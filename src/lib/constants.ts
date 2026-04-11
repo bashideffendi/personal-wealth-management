@@ -99,10 +99,10 @@ export const MONTHS = [
 
 export const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-  { label: 'Transaksi', href: '/transactions', icon: 'Receipt' },
-  { label: 'Anggaran', href: '/budget', icon: 'Wallet' },
-  { label: 'Aset', href: '/assets', icon: 'Building2' },
-  { label: 'Utang', href: '/debts', icon: 'CreditCard' },
-  { label: 'Dana Darurat', href: '/emergency-fund', icon: 'Shield' },
-  { label: 'Kekayaan Bersih', href: '/net-worth', icon: 'TrendingUp' },
+  { label: 'Transaksi', href: '/dashboard/transactions', icon: 'Receipt' },
+  { label: 'Anggaran', href: '/dashboard/budgeting', icon: 'Wallet' },
+  { label: 'Aset', href: '/dashboard/assets', icon: 'Building2' },
+  { label: 'Utang', href: '/dashboard/debts', icon: 'CreditCard' },
+  { label: 'Dana Darurat', href: '/dashboard/emergency-fund', icon: 'Shield' },
+  { label: 'Kekayaan Bersih', href: '/dashboard/net-worth', icon: 'TrendingUp' },
 ] as const
