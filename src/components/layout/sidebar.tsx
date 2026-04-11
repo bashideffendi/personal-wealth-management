@@ -54,15 +54,15 @@ export function Sidebar({ user }: SidebarProps) {
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col">
-      <div className="flex flex-1 flex-col bg-gradient-to-b from-teal-700 to-teal-900">
+      <div className="flex flex-1 flex-col bg-slate-900">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-500/20 font-bold text-sm text-teal-400">
             PWM
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white">PWM</h1>
-            <p className="text-xs text-teal-200">Personal Wealth Management</p>
+            <h1 className="text-sm font-semibold text-slate-200">PWM</h1>
+            <p className="text-xs text-slate-400">Personal Wealth Management</p>
           </div>
         </div>
 
@@ -76,11 +76,11 @@ export function Sidebar({ user }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-teal-100 transition-colors hover:bg-teal-600/50 hover:text-white',
-                  isActive && 'bg-teal-600/50 text-white'
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-slate-800 hover:text-slate-200',
+                  isActive && 'border-l-2 border-teal-400 bg-teal-500/10 text-teal-400'
                 )}
               >
-                {Icon && <Icon className="h-5 w-5" />}
+                {Icon && <Icon className="size-5 shrink-0" />}
                 {item.label}
               </Link>
             )
@@ -88,24 +88,24 @@ export function Sidebar({ user }: SidebarProps) {
         </nav>
 
         {/* User Info */}
-        <div className="border-t border-teal-600 p-4">
+        <div className="border-t border-slate-800 p-4">
           <div className="flex items-center gap-3">
             <Avatar size="sm">
-              <AvatarFallback className="bg-teal-500 text-xs text-white">
+              <AvatarFallback className="bg-teal-500/20 text-xs text-teal-400">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 truncate">
-              <p className="truncate text-sm font-medium text-white">
+              <p className="truncate text-sm font-medium text-slate-200">
                 {fullName}
               </p>
-              <p className="truncate text-xs text-teal-300">{user.email}</p>
+              <p className="truncate text-xs text-slate-500">{user.email}</p>
             </div>
             <Button
               variant="ghost"
               size="icon-sm"
               onClick={handleLogout}
-              className="text-teal-300 hover:bg-teal-600 hover:text-white"
+              className="text-slate-500 hover:bg-slate-800 hover:text-red-400"
               aria-label="Keluar"
             >
               <LogOut className="h-4 w-4" />

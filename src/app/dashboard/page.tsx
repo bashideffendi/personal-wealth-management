@@ -6,7 +6,6 @@ import { formatCurrency, formatDate, getMonthName } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import type { Transaction, Investment } from '@/types'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -38,7 +37,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-const CHART_COLORS = ['#0d9488', '#0891b2', '#6366f1', '#f59e0b', '#ef4444', '#22c55e', '#8b5cf6', '#ec4899']
+const CHART_COLORS = ['#0d9488', '#06b6d4', '#6366f1', '#f59e0b', '#ef4444', '#22c55e', '#8b5cf6', '#ec4899']
 
 const TYPE_LABELS: Record<string, string> = {
   income: 'Pemasukan',
@@ -202,7 +201,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="size-6 animate-spin text-teal-600" />
-        <span className="ml-2 text-gray-500">Memuat data...</span>
+        <span className="ml-2 text-slate-500">Memuat data...</span>
       </div>
     )
   }
@@ -212,15 +211,15 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500">{currentMonthYear}</p>
+          <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+          <p className="text-sm text-slate-500">{currentMonthYear}</p>
         </div>
         <div className="flex gap-2">
           <Select
             value={String(selectedYear)}
             onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}
           >
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-[100px] rounded-lg border-slate-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -235,7 +234,7 @@ export default function DashboardPage() {
             value={String(selectedMonth)}
             onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}
           >
-            <SelectTrigger className="w-[130px]">
+            <SelectTrigger className="w-[130px] rounded-lg border-slate-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -255,138 +254,130 @@ export default function DashboardPage() {
           title="Total Pemasukan"
           value={totalIncome}
           icon={<TrendingUp className="size-5 text-emerald-600" />}
-          valueColor="text-emerald-600"
+          iconBg="bg-emerald-100"
+          valueColor="text-slate-800"
         />
         <SummaryCard
           title="Total Pengeluaran"
           value={totalExpense}
-          icon={<TrendingDown className="size-5 text-red-600" />}
-          valueColor="text-red-600"
+          icon={<TrendingDown className="size-5 text-red-500" />}
+          iconBg="bg-red-100"
+          valueColor="text-slate-800"
         />
         <SummaryCard
           title="Total Tabungan"
           value={totalSaving}
           icon={<PiggyBank className="size-5 text-amber-500" />}
-          valueColor="text-amber-600"
+          iconBg="bg-amber-100"
+          valueColor="text-slate-800"
         />
         <SummaryCard
           title="Total Investasi"
           value={totalInvestment}
           icon={<BarChart3 className="size-5 text-blue-600" />}
-          valueColor="text-blue-600"
+          iconBg="bg-blue-100"
+          valueColor="text-slate-800"
         />
       </div>
 
       {/* Row 2: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Income vs Expense */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-teal-700">Pemasukan vs Pengeluaran Bulanan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" fontSize={12} />
-                <YAxis fontSize={12} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} />
-                <Tooltip formatter={formatTooltipValue} />
-                <Legend />
-                <Bar dataKey="income" name="Pemasukan" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" name="Pengeluaran" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Pemasukan vs Pengeluaran Bulanan</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="month" fontSize={12} tick={{ fill: '#64748b' }} />
+              <YAxis fontSize={12} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: '#64748b' }} />
+              <Tooltip formatter={formatTooltipValue} />
+              <Legend />
+              <Bar dataKey="income" name="Pemasukan" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expense" name="Pengeluaran" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
         {/* Investment Allocation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-teal-700">Alokasi Investasi</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {investmentPieData.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px] text-gray-400">
-                Belum ada data investasi.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={investmentPieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }: any) =>
-                      `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`
-                    }
-                    outerRadius={100}
-                    dataKey="value"
-                  >
-                    {investmentPieData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={formatTooltipValue} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Alokasi Investasi</h2>
+          {investmentPieData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px] text-slate-400">
+              Belum ada data investasi.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={investmentPieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: any) =>
+                    `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`
+                  }
+                  outerRadius={100}
+                  dataKey="value"
+                >
+                  {investmentPieData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={formatTooltipValue} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       {/* Row 3: Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-teal-700">Transaksi Terbaru</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h2 className="text-lg font-semibold text-slate-800 mb-4">Transaksi Terbaru</h2>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-slate-100">
+              <TableHead className="text-slate-500">Tanggal</TableHead>
+              <TableHead className="text-slate-500">Tipe</TableHead>
+              <TableHead className="text-slate-500">Kategori</TableHead>
+              <TableHead className="text-slate-500">Deskripsi</TableHead>
+              <TableHead className="text-right text-slate-500">Jumlah</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {recentTransactions.length === 0 ? (
               <TableRow>
-                <TableHead>Tanggal</TableHead>
-                <TableHead>Tipe</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Deskripsi</TableHead>
-                <TableHead className="text-right">Jumlah</TableHead>
+                <TableCell colSpan={5} className="text-center text-slate-400 py-10">
+                  Belum ada transaksi.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentTransactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-400 py-10">
-                    Belum ada transaksi.
+            ) : (
+              recentTransactions.map((tx) => (
+                <TableRow key={tx.id} className="hover:bg-slate-50 border-slate-100 transition-colors">
+                  <TableCell className="text-slate-600">{formatDate(tx.date)}</TableCell>
+                  <TableCell>
+                    <Badge className={TYPE_BADGE_COLORS[tx.type] || ''}>
+                      {TYPE_LABELS[tx.type] || tx.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-slate-600">{tx.category}</TableCell>
+                  <TableCell className="text-slate-600">{tx.description}</TableCell>
+                  <TableCell
+                    className={`text-right font-semibold ${
+                      tx.type === 'income'
+                        ? 'text-emerald-600'
+                        : tx.type === 'expense'
+                          ? 'text-red-500'
+                          : 'text-slate-700'
+                    }`}
+                  >
+                    {formatCurrency(tx.amount)}
                   </TableCell>
                 </TableRow>
-              ) : (
-                recentTransactions.map((tx) => (
-                  <TableRow key={tx.id}>
-                    <TableCell>{formatDate(tx.date)}</TableCell>
-                    <TableCell>
-                      <Badge className={TYPE_BADGE_COLORS[tx.type] || ''}>
-                        {TYPE_LABELS[tx.type] || tx.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{tx.category}</TableCell>
-                    <TableCell>{tx.description}</TableCell>
-                    <TableCell
-                      className={`text-right font-medium ${
-                        tx.type === 'income'
-                          ? 'text-emerald-600'
-                          : tx.type === 'expense'
-                            ? 'text-red-600'
-                            : 'text-gray-700'
-                      }`}
-                    >
-                      {formatCurrency(tx.amount)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
@@ -395,22 +386,27 @@ function SummaryCard({
   title,
   value,
   icon,
+  iconBg,
   valueColor,
 }: {
   title: string
   value: number
   icon: React.ReactNode
+  iconBg: string
   valueColor: string
 }) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-500">{title}</span>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+      <div className="flex items-center gap-4">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${iconBg}`}>
           {icon}
         </div>
-        <p className={`text-2xl font-bold ${valueColor}`}>{formatCurrency(value)}</p>
-      </CardContent>
-    </Card>
+        <div className="flex-1">
+          <p className="text-sm text-slate-500">{title}</p>
+          <p className={`text-2xl font-bold ${valueColor}`}>{formatCurrency(value)}</p>
+          <p className="text-xs text-slate-400">Bulan ini</p>
+        </div>
+      </div>
+    </div>
   )
 }

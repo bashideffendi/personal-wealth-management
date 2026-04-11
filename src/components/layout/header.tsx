@@ -74,7 +74,7 @@ export function Header({ user }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-white px-4 md:px-6">
+    <header className="flex h-16 items-center gap-4 border-b border-slate-200 bg-white px-4 md:px-6">
       {/* Mobile menu button */}
       <Button
         variant="ghost"
@@ -83,25 +83,38 @@ export function Header({ user }: HeaderProps) {
         onClick={() => setOpen(true)}
         aria-label="Buka menu"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-5 w-5 text-slate-600" />
       </Button>
 
       {/* Page title */}
-      <h1 className="text-lg font-semibold">{pageTitle}</h1>
+      <h1 className="font-semibold text-lg text-slate-800">{pageTitle}</h1>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Desktop user info */}
+      <div className="hidden md:flex items-center gap-3">
+        <span className="text-sm text-slate-600">{fullName}</span>
+        <Avatar size="sm">
+          <AvatarFallback className="bg-teal-500/20 text-xs text-teal-400">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      </div>
 
       {/* Mobile Sheet */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-72 p-0">
-          <SheetHeader className="bg-gradient-to-b from-teal-700 to-teal-800 p-0">
+        <SheetContent side="left" className="w-72 p-0 bg-slate-900 border-slate-800">
+          <SheetHeader className="p-0">
             <div className="flex items-center gap-3 px-6 py-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 font-bold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-500/20 font-bold text-sm text-teal-400">
                 PWM
               </div>
               <div>
-                <SheetTitle className="text-sm font-semibold text-white">
+                <SheetTitle className="text-sm font-semibold text-slate-200">
                   PWM
                 </SheetTitle>
-                <p className="text-xs text-teal-200">
+                <p className="text-xs text-slate-400">
                   Personal Wealth Management
                 </p>
               </div>
@@ -118,11 +131,11 @@ export function Header({ user }: HeaderProps) {
                     href={item.href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-teal-50 hover:text-teal-700',
-                      isActive && 'bg-teal-50 text-teal-700'
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-slate-800 hover:text-slate-200',
+                      isActive && 'border-l-2 border-teal-400 bg-teal-500/10 text-teal-400'
                     )}
                   >
-                    {Icon && <Icon className="h-5 w-5" />}
+                    {Icon && <Icon className="size-5 shrink-0" />}
                     {item.label}
                   </Link>
                 </SheetClose>
@@ -130,21 +143,22 @@ export function Header({ user }: HeaderProps) {
             })}
           </nav>
 
-          <div className="border-t p-4">
+          <div className="border-t border-slate-800 p-4">
             <div className="flex items-center gap-3">
               <Avatar size="sm">
-                <AvatarFallback className="bg-teal-600 text-xs text-white">
+                <AvatarFallback className="bg-teal-500/20 text-xs text-teal-400">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 truncate">
-                <p className="truncate text-sm font-medium">{fullName}</p>
-                <p className="truncate text-xs text-gray-500">{user.email}</p>
+                <p className="truncate text-sm font-medium text-slate-200">{fullName}</p>
+                <p className="truncate text-xs text-slate-500">{user.email}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleLogout}
+                className="text-slate-500 hover:bg-slate-800 hover:text-red-400"
                 aria-label="Keluar"
               >
                 <LogOut className="h-4 w-4" />
