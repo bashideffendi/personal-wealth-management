@@ -15,6 +15,7 @@ import { RRGChart } from '@/components/rrg/rrg-chart'
 interface HistoryResponse {
   series: Array<{ ticker: string; bars: Bar[] }>
   weeks: number
+  failures?: Array<{ ticker: string; reason: string }>
 }
 
 const BENCHMARK_PRESETS = [
@@ -39,6 +40,7 @@ export default function RRGPage() {
   const [loadingHoldings, setLoadingHoldings] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [failures, setFailures] = useState<Array<{ ticker: string; reason: string }>>([])
   const [series, setSeries] = useState<RRGSeries[]>([])
 
   // Load user's stock tickers once.
@@ -85,17 +87,21 @@ export default function RRGPage() {
     if (!canRun) return
     setLoading(true)
     setError(null)
+    setFailures([])
     try {
       const tickers = Array.from(new Set([...universe, benchmark])).join(',')
       const res = await fetch(`/api/history?tickers=${encodeURIComponent(tickers)}&weeks=80`)
       if (!res.ok) throw new Error(`API ${res.status}`)
       const json = (await res.json()) as HistoryResponse
+      setFailures(json.failures ?? [])
 
       const byTicker = new Map<string, Bar[]>()
       for (const s of json.series) byTicker.set(s.ticker, s.bars)
       const bench = byTicker.get(benchmark)
       if (!bench || bench.length === 0) {
-        throw new Error(`Benchmark ${benchmark} tidak ditemukan / kosong`)
+        const benchFail = json.failures?.find((f) => f.ticker === benchmark)
+        const why = benchFail ? ` — ${benchFail.reason}` : ''
+        throw new Error(`Benchmark ${benchmark} tidak ditemukan / kosong${why}`)
       }
 
       const computed: RRGSeries[] = []
@@ -239,6 +245,23 @@ export default function RRGPage() {
           style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}
         >
           {error}
+        </div>
+      )}
+
+      {failures.length > 0 && (
+        <div
+          className="s-card p-4 text-xs"
+          style={{ background: 'var(--surface-2)' }}
+        >
+          <p className="caps mb-2">Ticker yang gagal diambil</p>
+          <ul className="space-y-1 num">
+            {failures.map((f) => (
+              <li key={f.ticker} style={{ color: 'var(--ink-muted)' }}>
+                <span className="font-semibold" style={{ color: 'var(--ink)' }}>{f.ticker}</span>
+                {' — '}{f.reason}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

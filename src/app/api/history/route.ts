@@ -46,13 +46,19 @@ async function fetchLiveHistory(
   const period1 = new Date(now)
   period1.setDate(period1.getDate() - (weeks + 4) * 7)
 
-  const raw = (await yahooFinance.chart(ticker, {
-    period1,
-    period2: now,
-    interval: '1wk',
-  })) as YahooChartResult
+  // validateResult: false — yahoo-finance2's schema occasionally rejects
+  // valid responses for index tickers (e.g. ^JKSE). We handle shape defensively.
+  const raw = (await yahooFinance.chart(
+    ticker,
+    {
+      period1,
+      period2: now,
+      interval: '1wk',
+    },
+    { validateResult: false }
+  )) as YahooChartResult
 
-  const quotes = raw.quotes ?? []
+  const quotes = raw?.quotes ?? []
   const bars: HistoryBar[] = []
   for (const q of quotes) {
     const close = q.adjclose ?? q.close
@@ -136,6 +142,8 @@ export async function GET(request: Request) {
     }
   }
 
+  const failures: Array<{ ticker: string; reason: string }> = []
+
   if (toFetch.length > 0) {
     const settled = await Promise.allSettled(
       toFetch.map(async (t) => ({ ticker: t, bars: await fetchLiveHistory(t, weeks) }))
@@ -150,8 +158,15 @@ export async function GET(request: Request) {
     }> = []
     const nowIso = new Date().toISOString()
 
-    for (const r of settled) {
+    for (let i = 0; i < settled.length; i++) {
+      const r = settled[i]
+      const ticker = toFetch[i]
       if (r.status === 'fulfilled') {
+        if (r.value.bars.length === 0) {
+          failures.push({ ticker, reason: 'empty response from Yahoo' })
+          console.warn(`[history] ${ticker}: Yahoo returned 0 bars`)
+          continue
+        }
         results.push(r.value)
         for (const b of r.value.bars) {
           toUpsert.push({
@@ -163,6 +178,10 @@ export async function GET(request: Request) {
             fetched_at: nowIso,
           })
         }
+      } else {
+        const msg = r.reason instanceof Error ? r.reason.message : String(r.reason)
+        failures.push({ ticker, reason: msg })
+        console.error(`[history] ${ticker} failed:`, msg)
       }
     }
 
@@ -185,5 +204,5 @@ export async function GET(request: Request) {
     (a, b) => (orderMap.get(a.ticker) ?? 0) - (orderMap.get(b.ticker) ?? 0)
   )
 
-  return NextResponse.json({ series: results, weeks })
+  return NextResponse.json({ series: results, weeks, failures })
 }
