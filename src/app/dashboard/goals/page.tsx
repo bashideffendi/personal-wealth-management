@@ -118,7 +118,7 @@ export default function GoalsPage() {
         <p className="num tabular mt-3 text-4xl sm:text-5xl lg:text-6xl font-semibold" style={{ color: 'var(--ink)' }}>
           {formatCurrency(totals.current)}
         </p>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           dari target <span className="num">{formatCurrency(totals.target)}</span>
           {' · '}{totals.pct.toFixed(1)}% tercapai · {goals.length} goal
         </p>

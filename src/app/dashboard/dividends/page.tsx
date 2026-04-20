@@ -111,7 +111,7 @@ export default function DividendsPage() {
         <p className="num tabular mt-3 text-4xl sm:text-5xl font-semibold" style={{ color: 'var(--ink)' }}>
           {formatCurrency(stats.ytd)}
         </p>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           YTD · Total all-time <span className="num">{formatCurrency(stats.total)}</span>
           {' · '}Rata-rata <span className="num">{formatCurrency(stats.avgMonthly)}</span>/bln
         </p>

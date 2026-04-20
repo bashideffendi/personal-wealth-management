@@ -186,7 +186,7 @@ export default function InvestmentCategoryPage() {
             </span>
           )}
         </div>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           {items.length} posisi · Modal <span className="num">{formatCurrency(totals.invested)}</span>
           {' · '}
           P/L <span className="num">{formatCurrency(totals.pl)}</span>

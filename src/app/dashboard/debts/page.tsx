@@ -119,12 +119,12 @@ export default function DebtsOverviewPage() {
         <p className="num tabular mt-3 text-4xl sm:text-5xl lg:text-6xl font-semibold" style={{ color: 'var(--ink)' }}>
           {formatCurrency(totalRemaining)}
         </p>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           {active.length} utang aktif · cicilan <span className="num">{formatCurrency(totalMonthly)}</span>/bln
         </p>
         {totalPrincipal > 0 && (
           <div className="mt-5 max-w-md">
-            <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: '#4B5E14' }}>
+            <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: 'var(--on-black-mut)' }}>
               <span>Progress pelunasan</span>
               <span className="num font-semibold">{paidPct.toFixed(1)}%</span>
             </div>

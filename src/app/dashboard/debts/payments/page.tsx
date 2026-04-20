@@ -87,7 +87,7 @@ export default function DebtPaymentsPage() {
         <p className="num tabular mt-3 text-4xl sm:text-5xl font-semibold" style={{ color: 'var(--ink)' }}>
           {formatCurrency(totalPaid)}
         </p>
-        <div className="mt-2 flex flex-wrap gap-3 text-sm" style={{ color: '#4B5E14' }}>
+        <div className="mt-2 flex flex-wrap gap-3 text-sm" style={{ color: 'var(--on-black-mut)' }}>
           <span>{payments.length} transaksi</span>
           <span>·</span>
           <span>Bulan ini: <span className="num">{formatCurrency(thisMonth)}</span></span>

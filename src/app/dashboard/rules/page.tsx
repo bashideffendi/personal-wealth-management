@@ -98,7 +98,7 @@ export default function RulesPage() {
         <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2" style={{ color: 'var(--ink)' }}>
           Aturan Kategori
         </h2>
-        <p className="text-sm mt-2 max-w-xl" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--on-black-mut)' }}>
           Saat deskripsi transaksi mengandung teks yang cocok, kategori & tipe otomatis diisi.
           Contoh: deskripsi &ldquo;GRAB RIDE 25K&rdquo; → auto Transportasi.
         </p>

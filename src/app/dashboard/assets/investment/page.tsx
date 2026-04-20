@@ -95,7 +95,7 @@ export default function InvestmentOverviewPage() {
             {up ? '+' : ''}{totals.plPct.toFixed(2)}%
           </span>
         </div>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           Modal <span className="num">{formatCurrency(totals.invested)}</span>
           {' · '}
           P/L <span className="num">{formatCurrency(totals.pl)}</span>

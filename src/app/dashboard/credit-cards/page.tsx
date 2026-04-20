@@ -194,7 +194,7 @@ export default function CreditCardsPage() {
             {totals.utilization.toFixed(0)}% utilisasi
           </span>
         </div>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           {totals.count} kartu aktif · limit total <span className="num">{formatCurrency(totals.limit)}</span>
         </p>
       </div>

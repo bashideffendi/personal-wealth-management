@@ -43,7 +43,7 @@ export default function DebtStrategyPage() {
         <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2" style={{ color: 'var(--ink)' }}>
           Atur Prioritas Utang
         </h2>
-        <p className="text-sm mt-2 max-w-xl" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--on-black-mut)' }}>
           Pilih Snowball (saldo terkecil dulu) atau Avalanche (bunga tertinggi dulu). Tambahkan pembayaran
           ekstra untuk mempercepat lunas.
         </p>

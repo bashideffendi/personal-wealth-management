@@ -17,7 +17,7 @@ export default function CalculatorsPage() {
         <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2" style={{ color: 'var(--ink)' }}>
           Calculators
         </h2>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           Zakat, pajak penghasilan, dan simulasi cicilan KPR/KKB.
         </p>
       </div>

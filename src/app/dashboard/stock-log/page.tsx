@@ -164,7 +164,7 @@ export default function StockLogPage() {
             </p>
           </div>
         </div>
-        <p className="text-sm mt-3" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
           {stats.count} transaksi · data untuk lapor SPT tahunan
         </p>
       </div>

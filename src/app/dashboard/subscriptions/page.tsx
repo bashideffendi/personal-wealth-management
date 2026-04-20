@@ -78,7 +78,7 @@ export default function SubscriptionsPage() {
             </p>
           </div>
         </div>
-        <p className="text-sm mt-3" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
           {totals.count} subscription aktif — review yang mana yang masih kepakai.
         </p>
       </div>

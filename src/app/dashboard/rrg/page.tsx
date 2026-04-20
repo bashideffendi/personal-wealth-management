@@ -142,7 +142,7 @@ export default function RRGPage() {
         <p className="text-lg sm:text-xl font-semibold mt-2" style={{ color: 'var(--ink)' }}>
           Rotasi kekuatan relatif terhadap benchmark
         </p>
-        <p className="text-sm mt-2 max-w-2xl" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--on-black-mut)' }}>
           Bandingkan beberapa saham (atau aset) terhadap satu benchmark dalam 4 kuadran:
           <span className="font-semibold"> Leading, Weakening, Lagging, Improving</span>.
           Arah rotasi normal searah jarum jam.

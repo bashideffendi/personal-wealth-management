@@ -8,7 +8,7 @@ import {
   TrendingUp, ChevronDown, LogOut, Repeat, Target, Calculator,
   Coins, Clock, Sparkles, Gift, ListOrdered, Compass,
 } from 'lucide-react'
-import { NAV_ITEMS, type NavItem } from '@/lib/constants'
+import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { useT } from '@/lib/i18n/context'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -176,9 +176,28 @@ export function Sidebar({ user }: SidebarProps) {
           </p>
         </div>
 
-        {/* Nav — flat */}
-        <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
-          {NAV_ITEMS.map((item) => renderItem(item, 0))}
+        {/* Nav — grouped by section */}
+        <nav className="flex-1 overflow-y-auto px-2.5 py-3">
+          {NAV_SECTIONS.map((sec) => {
+            const items = NAV_ITEMS.filter((it) => it.section === sec.key)
+            if (items.length === 0) return null
+            const sectionLabel = t(sec.titleKey)
+            return (
+              <div key={sec.key} className="mb-3 last:mb-0">
+                {sectionLabel && (
+                  <p
+                    className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-[0.14em] font-semibold"
+                    style={{ color: '#52525B' }}
+                  >
+                    {sectionLabel}
+                  </p>
+                )}
+                <div className="space-y-0.5">
+                  {items.map((item) => renderItem(item, 0))}
+                </div>
+              </div>
+            )
+          })}
         </nav>
 
         {/* User */}

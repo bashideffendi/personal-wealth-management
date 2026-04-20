@@ -136,8 +136,6 @@ export type NavSection =
   | 'wealth'
   | 'debt'
   | 'invest_advanced'
-  | 'planning'
-  | 'reports'
   | 'tools'
 
 export type NavItem = {
@@ -159,20 +157,18 @@ export const NAV_SECTIONS: { key: NavSection; titleKey: string }[] = [
   { key: 'wealth',          titleKey: 'nav.section.wealth' },
   { key: 'debt',            titleKey: 'nav.section.debt' },
   { key: 'invest_advanced', titleKey: 'nav.section.invest_advanced' },
-  { key: 'planning',        titleKey: 'nav.section.planning' },
-  { key: 'reports',         titleKey: 'nav.section.reports' },
   { key: 'tools',           titleKey: 'nav.section.tools' },
 ]
 
 export const NAV_ITEMS: NavItem[] = [
-  // OVERVIEW
+  // OVERVIEW — where I am + where I'm heading
   { label: 'Dashboard',   titleKey: 'nav.dashboard',      href: '/dashboard',              icon: 'LayoutDashboard', section: 'overview' },
+  { label: 'Tujuan',      titleKey: 'nav.goals',          href: '/dashboard/goals',        icon: 'Target',          section: 'overview' },
 
   // ACTIVITY (daily recording)
   { label: 'Transaksi',   titleKey: 'nav.transactions',   href: '/dashboard/transactions', icon: 'Receipt',     section: 'activity' },
   { label: 'Recurring',   titleKey: 'nav.recurring',      href: '/dashboard/recurring',    icon: 'Repeat',      section: 'activity' },
   { label: 'Anggaran',    titleKey: 'nav.budgeting',      href: '/dashboard/budgeting',    icon: 'Wallet',      section: 'activity' },
-  { label: 'Kartu Kredit',titleKey: 'nav.credit_cards',   href: '/dashboard/credit-cards', icon: 'CreditCard',  section: 'activity' },
 
   // WEALTH (assets & net worth)
   {
@@ -187,29 +183,25 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Dana Darurat',    titleKey: 'nav.emergency_fund',  href: '/dashboard/emergency-fund', icon: 'Shield',     section: 'wealth' },
   { label: 'Kekayaan Bersih', titleKey: 'nav.net_worth',       href: '/dashboard/net-worth',      icon: 'TrendingUp', section: 'wealth' },
 
-  // DEBT
+  // DEBT — Kartu Kredit now lives here as a child of Utang
   {
     label: 'Utang', titleKey: 'nav.debts', href: '/dashboard/debts', icon: 'CreditCard', section: 'debt',
     children: [
       { label: 'Ringkasan',          titleKey: 'nav.debts_overview', href: '/dashboard/debts',          icon: '' },
       { label: 'Strategi Pelunasan', titleKey: 'nav.debts_strategy', href: '/dashboard/debts/strategy', icon: '' },
       { label: 'Pembayaran',         titleKey: 'nav.debts_payments', href: '/dashboard/debts/payments', icon: '' },
+      { label: 'Kartu Kredit',       titleKey: 'nav.credit_cards',   href: '/dashboard/credit-cards',   icon: '' },
     ],
   },
 
-  // ADVANCED INVESTMENT
+  // ADVANCED INVESTING — RRG first (newest), then stock log + dividends
+  { label: 'RRG',             titleKey: 'nav.rrg',             href: '/dashboard/rrg',            icon: 'Compass',     section: 'invest_advanced' },
   { label: 'Stock Log',       titleKey: 'nav.stock_log',       href: '/dashboard/stock-log',      icon: 'ListOrdered', section: 'invest_advanced' },
   { label: 'Dividen',         titleKey: 'nav.dividends',       href: '/dashboard/dividends',      icon: 'Coins',       section: 'invest_advanced' },
-  { label: 'RRG',             titleKey: 'nav.rrg',             href: '/dashboard/rrg',            icon: 'Compass',     section: 'invest_advanced' },
 
-  // PLANNING
-  { label: 'Tujuan',          titleKey: 'nav.goals',           href: '/dashboard/goals',          icon: 'Target',      section: 'planning' },
-  { label: 'Kalkulator',      titleKey: 'nav.calculators',     href: '/dashboard/calculators',    icon: 'Calculator',  section: 'planning' },
-
-  // REPORTS
-  { label: 'Wrapped',         titleKey: 'nav.wrapped',         href: '/dashboard/wrapped',        icon: 'Gift',        section: 'reports' },
-  { label: 'Subscription',    titleKey: 'nav.subscriptions',   href: '/dashboard/subscriptions',  icon: 'Clock',       section: 'reports' },
-
-  // TOOLS
+  // TOOLS — utilities, reports, calculators, category rules
+  { label: 'Kalkulator',      titleKey: 'nav.calculators',     href: '/dashboard/calculators',    icon: 'Calculator',  section: 'tools' },
+  { label: 'Wrapped',         titleKey: 'nav.wrapped',         href: '/dashboard/wrapped',        icon: 'Gift',        section: 'tools' },
+  { label: 'Subscription',    titleKey: 'nav.subscriptions',   href: '/dashboard/subscriptions',  icon: 'Clock',       section: 'tools' },
   { label: 'Aturan Kategori', titleKey: 'nav.rules',           href: '/dashboard/rules',          icon: 'Sparkles',    section: 'tools' },
 ]

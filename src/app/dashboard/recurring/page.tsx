@@ -206,7 +206,7 @@ export default function RecurringPage() {
             </p>
           </div>
         </div>
-        <p className="text-sm mt-3" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
           {totals.active} recurring aktif — otomatis generate transaksi sesuai jadwal.
         </p>
       </div>

@@ -112,7 +112,7 @@ export default function NonLiquidAssetsPage() {
         <p className="num tabular mt-3 text-4xl sm:text-5xl font-semibold" style={{ color: 'var(--ink)' }}>
           {formatCurrency(total)}
         </p>
-        <p className="text-sm mt-2" style={{ color: '#4B5E14' }}>
+        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
           {items.length} aset · nilai fluktuatif
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
