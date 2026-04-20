@@ -5,42 +5,52 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================
-   Personal Wealth Management — Campfire-inspired
-   Clean white · neutral zinc · teal accent · modern SaaS
+   Personal Wealth Management — Finspine-inspired
+   Warm off-white · fresh lime pop · orange secondary · near-black
    ============================================ */
 :root {
   /* Neutrals — paper & ink */
-  --paper:       #FFFFFF;    /* clean white page bg */
-  --surface:     #FFFFFF;    /* white card */
-  --surface-2:   #F5F5F5;    /* light gray alt bg */
-  --surface-3:   #E5E5E5;
+  --paper:       #F7F5EF;    /* warm off-white page bg */
+  --surface:     #FFFFFF;    /* pure white cards */
+  --surface-2:   #F3F1EB;    /* warm alt bg */
+  --surface-3:   #E8E5DD;
 
   --ink:         #0A0A0A;    /* near-black primary text */
   --ink-muted:   #525252;    /* neutral gray */
   --ink-soft:    #A3A3A3;    /* soft light gray */
-  --border:      #E5E5E5;
-  --border-soft: #F0F0F0;
+  --border:      #E8E5DD;
+  --border-soft: #EFEDE6;
 
-  /* Dark base (sidebar, dark hero cards) — cool charcoal, not warm */
+  /* Dark base (sidebar, dark hero cards) — neutral charcoal */
   --black:       #0A0A0A;
   --black-soft:  #18181B;
   --black-2:     #27272A;
   --black-line:  rgba(255, 255, 255, 0.08);
-  --on-black:    #FAFAFA;    /* white text on dark */
-  --on-black-mut:#A1A1AA;    /* zinc-400 muted on dark */
+  --on-black:    #FAFAFA;
+  --on-black-mut:#A1A1AA;
 
-  /* Teal — SIGNATURE ACCENT (Campfire deep teal) */
-  --butter-50:   #F0FDFA;
-  --butter-100:  #CCFBF1;
-  --butter-200:  #99F6E4;
-  --butter-300:  #5EEAD4;
-  --butter-400:  #14B8A6;   /* primary teal-500 */
-  --butter-500:  #0D9488;   /* teal-600 */
-  --butter-600:  #0F766E;   /* teal-700 */
-  --butter-700:  #115E59;   /* teal-800 */
-  --butter-800:  #134E4A;   /* teal-900 */
+  /* Fresh lime — SIGNATURE POP (Finspine green) */
+  --butter-50:   #F7FEE7;
+  --butter-100:  #ECFCCB;
+  --butter-200:  #D9F99D;
+  --butter-300:  #BEF264;
+  --butter-400:  #A3E635;   /* primary lime-400 — THE pop */
+  --butter-500:  #84CC16;
+  --butter-600:  #65A30D;
+  --butter-700:  #4D7C0F;
+  --butter-800:  #365314;
 
-  /* Emerald — supporting success green */
+  /* Orange — SECONDARY POP (for contrast/expense direction) */
+  --orange-50:   #FFF7ED;
+  --orange-100:  #FFEDD5;
+  --orange-200:  #FED7AA;
+  --orange-300:  #FDBA74;
+  --orange-400:  #FB923C;
+  --orange-500:  #F97316;
+  --orange-600:  #EA580C;
+  --orange-700:  #C2410C;
+
+  /* Emerald — supporting (different hue from lime, for success ring etc.) */
   --moss-50:     #ECFDF5;
   --moss-100:    #D1FAE5;
   --moss-300:    #6EE7B7;
@@ -54,13 +64,13 @@
   --stone-light: #A3A3A3;
 
   /* Semantic — clean modern */
-  --success:     #10B981;
-  --success-bg:  #D1FAE5;
-  --warning:     #F59E0B;
-  --warning-bg:  #FEF3C7;
-  --danger:      #EF4444;    /* clean red */
+  --success:     #65A30D;    /* lime-600 (echo signature) */
+  --success-bg:  #ECFCCB;    /* lime-100 */
+  --warning:     #F97316;    /* orange-500 */
+  --warning-bg:  #FFEDD5;    /* orange-100 */
+  --danger:      #EF4444;
   --danger-bg:   #FEE2E2;
-  --info:        #3B82F6;    /* bright blue */
+  --info:        #3B82F6;
   --info-bg:     #DBEAFE;
 
   /* App-wide aliases */

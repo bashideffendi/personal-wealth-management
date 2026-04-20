@@ -29,13 +29,13 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-// Campfire chart palette — clean modern SaaS
+// Finspine chart palette — fresh lime + orange + modern
 const CHART_PALETTE = [
   '#0A0A0A', // near-black
-  '#14B8A6', // teal-500 (primary accent)
-  '#3B82F6', // blue-500
+  '#A3E635', // lime-400 (primary pop)
+  '#F97316', // orange-500 (secondary pop)
   '#10B981', // emerald-500
-  '#F59E0B', // amber-500
+  '#3B82F6', // blue-500
   '#737373', // neutral-500
   '#8B5CF6', // violet-500
   '#EF4444', // red-500
@@ -167,23 +167,6 @@ export default function DashboardPage() {
     }
   }, [monthTransactions])
 
-  // ---- Sparkline data (12 months per metric) ----
-  const sparklineData = useMemo(() => {
-    const arr: { income: number; expense: number; saving: number; net: number }[] = []
-    for (let m = 0; m < 12; m++) {
-      const mStart = `${selectedYear}-${String(m + 1).padStart(2, '0')}-01`
-      const mEndMonth = m === 11 ? 1 : m + 2
-      const mEndYear = m === 11 ? selectedYear + 1 : selectedYear
-      const mEnd = `${mEndYear}-${String(mEndMonth).padStart(2, '0')}-01`
-      const mTx = yearTransactions.filter((tx) => tx.date >= mStart && tx.date < mEnd)
-      const income = mTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-      const expense = mTx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-      const saving = mTx.filter((t) => t.type === 'saving' || t.type === 'investment').reduce((s, t) => s + t.amount, 0)
-      arr.push({ income, expense, saving, net: income - expense - saving })
-    }
-    return arr
-  }, [yearTransactions, selectedYear])
-
   // ---- Monthly chart (area with net) ----
   const monthlyData = useMemo<MonthlyData[]>(() => {
     return MONTHS.map((name, idx) => {
@@ -264,24 +247,27 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — compact */}
-      <div className="dark-card px-6 py-4 sm:px-7 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Hero — full padding to match other pages */}
+      <div className="dark-card p-6 sm:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="caps" style={{ fontSize: '0.625rem' }}>{t('dashboard.monthly_report')}</p>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-0.5" style={{ color: 'var(--ink)' }}>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-1.5">
               {currentMonthYear}
             </h2>
+            <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
+              {t('dashboard.current_month')}
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-              <SelectTrigger className="w-[100px] h-8 bg-white/70 border-[rgba(10,10,10,0.15)] text-[var(--ink)] text-xs hover:bg-white/90"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[100px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-              <SelectTrigger className="w-[130px] h-8 bg-white/70 border-[rgba(10,10,10,0.15)] text-[var(--ink)] text-xs hover:bg-white/90"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
               </SelectContent>
@@ -290,17 +276,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards with sparklines */}
+      {/* Financial Health — promoted to hero #2 */}
+      <HealthScorePanel
+        monthTransactions={monthTransactions}
+        yearTransactions={yearTransactions}
+        savingRate={totals.savingRate}
+        liquidTotal={liquidTotal}
+        debtTotal={debtTotal}
+        efCurrent={emergencyFundCurrent}
+        efTarget={emergencyFundTarget}
+      />
+
+      {/* KPI Cards — clean, no sparklines */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  sparkline={sparklineData.map((d) => d.income)} />
-        <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} sparkline={sparklineData.map((d) => d.expense)} />
+        <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  direction="up" />
+        <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} direction="down" />
         <KpiCard
           label={t('dashboard.kpi_saving_investment')}
           value={totals.saving + totals.investment}
           note={`${t('dashboard.saving_rate')} ${totals.savingRate.toFixed(1)}%`}
-          sparkline={sparklineData.map((d) => d.saving)}
+          direction="up"
         />
-        <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} sparkline={sparklineData.map((d) => d.net)} />
+        <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} direction={totals.net >= 0 ? 'up' : 'down'} />
       </div>
 
       {/* Calendar + Budget Progress (moved up) */}
@@ -419,17 +416,6 @@ export default function DashboardPage() {
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
       </div>
 
-      {/* Health Score + Burn Rate + Heatmap */}
-      <HealthScorePanel
-        monthTransactions={monthTransactions}
-        yearTransactions={yearTransactions}
-        savingRate={totals.savingRate}
-        liquidTotal={liquidTotal}
-        debtTotal={debtTotal}
-        efCurrent={emergencyFundCurrent}
-        efTarget={emergencyFundTarget}
-      />
-
       {/* Spending Heatmap */}
       <SpendingHeatmap yearTransactions={yearTransactions} year={selectedYear} />
 
@@ -459,12 +445,12 @@ export default function DashboardPage() {
             <AreaChart data={monthlyData}>
               <defs>
                 <linearGradient id="g-income" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.55} />
-                  <stop offset="100%" stopColor="#14B8A6" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#A3E635" stopOpacity={0.55} />
+                  <stop offset="100%" stopColor="#A3E635" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="g-expense" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#F97316" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#F97316" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -482,8 +468,8 @@ export default function DashboardPage() {
                 labelStyle={{ color: 'var(--on-black-mut)' }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="income" name="Pemasukan" stroke="#0D9488" fill="url(#g-income)" strokeWidth={2} />
-              <Area type="monotone" dataKey="expense" name="Pengeluaran" stroke="#10B981" fill="url(#g-expense)" strokeWidth={2} />
+              <Area type="monotone" dataKey="income" name="Pemasukan" stroke="#65A30D" fill="url(#g-income)" strokeWidth={2} />
+              <Area type="monotone" dataKey="expense" name="Pengeluaran" stroke="#EA580C" fill="url(#g-expense)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -542,25 +528,41 @@ export default function DashboardPage() {
 }
 
 function KpiCard({
-  label, value, note, sparkline,
+  label, value, note, direction,
 }: {
   label: string
   value: number
   note?: string
-  sparkline?: number[]
+  direction?: 'up' | 'down'
 }) {
   const t = useT()
+  // Small circular indicator in top-right: lime for "up", orange for "down"
+  const indicatorColor = direction === 'up'
+    ? 'var(--butter-400)'
+    : direction === 'down'
+    ? 'var(--orange-400)'
+    : 'transparent'
   return (
     <div
-      className="rounded-xl p-5 relative overflow-hidden"
+      className="rounded-xl p-5 relative overflow-hidden transition-all hover:shadow-sm"
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border-soft)',
       }}
     >
-      <p className="caps">{label}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="caps">{label}</p>
+        {direction && (
+          <span
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0 text-[10px] font-bold"
+            style={{ background: indicatorColor, color: 'var(--ink)' }}
+          >
+            {direction === 'up' ? '↑' : '↓'}
+          </span>
+        )}
+      </div>
       <p
-        className="num tabular mt-3 text-2xl leading-tight font-semibold"
+        className="num tabular mt-4 text-[26px] leading-tight font-semibold"
         style={{ color: 'var(--ink)' }}
       >
         {formatCurrency(value)}
@@ -568,34 +570,7 @@ function KpiCard({
       <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
         {note ?? t('dashboard.current_month')}
       </p>
-      {sparkline && sparkline.length > 1 && (
-        <div className="mt-3 -mx-1">
-          <Sparkline data={sparkline} />
-        </div>
-      )}
     </div>
-  )
-}
-
-// Mini sparkline (pure SVG for performance)
-function Sparkline({ data }: { data: number[] }) {
-  const width = 100
-  const height = 24
-  const max = Math.max(...data, 1)
-  const min = Math.min(...data, 0)
-  const range = max - min || 1
-  const step = width / Math.max(1, data.length - 1)
-  const points = data.map((v, i) => {
-    const x = i * step
-    const y = height - ((v - min) / range) * height
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
-  const areaPoints = `${points} ${width},${height} 0,${height}`
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none">
-      <polygon points={areaPoints} fill="var(--lime-100)" />
-      <polyline points={points} fill="none" stroke="var(--ink)" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
   )
 }
 
@@ -977,7 +952,7 @@ function Row2({ label, value, accent, bold }: { label: string; value: number; ac
   )
 }
 
-// ─── Financial Health Score Panel ───
+// ─── Financial Health Score Panel — HERO ───
 function HealthScorePanel({
   monthTransactions, yearTransactions, savingRate, liquidTotal, debtTotal, efCurrent, efTarget,
 }: {
@@ -989,23 +964,24 @@ function HealthScorePanel({
   efCurrent: number
   efTarget: number
 }) {
-  // Score components
+  // Silence unused var (reserved for future EF-vs-target breakdown)
+  void efTarget
+
   const monthExpense = monthTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
-  // 1. Saving rate score (20pts): 0% = 0, 30%+ = 20
+  // 1. Saving rate score (20pts)
   const savingRateScore = Math.min(20, Math.max(0, (savingRate / 30) * 20))
 
-  // 2. Debt ratio score (20pts): debt/liquid — lower is better
+  // 2. Debt ratio score (20pts)
   const debtRatio = liquidTotal > 0 ? debtTotal / liquidTotal : 5
   const debtScore = debtRatio <= 0 ? 20 : debtRatio <= 1 ? 20 : debtRatio <= 2 ? 15 : debtRatio <= 4 ? 10 : 5
 
-  // 3. Emergency fund score (20pts): months coverage
+  // 3. Emergency fund score (20pts)
   const efMonths = monthExpense > 0 ? efCurrent / monthExpense : 0
   const efScore = efMonths >= 6 ? 20 : efMonths >= 3 ? 15 : efMonths >= 1 ? 10 : 5
 
-  // 4. Net worth growth (20pts): compare this year trend
+  // 4. Growth score (20pts)
   const growthScore = (() => {
-    // Simple: if more income than expense over year → high
     const inc = yearTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
     const exp = yearTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
     if (inc === 0) return 5
@@ -1013,71 +989,171 @@ function HealthScorePanel({
     return ratio >= 0.3 ? 20 : ratio >= 0.15 ? 15 : ratio >= 0 ? 10 : 0
   })()
 
-  // 5. Budget adherence (20pts): placeholder based on saving rate positive
+  // 5. Budget adherence (20pts)
   const budgetScore = savingRate > 0 ? 15 : 5
 
   const total = Math.round(savingRateScore + debtScore + efScore + growthScore + budgetScore)
   const grade = total >= 85 ? 'A' : total >= 70 ? 'B' : total >= 55 ? 'C' : total >= 40 ? 'D' : 'E'
-  const gradeColor = total >= 70 ? 'var(--lime-700)' : total >= 55 ? 'var(--warning)' : 'var(--danger)'
+  const verdict = total >= 85 ? 'Excellent'
+    : total >= 70 ? 'Good'
+    : total >= 55 ? 'Fair'
+    : total >= 40 ? 'Needs Work'
+    : 'Critical'
+  const verdictDesc = total >= 85 ? 'Kondisi finansialmu luar biasa — pertahankan ritme ini.'
+    : total >= 70 ? 'Finansialmu sehat. Masih ada ruang untuk optimasi.'
+    : total >= 55 ? 'Ada beberapa area yang perlu diperbaiki.'
+    : total >= 40 ? 'Banyak aspek yang butuh perhatian segera.'
+    : 'Kondisi darurat — prioritaskan stabilisasi.'
 
-  // Burn rate: months of liquid runway at current expense
+  // Score ring
+  const totalCapped = Math.min(100, Math.max(0, total))
+  const circumference = 2 * Math.PI * 62
+  const ringOffset = circumference - (totalCapped / 100) * circumference
+  const ringColor = total >= 70 ? 'var(--butter-400)'
+    : total >= 55 ? 'var(--orange-400)'
+    : 'var(--danger)'
+
   const burnMonths = monthExpense > 0 ? liquidTotal / monthExpense : 0
+  const burnColor = burnMonths >= 6 ? 'var(--butter-600)' : burnMonths >= 3 ? 'var(--orange-500)' : 'var(--danger)'
+
+  const components = [
+    { label: 'Saving Rate', v: savingRateScore, max: 20 },
+    { label: 'Debt Ratio',  v: debtScore,       max: 20 },
+    { label: 'Emergency',   v: efScore,         max: 20 },
+    { label: 'Growth',      v: growthScore,     max: 20 },
+    { label: 'Budget',      v: budgetScore,     max: 20 },
+  ]
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      {/* Score Card */}
-      <div className="s-card p-6 lg:col-span-2 relative overflow-hidden">
-        <p className="caps">Financial Health</p>
-        <div className="mt-2 flex items-end gap-6">
-          <div>
-            <p className="text-6xl sm:text-7xl font-bold tabular leading-none" style={{ color: gradeColor }}>
-              {total}
-              <span className="text-2xl align-top" style={{ color: 'var(--ink-soft)' }}>/100</span>
-            </p>
-            <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Grade <span className="font-semibold" style={{ color: gradeColor }}>{grade}</span>
-              {total >= 85 ? ' — Excellent' : total >= 70 ? ' — Good' : total >= 55 ? ' — Fair' : total >= 40 ? ' — Needs Work' : ' — Critical'}
-            </p>
+    <div
+      className="relative overflow-hidden rounded-2xl border p-6 sm:p-8"
+      style={{
+        background:
+          'linear-gradient(135deg, var(--butter-50) 0%, var(--surface) 40%, var(--surface) 100%)',
+        borderColor: 'var(--border-soft)',
+      }}
+    >
+      {/* Decorative background blob */}
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-40 blur-3xl"
+        style={{ background: 'var(--butter-200)' }}
+      />
+
+      <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Left: Score ring + verdict */}
+        <div className="lg:col-span-1">
+          <p className="caps">Financial Health</p>
+          <h3 className="mt-1 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
+            Skor Kesehatan Finansial
+          </h3>
+
+          <div className="mt-6 flex items-center gap-5">
+            <div className="relative shrink-0">
+              <svg width={150} height={150} viewBox="0 0 150 150">
+                <circle cx={75} cy={75} r={62} fill="none" stroke="var(--surface-2)" strokeWidth={12} />
+                <circle
+                  cx={75} cy={75} r={62} fill="none"
+                  stroke={ringColor}
+                  strokeWidth={12}
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={ringOffset}
+                  transform="rotate(-90 75 75)"
+                  style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="num font-bold tabular leading-none" style={{ fontSize: 44, color: 'var(--ink)' }}>
+                  {total}
+                </span>
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--ink-soft)' }}>
+                  /100
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-lg font-bold"
+                  style={{ background: ringColor, color: 'var(--ink)' }}
+                >
+                  {grade}
+                </span>
+                <span className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+                  {verdict}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                {verdictDesc}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-5 gap-2">
-          {[
-            { label: 'Saving Rate', v: savingRateScore, max: 20 },
-            { label: 'Debt Ratio', v: debtScore, max: 20 },
-            { label: 'Emergency', v: efScore, max: 20 },
-            { label: 'Growth', v: growthScore, max: 20 },
-            { label: 'Budget', v: budgetScore, max: 20 },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="h-12 rounded-sm flex items-end overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                <div
-                  className="w-full"
-                  style={{
-                    height: `${(s.v / s.max) * 100}%`,
-                    background: s.v >= s.max * 0.7 ? 'var(--lime-400)' : s.v >= s.max * 0.4 ? 'var(--ink)' : 'var(--danger)',
-                  }}
-                />
-              </div>
-              <p className="text-[10px] mt-1.5 font-semibold" style={{ color: 'var(--ink-muted)' }}>{s.label}</p>
-              <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{Math.round(s.v)}/{s.max}</p>
-            </div>
-          ))}
+        {/* Middle: Component bars */}
+        <div className="lg:col-span-1">
+          <p className="caps">Breakdown</p>
+          <h3 className="mt-1 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
+            5 Pilar Kesehatan
+          </h3>
+          <div className="mt-5 space-y-2.5">
+            {components.map((s) => {
+              const pct = (s.v / s.max) * 100
+              const barColor = s.v >= s.max * 0.7 ? 'var(--butter-400)'
+                : s.v >= s.max * 0.4 ? 'var(--orange-400)'
+                : 'var(--danger)'
+              return (
+                <div key={s.label}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="font-medium" style={{ color: 'var(--ink)' }}>
+                      {s.label}
+                    </span>
+                    <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                      {Math.round(s.v)}<span style={{ color: 'var(--ink-soft)' }}>/{s.max}</span>
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: barColor }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Burn Rate */}
-      <div className="s-card p-6">
-        <p className="caps">Burn Rate</p>
-        <h3 className="text-lg font-semibold mt-0.5">Runway</h3>
-        <div className="mt-3">
-          <p className="num tabular text-4xl font-semibold" style={{ color: burnMonths >= 6 ? 'var(--lime-700)' : burnMonths >= 3 ? 'var(--warning)' : 'var(--danger)' }}>
-            {burnMonths.toFixed(1)}
-            <span className="text-sm ml-1" style={{ color: 'var(--ink-soft)' }}>bulan</span>
-          </p>
-          <p className="text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>
-            Tanpa pemasukan baru, liquid cash <span className="num font-semibold">{formatCurrency(liquidTotal)}</span> bisa cover pengeluaran <span className="num font-semibold">{formatCurrency(monthExpense)}</span>/bulan.
-          </p>
+        {/* Right: Burn rate & key stats */}
+        <div className="lg:col-span-1">
+          <p className="caps">Runway / Burn Rate</p>
+          <h3 className="mt-1 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
+            Cash Coverage
+          </h3>
+          <div
+            className="mt-5 rounded-xl p-5"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
+          >
+            <p className="num tabular font-bold leading-none" style={{ fontSize: 48, color: burnColor }}>
+              {burnMonths.toFixed(1)}
+              <span className="text-base font-normal ml-1.5" style={{ color: 'var(--ink-muted)' }}>bulan</span>
+            </p>
+            <p className="text-xs mt-3 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              Tanpa pemasukan baru, liquid cash bisa cover pengeluaran bulanan selama{' '}
+              <span className="font-semibold" style={{ color: 'var(--ink)' }}>{burnMonths.toFixed(1)} bulan</span>.
+            </p>
+            <div className="mt-4 pt-3 border-t space-y-1.5" style={{ borderColor: 'var(--border-soft)' }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: 'var(--ink-muted)' }}>Liquid cash</span>
+                <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(liquidTotal)}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: 'var(--ink-muted)' }}>Pengeluaran/bulan</span>
+                <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthExpense)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

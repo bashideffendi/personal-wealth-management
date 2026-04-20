@@ -140,7 +140,7 @@ export default function DividendsPage() {
                 formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
                 contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 8, fontSize: 12 }}
               />
-              <Bar dataKey="value" fill="#14B8A6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="#A3E635" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

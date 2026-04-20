@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "Personal Wealth Management",
   description: "Kelola pendapatan, pengeluaran, aset, utang, dan investasi Anda.",
   manifest: "/manifest.json",
-  themeColor: "#14B8A6",
+  themeColor: "#A3E635",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

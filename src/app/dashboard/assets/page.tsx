@@ -77,7 +77,7 @@ export default function AssetsOverviewPage() {
   }, [investmentByCategory])
 
   const categoryColors: Record<string, string> = {
-    property: '#0A0A0A', vehicle: '#737373', personal_item: '#14B8A6',
+    property: '#0A0A0A', vehicle: '#737373', personal_item: '#A3E635',
   }
 
   if (loading) {
@@ -140,7 +140,7 @@ export default function AssetsOverviewPage() {
                 <PieChart>
                   <Pie data={allocation} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" stroke="transparent">
                     {allocation.map((_, i) => (
-                      <Cell key={i} fill={['#6366F1','#10B981','#06B6D4','#8B5CF6','#F59E0B','#F43F5E','#0EA5E9','#14B8A6'][i % 8]} />
+                      <Cell key={i} fill={['#A3E635','#F97316','#10B981','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#737373'][i % 8]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -152,7 +152,7 @@ export default function AssetsOverviewPage() {
               </ResponsiveContainer>
               <div className="mt-3 space-y-1.5">
                 {allocation.map((row, i) => {
-                  const color = ['#6366F1','#10B981','#06B6D4','#8B5CF6','#F59E0B','#F43F5E','#0EA5E9','#14B8A6'][i % 8]
+                  const color = ['#A3E635','#F97316','#10B981','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#737373'][i % 8]
                   const pct = totals.inv > 0 ? (row.value / totals.inv) * 100 : 0
                   return (
                     <div key={row.name} className="flex items-center justify-between text-xs">
