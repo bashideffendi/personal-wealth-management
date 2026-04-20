@@ -5,63 +5,63 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================
-   Personal Wealth Management — Butter & Moss
-   Premium warm palette · espresso · cream · butter mustard · moss
+   Personal Wealth Management — Campfire-inspired
+   Clean white · neutral zinc · teal accent · modern SaaS
    ============================================ */
 :root {
-  /* Warm neutrals — paper & ink */
-  --paper:       #F6F0DF;    /* warm cream page bg */
-  --surface:     #FDFAF0;    /* ivory card */
-  --surface-2:  #EFE7D2;     /* muted cream for alt rows */
-  --surface-3:  #E5DCC1;
+  /* Neutrals — paper & ink */
+  --paper:       #FFFFFF;    /* clean white page bg */
+  --surface:     #FFFFFF;    /* white card */
+  --surface-2:   #F5F5F5;    /* light gray alt bg */
+  --surface-3:   #E5E5E5;
 
-  --ink:         #1F1712;    /* deep espresso */
-  --ink-muted:   #6B5F4F;    /* warm brown-grey */
-  --ink-soft:    #9A8D79;    /* soft stone */
-  --border:      #DDD3BB;
-  --border-soft: #EBE3CE;
+  --ink:         #0A0A0A;    /* near-black primary text */
+  --ink-muted:   #525252;    /* neutral gray */
+  --ink-soft:    #A3A3A3;    /* soft light gray */
+  --border:      #E5E5E5;
+  --border-soft: #F0F0F0;
 
-  /* Dark base (sidebar, occasional dark cards) — espresso not pure black */
-  --black:       #1F1712;
-  --black-soft:  #2A2118;
-  --black-2:     #33281D;
-  --black-line:  rgba(245, 240, 224, 0.08);
-  --on-black:    #F5F0E0;    /* cream text on dark */
-  --on-black-mut:#A89A80;    /* muted stone on dark */
+  /* Dark base (sidebar, dark hero cards) — cool charcoal, not warm */
+  --black:       #0A0A0A;
+  --black-soft:  #18181B;
+  --black-2:     #27272A;
+  --black-line:  rgba(255, 255, 255, 0.08);
+  --on-black:    #FAFAFA;    /* white text on dark */
+  --on-black-mut:#A1A1AA;    /* zinc-400 muted on dark */
 
-  /* Butter mustard — SIGNATURE POP */
-  --butter-50:   #FAF2D6;
-  --butter-100:  #F5E8B8;
-  --butter-200:  #EDDA8A;
-  --butter-300:  #E1C568;
-  --butter-400:  #D4A847;   /* primary butter mustard */
-  --butter-500:  #BF9538;
-  --butter-600:  #A07C28;
-  --butter-700:  #80621F;
-  --butter-800:  #594416;
+  /* Teal — SIGNATURE ACCENT (Campfire deep teal) */
+  --butter-50:   #F0FDFA;
+  --butter-100:  #CCFBF1;
+  --butter-200:  #99F6E4;
+  --butter-300:  #5EEAD4;
+  --butter-400:  #14B8A6;   /* primary teal-500 */
+  --butter-500:  #0D9488;   /* teal-600 */
+  --butter-600:  #0F766E;   /* teal-700 */
+  --butter-700:  #115E59;   /* teal-800 */
+  --butter-800:  #134E4A;   /* teal-900 */
 
-  /* Moss green — supporting accent (stability, growth) */
-  --moss-50:     #EAF0E3;
-  --moss-100:    #D8E2CD;
-  --moss-300:    #9EB38E;
-  --moss-500:    #4A6B3E;
-  --moss-600:    #3B5632;
-  --moss-700:    #2E5C3F;
-  --moss-800:    #1E3B27;
+  /* Emerald — supporting success green */
+  --moss-50:     #ECFDF5;
+  --moss-100:    #D1FAE5;
+  --moss-300:    #6EE7B7;
+  --moss-500:    #10B981;
+  --moss-600:    #059669;
+  --moss-700:    #047857;
+  --moss-800:    #065F46;
 
-  /* Warm stone (supporting muted) */
-  --stone:       #8B7D65;
-  --stone-light: #B3A58B;
+  /* Cool stone (supporting muted) */
+  --stone:       #737373;
+  --stone-light: #A3A3A3;
 
-  /* Semantic — muted, earthy */
-  --success:     #4A6B3E;
-  --success-bg:  #E4EDD9;
-  --warning:     #CE9A43;
-  --warning-bg:  #F7EDD4;
-  --danger:      #B85C3F;    /* rust, not neon red */
-  --danger-bg:   #F3DCD0;
-  --info:        #4A6778;    /* muted slate blue */
-  --info-bg:     #DAE1E8;
+  /* Semantic — clean modern */
+  --success:     #10B981;
+  --success-bg:  #D1FAE5;
+  --warning:     #F59E0B;
+  --warning-bg:  #FEF3C7;
+  --danger:      #EF4444;    /* clean red */
+  --danger-bg:   #FEE2E2;
+  --info:        #3B82F6;    /* bright blue */
+  --info-bg:     #DBEAFE;
 
   /* App-wide aliases */
   --bg:          var(--paper);
@@ -191,14 +191,14 @@
 }
 
 .dark {
-  --bg:         #14100B;
-  --surface:    #1F1712;
-  --surface-2:  #2A2118;
-  --ink:        #F5F0E0;
-  --ink-muted:  #A89A80;
-  --ink-soft:   #7B6E58;
-  --border:     rgba(245, 240, 224, 0.14);
-  --border-soft:rgba(245, 240, 224, 0.08);
+  --bg:         #09090B;
+  --surface:    #18181B;
+  --surface-2:  #27272A;
+  --ink:        #FAFAFA;
+  --ink-muted:  #A1A1AA;
+  --ink-soft:   #71717A;
+  --border:     rgba(255, 255, 255, 0.14);
+  --border-soft:rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
@@ -250,27 +250,25 @@
   border-radius: var(--radius-lg);
 }
 
-/* Hero container — butter mustard pop.
-   Inside this scope, override --on-black tokens so children inherit
-   readable values (old code that used "on-black" etc. keeps working). */
+/* Hero container — charcoal dark card (Campfire-style dark section). */
 .dark-card {
-  background-color: var(--butter-400);
-  color: var(--ink);
+  background-color: var(--black);
+  color: var(--on-black);
   border-radius: calc(var(--radius-xl));
-  border: 1px solid var(--butter-500);
-  --on-black:      var(--ink);
-  --on-black-mut:  var(--butter-800);
-  --black-2:       rgba(31, 23, 18, 0.10);
-  --black-soft:    rgba(31, 23, 18, 0.06);
-  --black-line:    rgba(31, 23, 18, 0.16);
+  border: 1px solid var(--black-soft);
+  --on-black:      #FAFAFA;
+  --on-black-mut:  #A1A1AA;
+  --black-2:       rgba(255, 255, 255, 0.10);
+  --black-soft:    rgba(255, 255, 255, 0.06);
+  --black-line:    rgba(255, 255, 255, 0.12);
 }
-.dark-card .caps       { color: var(--butter-800); }
-.dark-card .text-white { color: var(--ink); }
+.dark-card .caps       { color: var(--butter-300); }
+.dark-card .text-white { color: var(--on-black); }
 .dark-card .text-white\/60,
 .dark-card .text-white\/70,
 .dark-card .text-white\/75,
 .dark-card .text-white\/80 {
-  color: var(--butter-800);
+  color: var(--on-black-mut);
 }
 
 /* True dark card variant — for dashboard hero when we want espresso not butter */

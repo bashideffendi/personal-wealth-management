@@ -177,7 +177,7 @@ export function Header({ user }: HeaderProps) {
         <SheetContent
           side="left"
           className="w-72 p-0 border-none"
-          style={{ backgroundColor: '#1F1712' }}
+          style={{ backgroundColor: '#09090B' }}
         >
           <SheetHeader className="p-0">
             <div

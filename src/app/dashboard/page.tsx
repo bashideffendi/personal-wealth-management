@@ -29,16 +29,16 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-// Butter & Moss chart palette — premium editorial
+// Campfire chart palette — clean modern SaaS
 const CHART_PALETTE = [
-  '#1F1712', // espresso
-  '#D4A847', // butter mustard
-  '#2E5C3F', // moss
-  '#8B7D65', // stone
-  '#B85C3F', // rust
-  '#6B5F4F', // warm brown
-  '#CE9A43', // warm gold
-  '#4A6778', // slate blue info
+  '#0A0A0A', // near-black
+  '#14B8A6', // teal-500 (primary accent)
+  '#3B82F6', // blue-500
+  '#10B981', // emerald-500
+  '#F59E0B', // amber-500
+  '#737373', // neutral-500
+  '#8B5CF6', // violet-500
+  '#EF4444', // red-500
 ]
 
 const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
@@ -459,12 +459,12 @@ export default function DashboardPage() {
             <AreaChart data={monthlyData}>
               <defs>
                 <linearGradient id="g-income" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#D4A847" stopOpacity={0.55} />
-                  <stop offset="100%" stopColor="#D4A847" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.55} />
+                  <stop offset="100%" stopColor="#14B8A6" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="g-expense" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2E5C3F" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#2E5C3F" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#10B981" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="#10B981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -482,8 +482,8 @@ export default function DashboardPage() {
                 labelStyle={{ color: 'var(--on-black-mut)' }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="income" name="Pemasukan" stroke="#BF9538" fill="url(#g-income)" strokeWidth={2} />
-              <Area type="monotone" dataKey="expense" name="Pengeluaran" stroke="#2E5C3F" fill="url(#g-expense)" strokeWidth={2} />
+              <Area type="monotone" dataKey="income" name="Pemasukan" stroke="#0D9488" fill="url(#g-income)" strokeWidth={2} />
+              <Area type="monotone" dataKey="expense" name="Pengeluaran" stroke="#10B981" fill="url(#g-expense)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

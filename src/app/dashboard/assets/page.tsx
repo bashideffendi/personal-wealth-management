@@ -77,7 +77,7 @@ export default function AssetsOverviewPage() {
   }, [investmentByCategory])
 
   const categoryColors: Record<string, string> = {
-    property: '#1F1712', vehicle: '#8B7D65', personal_item: '#D4A847',
+    property: '#0A0A0A', vehicle: '#737373', personal_item: '#14B8A6',
   }
 
   if (loading) {
@@ -181,8 +181,8 @@ export default function AssetsOverviewPage() {
               <BarChart data={Object.entries(nonLiquidByCategory).map(([k, v]) => ({ name: ({ property: 'Properti', vehicle: 'Kendaraan', personal_item: 'Barang Pribadi' } as Record<string, string>)[k] ?? k, value: v, color: categoryColors[k] ?? '#6366F1' }))}>
                 <defs>
                   <linearGradient id="bar-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1F1712" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#1F1712" stopOpacity={0.75} />
+                    <stop offset="0%" stopColor="#0A0A0A" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#0A0A0A" stopOpacity={0.75} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />

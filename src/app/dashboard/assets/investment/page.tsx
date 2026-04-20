@@ -136,7 +136,7 @@ export default function InvestmentOverviewPage() {
               <PieChart>
                 <Pie data={donut} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" stroke="transparent">
                   {donut.map((_, i) => (
-                    <Cell key={i} fill={['#1F1712','#D4A847','#2E5C3F','#8B7D65','#B85C3F','#6B5F4F','#CE9A43','#4A6778'][i % 8]} />
+                    <Cell key={i} fill={['#0A0A0A','#14B8A6','#3B82F6','#10B981','#F59E0B','#737373','#8B5CF6','#EF4444'][i % 8]} />
                   ))}
                 </Pie>
                 <Tooltip

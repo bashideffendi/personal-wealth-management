@@ -104,8 +104,8 @@ export function Sidebar({ user }: SidebarProps) {
               'flex flex-1 items-center gap-2.5 rounded-md transition-colors',
               depth === 0 ? 'px-3 py-2 text-[13.5px]' : 'px-3 py-1.5 text-[13px]',
               active
-                ? 'text-white font-medium bg-[#33281D]'
-                : 'text-[#A9A49A] hover:text-white hover:bg-[#2A2118]',
+                ? 'text-white font-medium bg-[#27272A]'
+                : 'text-[#A1A1AA] hover:text-white hover:bg-[#18181B]',
             )}
           >
             {active && depth === 0 && (
@@ -118,7 +118,7 @@ export function Sidebar({ user }: SidebarProps) {
               <Icon
                 className={cn(
                   'h-4 w-4 shrink-0',
-                  active ? 'text-white' : 'text-[#6E6A62]',
+                  active ? 'text-white' : 'text-[#71717A]',
                 )}
               />
             )}
@@ -130,7 +130,7 @@ export function Sidebar({ user }: SidebarProps) {
               onClick={() => toggle(item.href)}
               className={cn(
                 'ml-1 flex h-7 w-7 items-center justify-center rounded-md',
-                'text-[#8A7D65] hover:text-white hover:bg-[#2A2118]',
+                'text-[#71717A] hover:text-white hover:bg-[#18181B]',
               )}
               aria-label={open ? 'Tutup' : 'Buka'}
             >
@@ -142,7 +142,7 @@ export function Sidebar({ user }: SidebarProps) {
         </div>
 
         {hasChildren && open && (
-          <div className="ml-5 mt-0.5 pl-3 border-l border-[rgba(217,211,194,0.10)] space-y-0.5">
+          <div className="ml-5 mt-0.5 pl-3 border-l border-[rgba(255,255,255,0.08)] space-y-0.5">
             {item.children!.map((c) => renderItem(c, depth + 1, item.href))}
           </div>
         )}
@@ -154,13 +154,13 @@ export function Sidebar({ user }: SidebarProps) {
     <aside className="hidden md:flex md:w-64 md:flex-col">
       <div
         className="flex flex-1 flex-col"
-        style={{ background: '#1F1712' }}
+        style={{ background: '#09090B' }}
       >
         {/* Brand — minimal wordmark */}
-        <div className="px-5 py-5 border-b border-[rgba(217,211,194,0.08)]">
+        <div className="px-5 py-5 border-b border-[rgba(255,255,255,0.06)]">
           <p
             className="text-[10px] uppercase tracking-[0.24em] font-medium"
-            style={{ color: '#6E6A62' }}
+            style={{ color: '#71717A' }}
           >
             Personal
           </p>
@@ -172,7 +172,7 @@ export function Sidebar({ user }: SidebarProps) {
               className="inline-block h-1.5 w-1.5 rounded-full"
               style={{ background: 'var(--lime-400)' }}
             />
-            <span style={{ color: '#6E6A62' }} className="text-sm font-normal">Management</span>
+            <span style={{ color: '#71717A' }} className="text-sm font-normal">Management</span>
           </p>
         </div>
 
@@ -182,8 +182,8 @@ export function Sidebar({ user }: SidebarProps) {
         </nav>
 
         {/* User */}
-        <div className="border-t border-[rgba(217,211,194,0.08)] p-3">
-          <div className="flex items-center gap-3 rounded-md p-2 hover:bg-[#2A2118] transition-colors">
+        <div className="border-t border-[rgba(255,255,255,0.06)] p-3">
+          <div className="flex items-center gap-3 rounded-md p-2 hover:bg-[#18181B] transition-colors">
             <Avatar size="sm">
               <AvatarFallback
                 className="text-[11px] font-semibold"
@@ -196,7 +196,7 @@ export function Sidebar({ user }: SidebarProps) {
               <p className="truncate text-[13px] font-medium text-white">
                 {fullName}
               </p>
-              <p className="truncate text-[11px]" style={{ color: '#6E6A62' }}>
+              <p className="truncate text-[11px]" style={{ color: '#71717A' }}>
                 {user.email}
               </p>
             </div>
@@ -204,7 +204,7 @@ export function Sidebar({ user }: SidebarProps) {
               variant="ghost"
               size="icon-sm"
               onClick={handleLogout}
-              className="text-[#6E6A62] hover:bg-[#33281D] hover:text-[#C47054]"
+              className="text-[#71717A] hover:bg-[#27272A] hover:text-[#F87171]"
               aria-label="Keluar"
             >
               <LogOut className="h-4 w-4" />

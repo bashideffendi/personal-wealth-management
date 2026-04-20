@@ -139,7 +139,7 @@ export default function CategoryDrilldownPage() {
                   formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
                   contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 8, fontSize: 12 }}
                 />
-                <Bar dataKey="value" fill="#1F1712" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="#0A0A0A" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
