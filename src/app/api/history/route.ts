@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
-import yahooFinance from 'yahoo-finance2'
+import YahooFinance from 'yahoo-finance2'
 import { createClient } from '@/lib/supabase/server'
+
+// yahoo-finance2 v3 requires class instantiation (removed default instance)
+const yahooFinance = new YahooFinance()
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
