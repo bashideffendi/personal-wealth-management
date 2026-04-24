@@ -128,8 +128,8 @@ export default function DebtsOverviewPage() {
               <span>Progress pelunasan</span>
               <span className="num font-semibold">{paidPct.toFixed(1)}%</span>
             </div>
-            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(10,10,10,0.15)' }}>
-              <div className="h-full rounded-full" style={{ width: `${paidPct}%`, background: 'var(--black)' }} />
+            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
+              <div className="h-full rounded-full" style={{ width: `${paidPct}%`, background: 'var(--butter-400)' }} />
             </div>
           </div>
         )}

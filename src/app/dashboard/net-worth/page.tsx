@@ -167,7 +167,7 @@ export default function NetWorthPage() {
           </div>
           <span
             className="w-px h-12 self-center"
-            style={{ background: 'rgba(10,10,10,0.25)' }}
+            style={{ background: 'rgba(255,255,255,0.2)' }}
           />
           <div className="text-center">
             <p className="caps">Utang</p>

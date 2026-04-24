@@ -101,7 +101,7 @@ export default function WrappedPage() {
       {/* Hero Card */}
       <div className="dark-card p-8 sm:p-12 relative overflow-hidden">
         <div className="absolute top-4 right-4">
-          <Gift className="h-12 w-12" style={{ color: 'rgba(10,10,10,0.15)' }} />
+          <Gift className="h-12 w-12" style={{ color: 'rgba(255,255,255,0.1)' }} />
         </div>
         <p className="caps">Your {year} in Review</p>
         <div className="mt-6 grid grid-cols-2 gap-6">

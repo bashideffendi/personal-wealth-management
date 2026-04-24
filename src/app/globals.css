@@ -260,7 +260,9 @@
   border-radius: var(--radius-lg);
 }
 
-/* Hero container — charcoal dark card (Campfire-style dark section). */
+/* Hero container — charcoal dark card (Campfire-style dark section).
+   Vars are remapped so var(--ink) et al. read light on dark bg regardless
+   of light/dark page mode. This prevents "dark text on dark card" bugs. */
 .dark-card {
   background-color: var(--black);
   color: var(--on-black);
@@ -268,6 +270,11 @@
   border: 1px solid var(--black-soft);
   --on-black:      #FAFAFA;
   --on-black-mut:  #A1A1AA;
+  --ink:           #FAFAFA;
+  --ink-muted:     #A1A1AA;
+  --ink-soft:      #71717A;
+  --border:        rgba(255, 255, 255, 0.14);
+  --border-soft:   rgba(255, 255, 255, 0.08);
   --black-2:       rgba(255, 255, 255, 0.10);
   --black-soft:    rgba(255, 255, 255, 0.06);
   --black-line:    rgba(255, 255, 255, 0.12);
@@ -287,6 +294,13 @@
   color: var(--on-black);
   border-radius: calc(var(--radius-xl));
   border: 1px solid var(--black);
+  --on-black:      #FAFAFA;
+  --on-black-mut:  #A1A1AA;
+  --ink:           #FAFAFA;
+  --ink-muted:     #A1A1AA;
+  --ink-soft:      #71717A;
+  --border:        rgba(255, 255, 255, 0.14);
+  --border-soft:   rgba(255, 255, 255, 0.08);
 }
 .ink-card .caps { color: var(--on-black-mut); }
 
