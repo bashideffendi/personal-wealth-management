@@ -14,15 +14,15 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, MapPin, ExternalLink } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, MapPin, ExternalLink, Home, Car, Gem, type LucideIcon } from 'lucide-react'
 import { LeafletMap } from '@/components/map/map-client'
 
 type Category = 'property' | 'vehicle' | 'personal_item'
 
-const CAT: Record<Category, { label: string; note: string }> = {
-  property:      { label: 'Properti',       note: 'Rumah, apartemen, tanah' },
-  vehicle:       { label: 'Kendaraan',      note: 'Mobil, motor, kendaraan lain' },
-  personal_item: { label: 'Barang Pribadi', note: 'Elektronik, perhiasan, seni' },
+const CAT: Record<Category, { label: string; note: string; icon: LucideIcon; accent: string }> = {
+  property:      { label: 'Properti',       note: 'Rumah, apartemen, tanah',      icon: Home, accent: 'var(--butter-300)' },
+  vehicle:       { label: 'Kendaraan',      note: 'Mobil, motor, kendaraan lain', icon: Car,  accent: 'var(--orange-300)' },
+  personal_item: { label: 'Barang Pribadi', note: 'Elektronik, perhiasan, seni',  icon: Gem,  accent: 'var(--moss-300)' },
 }
 
 interface FormState {
@@ -147,26 +147,48 @@ export default function NonLiquidAssetsPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {(Object.keys(CAT) as Category[]).map((cat) => {
             const list = grouped[cat]
             if (list.length === 0) return null
+            const Icon = CAT[cat].icon
             return (
               <section key={cat}>
-                <div className="flex items-end justify-between mb-3">
-                  <div>
-                    <p className="caps">{CAT[cat].note}</p>
-                    <h3 className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>
-                      {CAT[cat].label}
-                    </h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="num text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                      {formatCurrency(totalOf(cat))}
-                    </p>
-                    <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                      {list.length} aset
-                    </p>
+                {/* Section header — icon chip + title + subtotal, framed by rules */}
+                <div className="relative mb-5">
+                  <div
+                    className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2"
+                    style={{ background: 'var(--border)' }}
+                    aria-hidden
+                  />
+                  <div
+                    className="relative flex items-center justify-between gap-3 pl-1 pr-4 py-1"
+                    style={{ background: 'var(--bg)' }}
+                  >
+                    <div className="flex items-center gap-3 pr-4" style={{ background: 'var(--bg)' }}>
+                      <div
+                        className="flex h-11 w-11 items-center justify-center rounded-xl shrink-0"
+                        style={{ background: CAT[cat].accent, color: 'var(--ink)' }}
+                      >
+                        <Icon className="h-5 w-5" strokeWidth={2.25} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                          {CAT[cat].label}
+                        </h3>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                          {CAT[cat].note}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 pl-4" style={{ background: 'var(--bg)' }}>
+                      <p className="num text-base font-semibold tabular leading-tight" style={{ color: 'var(--ink)' }}>
+                        {formatCurrency(totalOf(cat))}
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        {list.length} aset
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
