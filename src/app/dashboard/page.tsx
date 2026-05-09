@@ -267,13 +267,17 @@ export default function DashboardPage() {
           </div>
           <div className="flex gap-2 shrink-0">
             <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-              <SelectTrigger className="w-[100px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[100px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20">
+                <SelectValue placeholder="Tahun">{(v) => v}</SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-              <SelectTrigger className="w-[130px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20">
+                <SelectValue placeholder="Bulan">{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
               </SelectContent>
