@@ -286,10 +286,10 @@ export default function InvestmentCategoryPage() {
                   return (
                     <tr key={e.i.id} className="border-b hover:bg-[var(--surface-alt)]/50 transition-colors" style={{ borderColor: 'var(--border-soft)' }}>
                       <Td>
-                        <div className="flex items-center gap-2">
-                          <StockLogo ticker={e.i.ticker} size={28} />
+                        <div className="flex items-center gap-2.5">
+                          <StockLogo ticker={e.i.ticker} size={40} />
                           <Badge
-                            className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold border-0 tabular"
+                            className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular"
                             style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                           >
                             {e.i.ticker ?? '—'}

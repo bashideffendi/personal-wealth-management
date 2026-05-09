@@ -862,7 +862,7 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between gap-2 text-[12px]">
                             <span className="truncate flex items-center gap-1.5 min-w-0">
                               {isStock ? (
-                                <StockLogo ticker={h.ticker} size={20} />
+                                <StockLogo ticker={h.ticker} size={28} />
                               ) : (
                                 <span className="text-[10px] tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
                                   #{i + 1}
