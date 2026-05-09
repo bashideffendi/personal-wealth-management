@@ -42,8 +42,9 @@ export const messages = {
       language: 'Bahasa',
     },
     nav: {
-      dashboard: 'Dashboard',
+      dashboard: 'Beranda',
       accounts: 'Akun',
+      wealth: 'Kekayaan',
       transactions: 'Transaksi',
       recurring: 'Recurring',
       budgeting: 'Anggaran',
@@ -82,6 +83,9 @@ export const messages = {
       family: 'Keluarga',
       menu: 'Menu',
       section: {
+        primary: '',
+        secondary: 'Lainnya',
+        // Legacy (kept for any stragglers)
         overview: '',
         activity: 'Aktivitas',
         wealth: 'Kekayaan',
@@ -208,8 +212,9 @@ export const messages = {
       language: 'Language',
     },
     nav: {
-      dashboard: 'Dashboard',
+      dashboard: 'Home',
       accounts: 'Accounts',
+      wealth: 'Wealth',
       transactions: 'Transactions',
       recurring: 'Recurring',
       budgeting: 'Budget',
@@ -248,6 +253,8 @@ export const messages = {
       family: 'Family',
       menu: 'Menu',
       section: {
+        primary: '',
+        secondary: 'More',
         overview: '',
         activity: 'Activity',
         wealth: 'Wealth',

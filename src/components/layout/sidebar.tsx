@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Receipt, Wallet, Building2, CreditCard, Shield,
+  LayoutDashboard, Receipt, Wallet, Building2, CreditCard,
   TrendingUp, ChevronDown, LogOut, Repeat, Target, Calculator,
-  Clock, Sparkles, FileClock, FileText,
-  Crown, UserCircle, Home,
+  Clock, Sparkles, FileClock, FileText, CircleDollarSign,
+  Home,
 } from 'lucide-react'
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
@@ -19,9 +19,9 @@ import type { User } from '@supabase/supabase-js'
 
 // Icons are used only on top-level nav — sub-items are text-only (minimal).
 const topIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard, Receipt, Wallet, Building2, CreditCard, Shield, TrendingUp,
+  LayoutDashboard, Receipt, Wallet, Building2, CreditCard, TrendingUp,
   Repeat, Target, Calculator, Clock, Sparkles, FileClock, FileText,
-  Crown, UserCircle, Home,
+  CircleDollarSign, Home,
 }
 
 interface SidebarProps {
@@ -91,11 +91,30 @@ export function Sidebar({ user }: SidebarProps) {
     router.push('/login')
   }
 
-  function renderItem(item: NavItem, depth: number, parentKey = 'root') {
+  function renderItem(
+    item: NavItem,
+    depth: number,
+    parentKey = 'root',
+    variant: 'primary' | 'secondary' = 'primary',
+  ) {
     const hasChildren = !!item.children?.length
     const active = matchesPath(pathname, item.href)
     const open = expanded.has(item.href)
     const Icon = depth === 0 ? topIcons[item.icon] : undefined
+
+    // Primary: bigger, bolder, more padding
+    // Secondary: compact, lighter, less visual weight
+    const linkSize = depth === 0
+      ? variant === 'primary'
+        ? 'px-3 py-2 text-[14px]'
+        : 'px-3 py-1.5 text-[12.5px]'
+      : 'px-3 py-1.5 text-[12.5px]'
+
+    const iconSize = depth === 0
+      ? variant === 'primary'
+        ? 'h-4 w-4'
+        : 'h-3.5 w-3.5'
+      : 'h-3 w-3'
 
     return (
       <div key={`${parentKey}>${item.href}`} className="select-none">
@@ -104,7 +123,7 @@ export function Sidebar({ user }: SidebarProps) {
             href={item.href}
             className={cn(
               'flex flex-1 items-center gap-2.5 rounded-md transition-colors',
-              depth === 0 ? 'px-3 py-2 text-[13.5px]' : 'px-3 py-1.5 text-[13px]',
+              linkSize,
               active
                 ? 'text-white font-medium bg-[#27272A]'
                 : 'text-[#A1A1AA] hover:text-white hover:bg-[#18181B]',
@@ -113,15 +132,12 @@ export function Sidebar({ user }: SidebarProps) {
             {active && depth === 0 && (
               <span
                 className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r"
-                style={{ background: 'var(--lime-400)' }}
+                style={{ background: 'var(--emerald-400)' }}
               />
             )}
             {Icon && (
               <Icon
-                className={cn(
-                  'h-4 w-4 shrink-0',
-                  active ? 'text-white' : 'text-[#71717A]',
-                )}
+                className={cn(iconSize, 'shrink-0', active ? 'text-white' : 'text-[#71717A]')}
               />
             )}
             <span className="truncate">{item.titleKey ? t(item.titleKey) : item.label}</span>
@@ -145,7 +161,7 @@ export function Sidebar({ user }: SidebarProps) {
 
         {hasChildren && open && (
           <div className="ml-5 mt-0.5 pl-3 border-l border-[rgba(255,255,255,0.08)] space-y-0.5">
-            {item.children!.map((c) => renderItem(c, depth + 1, item.href))}
+            {item.children!.map((c) => renderItem(c, depth + 1, item.href, variant))}
           </div>
         )}
       </div>
@@ -172,7 +188,7 @@ export function Sidebar({ user }: SidebarProps) {
             Wealth
             <span
               className="inline-block h-1.5 w-1.5 rounded-full"
-              style={{ background: 'var(--lime-400)' }}
+              style={{ background: 'var(--emerald-400)' }}
             />
             <span style={{ color: '#71717A' }} className="text-sm font-normal">Management</span>
           </p>
@@ -182,28 +198,27 @@ export function Sidebar({ user }: SidebarProps) {
             flex-item default min-height: auto prevents the nav from
             shrinking below content height and overflow-y-auto never
             kicks in. */}
-        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 py-2 sidebar-nav-scroll">
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 py-3 sidebar-nav-scroll">
           {NAV_SECTIONS.map((sec) => {
             const items = NAV_ITEMS.filter((it) => it.section === sec.key)
             if (items.length === 0) return null
-            const sectionLabel = t(sec.titleKey)
+            const sectionLabel = sec.titleKey ? t(sec.titleKey) : ''
+            const variant: 'primary' | 'secondary' = sec.key === 'secondary' ? 'secondary' : 'primary'
             return (
-              <div key={sec.key} className="mb-1 last:mb-0">
-                {/* Section label rendered as a thin divider with tiny inline label.
-                    More visual hierarchy via separator + minimal text noise. */}
+              <div key={sec.key} className={cn(variant === 'secondary' ? 'mt-4' : 'mb-1')}>
                 {sectionLabel && (
-                  <div className="px-3 pt-3 pb-1 flex items-center gap-2">
+                  <div className="px-3 pt-2 pb-1.5 flex items-center gap-2">
                     <span
-                      className="text-[9px] uppercase tracking-[0.18em] font-medium"
-                      style={{ color: '#3F3F46' }}
+                      className="text-[9px] uppercase tracking-[0.18em] font-semibold"
+                      style={{ color: '#52525B' }}
                     >
                       {sectionLabel}
                     </span>
-                    <span className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    <span className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                   </div>
                 )}
                 <div>
-                  {items.map((item) => renderItem(item, 0))}
+                  {items.map((item) => renderItem(item, 0, 'root', variant))}
                 </div>
               </div>
             )

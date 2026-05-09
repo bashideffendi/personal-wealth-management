@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, LogOut, ChevronDown, Moon, Sun, Search } from 'lucide-react'
+import { Menu, LogOut, ChevronDown, Search } from 'lucide-react'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -15,8 +15,8 @@ import {
   SheetClose,
 } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { LanguageToggle } from '@/components/layout/language-toggle'
+import { AvatarMenu } from '@/components/layout/avatar-menu'
 import { useT } from '@/lib/i18n/context'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
@@ -148,26 +148,7 @@ export function Header({ user }: HeaderProps) {
           <kbd className="text-[10px] ml-3 px-1 rounded font-mono" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>⌘K</kbd>
         </button>
         <LanguageToggle />
-        <ThemeToggle />
-        <div className="text-right">
-          <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
-            {fullName}
-          </p>
-          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-            {user.email}
-          </p>
-        </div>
-        <Avatar size="sm">
-          <AvatarFallback
-            className="text-xs font-bold"
-            style={{
-              background: 'var(--lime-400)',
-              color: 'var(--black)',
-            }}
-          >
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <AvatarMenu user={user} />
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>

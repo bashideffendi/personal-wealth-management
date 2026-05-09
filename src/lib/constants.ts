@@ -130,13 +130,11 @@ export const INVESTMENT_SLUG_TO_CATEGORY: Record<string, string> = {
 }
 
 // Nested nav — single source of truth for the sidebar and route guards.
+// Phase 1.2: simplified to primary (most-used) + secondary (utility tools).
+// Profile/Pricing moved to header avatar dropdown.
 export type NavSection =
-  | 'overview'
-  | 'activity'
-  | 'wealth'
-  | 'debt'
-  | 'tools'
-  | 'account'
+  | 'primary'
+  | 'secondary'
 
 export type NavItem = {
   label: string
@@ -150,63 +148,43 @@ export type NavItem = {
   children?: NavItem[]
 }
 
-// Section labels (displayed as sidebar group headers)
+// Section labels — primary has no header (just clean items),
+// secondary has small "Lainnya" label as a divider
 export const NAV_SECTIONS: { key: NavSection; titleKey: string }[] = [
-  { key: 'overview',        titleKey: 'nav.section.overview' },
-  { key: 'activity',        titleKey: 'nav.section.activity' },
-  { key: 'wealth',          titleKey: 'nav.section.wealth' },
-  { key: 'debt',            titleKey: 'nav.section.debt' },
-  { key: 'tools',           titleKey: 'nav.section.tools' },
-  { key: 'account',         titleKey: 'nav.section.account' },
+  { key: 'primary',   titleKey: '' },                       // no header label
+  { key: 'secondary', titleKey: 'nav.section.secondary' },  // "Lainnya"
 ]
 
 export const NAV_ITEMS: NavItem[] = [
-  // OVERVIEW — where I am + where I'm heading
-  { label: 'Dashboard',   titleKey: 'nav.dashboard',      href: '/dashboard',              icon: 'LayoutDashboard', section: 'overview' },
-  { label: 'Tujuan',      titleKey: 'nav.goals',          href: '/dashboard/goals',        icon: 'Target',          section: 'overview' },
-
-  // ACTIVITY (daily recording)
-  { label: 'Akun',        titleKey: 'nav.accounts',       href: '/dashboard/accounts',     icon: 'Wallet',      section: 'activity' },
-  { label: 'Transaksi',   titleKey: 'nav.transactions',   href: '/dashboard/transactions', icon: 'Receipt',     section: 'activity' },
-  { label: 'Recurring',   titleKey: 'nav.recurring',      href: '/dashboard/recurring',    icon: 'Repeat',      section: 'activity' },
-  { label: 'Anggaran',    titleKey: 'nav.budgeting',      href: '/dashboard/budgeting',    icon: 'Wallet',      section: 'activity' },
-
-  // WEALTH (assets & net worth)
+  // ─── PRIMARY (7 items) — daily-use, top of sidebar ───
+  { label: 'Beranda',     titleKey: 'nav.dashboard',     href: '/dashboard',                   icon: 'LayoutDashboard', section: 'primary' },
+  { label: 'Transaksi',   titleKey: 'nav.transactions',  href: '/dashboard/transactions',      icon: 'Receipt',         section: 'primary' },
+  { label: 'Anggaran',    titleKey: 'nav.budgeting',     href: '/dashboard/budgeting',         icon: 'Wallet',          section: 'primary' },
+  { label: 'Investasi',   titleKey: 'nav.investment',    href: '/dashboard/assets/investment', icon: 'TrendingUp',      section: 'primary' },
   {
-    label: 'Aset', titleKey: 'nav.assets', href: '/dashboard/assets', icon: 'Building2', section: 'wealth',
+    label: 'Kekayaan', titleKey: 'nav.wealth', href: '/dashboard/net-worth', icon: 'Building2', section: 'primary',
     children: [
-      { label: 'Ringkasan',       titleKey: 'nav.assets_overview',     href: '/dashboard/assets',             icon: '' },
-      { label: 'Aset Likuid',     titleKey: 'nav.assets_liquid',       href: '/dashboard/assets/liquid',      icon: '' },
-      { label: 'Aset Non-Likuid', titleKey: 'nav.assets_non_liquid',   href: '/dashboard/assets/non-liquid',  icon: '' },
-      { label: 'Investasi',       titleKey: 'nav.investment',          href: '/dashboard/assets/investment',  icon: '' },
+      { label: 'Net Worth',       titleKey: 'nav.net_worth',         href: '/dashboard/net-worth',        icon: '' },
+      { label: 'Aset Likuid',     titleKey: 'nav.assets_liquid',     href: '/dashboard/assets/liquid',    icon: '' },
+      { label: 'Aset Non-Likuid', titleKey: 'nav.assets_non_liquid', href: '/dashboard/assets/non-liquid', icon: '' },
+      { label: 'Utang',           titleKey: 'nav.debts',             href: '/dashboard/debts',            icon: '' },
+      { label: 'Dana Darurat',    titleKey: 'nav.emergency_fund',    href: '/dashboard/emergency-fund',   icon: '' },
     ],
   },
-  { label: 'Dana Darurat',    titleKey: 'nav.emergency_fund',  href: '/dashboard/emergency-fund', icon: 'Shield',     section: 'wealth' },
-  { label: 'Kekayaan Bersih', titleKey: 'nav.net_worth',       href: '/dashboard/net-worth',      icon: 'TrendingUp', section: 'wealth' },
+  { label: 'Tujuan',      titleKey: 'nav.goals',         href: '/dashboard/goals',             icon: 'Target',          section: 'primary' },
+  { label: 'Keluarga',    titleKey: 'nav.family',        href: '/dashboard/family',            icon: 'Home',            section: 'primary' },
 
-  // DEBT — Kartu Kredit now lives here as a child of Utang
-  {
-    label: 'Utang', titleKey: 'nav.debts', href: '/dashboard/debts', icon: 'CreditCard', section: 'debt',
-    children: [
-      { label: 'Ringkasan',          titleKey: 'nav.debts_overview', href: '/dashboard/debts',          icon: '' },
-      { label: 'Strategi Pelunasan', titleKey: 'nav.debts_strategy', href: '/dashboard/debts/strategy', icon: '' },
-      { label: 'Pembayaran',         titleKey: 'nav.debts_payments', href: '/dashboard/debts/payments', icon: '' },
-      { label: 'Kartu Kredit',       titleKey: 'nav.credit_cards',   href: '/dashboard/credit-cards',   icon: '' },
-    ],
-  },
+  // ─── SECONDARY (utility tools, smaller styling) ───
+  { label: 'Akun',            titleKey: 'nav.accounts',       href: '/dashboard/accounts',       icon: 'CircleDollarSign', section: 'secondary' },
+  { label: 'Kartu Kredit',    titleKey: 'nav.credit_cards',   href: '/dashboard/credit-cards',   icon: 'CreditCard',       section: 'secondary' },
+  { label: 'Recurring',       titleKey: 'nav.recurring',      href: '/dashboard/recurring',      icon: 'Repeat',           section: 'secondary' },
+  { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report', href: '/dashboard/monthly-report', icon: 'FileText',         section: 'secondary' },
+  { label: 'Kontrak',         titleKey: 'nav.contracts',      href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
+  { label: 'Subscription',    titleKey: 'nav.subscriptions',  href: '/dashboard/subscriptions',  icon: 'Clock',            section: 'secondary' },
+  { label: 'Kalkulator',      titleKey: 'nav.calculators',    href: '/dashboard/calculators',    icon: 'Calculator',       section: 'secondary' },
+  { label: 'Aturan Kategori', titleKey: 'nav.rules',          href: '/dashboard/rules',          icon: 'Sparkles',         section: 'secondary' },
 
-  // (Stock Log + Dividen now live as tabs inside /dashboard/assets/investment/stock)
-  // (RRG moved out to standalone investment-dashboard project)
-
-  // TOOLS — utilities, reports, calculators, category rules
-  { label: 'Kalkulator',      titleKey: 'nav.calculators',     href: '/dashboard/calculators',    icon: 'Calculator',   section: 'tools' },
-  { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report',  href: '/dashboard/monthly-report', icon: 'FileText',     section: 'tools' },
-  { label: 'Subscription',    titleKey: 'nav.subscriptions',   href: '/dashboard/subscriptions',  icon: 'Clock',        section: 'tools' },
-  { label: 'Kontrak',         titleKey: 'nav.contracts',       href: '/dashboard/contracts',      icon: 'FileClock',   section: 'tools' },
-  { label: 'Aturan Kategori', titleKey: 'nav.rules',           href: '/dashboard/rules',          icon: 'Sparkles',    section: 'tools' },
-
-  // ACCOUNT — pricing, profile, & family
-  { label: 'Keluarga',        titleKey: 'nav.family',          href: '/dashboard/family',         icon: 'Home',        section: 'account' },
-  { label: 'Paket',           titleKey: 'nav.pricing',         href: '/dashboard/pricing',        icon: 'Crown',       section: 'account' },
-  { label: 'Profil',          titleKey: 'nav.profile',         href: '/dashboard/profile',        icon: 'UserCircle',  section: 'account' },
+  // (Profile, Paket, Keluar are accessed via avatar dropdown in header)
+  // (Stock Log + Dividen are tabs inside /dashboard/assets/investment/stock)
+  // (Debt sub-pages — Strategi, Pembayaran — accessible via Utang page tabs)
 ]
