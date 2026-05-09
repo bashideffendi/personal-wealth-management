@@ -145,7 +145,7 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .eq('is_active', true),
       supabase
-        .from('emergency_fund')
+        .from('emergency_funds')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle(),

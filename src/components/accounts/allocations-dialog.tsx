@@ -103,7 +103,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
         .eq('is_active', true)
         .order('name'),
       supabase
-        .from('emergency_fund')
+        .from('emergency_funds')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle(),

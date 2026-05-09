@@ -108,8 +108,8 @@ export default function EmergencyFundPage() {
     if (!user) return
 
     const [fundRes, locRes, allocRes] = await Promise.all([
-      supabase.from('emergency_fund').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('emergency_fund_locations').select('*, emergency_fund!inner(user_id)').eq('emergency_fund.user_id', user.id),
+      supabase.from('emergency_funds').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('emergency_fund_locations').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id),
       // Account allocations earmarked for emergency_fund. Tolerant of the
       // table not existing yet (migration 016 unapplied).
       supabase
@@ -157,9 +157,9 @@ export default function EmergencyFundPage() {
     }
 
     if (fund) {
-      await supabase.from('emergency_fund').update(payload).eq('id', fund.id)
+      await supabase.from('emergency_funds').update(payload).eq('id', fund.id)
     } else {
-      await supabase.from('emergency_fund').insert(payload)
+      await supabase.from('emergency_funds').insert(payload)
     }
 
     setSaving(false)

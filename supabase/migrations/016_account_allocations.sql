@@ -25,7 +25,7 @@ create table if not exists public.account_allocations (
     check (purpose_kind in ('emergency_fund', 'goal', 'sinking_fund', 'other')),
 
   -- Exactly one of these is set, depending on purpose_kind:
-  emergency_fund_id uuid references public.emergency_fund on delete cascade,
+  emergency_fund_id uuid references public.emergency_funds on delete cascade,
   goal_id           uuid references public.goals on delete cascade,
   -- For sinking_fund / other: free-text label
   custom_label text not null default '',
