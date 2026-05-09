@@ -369,17 +369,17 @@ export default function DashboardPage() {
         goals={activeGoals}
       />
 
-      {/* Phase 9 — Money Flow Sankey: Pemasukan → Total → Penggunaan */}
-      <div className="s-card p-5 sm:p-6">
-        <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
+      {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
+      <div className="s-card p-4 sm:p-6">
+        <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="caps">Aliran Uang</p>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               Dari mana datangnya, ke mana perginya — bulan ini
             </p>
           </div>
-          {/* Legend */}
-          <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          {/* Legend — wraps on narrow screens */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: '#10B981' }} />
               Pemasukan
@@ -398,16 +398,25 @@ export default function DashboardPage() {
             </span>
           </div>
         </div>
-        {/* Mobile: scroll horizontally if too narrow */}
-        <div className="overflow-x-auto -mx-1 px-1">
-          <div className="min-w-[640px]">
-            <MoneyFlowSankey
-              income={sankeyData.income}
-              outflow={sankeyData.outflow}
-              height={Math.max(320, Math.min(440, 80 + (sankeyData.income.length + sankeyData.outflow.length) * 28))}
-              emptyMessage="Belum ada transaksi bulan ini — input dulu transaksi pertamamu."
-            />
-          </div>
+
+        {/* Two renders so we can tune layout per breakpoint without media queries
+            inside the chart itself. Tailwind hides the inactive one. */}
+        <div className="hidden md:block">
+          <MoneyFlowSankey
+            income={sankeyData.income}
+            outflow={sankeyData.outflow}
+            height={Math.max(360, Math.min(480, 90 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 36))}
+            emptyMessage="Belum ada transaksi bulan ini — input dulu transaksi pertamamu."
+          />
+        </div>
+        <div className="md:hidden">
+          <MoneyFlowSankey
+            income={sankeyData.income}
+            outflow={sankeyData.outflow}
+            compact
+            height={Math.max(300, Math.min(420, 60 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 30))}
+            emptyMessage="Belum ada transaksi bulan ini — input dulu transaksi pertamamu."
+          />
         </div>
       </div>
 
