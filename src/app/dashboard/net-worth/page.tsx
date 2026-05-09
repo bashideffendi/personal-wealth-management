@@ -1,17 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Loader2, TrendingUp } from 'lucide-react'
+import { Loader2, TrendingUp, TrendingDown, Camera, Sparkles } from 'lucide-react'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  ComposedChart, Bar, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, ReferenceLine,
 } from 'recharts'
+import { Button } from '@/components/ui/button'
 
 interface NetWorthData {
   // Aset Lancar
@@ -32,7 +34,9 @@ export default function NetWorthPage() {
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
+  const [snapshotting, setSnapshotting] = useState(false)
   const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([])
+  const [period, setPeriod] = useState<'3m' | '6m' | '12m' | 'all'>('12m')
   const [data, setData] = useState<NetWorthData>({
     cashAndEquivalent: 0,
     receivable: 0,
@@ -118,7 +122,42 @@ export default function NetWorthPage() {
       longTermDebt,
     })
 
+    // Auto-upsert today's snapshot so the chart always has at least one
+    // data point. Uses (user_id, snapshot_date) unique constraint — if
+    // there's already a snapshot today, it gets updated to current values.
+    const totalAssetsNow =
+      cashAndEquivalent + receivable + property + vehicle +
+      personalItem + longTermInvestment
+    const totalDebtsNow = consumerDebt + cashLoan + longTermDebt
+    const todayISO = new Date().toISOString().split('T')[0]
+    await supabase.from('net_worth_snapshots').upsert(
+      {
+        user_id: user.id,
+        snapshot_date: todayISO,
+        total_assets: totalAssetsNow,
+        total_debts: totalDebtsNow,
+        net_worth: totalAssetsNow - totalDebtsNow,
+      },
+      { onConflict: 'user_id,snapshot_date' },
+    )
+
+    // Re-read snapshots so the just-upserted today row is included
+    const refreshed = await supabase
+      .from('net_worth_snapshots')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('snapshot_date')
+    setSnapshots((refreshed.data ?? []) as NetWorthSnapshot[])
+
     setLoading(false)
+  }
+
+  // Manual snapshot trigger — useful before/after a big transaction
+  // so the user can mark a specific moment in time.
+  async function takeManualSnapshot() {
+    setSnapshotting(true)
+    await fetchData()
+    setSnapshotting(false)
   }
 
   const totalCurrentAssets = data.cashAndEquivalent + data.receivable
@@ -174,57 +213,13 @@ export default function NetWorthPage() {
       </div>
 
       {/* Historical Timeline */}
-      {snapshots.length > 1 && (
-        <div className="s-card p-6">
-          <p className="caps">Riwayat</p>
-          <h3 className="text-lg font-semibold mt-0.5">Net Worth 12 Bulan</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart
-              data={snapshots.map((s) => ({
-                month: new Date(s.snapshot_date).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
-                net: s.net_worth,
-                assets: s.total_assets,
-                debts: s.total_debts,
-              }))}
-            >
-              <defs>
-                <linearGradient id="g-net" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#A3E635" stopOpacity={0.7} />
-                  <stop offset="100%" stopColor="#A3E635" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-              <XAxis dataKey="month" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
-              <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000_000).toFixed(1)}M`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-              <Tooltip
-                formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
-                contentStyle={{
-                  backgroundColor: 'var(--black)',
-                  border: '1px solid var(--black-line)',
-                  borderRadius: '8px',
-                  fontSize: 12,
-                  color: 'var(--on-black)',
-                }}
-              />
-              <Area type="monotone" dataKey="net" name="Net Worth" stroke="#65A30D" fill="url(#g-net)" strokeWidth={2.5} />
-            </AreaChart>
-          </ResponsiveContainer>
-          {(() => {
-            const first = snapshots[0].net_worth
-            const last = snapshots[snapshots.length - 1].net_worth
-            const delta = last - first
-            const pct = first > 0 ? (delta / first) * 100 : 0
-            return (
-              <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm" style={{ borderColor: 'var(--border-soft)' }}>
-                <span style={{ color: 'var(--ink-muted)' }}>Perubahan 12 bulan</span>
-                <span className="num font-semibold tabular" style={{ color: delta >= 0 ? 'var(--lime-700)' : 'var(--danger)' }}>
-                  {delta >= 0 ? '+' : ''}{formatCurrency(delta)} ({pct >= 0 ? '+' : ''}{pct.toFixed(1)}%)
-                </span>
-              </div>
-            )
-          })()}
-        </div>
-      )}
+      <NetWorthHistoryCard
+        snapshots={snapshots}
+        period={period}
+        onPeriodChange={setPeriod}
+        onSnapshot={takeManualSnapshot}
+        snapshotting={snapshotting}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Asset Breakdown */}
@@ -340,6 +335,263 @@ function Row({
       >
         {formatCurrency(value)}
       </span>
+    </div>
+  )
+}
+
+// ─── Net Worth History Card ─────────────────────────────────────────
+// Composed chart: Assets bars (positive emerald), Debts bars (negative coral),
+// Net Worth line (indigo) overlaid. Period selector + comparison stats.
+
+interface HistoryProps {
+  snapshots: NetWorthSnapshot[]
+  period: '3m' | '6m' | '12m' | 'all'
+  onPeriodChange: (p: '3m' | '6m' | '12m' | 'all') => void
+  onSnapshot: () => void
+  snapshotting: boolean
+}
+
+function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, snapshotting }: HistoryProps) {
+  // Filter snapshots by period
+  const filtered = useMemo(() => {
+    if (period === 'all' || snapshots.length === 0) return snapshots
+    const now = new Date()
+    const months = period === '3m' ? 3 : period === '6m' ? 6 : 12
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - months + 1, 1)
+    return snapshots.filter((s) => new Date(s.snapshot_date) >= cutoff)
+  }, [snapshots, period])
+
+  // Comparison stats — first vs last in filtered range, plus vs 1mo / 3mo / YTD
+  const stats = useMemo(() => {
+    if (snapshots.length === 0) return null
+    const last = snapshots[snapshots.length - 1]
+    const findClosest = (target: Date) => {
+      let best: NetWorthSnapshot | null = null
+      let bestDist = Infinity
+      for (const s of snapshots) {
+        const dist = Math.abs(new Date(s.snapshot_date).getTime() - target.getTime())
+        if (dist < bestDist) { bestDist = dist; best = s }
+      }
+      return best
+    }
+    const now = new Date()
+    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+
+    function delta(from: NetWorthSnapshot | null) {
+      if (!from || from.snapshot_date === last.snapshot_date) return null
+      const d = last.net_worth - from.net_worth
+      const pct = from.net_worth !== 0 ? (d / Math.abs(from.net_worth)) * 100 : 0
+      return { delta: d, pct }
+    }
+
+    return {
+      vs1mo: delta(findClosest(oneMonthAgo)),
+      vs3mo: delta(findClosest(threeMonthsAgo)),
+      vsYtd: delta(findClosest(startOfYear)),
+    }
+  }, [snapshots])
+
+  // Compute Y axis ticks dynamically (show in M / Jt scale)
+  const chartData = useMemo(() => {
+    return filtered.map((s) => {
+      const d = new Date(s.snapshot_date)
+      const label = d.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })
+      return {
+        date: label,
+        rawDate: s.snapshot_date,
+        assets: s.total_assets,
+        debts: -s.total_debts, // negative so they go below the axis
+        net: s.net_worth,
+      }
+    })
+  }, [filtered])
+
+  const periodLabels: Record<typeof period, string> = {
+    '3m': '3 Bulan',
+    '6m': '6 Bulan',
+    '12m': '12 Bulan',
+    all: 'Semua',
+  }
+
+  return (
+    <div className="s-card p-5 sm:p-6">
+      <div className="mb-4 flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <p className="caps">Riwayat</p>
+          <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            Net Worth dari Waktu ke Waktu
+          </h3>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+            Snapshot otomatis tiap kamu buka halaman ini · {snapshots.length} titik data
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {(['3m', '6m', '12m', 'all'] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onPeriodChange(p)}
+              className="text-[11px] font-medium px-2.5 py-1 rounded-md transition"
+              style={{
+                background: period === p ? 'var(--ink)' : 'var(--surface-2)',
+                color: period === p ? 'var(--surface)' : 'var(--ink-muted)',
+              }}
+            >
+              {periodLabels[p]}
+            </button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSnapshot}
+            disabled={snapshotting}
+            className="ml-1"
+          >
+            {snapshotting ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />}
+            <span className="hidden sm:inline">Snapshot</span>
+          </Button>
+        </div>
+      </div>
+
+      {snapshots.length === 0 ? (
+        <div
+          className="flex flex-col items-center justify-center py-12 text-center px-6"
+          style={{ color: 'var(--ink-soft)' }}
+        >
+          <Sparkles className="size-8 mb-3 opacity-40" />
+          <p className="text-sm">Belum ada riwayat</p>
+        </div>
+      ) : snapshots.length === 1 ? (
+        <div
+          className="rounded-xl border-2 border-dashed p-8 text-center"
+          style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}
+        >
+          <Sparkles className="size-7 mx-auto mb-2 opacity-50" style={{ color: 'var(--emerald-500)' }} />
+          <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+            Snapshot pertama tercatat hari ini ({new Date(snapshots[0].snapshot_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})
+          </p>
+          <p className="text-xs mt-1.5">
+            Cek lagi dalam beberapa hari/minggu — grafik akan muncul begitu ada minimal 2 data point.
+            Tiap kali kamu buka halaman ini, snapshot baru otomatis dicatat untuk hari tersebut.
+          </p>
+        </div>
+      ) : (
+        <>
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 8, bottom: 0, left: 8 }}>
+              <defs>
+                <linearGradient id="g-assets" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10B981" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#10B981" stopOpacity={0.55} />
+                </linearGradient>
+                <linearGradient id="g-debts" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stopColor="#EF4444" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#EF4444" stopOpacity={0.55} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
+              <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
+              <XAxis
+                dataKey="date"
+                fontSize={11}
+                tick={{ fill: 'var(--ink-muted)' }}
+                axisLine={{ stroke: 'var(--border-soft)' }}
+                tickLine={false}
+              />
+              <YAxis
+                fontSize={11}
+                tickFormatter={(v: number) => formatCompactCurrency(v)}
+                tick={{ fill: 'var(--ink-muted)' }}
+                axisLine={false}
+                tickLine={false}
+                width={70}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const p = payload[0].payload as { date: string; rawDate: string; assets: number; debts: number; net: number }
+                  return (
+                    <div
+                      className="rounded-md border px-3 py-2 text-xs shadow-md"
+                      style={{
+                        background: 'var(--surface)',
+                        borderColor: 'var(--border)',
+                        color: 'var(--ink)',
+                      }}
+                    >
+                      <p className="font-semibold mb-1.5">
+                        {new Date(p.rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                      <div className="space-y-0.5">
+                        <p className="num tabular flex justify-between gap-3">
+                          <span style={{ color: '#10B981' }}>● Aset</span>
+                          <span>{formatCurrency(p.assets)}</span>
+                        </p>
+                        <p className="num tabular flex justify-between gap-3">
+                          <span style={{ color: '#EF4444' }}>● Utang</span>
+                          <span>{formatCurrency(Math.abs(p.debts))}</span>
+                        </p>
+                        <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+                          <span style={{ color: '#6366F1' }}>● Net Worth</span>
+                          <span>{formatCurrency(p.net)}</span>
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+              <Bar dataKey="assets" name="Aset" fill="url(#g-assets)" stackId="a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="debts" name="Utang" fill="url(#g-debts)" stackId="a" radius={[0, 0, 4, 4]} />
+              <Line
+                type="monotone"
+                dataKey="net"
+                name="Net Worth"
+                stroke="#6366F1"
+                strokeWidth={2.5}
+                dot={{ r: 3, fill: '#6366F1', stroke: 'var(--surface)', strokeWidth: 2 }}
+                activeDot={{ r: 5 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+
+          {/* Comparison stats */}
+          {stats && (
+            <div className="mt-5 pt-4 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
+              <ChangeStat label="vs Bulan Lalu" change={stats.vs1mo} />
+              <ChangeStat label="vs 3 Bulan Lalu" change={stats.vs3mo} />
+              <ChangeStat label="YTD (Awal Tahun)" change={stats.vsYtd} />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function ChangeStat({ label, change }: { label: string; change: { delta: number; pct: number } | null }) {
+  if (!change) {
+    return (
+      <div>
+        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>—</p>
+      </div>
+    )
+  }
+  const positive = change.delta >= 0
+  const color = positive ? '#059669' : '#DC2626'
+  const Icon = positive ? TrendingUp : TrendingDown
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
+      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1" style={{ color }}>
+        <Icon className="size-3.5" />
+        {positive ? '+' : ''}{formatCompactCurrency(change.delta)}
+      </p>
+      <p className="text-[11px] mt-0.5" style={{ color }}>
+        {positive ? '+' : ''}{change.pct.toFixed(1)}%
+      </p>
     </div>
   )
 }
