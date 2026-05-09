@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
@@ -40,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet } from 'lucide-react'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -438,6 +439,10 @@ export default function TransactionsPage() {
   }
 
   function openAddDialog() {
+    if (accounts.length === 0 && creditCards.length === 0) {
+      alert('Belum ada akun. Bikin akun dulu di menu "Akun" sebelum mencatat transaksi.')
+      return
+    }
     setEditingId(null)
     const picked = pickAccount()
     setForm({ ...emptyForm, account_id: picked?.id ?? '' })
@@ -582,6 +587,25 @@ export default function TransactionsPage() {
         </div>
         <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>{today}</p>
       </div>
+
+      {!loading && accounts.length === 0 && creditCards.length === 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <Wallet className="size-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="flex-1 text-sm">
+            <p className="font-medium text-amber-900">Belum ada akun terdaftar</p>
+            <p className="mt-1 text-amber-800">
+              Sebelum bisa nyatet transaksi, kamu harus bikin minimal 1 akun (e.g. BCA Tahapan, Cash di dompet, GoPay).
+            </p>
+            <Link
+              href="/dashboard/accounts"
+              className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-900 hover:underline"
+            >
+              Bikin Akun Pertama →
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="outline" onClick={() => setImportOpen(true)}>
           <Upload className="size-4" /> Import CSV

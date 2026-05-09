@@ -166,6 +166,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Tujuan',      titleKey: 'nav.goals',          href: '/dashboard/goals',        icon: 'Target',          section: 'overview' },
 
   // ACTIVITY (daily recording)
+  { label: 'Akun',        titleKey: 'nav.accounts',       href: '/dashboard/accounts',     icon: 'Wallet',      section: 'activity' },
   { label: 'Transaksi',   titleKey: 'nav.transactions',   href: '/dashboard/transactions', icon: 'Receipt',     section: 'activity' },
   { label: 'Recurring',   titleKey: 'nav.recurring',      href: '/dashboard/recurring',    icon: 'Repeat',      section: 'activity' },
   { label: 'Anggaran',    titleKey: 'nav.budgeting',      href: '/dashboard/budgeting',    icon: 'Wallet',      section: 'activity' },

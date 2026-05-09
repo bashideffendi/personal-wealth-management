@@ -43,6 +43,7 @@ export const messages = {
     },
     nav: {
       dashboard: 'Dashboard',
+      accounts: 'Akun',
       transactions: 'Transaksi',
       recurring: 'Recurring',
       budgeting: 'Anggaran',
@@ -208,6 +209,7 @@ export const messages = {
     },
     nav: {
       dashboard: 'Dashboard',
+      accounts: 'Accounts',
       transactions: 'Transactions',
       recurring: 'Recurring',
       budgeting: 'Budget',
