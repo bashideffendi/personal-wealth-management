@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine } from 'lucide-react'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -177,6 +177,73 @@ export default function TransactionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
 
+  // Receipt OCR (struk → auto-fill)
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null)
+  const [extracting, setExtracting] = useState(false)
+  const [extractError, setExtractError] = useState<string | null>(null)
+  const [extractConfidence, setExtractConfidence] = useState<'high' | 'medium' | 'low' | null>(null)
+
+  function resetReceipt() {
+    if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl)
+    setReceiptFile(null)
+    setReceiptPreviewUrl(null)
+    setExtractError(null)
+    setExtractConfidence(null)
+    setExtracting(false)
+  }
+
+  async function handleReceiptUpload(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setExtractError('File harus berupa gambar (JPG/PNG/WebP)')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setExtractError('File terlalu besar (maks 10MB)')
+      return
+    }
+
+    if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl)
+    setReceiptFile(file)
+    setReceiptPreviewUrl(URL.createObjectURL(file))
+    setExtractError(null)
+    setExtractConfidence(null)
+    setExtracting(true)
+
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await fetch('/api/extract-receipt', { method: 'POST', body: fd })
+      const json = await res.json()
+      if (!res.ok) {
+        setExtractError(json.error ?? `Gagal: ${res.status}`)
+        return
+      }
+      const d = json.data as {
+        merchant: string
+        date: string
+        total: number
+        type: 'income' | 'expense' | 'saving' | 'investment'
+        category: string
+        description: string
+        confidence: 'high' | 'medium' | 'low'
+      }
+      setForm((prev) => ({
+        ...prev,
+        date: d.date || prev.date,
+        type: d.type || prev.type,
+        category: d.category || prev.category,
+        description: d.description || d.merchant || prev.description,
+        amount: d.total || prev.amount,
+      }))
+      setExtractConfidence(d.confidence)
+    } catch (err) {
+      setExtractError(err instanceof Error ? err.message : 'Gagal memproses struk')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
   // Transfer dialog
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [transferForm, setTransferForm] = useState({
@@ -299,6 +366,7 @@ export default function TransactionsPage() {
   function openAddDialog() {
     setEditingId(null)
     setForm(emptyForm)
+    resetReceipt()
     setDialogOpen(true)
   }
 
@@ -312,6 +380,7 @@ export default function TransactionsPage() {
       description: tx.description,
       amount: tx.amount,
     })
+    resetReceipt()
     setDialogOpen(true)
   }
 
@@ -320,7 +389,23 @@ export default function TransactionsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const payload = {
+    // Upload receipt to Storage first (if attached on a NEW transaction)
+    let receiptPath: string | null = null
+    if (receiptFile && !editingId) {
+      const ext = receiptFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const path = `${user.id}/${filename}`
+      const { error: upErr } = await supabase.storage
+        .from('receipts')
+        .upload(path, receiptFile, { contentType: receiptFile.type, upsert: false })
+      if (upErr) {
+        alert(`Gagal upload struk ke Storage: ${upErr.message}\nTransaksi tetap disimpan tanpa foto.`)
+      } else {
+        receiptPath = path
+      }
+    }
+
+    const payload: Record<string, unknown> = {
       user_id: user.id,
       date: form.date,
       account_id: form.account_id,
@@ -329,6 +414,7 @@ export default function TransactionsPage() {
       description: form.description,
       amount: form.amount,
     }
+    if (receiptPath) payload.receipt_url = receiptPath
 
     if (editingId) {
       await supabase.from('transactions').update(payload).eq('id', editingId)
@@ -590,6 +676,80 @@ export default function TransactionsPage() {
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
+            {/* Receipt Upload (only for new transactions) */}
+            {!editingId && (
+              <div className="grid gap-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <ScanLine className="size-4" />
+                  Upload Struk <span className="text-xs font-normal text-muted-foreground">(opsional, otomatis isi form)</span>
+                </Label>
+                {!receiptPreviewUrl ? (
+                  <label
+                    htmlFor="receipt-upload"
+                    className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 px-4 py-6 text-center transition hover:border-muted-foreground/60 hover:bg-muted/40"
+                  >
+                    <Camera className="size-6 text-muted-foreground" />
+                    <span className="text-sm">Klik atau drop foto struk di sini</span>
+                    <span className="text-xs text-muted-foreground">JPG/PNG/WebP, maks 10MB</span>
+                    <input
+                      id="receipt-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0]
+                        if (f) handleReceiptUpload(f)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                ) : (
+                  <div className="relative rounded-lg border bg-muted/20 p-2">
+                    <div className="flex items-start gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={receiptPreviewUrl}
+                        alt="Preview struk"
+                        className="h-20 w-20 rounded object-cover"
+                      />
+                      <div className="flex-1 text-xs">
+                        {extracting && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Loader2 className="size-3 animate-spin" />
+                            Membaca struk...
+                          </div>
+                        )}
+                        {!extracting && extractError && (
+                          <div className="text-red-600">{extractError}</div>
+                        )}
+                        {!extracting && !extractError && extractConfidence && (
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1 text-emerald-700">
+                              <Sparkles className="size-3" />
+                              <span className="font-medium">Form terisi otomatis</span>
+                            </div>
+                            <div className="text-muted-foreground">
+                              Akurasi: <span className="font-medium">{extractConfidence === 'high' ? 'Tinggi' : extractConfidence === 'medium' ? 'Sedang' : 'Rendah — cek ulang'}</span>
+                            </div>
+                            <div className="text-muted-foreground">Cek field di bawah, edit kalau perlu.</div>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={resetReceipt}
+                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        aria-label="Hapus struk"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Date */}
             <div className="grid gap-1.5">
               <Label htmlFor="tx-date">Tanggal</Label>
