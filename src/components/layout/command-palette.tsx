@@ -1,49 +1,182 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { NAV_ITEMS, type NavItem } from '@/lib/constants'
-import { Search } from 'lucide-react'
+/**
+ * Command Palette (Cmd+K / Ctrl+K)
+ *
+ * Linear-style: grouped results, icons, recent items, smart quick actions.
+ * Open via global keyboard shortcut or by clicking the Search button in header.
+ *
+ * Phase 1.3.A — UI enhancement (this file).
+ * Phase 1.3.B (TODO) — Natural-language transaction parsing via Claude Haiku.
+ */
 
-function flatten(items: NavItem[], trail: string[] = []): { label: string; href: string; breadcrumb: string }[] {
-  const out: { label: string; href: string; breadcrumb: string }[] = []
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { NAV_ITEMS, type NavItem } from '@/lib/constants'
+import {
+  Search, ArrowRight, Sparkles, Receipt, Wallet, Target, Calculator,
+  Plus, FileText, History, CornerDownLeft, ChevronUp, ChevronDown,
+  Loader2, Check, AlertCircle,
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+
+const RECENT_KEY = 'pwm-recent-pages'
+const RECENT_LIMIT = 3
+
+type ItemKind = 'page' | 'action' | 'recent' | 'ai'
+
+interface PaletteItem {
+  id: string
+  label: string
+  href?: string         // navigation target
+  onSelect?: () => void // override action
+  breadcrumb?: string   // section path (e.g. "Kekayaan")
+  kind: ItemKind
+  icon?: React.ReactNode
+}
+
+// ─── Flatten NAV_ITEMS into searchable list ──────────────────────
+
+function flatten(items: NavItem[], trail: string[] = []): PaletteItem[] {
+  const out: PaletteItem[] = []
   for (const it of items) {
-    out.push({ label: it.label, href: it.href, breadcrumb: trail.join(' › ') })
+    out.push({
+      id: `nav:${it.href}`,
+      label: it.label,
+      href: it.href,
+      breadcrumb: trail.join(' › '),
+      kind: 'page',
+    })
     if (it.children) out.push(...flatten(it.children, [...trail, it.label]))
   }
   return out
 }
 
+// ─── Recent pages (localStorage) ─────────────────────────────────
+
+function getRecent(): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function pushRecent(href: string) {
+  if (typeof window === 'undefined') return
+  try {
+    const list = getRecent().filter((h) => h !== href)
+    list.unshift(href)
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_LIMIT)))
+  } catch {
+    /* ignore */
+  }
+}
+
+// ─── Quick actions ───────────────────────────────────────────────
+
+const QUICK_ACTIONS: PaletteItem[] = [
+  { id: 'a:add-tx',       label: 'Tambah Transaksi',     href: '/dashboard/transactions',  kind: 'action', icon: <Plus className="size-4" /> },
+  { id: 'a:add-account',  label: 'Buat Akun Baru',       href: '/dashboard/accounts',      kind: 'action', icon: <Wallet className="size-4" /> },
+  { id: 'a:add-goal',     label: 'Buat Goal Baru',       href: '/dashboard/goals',         kind: 'action', icon: <Target className="size-4" /> },
+  { id: 'a:set-budget',   label: 'Atur Anggaran Bulanan', href: '/dashboard/budgeting',     kind: 'action', icon: <FileText className="size-4" /> },
+  { id: 'a:scan-receipt', label: 'Scan Struk dengan AI', href: '/dashboard/transactions',  kind: 'action', icon: <Sparkles className="size-4" /> },
+  { id: 'a:report',       label: 'Lihat Laporan Bulanan', href: '/dashboard/monthly-report', kind: 'action', icon: <Receipt className="size-4" /> },
+  { id: 'a:calc',         label: 'Buka Kalkulator',      href: '/dashboard/calculators',   kind: 'action', icon: <Calculator className="size-4" /> },
+]
+
+// ─── Component ───────────────────────────────────────────────────
+
+interface ParsedTransaction {
+  type: 'income' | 'expense' | 'saving' | 'investment'
+  amount: number
+  category: string
+  description: string
+  payment_hint?: string
+  confidence: 'high' | 'medium' | 'low'
+}
+
+type AIState =
+  | { kind: 'idle' }
+  | { kind: 'parsing' }
+  | { kind: 'preview'; data: ParsedTransaction }
+  | { kind: 'saving' }
+  | { kind: 'success' }
+  | { kind: 'error'; message: string }
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIdx, setSelectedIdx] = useState(0)
+  const [recentHrefs, setRecentHrefs] = useState<string[]>([])
+  const [aiState, setAiState] = useState<AIState>({ kind: 'idle' })
   const router = useRouter()
+  const pathname = usePathname()
+  const supabase = createClient()
 
-  const all = useMemo(() => {
-    // Include direct action shortcuts
-    const extras = [
-      { label: 'Tambah Transaksi',  href: '/dashboard/transactions',  breadcrumb: 'Quick Action' },
-      { label: 'Tambah Goal',       href: '/dashboard/goals',         breadcrumb: 'Quick Action' },
-      { label: 'Bayar Kartu Kredit',href: '/dashboard/credit-cards',  breadcrumb: 'Quick Action' },
-      { label: 'Atur Budget',       href: '/dashboard/budgeting',     breadcrumb: 'Quick Action' },
-      { label: 'Kalkulator Zakat',  href: '/dashboard/calculators',   breadcrumb: 'Quick Action' },
-    ]
-    return [...flatten(NAV_ITEMS), ...extras]
-  }, [])
+  const allPages = useMemo(() => flatten(NAV_ITEMS), [])
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return all
-    const q = query.toLowerCase()
-    return all.filter(
-      (i) => i.label.toLowerCase().includes(q) || i.breadcrumb.toLowerCase().includes(q),
-    )
-  }, [query, all])
+  // Refresh recent list whenever palette opens (in case user navigated)
+  useEffect(() => {
+    if (open) setRecentHrefs(getRecent())
+  }, [open])
+
+  // Track current page into recent on path change
+  useEffect(() => {
+    if (pathname.startsWith('/dashboard')) pushRecent(pathname)
+  }, [pathname])
+
+  // ─── Filter logic ─────────────────────────────────────────────
+  const groups = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const matches = (item: PaletteItem) =>
+      !q ||
+      item.label.toLowerCase().includes(q) ||
+      (item.breadcrumb?.toLowerCase().includes(q) ?? false)
+
+    // Recent (only when no query) — resolve href to page object
+    const recent = !q
+      ? recentHrefs
+          .map((href) => allPages.find((p) => p.href === href))
+          .filter((p): p is PaletteItem => !!p)
+          .slice(0, RECENT_LIMIT)
+          .map((p) => ({ ...p, id: `r:${p.href}`, kind: 'recent' as const, icon: <History className="size-4" /> }))
+      : []
+
+    const pages = allPages.filter(matches).slice(0, 8)
+    const actions = QUICK_ACTIONS.filter(matches)
+
+    // AI quick-add detection — if query has digits, treat as potential transaction
+    const aiItems: PaletteItem[] = []
+    if (q && /\d/.test(q) && q.length > 4) {
+      aiItems.push({
+        id: 'ai:quick-add',
+        label: `AI Quick Add: "${query.trim()}"`,
+        breadcrumb: 'Tekan Enter untuk parse otomatis',
+        kind: 'ai',
+        icon: <Sparkles className="size-4" />,
+        onSelect: () => parseAndPreview(query.trim()),
+      })
+    }
+
+    return [
+      { key: 'recent', label: 'Terakhir Dibuka', items: recent },
+      { key: 'ai', label: 'AI Asisten', items: aiItems },
+      { key: 'pages', label: 'Halaman', items: pages },
+      { key: 'actions', label: 'Aksi Cepat', items: actions },
+    ].filter((g) => g.items.length > 0)
+  }, [query, allPages, recentHrefs, router])
+
+  // Flat list for keyboard navigation
+  const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
 
   useEffect(() => {
     setSelectedIdx(0)
   }, [query])
 
+  // ─── Keyboard handlers ────────────────────────────────────────
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -61,26 +194,113 @@ export function CommandPalette() {
     if (!open) {
       setQuery('')
       setSelectedIdx(0)
+      setAiState({ kind: 'idle' })
     }
   }, [open])
 
-  function go(idx: number) {
-    const target = filtered[idx]
-    if (!target) return
-    router.push(target.href)
+  function go(item: PaletteItem) {
+    if (item.onSelect) {
+      item.onSelect()
+      // Don't close — let action handle closing
+      return
+    }
+    if (item.href) router.push(item.href)
     setOpen(false)
+  }
+
+  async function parseAndPreview(text: string) {
+    setAiState({ kind: 'parsing' })
+    try {
+      const res = await fetch('/api/parse-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setAiState({ kind: 'error', message: json.error ?? 'Gagal parse' })
+        return
+      }
+      setAiState({ kind: 'preview', data: json.data as ParsedTransaction })
+    } catch (err) {
+      setAiState({
+        kind: 'error',
+        message: err instanceof Error ? err.message : 'Gagal parse',
+      })
+    }
+  }
+
+  async function saveTransaction(data: ParsedTransaction) {
+    setAiState({ kind: 'saving' })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setAiState({ kind: 'error', message: 'Tidak login' })
+      return
+    }
+
+    // Find a default account — try profile.default_account_id first, else cash, else first
+    const profRes = await supabase
+      .from('profiles')
+      .select('default_account_id')
+      .eq('id', user.id)
+      .maybeSingle()
+    const accRes = await supabase
+      .from('accounts')
+      .select('id, name, type')
+      .eq('user_id', user.id)
+
+    const accounts = (accRes.data ?? []) as { id: string; name: string; type: string }[]
+    if (accounts.length === 0) {
+      setAiState({
+        kind: 'error',
+        message: 'Belum ada akun. Bikin akun dulu di menu Akun.',
+      })
+      return
+    }
+
+    const defaultId = (profRes.data as { default_account_id: string } | null)?.default_account_id
+    const accountId =
+      accounts.find((a) => a.id === defaultId)?.id ??
+      accounts.find((a) => a.type === 'cash')?.id ??
+      accounts[0].id
+
+    const { error } = await supabase.from('transactions').insert({
+      user_id: user.id,
+      date: new Date().toISOString().split('T')[0],
+      account_id: accountId,
+      type: data.type,
+      category: data.category,
+      description: data.description,
+      amount: data.amount,
+    })
+
+    if (error) {
+      setAiState({ kind: 'error', message: error.message })
+      return
+    }
+    setAiState({ kind: 'success' })
+    setTimeout(() => {
+      setOpen(false)
+      setAiState({ kind: 'idle' })
+      router.refresh()
+    }, 1200)
+  }
+
+  function resetAI() {
+    setAiState({ kind: 'idle' })
   }
 
   function onInputKey(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setSelectedIdx((i) => Math.min(i + 1, filtered.length - 1))
+      setSelectedIdx((i) => Math.min(i + 1, flatItems.length - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setSelectedIdx((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      go(selectedIdx)
+      const item = flatItems[selectedIdx]
+      if (item) go(item)
     }
   }
 
@@ -89,66 +309,327 @@ export function CommandPalette() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4"
-      style={{ background: 'rgba(10,10,10,0.5)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-lg rounded-xl overflow-hidden border shadow-2xl"
+        className="w-full max-w-xl rounded-2xl overflow-hidden border shadow-2xl animate-in fade-in zoom-in-95 duration-150"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-          <Search className="h-4 w-4" style={{ color: 'var(--ink-muted)' }} />
+        {/* Search input */}
+        <div
+          className="flex items-center gap-3 px-4 py-3.5 border-b"
+          style={{ borderColor: 'var(--border-soft)' }}
+        >
+          <Search className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onInputKey}
-            placeholder="Cari halaman atau aksi..."
-            className="flex-1 bg-transparent outline-none text-sm"
+            placeholder="Cari halaman, aksi, atau ketik 'indomaret 50rb'…"
+            className="flex-1 bg-transparent outline-none text-[15px]"
             style={{ color: 'var(--ink)' }}
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+          <kbd
+            className="text-[10px] px-1.5 py-0.5 rounded font-mono shrink-0"
+            style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+          >
             ESC
           </kbd>
         </div>
-        <div className="max-h-80 overflow-y-auto py-1">
-          {filtered.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: 'var(--ink-soft)' }}>
-              Tidak ada hasil.
-            </p>
+
+        {/* AI overlay states — shown when user triggered NL parse */}
+        {aiState.kind !== 'idle' && (
+          <AIPanel
+            state={aiState}
+            text={query}
+            onConfirm={(d) => saveTransaction(d)}
+            onCancel={resetAI}
+          />
+        )}
+
+        {/* Results — only when AI is idle */}
+        {aiState.kind === 'idle' && (
+        <div className="max-h-[60vh] overflow-y-auto py-2 sidebar-nav-scroll">
+          {flatItems.length === 0 ? (
+            <div className="py-12 text-center">
+              <Search
+                className="size-8 mx-auto mb-3 opacity-30"
+                style={{ color: 'var(--ink-soft)' }}
+              />
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+                Tidak ada hasil untuk &ldquo;{query}&rdquo;
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
+                Coba kata kunci lain atau Enter untuk buka link
+              </p>
+            </div>
           ) : (
-            filtered.map((item, i) => (
-              <button
-                key={`${item.href}-${item.label}-${i}`}
-                onClick={() => go(i)}
-                onMouseEnter={() => setSelectedIdx(i)}
-                className="w-full text-left px-4 py-2.5 flex items-center justify-between transition-colors"
-                style={{
-                  background: i === selectedIdx ? 'var(--lime-100)' : 'transparent',
-                }}
-              >
-                <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{item.label}</span>
-                {item.breadcrumb && (
-                  <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                    {item.breadcrumb}
-                  </span>
-                )}
-              </button>
-            ))
+            (() => {
+              let renderIdx = 0
+              return groups.map((group) => (
+                <div key={group.key} className="mb-1">
+                  <p
+                    className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-[0.12em] font-semibold"
+                    style={{ color: 'var(--ink-soft)' }}
+                  >
+                    {group.label}
+                  </p>
+                  {group.items.map((item) => {
+                    const idx = renderIdx++
+                    const isSelected = idx === selectedIdx
+                    const isAI = item.kind === 'ai'
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => go(item)}
+                        onMouseEnter={() => setSelectedIdx(idx)}
+                        className="w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors group"
+                        style={{
+                          background: isSelected
+                            ? isAI
+                              ? 'rgba(139, 92, 246, 0.10)'
+                              : 'var(--emerald-50)'
+                            : 'transparent',
+                        }}
+                      >
+                        <span
+                          className="flex size-8 items-center justify-center rounded-lg shrink-0"
+                          style={{
+                            background: isSelected
+                              ? isAI
+                                ? 'rgba(139, 92, 246, 0.20)'
+                                : 'var(--emerald-100)'
+                              : 'var(--surface-2)',
+                            color: isSelected
+                              ? isAI
+                                ? '#8B5CF6'
+                                : 'var(--emerald-700)'
+                              : 'var(--ink-muted)',
+                          }}
+                        >
+                          {item.icon ?? <ArrowRight className="size-4" />}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span
+                            className="block text-sm font-medium truncate"
+                            style={{ color: 'var(--ink)' }}
+                          >
+                            {item.label}
+                          </span>
+                          {item.breadcrumb && (
+                            <span
+                              className="block text-[11px] truncate"
+                              style={{ color: 'var(--ink-soft)' }}
+                            >
+                              {item.breadcrumb}
+                            </span>
+                          )}
+                        </span>
+                        {isSelected && (
+                          <CornerDownLeft
+                            className="size-3.5 shrink-0"
+                            style={{ color: 'var(--ink-soft)' }}
+                          />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))
+            })()
           )}
         </div>
+        )}
+
+        {/* Footer hints */}
         <div
-          className="flex items-center justify-between px-4 py-2 text-[10px] border-t"
+          className="flex items-center justify-between px-4 py-2.5 text-[10px] border-t"
           style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}
         >
-          <span className="font-mono">↑↓ navigasi · Enter pilih · Esc tutup</span>
-          <span>
-            <kbd className="font-mono px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)' }}>⌘</kbd>
-            <kbd className="font-mono px-1 py-0.5 rounded ml-0.5" style={{ background: 'var(--surface-2)' }}>K</kbd>
+          <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Kbd>
+                <ChevronUp className="size-2.5" />
+              </Kbd>
+              <Kbd>
+                <ChevronDown className="size-2.5" />
+              </Kbd>
+              <span className="ml-1">navigasi</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <Kbd>
+                <CornerDownLeft className="size-2.5" />
+              </Kbd>
+              <span>pilih</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <Kbd>esc</Kbd>
+              <span>tutup</span>
+            </span>
+          </span>
+          <span className="flex items-center gap-1">
+            <Kbd>⌘</Kbd>
+            <Kbd>K</Kbd>
           </span>
         </div>
       </div>
+    </div>
+  )
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd
+      className="font-mono px-1.5 py-0.5 rounded text-[9px] inline-flex items-center"
+      style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+    >
+      {children}
+    </kbd>
+  )
+}
+
+// ─── AI Panel — shown when user triggers natural-language parse ──
+
+interface AIPanelProps {
+  state: Exclude<AIState, { kind: 'idle' }>
+  text: string
+  onConfirm: (data: ParsedTransaction) => void
+  onCancel: () => void
+}
+
+function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
+  if (state.kind === 'parsing') {
+    return (
+      <div className="px-6 py-12 text-center">
+        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--emerald-500)' }} />
+        <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
+          AI sedang parse transaksi...
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
+          &ldquo;{text}&rdquo;
+        </p>
+      </div>
+    )
+  }
+
+  if (state.kind === 'preview') {
+    const d = state.data
+    const typeLabel: Record<string, string> = {
+      expense: 'Pengeluaran', income: 'Pemasukan', saving: 'Tabungan', investment: 'Investasi',
+    }
+    const typeColor: Record<string, string> = {
+      expense: '#F43F5E', income: '#10B981', saving: '#F59E0B', investment: '#0EA5E9',
+    }
+    const fmt = 'Rp ' + d.amount.toLocaleString('id-ID')
+    return (
+      <div className="px-5 py-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="size-3.5" style={{ color: 'var(--emerald-500)' }} />
+          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--emerald-700)' }}>
+            AI Quick Add — Konfirmasi
+          </p>
+        </div>
+        <div
+          className="rounded-xl border p-4"
+          style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
+        >
+          <div className="flex items-baseline justify-between gap-2 mb-2">
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+              style={{ background: typeColor[d.type] + '20', color: typeColor[d.type] }}
+            >
+              {typeLabel[d.type] ?? d.type}
+            </span>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
+              Akurasi: <strong style={{ color: 'var(--ink)' }}>{d.confidence === 'high' ? 'Tinggi' : d.confidence === 'medium' ? 'Sedang' : 'Rendah'}</strong>
+            </p>
+          </div>
+          <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
+            {fmt}
+          </p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink)' }}>
+            {d.description}
+          </p>
+          <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: 'var(--ink-muted)' }}>
+            <span>📂 {d.category}</span>
+            {d.payment_hint && <span>💳 {d.payment_hint}</span>}
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs px-3 py-1.5 rounded-md transition hover:bg-[var(--surface-2)]"
+            style={{ color: 'var(--ink-muted)' }}
+          >
+            ← Kembali
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(d)}
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
+            style={{ background: 'var(--emerald-500)' }}
+          >
+            <Check className="size-4" />
+            Simpan ke Akun Default
+          </button>
+        </div>
+        <p className="text-[10px] mt-2 text-center" style={{ color: 'var(--ink-soft)' }}>
+          Akan dicatat hari ini ke akun default kamu. Edit nanti di /Transaksi kalau perlu.
+        </p>
+      </div>
+    )
+  }
+
+  if (state.kind === 'saving') {
+    return (
+      <div className="px-6 py-12 text-center">
+        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--emerald-500)' }} />
+        <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>Menyimpan...</p>
+      </div>
+    )
+  }
+
+  if (state.kind === 'success') {
+    return (
+      <div className="px-6 py-12 text-center">
+        <div
+          className="size-12 mx-auto rounded-full flex items-center justify-center"
+          style={{ background: 'var(--emerald-100)' }}
+        >
+          <Check className="size-6" style={{ color: 'var(--emerald-600)' }} />
+        </div>
+        <p className="text-sm mt-3 font-semibold" style={{ color: 'var(--ink)' }}>
+          🎉 Transaksi tersimpan!
+        </p>
+      </div>
+    )
+  }
+
+  // error
+  return (
+    <div className="px-6 py-8 text-center">
+      <div
+        className="size-10 mx-auto rounded-full flex items-center justify-center"
+        style={{ background: 'rgba(244,63,94,0.12)' }}
+      >
+        <AlertCircle className="size-5" style={{ color: 'var(--coral-500)' }} />
+      </div>
+      <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
+        Gagal parse
+      </p>
+      <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{state.message}</p>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="text-xs mt-4 px-3 py-1.5 rounded-md transition hover:bg-[var(--surface-2)]"
+        style={{ color: 'var(--ink-muted)' }}
+      >
+        ← Kembali
+      </button>
     </div>
   )
 }
