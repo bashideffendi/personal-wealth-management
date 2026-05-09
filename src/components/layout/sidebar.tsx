@@ -153,9 +153,9 @@ export function Sidebar({ user }: SidebarProps) {
   }
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col">
+    <aside className="hidden md:flex md:h-screen md:w-64 md:flex-col">
       <div
-        className="flex flex-1 flex-col"
+        className="flex flex-1 flex-col min-h-0"
         style={{ background: '#09090B' }}
       >
         {/* Brand — minimal wordmark */}
@@ -178,23 +178,26 @@ export function Sidebar({ user }: SidebarProps) {
           </p>
         </div>
 
-        {/* Nav — grouped by section */}
-        <nav className="flex-1 overflow-y-auto px-2.5 py-3">
+        {/* Nav — grouped by section. min-h-0 is critical: without it,
+            flex-item default min-height: auto prevents the nav from
+            shrinking below content height and overflow-y-auto never
+            kicks in. */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 py-2 sidebar-nav-scroll">
           {NAV_SECTIONS.map((sec) => {
             const items = NAV_ITEMS.filter((it) => it.section === sec.key)
             if (items.length === 0) return null
             const sectionLabel = t(sec.titleKey)
             return (
-              <div key={sec.key} className="mb-3 last:mb-0">
+              <div key={sec.key} className="mb-2 last:mb-0">
                 {sectionLabel && (
                   <p
-                    className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-[0.14em] font-semibold"
+                    className="px-3 pt-1.5 pb-0.5 text-[10px] uppercase tracking-[0.14em] font-semibold"
                     style={{ color: '#52525B' }}
                   >
                     {sectionLabel}
                   </p>
                 )}
-                <div className="space-y-0.5">
+                <div>
                   {items.map((item) => renderItem(item, 0))}
                 </div>
               </div>
