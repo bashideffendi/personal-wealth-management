@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, LogOut, ChevronDown, Search, Crown } from 'lucide-react'
+import { Menu, LogOut, ChevronDown, Search, Crown, Sun, Moon, Monitor } from 'lucide-react'
+import { useTheme } from '@/components/theme/theme-provider'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -65,6 +66,18 @@ export function Header({ user }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const t = useT()
+  const { mode, setMode, resolved } = useTheme()
+
+  // Cycle: light → dark → auto → light. Same pattern as the desktop avatar dropdown.
+  function cycleTheme() {
+    const next = mode === 'light' ? 'dark' : mode === 'dark' ? 'auto' : 'light'
+    setMode(next)
+  }
+  const ThemeIcon = mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor
+  const themeLabel =
+    mode === 'light' ? 'Mode Terang'
+    : mode === 'dark' ? 'Mode Gelap'
+    : `Auto (ikut ${resolved === 'dark' ? 'gelap' : 'terang'})`
 
   const fullName =
     (user.user_metadata?.full_name as string) || user.email || 'Pengguna'
@@ -224,6 +237,19 @@ export function Header({ user }: HeaderProps) {
                 <span className="flex-1 font-medium">Paket Langganan</span>
               </Link>
             </SheetClose>
+
+            {/* Theme cycle — keep the sheet open after click so the user
+                can see the theme switch and tap again if they want. */}
+            <button
+              type="button"
+              onClick={cycleTheme}
+              className="flex w-full items-center gap-2 rounded-lg p-2 text-sm transition hover:bg-white/5"
+              style={{ color: '#E2E8F0' }}
+            >
+              <ThemeIcon className="size-4" />
+              <span className="flex-1 text-left font-medium">{themeLabel}</span>
+              <span className="text-[10px] text-white/40">tap utk ganti</span>
+            </button>
 
             {/* Logout */}
             <button
