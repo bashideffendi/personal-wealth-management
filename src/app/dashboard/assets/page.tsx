@@ -96,7 +96,7 @@ export default function AssetsOverviewPage() {
         <p className="num tabular mt-4 text-white text-4xl sm:text-5xl lg:text-6xl font-semibold">
           {formatCurrency(totals.total)}
         </p>
-        <div className="mt-7 grid grid-cols-3 gap-3">
+        <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {compositionBuckets.map((b) => {
             const pct = totals.total > 0 ? (b.value / totals.total) * 100 : 0
             return (

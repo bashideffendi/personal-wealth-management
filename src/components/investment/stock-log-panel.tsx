@@ -145,7 +145,7 @@ export function StockLogPanel() {
   return (
     <div className="space-y-5">
       {/* Stats inline (no dark hero — parent page already has one) */}
-      <div className="grid grid-cols-3 gap-4 rounded-xl border bg-white p-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-white p-5">
         <div>
           <p className="caps" style={{ fontSize: '0.625rem' }}>Total Buy</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -283,7 +283,7 @@ export function StockLogPanel() {
                 <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5">
                 <Label>Shares</Label>
                 <Input type="number" step="any" min={0} value={form.shares || ''} onChange={(e) => setForm({ ...form, shares: Number(e.target.value) || 0 })} />

@@ -187,22 +187,22 @@ export default function RecurringPage() {
       {/* Hero */}
       <div className="dark-card p-6 sm:p-8">
         <p className="caps">Transaksi Berulang</p>
-        <div className="mt-3 grid grid-cols-3 gap-4">
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <p className="caps" style={{ fontSize: '0.625rem' }}>Masuk/bln</p>
-            <p className="num tabular text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="num tabular text-xl sm:text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totals.monthlyIn)}
             </p>
           </div>
           <div>
             <p className="caps" style={{ fontSize: '0.625rem' }}>Keluar/bln</p>
-            <p className="num tabular text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="num tabular text-xl sm:text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totals.monthlyOut)}
             </p>
           </div>
           <div>
             <p className="caps" style={{ fontSize: '0.625rem' }}>Net/bln</p>
-            <p className="num tabular text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="num tabular text-xl sm:text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totals.monthlyNet)}
             </p>
           </div>

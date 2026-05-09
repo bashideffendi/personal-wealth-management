@@ -421,7 +421,7 @@ export default function InvestmentCategoryPage() {
               <Label>Platform / Sekuritas</Label>
               <Input value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="Stockbit, Ajaib, Bibit, Pintu..." />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5">
                 <Label>Qty</Label>
                 <Input type="number" step="any" value={form.quantity || ''} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) || 0 })} />
