@@ -82,9 +82,13 @@ export default function DashboardPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [liquidTotal, setLiquidTotal] = useState(0)
+  const [nonLiquidTotal, setNonLiquidTotal] = useState(0)
   const [debtTotal, setDebtTotal] = useState(0)
   const [emergencyFundCurrent, setEmergencyFundCurrent] = useState(0)
   const [emergencyFundTarget, setEmergencyFundTarget] = useState(0)
+  const [activeGoals, setActiveGoals] = useState<Array<{
+    id: string; name: string; target_amount: number; current_amount: number; deadline: string | null
+  }>>([])
 
   useEffect(() => {
     fetchData()
@@ -101,7 +105,7 @@ export default function DashboardPage() {
     const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
     const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
 
-    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, efRes, ctrRes] = await Promise.all([
+    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, efRes, ctrRes, nlqRes, goalsRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('*')
@@ -141,8 +145,23 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .eq('is_archived', false)
         .order('end_date', { ascending: true }),
+      supabase
+        .from('assets_non_liquid')
+        .select('current_value')
+        .eq('user_id', user.id),
+      supabase
+        .from('goals')
+        .select('id, name, target_amount, current_amount, deadline')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('deadline', { ascending: true, nullsFirst: false })
+        .limit(3),
     ])
     setLiquidTotal(sumLiquid(liquidEntries))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setNonLiquidTotal(((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setActiveGoals((goalsRes.data ?? []) as any[])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setDebtTotal(((debtRes.data ?? []) as any[]).reduce((s, d) => s + (d.remaining ?? 0), 0))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,38 +272,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — full padding to match other pages */}
-      <div className="dark-card p-6 sm:p-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>{t('dashboard.monthly_report')}</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-1.5">
-              {currentMonthYear}
-            </h2>
-            <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
-              {t('dashboard.current_month')}
-            </p>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-              <SelectTrigger className="w-[100px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20">
-                <SelectValue placeholder="Tahun">{(v) => v}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-              <SelectTrigger className="w-[130px] h-9 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20">
-                <SelectValue placeholder="Bulan">{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
+      {/* Hero — Net Worth as primary, friendly greeting */}
+      <NetWorthHero
+        liquidTotal={liquidTotal}
+        nonLiquidTotal={nonLiquidTotal}
+        investmentsTotal={investments.reduce((s, i) => s + (i.total_value || 0), 0)}
+        debtTotal={debtTotal}
+        currentMonthYear={currentMonthYear}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        yearOptions={yearOptions}
+        onYearChange={setSelectedYear}
+        onMonthChange={setSelectedMonth}
+      />
 
       {/* Financial Health — promoted to hero #2 */}
       <HealthScorePanel
@@ -311,6 +311,12 @@ export default function DashboardPage() {
           direction="up"
         />
         <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} direction={totals.net >= 0 ? 'up' : 'down'} />
+      </div>
+
+      {/* Phase 2.1 — Recent Transactions + Goals row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <RecentTransactions transactions={monthTransactions} />
+        <GoalsWidget goals={activeGoals} />
       </div>
 
       {/* Daily activity + Budget Progress */}
@@ -1286,6 +1292,239 @@ function SpendingHeatmap({ yearTransactions, year }: { yearTransactions: Transac
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Phase 2.1 — New dashboard hero: Net Worth as primary
+// ─────────────────────────────────────────────────────────────────
+
+interface NetWorthHeroProps {
+  liquidTotal: number
+  nonLiquidTotal: number
+  investmentsTotal: number
+  debtTotal: number
+  currentMonthYear: string
+  selectedYear: number
+  selectedMonth: number
+  yearOptions: number[]
+  onYearChange: (y: number) => void
+  onMonthChange: (m: number) => void
+}
+
+function NetWorthHero({
+  liquidTotal,
+  nonLiquidTotal,
+  investmentsTotal,
+  debtTotal,
+  currentMonthYear,
+  selectedYear,
+  selectedMonth,
+  yearOptions,
+  onYearChange,
+  onMonthChange,
+}: NetWorthHeroProps) {
+  const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
+  const netWorth = totalAssets - debtTotal
+
+  // Friendly greeting based on time
+  const hour = new Date().getHours()
+  const greeting = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 18 ? 'Selamat sore' : 'Selamat malam'
+
+  return (
+    <div className="dark-card p-6 sm:p-8 relative overflow-hidden">
+      {/* Subtle decorative gradient blob */}
+      <div
+        className="absolute -top-20 -right-20 size-72 rounded-full opacity-20 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, var(--emerald-400), transparent 70%)',
+        }}
+      />
+
+      <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm" style={{ color: 'var(--on-black-mut)' }}>
+            {greeting} 👋
+          </p>
+          <p className="caps mt-3" style={{ fontSize: '0.625rem' }}>Kekayaan Bersih</p>
+          <p
+            className="num tabular text-4xl sm:text-5xl lg:text-6xl font-bold mt-2 leading-none"
+            style={{ color: 'var(--on-black)' }}
+          >
+            {formatCurrency(netWorth)}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
+            <span style={{ color: 'var(--on-black-mut)' }}>
+              Aset <span className="num font-semibold ml-1" style={{ color: 'var(--on-black)' }}>{formatCurrency(totalAssets)}</span>
+            </span>
+            <span style={{ color: 'var(--on-black-mut)' }}>
+              Utang <span className="num font-semibold ml-1" style={{ color: 'var(--coral-400)' }}>−{formatCurrency(debtTotal)}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Period selector — for the rest of dashboard widgets */}
+        <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+          <p className="caps" style={{ fontSize: '0.625rem' }}>Periode</p>
+          <div className="flex gap-2">
+            <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) onMonthChange(Number(v)) }}>
+              <SelectTrigger className="w-[120px] h-8 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20">
+                <SelectValue placeholder="Bulan">{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={String(selectedYear)} onValueChange={(v) => { if (v) onYearChange(Number(v)) }}>
+              <SelectTrigger className="w-[90px] h-8 bg-white/10 border-white/15 text-white text-xs hover:bg-white/20">
+                <SelectValue placeholder="Tahun">{(v) => v}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--on-black-mut)' }}>
+            Data widget di bawah pakai {currentMonthYear}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Recent Transactions widget
+// ─────────────────────────────────────────────────────────────────
+
+function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
+  const recent = useMemo(
+    () => [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
+    [transactions],
+  )
+
+  const TYPE_EMOJI: Record<string, string> = {
+    expense: '🔴', income: '🟢', saving: '🟡', investment: '🔵',
+  }
+
+  return (
+    <div className="s-card p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="caps">Transaksi Terbaru</p>
+          <h3 className="text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            5 Transaksi Terakhir
+          </h3>
+        </div>
+        <a
+          href="/dashboard/transactions"
+          className="text-xs font-medium hover:underline inline-flex items-center gap-1"
+          style={{ color: 'var(--emerald-700)' }}
+        >
+          Lihat semua <ArrowRight className="size-3" />
+        </a>
+      </div>
+      {recent.length === 0 ? (
+        <p className="text-sm py-6 text-center" style={{ color: 'var(--ink-soft)' }}>
+          Belum ada transaksi bulan ini.
+        </p>
+      ) : (
+        <ul className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+          {recent.map((tx) => (
+            <li key={tx.id} className="flex items-center gap-3 py-2.5">
+              <span className="text-base shrink-0">{TYPE_EMOJI[tx.type] ?? '⚪'}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
+                  {tx.description || tx.category}
+                </p>
+                <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>
+                  {tx.category} · {new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                </p>
+              </div>
+              <p
+                className="text-sm font-semibold tabular-nums shrink-0"
+                style={{ color: tx.type === 'income' ? 'var(--emerald-600)' : tx.type === 'expense' ? 'var(--coral-600)' : 'var(--amber-600)' }}
+              >
+                {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Goals widget — top 3 active
+// ─────────────────────────────────────────────────────────────────
+
+function GoalsWidget({ goals }: {
+  goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }>
+}) {
+  if (goals.length === 0) {
+    return (
+      <div className="s-card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="caps">Tujuan Keuangan</p>
+            <h3 className="text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+              Belum ada goal
+            </h3>
+          </div>
+          <a href="/dashboard/goals" className="text-xs font-medium hover:underline" style={{ color: 'var(--emerald-700)' }}>
+            Buat sekarang →
+          </a>
+        </div>
+        <p className="text-sm py-4 text-center" style={{ color: 'var(--ink-soft)' }}>
+          Set target keuangan biar ada arah — &ldquo;DP Rumah&rdquo;, &ldquo;Liburan Bali&rdquo;, dll.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="s-card p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="caps">Tujuan Keuangan</p>
+          <h3 className="text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {goals.length} Goal Aktif
+          </h3>
+        </div>
+        <a href="/dashboard/goals" className="text-xs font-medium hover:underline inline-flex items-center gap-1" style={{ color: 'var(--emerald-700)' }}>
+          Semua <ArrowRight className="size-3" />
+        </a>
+      </div>
+      <div className="space-y-3">
+        {goals.map((g) => {
+          const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0
+          const done = pct >= 100
+          return (
+            <div key={g.id}>
+              <div className="flex items-baseline justify-between gap-2 text-xs mb-1">
+                <span className="font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</span>
+                <span className="num tabular shrink-0" style={{ color: done ? 'var(--emerald-700)' : 'var(--ink-muted)' }}>
+                  {pct.toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${pct}%`,
+                    background: done ? 'var(--emerald-500)' : 'var(--emerald-400)',
+                  }}
+                />
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>
+                {formatCurrency(g.current_amount)} / {formatCurrency(g.target_amount)}
+              </p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
