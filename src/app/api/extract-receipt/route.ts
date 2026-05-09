@@ -21,6 +21,30 @@ const ALL_CATEGORIES = [
 const ALLOWED_MEDIA = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const MAX_BYTES = 10 * 1024 * 1024 // 10MB
 
+type SupportedMedia = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+
+// Sniff actual format from magic bytes — browsers (esp. mobile) sometimes
+// mislabel file.type. Returns null if no known signature matches.
+function detectMediaType(buf: Buffer): SupportedMedia | null {
+  if (buf.length < 12) return null
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg'
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47
+  ) return 'image/png'
+  // GIF: 47 49 46 38 (GIF8)
+  if (
+    buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38
+  ) return 'image/gif'
+  // WebP: RIFF....WEBP — bytes 0-3 = "RIFF", bytes 8-11 = "WEBP"
+  if (
+    buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+    buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
+  ) return 'image/webp'
+  return null
+}
+
 const SYSTEM_PROMPT = `Kamu adalah asisten OCR struk belanja Indonesia. Tugasmu mengekstrak field-field penting dari foto struk.
 
 Aturan:
@@ -107,13 +131,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Field "image" wajib (file)' }, { status: 400 })
   }
 
-  if (!ALLOWED_MEDIA.has(file.type)) {
-    return NextResponse.json(
-      { error: `Tipe file tidak didukung: ${file.type}. Pakai JPEG/PNG/WebP/GIF.` },
-      { status: 400 },
-    )
-  }
-
   if (file.size > MAX_BYTES) {
     return NextResponse.json(
       { error: `File terlalu besar (${Math.round(file.size / 1024 / 1024)}MB). Maks 10MB.` },
@@ -122,7 +139,23 @@ export async function POST(request: NextRequest) {
   }
 
   const arrayBuffer = await file.arrayBuffer()
-  const base64 = Buffer.from(arrayBuffer).toString('base64')
+  const buffer = Buffer.from(arrayBuffer)
+
+  // Sniff actual format from magic bytes (don't trust file.type — browsers lie)
+  const detectedType = detectMediaType(buffer)
+  const reportedType = ALLOWED_MEDIA.has(file.type) ? (file.type as SupportedMedia) : null
+  const mediaType: SupportedMedia | null = detectedType ?? reportedType
+
+  if (!mediaType) {
+    return NextResponse.json(
+      {
+        error: `Format gambar tidak dikenali. Pakai JPEG/PNG/WebP/GIF. (browser: ${file.type || 'unknown'})`,
+      },
+      { status: 400 },
+    )
+  }
+
+  const base64 = buffer.toString('base64')
 
   const client = new Anthropic()
 
@@ -148,7 +181,7 @@ export async function POST(request: NextRequest) {
               type: 'image',
               source: {
                 type: 'base64',
-                media_type: file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
+                media_type: mediaType,
                 data: base64,
               },
             },
