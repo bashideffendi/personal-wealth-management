@@ -569,11 +569,28 @@ body {
    pervasive in the codebase). One global rule covers everything without
    per-component wiring. Hover reveals briefly so the user can peek if
    they need to.
+
+   Two-stage blur: small text gets a moderate blur, large hero numbers
+   (text-2xl and up, set via data-private-hero on the page side OR via
+   font-size threshold) need stronger blur because at big sizes 7-10px
+   isn't enough to fully obscure digit shapes.
    ============================================ */
 body[data-privacy="hidden"] .num {
-  filter: blur(7px);
+  filter: blur(14px) saturate(0.6);
   user-select: none;
   transition: filter 0.18s ease;
+}
+/* Smaller numbers (in tables, pills, list items) only need a lighter blur.
+   The .num.tabular .text-xs / text-sm / text-[11px] etc. patterns hit the
+   light blur via this more-specific selector. */
+body[data-privacy="hidden"] .num.text-xs,
+body[data-privacy="hidden"] .num.text-sm,
+body[data-privacy="hidden"] .num.text-\[11px\],
+body[data-privacy="hidden"] .num.text-\[10px\],
+body[data-privacy="hidden"] .num.text-\[9px\],
+body[data-privacy="hidden"] .num.text-\[8px\],
+body[data-privacy="hidden"] .num.text-\[8\.5px\] {
+  filter: blur(8px) saturate(0.6);
 }
 body[data-privacy="hidden"] .num:hover {
   filter: blur(0);
@@ -581,6 +598,6 @@ body[data-privacy="hidden"] .num:hover {
 /* Also blur recharts chart text/labels (SVG) so amount tooltips don't leak */
 body[data-privacy="hidden"] .recharts-tooltip-wrapper,
 body[data-privacy="hidden"] .recharts-text {
-  filter: blur(5px);
+  filter: blur(7px);
   pointer-events: none;
 }
