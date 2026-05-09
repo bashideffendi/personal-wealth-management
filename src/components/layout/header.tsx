@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, LogOut, ChevronDown, Search } from 'lucide-react'
+import { Menu, LogOut, ChevronDown, Search, Crown } from 'lucide-react'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -180,39 +180,61 @@ export function Header({ user }: HeaderProps) {
           <MobileNav pathname={pathname} onClose={() => setOpen(false)} />
 
           <div
-            className="border-t p-3"
+            className="border-t p-3 space-y-1"
             style={{ borderColor: 'rgba(148,163,184,0.10)' }}
           >
-            <div className="flex items-center gap-3 p-2">
-              <Avatar size="sm">
-                <AvatarFallback
-                  className="text-xs font-bold"
-                  style={{
-                    background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%)',
-                    color: '#FFFFFF',
-                  }}
-                >
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 truncate">
-                <p className="truncate text-sm font-medium text-white">
-                  {fullName}
-                </p>
-                <p className="truncate text-xs text-white/40">
-                  {user.email}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleLogout}
-                className="text-white/50 hover:bg-white/10 hover:text-[#F43F5E]"
-                aria-label="Keluar"
+            {/* Tappable user card → Profile */}
+            <SheetClose render={<span />}>
+              <Link
+                href="/dashboard/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-white/5"
               >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+                <Avatar size="sm">
+                  <AvatarFallback
+                    className="text-xs font-bold"
+                    style={{
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 truncate">
+                  <p className="truncate text-sm font-medium text-white">
+                    {fullName}
+                  </p>
+                  <p className="truncate text-[11px] text-white/40">
+                    Lihat profil & pengaturan
+                  </p>
+                </div>
+              </Link>
+            </SheetClose>
+
+            {/* Pricing / Subscription CTA */}
+            <SheetClose render={<span />}>
+              <Link
+                href="/dashboard/pricing"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg p-2 text-sm transition hover:bg-white/5"
+                style={{ color: '#FCD34D' }}
+              >
+                <Crown className="size-4" />
+                <span className="flex-1 font-medium">Paket Langganan</span>
+              </Link>
+            </SheetClose>
+
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-lg p-2 text-sm transition hover:bg-white/5"
+              style={{ color: '#F87171' }}
+            >
+              <LogOut className="size-4" />
+              <span className="flex-1 text-left font-medium">Keluar</span>
+            </button>
           </div>
         </SheetContent>
       </Sheet>

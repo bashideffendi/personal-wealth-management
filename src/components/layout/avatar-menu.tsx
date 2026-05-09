@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -83,12 +82,12 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem render={<Link href="/dashboard/profile" />}>
+        <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
           <UserCircle className="size-4 mr-2" />
           Profil
         </DropdownMenuItem>
 
-        <DropdownMenuItem render={<Link href="/dashboard/pricing" />}>
+        <DropdownMenuItem onClick={() => router.push('/dashboard/pricing')}>
           <Crown className="size-4 mr-2" />
           Paket Langganan
         </DropdownMenuItem>
