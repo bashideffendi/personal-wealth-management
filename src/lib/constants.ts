@@ -199,9 +199,9 @@ export const NAV_ITEMS: NavItem[] = [
   // (RRG moved out to standalone investment-dashboard project)
 
   // TOOLS — utilities, reports, calculators, category rules
-  { label: 'Kalkulator',      titleKey: 'nav.calculators',     href: '/dashboard/calculators',    icon: 'Calculator',  section: 'tools' },
-  { label: 'Wrapped',         titleKey: 'nav.wrapped',         href: '/dashboard/wrapped',        icon: 'Gift',        section: 'tools' },
-  { label: 'Subscription',    titleKey: 'nav.subscriptions',   href: '/dashboard/subscriptions',  icon: 'Clock',       section: 'tools' },
+  { label: 'Kalkulator',      titleKey: 'nav.calculators',     href: '/dashboard/calculators',    icon: 'Calculator',   section: 'tools' },
+  { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report',  href: '/dashboard/monthly-report', icon: 'FileText',     section: 'tools' },
+  { label: 'Subscription',    titleKey: 'nav.subscriptions',   href: '/dashboard/subscriptions',  icon: 'Clock',        section: 'tools' },
   { label: 'Kontrak',         titleKey: 'nav.contracts',       href: '/dashboard/contracts',      icon: 'FileClock',   section: 'tools' },
   { label: 'Aturan Kategori', titleKey: 'nav.rules',           href: '/dashboard/rules',          icon: 'Sparkles',    section: 'tools' },
 
