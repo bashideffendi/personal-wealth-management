@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2, RefreshCw } from 'lucide-react'
+import Image from 'next/image'
 
 interface FxQuote {
   ticker: string
@@ -19,13 +20,15 @@ interface FxQuote {
   changePct: number | null
 }
 
-const PAIRS: { ticker: string; code: string; flag: string; name: string }[] = [
-  { ticker: 'USDIDR=X', code: 'USD', flag: '🇺🇸', name: 'US Dollar' },
-  { ticker: 'SGDIDR=X', code: 'SGD', flag: '🇸🇬', name: 'Singapore Dollar' },
-  { ticker: 'EURIDR=X', code: 'EUR', flag: '🇪🇺', name: 'Euro' },
-  { ticker: 'MYRIDR=X', code: 'MYR', flag: '🇲🇾', name: 'Malaysian Ringgit' },
-  { ticker: 'JPYIDR=X', code: 'JPY', flag: '🇯🇵', name: 'Japanese Yen' },
-  { ticker: 'CNYIDR=X', code: 'CNY', flag: '🇨🇳', name: 'Chinese Yuan' },
+// `iso` = ISO 3166-1 alpha-2 country code (or 'eu' for European Union),
+// matched to circle-flags filenames at hatscripts.github.io/circle-flags/flags/
+const PAIRS: { ticker: string; code: string; iso: string; name: string }[] = [
+  { ticker: 'USDIDR=X', code: 'USD', iso: 'us', name: 'US Dollar' },
+  { ticker: 'SGDIDR=X', code: 'SGD', iso: 'sg', name: 'Singapore Dollar' },
+  { ticker: 'EURIDR=X', code: 'EUR', iso: 'european_union', name: 'Euro' },
+  { ticker: 'MYRIDR=X', code: 'MYR', iso: 'my', name: 'Malaysian Ringgit' },
+  { ticker: 'JPYIDR=X', code: 'JPY', iso: 'jp', name: 'Japanese Yen' },
+  { ticker: 'CNYIDR=X', code: 'CNY', iso: 'cn', name: 'Chinese Yuan' },
 ]
 
 function formatRate(price: number): string {
@@ -128,7 +131,14 @@ export function CurrencyRates() {
               >
                 <div className="flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-base shrink-0">{pair.flag}</span>
+                    <Image
+                      src={`https://hatscripts.github.io/circle-flags/flags/${pair.iso}.svg`}
+                      alt={`Bendera ${pair.name}`}
+                      width={20}
+                      height={20}
+                      className="shrink-0 rounded-full ring-1 ring-black/5"
+                      unoptimized
+                    />
                     <span className="text-[11px] font-semibold" style={{ color: 'var(--ink)' }}>
                       {pair.code}
                     </span>

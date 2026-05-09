@@ -247,8 +247,10 @@ export default function InvestmentOverviewPage() {
         />
       </div>
 
-      {/* Allocation + category grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+      {/* Allocation + category grid — items-start so the left card stays at
+          its natural height instead of stretching to match the (often taller)
+          right column, which leaves blank space below. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 items-start">
         <div className="glass-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>

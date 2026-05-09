@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
         hostname: 'raw.githubusercontent.com',
         pathname: '/spothq/cryptocurrency-icons/**',
       },
+      {
+        // HatScripts/circle-flags — open-source circular country flag SVGs
+        protocol: 'https',
+        hostname: 'hatscripts.github.io',
+        pathname: '/circle-flags/**',
+      },
     ],
   },
 };
