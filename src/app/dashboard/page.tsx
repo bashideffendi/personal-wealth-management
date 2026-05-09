@@ -7,6 +7,7 @@ import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
+import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import type { Transaction, Investment, CreditCard, Contract } from '@/types'
 
 import {
@@ -312,6 +313,15 @@ export default function DashboardPage() {
         />
         <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} direction={totals.net >= 0 ? 'up' : 'down'} />
       </div>
+
+      {/* Phase 2.3 — AI-generated personalized insights */}
+      <AIInsightsCard
+        monthTransactions={monthTransactions}
+        yearTransactions={yearTransactions}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        goals={activeGoals}
+      />
 
       {/* Phase 2.1 — Recent Transactions + Goals row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
