@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
@@ -11,24 +10,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Loader2, FileDown, TrendingUp, TrendingDown, Calendar,
+  Loader2, Printer, TrendingUp, TrendingDown, Calendar,
   Trophy, Activity, Wallet, PieChart as PieIcon,
 } from 'lucide-react'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts'
-import type { ReportData } from '@/components/monthly-report/report-pdf'
-
-// PDF components are SSR-incompatible — load only on client
-const PDFDownloadLink = dynamic(
-  () => import('@react-pdf/renderer').then((m) => m.PDFDownloadLink),
-  { ssr: false, loading: () => <span className="text-sm text-muted-foreground">Menyiapkan PDF...</span> },
-)
-const MonthlyReportPDF = dynamic(
-  () => import('@/components/monthly-report/report-pdf').then((m) => ({ default: m.MonthlyReportPDF })),
-  { ssr: false },
-)
 
 interface UserState { id: string; name: string }
 
@@ -45,7 +33,6 @@ export default function MonthlyReportPage() {
     setLoading(true)
     const { data: { user: u } } = await supabase.auth.getUser()
     if (!u) { setLoading(false); return }
-    // Get profile for name
     const profRes = await supabase.from('profiles').select('full_name').eq('id', u.id).maybeSingle()
     setUser({
       id: u.id,
@@ -79,7 +66,6 @@ export default function MonthlyReportPage() {
     const net = income - expense - saving - investment
     const savingRate = income > 0 ? ((saving + investment) / income) * 100 : 0
 
-    // Income by category
     const incCat: Record<string, number> = {}
     for (const t of txs.filter((t) => t.type === 'income')) {
       incCat[t.category] = (incCat[t.category] || 0) + t.amount
@@ -88,7 +74,6 @@ export default function MonthlyReportPage() {
       .sort(([, a], [, b]) => b - a)
       .map(([name, amount]) => ({ name, amount, pct: income > 0 ? (amount / income) * 100 : 0 }))
 
-    // Expense by category
     const expCat: Record<string, number> = {}
     for (const t of txs.filter((t) => t.type === 'expense')) {
       expCat[t.category] = (expCat[t.category] || 0) + t.amount
@@ -97,7 +82,6 @@ export default function MonthlyReportPage() {
       .sort(([, a], [, b]) => b - a)
       .map(([name, amount]) => ({ name, amount, pct: expense > 0 ? (amount / expense) * 100 : 0 }))
 
-    // Top expense transactions
     const top_expenses = txs
       .filter((t) => t.type === 'expense')
       .sort((a, b) => b.amount - a.amount)
@@ -105,7 +89,6 @@ export default function MonthlyReportPage() {
 
     const biggest_expense = top_expenses[0] ?? null
 
-    // Busiest day
     const dayMap: Record<string, { count: number; amount: number }> = {}
     for (const t of txs) {
       const d = t.date
@@ -116,7 +99,6 @@ export default function MonthlyReportPage() {
     const busiest = Object.entries(dayMap).sort(([, a], [, b]) => b.count - a.count)[0]
     const busiest_day = busiest ? { date: busiest[0], count: busiest[1].count, amount: busiest[1].amount } : null
 
-    // Daily expense bar (28-31 days)
     const daysInMonth = new Date(year, month, 0).getDate()
     const dailyExp: { day: string; expense: number; income: number }[] = []
     for (let d = 1; d <= daysInMonth; d++) {
@@ -138,40 +120,10 @@ export default function MonthlyReportPage() {
     }
   }, [txs, year, month])
 
-  const reportData: ReportData | null = user ? {
-    user_name: user.name,
-    period_label: `${MONTHS[month - 1]} ${year}`,
-    generated_at: now.toLocaleDateString('id-ID', {
-      day: 'numeric', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    }) + ' WIB',
-    income: recap.income,
-    expense: recap.expense,
-    saving: recap.saving,
-    investment: recap.investment,
-    net: recap.net,
-    saving_rate: recap.savingRate,
-    tx_count: recap.tx_count,
-    income_by_category: recap.income_by_category,
-    expense_by_category: recap.expense_by_category,
-    top_expenses: recap.top_expenses.map((t) => ({
-      date: t.date, type: t.type, category: t.category,
-      description: t.description, amount: t.amount,
-    })),
-    biggest_expense: recap.biggest_expense ? {
-      date: recap.biggest_expense.date, type: 'expense',
-      category: recap.biggest_expense.category,
-      description: recap.biggest_expense.description,
-      amount: recap.biggest_expense.amount,
-    } : null,
-    busiest_day: recap.busiest_day,
-  } : null
-
   const yearOpts = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i)
   const monthOpts = MONTHS.map((m, i) => ({ value: i + 1, label: m }))
   const periodLabel = `${MONTHS[month - 1]} ${year}`
 
-  // Donut data
   const expenseDonut = recap.expense_by_category.slice(0, 6).map((c) => ({ name: c.name, value: c.amount }))
   const PIE_COLORS = ['#8B1538', '#D97706', '#059669', '#4F46E5', '#E11D48', '#737373']
 
@@ -184,188 +136,250 @@ export default function MonthlyReportPage() {
   }
 
   const netUp = recap.net >= 0
+  const generatedDate = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB'
 
   return (
-    <div className="space-y-6">
-      {/* Title + period selector + download */}
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Laporan Bulanan</p>
-        <div className="mt-2 flex items-end justify-between gap-4 flex-wrap">
-          <div>
-            <h2 className="text-white text-3xl sm:text-4xl font-semibold tracking-tight">
-              {periodLabel}
-            </h2>
-            <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
-              {recap.tx_count} transaksi · disiapkan untuk {user?.name ?? 'Anda'}
+    <>
+      {/* PRINT CSS — applied only when printing/saving as PDF.
+          - Hide sidebar/header/quick-add/dialogs (no app chrome in PDF)
+          - Reset main scroll area so full content prints
+          - Force high-contrast colors (override CSS vars that might use OKLCH)
+          - Page break between major sections, A4 portrait friendly
+      */}
+      <style jsx global>{`
+        @media print {
+          @page { size: A4 portrait; margin: 14mm; }
+          html, body { background: white !important; }
+          /* Hide app chrome */
+          aside, header, .quick-add-fab, [role="dialog"] { display: none !important; }
+          main { overflow: visible !important; padding: 0 !important; }
+          .max-w-\\[1400px\\] { max-width: 100% !important; }
+          /* Hide print button itself + selectors */
+          .no-print { display: none !important; }
+          /* Tighten spacing for print */
+          .space-y-6 > * + * { margin-top: 12px !important; }
+          /* Force backgrounds + colors to print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          /* Page breaks */
+          .print-page-break { page-break-before: always; }
+          .print-avoid-break { page-break-inside: avoid; }
+        }
+      `}</style>
+
+      <div className="space-y-6">
+        {/* Header — print-friendly */}
+        <div className="dark-card p-6 sm:p-7 print-avoid-break">
+          <p className="caps">Laporan Bulanan</p>
+          <div className="mt-2 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-white text-3xl sm:text-4xl font-semibold tracking-tight">
+                {periodLabel}
+              </h2>
+              <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
+                {recap.tx_count} transaksi · disiapkan untuk {user?.name ?? 'Anda'}
+              </p>
+              <p className="text-xs mt-1 hidden print:block" style={{ color: 'var(--on-black-mut)' }}>
+                Dibuat: {generatedDate}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 items-center no-print">
+              <Select value={String(month)} onValueChange={(v) => v && setMonth(Number(v))}>
+                <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {monthOpts.map((m) => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={String(year)} onValueChange={(v) => v && setYear(Number(v))}>
+                <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {yearOpts.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {recap.tx_count > 0 && (
+                <Button onClick={() => window.print()}>
+                  <Printer className="size-4" data-icon="inline-start" />
+                  Cetak / Simpan PDF
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {recap.tx_count === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-muted bg-muted/20 p-10 sm:p-14 text-center">
+            <Calendar className="size-12 mx-auto text-muted-foreground/60" />
+            <h3 className="mt-4 text-lg font-semibold">Tidak ada transaksi di {periodLabel}</h3>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto mt-2">
+              Belum ada data buat di-recap. Mulai catat transaksi atau pilih bulan lain.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 items-center">
-            <Select value={String(month)} onValueChange={(v) => v && setMonth(Number(v))}>
-              <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {monthOpts.map((m) => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={(v) => v && setYear(Number(v))}>
-              <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {yearOpts.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            {reportData && recap.tx_count > 0 && (
-              <PDFDownloadLink
-                document={<MonthlyReportPDF data={reportData} />}
-                fileName={`Laporan-Bulanan-${periodLabel.replace(' ', '-')}.pdf`}
-              >
-                {({ loading: pdfLoading }) => (
-                  <Button disabled={pdfLoading}>
-                    {pdfLoading ? <Loader2 className="size-4 animate-spin" data-icon="inline-start" /> : <FileDown className="size-4" data-icon="inline-start" />}
-                    {pdfLoading ? 'Generating...' : 'Download PDF'}
-                  </Button>
-                )}
-              </PDFDownloadLink>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {recap.tx_count === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-muted bg-muted/20 p-10 sm:p-14 text-center">
-          <Calendar className="size-12 mx-auto text-muted-foreground/60" />
-          <h3 className="mt-4 text-lg font-semibold">Tidak ada transaksi di {periodLabel}</h3>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto mt-2">
-            Belum ada data buat di-recap. Mulai catat transaksi atau pilih bulan lain.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* KPI grid */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <KpiCard label="Pemasukan" value={formatCurrency(recap.income)} accent="emerald" icon={<TrendingUp className="size-4" />} />
-            <KpiCard label="Pengeluaran" value={formatCurrency(recap.expense)} accent="rose" icon={<TrendingDown className="size-4" />} />
-            <KpiCard label="Tabungan + Investasi" value={formatCurrency(recap.saving + recap.investment)} accent="amber" icon={<Wallet className="size-4" />} note={`Saving rate ${recap.savingRate.toFixed(1)}%`} />
-            <KpiCard label="Net Cashflow" value={`${netUp ? '+' : ''}${formatCurrency(recap.net)}`} accent={netUp ? 'emerald' : 'rose'} icon={netUp ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />} />
-          </div>
-
-          {/* Highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recap.biggest_expense && (
-              <Highlight
-                icon={<Trophy className="size-4 text-amber-700" />}
-                label="Pengeluaran Terbesar"
-                main={recap.biggest_expense.description || recap.biggest_expense.category}
-                value={formatCurrency(recap.biggest_expense.amount)}
-                sub={`${recap.biggest_expense.category} · ${new Date(recap.biggest_expense.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}`}
-                tone="amber"
-              />
-            )}
-            {recap.busiest_day && (
-              <Highlight
-                icon={<Activity className="size-4 text-blue-700" />}
-                label="Hari Paling Aktif"
-                main={new Date(recap.busiest_day.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-                value={`${recap.busiest_day.count} transaksi`}
-                sub={`Total: ${formatCurrency(recap.busiest_day.amount)}`}
-                tone="blue"
-              />
-            )}
-            <Highlight
-              icon={<PieIcon className="size-4 text-purple-700" />}
-              label="Kategori Dominan"
-              main={recap.expense_by_category[0]?.name ?? '—'}
-              value={recap.expense_by_category[0] ? formatCurrency(recap.expense_by_category[0].amount) : '—'}
-              sub={recap.expense_by_category[0] ? `${recap.expense_by_category[0].pct.toFixed(1)}% dari total pengeluaran` : ''}
-              tone="purple"
-            />
-          </div>
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            {/* Daily bar */}
-            <div className="s-card p-5 lg:col-span-3">
-              <p className="caps">Aktivitas Harian</p>
-              <h3 className="font-semibold mt-0.5">Pemasukan vs Pengeluaran per Hari</h3>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={recap.dailyExp} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-                  <XAxis dataKey="day" fontSize={10} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-                  <YAxis fontSize={10} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    formatter={(v: unknown, name) => [formatCurrency(Number(v) || 0), String(name) === 'income' ? 'Pemasukan' : 'Pengeluaran']}
-                    labelFormatter={(d) => `Tgl ${d}`}
-                    contentStyle={{ background: 'white', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }}
-                  />
-                  <Bar dataKey="income" fill="#059669" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="expense" fill="#E11D48" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+        ) : (
+          <>
+            {/* KPI grid */}
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 print-avoid-break">
+              <KpiCard label="Pemasukan" value={formatCurrency(recap.income)} accent="emerald" icon={<TrendingUp className="size-4" />} />
+              <KpiCard label="Pengeluaran" value={formatCurrency(recap.expense)} accent="rose" icon={<TrendingDown className="size-4" />} />
+              <KpiCard label="Tabungan + Investasi" value={formatCurrency(recap.saving + recap.investment)} accent="amber" icon={<Wallet className="size-4" />} note={`Saving rate ${recap.savingRate.toFixed(1)}%`} />
+              <KpiCard label="Net Cashflow" value={`${netUp ? '+' : ''}${formatCurrency(recap.net)}`} accent={netUp ? 'emerald' : 'rose'} icon={netUp ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />} />
             </div>
 
-            {/* Donut by category */}
-            <div className="s-card p-5 lg:col-span-2">
-              <p className="caps">Komposisi Pengeluaran</p>
-              <h3 className="font-semibold mt-0.5">Top Kategori</h3>
-              {expenseDonut.length === 0 ? (
-                <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
-                  Belum ada pengeluaran.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie data={expenseDonut} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={2} dataKey="value">
-                      {expenseDonut.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
+            {/* Highlights */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print-avoid-break">
+              {recap.biggest_expense && (
+                <Highlight
+                  icon={<Trophy className="size-4 text-amber-700" />}
+                  label="Pengeluaran Terbesar"
+                  main={recap.biggest_expense.description || recap.biggest_expense.category}
+                  value={formatCurrency(recap.biggest_expense.amount)}
+                  sub={`${recap.biggest_expense.category} · ${new Date(recap.biggest_expense.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}`}
+                  tone="amber"
+                />
+              )}
+              {recap.busiest_day && (
+                <Highlight
+                  icon={<Activity className="size-4 text-blue-700" />}
+                  label="Hari Paling Aktif"
+                  main={new Date(recap.busiest_day.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  value={`${recap.busiest_day.count} transaksi`}
+                  sub={`Total: ${formatCurrency(recap.busiest_day.amount)}`}
+                  tone="blue"
+                />
+              )}
+              <Highlight
+                icon={<PieIcon className="size-4 text-purple-700" />}
+                label="Kategori Dominan"
+                main={recap.expense_by_category[0]?.name ?? '—'}
+                value={recap.expense_by_category[0] ? formatCurrency(recap.expense_by_category[0].amount) : '—'}
+                sub={recap.expense_by_category[0] ? `${recap.expense_by_category[0].pct.toFixed(1)}% dari total pengeluaran` : ''}
+                tone="purple"
+              />
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 print-page-break">
+              <div className="s-card p-5 lg:col-span-3 print-avoid-break">
+                <p className="caps">Aktivitas Harian</p>
+                <h3 className="font-semibold mt-0.5">Pemasukan vs Pengeluaran per Hari</h3>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={recap.dailyExp} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
+                    <XAxis dataKey="day" fontSize={10} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
+                    <YAxis fontSize={10} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
                     <Tooltip
-                      formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
+                      formatter={(v: unknown, name) => [formatCurrency(Number(v) || 0), String(name) === 'income' ? 'Pemasukan' : 'Pengeluaran']}
+                      labelFormatter={(d) => `Tgl ${d}`}
                       contentStyle={{ background: 'white', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }}
                     />
-                  </PieChart>
+                    <Bar dataKey="income" fill="#059669" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="expense" fill="#E11D48" radius={[3, 3, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
-              )}
-              <div className="mt-3 space-y-1.5">
-                {expenseDonut.map((c, i) => (
-                  <div key={c.name} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2">
-                      <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                      {c.name}
-                    </span>
-                    <span className="font-medium tabular-nums">{formatCurrency(c.value)}</span>
-                  </div>
-                ))}
               </div>
-            </div>
-          </div>
 
-          {/* Top categories table */}
-          {recap.expense_by_category.length > 0 && (
-            <div className="s-card p-5">
-              <p className="caps">Pengeluaran per Kategori</p>
-              <h3 className="font-semibold mt-0.5">Lengkap Diurutkan dari Terbesar</h3>
-              <div className="mt-4 space-y-2">
-                {recap.expense_by_category.map((row, i) => (
-                  <div key={row.name} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground tabular-nums w-6">{i + 1}.</span>
-                    <span className="text-sm flex-1">{row.name}</span>
-                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden max-w-[200px]">
-                      <div className="h-full rounded-full" style={{ width: `${row.pct}%`, background: 'var(--burgundy-700, #8B1538)' }} />
+              <div className="s-card p-5 lg:col-span-2 print-avoid-break">
+                <p className="caps">Komposisi Pengeluaran</p>
+                <h3 className="font-semibold mt-0.5">Top Kategori</h3>
+                {expenseDonut.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                    Belum ada pengeluaran.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie data={expenseDonut} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={2} dataKey="value">
+                        {expenseDonut.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip
+                        formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
+                        contentStyle={{ background: 'white', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+                <div className="mt-3 space-y-1.5">
+                  {expenseDonut.map((c, i) => (
+                    <div key={c.name} className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                        {c.name}
+                      </span>
+                      <span className="font-medium tabular-nums">{formatCurrency(c.value)}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground tabular-nums w-12 text-right">{row.pct.toFixed(1)}%</span>
-                    <span className="text-sm font-semibold tabular-nums w-32 text-right">{formatCurrency(row.amount)}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Footer note */}
-          <div className="rounded-lg border bg-muted/30 p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              💡 Klik <strong>Download PDF</strong> di atas untuk export laporan ini ke file PDF berformat A4 — siap di-share atau di-print.
-            </p>
-          </div>
-        </>
-      )}
-    </div>
+            {/* Top categories table */}
+            {recap.expense_by_category.length > 0 && (
+              <div className="s-card p-5 print-avoid-break">
+                <p className="caps">Pengeluaran per Kategori</p>
+                <h3 className="font-semibold mt-0.5">Lengkap Diurutkan dari Terbesar</h3>
+                <div className="mt-4 space-y-2">
+                  {recap.expense_by_category.map((row, i) => (
+                    <div key={row.name} className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground tabular-nums w-6">{i + 1}.</span>
+                      <span className="text-sm flex-1">{row.name}</span>
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden max-w-[200px]">
+                        <div className="h-full rounded-full" style={{ width: `${row.pct}%`, background: '#8B1538' }} />
+                      </div>
+                      <span className="text-xs text-muted-foreground tabular-nums w-12 text-right">{row.pct.toFixed(1)}%</span>
+                      <span className="text-sm font-semibold tabular-nums w-32 text-right">{formatCurrency(row.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top transactions table — for PDF reference */}
+            {recap.top_expenses.length > 0 && (
+              <div className="s-card p-5 print-page-break print-avoid-break">
+                <p className="caps">Transaksi Pengeluaran Terbesar</p>
+                <h3 className="font-semibold mt-0.5">Top 10 Single Transactions</h3>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-xs text-muted-foreground uppercase tracking-wider">
+                        <th className="pb-2 font-medium">Tanggal</th>
+                        <th className="pb-2 font-medium">Deskripsi</th>
+                        <th className="pb-2 font-medium">Kategori</th>
+                        <th className="pb-2 font-medium text-right">Jumlah</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recap.top_expenses.map((tx, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-2 text-muted-foreground text-xs">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                          <td className="py-2">{tx.description || '—'}</td>
+                          <td className="py-2 text-muted-foreground text-xs">{tx.category}</td>
+                          <td className="py-2 text-right font-semibold tabular-nums" style={{ color: '#E11D48' }}>{formatCurrency(tx.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Footer note (screen only) */}
+            <div className="rounded-lg border bg-muted/30 p-4 text-center no-print">
+              <p className="text-sm text-muted-foreground">
+                💡 Klik <strong>Cetak / Simpan PDF</strong> untuk export laporan ini.
+                Di dialog browser, pilih <strong>&quot;Save as PDF&quot;</strong> sebagai destination — quality vector, file ringan, text searchable.
+              </p>
+            </div>
+
+            {/* Print-only footer */}
+            <div className="hidden print:block text-center text-xs text-muted-foreground border-t pt-3 mt-6">
+              Personal Wealth Management · Laporan dibuat {generatedDate} · masbash.id
+            </div>
+          </>
+        )}
+      </div>
+    </>
   )
 }
 
