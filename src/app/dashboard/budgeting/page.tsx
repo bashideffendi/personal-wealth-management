@@ -220,12 +220,6 @@ export default function BudgetingPage() {
     return budgets[budgetKey(type, category, month)] ?? 0
   }
 
-  function rowTotal(type: string, category: string) {
-    let sum = 0
-    for (let m = 1; m <= 12; m++) sum += getValue(type, category, m)
-    return sum
-  }
-
   function sectionMonthTotal(
     categories: readonly string[],
     type: string,
@@ -303,12 +297,6 @@ export default function BudgetingPage() {
             </td>
           )
         })}
-        <td
-          className="num border border-[color:var(--border-soft)] px-2 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
-          title={formatCurrency(rowTotal(type, category))}
-        >
-          {formatCompactCurrency(rowTotal(type, category))}
-        </td>
       </tr>
     )
   }
@@ -336,12 +324,6 @@ export default function BudgetingPage() {
             </td>
           )
         })}
-        <td
-          className="num border border-[color:var(--border-soft)] px-2 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
-          title={formatCurrency(sectionTotal(categories, type))}
-        >
-          {formatCompactCurrency(sectionTotal(categories, type))}
-        </td>
       </tr>
     )
   }
@@ -366,12 +348,6 @@ export default function BudgetingPage() {
             </td>
           )
         })}
-        <td className="num border border-[color:var(--border-soft)] px-2 py-1 text-right text-[11px] font-semibold italic bg-inherit whitespace-nowrap tabular">
-          {totalIncomeYear > 0
-            ? ((totalExpenseYear / totalIncomeYear) * 100).toFixed(1)
-            : '0.0'}
-          %
-        </td>
       </tr>
     )
   }
@@ -380,7 +356,7 @@ export default function BudgetingPage() {
     return (
       <tr style={{ background: 'var(--ink)' }}>
         <td
-          colSpan={14}
+          colSpan={13}
           className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] bg-inherit"
           style={{ color: 'var(--lime-400)' }}
         >
@@ -460,7 +436,6 @@ export default function BudgetingPage() {
             <colgroup>
               <col style={{ width: '160px' }} />
               {SHORT_MONTHS.map((m) => <col key={m} style={{ width: 'auto', minWidth: '64px' }} />)}
-              <col style={{ width: '92px' }} />
             </colgroup>
             <thead>
               <tr className="bg-[color:var(--surface-alt)]">
@@ -475,9 +450,6 @@ export default function BudgetingPage() {
                     {m}
                   </th>
                 ))}
-                <th className="border border-[color:var(--border-soft)] px-2 py-1.5 text-center text-[11px] font-bold whitespace-nowrap">
-                  Total
-                </th>
               </tr>
             </thead>
             <tbody>
