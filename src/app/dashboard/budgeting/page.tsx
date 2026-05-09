@@ -353,16 +353,55 @@ export default function BudgetingPage() {
     )
   }
 
-  function renderSectionHeader(label: string) {
+  // Color tokens per kind — used by section header + total row tinting.
+  // Matches the dashboard Sankey palette for cross-page consistency.
+  const KIND_COLOR: Record<BudgetType, { hex: string; bgSoft: string; bgFirm: string; textOnFirm: string }> = {
+    income: {
+      hex: '#10B981', // emerald
+      bgSoft: 'rgba(16, 185, 129, 0.06)',
+      bgFirm: 'rgba(16, 185, 129, 0.14)',
+      textOnFirm: '#065F46',
+    },
+    expense: {
+      hex: '#EF4444', // coral / red
+      bgSoft: 'rgba(239, 68, 68, 0.05)',
+      bgFirm: 'rgba(239, 68, 68, 0.13)',
+      textOnFirm: '#991B1B',
+    },
+    saving: {
+      hex: '#F59E0B', // amber
+      bgSoft: 'rgba(245, 158, 11, 0.06)',
+      bgFirm: 'rgba(245, 158, 11, 0.16)',
+      textOnFirm: '#92400E',
+    },
+    investment: {
+      hex: '#0EA5E9', // sky
+      bgSoft: 'rgba(14, 165, 233, 0.05)',
+      bgFirm: 'rgba(14, 165, 233, 0.14)',
+      textOnFirm: '#075985',
+    },
+  }
+
+  function renderSectionHeader(label: string, kind: BudgetType) {
+    const color = KIND_COLOR[kind]
     return (
-      <tr style={{ background: 'var(--ink)' }}>
+      <tr style={{ background: color.hex }}>
         <td
           colSpan={13}
-          className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] bg-inherit"
-          style={{ color: 'var(--lime-400)' }}
+          className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] bg-inherit"
+          style={{ color: '#FFFFFF' }}
         >
           {label}
         </td>
+      </tr>
+    )
+  }
+
+  // Tall spacer row that separates sections visually inside one table.
+  function renderSpacer() {
+    return (
+      <tr aria-hidden="true">
+        <td colSpan={13} style={{ height: 18, background: 'var(--bg)', border: 'none' }} />
       </tr>
     )
   }
@@ -468,53 +507,56 @@ export default function BudgetingPage() {
               </tr>
             </thead>
             <tbody>
-              {/* INCOME — lime tint (money in) */}
-              {renderSectionHeader('Pendapatan yang Diharapkan')}
-              {visibleIncome.map((c) =>
-                renderCategoryRow('income', c, 'bg-[color:var(--lime-50)]'),
+              {/* INCOME — emerald */}
+              {renderSectionHeader('Pendapatan', 'income')}
+              {visibleIncome.map((c, i) =>
+                renderCategoryRow('income', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(16,185,129,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Pendapatan',
                 visibleIncome,
                 'income',
-                'bg-[color:var(--lime-100)]',
+                'bg-[rgba(16,185,129,0.12)]',
               )}
+              {renderSpacer()}
 
-              {/* EXPENSE — neutral grey */}
-              {renderSectionHeader('Pengeluaran')}
-              {visibleExpense.map((c) =>
-                renderCategoryRow('expense', c, 'bg-white'),
+              {/* EXPENSE — coral */}
+              {renderSectionHeader('Pengeluaran', 'expense')}
+              {visibleExpense.map((c, i) =>
+                renderCategoryRow('expense', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(239,68,68,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Pengeluaran',
                 visibleExpense,
                 'expense',
-                'bg-[color:var(--surface-2)]',
+                'bg-[rgba(239,68,68,0.12)]',
               )}
               {renderPercentRow()}
+              {renderSpacer()}
 
-              {/* SAVING */}
-              {renderSectionHeader('Tabungan')}
-              {visibleSaving.map((c) =>
-                renderCategoryRow('saving', c, 'bg-white'),
+              {/* SAVING — amber */}
+              {renderSectionHeader('Tabungan', 'saving')}
+              {visibleSaving.map((c, i) =>
+                renderCategoryRow('saving', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(245,158,11,0.05)]'),
               )}
               {renderTotalRow(
                 'Total Tabungan',
                 visibleSaving,
                 'saving',
-                'bg-[color:var(--surface-2)]',
+                'bg-[rgba(245,158,11,0.14)]',
               )}
+              {renderSpacer()}
 
-              {/* INVESTMENT */}
-              {renderSectionHeader('Investasi')}
-              {visibleInvestment.map((c) =>
-                renderCategoryRow('investment', c, 'bg-white'),
+              {/* INVESTMENT — sky */}
+              {renderSectionHeader('Investasi', 'investment')}
+              {visibleInvestment.map((c, i) =>
+                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(14,165,233,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Investasi',
                 visibleInvestment,
                 'investment',
-                'bg-[color:var(--surface-2)]',
+                'bg-[rgba(14,165,233,0.12)]',
               )}
             </tbody>
           </table>

@@ -432,80 +432,121 @@ export default function DashboardPage() {
         <GoalsWidget goals={activeGoals} />
       </div>
 
-      {/* Daily activity + Budget Progress */}
+      {/* Calendar + Budget Progress */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        {/* Daily expense trend — compact bar chart with inline insights */}
-        <div className="s-card p-6 lg:col-span-3">
+        {/* Transactions calendar — 7-col month grid, colored by net activity */}
+        <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
-              <p className="caps">Aktivitas Harian</p>
+              <p className="caps">Aktivitas Bulan Ini</p>
               <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-                Pengeluaran per Hari
+                {MONTHS[selectedMonth - 1]} {selectedYear}
               </h3>
             </div>
-            {(() => {
-              const dailyExp = calendarData
-                .filter((c) => c.day !== null)
-                .map((c) => c.expense)
-              const totalExp = dailyExp.reduce((s, x) => s + x, 0)
-              const activeDays = dailyExp.filter((x) => x > 0).length
-              const avgDaily = activeDays > 0 ? totalExp / activeDays : 0
-              const peakIdx = dailyExp.indexOf(Math.max(...dailyExp, 0))
-              const peakDay = peakIdx >= 0 && dailyExp[peakIdx] > 0 ? peakIdx + 1 : null
-              return (
-                <div className="flex items-center gap-4 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                  <span>
-                    Rata-rata <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
-                      {formatCurrency(avgDaily)}
-                    </span>/hari aktif
-                  </span>
-                  {peakDay && (
-                    <span>
-                      Tertinggi <span className="num font-semibold" style={{ color: '#E11D48' }}>
-                        tgl {peakDay}
-                      </span>
-                    </span>
-                  )}
-                </div>
-              )
-            })()}
+            <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded" style={{ background: '#10B981' }} />
+                Pemasukan
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded" style={{ background: '#EF4444' }} />
+                Pengeluaran
+              </span>
+            </div>
           </div>
-          {/* Compact bar chart: each day = a vertical bar, height proportional to expense */}
+
           {(() => {
-            const days = calendarData.filter((c) => c.day !== null) as Array<{
-              day: number; date?: string; income: number; expense: number; net: number; count: number
-            }>
-            const maxExp = Math.max(...days.map((d) => d.expense), 1)
+            const today = new Date()
+            const isCurrentMonth =
+              today.getFullYear() === selectedYear &&
+              today.getMonth() + 1 === selectedMonth
+            const todayDay = today.getDate()
+            const days = calendarData
+            // Determine intensity scaling — pick largest absolute movement
+            const allAmounts = days
+              .filter((c) => c.day !== null)
+              .map((c) => Math.max(c.income, c.expense))
+            const maxAmt = Math.max(...allAmounts, 1)
+            const dayLabels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+
             return (
-              <div className="flex items-end gap-[3px] h-[140px]">
-                {days.map((d) => {
-                  const heightPct = (d.expense / maxExp) * 100
-                  const hasActivity = d.expense > 0
-                  return (
+              <>
+                {/* Day-of-week header */}
+                <div className="grid grid-cols-7 gap-1 mb-1.5">
+                  {dayLabels.map((d) => (
                     <div
-                      key={d.day}
-                      className="flex-1 flex flex-col items-center justify-end group cursor-default"
-                      title={hasActivity ? `Tgl ${d.day}: ${formatCurrency(d.expense)} (${d.count} transaksi)` : `Tgl ${d.day}: tidak ada pengeluaran`}
+                      key={d}
+                      className="text-center text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--ink-soft)' }}
                     >
-                      <div
-                        className="w-full rounded-t transition-all group-hover:opacity-80"
-                        style={{
-                          height: hasActivity ? `${Math.max(heightPct, 4)}%` : '2px',
-                          minHeight: hasActivity ? '4px' : '2px',
-                          background: hasActivity ? '#8B1538' : 'var(--border-soft)',
-                        }}
-                      />
+                      {d}
                     </div>
-                  )
-                })}
-              </div>
+                  ))}
+                </div>
+
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {days.map((d, i) => {
+                    if (d.day === null) return <div key={`pad-${i}`} className="aspect-square" />
+                    const isToday = isCurrentMonth && d.day === todayDay
+                    const hasIncome = d.income > 0
+                    const hasExpense = d.expense > 0
+                    const incomeIntensity = hasIncome ? Math.max(0.18, d.income / maxAmt) : 0
+                    const expenseIntensity = hasExpense ? Math.max(0.18, d.expense / maxAmt) : 0
+                    // Pick dominant color — whichever is larger
+                    const dominantColor =
+                      d.income > d.expense
+                        ? `rgba(16, 185, 129, ${incomeIntensity})`
+                        : hasExpense
+                          ? `rgba(239, 68, 68, ${expenseIntensity})`
+                          : 'transparent'
+
+                    const tooltipParts: string[] = [`Tgl ${d.day}`]
+                    if (hasIncome) tooltipParts.push(`+${formatCurrency(d.income)}`)
+                    if (hasExpense) tooltipParts.push(`-${formatCurrency(d.expense)}`)
+                    if (d.count > 0) tooltipParts.push(`${d.count} transaksi`)
+
+                    return (
+                      <div
+                        key={d.day}
+                        className="aspect-square rounded-md relative flex flex-col items-start justify-start p-1 transition hover:scale-105 cursor-default"
+                        style={{
+                          background: dominantColor || 'var(--surface-2)',
+                          border: isToday ? '2px solid var(--emerald-600, #059669)' : '1px solid var(--border-soft)',
+                        }}
+                        title={tooltipParts.join(' · ')}
+                      >
+                        <span
+                          className="text-[10px] font-semibold leading-none"
+                          style={{
+                            color:
+                              hasIncome || hasExpense
+                                ? d.income > d.expense
+                                  ? incomeIntensity > 0.4 ? '#FFFFFF' : 'var(--ink)'
+                                  : expenseIntensity > 0.4 ? '#FFFFFF' : 'var(--ink)'
+                                : 'var(--ink-muted)',
+                          }}
+                        >
+                          {d.day}
+                        </span>
+                        {/* Bottom indicator dots */}
+                        {(hasIncome || hasExpense) && (
+                          <div className="absolute bottom-1 right-1 flex gap-0.5">
+                            {hasIncome && d.income <= d.expense && (
+                              <span className="size-1 rounded-full" style={{ background: '#10B981' }} />
+                            )}
+                            {hasExpense && d.expense <= d.income && (
+                              <span className="size-1 rounded-full" style={{ background: '#EF4444' }} />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
             )
           })()}
-          <div className="mt-2 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
-            <span>Tgl 1</span>
-            <span className="font-semibold">Tgl {Math.ceil(calendarData.filter((c) => c.day !== null).length / 2)}</span>
-            <span>Tgl {calendarData.filter((c) => c.day !== null).length}</span>
-          </div>
         </div>
 
         {/* Budget Progress */}

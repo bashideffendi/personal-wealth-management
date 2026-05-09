@@ -102,19 +102,14 @@ export function Sidebar({ user }: SidebarProps) {
     const open = expanded.has(item.href)
     const Icon = depth === 0 ? topIcons[item.icon] : undefined
 
-    // Primary: bigger, bolder, more padding
-    // Secondary: compact, lighter, less visual weight
+    // Single consistent font size across primary and secondary — only the
+    // section header label below acts as the visual divider. Nested
+    // children stay slightly tighter (less padding) to read as a sub-list.
     const linkSize = depth === 0
-      ? variant === 'primary'
-        ? 'px-3 py-2 text-[14px]'
-        : 'px-3 py-1.5 text-[12.5px]'
-      : 'px-3 py-1.5 text-[12.5px]'
+      ? 'px-3 py-2 text-[14px]'
+      : 'px-3 py-1.5 text-[13px]'
 
-    const iconSize = depth === 0
-      ? variant === 'primary'
-        ? 'h-4 w-4'
-        : 'h-3.5 w-3.5'
-      : 'h-3 w-3'
+    const iconSize = depth === 0 ? 'h-4 w-4' : 'h-3.5 w-3.5'
 
     return (
       <div key={`${parentKey}>${item.href}`} className="select-none">

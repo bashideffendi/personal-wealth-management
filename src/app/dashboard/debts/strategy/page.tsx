@@ -7,7 +7,8 @@ import type { Debt } from '@/types'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
-import { Snowflake, TrendingDown, Target, Loader2, Zap, Flame } from 'lucide-react'
+import { Snowflake, TrendingDown, Target, Loader2, Zap, Flame, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 export default function DebtStrategyPage() {
   const supabase = createClient()
@@ -53,11 +54,84 @@ export default function DebtStrategyPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} /></div>
       ) : active.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <p className="text-5xl">🎉</p>
-          <p className="mt-3 font-semibold">Tidak ada utang aktif</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Selamat, Anda bebas utang!</p>
-        </div>
+        // Educational empty state — show users WHAT the feature does even
+        // before they have debts. Bebas utang is great, but they should
+        // know this tool exists for the day they take a KPR / paylater.
+        <>
+          <div
+            className="rounded-xl border p-5 sm:p-6 flex items-start gap-4"
+            style={{
+              background: 'linear-gradient(135deg, rgba(16,185,129,0.06), rgba(14,165,233,0.05))',
+              borderColor: 'var(--border-soft)',
+            }}
+          >
+            <div
+              className="hidden sm:flex shrink-0 size-12 items-center justify-center rounded-xl text-2xl"
+              style={{ background: 'rgba(16,185,129,0.18)' }}
+            >
+              🎉
+            </div>
+            <div className="flex-1">
+              <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+                Bebas utang — keren!
+              </p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+                Begitu ada utang baru (KPR, KKB, paylater, kartu kredit),
+                tool ini ngitungin urutan bayar terbaik biar lunas lebih cepat & lebih hemat bunga.
+              </p>
+              <Link
+                href="/dashboard/debts"
+                className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium"
+                style={{ color: 'var(--emerald-600, #059669)' }}
+              >
+                Catat utang pertamamu
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Demo strategy comparison — always visible so users learn */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <StrategyCard
+              active={false}
+              onClick={() => {}}
+              emoji="❄️"
+              icon={<Snowflake className="h-4 w-4" />}
+              title="Snowball"
+              subtitle="Saldo Terkecil Dulu"
+              desc="Lunasi utang dengan saldo terkecil dulu — momentum cepat, bagus buat motivasi disiplin."
+              accent="linear-gradient(135deg, #06B6D4, #3B82F6)"
+            />
+            <StrategyCard
+              active={false}
+              onClick={() => {}}
+              emoji="🔥"
+              icon={<TrendingDown className="h-4 w-4" />}
+              title="Avalanche"
+              subtitle="Bunga Tertinggi Dulu"
+              desc="Lunasi utang dengan bunga tertinggi dulu — paling hemat secara matematika."
+              accent="linear-gradient(135deg, #F43F5E, #F97316)"
+            />
+          </div>
+
+          <div
+            className="rounded-xl border p-4 text-sm"
+            style={{
+              background: 'var(--surface-2)',
+              borderColor: 'var(--border-soft)',
+              color: 'var(--ink-muted)',
+            }}
+          >
+            <p className="font-medium mb-1" style={{ color: 'var(--ink)' }}>Contoh kasus:</p>
+            <p>
+              Misal punya 3 utang: KPR Rp 250jt (bunga 8%), KKB Rp 80jt (bunga 11%), kartu kredit Rp 12jt (bunga 24%).
+            </p>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li><strong>Snowball</strong>: Kartu kredit dulu (paling kecil) → KKB → KPR. Cepat ada win pertama.</li>
+              <li><strong>Avalanche</strong>: Kartu kredit dulu (bunga 24%) → KKB (11%) → KPR (8%). Hemat bunga ratusan juta.</li>
+            </ul>
+          </div>
+        </>
       ) : (
         <>
           {/* Strategy picker */}
