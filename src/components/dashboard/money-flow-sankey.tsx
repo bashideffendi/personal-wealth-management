@@ -33,7 +33,7 @@ import {
   Rectangle,
   ResponsiveContainer,
 } from 'recharts'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 
 export type FlowKind = 'income' | 'expense' | 'saving' | 'investment' | 'middle'
 
@@ -79,10 +79,14 @@ interface SankeyNodeData {
 }
 
 function makeRenderNode(compact: boolean) {
-  const labelMax = compact ? 14 : 22
-  const fontMain = compact ? 10 : 11
-  const fontSub = compact ? 9 : 10
-  const labelGap = compact ? 6 : 8
+  // Compact mode is sized to fit within ~70px label margin on a 375px
+  // mobile viewport. Names truncate hard ("Cryptocurr…") and amounts use
+  // the compact "Rp 5,5jt" format instead of full "Rp 5.500.000".
+  const labelMax = compact ? 10 : 22
+  const fontMain = compact ? 9.5 : 11
+  const fontSub = compact ? 8.5 : 10
+  const labelGap = compact ? 4 : 8
+  const lineGap = compact ? 6 : 9
 
   return function renderNode(props: {
     x: number
@@ -127,7 +131,7 @@ function makeRenderNode(compact: boolean) {
         </text>
         <text
           x={labelX}
-          y={y + height / 2 + (compact ? 7 : 9)}
+          y={y + height / 2 + lineGap}
           textAnchor={anchor}
           dominantBaseline="middle"
           style={{
@@ -137,7 +141,7 @@ function makeRenderNode(compact: boolean) {
             fontVariantNumeric: 'tabular-nums',
           }}
         >
-          {formatCurrency(payload.value)}
+          {compact ? formatCompactCurrency(payload.value) : formatCurrency(payload.value)}
         </text>
       </Layer>
     )
@@ -279,8 +283,11 @@ export function MoneyFlowSankey({
     )
   }
 
+  // Asymmetric on compact: spending category names (right side) tend to be
+  // longer than income source names ("Cryptocurrency" vs "Gaji"), so give
+  // the right side more breathing room.
   const margin = compact
-    ? { top: 8, right: 70, bottom: 8, left: 70 }
+    ? { top: 8, right: 88, bottom: 8, left: 56 }
     : { top: 14, right: 130, bottom: 14, left: 130 }
 
   const renderNode = makeRenderNode(compact)

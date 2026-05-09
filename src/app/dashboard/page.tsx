@@ -520,11 +520,12 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Calendar grid — each cell shows day number + net amount.
-                    Net amount = income − expense, formatted compact (rb/jt) so
-                    even small phones can fit it inside the cell. */}
+                    On mobile, cells are ~45px wide so we use a TIGHT format
+                    (no "Rp" prefix, e.g. "+12,5jt" / "−500rb") and a tiny
+                    font so amounts fit inside. */}
                 <div className="grid grid-cols-7 gap-1">
                   {days.map((d, i) => {
-                    if (d.day === null) return <div key={`pad-${i}`} className="aspect-square min-h-[60px]" />
+                    if (d.day === null) return <div key={`pad-${i}`} className="aspect-square min-h-[56px]" />
                     const isToday = isCurrentMonth && d.day === todayDay
                     const hasIncome = d.income > 0
                     const hasExpense = d.expense > 0
@@ -532,8 +533,6 @@ export default function DashboardPage() {
                     const intensity = Math.max(hasIncome ? d.income / maxAmt : 0, hasExpense ? d.expense / maxAmt : 0)
                     const isPositive = net > 0
                     const isNegative = net < 0
-                    // Color by NET sign (positive = surplus = green, negative = deficit = red).
-                    // If both income and expense exist but cancel, show neutral.
                     const bg =
                       isPositive
                         ? `rgba(16, 185, 129, ${Math.max(0.10, intensity * 0.45)})`
@@ -546,10 +545,20 @@ export default function DashboardPage() {
                     if (hasExpense) tooltipParts.push(`-${formatCurrency(d.expense)}`)
                     if (d.count > 0) tooltipParts.push(`${d.count} transaksi`)
 
+                    // Tiny "Rp"-less format optimized for narrow cells:
+                    //   12,500,000 → "12,5jt"  ·  500,000 → "500rb"
+                    function tight(n: number) {
+                      const abs = Math.abs(n)
+                      if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1)}M`
+                      if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1).replace('.', ',')}jt`
+                      if (abs >= 1_000) return `${Math.round(abs / 1_000)}rb`
+                      return `${abs}`
+                    }
+
                     return (
                       <div
                         key={d.day}
-                        className="aspect-square min-h-[60px] rounded-md relative flex flex-col items-start justify-between p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
+                        className="aspect-square min-h-[56px] rounded-md relative flex flex-col items-start justify-between p-1 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
                         style={{
                           background: bg || 'var(--surface-2)',
                           border: isToday ? '2px solid var(--emerald-600, #059669)' : '1px solid var(--border-soft)',
@@ -563,26 +572,24 @@ export default function DashboardPage() {
                           {d.day}
                         </span>
 
-                        {/* Net amount — compact format. Show both income+expense
-                            stacked when BOTH happen on the same day, else single net. */}
                         {(hasIncome || hasExpense) && (
                           <div className="w-full text-right leading-none">
                             {hasIncome && hasExpense ? (
                               <>
-                                <p className="num tabular text-[8.5px] font-semibold" style={{ color: '#059669' }}>
-                                  +{formatCompactCurrency(d.income)}
+                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: '#059669' }}>
+                                  +{tight(d.income)}
                                 </p>
-                                <p className="num tabular text-[8.5px] font-semibold mt-0.5" style={{ color: '#DC2626' }}>
-                                  −{formatCompactCurrency(d.expense)}
+                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: '#DC2626' }}>
+                                  −{tight(d.expense)}
                                 </p>
                               </>
                             ) : (
                               <p
-                                className="num tabular text-[10px] font-semibold"
+                                className="num tabular text-[9px] sm:text-[11px] font-semibold"
                                 style={{ color: hasIncome ? '#059669' : '#DC2626' }}
                               >
                                 {hasIncome ? '+' : '−'}
-                                {formatCompactCurrency(hasIncome ? d.income : d.expense)}
+                                {tight(hasIncome ? d.income : d.expense)}
                               </p>
                             )}
                           </div>
@@ -987,10 +994,14 @@ function KpiCard({
         )}
       </div>
       <p
-        className="relative num tabular mt-4 text-[26px] leading-tight font-semibold"
+        className="relative num tabular mt-4 text-[18px] sm:text-[22px] lg:text-[26px] leading-tight font-semibold"
         style={{ color: 'var(--ink)' }}
       >
-        {formatCurrency(value)}
+        {/* Use compact format on mobile so 8-figure numbers don't overflow
+            ("Rp 15jt" instead of "Rp 15.000.000"). Hidden on sm+ where the
+            full format fits. */}
+        <span className="sm:hidden">{formatCompactCurrency(value)}</span>
+        <span className="hidden sm:inline">{formatCurrency(value)}</span>
       </p>
       <p className="relative text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
         {note ?? t('dashboard.current_month')}
