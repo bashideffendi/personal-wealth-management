@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { StockLogo } from '@/components/investment/stock-logo'
+import { StockTickerSearch } from '@/components/investment/stock-ticker-search'
+import { IDX_BROKERS } from '@/lib/idx-brokers'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
@@ -408,25 +410,109 @@ export default function InvestmentCategoryPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label>Nama</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Ticker (opsional)</Label>
-                <Input value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} placeholder="BBCA.JK" />
-              </div>
-            </div>
-            {category === 'stock' && (
-              <div className="grid gap-1.5">
-                <Label>Sektor</Label>
-                <Input value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} placeholder="Finansial, Teknologi, ..." />
-              </div>
+            {/* Stock-only: ticker autocomplete from IDX catalog auto-fills name + sector */}
+            {category === 'stock' ? (
+              <>
+                <div className="grid gap-1.5">
+                  <Label>Cari Saham</Label>
+                  <StockTickerSearch
+                    value={form.ticker?.split('.')[0] ?? ''}
+                    onSelect={(s) =>
+                      setForm({
+                        ...form,
+                        // Yahoo Finance uses .JK suffix for IDX
+                        ticker: `${s.t}.JK`,
+                        name: s.n,
+                        sector: s.s,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label>Nama</Label>
+                    <Input
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="auto dari pencarian"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Ticker</Label>
+                    <Input
+                      value={form.ticker}
+                      onChange={(e) => setForm({ ...form, ticker: e.target.value })}
+                      placeholder="BBCA.JK"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Sektor</Label>
+                  <Input
+                    value={form.sector}
+                    onChange={(e) => setForm({ ...form, sector: e.target.value })}
+                    placeholder="auto dari pencarian"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label>Nama</Label>
+                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Ticker (opsional)</Label>
+                    <Input value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} placeholder={category === 'crypto' ? 'BTC-USD' : 'simbol'} />
+                  </div>
+                </div>
+              </>
             )}
+
+            {/* Platform / Sekuritas: dropdown for stocks (with fee preview),
+                free text for everything else */}
             <div className="grid gap-1.5">
               <Label>Platform / Sekuritas</Label>
-              <Input value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="Stockbit, Ajaib, Bibit, Pintu..." />
+              {category === 'stock' ? (
+                <Select
+                  value={form.platform || ''}
+                  onValueChange={(v) => setForm({ ...form, platform: v ?? '' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih sekuritas">
+                      {(v) => {
+                        const broker = IDX_BROKERS.find((b) => b.short === v || b.name === v)
+                        if (!broker) return v || 'Pilih sekuritas'
+                        return broker.code ? `${broker.short} (${broker.code})` : broker.short
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {IDX_BROKERS.map((b) => (
+                      <SelectItem key={b.code || b.short} value={b.short}>
+                        <div className="flex items-center justify-between gap-3 w-full">
+                          <span>
+                            {b.code && (
+                              <span className="font-mono text-[10px] mr-1.5 px-1 rounded" style={{ background: 'var(--surface-2)' }}>
+                                {b.code}
+                              </span>
+                            )}
+                            {b.short}
+                          </span>
+                          {b.buyRate > 0 && (
+                            <span className="text-[10px] tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
+                              {(b.buyRate * 100).toFixed(2)}% / {(b.sellRate * 100).toFixed(2)}%
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} placeholder="Bibit, Pintu, ..." />
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5">
