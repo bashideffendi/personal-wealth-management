@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, getMonthName } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { useT } from '@/lib/i18n/context'
@@ -524,21 +524,26 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                {/* Calendar grid */}
+                {/* Calendar grid — each cell shows day number + net amount.
+                    Net amount = income − expense, formatted compact (rb/jt) so
+                    even small phones can fit it inside the cell. */}
                 <div className="grid grid-cols-7 gap-1">
                   {days.map((d, i) => {
-                    if (d.day === null) return <div key={`pad-${i}`} className="aspect-square" />
+                    if (d.day === null) return <div key={`pad-${i}`} className="aspect-square min-h-[60px]" />
                     const isToday = isCurrentMonth && d.day === todayDay
                     const hasIncome = d.income > 0
                     const hasExpense = d.expense > 0
-                    const incomeIntensity = hasIncome ? Math.max(0.18, d.income / maxAmt) : 0
-                    const expenseIntensity = hasExpense ? Math.max(0.18, d.expense / maxAmt) : 0
-                    // Pick dominant color — whichever is larger
-                    const dominantColor =
-                      d.income > d.expense
-                        ? `rgba(16, 185, 129, ${incomeIntensity})`
-                        : hasExpense
-                          ? `rgba(239, 68, 68, ${expenseIntensity})`
+                    const net = d.income - d.expense
+                    const intensity = Math.max(hasIncome ? d.income / maxAmt : 0, hasExpense ? d.expense / maxAmt : 0)
+                    const isPositive = net > 0
+                    const isNegative = net < 0
+                    // Color by NET sign (positive = surplus = green, negative = deficit = red).
+                    // If both income and expense exist but cancel, show neutral.
+                    const bg =
+                      isPositive
+                        ? `rgba(16, 185, 129, ${Math.max(0.10, intensity * 0.45)})`
+                        : isNegative
+                          ? `rgba(239, 68, 68, ${Math.max(0.10, intensity * 0.45)})`
                           : 'transparent'
 
                     const tooltipParts: string[] = [`Tgl ${d.day}`]
@@ -549,34 +554,41 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={d.day}
-                        className="aspect-square rounded-md relative flex flex-col items-start justify-start p-1 transition hover:scale-105 cursor-default"
+                        className="aspect-square min-h-[60px] rounded-md relative flex flex-col items-start justify-between p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
                         style={{
-                          background: dominantColor || 'var(--surface-2)',
+                          background: bg || 'var(--surface-2)',
                           border: isToday ? '2px solid var(--emerald-600, #059669)' : '1px solid var(--border-soft)',
                         }}
                         title={tooltipParts.join(' · ')}
                       >
                         <span
                           className="text-[10px] font-semibold leading-none"
-                          style={{
-                            color:
-                              hasIncome || hasExpense
-                                ? d.income > d.expense
-                                  ? incomeIntensity > 0.4 ? '#FFFFFF' : 'var(--ink)'
-                                  : expenseIntensity > 0.4 ? '#FFFFFF' : 'var(--ink)'
-                                : 'var(--ink-muted)',
-                          }}
+                          style={{ color: 'var(--ink)' }}
                         >
                           {d.day}
                         </span>
-                        {/* Bottom indicator dots */}
+
+                        {/* Net amount — compact format. Show both income+expense
+                            stacked when BOTH happen on the same day, else single net. */}
                         {(hasIncome || hasExpense) && (
-                          <div className="absolute bottom-1 right-1 flex gap-0.5">
-                            {hasIncome && d.income <= d.expense && (
-                              <span className="size-1 rounded-full" style={{ background: '#10B981' }} />
-                            )}
-                            {hasExpense && d.expense <= d.income && (
-                              <span className="size-1 rounded-full" style={{ background: '#EF4444' }} />
+                          <div className="w-full text-right leading-none">
+                            {hasIncome && hasExpense ? (
+                              <>
+                                <p className="num tabular text-[8.5px] font-semibold" style={{ color: '#059669' }}>
+                                  +{formatCompactCurrency(d.income)}
+                                </p>
+                                <p className="num tabular text-[8.5px] font-semibold mt-0.5" style={{ color: '#DC2626' }}>
+                                  −{formatCompactCurrency(d.expense)}
+                                </p>
+                              </>
+                            ) : (
+                              <p
+                                className="num tabular text-[10px] font-semibold"
+                                style={{ color: hasIncome ? '#059669' : '#DC2626' }}
+                              >
+                                {hasIncome ? '+' : '−'}
+                                {formatCompactCurrency(hasIncome ? d.income : d.expense)}
+                              </p>
                             )}
                           </div>
                         )}
@@ -640,9 +652,6 @@ export default function DashboardPage() {
         <DayOfWeekChart monthTransactions={monthTransactions} />
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
       </div>
-
-      {/* Spending Heatmap */}
-      <SpendingHeatmap yearTransactions={yearTransactions} year={selectedYear} />
 
       {/* Insights & Alerts */}
       <InsightsPanel
@@ -1594,92 +1603,6 @@ function HealthScorePanel({
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Spending Heatmap ───
-function SpendingHeatmap({ yearTransactions, year }: { yearTransactions: Transaction[]; year: number }) {
-  // Build daily expense map
-  const expMap = new Map<string, number>()
-  let maxExp = 0
-  for (const t of yearTransactions) {
-    if (t.type !== 'expense') continue
-    const prev = expMap.get(t.date) ?? 0
-    const next = prev + t.amount
-    expMap.set(t.date, next)
-    if (next > maxExp) maxExp = next
-  }
-
-  // Generate cells for each day of year
-  const isLeap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
-  const daysInYear = isLeap ? 366 : 365
-  const firstDayDow = new Date(year, 0, 1).getDay() // 0=Sun, 6=Sat
-
-  // Pre-pad so weeks align (rows=days of week)
-  const cells: Array<{ date: string; exp: number } | null> = Array(firstDayDow).fill(null)
-  for (let i = 0; i < daysInYear; i++) {
-    const d = new Date(year, 0, 1)
-    d.setDate(d.getDate() + i)
-    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    cells.push({ date: ds, exp: expMap.get(ds) ?? 0 })
-  }
-
-  function intensity(exp: number): string {
-    if (exp === 0) return 'var(--surface-2)'
-    const r = exp / maxExp
-    if (r < 0.2) return 'var(--lime-100)'
-    if (r < 0.4) return 'var(--lime-200)'
-    if (r < 0.6) return 'var(--lime-300)'
-    if (r < 0.8) return 'var(--lime-400)'
-    return 'var(--lime-600)'
-  }
-
-  // Group into weeks (columns of 7)
-  const weeks: typeof cells[] = []
-  for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7))
-  }
-
-  return (
-    <div className="s-card p-5">
-      <div className="flex items-end justify-between mb-3">
-        <div>
-          <p className="caps">Spending Heatmap</p>
-          <h3 className="text-lg font-semibold mt-0.5">Pola Pengeluaran Harian {year}</h3>
-        </div>
-        <div className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-          <span>Less</span>
-          {['var(--surface-2)', 'var(--lime-100)', 'var(--lime-200)', 'var(--lime-300)', 'var(--lime-400)', 'var(--lime-600)'].map((c, i) => (
-            <span key={i} className="h-3 w-3 rounded-sm" style={{ background: c }} />
-          ))}
-          <span>More</span>
-        </div>
-      </div>
-      <div className="overflow-x-auto">
-        <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
-          {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-[3px]">
-              {Array.from({ length: 7 }, (_, di) => {
-                const cell = week[di]
-                if (!cell) return <div key={di} className="h-3 w-3" />
-                return (
-                  <div
-                    key={di}
-                    className="h-3 w-3 rounded-sm"
-                    style={{ background: intensity(cell.exp) }}
-                    title={
-                      cell.exp === 0
-                        ? `${cell.date}: no spending`
-                        : `${cell.date}: ${formatCurrency(cell.exp)}`
-                    }
-                  />
-                )
-              })}
-            </div>
-          ))}
         </div>
       </div>
     </div>

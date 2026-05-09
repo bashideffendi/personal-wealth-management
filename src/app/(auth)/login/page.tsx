@@ -1,5 +1,16 @@
 'use client'
 
+/**
+ * Login page — full redesign aligned with the app's emerald-forward palette.
+ *
+ * Left side: dark navy panel with emerald + indigo ambient glows, the brand
+ * mark, a tagline, and 4 mini-feature pills that hint at what the app does.
+ * Right side: clean white card with the form, no chrome competing with it.
+ *
+ * The previous design used a purple/violet gradient that didn't match the
+ * dashboard at all — felt like a different app.
+ */
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,7 +20,9 @@ import { LanguageToggle } from '@/components/layout/language-toggle'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Mail, Lock, Sparkles } from 'lucide-react'
+import {
+  Mail, Lock, Wallet, TrendingUp, Receipt, Target, Sparkles,
+} from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -26,7 +39,10 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { setError(error.message); return }
+      if (error) {
+        setError(error.message)
+        return
+      }
       router.push('/dashboard')
     } catch {
       setError(t('auth.error_generic'))
@@ -37,84 +53,114 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      {/* Left Hero */}
+      {/* ─── LEFT — Brand panel ─────────────────────────────── */}
       <div
         className="relative flex w-full flex-col items-center justify-center overflow-hidden px-8 py-16 lg:w-[55%] lg:py-0"
         style={{
           background:
-            'linear-gradient(135deg, #1E1B4B 0%, #4F46E5 55%, #7C3AED 100%)',
+            'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
         }}
       >
+        {/* Ambient color glows — matches the dashboard background pattern */}
         <div
-          className="animate-float absolute left-[10%] top-[18%] h-64 w-64 rounded-full blur-3xl"
-          style={{ backgroundColor: 'rgba(139, 92, 246, 0.35)' }}
+          className="absolute left-[10%] top-[18%] h-72 w-72 rounded-full blur-3xl"
+          style={{ backgroundColor: 'rgba(16, 185, 129, 0.22)' }}
+          aria-hidden="true"
         />
         <div
-          className="animate-float-delayed absolute bottom-[12%] right-[8%] h-80 w-80 rounded-full blur-3xl"
-          style={{ backgroundColor: 'rgba(6, 182, 212, 0.28)' }}
+          className="absolute bottom-[12%] right-[8%] h-80 w-80 rounded-full blur-3xl"
+          style={{ backgroundColor: 'rgba(99, 102, 241, 0.18)' }}
+          aria-hidden="true"
         />
         <div
-          className="animate-pulse-glow absolute left-[50%] top-[55%] h-40 w-40 rounded-full blur-3xl"
-          style={{ backgroundColor: 'rgba(16, 185, 129, 0.25)' }}
+          className="absolute left-[55%] top-[60%] h-40 w-40 rounded-full blur-3xl"
+          style={{ backgroundColor: 'rgba(245, 158, 11, 0.10)' }}
+          aria-hidden="true"
         />
 
         <div className="relative z-10 max-w-md text-center text-white">
+          {/* Brand mark — emerald monogram matching app icon */}
           <div
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl font-bold text-lg"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-3xl font-bold shadow-2xl"
             style={{
-              background: 'rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.20)',
+              background: 'linear-gradient(135deg, #10B981, #059669)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.05em',
+              boxShadow: '0 12px 32px -8px rgba(16, 185, 129, 0.45)',
             }}
           >
-            PWM
+            P
           </div>
 
-          <h1 className="mt-6 text-4xl font-bold leading-tight lg:text-5xl">
-            Kendali penuh atas
-            <br />
+          <p
+            className="mt-5 text-[10px] uppercase tracking-[0.24em] font-medium"
+            style={{ color: 'rgba(255,255,255,0.45)' }}
+          >
+            Personal Wealth Management
+          </p>
+
+          <h1 className="mt-3 text-4xl font-bold leading-tight lg:text-5xl tracking-tight">
+            Kelola uangmu,{' '}
             <span
               className="bg-clip-text text-transparent"
               style={{
-                backgroundImage: 'linear-gradient(90deg, #67E8F9, #A5B4FC)',
+                backgroundImage:
+                  'linear-gradient(90deg, #34D399 0%, #6EE7B7 50%, #A5F3FC 100%)',
               }}
             >
-              keuangan pribadi
+              dengan AI
             </span>
           </h1>
           <p
             className="mt-5 text-sm lg:text-base leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.75)' }}
+            style={{ color: 'rgba(255,255,255,0.70)' }}
           >
-            Pantau arus kas, aset, utang, investasi, dan kekayaan bersih Anda
-            dalam satu tempat.
+            Catat transaksi natural language, scan struk pakai kamera,
+            track aset & utang, lihat aliran uangmu — semuanya di satu tempat.
           </p>
 
-          <div className="mt-8 flex justify-center gap-3">
+          {/* Feature pills — hint at what's inside */}
+          <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
-              { label: 'Cashflow', color: '#67E8F9' },
-              { label: 'Investasi', color: '#6EE7B7' },
-              { label: 'Aset', color: '#A5B4FC' },
-            ].map((chip) => (
-              <span
-                key={chip.label}
-                className="pill"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.10)',
-                  color: chip.color,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  padding: '0.25rem 0.75rem',
-                }}
-              >
-                <Sparkles className="h-3 w-3" />
-                {chip.label}
-              </span>
-            ))}
+              { label: 'Cashflow', icon: Receipt, tint: 'rgba(16,185,129,0.18)', fg: '#6EE7B7' },
+              { label: 'Investasi', icon: TrendingUp, tint: 'rgba(14,165,233,0.18)', fg: '#7DD3FC' },
+              { label: 'Aset', icon: Wallet, tint: 'rgba(245,158,11,0.18)', fg: '#FCD34D' },
+              { label: 'Goals', icon: Target, tint: 'rgba(99,102,241,0.18)', fg: '#A5B4FC' },
+            ].map((chip) => {
+              const Icon = chip.icon
+              return (
+                <span
+                  key={chip.label}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-medium border"
+                  style={{
+                    background: chip.tint,
+                    color: chip.fg,
+                    borderColor: 'rgba(255,255,255,0.10)',
+                  }}
+                >
+                  <Icon className="size-3" />
+                  {chip.label}
+                </span>
+              )
+            })}
           </div>
+
+          {/* Subtle social proof / value prop */}
+          <p
+            className="mt-8 inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full"
+            style={{
+              color: 'rgba(255,255,255,0.55)',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <Sparkles className="size-3" style={{ color: '#34D399' }} />
+            Powered by Claude AI · Bank-grade security
+          </p>
         </div>
       </div>
 
-      {/* Right Form */}
+      {/* ─── RIGHT — Login form ─────────────────────────────── */}
       <div
         className="flex w-full items-center justify-center px-6 py-12 lg:w-[45%] lg:px-12"
         style={{ backgroundColor: 'var(--surface)' }}
@@ -124,7 +170,7 @@ export default function LoginPage() {
             <div>
               <p className="caps">{t('auth.login_page')}</p>
               <h2
-                className="text-2xl font-semibold mt-1"
+                className="text-2xl font-semibold mt-1 tracking-tight"
                 style={{ color: 'var(--ink)' }}
               >
                 {t('auth.welcome_back')}
@@ -139,11 +185,11 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             {error && (
               <div
-                className="flex items-center gap-2 rounded-lg border p-3 text-sm"
+                className="flex items-start gap-2 rounded-lg border p-3 text-sm"
                 style={{
-                  backgroundColor: 'var(--danger-bg)',
-                  borderColor: '#FECDD3',
-                  color: 'var(--danger)',
+                  background: 'rgba(239, 68, 68, 0.06)',
+                  borderColor: 'rgba(239, 68, 68, 0.30)',
+                  color: '#991B1B',
                 }}
               >
                 {error}
@@ -153,7 +199,10 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">{t('auth.email')}</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--ink-soft)' }} />
+                <Mail
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: 'var(--ink-soft)' }}
+                />
                 <Input
                   id="email"
                   type="email"
@@ -169,7 +218,10 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--ink-soft)' }} />
+                <Lock
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: 'var(--ink-soft)' }}
+                />
                 <Input
                   id="password"
                   type="password"
@@ -186,16 +238,23 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="mt-2 h-11 w-full text-sm font-medium"
+              style={{
+                background: 'linear-gradient(135deg, #10B981, #059669)',
+                color: '#FFFFFF',
+              }}
             >
               {loading ? t('auth.processing') : t('auth.login_button')}
             </Button>
 
-            <p className="text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
+            <p
+              className="text-center text-sm"
+              style={{ color: 'var(--ink-muted)' }}
+            >
               {t('auth.no_account')}{' '}
               <Link
                 href="/register"
                 className="font-semibold hover:underline"
-                style={{ color: 'var(--indigo-600)' }}
+                style={{ color: 'var(--emerald-600, #059669)' }}
               >
                 {t('auth.register_link')}
               </Link>

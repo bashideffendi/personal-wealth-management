@@ -42,67 +42,81 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      {/* Brand panel — matches login page emerald palette */}
       <div
         className="relative flex w-full flex-col items-center justify-center overflow-hidden px-8 py-16 lg:w-[55%] lg:py-0"
         style={{
           background:
-            'linear-gradient(135deg, #1E1B4B 0%, #4F46E5 55%, #7C3AED 100%)',
+            'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
         }}
       >
         <div
-          className="animate-float absolute left-[10%] top-[18%] h-64 w-64 rounded-full blur-3xl"
-          style={{ backgroundColor: 'rgba(139, 92, 246, 0.35)' }}
+          className="absolute left-[10%] top-[18%] h-72 w-72 rounded-full blur-3xl"
+          style={{ backgroundColor: 'rgba(16, 185, 129, 0.22)' }}
+          aria-hidden="true"
         />
         <div
-          className="animate-float-delayed absolute bottom-[12%] right-[8%] h-80 w-80 rounded-full blur-3xl"
-          style={{ backgroundColor: 'rgba(6, 182, 212, 0.28)' }}
+          className="absolute bottom-[12%] right-[8%] h-80 w-80 rounded-full blur-3xl"
+          style={{ backgroundColor: 'rgba(99, 102, 241, 0.18)' }}
+          aria-hidden="true"
         />
 
         <div className="relative z-10 max-w-md text-center text-white">
           <div
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl font-bold text-lg"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-3xl font-bold shadow-2xl"
             style={{
-              background: 'rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.20)',
+              background: 'linear-gradient(135deg, #10B981, #059669)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.05em',
+              boxShadow: '0 12px 32px -8px rgba(16, 185, 129, 0.45)',
             }}
           >
-            PWM
+            P
           </div>
 
-          <h1 className="mt-6 text-4xl font-bold leading-tight lg:text-5xl">
-            Mulai perjalanan
-            <br />
+          <p
+            className="mt-5 text-[10px] uppercase tracking-[0.24em] font-medium"
+            style={{ color: 'rgba(255,255,255,0.45)' }}
+          >
+            Personal Wealth Management
+          </p>
+
+          <h1 className="mt-3 text-4xl font-bold leading-tight lg:text-5xl tracking-tight">
+            Mulai perjalanan{' '}
             <span
               className="bg-clip-text text-transparent"
               style={{
-                backgroundImage: 'linear-gradient(90deg, #67E8F9, #A5B4FC)',
+                backgroundImage:
+                  'linear-gradient(90deg, #34D399 0%, #6EE7B7 50%, #A5F3FC 100%)',
               }}
             >
-              finansial Anda
+              finansialmu
             </span>
           </h1>
           <p
             className="mt-5 text-sm lg:text-base leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.75)' }}
+            style={{ color: 'rgba(255,255,255,0.70)' }}
           >
-            Daftar gratis. Bangun disiplin pencatatan, monitor investasi,
-            dan raih tujuan finansial lebih cepat.
+            Daftar gratis. Mulai catat transaksi, monitor investasi & utang,
+            dan capai tujuan finansial dengan dibantu AI.
           </p>
-          <div className="mt-8 flex justify-center gap-3">
-            {['Dashboard real-time', 'Live quote saham', 'Analisa utang'].map((chip) => (
+          <div className="mt-8 flex justify-center gap-2 flex-wrap">
+            {[
+              { label: 'AI Receipt Scanner', tint: 'rgba(16,185,129,0.18)', fg: '#6EE7B7' },
+              { label: 'Live Stock Quote', tint: 'rgba(14,165,233,0.18)', fg: '#7DD3FC' },
+              { label: 'Smart Insights', tint: 'rgba(245,158,11,0.18)', fg: '#FCD34D' },
+            ].map((chip) => (
               <span
-                key={chip}
-                className="pill"
+                key={chip.label}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium border"
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.10)',
-                  color: '#A5B4FC',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  padding: '0.25rem 0.75rem',
+                  background: chip.tint,
+                  color: chip.fg,
+                  borderColor: 'rgba(255,255,255,0.10)',
                 }}
               >
-                <Sparkles className="h-3 w-3" />
-                {chip}
+                <Sparkles className="size-3" />
+                {chip.label}
               </span>
             ))}
           </div>
@@ -206,13 +220,17 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading || success}
               className="mt-2 h-11 w-full text-sm font-medium"
+              style={{
+                background: 'linear-gradient(135deg, #10B981, #059669)',
+                color: '#FFFFFF',
+              }}
             >
               {loading ? t('auth.processing') : t('auth.register_button')}
             </Button>
 
             <p className="text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
               {t('auth.have_account')}{' '}
-              <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--indigo-600)' }}>
+              <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--emerald-600, #059669)' }}>
                 {t('auth.login_link')}
               </Link>
             </p>
