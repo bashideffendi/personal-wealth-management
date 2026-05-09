@@ -55,7 +55,12 @@ function pickGradient(sym: string): string {
 }
 
 export function CryptoLogo({ symbol, size = 28, className, shape = 'circle' }: CryptoLogoProps) {
-  const [errored, setErrored] = useState(false)
+  // Two-stage fallback:
+  //   1. Local /crypto-logos/{slug}.png (top 50 popular coins, shipped with app)
+  //   2. spothq GitHub raw (everything else — newer coins not in local snapshot)
+  //   3. Monogram fallback (URL dead OR symbol totally unknown)
+  // We track which path failed via stage state.
+  const [stage, setStage] = useState<'local' | 'remote' | 'monogram'>('local')
   const radius = shape === 'circle' ? 'rounded-full' : 'rounded-lg'
 
   if (!symbol) {
@@ -67,7 +72,7 @@ export function CryptoLogo({ symbol, size = 28, className, shape = 'circle' }: C
   const normalized = normalizeSymbol(symbol)
   const lower = normalized.toLowerCase()
 
-  if (errored) {
+  if (stage === 'monogram') {
     return (
       <FallbackMonogram
         label={normalized.slice(0, 4)}
@@ -79,8 +84,9 @@ export function CryptoLogo({ symbol, size = 28, className, shape = 'circle' }: C
     )
   }
 
-  // spothq's GitHub raw — CORS open, served via Cloudflare CDN
-  const url = `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${lower}.png`
+  const url = stage === 'local'
+    ? `/crypto-logos/${lower}.png`
+    : `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${lower}.png`
 
   return (
     <div
@@ -93,7 +99,7 @@ export function CryptoLogo({ symbol, size = 28, className, shape = 'circle' }: C
         width={size}
         height={size}
         className="object-cover w-full h-full"
-        onError={() => setErrored(true)}
+        onError={() => setStage(stage === 'local' ? 'remote' : 'monogram')}
         unoptimized
       />
     </div>

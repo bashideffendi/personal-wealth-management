@@ -132,7 +132,7 @@ export function CurrencyRates() {
                 <div className="flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <Image
-                      src={`https://hatscripts.github.io/circle-flags/flags/${pair.iso}.svg`}
+                      src={`/flag-logos/${pair.iso}.svg`}
                       alt={`Bendera ${pair.name}`}
                       width={20}
                       height={20}
