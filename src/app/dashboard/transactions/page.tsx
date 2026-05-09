@@ -553,9 +553,9 @@ export default function TransactionsPage() {
 
   function getAccountName(accountId: string) {
     const acc = accounts.find((a) => a.id === accountId)
-    if (acc) return acc.name
+    if (acc) return acc.name?.trim() || `Akun tanpa nama (${acc.type})`
     const cc = creditCards.find((c) => c.id === accountId)
-    if (cc) return `${cc.name}${cc.last_four ? ` ••${cc.last_four}` : ''}`
+    if (cc) return `${cc.name?.trim() || 'Kartu Kredit'}${cc.last_four ? ` ••${cc.last_four}` : ''}`
     return '-'
   }
 
@@ -660,7 +660,7 @@ export default function TransactionsPage() {
               <SelectItem value="all">Semua Akun</SelectItem>
               {accounts.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.name}
+                  {a.name?.trim() || `Akun tanpa nama (${a.type})`}
                 </SelectItem>
               ))}
               {creditCards.map((c) => (
@@ -1147,7 +1147,7 @@ export default function TransactionsPage() {
                 <Select value={transferForm.from_account_id} onValueChange={(v) => setTransferForm({ ...transferForm, from_account_id: v ?? '' })}>
                   <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
                   <SelectContent>
-                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `Akun tanpa nama (${a.type})`}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1156,7 +1156,7 @@ export default function TransactionsPage() {
                 <Select value={transferForm.to_account_id} onValueChange={(v) => setTransferForm({ ...transferForm, to_account_id: v ?? '' })}>
                   <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
                   <SelectContent>
-                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `Akun tanpa nama (${a.type})`}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

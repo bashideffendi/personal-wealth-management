@@ -243,7 +243,7 @@ export default function AccountsPage() {
               <TableRow key={a.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    {a.name}
+                    {a.name?.trim() || <span className="italic text-muted-foreground">Akun tanpa nama</span>}
                     {a.id === defaultAccountId && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                         <Star className="size-3 fill-blue-700" /> Default
