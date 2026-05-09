@@ -18,7 +18,11 @@ import {
 } from '@/components/ui/select'
 import {
   Loader2, Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown,
+  LineChart, Coins,
 } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { StockLogPanel } from '@/components/investment/stock-log-panel'
+import { DividendsPanel } from '@/components/investment/dividends-panel'
 
 interface FormState {
   id: string | null
@@ -193,6 +197,16 @@ export default function InvestmentCategoryPage() {
         </p>
       </div>
 
+      <Tabs defaultValue="holdings" className="w-full">
+        {category === 'stock' && (
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />Posisi</TabsTrigger>
+            <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />Stock Log</TabsTrigger>
+            <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />Dividen</TabsTrigger>
+          </TabsList>
+        )}
+
+        <TabsContent value="holdings" className="space-y-6 mt-6">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
           {category === 'stock'
@@ -358,6 +372,19 @@ export default function InvestmentCategoryPage() {
           })}
         </div>
       )}
+        </TabsContent>
+
+        {category === 'stock' && (
+          <>
+            <TabsContent value="log" className="mt-6">
+              <StockLogPanel />
+            </TabsContent>
+            <TabsContent value="dividen" className="mt-6">
+              <DividendsPanel />
+            </TabsContent>
+          </>
+        )}
+      </Tabs>
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

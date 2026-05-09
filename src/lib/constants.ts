@@ -135,7 +135,6 @@ export type NavSection =
   | 'activity'
   | 'wealth'
   | 'debt'
-  | 'invest_advanced'
   | 'tools'
   | 'account'
 
@@ -157,7 +156,6 @@ export const NAV_SECTIONS: { key: NavSection; titleKey: string }[] = [
   { key: 'activity',        titleKey: 'nav.section.activity' },
   { key: 'wealth',          titleKey: 'nav.section.wealth' },
   { key: 'debt',            titleKey: 'nav.section.debt' },
-  { key: 'invest_advanced', titleKey: 'nav.section.invest_advanced' },
   { key: 'tools',           titleKey: 'nav.section.tools' },
   { key: 'account',         titleKey: 'nav.section.account' },
 ]
@@ -197,10 +195,8 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
-  // ADVANCED INVESTING — RRG first (newest), then stock log + dividends
-  { label: 'RRG',             titleKey: 'nav.rrg',             href: '/dashboard/rrg',            icon: 'Compass',     section: 'invest_advanced' },
-  { label: 'Stock Log',       titleKey: 'nav.stock_log',       href: '/dashboard/stock-log',      icon: 'ListOrdered', section: 'invest_advanced' },
-  { label: 'Dividen',         titleKey: 'nav.dividends',       href: '/dashboard/dividends',      icon: 'Coins',       section: 'invest_advanced' },
+  // (Stock Log + Dividen now live as tabs inside /dashboard/assets/investment/stock)
+  // (RRG moved out to standalone investment-dashboard project)
 
   // TOOLS — utilities, reports, calculators, category rules
   { label: 'Kalkulator',      titleKey: 'nav.calculators',     href: '/dashboard/calculators',    icon: 'Calculator',  section: 'tools' },

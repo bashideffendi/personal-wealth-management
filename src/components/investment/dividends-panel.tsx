@@ -1,5 +1,11 @@
 'use client'
 
+/**
+ * Dividends panel.
+ * Used as a tab inside /dashboard/assets/investment/stock.
+ * Was previously the standalone /dashboard/dividends page.
+ */
+
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -31,7 +37,7 @@ const EMPTY: FormState = {
   ex_date: '', pay_date: new Date().toISOString().split('T')[0], notes: '',
 }
 
-export default function DividendsPage() {
+export function DividendsPanel() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Dividend[]>([])
@@ -40,12 +46,10 @@ export default function DividendsPage() {
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   async function load() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
     const [dR, iR] = await Promise.all([
       supabase.from('dividends').select('*').eq('user_id', user.id).order('pay_date', { ascending: false }),
       supabase.from('investments').select('*').eq('user_id', user.id).eq('category', 'stock'),
@@ -54,6 +58,9 @@ export default function DividendsPage() {
     setStocks((iR.data ?? []) as Investment[])
     setLoading(false)
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void load() }, [])
 
   async function save() {
     setSaving(true)
@@ -82,12 +89,11 @@ export default function DividendsPage() {
     void load()
   }
 
-  // Aggregates
   const stats = useMemo(() => {
     const year = new Date().getFullYear()
     const ytd = items.filter((d) => new Date(d.pay_date).getFullYear() === year).reduce((s, d) => s + d.amount, 0)
     const total = items.reduce((s, d) => s + d.amount, 0)
-    const avgMonthly = items.length > 0 ? total / Math.max(1, months(items)) : 0
+    const avgMonthly = items.length > 0 ? total / Math.max(1, monthsSpan(items)) : 0
     return { ytd, total, avgMonthly, count: items.length }
   }, [items])
 
@@ -105,16 +111,27 @@ export default function DividendsPage() {
   }, [items])
 
   return (
-    <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Dividen Diterima</p>
-        <p className="num tabular mt-3 text-4xl sm:text-5xl font-semibold" style={{ color: 'var(--ink)' }}>
-          {formatCurrency(stats.ytd)}
-        </p>
-        <p className="text-sm mt-2" style={{ color: 'var(--on-black-mut)' }}>
-          YTD · Total all-time <span className="num">{formatCurrency(stats.total)}</span>
-          {' · '}Rata-rata <span className="num">{formatCurrency(stats.avgMonthly)}</span>/bln
-        </p>
+    <div className="space-y-5">
+      {/* Stats inline (no dark hero — parent page already has one) */}
+      <div className="grid grid-cols-3 gap-4 rounded-xl border bg-white p-5">
+        <div>
+          <p className="caps" style={{ fontSize: '0.625rem' }}>YTD Dividen</p>
+          <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(stats.ytd)}
+          </p>
+        </div>
+        <div>
+          <p className="caps" style={{ fontSize: '0.625rem' }}>Total All-Time</p>
+          <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(stats.total)}
+          </p>
+        </div>
+        <div>
+          <p className="caps" style={{ fontSize: '0.625rem' }}>Rata-rata / Bulan</p>
+          <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(stats.avgMonthly)}
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
@@ -126,7 +143,6 @@ export default function DividendsPage() {
         </Button>
       </div>
 
-      {/* Monthly chart */}
       {monthlyData.length > 0 && (
         <div className="s-card p-5">
           <p className="caps">Riwayat Pembayaran</p>
@@ -151,7 +167,7 @@ export default function DividendsPage() {
       ) : items.length === 0 ? (
         <div className="s-card p-12 text-center">
           <p className="font-semibold">Belum ada catatan dividen</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat dividen dari saham-saham Anda.</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Catat dividen yang diterima dari saham-saham kamu.</p>
         </div>
       ) : (
         <div className="s-card overflow-x-auto">
@@ -264,7 +280,7 @@ export default function DividendsPage() {
   )
 }
 
-function months(items: Dividend[]): number {
+function monthsSpan(items: Dividend[]): number {
   if (items.length === 0) return 1
   const dates = items.map((d) => new Date(d.pay_date).getTime())
   const min = Math.min(...dates)

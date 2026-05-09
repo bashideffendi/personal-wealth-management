@@ -1,5 +1,11 @@
 'use client'
 
+/**
+ * Stock transaction log panel.
+ * Used as a tab inside /dashboard/assets/investment/stock.
+ * Was previously the standalone /dashboard/stock-log page.
+ */
+
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -35,7 +41,6 @@ const EMPTY: FormState = {
 
 // FIFO realized P/L computation
 function computeRealizedPL(txs: StockTransaction[]): number {
-  // Group by ticker
   const byTicker: Record<string, StockTransaction[]> = {}
   for (const t of txs) {
     const k = t.ticker ?? 'unknown'
@@ -44,14 +49,12 @@ function computeRealizedPL(txs: StockTransaction[]): number {
   }
   let total = 0
   for (const group of Object.values(byTicker)) {
-    // Sort by date asc
     const sorted = [...group].sort((a, b) => a.date.localeCompare(b.date))
     const lots: { shares: number; cost: number }[] = []
     for (const t of sorted) {
       if (t.side === 'buy') {
         lots.push({ shares: t.shares, cost: t.price })
       } else {
-        // sell — match against lots FIFO
         let remaining = t.shares
         while (remaining > 0 && lots.length > 0) {
           const lot = lots[0]
@@ -67,7 +70,7 @@ function computeRealizedPL(txs: StockTransaction[]): number {
   return total
 }
 
-export default function StockLogPage() {
+export function StockLogPanel() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<StockTransaction[]>([])
@@ -77,12 +80,10 @@ export default function StockLogPage() {
   const [saving, setSaving] = useState(false)
   const [filterTicker, setFilterTicker] = useState<string>('all')
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   async function load() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
     const [sR, iR] = await Promise.all([
       supabase.from('stock_transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }),
       supabase.from('investments').select('*').eq('user_id', user.id).eq('category', 'stock'),
@@ -91,6 +92,9 @@ export default function StockLogPage() {
     setStocks((iR.data ?? []) as Investment[])
     setLoading(false)
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void load() }, [])
 
   async function save() {
     setSaving(true)
@@ -136,46 +140,40 @@ export default function StockLogPage() {
   }, [items])
 
   const tickers = Array.from(new Set(items.map((t) => t.ticker).filter(Boolean) as string[]))
-
   const plPositive = stats.realizedPL >= 0
 
   return (
-    <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Stock Transaction Log</p>
-        <div className="mt-3 grid grid-cols-3 gap-4">
-          <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>Total Buy</p>
-            <p className="num tabular text-xl sm:text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
-              {formatCurrency(stats.totalBuys)}
-            </p>
-          </div>
-          <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>Total Sell</p>
-            <p className="num tabular text-xl sm:text-2xl font-semibold" style={{ color: 'var(--ink)' }}>
-              {formatCurrency(stats.totalSells)}
-            </p>
-          </div>
-          <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>Realized P/L (FIFO)</p>
-            <p className="num tabular text-xl sm:text-2xl font-semibold flex items-center gap-1" style={{ color: plPositive ? 'var(--lime-700)' : 'var(--danger)' }}>
-              {plPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-              {formatCurrency(stats.realizedPL)}
-            </p>
-          </div>
+    <div className="space-y-5">
+      {/* Stats inline (no dark hero — parent page already has one) */}
+      <div className="grid grid-cols-3 gap-4 rounded-xl border bg-white p-5">
+        <div>
+          <p className="caps" style={{ fontSize: '0.625rem' }}>Total Buy</p>
+          <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(stats.totalBuys)}
+          </p>
         </div>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          {stats.count} transaksi · data untuk lapor SPT tahunan
-        </p>
+        <div>
+          <p className="caps" style={{ fontSize: '0.625rem' }}>Total Sell</p>
+          <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(stats.totalSells)}
+          </p>
+        </div>
+        <div>
+          <p className="caps" style={{ fontSize: '0.625rem' }}>Realized P/L (FIFO)</p>
+          <p className="num tabular text-xl font-semibold flex items-center gap-1 mt-0.5" style={{ color: plPositive ? 'var(--lime-700)' : 'var(--danger)' }}>
+            {plPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+            {formatCurrency(stats.realizedPL)}
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Filter ticker:</span>
+          <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Filter:</span>
           <Select value={filterTicker} onValueChange={(v) => setFilterTicker(v ?? 'all')}>
             <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua</SelectItem>
+              <SelectItem value="all">Semua ticker</SelectItem>
               {tickers.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -190,7 +188,7 @@ export default function StockLogPage() {
       ) : filtered.length === 0 ? (
         <div className="s-card p-12 text-center">
           <p className="font-semibold">Belum ada transaksi saham</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat buy/sell per saham.</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat buy/sell per saham — penting buat lapor SPT tahunan.</p>
         </div>
       ) : (
         <div className="s-card overflow-x-auto">
