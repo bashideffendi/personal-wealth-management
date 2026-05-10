@@ -14,7 +14,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Sparkles, ChevronRight } from 'lucide-react'
+import { Zap, ChevronRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 interface CreditStatus {
@@ -79,7 +79,7 @@ export function AICreditsBadge() {
         title="Kredit AI — buat scan struk, AI parse, & insight"
         aria-label="AI credit balance"
       >
-        <Sparkles className="size-3" />
+        <Zap className="size-3 fill-current" />
         <span className="num tabular">{status.current}</span>
         <span>AI credits</span>
       </button>
@@ -110,7 +110,7 @@ export function AICreditsBadge() {
                   <span className="text-sm font-normal ml-1 opacity-60">/{status.cap}</span>
                 </p>
               </div>
-              <Sparkles className="size-5" style={{ color: low ? '#F59E0B' : '#10B981' }} />
+              <Zap className="size-5 fill-current" style={{ color: low ? '#F59E0B' : '#10B981' }} />
             </div>
 
             {/* Progress bar */}
