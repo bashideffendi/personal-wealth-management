@@ -76,24 +76,25 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                   className="size-[84%] rounded-full flex flex-col items-center justify-center"
                   style={{ background: 'var(--surface)' }}
                 >
-                  {/* Sans-serif bold (Inter) instead of .num mono — feels
-                      friendlier/less spreadsheet-y. Tabular for alignment.
-                      Slight gradient on the digit for personality. */}
+                  {/* Instrument Serif (NORMAL, not italic) — warmer than
+                      Inter sans, less rigid than mono. Same display-serif
+                      feel as Mercury / Wealthfront hero numbers without
+                      the italic. */}
                   <span
-                    className="leading-none font-extrabold tabular-nums"
+                    className="leading-none tabular-nums"
                     style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'normal',
+                      fontWeight: 400,
                       fontSize: 92,
-                      letterSpacing: '-0.06em',
-                      background: `linear-gradient(180deg, ${tierMeta.color}, ${tierMeta.color}DD)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
+                      letterSpacing: '-0.04em',
+                      color: tierMeta.color,
                     }}
                   >
                     {score}
                   </span>
                   <span
-                    className="text-[11px] mt-0.5 font-medium opacity-60"
+                    className="text-[11px] mt-1 font-medium opacity-50"
                     style={{ color: tierMeta.color }}
                   >
                     dari 100
