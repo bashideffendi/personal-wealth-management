@@ -1004,88 +1004,80 @@ function KpiCard({
   kind?: 'income' | 'expense' | 'saving' | 'net'
 }) {
   const t = useT()
-  // Per-kind palette for tints + accents — gives the 4 KPI cards distinct
-  // identities so the row reads as 4 different signals, not 4 white boxes.
+  // Per-kind palette matching dashboard-refine.jsx KPI grid pattern.
+  // Each card: tint icon-box bg + emoji icon + delta chip top-right.
   const palette = (() => {
     switch (kind) {
       case 'income':
         return {
-          tint: 'linear-gradient(135deg, rgba(16,185,129,0.10), rgba(16,185,129,0.02))',
-          accent: '#10B981',
-          ring: 'rgba(16,185,129,0.20)',
-          glyph: '↑',
+          tint: 'var(--emerald-100)',
+          accent: 'var(--emerald-600)',
+          chipBg: 'var(--emerald-50)',
+          icon: '💰',
         }
       case 'expense':
         return {
-          tint: 'linear-gradient(135deg, rgba(239,68,68,0.10), rgba(239,68,68,0.02))',
-          accent: '#EF4444',
-          ring: 'rgba(239,68,68,0.20)',
-          glyph: '↓',
+          tint: 'var(--coral-100)',
+          accent: 'var(--coral-600)',
+          chipBg: 'var(--coral-50)',
+          icon: '💸',
         }
       case 'saving':
         return {
-          tint: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(14,165,233,0.04))',
-          accent: '#F59E0B',
-          ring: 'rgba(245,158,11,0.20)',
-          glyph: '＋',
+          tint: 'var(--amber-100)',
+          accent: 'var(--amber-600)',
+          chipBg: 'var(--amber-50)',
+          icon: '🏦',
         }
       case 'net':
         return {
-          tint:
-            value >= 0
-              ? 'linear-gradient(135deg, rgba(99,102,241,0.10), rgba(16,185,129,0.04))'
-              : 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(245,158,11,0.04))',
-          accent: value >= 0 ? '#6366F1' : '#EF4444',
-          ring: value >= 0 ? 'rgba(99,102,241,0.20)' : 'rgba(239,68,68,0.20)',
-          glyph: value >= 0 ? '↑' : '↓',
+          tint: value >= 0 ? 'var(--sky-100)' : 'var(--coral-100)',
+          accent: value >= 0 ? 'var(--sky-600)' : 'var(--coral-600)',
+          chipBg: value >= 0 ? 'var(--sky-50)' : 'var(--coral-50)',
+          icon: value >= 0 ? '📈' : '📉',
         }
       default:
         return {
-          tint: 'var(--surface)',
+          tint: 'var(--surface-2)',
           accent: 'var(--ink)',
-          ring: 'var(--border)',
-          glyph: '•',
+          chipBg: 'var(--surface-2)',
+          icon: '•',
         }
     }
   })()
 
   return (
-    <div
-      className="rounded-xl p-5 relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5"
-      style={{
-        background: palette.tint,
-        border: `1px solid ${palette.ring}`,
-      }}
-    >
-      {/* Decorative blob in corner — purely visual, gives the card depth */}
-      <div
-        className="absolute -top-8 -right-8 size-24 rounded-full pointer-events-none"
-        style={{ background: palette.accent, opacity: 0.06, filter: 'blur(12px)' }}
-        aria-hidden="true"
-      />
-
-      <div className="relative flex items-start justify-between gap-2">
-        <p className="caps">{label}</p>
+    <div className="s-card p-5 transition-all hover:shadow-md hover:-translate-y-0.5">
+      {/* Header row — icon-box left + delta chip right (per mockup) */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div
+          className="size-9 rounded-[10px] flex items-center justify-center text-base"
+          style={{ background: palette.tint }}
+        >
+          {palette.icon}
+        </div>
         {direction && (
           <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full shrink-0 text-[12px] font-bold shadow-sm"
-            style={{ background: palette.accent, color: '#FFFFFF' }}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+            style={{ background: palette.chipBg, color: palette.accent }}
           >
             {direction === 'up' ? '↑' : '↓'}
           </span>
         )}
       </div>
+      {/* Label small + Value big — per dashboard-refine.jsx spec */}
+      <p className="text-xs font-medium mb-1" style={{ color: 'var(--ink-muted)' }}>
+        {label}
+      </p>
       <p
-        className="relative num tabular mt-4 text-[18px] sm:text-[22px] lg:text-[26px] leading-tight font-semibold"
-        style={{ color: 'var(--ink)' }}
+        className="num tabular text-xl sm:text-[22px] leading-tight font-bold"
+        style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
       >
-        {/* Use compact format on mobile so 8-figure numbers don't overflow
-            ("Rp 15jt" instead of "Rp 15.000.000"). Hidden on sm+ where the
-            full format fits. */}
+        {/* Compact on mobile, full on sm+ */}
         <span className="sm:hidden">{formatCompactCurrency(value)}</span>
         <span className="hidden sm:inline">{formatCurrency(value)}</span>
       </p>
-      <p className="relative text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
         {note ?? t('dashboard.current_month')}
       </p>
     </div>
