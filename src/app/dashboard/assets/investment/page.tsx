@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
@@ -11,6 +11,7 @@ import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Percent, Wallet } from
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 
 const CAT_LABELS: Record<string, string> = {
   stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
@@ -42,13 +43,14 @@ interface RdnAccount {
 
 export default function InvestmentOverviewPage() {
   const supabase = createClient()
+  const { hidden: privacyHidden } = usePrivacy()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Investment[]>([])
   const [rdnAccounts, setRdnAccounts] = useState<RdnAccount[]>([])
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function load() {
+  // useCallback so the function is stable and can be a useEffect dep
+  // without re-running every render. Same pattern as [slug]/page.tsx.
+  const load = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -63,7 +65,13 @@ export default function InvestmentOverviewPage() {
     setItems((invRes.data ?? []) as Investment[])
     setRdnAccounts((rdnRes.data ?? []) as RdnAccount[])
     setLoading(false)
-  }
+  }, [supabase])
+
+  // The set-state-in-effect rule is overly strict for legitimate data-
+  // fetching effects (load → setState). The fetch is gated by auth + an
+  // unmount guard inside `load` would just add ceremony.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void load() }, [load])
 
   const rdnTotal = rdnAccounts.reduce((s, a) => s + (a.current_balance ?? 0), 0)
 
@@ -366,7 +374,7 @@ export default function InvestmentOverviewPage() {
                     <div
                       className="rounded-lg p-2.5 border"
                       style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.20)' }}
-                      title={`${bestPerformer.i.name}: ${formatCurrency(bestPerformer.market)}`}
+                      title={privacyHidden ? bestPerformer.i.name : `${bestPerformer.i.name}: ${formatCurrency(bestPerformer.market)}`}
                     >
                       <p className="text-[9px] uppercase tracking-wide" style={{ color: '#059669' }}>
                         ▲ Top performer
@@ -383,7 +391,7 @@ export default function InvestmentOverviewPage() {
                     <div
                       className="rounded-lg p-2.5 border"
                       style={{ background: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.20)' }}
-                      title={`${worstPerformer.i.name}: ${formatCurrency(worstPerformer.market)}`}
+                      title={privacyHidden ? worstPerformer.i.name : `${worstPerformer.i.name}: ${formatCurrency(worstPerformer.market)}`}
                     >
                       <p className="text-[9px] uppercase tracking-wide" style={{ color: '#DC2626' }}>
                         ▼ Underperform

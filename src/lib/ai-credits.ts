@@ -81,3 +81,27 @@ export async function consumeAICredits(
 
   return { ok: true, remaining: profile?.ai_credits ?? 0 }
 }
+
+/**
+ * Refund credits to a user — for use in API route catch blocks when the
+ * upstream Anthropic call fails after we've already charged.
+ *
+ * Best-effort: silently swallows errors so a refund failure never masks
+ * the original error we're returning to the user. The amount is clamped
+ * server-side to the plan cap so this can never grant free credits.
+ */
+export async function refundAICredits(
+  supabase: SupabaseClient,
+  userId: string,
+  costKey: AICostKey,
+): Promise<void> {
+  const amount = AI_COSTS[costKey]
+  try {
+    await supabase.rpc('refund_ai_credits', {
+      p_user_id: userId,
+      p_amount: amount,
+    })
+  } catch {
+    // intentionally ignored — refund failure shouldn't shadow the upstream error
+  }
+}

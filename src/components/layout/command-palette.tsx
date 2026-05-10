@@ -19,6 +19,7 @@ import {
   Loader2, Check, AlertCircle, Mic, MicOff,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition'
 
 const RECENT_KEY = 'pwm-recent-pages'
@@ -248,6 +249,9 @@ export function CommandPalette() {
         kind: 'error',
         message: err instanceof Error ? err.message : 'Gagal parse',
       })
+    } finally {
+      // Refresh badge — credits consumed (success) or refunded (server-side failure)
+      notifyAICreditsChanged()
     }
   }
 

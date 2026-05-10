@@ -16,7 +16,7 @@
  * still pick them.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Loader2 } from 'lucide-react'
 import { CryptoLogo } from './crypto-logo'
 
@@ -103,9 +103,13 @@ export function CryptoSearch({ value, onSelect, placeholder }: Props) {
     return () => document.removeEventListener('pointerdown', onPointer)
   }, [open])
 
+  // Defer the filter input so typing stays buttery even on large catalogs
+  // (Binance has ~400 USDT pairs). React batches the filter work behind the
+  // input update — equivalent of a debounce without the timer plumbing.
+  const deferredQuery = useDeferredValue(query)
   const results = useMemo(() => {
     if (!catalog) return []
-    const q = query.trim().toUpperCase()
+    const q = deferredQuery.trim().toUpperCase()
     if (!q) return catalog.slice(0, 20)  // initial: top 20 by market cap order
     const symMatches: CryptoSymbol[] = []
     const nameMatches: CryptoSymbol[] = []
@@ -118,7 +122,7 @@ export function CryptoSearch({ value, onSelect, placeholder }: Props) {
       if (symMatches.length + nameMatches.length >= 30) break
     }
     return [...symMatches, ...nameMatches].slice(0, 20)
-  }, [catalog, query])
+  }, [catalog, deferredQuery])
 
   function pick(c: CryptoSymbol) {
     setQuery(c.s)

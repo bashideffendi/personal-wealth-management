@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account } from '@/types'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,6 +59,7 @@ const emptyForm = {
 
 export default function AccountsPage() {
   const supabase = createClient()
+  const { hidden: privacyHidden } = usePrivacy()
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null)
@@ -398,7 +400,7 @@ export default function AccountsPage() {
                         key={i}
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: pillBg[al.purpose_kind], color: pillFg[al.purpose_kind] }}
-                        title={`${al.label}: ${formatCurrency(al.amount)}`}
+                        title={privacyHidden ? al.label : `${al.label}: ${formatCurrency(al.amount)}`}
                       >
                         {al.label} · {formatCurrency(al.amount)}
                       </span>

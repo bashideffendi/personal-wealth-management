@@ -12,6 +12,7 @@ import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { CryptoLogo } from '@/components/investment/crypto-logo'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 import type { Transaction, Investment, CreditCard, Contract } from '@/types'
 
 import {
@@ -1077,6 +1078,7 @@ function TopCategoriesBar({ monthTransactions }: { monthTransactions: Transactio
 
 // ─── Day-of-Week Spending Pattern ───
 function DayOfWeekChart({ monthTransactions }: { monthTransactions: Transaction[] }) {
+  const { hidden: privacyHidden } = usePrivacy()
   const labels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
   const sums = [0, 0, 0, 0, 0, 0, 0]
   const counts = [0, 0, 0, 0, 0, 0, 0]
@@ -1107,7 +1109,7 @@ function DayOfWeekChart({ monthTransactions }: { monthTransactions: Transaction[
                     background: isPeak ? 'var(--ink)' : 'var(--lime-400)',
                     minHeight: sums[i] > 0 ? 4 : 0,
                   }}
-                  title={`${lbl}: ${formatCurrency(sums[i])} total, ${formatCurrency(averages[i])} rata-rata`}
+                  title={privacyHidden ? lbl : `${lbl}: ${formatCurrency(sums[i])} total, ${formatCurrency(averages[i])} rata-rata`}
                 />
               </div>
               <span className="text-[10px] font-semibold" style={{ color: isPeak ? 'var(--ink)' : 'var(--ink-muted)' }}>

@@ -15,6 +15,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Sparkles, ChevronRight } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 interface CreditStatus {
   current: number
@@ -56,9 +57,10 @@ export function AICreditsBadge() {
   const pct = status.cap > 0 ? (status.current / status.cap) * 100 : 0
   const low = pct < 20
   const empty = status.current === 0
-  const renewalText = status.renewalAt
-    ? new Date(status.renewalAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-    : '—'
+  // Use the shared formatDate so renewal date renders the same way as
+  // every other date in the app (e.g. "10 Juni 2026"). Previously this
+  // used a one-off short format which drifted from the rest of the UI.
+  const renewalText = status.renewalAt ? formatDate(status.renewalAt) : '—'
 
   return (
     <div className="relative">

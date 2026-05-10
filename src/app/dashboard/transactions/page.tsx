@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
   INCOME_CATEGORIES,
@@ -320,6 +321,8 @@ export default function TransactionsPage() {
       setExtractError(err instanceof Error ? err.message : 'Gagal memproses struk')
     } finally {
       setExtracting(false)
+      // Refresh badge — credits consumed (success) or refunded (server-side failure)
+      notifyAICreditsChanged()
     }
   }
 

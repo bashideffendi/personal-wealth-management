@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -110,7 +110,7 @@ const RESPONSE_SCHEMA: Anthropic.Tool.InputSchema = {
       description: 'Catatan tambahan (opsional, untuk hal yang ga yakin)',
     },
   },
-  required: ['merchant', 'date', 'total', 'type', 'category', 'description', 'payment_method', 'confidence'],
+  required: ['merchant', 'date', 'total', 'type', 'category', 'description', 'payment_method', 'payment_detail', 'confidence'],
   additionalProperties: false,
 }
 
@@ -214,6 +214,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (response.stop_reason === 'refusal') {
+      // Refund — user got nothing usable from this call
+      await refundAICredits(supabase, user.id, 'receipt_scan')
       return NextResponse.json(
         { error: 'Claude menolak memproses gambar ini.' },
         { status: 422 },
@@ -222,6 +224,8 @@ export async function POST(request: NextRequest) {
 
     const toolUseBlock = response.content.find((b) => b.type === 'tool_use')
     if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+      // Refund — Claude responded but didn't extract anything actionable
+      await refundAICredits(supabase, user.id, 'receipt_scan')
       return NextResponse.json(
         { error: 'Claude tidak memanggil tool extract_receipt' },
         { status: 502 },
@@ -236,6 +240,8 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (err) {
+    // Refund credits since the call failed — user shouldn't pay for a 502
+    await refundAICredits(supabase, user.id, 'receipt_scan')
     if (err instanceof Anthropic.APIError) {
       return NextResponse.json(
         { error: `Anthropic API error: ${err.message}`, status: err.status },

@@ -129,7 +129,10 @@ function WalletLogoImage({
   const radiusCls = shape === 'circle' ? 'rounded-full' : 'rounded-lg'
   return (
     <div
-      className={`relative shrink-0 ${radiusCls} overflow-hidden bg-white ring-1 ring-black/5 flex items-center justify-center ${className ?? ''}`}
+      // ring bumped from /5 to /10 + soft inset shadow so logos with white
+      // backgrounds stay visible against a white card. Slight padding so
+      // the logo doesn't crash into the ring edge.
+      className={`relative shrink-0 ${radiusCls} overflow-hidden bg-white ring-1 ring-black/10 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)] p-[2px] flex items-center justify-center ${className ?? ''}`}
       style={{ width: size, height: size }}
     >
       <Image
@@ -137,7 +140,9 @@ function WalletLogoImage({
         alt={`Logo ${brand}`}
         width={size}
         height={size}
-        className="object-cover w-full h-full"
+        // object-contain so logos don't get cropped — the bg-white frame
+        // gives them breathing room (matters for non-square wallet logos).
+        className="object-contain w-full h-full"
         onError={() => {
           if (tried === 'png') setTried('svg')
           else onAllFailed()

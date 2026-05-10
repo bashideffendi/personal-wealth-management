@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatPercent } from '@/lib/utils'
@@ -82,29 +82,10 @@ export default function InvestmentCategoryPage() {
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (!subcat) { router.push('/dashboard/assets/investment'); return }
-    void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug])
-
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase
-      .from('investments')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('category', category)
-      .order('total_value', { ascending: false })
-    const list = (data ?? []) as Investment[]
-    setItems(list)
-    setLoading(false)
-    void refreshQuotes(list)
-  }
-
-  async function refreshQuotes(list: Investment[] = items) {
+  // Declared as useCallback before the useEffect that triggers it so the
+  // hook deps lint rule is happy without disabling it. Both `load` and
+  // `refreshQuotes` are stable as long as `category` doesn't change.
+  const refreshQuotes = useCallback(async (list: Investment[]) => {
     const tickers = Array.from(new Set(list.map((i) => i.ticker).filter(Boolean) as string[]))
     if (tickers.length === 0) return
     setRefreshing(true)
@@ -112,22 +93,40 @@ export default function InvestmentCategoryPage() {
       // Crypto holdings: prefer Binance public market data (more reliable from
       // Indonesian ISPs than Yahoo's crypto endpoints which often geoblock).
       // Convert Yahoo-style "BTC-USD" → Binance "BTCUSDT" before sending.
+      //
+      // CRITICAL: Binance returns USD prices, but the rest of the app
+      // (avg_cost, totals, formatCurrency) is all in IDR. Without converting,
+      // BTC at $80k would render as Rp 80k → fake -99.99% loss. We fetch
+      // USDIDR=X from Yahoo in parallel and multiply before storing.
       if (category === 'crypto') {
         const binanceTickers = tickers
           .map((t) => t.replace(/-USD$/i, 'USDT').toUpperCase())
-        const res = await fetch(`/api/crypto-price?symbols=${encodeURIComponent(binanceTickers.join(','))}`)
-        if (!res.ok) return
-        const json = (await res.json()) as {
+        const [priceRes, fxRes] = await Promise.all([
+          fetch(`/api/crypto-price?symbols=${encodeURIComponent(binanceTickers.join(','))}`),
+          fetch(`/api/quotes?tickers=USDIDR%3DX`),
+        ])
+        if (!priceRes.ok) return
+        const priceJson = (await priceRes.json()) as {
           tickers: Array<{ symbol: string; lastPrice: number; priceChangePercent: number }>
         }
+        // Default fallback rate if Yahoo FX endpoint fails — better to show a
+        // ballpark IDR value than a 13000× wrong one. Updated periodically.
+        let usdIdr = 16500
+        if (fxRes.ok) {
+          const fxJson = (await fxRes.json()) as { quotes?: Array<{ ticker: string; price: number }> }
+          const fx = fxJson.quotes?.find((q) => q.ticker === 'USDIDR=X')
+          if (fx && fx.price > 0) usdIdr = fx.price
+        }
         const map: Record<string, Quote> = {}
-        for (const t of json.tickers) {
+        for (const t of priceJson.tickers) {
           // Map Binance symbol back to user's stored ticker (BTCUSDT → BTC-USD)
           const userTicker = t.symbol.replace(/USDT$/, '-USD')
           map[userTicker] = {
             ticker: userTicker,
-            price: t.lastPrice,
-            currency: 'USD',
+            // Convert USD → IDR so downstream math (invested vs market) is
+            // apples-to-apples with avg_cost which user enters in IDR.
+            price: t.lastPrice * usdIdr,
+            currency: 'IDR',
             changePct: t.priceChangePercent,
             marketState: null,
           }
@@ -146,7 +145,28 @@ export default function InvestmentCategoryPage() {
     } finally {
       setRefreshing(false)
     }
-  }
+  }, [category])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase
+      .from('investments')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('category', category)
+      .order('total_value', { ascending: false })
+    const list = (data ?? []) as Investment[]
+    setItems(list)
+    setLoading(false)
+    void refreshQuotes(list)
+  }, [supabase, category, refreshQuotes])
+
+  useEffect(() => {
+    if (!subcat) { router.push('/dashboard/assets/investment'); return }
+    void load()
+  }, [slug, subcat, router, load])
 
   function openCreate() {
     setForm(EMPTY)
@@ -306,7 +326,7 @@ export default function InvestmentCategoryPage() {
           {(category === 'stock' || category === 'crypto') && (
             <Button
               variant="outline"
-              onClick={() => refreshQuotes()}
+              onClick={() => refreshQuotes(items)}
               disabled={refreshing || !items.some((i) => i.ticker)}
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />

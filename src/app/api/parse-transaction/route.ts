@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -132,6 +132,8 @@ export async function POST(request: NextRequest) {
 
     const block = response.content.find((b) => b.type === 'tool_use')
     if (!block || block.type !== 'tool_use') {
+      // Refund — Claude responded but didn't actually parse
+      await refundAICredits(supabase, user.id, 'nl_parse')
       return NextResponse.json(
         { error: 'Claude tidak memanggil parser' },
         { status: 502 },
@@ -146,6 +148,8 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (err) {
+    // Refund credits — user shouldn't pay for a failed call
+    await refundAICredits(supabase, user.id, 'nl_parse')
     if (err instanceof Anthropic.APIError) {
       return NextResponse.json(
         { error: `Anthropic API error: ${err.message}` },

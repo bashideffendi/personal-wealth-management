@@ -93,3 +93,18 @@ export function Hidden({
   }
   return <>{children}</>
 }
+
+/**
+ * Mask a string (typically a `title` tooltip or `aria-label`) when privacy
+ * mode is on. Browser tooltips and screen readers don't respect CSS blur,
+ * so any sensitive text passed via these attributes leaks even when the
+ * visible UI is blurred.
+ *
+ * Usage:
+ *   const maskedTitle = useMaskedText(`Saldo: ${formatCurrency(amount)}`)
+ *   <div title={maskedTitle}>...</div>
+ */
+export function useMaskedText(text: string, mask = '••••••'): string {
+  const { hidden } = usePrivacy()
+  return hidden ? mask : text
+}

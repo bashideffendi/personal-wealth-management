@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -113,40 +113,79 @@ export async function POST(request: NextRequest) {
 
   const client = new Anthropic()
 
-  // Build user message — compact, focused on signals
-  const userMsg = `Berikut ringkasan keuangan untuk ${input.period_label}:
+  // Build user message — compact, focused on signals.
+  //
+  // Sparse data guard: if user has < 3 transactions worth of category data,
+  // we tell Claude this is an onboarding scenario and ask for encouraging,
+  // forward-looking insights instead of analytical ones (which would be
+  // hollow with no real data to chew on).
+  const hasMeaningfulCategoryData = input.expense_by_category
+    .filter((c) => c.this_month > 0).length >= 2
+  const isSparse = !hasMeaningfulCategoryData && input.expense < 100_000
 
-PEMASUKAN: Rp ${input.income.toLocaleString('id-ID')}
-PENGELUARAN: Rp ${input.expense.toLocaleString('id-ID')}
-TABUNGAN: Rp ${input.saving.toLocaleString('id-ID')}
-INVESTASI: Rp ${input.investment.toLocaleString('id-ID')}
-NET CASHFLOW: Rp ${input.net.toLocaleString('id-ID')}
-SAVING RATE: ${input.saving_rate.toFixed(1)}%
+  const sections: string[] = []
+  sections.push(`Berikut ringkasan keuangan untuk ${input.period_label}:`)
+  sections.push('')
+  sections.push(`PEMASUKAN: Rp ${input.income.toLocaleString('id-ID')}`)
+  sections.push(`PENGELUARAN: Rp ${input.expense.toLocaleString('id-ID')}`)
+  sections.push(`TABUNGAN: Rp ${input.saving.toLocaleString('id-ID')}`)
+  sections.push(`INVESTASI: Rp ${input.investment.toLocaleString('id-ID')}`)
+  sections.push(`NET CASHFLOW: Rp ${input.net.toLocaleString('id-ID')}`)
+  sections.push(`SAVING RATE: ${input.saving_rate.toFixed(1)}%`)
 
-${input.last_month ? `BULAN LALU:
-- Pemasukan: Rp ${input.last_month.income.toLocaleString('id-ID')}
-- Pengeluaran: Rp ${input.last_month.expense.toLocaleString('id-ID')}
-- Tabungan+Investasi: Rp ${(input.last_month.saving + input.last_month.investment).toLocaleString('id-ID')}` : ''}
+  if (input.last_month) {
+    sections.push('')
+    sections.push('BULAN LALU:')
+    sections.push(`- Pemasukan: Rp ${input.last_month.income.toLocaleString('id-ID')}`)
+    sections.push(`- Pengeluaran: Rp ${input.last_month.expense.toLocaleString('id-ID')}`)
+    sections.push(`- Tabungan+Investasi: Rp ${(input.last_month.saving + input.last_month.investment).toLocaleString('id-ID')}`)
+  }
 
-PENGELUARAN PER KATEGORI (top 6):
-${input.expense_by_category.slice(0, 6).map((c) => {
-  const delta = c.last_month > 0 ? ((c.this_month - c.last_month) / c.last_month) * 100 : 0
-  const deltaStr = c.last_month > 0 ? ` (${delta > 0 ? '+' : ''}${delta.toFixed(0)}% vs bln lalu)` : ''
-  return `- ${c.category}: Rp ${c.this_month.toLocaleString('id-ID')}${deltaStr}`
-}).join('\n')}
+  if (input.expense_by_category.some((c) => c.this_month > 0)) {
+    sections.push('')
+    sections.push('PENGELUARAN PER KATEGORI (top 6):')
+    for (const c of input.expense_by_category.slice(0, 6)) {
+      if (c.this_month <= 0) continue
+      const delta = c.last_month > 0 ? ((c.this_month - c.last_month) / c.last_month) * 100 : 0
+      const deltaStr = c.last_month > 0 ? ` (${delta > 0 ? '+' : ''}${delta.toFixed(0)}% vs bln lalu)` : ''
+      sections.push(`- ${c.category}: Rp ${c.this_month.toLocaleString('id-ID')}${deltaStr}`)
+    }
+  }
 
-${input.top_expenses && input.top_expenses.length > 0 ? `TRANSAKSI PENGELUARAN TERBESAR (top 5):
-${input.top_expenses.slice(0, 5).map((t) => `- ${t.description || t.category}: Rp ${t.amount.toLocaleString('id-ID')} (${t.category}, ${t.date})`).join('\n')}` : ''}
+  if (input.top_expenses && input.top_expenses.length > 0) {
+    sections.push('')
+    sections.push('TRANSAKSI PENGELUARAN TERBESAR (top 5):')
+    for (const t of input.top_expenses.slice(0, 5)) {
+      sections.push(`- ${t.description || t.category}: Rp ${t.amount.toLocaleString('id-ID')} (${t.category}, ${t.date})`)
+    }
+  }
 
-${input.goals && input.goals.length > 0 ? `GOAL AKTIF:
-${input.goals.map((g) => `- ${g.name}: ${g.progress_pct.toFixed(0)}% tercapai, sisa Rp ${g.remaining.toLocaleString('id-ID')}${g.deadline ? `, deadline ${g.deadline}` : ''}`).join('\n')}` : ''}
+  if (input.goals && input.goals.length > 0) {
+    sections.push('')
+    sections.push('GOAL AKTIF:')
+    for (const g of input.goals) {
+      sections.push(`- ${g.name}: ${g.progress_pct.toFixed(0)}% tercapai, sisa Rp ${g.remaining.toLocaleString('id-ID')}${g.deadline ? `, deadline ${g.deadline}` : ''}`)
+    }
+  }
 
-${input.upcoming_bills && input.upcoming_bills.length > 0 ? `TAGIHAN MENDATANG (≤14 hari):
-${input.upcoming_bills.map((b) => `- ${b.name}: Rp ${b.amount.toLocaleString('id-ID')} dalam ${b.days_until} hari`).join('\n')}` : ''}
+  if (input.upcoming_bills && input.upcoming_bills.length > 0) {
+    sections.push('')
+    sections.push('TAGIHAN MENDATANG (≤14 hari):')
+    for (const b of input.upcoming_bills) {
+      sections.push(`- ${b.name}: Rp ${b.amount.toLocaleString('id-ID')} dalam ${b.days_until} hari`)
+    }
+  }
 
-Tanggal hari ini: ${input.today}
+  sections.push('')
+  sections.push(`Tanggal hari ini: ${input.today}`)
+  sections.push('')
+  if (isSparse) {
+    sections.push('CATATAN: User masih baru pakai app — data sangat tipis. Generate 2 insight yang welcoming, edukatif, dan dorong user catat lebih banyak transaksi. Hindari analisis pattern (datanya belum cukup). Contoh tone: "Selamat mulai catat keuangan! Coba log 1 transaksi tiap hari minggu ini biar kita bisa kasih insight yang lebih dalam."')
+  } else {
+    sections.push('Generate 2-3 insight personal yang specific, actionable, dan bervariasi tone-nya.')
+  }
 
-Generate 2-3 insight personal yang specific, actionable, dan bervariasi tone-nya.`
+  const userMsg = sections.join('\n')
 
   try {
     const response = await client.messages.create({
@@ -166,6 +205,8 @@ Generate 2-3 insight personal yang specific, actionable, dan bervariasi tone-nya
 
     const block = response.content.find((b) => b.type === 'tool_use')
     if (!block || block.type !== 'tool_use') {
+      // Refund — got a response but no insights tool call
+      await refundAICredits(supabase, user.id, 'insights')
       return NextResponse.json({ error: 'Claude tidak generate insights' }, { status: 502 })
     }
 
@@ -177,6 +218,8 @@ Generate 2-3 insight personal yang specific, actionable, dan bervariasi tone-nya
       },
     })
   } catch (err) {
+    // Refund credits since the call failed
+    await refundAICredits(supabase, user.id, 'insights')
     if (err instanceof Anthropic.APIError) {
       return NextResponse.json({ error: `Anthropic API error: ${err.message}` }, { status: 502 })
     }

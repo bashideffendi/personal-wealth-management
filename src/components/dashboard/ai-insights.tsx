@@ -13,6 +13,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Sparkles, RefreshCw, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import type { Transaction } from '@/types'
 
 interface Insight {
@@ -216,6 +217,9 @@ export function AIInsightsCard({
       setError(err instanceof Error ? err.message : 'Gagal fetch')
     } finally {
       setLoading(false)
+      // Refresh badge — credits were either consumed (success) or refunded
+      // (server-side on failure). Either way the displayed balance is stale.
+      notifyAICreditsChanged()
     }
   }
 

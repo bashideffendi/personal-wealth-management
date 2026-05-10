@@ -9,6 +9,7 @@ import {
   SAVING_CATEGORIES,
   INVESTMENT_CATEGORIES,
 } from '@/lib/constants'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 import type { Budget } from '@/types'
 
 import { Button } from '@/components/ui/button'
@@ -101,6 +102,7 @@ function loadCustom(): EnabledCats {
 
 export default function BudgetingPage() {
   const supabase = createClient()
+  const { hidden: privacyHidden } = usePrivacy()
 
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
@@ -319,7 +321,7 @@ export default function BudgetingPage() {
             <td
               key={i}
               className="num border border-[color:var(--border-soft)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
-              title={formatCurrency(v)}
+              title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
               {formatCompactCurrency(v)}
             </td>

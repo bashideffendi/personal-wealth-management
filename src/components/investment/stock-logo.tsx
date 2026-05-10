@@ -76,7 +76,11 @@ export function StockLogo({ ticker, size = 28, className, shape = 'circle' }: St
 
   return (
     <div
-      className={`relative shrink-0 ${radius} overflow-hidden bg-white ring-1 ring-black/5 ${className ?? ''}`}
+      // ring bumped from /5 to /10 + subtle inner shadow so logos with
+      // white backgrounds (BCA, Mandiri, etc.) stay distinguishable when
+      // placed against a white card. Inner padding via p-[2px] keeps the
+      // logo from kissing the ring.
+      className={`relative shrink-0 ${radius} overflow-hidden bg-white ring-1 ring-black/10 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)] p-[2px] ${className ?? ''}`}
       style={{ width: size, height: size }}
     >
       <Image
