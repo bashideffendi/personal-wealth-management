@@ -246,17 +246,18 @@ export default async function LandingPage() {
         className="px-6 sm:px-12 py-16 sm:py-20"
         style={{ background: 'var(--surface)' }}
       >
-        <div className="max-w-2xl mb-10">
-          <span className="caps">Fitur</span>
-          <h2
-            className="font-bold mt-3 tracking-tight"
-            style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
-          >
-            Semua yang kamu butuh, <span style={{ color: 'var(--ink-muted)' }}>tanpa pindah app.</span>
-          </h2>
-        </div>
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-2xl mb-10">
+            <span className="caps">Fitur</span>
+            <h2
+              className="font-bold mt-3 tracking-tight"
+              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+            >
+              Semua yang kamu butuh, <span style={{ color: 'var(--ink-muted)' }}>tanpa pindah app.</span>
+            </h2>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             {
               icon: MessageCircle,
@@ -338,25 +339,27 @@ export default async function LandingPage() {
               </p>
             </div>
           ))}
+          </div>
         </div>
       </section>
 
       {/* ─── PRICING ───────────────────────────────────────────── */}
       <section id="harga" className="px-6 sm:px-12 py-16 sm:py-20">
-        <div className="max-w-2xl mb-10">
-          <span className="caps">Harga</span>
-          <h2
-            className="font-bold mt-3 tracking-tight"
-            style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
-          >
-            Pilih yang cocok buat kamu.
-          </h2>
-          <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
-            Mulai gratis. Upgrade kapan aja.
-          </p>
-        </div>
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-2xl mb-10">
+            <span className="caps">Harga</span>
+            <h2
+              className="font-bold mt-3 tracking-tight"
+              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+            >
+              Pilih yang cocok buat kamu.
+            </h2>
+            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
+              Mulai gratis. Upgrade kapan aja.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-6xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Solo */}
           <div
             className="rounded-2xl p-7 border"
@@ -513,6 +516,7 @@ export default async function LandingPage() {
                 </li>
               ))}
             </ul>
+          </div>
           </div>
         </div>
       </section>
