@@ -629,7 +629,7 @@ export default function ProfilePage() {
           <div className="flex flex-wrap items-center gap-4">
             <Link href="#" className="hover:underline text-muted-foreground">Tutorial</Link>
             <Link href="#" className="hover:underline text-muted-foreground">Yang Baru</Link>
-            <a href="mailto:support@masbash.id" className="hover:underline text-muted-foreground inline-flex items-center gap-1">
+            <a href="mailto:support@klunting.com" className="hover:underline text-muted-foreground inline-flex items-center gap-1">
               Hubungi Support <ExternalLink className="size-3" />
             </a>
           </div>

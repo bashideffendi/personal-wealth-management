@@ -104,7 +104,7 @@ export default function PricingPage() {
       alert('Untuk downgrade ke Solo, hubungi support.')
       return
     }
-    alert(`Pembayaran via Midtrans akan segera hadir. Untuk early access ke ${planId.toUpperCase()}, hubungi support@masbash.id.`)
+    alert(`Pembayaran via Midtrans akan segera hadir. Untuk early access ke ${planId.toUpperCase()}, hubungi support@klunting.com.`)
   }
 
   if (loading) {
@@ -366,7 +366,7 @@ export default function PricingPage() {
       </section>
 
       <p className="text-center text-sm text-muted-foreground">
-        Ada pertanyaan? <Link href="mailto:support@masbash.id" className="font-medium text-foreground hover:underline">Hubungi kami</Link>
+        Ada pertanyaan? <Link href="mailto:support@klunting.com" className="font-medium text-foreground hover:underline">Hubungi kami</Link>
       </p>
     </div>
   )

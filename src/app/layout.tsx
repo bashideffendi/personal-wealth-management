@@ -29,6 +29,12 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
+  // Canonical base URL — used by Next.js to resolve absolute URLs for
+  // OpenGraph, Twitter cards, sitemap, robots.txt, etc. Override locally
+  // by setting NEXT_PUBLIC_SITE_URL (preview deploys etc).
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://klunting.com",
+  ),
   title: {
     default: "Klunting — Wealth Management App",
     template: "%s · Klunting",
@@ -53,6 +59,21 @@ export const metadata: Metadata = {
     apple: [
       { url: "/apple-icon", sizes: "180x180", type: "image/png" },
     ],
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "https://klunting.com",
+    siteName: "Klunting",
+    title: "Klunting — Wealth Management App",
+    description:
+      "Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai AI biar cepat.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Klunting — Wealth Management App",
+    description:
+      "Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai AI biar cepat.",
   },
 };
 
