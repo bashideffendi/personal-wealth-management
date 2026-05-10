@@ -602,34 +602,40 @@ body[data-privacy="hidden"] .recharts-text {
   pointer-events: none;
 }
 
-/* Calm Mode — when body[data-calm="true"], soften the harshness of red P/L
-   colors so loss aversion doesn't push user toward panic decisions.
-   Two-pronged approach:
-     1. Override --danger CSS variable to a neutral slate so anything using
-        var(--danger) instantly turns calm-grey
-     2. Filter inline-hex loss colors that don't go through the variable
-*/
+/* Calm Mode — when body[data-calm="true"], BLUR loss-colored elements so
+   the user can't read panic-inducing red P/L numbers. Same blur strategy
+   as Privacy Mode but selective to loss-color targets only.
+   Hover to peek at the actual value — like privacy mode. */
+
+/* Override --danger CSS variable so anything using var(--danger) via
+   className-based color also goes neutral. */
 body[data-calm="true"] {
-  --danger: #94a3b8;   /* slate-400 — neutral, calm */
-  --coral-500: #94a3b8;
-  --coral-600: #94a3b8;
+  --danger: #94a3b8;   /* slate-400 fallback for class-based usage */
   --coral-700: #94a3b8;
 }
 
-/* Inline-hex loss colors: aggressively desaturate + fade */
+/* BLUR any element with a loss color in its inline style — covers both
+   var(--danger) and explicit hex codes. Targets the smallest match by
+   matching the color value substring. */
 body[data-calm="true"] [style*="#DC2626"],
 body[data-calm="true"] [style*="#EF4444"],
 body[data-calm="true"] [style*="#F87171"],
 body[data-calm="true"] [style*="#E11D48"],
 body[data-calm="true"] [style*="#F43F5E"],
-body[data-calm="true"] [style*="rgba(220,38,38"],
-body[data-calm="true"] [style*="rgba(239,68,68"],
-body[data-calm="true"] [style*="rgba(244,63,94"] {
-  filter: saturate(0.10) opacity(0.55) !important;
-  transition: filter 0.4s ease, opacity 0.4s ease;
+body[data-calm="true"] [style*="--danger"],
+body[data-calm="true"] [style*="--coral"] {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease;
 }
 
-/* Smooth fade for var(--danger) overrides too */
-body[data-calm="true"] [style*="--danger"] {
-  transition: color 0.4s ease, background 0.4s ease;
+/* Hover-to-peek — like privacy mode. User can still check the actual
+   number when they REALLY want to, but default hides it. */
+body[data-calm="true"] [style*="#DC2626"]:hover,
+body[data-calm="true"] [style*="#EF4444"]:hover,
+body[data-calm="true"] [style*="#F87171"]:hover,
+body[data-calm="true"] [style*="#E11D48"]:hover,
+body[data-calm="true"] [style*="#F43F5E"]:hover,
+body[data-calm="true"] [style*="--danger"]:hover,
+body[data-calm="true"] [style*="--coral"]:hover {
+  filter: blur(0) !important;
 }
