@@ -64,21 +64,24 @@ export function AICreditsBadge() {
 
   return (
     <div className="relative">
+      {/* Per dashboard-refine.jsx mockup line 83 — emerald pill style:
+          "⚡ {n} AI credits". Cleaner than the previous "current/cap" format
+          which read as "90/10" and confused users. Cap detail still
+          available in the dropdown panel below. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-colors hover:bg-[var(--surface-2)]"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors hover:opacity-90"
         style={{
-          borderColor: empty ? 'rgba(239,68,68,0.30)' : low ? 'rgba(245,158,11,0.30)' : 'var(--border-soft)',
-          background: empty ? 'rgba(239,68,68,0.06)' : low ? 'rgba(245,158,11,0.06)' : 'transparent',
-          color: empty ? '#991B1B' : low ? '#92400E' : 'var(--ink-muted)',
+          background: empty ? 'rgba(239,68,68,0.10)' : low ? 'rgba(245,158,11,0.12)' : 'var(--emerald-100)',
+          color: empty ? 'var(--coral-700)' : low ? 'var(--amber-700)' : 'var(--emerald-800)',
         }}
         title="Kredit AI — buat scan struk, AI parse, & insight"
         aria-label="AI credit balance"
       >
         <Sparkles className="size-3" />
         <span className="num tabular">{status.current}</span>
-        <span className="opacity-50">/{status.cap}</span>
+        <span>AI credits</span>
       </button>
 
       {open && (

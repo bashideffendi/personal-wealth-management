@@ -460,6 +460,36 @@ export default function DashboardPage() {
       {/* Onboarding mission card — auto-hides when user completes setup */}
       <GettingStarted />
 
+      {/* Period selector for the monthly widgets below (KPI cards, AI insights,
+          cashflow chart, sankey, recent tx, etc all read selectedMonth/Year).
+          Removed from the hero per mockup; lives here as a compact pill row. */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="caps">Periode</p>
+          <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            {currentMonthYear}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
+            <SelectTrigger className="w-[130px] h-9 text-sm">
+              <SelectValue placeholder="Bulan">{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
+            <SelectTrigger className="w-[100px] h-9 text-sm">
+              <SelectValue placeholder="Tahun">{(v) => v}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* KPI Cards — color-tinted by kind for visual variety */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  direction="up"   kind="income" />
