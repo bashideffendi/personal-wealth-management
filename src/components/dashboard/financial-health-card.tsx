@@ -3,19 +3,19 @@
 /**
  * Financial Health Score card — headline diagnostic for the dashboard.
  *
- * Minimalist 3-column layout:
- *   1. BIG score + tier + 1-line verdict (left, the headline)
- *   2. Compact indicator bars per pillar (middle, no inline tips)
- *   3. Burn rate / runway panel (right)
+ * 3-column layout, equal-height columns (no wasted whitespace):
+ *   1. BIG score + tier + verdict (left, dominant)
+ *   2. Flat 7-indicator bars list (middle)
+ *   3. BIG burn rate / runway panel (right, dominant)
  *
  * Tips per indicator hidden by default — surface via native browser
- * tooltip (title attribute) on hover. Keeps the visual surface clean.
+ * tooltip on hover.
  *
  * Design tenets:
- *   - The score IS the headline — make it punchy (text-6xl/7xl)
- *   - Tier color does the visual storytelling
- *   - Breakdown bars are scannable in 2 seconds, not a wall of text
- *   - Detail / tips → hover, not inline
+ *   - Both side columns are HEROES (score + cash coverage) — make them
+ *     visually punchy with big numbers
+ *   - Middle column is the diagnostic detail — clean flat list
+ *   - All 3 columns stretch to same height → no awkward whitespace
  */
 
 import { Activity, Sparkles } from 'lucide-react'
@@ -50,26 +50,26 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
 
   return (
     <div
-      className="rounded-2xl border p-5 sm:p-6"
+      className="rounded-2xl border p-5"
       style={{
         background: 'var(--surface)',
         borderColor: 'var(--border)',
         boxShadow: '0 4px 12px -4px rgba(0,0,0,0.06)',
       }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* ─── Col 1: BIG Score + Tier + Verdict ──────────────── */}
-        <div className="lg:col-span-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* ─── Col 1: BIG Score (dominant) ──────────────────────── */}
+        <div className="lg:col-span-4 flex flex-col">
           <div className="flex items-center gap-1.5 mb-3">
             <p className="caps">Skor Kesehatan Finansial</p>
             <EduTip topic="financial-health" side="bottom" />
           </div>
 
-          {/* Score with circular arc — big & punchy */}
-          <div className="flex items-center gap-4">
+          {/* Score + tier+verdict side by side, fills column vertically */}
+          <div className="flex items-center gap-4 flex-1">
             <div className="relative shrink-0">
               <div
-                className="size-32 rounded-full flex items-center justify-center"
+                className="size-36 rounded-full flex items-center justify-center"
                 style={{
                   background: `conic-gradient(${tierMeta.color} ${arcAngle}deg, var(--surface-2) 0deg)`,
                 }}
@@ -80,11 +80,11 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                 >
                   <p
                     className="num tabular font-bold leading-none"
-                    style={{ color: tierMeta.color, fontSize: 52 }}
+                    style={{ color: tierMeta.color, fontSize: 60 }}
                   >
                     {score}
                   </p>
-                  <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--ink-soft)' }}>
                     /100
                   </p>
                 </div>
@@ -92,69 +92,76 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <div className="flex items-center gap-2 flex-wrap mb-2">
                 <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide"
                   style={{
                     background: `${tierMeta.color}1A`,
                     color: tierMeta.color,
                   }}
                 >
-                  <Activity className="size-2.5" />
+                  <Activity className="size-3" />
                   {tierMeta.label}
                 </span>
                 {tier === 'thriving' && (
-                  <Sparkles className="size-3.5" style={{ color: tierMeta.color }} />
+                  <Sparkles className="size-4" style={{ color: tierMeta.color }} />
                 )}
               </div>
-              <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                 {tierMeta.description}
               </p>
             </div>
           </div>
         </div>
 
-        {/* ─── Col 2: Flat list of indicators with consistent rhythm ──── */}
-        <div className="lg:col-span-5 lg:border-l lg:border-r lg:px-6" style={{ borderColor: 'var(--border-soft)' }}>
+        {/* ─── Col 2: Flat 7-indicator bars ──────────────────────── */}
+        <div className="lg:col-span-5 lg:border-l lg:border-r lg:px-5 flex flex-col" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="caps mb-3">Breakdown</p>
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1">
             {breakdown.map((ind) => (
               <IndicatorBar key={ind.key} indicator={ind} />
             ))}
           </div>
         </div>
 
-        {/* ─── Col 3: Burn rate / Runway ──────────────────────────── */}
-        <div className="lg:col-span-3">
+        {/* ─── Col 3: BIG Cash Coverage (dominant, fills column) ──── */}
+        <div className="lg:col-span-3 flex flex-col">
           <p className="caps mb-3">Cash Coverage</p>
           <div
-            className="rounded-lg p-3.5"
+            className="rounded-xl p-4 flex-1 flex flex-col"
             style={{
               background: 'var(--surface-2)',
               border: '1px solid var(--border-soft)',
             }}
           >
-            <p className="num tabular font-bold leading-none" style={{ fontSize: 36, color: burnColor }}>
+            <p className="num tabular font-bold leading-none" style={{ fontSize: 48, color: burnColor }}>
               {burnMonths > 99 ? '99+' : burnMonths.toFixed(1)}
-              <span className="text-xs font-normal ml-1.5" style={{ color: 'var(--ink-muted)' }}>
+              <span className="text-base font-normal ml-1.5" style={{ color: 'var(--ink-muted)' }}>
                 bulan
               </span>
             </p>
-            <p className="text-[11px] mt-1.5 font-medium" style={{ color: burnColor }}>
+            <p className="text-xs mt-2 font-semibold uppercase tracking-wide" style={{ color: burnColor }}>
               {burnVerdict}
             </p>
+            <p className="text-[11px] mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              Tanpa pemasukan baru, liquid cash bisa cover{' '}
+              <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
+                {burnMonths > 99 ? '> 99' : burnMonths.toFixed(1)}
+              </span> bulan pengeluaran.
+            </p>
+            {/* Push detail rows to the bottom of the panel */}
             <div
-              className="mt-3 pt-2 border-t space-y-1"
+              className="mt-auto pt-3 border-t space-y-1"
               style={{ borderColor: 'var(--border-soft)' }}
             >
-              <div className="flex items-center justify-between text-[10px]">
-                <span style={{ color: 'var(--ink-muted)' }}>Liquid</span>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: 'var(--ink-muted)' }}>Liquid cash</span>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(liquidBalance)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[10px]">
-                <span style={{ color: 'var(--ink-muted)' }}>Expense/bln</span>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: 'var(--ink-muted)' }}>Pengeluaran/bln</span>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(monthlyExpense)}
                 </span>
@@ -168,9 +175,8 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
 }
 
 /**
- * Compact one-line indicator: label + score on top, thin bar below.
- * Hover for full explainer + tip via native browser tooltip (title attr).
- * No inline tip clutter — keeps the breakdown scannable.
+ * Compact indicator: label + score on one line, thin bar below.
+ * Hover for full explainer + tip via native browser tooltip.
  */
 function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
   const isNa = indicator.status === 'na'
@@ -182,7 +188,6 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
   })()
   const pct = isNa ? 0 : Math.min(100, Math.max(0, indicator.score))
 
-  // Hover tooltip combines explainer + tip (if any)
   const tooltip = indicator.tip
     ? `${indicator.explainer}\n\n💡 ${indicator.tip}`
     : indicator.explainer
@@ -197,7 +202,7 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
           className="num tabular font-semibold shrink-0"
           style={{ color: isNa ? 'var(--ink-soft)' : barColor }}
         >
-          {isNa ? 'N/A' : `${indicator.score}`}
+          {isNa ? 'N/A' : indicator.score}
         </span>
       </div>
       <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
