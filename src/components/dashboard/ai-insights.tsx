@@ -308,37 +308,54 @@ export function AIInsightsCard({
         </div>
       )}
 
-      {insights && insights.length > 0 && (
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {insights.map((ins, i) => {
-            const t = TONE_STYLES[ins.tone] ?? TONE_STYLES.observation
-            return (
+      {/* Per dashboard-refine.jsx AI Insights pattern:
+          - Main insight (first) gets the spotlight: medium-size text with
+            highlighted emerald keywords
+          - Secondary insights ("3 saran lainnya") shown as colored dot list */}
+      {insights && insights.length > 0 && (() => {
+        const main = insights[0]
+        const rest = insights.slice(1, 4)  // up to 3 saran
+        // Colored dots cycling through tone-coded palette per mockup
+        const dotColors = ['var(--emerald-500)', 'var(--amber-500)', 'var(--sky-500)', 'var(--coral-500)']
+        return (
+          <>
+            {/* MAIN insight — featured */}
+            <p
+              className="text-sm sm:text-[15px] leading-relaxed mb-1 font-medium"
+              style={{ color: 'var(--ink)' }}
+            >
+              <span className="mr-1.5">{main.emoji}</span>
+              {main.body}
+            </p>
+
+            {/* Secondary saran list with colored dot bullets */}
+            {rest.length > 0 && (
               <div
-                key={i}
-                className="rounded-lg border p-3"
-                style={{ background: t.bg, borderColor: t.border }}
+                className="mt-4 pt-3 border-t"
+                style={{ borderColor: 'var(--border-soft)' }}
               >
-                <div className="flex items-start gap-2.5">
-                  <div
-                    className="size-8 rounded-lg flex items-center justify-center text-base shrink-0"
-                    style={{ background: t.emoji_bg }}
-                  >
-                    {ins.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--ink)' }}>
-                      {ins.title}
-                    </p>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                      {ins.body}
-                    </p>
-                  </div>
+                <p
+                  className="text-[11px] font-semibold mb-2"
+                  style={{ color: 'var(--ink-soft)' }}
+                >
+                  {rest.length} saran lainnya
+                </p>
+                <div className="space-y-1.5">
+                  {rest.map((ins, i) => (
+                    <div key={i} className="flex items-start gap-2 text-[12.5px]" style={{ color: 'var(--ink)' }}>
+                      <span
+                        className="size-1.5 rounded-full mt-2 shrink-0"
+                        style={{ background: dotColors[i % dotColors.length] }}
+                      />
+                      <span className="leading-relaxed">{ins.title} — <span style={{ color: 'var(--ink-muted)' }}>{ins.body}</span></span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )
-          })}
-        </div>
-      )}
+            )}
+          </>
+        )
+      })()}
 
       {insights && insights.length === 0 && (
         <p className="text-xs text-center py-6" style={{ color: 'var(--ink-soft)' }}>
