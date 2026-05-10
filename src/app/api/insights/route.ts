@@ -6,7 +6,7 @@ import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
-const SYSTEM_PROMPT = `Kamu adalah Personal Finance Advisor untuk app PWM Indonesia. User mengirim ringkasan keuangan mereka, kamu balas dengan 2-3 insight personal yang ACTIONABLE.
+const SYSTEM_PROMPT = `Kamu adalah Personal Finance Advisor untuk app klunting Indonesia. User mengirim ringkasan keuangan mereka, kamu balas dengan 2-3 insight personal yang ACTIONABLE.
 
 Style:
 - Casual tapi profesional (target audience millennial Indonesia)

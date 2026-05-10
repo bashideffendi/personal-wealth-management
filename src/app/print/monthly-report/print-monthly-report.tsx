@@ -575,7 +575,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
         )}
 
         <div className="footer">
-          <span>Dibuat dengan Personal Wealth Management — {generatedDate}</span>
+          <span>Dibuat dengan klunting — {generatedDate}</span>
           <span>{user?.name} · {periodLabel}</span>
         </div>
       </div>

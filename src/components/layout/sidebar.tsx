@@ -181,17 +181,16 @@ export function Sidebar({ user }: SidebarProps) {
             className="text-[10px] uppercase tracking-[0.24em] font-medium"
             style={{ color: '#71717A' }}
           >
-            Personal
+            Atur duitmu
           </p>
           <p
-            className="text-base font-semibold text-white mt-0.5 flex items-center gap-2"
+            className="text-xl font-bold text-white mt-0.5 flex items-center gap-2 tracking-tight"
           >
-            Wealth
+            klunting
             <span
               className="inline-block h-1.5 w-1.5 rounded-full"
               style={{ background: 'var(--emerald-400)' }}
             />
-            <span style={{ color: '#71717A' }} className="text-sm font-normal">Management</span>
           </p>
         </div>
 

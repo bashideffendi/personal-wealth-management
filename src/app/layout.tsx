@@ -30,18 +30,18 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: "PWM — Personal Wealth Management",
-    template: "%s · PWM",
+    default: "klunting — Atur duitmu sendiri",
+    template: "%s · klunting",
   },
   description:
     "Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai AI biar cepat.",
-  applicationName: "PWM",
+  applicationName: "klunting",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     // 'black-translucent' makes the iOS status bar overlay the app — feels native
     statusBarStyle: "black-translucent",
-    title: "PWM",
+    title: "klunting",
   },
   formatDetection: {
     telephone: false,

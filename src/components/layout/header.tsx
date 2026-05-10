@@ -228,16 +228,16 @@ export function Header({ user }: HeaderProps) {
               style={{ borderColor: 'rgba(148,163,184,0.10)' }}
             >
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-2xl font-bold text-[13px]"
-                style={{ background: 'var(--lime-400)', color: 'var(--black)' }}
+                className="flex h-10 w-10 items-center justify-center rounded-2xl font-bold text-[15px]"
+                style={{ background: 'var(--emerald-400)', color: 'var(--black)' }}
               >
-                PWM
+                k
               </div>
               <div>
-                <SheetTitle className="text-sm font-bold text-white leading-tight">
-                  Personal Wealth
+                <SheetTitle className="text-base font-bold text-white leading-tight tracking-tight">
+                  klunting
                 </SheetTitle>
-                <p className="text-[11px] text-white/40">Management</p>
+                <p className="text-[11px] text-white/40">Atur duitmu sendiri</p>
               </div>
             </div>
           </SheetHeader>

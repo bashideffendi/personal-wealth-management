@@ -1,6 +1,6 @@
 {
-  "name": "Personal Wealth Management",
-  "short_name": "PWM",
+  "name": "klunting",
+  "short_name": "klunting",
   "description": "Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai AI biar cepat.",
   "start_url": "/dashboard",
   "scope": "/",

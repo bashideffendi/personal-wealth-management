@@ -383,7 +383,7 @@ export default function MonthlyReportPage() {
 
             {/* Print-only footer */}
             <div className="hidden print:block text-center text-xs text-muted-foreground border-t pt-3 mt-6">
-              Personal Wealth Management · Laporan dibuat {generatedDate} · masbash.id
+              klunting · Laporan dibuat {generatedDate} · masbash.id
             </div>
           </>
         )}

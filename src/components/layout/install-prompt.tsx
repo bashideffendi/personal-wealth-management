@@ -108,7 +108,7 @@ export function InstallPrompt() {
     <div
       className="fixed bottom-20 md:bottom-6 inset-x-0 z-40 px-4 pointer-events-none animate-in slide-in-from-bottom duration-500"
       role="dialog"
-      aria-label="Pasang aplikasi PWM"
+      aria-label="Pasang aplikasi klunting"
     >
       <div
         className="pointer-events-auto mx-auto max-w-sm rounded-2xl border shadow-2xl"
@@ -131,7 +131,7 @@ export function InstallPrompt() {
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-              Pasang PWM di HP
+              Pasang klunting di HP
             </p>
             {iosMode ? (
               <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
