@@ -125,10 +125,14 @@ export function Header({ user }: HeaderProps) {
       </Button>
 
       <div className="flex-1 min-w-0">
-        {/* On the root /dashboard route the greeting (rendered inside the
-            page) takes the place of a page title. Skip the redundant
-            "Home" / "Dashboard" header text per design mockup. */}
-        {pathname !== '/dashboard' && (
+        {/* On /dashboard, header top-left shows just the date (greeting
+            now lives in the page body). Other routes show page title +
+            breadcrumb as before. */}
+        {pathname === '/dashboard' ? (
+          <p className="text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>
+            {today}
+          </p>
+        ) : (
           <>
             <h1
               className="text-lg font-bold leading-tight truncate"

@@ -1814,9 +1814,6 @@ function NetWorthHero({
     return ['jangan lupa tidur ya', 'begadang sambil cek finansial, nice']
   })()
   const subGreeting = subOptions[dateSeed % subOptions.length]
-  const todayLong = now.toLocaleDateString('id-ID', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
 
   // Period filter for the chart — chip-style selector per mockup ("1Y" active).
   // Filters the monthlyTrend slice shown in the sparkline.
@@ -1881,21 +1878,16 @@ function NetWorthHero({
   return (
     <div className="space-y-5">
       {/* Greeting row — page-level h1 (replaces "Home" header title per
-          mockup). Date eyebrow above, witty sub after the name. */}
-      <div>
-        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {todayLong}
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1" style={{ color: 'var(--ink)' }}>
-          {greetingMain}{userName ? `, ${userName}` : ''} 👋
-          <span
-            className="ml-2 font-normal text-base sm:text-lg"
-            style={{ color: 'var(--ink-muted)' }}
-          >
-            — {subGreeting}.
-          </span>
-        </h1>
-      </div>
+          mockup). Date moved to header top-left bar (per user feedback). */}
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+        {greetingMain}{userName ? `, ${userName}` : ''} 👋
+        <span
+          className="ml-2 font-normal text-base sm:text-lg"
+          style={{ color: 'var(--ink-muted)' }}
+        >
+          — {subGreeting}.
+        </span>
+      </h1>
 
       {/* Net Worth Hero card */}
       <div className="dark-card p-6 sm:p-8 relative overflow-hidden">
