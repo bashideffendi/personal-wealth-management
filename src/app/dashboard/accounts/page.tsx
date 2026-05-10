@@ -253,13 +253,11 @@ export default function AccountsPage() {
         {!loading && accounts.length > 0 ? (
           <>
             <p
-              className="font-display tabular mt-3 leading-none"
+              className="num tabular mt-3 leading-none font-bold"
               style={{
                 color: 'var(--on-black)',
-                fontStyle: 'italic',
-                fontSize: 'clamp(40px, 6vw, 56px)',
+                fontSize: 'clamp(36px, 5vw, 48px)',
                 letterSpacing: '-0.03em',
-                fontWeight: 400,
               }}
             >
               {formatCurrency(totalBalance)}
@@ -270,14 +268,8 @@ export default function AccountsPage() {
           </>
         ) : (
           <h2
-            className="font-display mt-3"
-            style={{
-              color: 'var(--on-black)',
-              fontStyle: 'italic',
-              fontSize: 40,
-              letterSpacing: '-0.02em',
-              fontWeight: 400,
-            }}
+            className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3"
+            style={{ color: 'var(--on-black)' }}
           >
             Kelola Akun
           </h2>

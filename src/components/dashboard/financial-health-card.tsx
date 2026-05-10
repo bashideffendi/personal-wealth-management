@@ -75,14 +75,14 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                   className="size-[80%] rounded-full flex flex-col items-center justify-center"
                   style={{ background: 'var(--surface)' }}
                 >
-                  {/* Italic display = "moment of personality" per handoff.
-                      Numbers as heroes — see typography-system.md */}
+                  {/* Hero number — .num (JetBrains Mono) per actual mockup.
+                      Italic serif reserved for text moments (empty states,
+                      taglines), not numbers. */}
                   <span
-                    className="font-display tabular leading-none"
+                    className="num tabular leading-none font-bold"
                     style={{
                       color: tierMeta.color,
-                      fontSize: 64,
-                      fontStyle: 'italic',
+                      fontSize: 60,
                       letterSpacing: '-0.04em',
                     }}
                   >
@@ -144,14 +144,12 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
               border: `1px solid ${burnColor}33`,
             }}
           >
-            {/* Italic display number for personality */}
             <div className="flex items-baseline gap-1.5">
               <span
-                className="font-display tabular leading-none"
+                className="num tabular leading-none font-bold"
                 style={{
                   color: burnColor,
-                  fontSize: 56,
-                  fontStyle: 'italic',
+                  fontSize: 48,
                   letterSpacing: '-0.03em',
                 }}
               >

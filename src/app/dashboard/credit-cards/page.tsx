@@ -186,13 +186,11 @@ export default function CreditCardsPage() {
         <p className="caps" style={{ color: 'var(--emerald-300)' }}>Kartu Kredit</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p
-            className="font-display tabular leading-none"
+            className="num tabular leading-none font-bold"
             style={{
               color: 'var(--on-black)',
-              fontStyle: 'italic',
-              fontSize: 'clamp(48px, 8vw, 72px)',
+              fontSize: 'clamp(40px, 6vw, 56px)',
               letterSpacing: '-0.035em',
-              fontWeight: 400,
             }}
           >
             {formatCurrency(totals.outstanding)}

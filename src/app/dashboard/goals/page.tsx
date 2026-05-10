@@ -116,17 +116,14 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — italic display per typography-system.md "numbers are heroes" */}
       <div className="dark-card p-6 sm:p-8">
         <p className="caps" style={{ color: 'var(--emerald-300)' }}>Tujuan Keuangan</p>
         <p
-          className="font-display tabular mt-3 leading-none"
+          className="num tabular mt-3 leading-none font-bold"
           style={{
             color: 'var(--on-black)',
-            fontStyle: 'italic',
-            fontSize: 'clamp(48px, 8vw, 72px)',
+            fontSize: 'clamp(40px, 6vw, 56px)',
             letterSpacing: '-0.035em',
-            fontWeight: 400,
           }}
         >
           {formatCurrency(totals.current)}

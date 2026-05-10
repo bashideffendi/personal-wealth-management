@@ -16,15 +16,8 @@ export default function CalculatorsPage() {
       <div className="dark-card p-6 sm:p-7">
         <p className="caps" style={{ color: 'var(--emerald-300)' }}>Alat Hitung</p>
         <h2
-          className="font-display mt-3"
-          style={{
-            color: 'var(--on-black)',
-            fontStyle: 'italic',
-            fontSize: 'clamp(40px, 6vw, 56px)',
-            letterSpacing: '-0.03em',
-            fontWeight: 400,
-            lineHeight: 1,
-          }}
+          className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2"
+          style={{ color: 'var(--on-black)' }}
         >
           Calculators
         </h2>

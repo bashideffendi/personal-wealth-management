@@ -225,15 +225,8 @@ export default function EmergencyFundPage() {
             <div className="mt-2 flex items-end gap-3">
               <Shield className="h-7 w-7" style={{ color: 'var(--emerald-400)' }} />
               <h2
-                className="font-display flex items-center gap-2"
-                style={{
-                  color: 'var(--on-black)',
-                  fontStyle: 'italic',
-                  fontSize: 'clamp(36px, 5vw, 48px)',
-                  letterSpacing: '-0.02em',
-                  fontWeight: 400,
-                  lineHeight: 1,
-                }}
+                className="text-3xl sm:text-4xl font-semibold tracking-tight flex items-center gap-2"
+                style={{ color: 'var(--on-black)' }}
               >
                 Dana Darurat
                 <EduTip topic="emergency-fund" side="bottom" iconSize={18} />

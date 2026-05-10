@@ -416,17 +416,7 @@ export default function BudgetingPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="caps" style={{ color: 'var(--emerald-300)' }}>Perencanaan · {year}</p>
-            <h2
-              className="font-display mt-3"
-              style={{
-                color: 'var(--on-black)',
-                fontStyle: 'italic',
-                fontSize: 'clamp(36px, 6vw, 56px)',
-                letterSpacing: '-0.03em',
-                fontWeight: 400,
-                lineHeight: 1,
-              }}
-            >
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2 text-white">
               Anggaran Tahunan
             </h2>
             <p className="text-sm mt-3 flex items-center gap-1.5" style={{ color: 'var(--on-black-mut)' }}>

@@ -225,17 +225,7 @@ export default function FamilyPage() {
       <div className="space-y-6">
         <div className="dark-card p-6 sm:p-7">
           <p className="caps" style={{ color: 'var(--emerald-300)' }}>Keluarga</p>
-          <h2
-            className="font-display mt-3"
-            style={{
-              color: 'var(--on-black)',
-              fontStyle: 'italic',
-              fontSize: 'clamp(36px, 6vw, 56px)',
-              letterSpacing: '-0.03em',
-              fontWeight: 400,
-              lineHeight: 1,
-            }}
-          >
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mt-2">
             Atur Keuangan Bersama
           </h2>
           <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>{today}</p>
@@ -306,17 +296,7 @@ export default function FamilyPage() {
         <p className="caps" style={{ color: 'var(--emerald-300)' }}>Keluarga</p>
         <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <h2
-              className="font-display"
-              style={{
-                color: 'var(--on-black)',
-                fontStyle: 'italic',
-                fontSize: 'clamp(36px, 5vw, 48px)',
-                letterSpacing: '-0.025em',
-                fontWeight: 400,
-                lineHeight: 1,
-              }}
-            >
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
               {household.name}
             </h2>
             <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>

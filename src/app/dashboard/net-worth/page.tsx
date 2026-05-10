@@ -184,20 +184,18 @@ export default function NetWorthPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — italic display "moment of personality" per typography-system.md.
-          Net Worth is THE signature number; deserves the serif treatment. */}
       <div className="dark-card p-6 sm:p-10">
         <p className="caps text-center" style={{ color: 'var(--emerald-300)' }}>
           Total Kekayaan · {today}
         </p>
+        {/* Hero number — .num (JetBrains Mono) at clamp(48-72px) per
+            dashboard-refine mockup. Mono > serif for currency. */}
         <p
-          className="font-display tabular text-center mt-4 leading-none"
+          className="num tabular text-center mt-4 leading-none font-bold"
           style={{
             color: isPositive ? 'var(--on-black)' : 'var(--coral-400)',
-            fontStyle: 'italic',
-            fontSize: 'clamp(56px, 10vw, 96px)',
-            letterSpacing: '-0.04em',
-            fontWeight: 400,
+            fontSize: 'clamp(48px, 8vw, 72px)',
+            letterSpacing: '-0.035em',
           }}
         >
           {formatCurrency(netWorth)}

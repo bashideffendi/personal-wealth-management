@@ -65,13 +65,11 @@ export default function SubscriptionsPage() {
       <div className="dark-card p-6 sm:p-7">
         <p className="caps" style={{ color: 'var(--emerald-300)' }}>Audit Subscription · per bulan</p>
         <p
-          className="font-display tabular mt-3 leading-none"
+          className="num tabular mt-3 leading-none font-bold"
           style={{
             color: 'var(--on-black)',
-            fontStyle: 'italic',
-            fontSize: 'clamp(40px, 7vw, 64px)',
+            fontSize: 'clamp(36px, 5vw, 48px)',
             letterSpacing: '-0.035em',
-            fontWeight: 400,
           }}
         >
           {formatCurrency(totals.monthEquivalent)}

@@ -1772,17 +1772,16 @@ function NetWorthHero({
               — {subGreeting}.
             </span>
           </h2>
-          <p className="caps mt-4" style={{ fontSize: '0.625rem' }}>Kekayaan Bersih</p>
-          {/* Net Worth as the HERO number — Instrument Serif italic per
-              typography-system.md. "Numbers are heroes" pattern. */}
+          <p className="caps mt-4" style={{ fontSize: '0.625rem', color: 'var(--emerald-300)' }}>Kekayaan Bersih</p>
+          {/* Hero number — JetBrains Mono `.num` at large size per actual
+              dashboard-refine mockup. Mono works better than serif for
+              long IDR currency strings (alignment, scanability). */}
           <p
-            className="font-display tabular mt-2 leading-none"
+            className="num tabular mt-2 leading-none font-bold"
             style={{
               color: 'var(--on-black)',
-              fontStyle: 'italic',
-              fontSize: 'clamp(48px, 8vw, 72px)',
+              fontSize: 'clamp(40px, 7vw, 56px)',
               letterSpacing: '-0.035em',
-              fontWeight: 400,
             }}
           >
             {formatCurrency(netWorth)}

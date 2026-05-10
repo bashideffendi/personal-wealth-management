@@ -175,17 +175,7 @@ export default function MonthlyReportPage() {
           <p className="caps" style={{ color: 'var(--emerald-300)' }}>Laporan Bulanan</p>
           <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <h2
-                className="font-display"
-                style={{
-                  color: 'var(--on-black)',
-                  fontStyle: 'italic',
-                  fontSize: 'clamp(36px, 6vw, 56px)',
-                  letterSpacing: '-0.025em',
-                  fontWeight: 400,
-                  lineHeight: 1,
-                }}
-              >
+              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
                 {periodLabel}
               </h2>
               <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>

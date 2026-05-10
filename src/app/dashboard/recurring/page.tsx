@@ -188,13 +188,11 @@ export default function RecurringPage() {
       <div className="dark-card p-6 sm:p-8">
         <p className="caps" style={{ color: 'var(--emerald-300)' }}>Transaksi Berulang · Net/bln</p>
         <p
-          className="font-display tabular mt-3 leading-none"
+          className="num tabular mt-3 leading-none font-bold"
           style={{
             color: totals.monthlyNet >= 0 ? 'var(--on-black)' : 'var(--coral-400)',
-            fontStyle: 'italic',
-            fontSize: 'clamp(40px, 7vw, 64px)',
+            fontSize: 'clamp(36px, 5vw, 48px)',
             letterSpacing: '-0.035em',
-            fontWeight: 400,
           }}
         >
           {formatCurrency(totals.monthlyNet)}
