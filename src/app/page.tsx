@@ -1,24 +1,19 @@
 /**
  * Klunting — Landing page (root /).
  *
- * Copy direction: senior copywriter, conversion-focused.
- * - Hook: question yang nyentil (creates curiosity + reveals pain)
- * - Hero sub: spesifik benefits + remove friction
- * - Stats strip: visual proof (numbers > words)
- * - Cara kerja: lower the barrier (3 steps, jelas)
- * - Features: outcome-focused (bukan "ada fitur X" tapi "X bikin kamu bisa Y")
- * - Persona quotes: vivid, dari mulut user
- * - CTA strip: urgency tanpa manipulasi
- *
- * Server component. Authed → /dashboard, anon → render landing.
+ * v3 — fokus produk, bukan copywriting essay.
+ * - Cut: trusted-by row, cara kerja, comparison, untuk siapa, stats strip
+ * - Tonjolin fitur andalan (WA, AI, multi-aset, family)
+ * - Pricing inline, gak perlu navigate ke /dashboard/pricing dulu
+ * - Copy hemat — orang Indonesia gak baca text panjang di landing
  */
 
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import {
-  ArrowRight, Camera, Wallet, TrendingUp, Brain, Shield, Sparkles,
-  Check,
+  ArrowRight, MessageCircle, Camera, TrendingUp, CreditCard,
+  Users, Sparkles, Check, Crown,
 } from 'lucide-react'
 
 export default async function LandingPage() {
@@ -53,10 +48,8 @@ export default async function LandingPage() {
           <div className="font-bold text-base tracking-tight">Klunting</div>
         </div>
         <nav className="hidden md:flex gap-7 text-sm" style={{ color: 'var(--ink-muted)' }}>
-          <a href="#cara-kerja" className="hover:text-[var(--ink)] transition-colors">Cara kerja</a>
           <a href="#fitur" className="hover:text-[var(--ink)] transition-colors">Fitur</a>
-          <a href="#untuk-siapa" className="hover:text-[var(--ink)] transition-colors">Untuk siapa</a>
-          <Link href="/dashboard/pricing" className="hover:text-[var(--ink)] transition-colors">Harga</Link>
+          <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
         </nav>
         <div className="flex gap-2 items-center">
           <Link
@@ -71,7 +64,7 @@ export default async function LandingPage() {
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition hover:opacity-90"
             style={{ background: 'var(--ink)', color: 'var(--surface)' }}
           >
-            Mulai gratis
+            Daftar gratis
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
@@ -91,13 +84,6 @@ export default async function LandingPage() {
         <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
           {/* LEFT — copy */}
           <div>
-            <span
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold mb-6"
-              style={{ background: 'var(--emerald-100)', color: 'var(--emerald-800)' }}
-            >
-              <span className="size-1.5 rounded-full" style={{ background: 'var(--emerald-500)' }} />
-              Buat kamu yang punya 3+ app keuangan
-            </span>
             <h1
               className="font-bold tracking-tight"
               style={{
@@ -106,16 +92,15 @@ export default async function LandingPage() {
                 letterSpacing: '-0.04em',
               }}
             >
-              Berapa kekayaanmu,<br />
-              <span style={{ color: 'var(--emerald-700)' }}>sebenernya?</span>
+              Total kekayaanmu,<br />
+              <span style={{ color: 'var(--emerald-700)' }}>di satu app.</span>
             </h1>
             <p
-              className="mt-6 text-lg leading-relaxed max-w-xl"
+              className="mt-6 text-lg leading-relaxed max-w-lg"
               style={{ color: 'var(--ink-muted)' }}
             >
-              Saldo BCA, GoPay, reksa dana Bibit, saham Stockbit, emas Pegadaian, cicilan KPR.
-              Kebanyakan orang punya 5+ app keuangan dan gak tau total asetnya.
-              Klunting jumlahin semuanya jadi satu net worth, update tiap hari.
+              Saldo, investasi, dan utang dijumlahin Klunting jadi satu net worth real-time.
+              Plus AI yang baca pola pengeluaran kamu.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 items-center">
               <Link
@@ -127,33 +112,22 @@ export default async function LandingPage() {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                 }}
               >
-                Mulai gratis (2 menit setup)
+                Mulai gratis
                 <ArrowRight className="size-4" />
               </Link>
               <a
-                href="#cara-kerja"
+                href="#fitur"
                 className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium border transition hover:bg-[var(--surface-2)]"
                 style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}
               >
-                Liat cara kerjanya
+                Lihat fitur
               </a>
             </div>
             <div
-              className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-[13px]"
+              className="mt-6 text-[13px]"
               style={{ color: 'var(--ink-muted)' }}
             >
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5" style={{ color: 'var(--emerald-600)' }} />
-                Gratis selamanya
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5" style={{ color: 'var(--emerald-600)' }} />
-                Tanpa kartu kredit
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5" style={{ color: 'var(--emerald-600)' }} />
-                Data terenkripsi
-              </span>
+              Gratis selamanya · Tanpa kartu kredit
             </div>
           </div>
 
@@ -221,28 +195,28 @@ export default async function LandingPage() {
               </div>
             </div>
 
-            {/* Floating notif: insight */}
+            {/* Floating WA bubble */}
             <div
               className="hidden sm:flex absolute -bottom-6 -left-6 bg-white rounded-2xl px-4 py-3 gap-3 items-center max-w-[280px]"
               style={{ boxShadow: '0 12px 32px -8px rgba(0,0,0,0.22)' }}
             >
               <div
                 className="size-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                style={{ background: 'var(--emerald-100)' }}
+                style={{ background: '#DCFCE7' }}
               >
-                ☕
+                💬
               </div>
               <div>
                 <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-                  Pengeluaran kopi turun 60%
+                  &ldquo;kopi 35rb&rdquo;
                 </p>
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                  Hemat Rp 480k bulan ini
+                  Tercatat lewat WhatsApp
                 </p>
               </div>
             </div>
 
-            {/* Floating notif: receipt scan */}
+            {/* Floating receipt */}
             <div
               className="hidden sm:flex absolute -top-4 -right-4 bg-white rounded-xl px-3 py-2.5 gap-2.5 items-center border"
               style={{ borderColor: 'var(--border-soft)', boxShadow: '0 8px 24px -8px rgba(0,0,0,0.15)' }}
@@ -258,7 +232,7 @@ export default async function LandingPage() {
                   Indomaret · 3 detik
                 </p>
                 <p className="num text-[12px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-                  Rp 47.500 · 4 item
+                  Rp 47.500
                 </p>
               </div>
             </div>
@@ -266,210 +240,95 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ─── TRUSTED BY ────────────────────────────────────────── */}
-      <section className="px-6 sm:px-12 pb-16">
-        <p
-          className="text-center text-[11px] uppercase font-semibold mb-6"
-          style={{ color: 'var(--ink-soft)', letterSpacing: '0.18em' }}
-        >
-          Tarik aset dari platform yang kamu pakai
-        </p>
-        <div
-          className="flex justify-center flex-wrap gap-x-8 sm:gap-x-12 gap-y-3 font-bold text-base opacity-60"
-          style={{ color: 'var(--ink-muted)' }}
-        >
-          <span>BIBIT</span>
-          <span>Bareksa</span>
-          <span>Stockbit</span>
-          <span>Pluang</span>
-          <span>Pintu</span>
-          <span>IPOT</span>
-          <span>Mirae</span>
-        </div>
-      </section>
-
-      {/* ─── STATS STRIP ───────────────────────────────────────── */}
-      <section className="px-6 sm:px-12 pb-12">
-        <div className="max-w-5xl mx-auto grid grid-cols-3 gap-4 sm:gap-8">
-          {[
-            {
-              num: '2 menit',
-              label: 'Setup awal',
-              hint: 'Daftar → connect → liat',
-            },
-            {
-              num: '7+',
-              label: 'Platform investasi',
-              hint: 'Bibit, Stockbit, IPOT, dll',
-            },
-            {
-              num: 'Rp 0',
-              label: 'Selamanya',
-              hint: 'Solo plan tanpa batas waktu',
-            },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <p
-                className="font-bold tracking-tight"
-                style={{
-                  color: 'var(--ink)',
-                  fontSize: 'clamp(28px, 4vw, 44px)',
-                  letterSpacing: '-0.025em',
-                  lineHeight: 1,
-                }}
-              >
-                {s.num}
-              </p>
-              <p
-                className="mt-2 text-sm font-semibold"
-                style={{ color: 'var(--ink)' }}
-              >
-                {s.label}
-              </p>
-              <p className="mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                {s.hint}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── HOW IT WORKS ──────────────────────────────────────── */}
+      {/* ─── FITUR ─────────────────────────────────────────────── */}
       <section
-        id="cara-kerja"
-        className="px-6 sm:px-12 py-16 sm:py-24"
+        id="fitur"
+        className="px-6 sm:px-12 py-16 sm:py-20"
         style={{ background: 'var(--surface)' }}
       >
-        <div className="max-w-3xl mb-12">
-          <span className="caps">Cara kerja</span>
-          <h2
-            className="font-bold mt-3 tracking-tight"
-            style={{ fontSize: 'clamp(28px, 4vw, 44px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
-          >
-            Dari nol ke <span style={{ color: 'var(--emerald-700)' }}>net worth utuh</span> dalam satu sore.
-          </h2>
-          <p className="mt-4 text-lg" style={{ color: 'var(--ink-muted)' }}>
-            Gak perlu tutorial 30 menit atau setup ratusan kategori manual.
-            Tiga langkah, kamu udah liat angka real-time.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {[
-            {
-              num: '01',
-              title: 'Daftar pakai email',
-              body: 'Email + password. Klunting auto-set 100 kategori transaksi, akun Cash, dan Solo plan gratis.',
-              time: '30 detik',
-            },
-            {
-              num: '02',
-              title: 'Tambahin asetmu',
-              body: 'Saldo bank, e-wallet, portfolio investasi, utang. Manual atau import. Sekali aja, sisanya auto-update.',
-              time: '5 menit',
-            },
-            {
-              num: '03',
-              title: 'Liat insight pertamamu',
-              body: 'Net worth real-time. Pengeluaran terbesar bulan ini. Forecast saldo akhir bulan. Semua langsung kelihatan.',
-              time: 'Langsung',
-            },
-          ].map((step) => (
-            <div
-              key={step.num}
-              className="rounded-2xl p-6 border"
-              style={{ background: 'var(--paper)', borderColor: 'var(--border)' }}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <span
-                  className="num text-3xl font-bold"
-                  style={{ color: 'var(--emerald-700)', letterSpacing: '-0.02em' }}
-                >
-                  {step.num}
-                </span>
-                <span
-                  className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase"
-                  style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)', letterSpacing: '0.08em' }}
-                >
-                  {step.time}
-                </span>
-              </div>
-              <h3
-                className="text-lg font-bold tracking-tight mb-2"
-                style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}
-              >
-                {step.title}
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                {step.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── FEATURES ──────────────────────────────────────────── */}
-      <section id="fitur" className="px-6 sm:px-12 py-16 sm:py-24">
-        <div className="max-w-3xl mb-12">
+        <div className="max-w-2xl mb-10">
           <span className="caps">Fitur</span>
           <h2
             className="font-bold mt-3 tracking-tight"
-            style={{ fontSize: 'clamp(28px, 4vw, 44px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+            style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
           >
-            Klunting hitung <span style={{ color: 'var(--emerald-700)' }}>kekayaanmu utuh.</span>
+            Semua yang kamu butuh, <span style={{ color: 'var(--ink-muted)' }}>tanpa pindah app.</span>
           </h2>
-          <p className="mt-4 text-lg" style={{ color: 'var(--ink-muted)' }}>
-            Kamu kerja keras naikin gaji, naikin investasi, naikin aset.
-            Klunting bantu kamu liat hasil kerja itu utuh, jelas, dan real-time.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl">
           {[
             {
-              icon: Camera, color: 'var(--emerald-500)', bg: 'var(--emerald-100)',
-              title: 'Foto struk, beres dalam 3 detik.',
-              body: 'Foto struk Indomaret, Alfamart, atau restoran. AI baca total, item, dan kategori. Kamu hemat 5 menit per transaksi.',
+              icon: MessageCircle,
+              color: '#16A34A',
+              bg: '#DCFCE7',
+              title: 'Catat lewat WhatsApp',
+              body: 'Kirim "kopi 35rb" atau forward struk ke nomor Klunting. AI parse dan simpan ke transaksimu.',
+              badge: 'Segera',
             },
             {
-              icon: Brain, color: 'var(--sky-500)', bg: 'var(--sky-100)',
-              title: 'Catat secepat ngetik chat.',
-              body: 'Ketik "kopi 35rb" atau "gaji 8jt". Klunting baca, kategorize, dan simpan. Tanpa form, tanpa dropdown.',
+              icon: Sparkles,
+              color: '#8B5CF6',
+              bg: '#EDE9FE',
+              title: 'AI Insight personal',
+              body: 'Tiap awal bulan: "Kopi naik 60%." "Forecast saldo tipis Rp 200k." Bukan tips generic.',
             },
             {
-              icon: TrendingUp, color: 'var(--amber-500)', bg: 'var(--amber-100)',
-              title: 'Asetmu nyebar? Klunting satuin.',
-              body: 'Klunting tarik harga aset dari Bibit, Stockbit, IPOT, Pluang, Pintu, Pegadaian, dan BCA. Liat satu net worth dengan return tiap aset di satu layar.',
+              icon: Camera,
+              color: 'var(--emerald-500)',
+              bg: 'var(--emerald-100)',
+              title: 'Foto struk auto-fill',
+              body: 'Foto struk Indomaret atau Alfamart, AI baca total dan kategori dalam 3 detik.',
             },
             {
-              icon: Wallet, color: 'var(--coral-500)', bg: 'var(--coral-100)',
-              title: 'Anggaran 12 bulan ke depan.',
-              body: 'Plan pemasukan, pengeluaran, tabungan, dan investasi sampai akhir tahun. Pilih mode 50/30/20 atau zero-based. Klunting alert kamu pas mulai over.',
+              icon: TrendingUp,
+              color: 'var(--amber-500)',
+              bg: 'var(--amber-100)',
+              title: 'Track semua aset',
+              body: 'Saham, reksa dana, crypto, emas, SBN, P2P, deposito. Net worth update otomatis tiap hari.',
             },
             {
-              icon: Sparkles, color: '#8B5CF6', bg: '#EDE9FE',
-              title: 'AI yang baca pola kamu.',
-              body: 'Tiap awal bulan kamu dapet insight kayak: "Pengeluaran kopi naik 60%." "Forecast saldo akhir bulan tipis Rp 200k." Semua dari data kamu sendiri.',
+              icon: CreditCard,
+              color: 'var(--coral-500)',
+              bg: 'var(--coral-100)',
+              title: 'Atur utang & cicilan',
+              body: 'KPR, KTA, kartu kredit. Lihat sisa, jadwal pembayaran, dan strategi pelunasan tercepat.',
             },
             {
-              icon: Shield, color: 'var(--emerald-700)', bg: 'var(--emerald-100)',
-              title: 'Mode kalem buat hari merah.',
-              body: 'Pas pasar koreksi -8%, klik calm mode. Klunting samarin angka tapi positioning kamu tetep keliatan. Lihat yang penting, tanpa panik.',
+              icon: Users,
+              color: 'var(--sky-500)',
+              bg: 'var(--sky-100)',
+              title: 'Sharing keluarga',
+              body: 'Sampai 4 anggota. Wallet & anggaran bersama. Tau pasti siapa belanja apa.',
             },
           ].map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl p-6 border transition-all hover:shadow-md hover:-translate-y-0.5"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+              className="rounded-2xl p-5 border transition-all hover:shadow-md hover:-translate-y-0.5"
+              style={{ background: 'var(--paper)', borderColor: 'var(--border)' }}
             >
-              <div
-                className="size-11 rounded-xl flex items-center justify-center mb-4"
-                style={{ background: f.bg }}
-              >
-                <f.icon className="size-5" style={{ color: f.color }} />
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className="size-10 rounded-xl flex items-center justify-center"
+                  style={{ background: f.bg }}
+                >
+                  <f.icon className="size-5" style={{ color: f.color }} />
+                </div>
+                {f.badge && (
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                    style={{
+                      background: 'var(--surface-2)',
+                      color: 'var(--ink-muted)',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    {f.badge}
+                  </span>
+                )}
               </div>
               <h3
-                className="text-lg font-bold tracking-tight mb-2"
+                className="text-base font-bold tracking-tight mb-1.5"
                 style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}
               >
                 {f.title}
@@ -482,143 +341,186 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ─── UNTUK SIAPA ───────────────────────────────────────── */}
-      <section
-        id="untuk-siapa"
-        className="px-6 sm:px-12 py-16 sm:py-24"
-        style={{ background: 'var(--surface)' }}
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-3xl mb-12">
-            <span className="caps">Untuk siapa</span>
-            <h2
-              className="font-bold mt-3 tracking-tight"
-              style={{ fontSize: 'clamp(28px, 4vw, 44px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
-            >
-              Buat kamu yang capek <span style={{ color: 'var(--ink-muted)' }}>nge-track manual.</span>
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              {
-                tag: 'Profesional muda',
-                pain: '"Gaji 8jt, tabungan stuck. Bingung di mana yang harus dipotong."',
-                fix: 'Klunting kasih breakdown jelas: 35% di GoFood, 12% transport, 8% subscription. Kamu tau pasti yang biggest leak. Mulai potong dari situ.',
-              },
-              {
-                tag: 'Investor pemula',
-                pain: '"Reksa dana di Bibit, saham di Stockbit, emas di Pegadaian. Total return-ku berapa?"',
-                fix: 'Connect semua dalam 5 menit. Liat satu net worth, satu IRR, satu alokasi aset. Nggak perlu spreadsheet bulanan lagi.',
-              },
-              {
-                tag: 'Pasangan / keluarga',
-                pain: '"Pengeluaran rumah tangga campur. Bingung siapa belanja apa."',
-                fix: 'Wallet bersama, transaksi keliatan dua-duanya, anggaran kompak. Plan Family bisa sampai 4 anggota — pasangan, anak, atau orang tua.',
-              },
-            ].map((p) => (
-              <div
-                key={p.tag}
-                className="rounded-2xl p-6 border"
-                style={{ background: 'var(--paper)', borderColor: 'var(--border)' }}
-              >
-                <span
-                  className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold mb-4"
-                  style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
-                >
-                  {p.tag}
-                </span>
-                <p
-                  className="text-base font-semibold leading-snug mb-3"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  {p.pain}
-                </p>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {p.fix}
-                </p>
-              </div>
-            ))}
-          </div>
+      {/* ─── PRICING ───────────────────────────────────────────── */}
+      <section id="harga" className="px-6 sm:px-12 py-16 sm:py-20">
+        <div className="max-w-2xl mb-10">
+          <span className="caps">Harga</span>
+          <h2
+            className="font-bold mt-3 tracking-tight"
+            style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+          >
+            Pilih yang cocok buat kamu.
+          </h2>
+          <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
+            Mulai gratis. Upgrade kapan aja.
+          </p>
         </div>
-      </section>
 
-      {/* ─── COMPARISON / WHY KLUNTING ─────────────────────────── */}
-      <section className="px-6 sm:px-12 py-16 sm:py-24">
-        <div className="max-w-5xl mx-auto">
-          <div className="max-w-2xl mb-10">
-            <span className="caps">Kenapa Klunting</span>
-            <h2
-              className="font-bold mt-3 tracking-tight"
-              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-6xl">
+          {/* Solo */}
+          <div
+            className="rounded-2xl p-7 border"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="size-5" style={{ color: 'var(--ink-muted)' }} />
+              <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Solo</h3>
+            </div>
+            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+              Mulai atur keuangan tanpa biaya.
+            </p>
+            <div className="mt-5 mb-5">
+              <span
+                className="text-4xl font-bold tracking-tight"
+                style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}
+              >
+                Rp 0
+              </span>
+              <span className="text-sm ml-1" style={{ color: 'var(--ink-muted)' }}>
+                /selamanya
+              </span>
+            </div>
+            <Link
+              href="/register"
+              className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80"
+              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
             >
-              Excel kamu udah cape. <span style={{ color: 'var(--ink-muted)' }}>Pindah ke yang otomatis.</span>
-            </h2>
+              Mulai gratis
+            </Link>
+            <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
+              {[
+                'Catat transaksi unlimited',
+                'Anggaran bulanan',
+                'Net worth dashboard',
+                '10 kredit AI/bulan',
+              ].map((f) => (
+                <li key={f} className="flex gap-2">
+                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div
-              className="rounded-2xl p-6 border"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-            >
-              <p
-                className="text-[11px] uppercase font-semibold mb-4"
-                style={{ color: 'var(--ink-muted)', letterSpacing: '0.14em' }}
-              >
-                Sebelum Klunting
-              </p>
-              <ul className="space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-                <li>· Buka 5 app buat ngitung total aset</li>
-                <li>· Excel keuangan yang gak ke-update 2 minggu</li>
-                <li>· Akhir bulan: "Lho, kok saldo segini doang?"</li>
-                <li>· Goal nabung mandek 6 bulan</li>
-                <li>· Bingung mau invest dari mana mulai</li>
-              </ul>
-            </div>
-            <div
-              className="rounded-2xl p-6 border"
+          {/* Pro — popular */}
+          <div
+            className="rounded-2xl p-7 border-2 relative"
+            style={{
+              background: 'linear-gradient(135deg, #FFFBEB, var(--surface))',
+              borderColor: '#F59E0B',
+            }}
+          >
+            <span
+              className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase"
               style={{
-                background: 'linear-gradient(135deg, var(--emerald-50, #ECFDF5), var(--surface))',
-                borderColor: 'var(--emerald-200, #A7F3D0)',
+                background: '#F59E0B',
+                color: '#FFFFFF',
+                letterSpacing: '0.08em',
               }}
             >
-              <p
-                className="text-[11px] uppercase font-semibold mb-4"
-                style={{ color: 'var(--emerald-700)', letterSpacing: '0.14em' }}
-              >
-                Sesudah Klunting
-              </p>
-              <ul className="space-y-2.5 text-sm" style={{ color: 'var(--ink)' }}>
-                <li className="flex gap-2">
-                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
-                  Klunting jumlahin semua asetmu di satu dashboard
-                </li>
-                <li className="flex gap-2">
-                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
-                  Kamu catat transaksi 3 detik via foto struk atau ketik chat
-                </li>
-                <li className="flex gap-2">
-                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
-                  AI alert pas pengeluaranmu mulai bocor
-                </li>
-                <li className="flex gap-2">
-                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
-                  Goal nabung yang progressnya keliatan per bulan
-                </li>
-                <li className="flex gap-2">
-                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
-                  Insight personal dari data kamu, contoh "kopi naik 60%"
-                </li>
-              </ul>
+              Paling populer
+            </span>
+            <div className="flex items-center gap-2 mb-3">
+              <Crown className="size-5" style={{ color: '#D97706' }} />
+              <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Pro</h3>
             </div>
+            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+              Kontrol penuh kekayaanmu.
+            </p>
+            <div className="mt-5 mb-5">
+              <span
+                className="text-4xl font-bold tracking-tight"
+                style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}
+              >
+                Rp 79rb
+              </span>
+              <span className="text-sm ml-1" style={{ color: 'var(--ink-muted)' }}>
+                /bulan
+              </span>
+              <p className="text-xs mt-1" style={{ color: '#92400E' }}>
+                Diskon 47% dari Rp 149rb
+              </p>
+            </div>
+            <Link
+              href="/register"
+              className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
+              style={{ background: '#D97706', color: '#FFFFFF' }}
+            >
+              Pilih Pro
+            </Link>
+            <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
+              {[
+                'Semua fitur Solo',
+                'AI Receipt Scanner',
+                'AI Advisor unlimited',
+                'Track investasi lengkap',
+                'Goal & laporan detail',
+                '100 kredit AI/bulan',
+              ].map((f) => (
+                <li key={f} className="flex gap-2">
+                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Family */}
+          <div
+            className="rounded-2xl p-7 border"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="size-5" style={{ color: 'var(--sky-500)' }} />
+              <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Family</h3>
+            </div>
+            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+              Atur bareng pasangan & keluarga.
+            </p>
+            <div className="mt-5 mb-5">
+              <span
+                className="text-4xl font-bold tracking-tight"
+                style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}
+              >
+                Rp 199rb
+              </span>
+              <span className="text-sm ml-1" style={{ color: 'var(--ink-muted)' }}>
+                /bulan
+              </span>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
+                Up to 4 anggota
+              </p>
+            </div>
+            <Link
+              href="/register"
+              className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80"
+              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+            >
+              Pilih Family
+            </Link>
+            <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
+              {[
+                'Semua fitur Pro',
+                'Sampai 4 anggota',
+                'Wallet & budget bersama',
+                'Tracking per-anggota',
+                'Notifikasi sinkron',
+                '250 kredit AI/bulan',
+              ].map((f) => (
+                <li key={f} className="flex gap-2">
+                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+                  {f}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
       {/* ─── CTA STRIP ──────────────────────────────────────────── */}
-      <section className="px-6 sm:px-12 pb-20 sm:pb-28">
+      <section className="px-6 sm:px-12 pb-20">
         <div
-          className="max-w-5xl mx-auto rounded-3xl p-10 sm:p-14 relative overflow-hidden"
+          className="max-w-5xl mx-auto rounded-3xl p-10 sm:p-14 relative overflow-hidden text-center"
           style={{
             background: 'linear-gradient(135deg, var(--emerald-600), var(--emerald-800))',
             boxShadow: '0 24px 48px -16px rgba(16,185,129,0.40)',
@@ -628,7 +530,7 @@ export default async function LandingPage() {
             className="absolute -top-20 -right-20 size-80 rounded-full opacity-40 pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.20), transparent 60%)' }}
           />
-          <div className="relative text-center">
+          <div className="relative">
             <h2
               className="font-bold tracking-tight"
               style={{
@@ -638,44 +540,22 @@ export default async function LandingPage() {
                 lineHeight: 1.15,
               }}
             >
-              Pengeluaran kamu hari ini<br />bakal ke mana?
+              Mulai atur uangmu hari ini.
             </h2>
-            <p
-              className="mt-4 text-base sm:text-lg max-w-xl mx-auto"
-              style={{ color: 'rgba(255,255,255,0.88)' }}
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold mt-7 transition hover:opacity-90"
+              style={{
+                background: '#FFFFFF',
+                color: 'var(--emerald-700)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              }}
             >
-              Pake ingatan, kamu lupa. Pake Excel, kamu lupa update.
-              Pake Klunting, otomatis ke-record. Mulai gratis sekarang.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3 justify-center items-center">
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold transition hover:opacity-90"
-                style={{
-                  background: '#FFFFFF',
-                  color: 'var(--emerald-700)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                }}
-              >
-                Daftar gratis (2 menit setup)
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                href="/dashboard/pricing"
-                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-base font-medium transition hover:bg-white/10"
-                style={{
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255,255,255,0.30)',
-                }}
-              >
-                Lihat semua plan
-              </Link>
-            </div>
-            <p
-              className="mt-6 text-[12px]"
-              style={{ color: 'rgba(255,255,255,0.65)' }}
-            >
-              Solo plan gratis selamanya · Upgrade ke Pro Rp 79k/bulan kapan saja
+              Daftar gratis
+              <ArrowRight className="size-4" />
+            </Link>
+            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.70)' }}>
+              Gratis selamanya · Tanpa kartu kredit
             </p>
           </div>
         </div>
@@ -700,7 +580,7 @@ export default async function LandingPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-            <Link href="/dashboard/pricing" className="hover:text-[var(--ink)] transition-colors">Harga</Link>
+            <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
             <a href="mailto:support@klunting.com" className="hover:text-[var(--ink)] transition-colors">Support</a>
             <span>Built in Indonesia 🇮🇩</span>
           </div>
