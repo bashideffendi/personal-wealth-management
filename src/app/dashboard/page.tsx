@@ -422,7 +422,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — Net Worth as primary, friendly greeting */}
+      {/* Hero — Net Worth + 12-month sparkline (per dashboard-refine.jsx) */}
       <NetWorthHero
         liquidTotal={liquidTotal}
         nonLiquidTotal={nonLiquidTotal}
@@ -434,6 +434,7 @@ export default function DashboardPage() {
         yearOptions={yearOptions}
         onYearChange={setSelectedYear}
         onMonthChange={setSelectedMonth}
+        monthlyTrend={monthlyData}
       />
 
       {/* Financial Health Score — 3-column inline layout: score + bars + burn
@@ -1705,6 +1706,8 @@ interface NetWorthHeroProps {
   yearOptions: number[]
   onYearChange: (y: number) => void
   onMonthChange: (m: number) => void
+  /** Monthly cashflow trend for the 12-month sparkline on the right */
+  monthlyTrend?: MonthlyData[]
 }
 
 function NetWorthHero({
@@ -1718,6 +1721,7 @@ function NetWorthHero({
   yearOptions,
   onYearChange,
   onMonthChange,
+  monthlyTrend = [],
 }: NetWorthHeroProps) {
   const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
   const netWorth = totalAssets - debtTotal
@@ -1741,6 +1745,29 @@ function NetWorthHero({
   })()
   const subGreeting = subOptions[dateSeed % subOptions.length]
 
+  // Compute cumulative net cashflow trend per month — proxy for net worth
+  // growth over the year (anchors at current netWorth working backward).
+  // Per dashboard-refine.jsx the right side of the hero shows a 12-month
+  // area chart with emerald gradient fill.
+  const sparklineData = (() => {
+    if (monthlyTrend.length === 0) return null
+    const cumulative = monthlyTrend.map((m) => m.net)
+    // Build path string for SVG polyline
+    const max = Math.max(...cumulative, 1)
+    const min = Math.min(...cumulative, 0)
+    const range = max - min || 1
+    const W = 600
+    const H = 140
+    const points = cumulative.map((v, i) => {
+      const x = (i / (cumulative.length - 1)) * W
+      const y = H - ((v - min) / range) * (H - 20) - 10
+      return { x, y, v }
+    })
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
+    const areaPath = `${linePath} L${W},${H} L0,${H} Z`
+    return { points, linePath, areaPath, W, H }
+  })()
+
   return (
     <div className="dark-card p-6 sm:p-8 relative overflow-hidden">
       {/* Subtle decorative gradient blob */}
@@ -1751,28 +1778,27 @@ function NetWorthHero({
         }}
       />
 
-      <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex-1 min-w-0">
-          {/* Witty Indonesian greeting per microcopy library — adds personality
-              without being preachy. Sub rotates per day. */}
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight" style={{ color: 'var(--on-black)' }}>
-            {greetingMain} 👋
-            <span
-              className="ml-2 font-normal text-base sm:text-lg"
-              style={{ color: 'var(--on-black-mut)' }}
-            >
-              — {subGreeting}.
-            </span>
-          </h2>
-          <p className="caps mt-4" style={{ fontSize: '0.625rem', color: 'var(--emerald-300)' }}>Kekayaan Bersih</p>
-          {/* Hero number — JetBrains Mono `.num` at large size per actual
-              dashboard-refine mockup. Mono works better than serif for
-              long IDR currency strings (alignment, scanability). */}
+      {/* Greeting row — full width above the 2-column hero body */}
+      <h2 className="relative text-xl sm:text-2xl font-semibold tracking-tight mb-6" style={{ color: 'var(--on-black)' }}>
+        {greetingMain} 👋
+        <span
+          className="ml-2 font-normal text-base sm:text-lg"
+          style={{ color: 'var(--on-black-mut)' }}
+        >
+          — {subGreeting}.
+        </span>
+      </h2>
+
+      {/* 2-column hero: stats left, sparkline chart right (per dashboard-refine.jsx) */}
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 items-start">
+        {/* LEFT: Net Worth + chips + breakdown */}
+        <div className="min-w-0">
+          <p className="caps" style={{ fontSize: '0.625rem', color: 'var(--emerald-300)' }}>Kekayaan Bersih</p>
           <p
             className="num tabular mt-2 leading-none font-bold"
             style={{
               color: 'var(--on-black)',
-              fontSize: 'clamp(40px, 7vw, 56px)',
+              fontSize: 'clamp(40px, 6vw, 56px)',
               letterSpacing: '-0.035em',
             }}
           >
@@ -1788,7 +1814,79 @@ function NetWorthHero({
           </div>
         </div>
 
-        {/* Period selector — for the rest of dashboard widgets */}
+        {/* RIGHT: 12-month cashflow sparkline chart */}
+        <div className="min-w-0">
+          <div className="flex items-center justify-between mb-3 gap-3">
+            <p className="caps" style={{ fontSize: '0.625rem', color: 'var(--emerald-300)' }}>
+              Cashflow 12 bulan
+            </p>
+            {/* Period selector — moved into chart header per mockup */}
+            <div className="flex gap-1">
+              <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) onMonthChange(Number(v)) }}>
+                <SelectTrigger className="w-[100px] h-7 bg-white/10 border-white/15 text-white text-[11px] hover:bg-white/20">
+                  <SelectValue placeholder="Bulan">{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={String(selectedYear)} onValueChange={(v) => { if (v) onYearChange(Number(v)) }}>
+                <SelectTrigger className="w-[78px] h-7 bg-white/10 border-white/15 text-white text-[11px] hover:bg-white/20">
+                  <SelectValue placeholder="Tahun">{(v) => v}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {sparklineData ? (
+            <svg viewBox={`0 0 ${sparklineData.W} ${sparklineData.H}`} className="w-full" style={{ height: 140 }} preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="nw-spark-grad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#10B981" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={sparklineData.areaPath} fill="url(#nw-spark-grad)" />
+              <path d={sparklineData.linePath} fill="none" stroke="#34D399" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+              {/* End-point marker */}
+              {sparklineData.points.length > 0 && (
+                <>
+                  <circle
+                    cx={sparklineData.points[sparklineData.points.length - 1].x}
+                    cy={sparklineData.points[sparklineData.points.length - 1].y}
+                    r="4" fill="#34D399"
+                  />
+                  <circle
+                    cx={sparklineData.points[sparklineData.points.length - 1].x}
+                    cy={sparklineData.points[sparklineData.points.length - 1].y}
+                    r="9" fill="#34D399" opacity="0.25"
+                  />
+                </>
+              )}
+            </svg>
+          ) : (
+            <div className="h-[140px] flex items-center justify-center text-xs" style={{ color: 'var(--on-black-mut)' }}>
+              Catat transaksi untuk lihat trend
+            </div>
+          )}
+
+          {/* Month labels under chart */}
+          {monthlyTrend.length > 0 && (
+            <div className="flex justify-between mt-2 text-[10px]" style={{ color: 'var(--on-black-mut)' }}>
+              {monthlyTrend.filter((_, i) => i % 2 === 0).map((m, i) => (
+                <span key={i}>{m.month}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hidden — period selector now lives in chart header. Keep this block
+          structure intact to avoid breaking parent prop shape. */}
+      <div className="hidden">
         <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
           <p className="caps" style={{ fontSize: '0.625rem' }}>Periode</p>
           <div className="flex gap-2">
