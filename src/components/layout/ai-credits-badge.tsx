@@ -100,25 +100,27 @@ export function AICreditsBadge() {
               boxShadow: '0 10px 30px -8px rgba(0,0,0,0.18)',
             }}
           >
-            <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-start justify-between gap-2 mb-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                  Kredit AI
+                  Kredit AI Tersisa
                 </p>
-                <p className="num tabular text-2xl font-bold mt-0.5" style={{ color: 'var(--ink)' }}>
+                {/* Just the current balance — no /cap inline (read as "86/10"
+                    which confused users when accumulated balance exceeds the
+                    monthly cap). Cap shown separately in the explainer below. */}
+                <p className="num tabular text-3xl font-bold mt-0.5" style={{ color: 'var(--ink)' }}>
                   {status.current}
-                  <span className="text-sm font-normal ml-1 opacity-60">/{status.cap}</span>
                 </p>
               </div>
               <Zap className="size-5 fill-current" style={{ color: low ? '#F59E0B' : '#10B981' }} />
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar — current vs cap, capped at 100% visual */}
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  width: `${pct}%`,
+                  width: `${Math.min(100, pct)}%`,
                   background: empty
                     ? '#EF4444'
                     : low
@@ -128,8 +130,11 @@ export function AICreditsBadge() {
               />
             </div>
 
-            <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
-              Reset otomatis: <span style={{ color: 'var(--ink)' }}>{renewalText}</span>
+            <p className="text-[11px] mt-2 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+              Plafon bulanan{' '}
+              <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{status.cap}</span>
+              {' '}kredit · top-up otomatis{' '}
+              <span style={{ color: 'var(--ink)' }}>{renewalText}</span>
             </p>
 
             <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
