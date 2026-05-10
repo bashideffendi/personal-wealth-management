@@ -22,10 +22,19 @@ import { redirect } from 'next/navigation'
 import { Sparkles, ArrowRight, Camera, Wallet, TrendingUp, Brain, Shield, Zap } from 'lucide-react'
 
 export default async function LandingPage() {
-  // If logged in, skip the landing page
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user) redirect('/dashboard')
+  // If logged in, skip the landing page. Wrap in try/catch because
+  // supabase.auth.getUser() can throw on anonymous requests when there
+  // are no auth cookies (the AuthSessionMissingError → "forbidden" page).
+  // Anonymous = render landing.
+  let isAuthed = false
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    isAuthed = !!user
+  } catch {
+    isAuthed = false
+  }
+  if (isAuthed) redirect('/dashboard')
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--paper)', color: 'var(--ink)' }}>
