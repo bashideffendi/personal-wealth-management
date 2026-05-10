@@ -50,11 +50,22 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/register')
-  ) {
+  // Public routes that anonymous users can access without redirect:
+  //   - /                 → landing/marketing page
+  //   - /login            → login form
+  //   - /register         → register form
+  //   - /auth/*           → OAuth callback handler
+  //   - /api/*            → public API routes (have their own auth gates)
+  // Any other path under an unauthenticated session → redirect to /login.
+  const path = request.nextUrl.pathname
+  const isPublicRoute =
+    path === '/' ||
+    path.startsWith('/login') ||
+    path.startsWith('/register') ||
+    path.startsWith('/auth') ||
+    path.startsWith('/api')
+
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
