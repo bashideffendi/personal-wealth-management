@@ -131,9 +131,15 @@ export function Sidebar({ user }: SidebarProps) {
               />
             )}
             {Icon && (
-              <Icon
-                className={cn(iconSize, 'shrink-0', active ? 'text-white' : 'text-[#71717A]')}
-              />
+              // Active icon = emerald (per dashboard-refine.jsx line 52),
+              // inactive = soft slate. Wrap in span so we can drive color
+              // via parent currentColor since the Icon prop type is strict.
+              <span
+                className="shrink-0 inline-flex"
+                style={{ color: active ? 'var(--emerald-400)' : '#71717A' }}
+              >
+                <Icon className={iconSize} />
+              </span>
             )}
             <span className="truncate">{item.titleKey ? t(item.titleKey) : item.label}</span>
           </Link>

@@ -27,8 +27,8 @@ import {
 } from '@/components/ui/select'
 import { Loader2, ArrowRight, Calendar } from 'lucide-react'
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -742,33 +742,54 @@ export default function DashboardPage() {
         netCashflow={totals.net}
       />
 
-      {/* Row: Monthly Area Chart + Investment Donut */}
+      {/* Row: Monthly Bar Chart (income vs expense) + Investment Donut.
+          Per dashboard-refine.jsx — twin bars per month (emerald + coral)
+          show clearer comparison than overlapping area chart. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-6 lg:col-span-3">
-          <div className="mb-4 flex items-end justify-between">
+          <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="caps">{t('dashboard.cashflow_yearly')}</p>
               <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 {t('dashboard.income_vs_expense')}
               </h3>
             </div>
-            <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>{selectedYear}</span>
+            {/* Surplus/Deficit chip per mockup line 168 */}
+            {(() => {
+              const yearIncome = monthlyData.reduce((s, m) => s + m.income, 0)
+              const yearExpense = monthlyData.reduce((s, m) => s + m.expense, 0)
+              const yearNet = yearIncome - yearExpense
+              const isSurplus = yearNet >= 0
+              return (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{
+                    background: isSurplus ? 'var(--emerald-50)' : 'var(--coral-50)',
+                    color: isSurplus ? 'var(--emerald-700)' : 'var(--coral-700)',
+                  }}
+                >
+                  {isSurplus ? 'Surplus' : 'Defisit'} {formatCompactCurrency(Math.abs(yearNet))}
+                </span>
+              )
+            })()}
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={monthlyData}>
-              <defs>
-                <linearGradient id="g-income" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#A3E635" stopOpacity={0.55} />
-                  <stop offset="100%" stopColor="#A3E635" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="g-expense" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F97316" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#F97316" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <BarChart data={monthlyData} barGap={4} barCategoryGap="20%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-              <XAxis dataKey="month" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
-              <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
+              <XAxis
+                dataKey="month"
+                fontSize={11}
+                tick={{ fill: 'var(--ink-muted)' }}
+                axisLine={{ stroke: 'var(--border-soft)' }}
+                tickLine={false}
+              />
+              <YAxis
+                fontSize={11}
+                tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`}
+                tick={{ fill: 'var(--ink-muted)' }}
+                axisLine={false}
+                tickLine={false}
+              />
               <Tooltip
                 formatter={formatTooltipValue}
                 contentStyle={{
@@ -779,11 +800,13 @@ export default function DashboardPage() {
                   color: 'var(--on-black)',
                 }}
                 labelStyle={{ color: 'var(--on-black-mut)' }}
+                cursor={{ fill: 'rgba(0,0,0,0.04)' }}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="income" name="Pemasukan" stroke="#65A30D" fill="url(#g-income)" strokeWidth={2} />
-              <Area type="monotone" dataKey="expense" name="Pengeluaran" stroke="#EA580C" fill="url(#g-expense)" strokeWidth={2} />
-            </AreaChart>
+              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
+              {/* Emerald + coral matching mockup palette (line 181-182) */}
+              <Bar dataKey="income" name="Pemasukan" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="expense" name="Pengeluaran" fill="#FB7185" radius={[3, 3, 0, 0]} maxBarSize={24} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
 
