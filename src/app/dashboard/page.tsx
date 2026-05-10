@@ -1730,9 +1730,24 @@ function NetWorthHero({
   const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
   const netWorth = totalAssets - debtTotal
 
-  // Friendly greeting based on time
-  const hour = new Date().getHours()
-  const greeting = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 18 ? 'Selamat sore' : 'Selamat malam'
+  // Time-aware witty greeting per design handoff microcopy library.
+  // Sub-greeting rotates per day (date as seed) so it feels "alive" but stable.
+  const now = new Date()
+  const hour = now.getHours()
+  const dateSeed = now.getDate() + now.getMonth() * 31  // stable per day
+  const greetingMain = hour >= 4 && hour < 11 ? 'Pagi'
+    : hour >= 11 && hour < 15 ? 'Siang'
+    : hour >= 15 && hour < 18 ? 'Sore'
+    : hour >= 18 && hour < 23 ? 'Malam'
+    : 'Wah masih bangun?'
+  const subOptions = (() => {
+    if (hour >= 4 && hour < 11) return ['uangmu lagi sehat-sehat aja', 'siap nabung hari ini? ☕', 'udah sarapan? jangan lupa catat']
+    if (hour >= 11 && hour < 15) return ['udah makan? jangan lupa catat ya', 'review pengeluaran sebentar yuk']
+    if (hour >= 15 && hour < 18) return ['review pengeluaran hari ini yuk', 'udah hampir gajian, sabar 💪']
+    if (hour >= 18 && hour < 23) return ['santai dulu, uangmu udah dijaga', 'selamat istirahat']
+    return ['jangan lupa tidur ya', 'begadang sambil cek finansial, nice']
+  })()
+  const subGreeting = subOptions[dateSeed % subOptions.length]
 
   return (
     <div className="dark-card p-6 sm:p-8 relative overflow-hidden">
@@ -1746,13 +1761,29 @@ function NetWorthHero({
 
       <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-sm" style={{ color: 'var(--on-black-mut)' }}>
-            {greeting} 👋
-          </p>
-          <p className="caps mt-3" style={{ fontSize: '0.625rem' }}>Kekayaan Bersih</p>
+          {/* Witty Indonesian greeting per microcopy library — adds personality
+              without being preachy. Sub rotates per day. */}
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight" style={{ color: 'var(--on-black)' }}>
+            {greetingMain} 👋
+            <span
+              className="ml-2 font-normal text-base sm:text-lg"
+              style={{ color: 'var(--on-black-mut)' }}
+            >
+              — {subGreeting}.
+            </span>
+          </h2>
+          <p className="caps mt-4" style={{ fontSize: '0.625rem' }}>Kekayaan Bersih</p>
+          {/* Net Worth as the HERO number — Instrument Serif italic per
+              typography-system.md. "Numbers are heroes" pattern. */}
           <p
-            className="num tabular text-4xl sm:text-5xl lg:text-6xl font-bold mt-2 leading-none"
-            style={{ color: 'var(--on-black)' }}
+            className="font-display tabular mt-2 leading-none"
+            style={{
+              color: 'var(--on-black)',
+              fontStyle: 'italic',
+              fontSize: 'clamp(48px, 8vw, 72px)',
+              letterSpacing: '-0.035em',
+              fontWeight: 400,
+            }}
           >
             {formatCurrency(netWorth)}
           </p>

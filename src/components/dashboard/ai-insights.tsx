@@ -232,25 +232,35 @@ export function AIInsightsCard({
 
   return (
     <div
-      className="rounded-2xl border p-5"
+      className="rounded-2xl border p-5 sm:p-6 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04), rgba(14, 165, 233, 0.04))',
-        borderColor: 'var(--border)',
+        background: 'linear-gradient(160deg, var(--surface), var(--emerald-50))',
+        borderColor: 'var(--emerald-100)',
       }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+      {/* Soft ambient glow per design handoff signature pattern */}
+      <div
+        className="absolute -top-16 -right-16 size-48 rounded-full opacity-40 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, var(--emerald-100), transparent 70%)' }}
+      />
+      <div className="relative flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          {/* Per 03-component-patterns.md § AI Insight Card — emerald
+              filled circle with sparkle, 28px size */}
           <div
-            className="size-8 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, var(--emerald-500), var(--sky-500))' }}
+            className="size-7 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--emerald-500)' }}
           >
-            <Sparkles className="size-4 text-white" />
+            <Sparkles className="size-3.5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-              Insight AI
+            <p
+              className="text-[11px] uppercase tracking-[0.14em] font-semibold"
+              style={{ color: 'var(--emerald-700)' }}
+            >
+              AI Insights
             </p>
-            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               {generatedAt
                 ? `Diperbarui ${formatRelative(generatedAt)} · cache 24 jam`
                 : loading
@@ -275,6 +285,7 @@ export function AIInsightsCard({
         </button>
       </div>
 
+      <div className="relative">
       {error && (
         <div
           className="rounded-lg border p-3 flex items-start gap-2 text-xs"
@@ -291,7 +302,7 @@ export function AIInsightsCard({
             <div
               key={i}
               className="h-16 rounded-lg animate-pulse"
-              style={{ background: 'var(--surface-2)' }}
+              style={{ background: 'rgba(255,255,255,0.5)' }}
             />
           ))}
         </div>
@@ -334,6 +345,7 @@ export function AIInsightsCard({
           Belum ada insight untuk periode ini. Coba lagi setelah ada lebih banyak transaksi.
         </p>
       )}
+      </div>
     </div>
   )
 }
