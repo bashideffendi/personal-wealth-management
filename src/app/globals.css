@@ -603,17 +603,33 @@ body[data-privacy="hidden"] .recharts-text {
 }
 
 /* Calm Mode — when body[data-calm="true"], soften the harshness of red P/L
-   colors so loss aversion doesn't push user toward panic decisions. We
-   desaturate red/coral colors via CSS filter on common loss-color targets.
+   colors so loss aversion doesn't push user toward panic decisions.
+   Two-pronged approach:
+     1. Override --danger CSS variable to a neutral slate so anything using
+        var(--danger) instantly turns calm-grey
+     2. Filter inline-hex loss colors that don't go through the variable
+*/
+body[data-calm="true"] {
+  --danger: #94a3b8;   /* slate-400 — neutral, calm */
+  --coral-500: #94a3b8;
+  --coral-600: #94a3b8;
+  --coral-700: #94a3b8;
+}
 
-   Strategy: any element with inline color of typical "loss" reds gets
-   desaturated. Can't catch every case (palette is broad) but covers the
-   most-prominent P/L displays without requiring per-component opt-in. */
-body[data-calm="true"] [style*="--danger"],
+/* Inline-hex loss colors: aggressively desaturate + fade */
 body[data-calm="true"] [style*="#DC2626"],
 body[data-calm="true"] [style*="#EF4444"],
 body[data-calm="true"] [style*="#F87171"],
-body[data-calm="true"] [style*="#E11D48"] {
-  filter: saturate(0.4) opacity(0.85);
+body[data-calm="true"] [style*="#E11D48"],
+body[data-calm="true"] [style*="#F43F5E"],
+body[data-calm="true"] [style*="rgba(220,38,38"],
+body[data-calm="true"] [style*="rgba(239,68,68"],
+body[data-calm="true"] [style*="rgba(244,63,94"] {
+  filter: saturate(0.10) opacity(0.55) !important;
   transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+/* Smooth fade for var(--danger) overrides too */
+body[data-calm="true"] [style*="--danger"] {
+  transition: color 0.4s ease, background 0.4s ease;
 }
