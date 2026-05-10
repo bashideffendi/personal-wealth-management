@@ -601,3 +601,19 @@ body[data-privacy="hidden"] .recharts-text {
   filter: blur(7px);
   pointer-events: none;
 }
+
+/* Calm Mode — when body[data-calm="true"], soften the harshness of red P/L
+   colors so loss aversion doesn't push user toward panic decisions. We
+   desaturate red/coral colors via CSS filter on common loss-color targets.
+
+   Strategy: any element with inline color of typical "loss" reds gets
+   desaturated. Can't catch every case (palette is broad) but covers the
+   most-prominent P/L displays without requiring per-component opt-in. */
+body[data-calm="true"] [style*="--danger"],
+body[data-calm="true"] [style*="#DC2626"],
+body[data-calm="true"] [style*="#EF4444"],
+body[data-calm="true"] [style*="#F87171"],
+body[data-calm="true"] [style*="#E11D48"] {
+  filter: saturate(0.4) opacity(0.85);
+  transition: filter 0.4s ease, opacity 0.4s ease;
+}

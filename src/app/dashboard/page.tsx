@@ -12,6 +12,7 @@ import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
 import { WealthPyramid } from '@/components/dashboard/wealth-pyramid'
+import { SaveMoreTomorrow } from '@/components/dashboard/save-more-tomorrow'
 import { computeFinancialHealth } from '@/lib/financial-health'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { StockLogo } from '@/components/investment/stock-logo'
@@ -442,8 +443,7 @@ export default function DashboardPage() {
           HealthScorePanel with a more rigorous, diagnostic version. */}
       <FinancialHealthCard result={fhsResult} />
 
-      {/* Cash-flow forecast — projects 30-day balance based on recurring +
-          contracts. Surfaces "saldo tipis sebelum gajian" risk early. */}
+      {/* Cash-flow forecast + Wealth pyramid — diagnostic widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CashFlowForecast
           liquidBalance={liquidTotal}
@@ -463,6 +463,9 @@ export default function DashboardPage() {
           }}
         />
       </div>
+
+      {/* Save More Tomorrow commitment widget */}
+      <SaveMoreTomorrow currentRate={totals.savingRate} />
 
       {/* Onboarding mission card — auto-hides when user completes setup */}
       <GettingStarted />

@@ -112,6 +112,14 @@ export const EDU_TIPS: Record<string, EduContent> = {
     source: 'CFPB Cash Flow Budget Tool (2021)',
   },
 
+  // ── Save More Tomorrow (Thaler-Benartzi) ────────────────────────
+  'save-more-tomorrow': {
+    title: 'Save More Tomorrow',
+    body: 'Strategi Thaler-Benartzi (2004): commit naikkan savings rate +1% setiap 3 bulan, sampai target tercapai. Powerful karena pre-commitment di awal (sebelum loss aversion kena), bukan tiap kali kamu liat saldo. Studi 401(k) US: partisipasi naik dari 49% → 86% dengan SMT.',
+    applied: 'Set target sekarang (saat motivasi tinggi), app reminder kamu setiap 3 bulan untuk bump kontribusi. Increment kecil per kuartal = lompatan besar dalam 2-3 tahun.',
+    source: 'Thaler & Benartzi, "Save More Tomorrow" (Journal of Political Economy 2004)',
+  },
+
   // ── Wealth Pyramid (HFN) ────────────────────────────────────────
   'wealth-pyramid': {
     title: 'Hierarchy of Financial Needs',

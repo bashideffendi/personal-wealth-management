@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StockLogPanel } from '@/components/investment/stock-log-panel'
 import { DividendsPanel } from '@/components/investment/dividends-panel'
 import { EduTip } from '@/components/edu/edu-tip'
+import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 
 interface FormState {
   id: string | null
@@ -246,12 +247,17 @@ export default function InvestmentCategoryPage() {
   return (
     <div className="space-y-6">
       <div className="dark-card p-6 sm:p-8">
-        <p className="caps flex items-center gap-1.5">
-          {subcat.label}
+        <div className="flex items-start justify-between gap-3">
+          <p className="caps flex items-center gap-1.5">
+            {subcat.label}
+            {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && (
+              <EduTip topic="dca" side="bottom" />
+            )}
+          </p>
           {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && (
-            <EduTip topic="dca" side="bottom" />
+            <CalmModeToggle compact />
           )}
-        </p>
+        </div>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p className="num tabular text-4xl sm:text-5xl lg:text-6xl font-semibold" style={{ color: 'var(--ink)' }}>
             {formatCurrency(totals.market)}

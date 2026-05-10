@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
+import {
+  ReflectiveSpendingModal,
+  shouldTriggerReflection,
+} from '@/components/reflective/reflective-spending-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
   INCOME_CATEGORIES,
@@ -479,6 +483,9 @@ export default function TransactionsPage() {
     setDialogOpen(true)
   }
 
+  // Reflective spending (Kakeibo) — anti-impulse modal for big expenses
+  const [reflectionOpen, setReflectionOpen] = useState(false)
+
   async function handleSave() {
     // Client-side validation with clear messages
     if (!form.account_id) {
@@ -493,6 +500,17 @@ export default function TransactionsPage() {
       alert('Jumlah harus lebih dari 0.')
       return
     }
+
+    // For NEW expense transactions over threshold, ask user to reflect first
+    // (not for edits — they've already committed to the spend in the past)
+    if (!editingId && shouldTriggerReflection({ type: form.type, amount: form.amount })) {
+      setReflectionOpen(true)
+      return
+    }
+    await actuallySave()
+  }
+
+  async function actuallySave() {
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -1286,6 +1304,16 @@ export default function TransactionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Kakeibo reflection modal — fires for big NEW expenses */}
+      <ReflectiveSpendingModal
+        open={reflectionOpen}
+        onClose={() => setReflectionOpen(false)}
+        onConfirm={() => { void actuallySave() }}
+        amount={form.amount}
+        category={form.category}
+        description={form.description}
+      />
 
       {/* CSV Import Dialog */}
       <Dialog open={importOpen} onOpenChange={(o) => { setImportOpen(o); if (!o) setImportRows([]) }}>
