@@ -125,26 +125,33 @@ export function Header({ user }: HeaderProps) {
       </Button>
 
       <div className="flex-1 min-w-0">
-        <h1
-          className="text-lg font-bold leading-tight truncate"
-          style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
-        >
-          {pageTitle}
-        </h1>
-        <div className="hidden md:flex items-center gap-1 mt-0.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-          {breadcrumb.length > 1 ? (
-            breadcrumb.map((b, i) => (
-              <span key={b.href} className="flex items-center gap-1">
-                {i > 0 && <span className="opacity-40">/</span>}
-                <span className={i === breadcrumb.length - 1 ? 'font-medium' : ''} style={i === breadcrumb.length - 1 ? { color: 'var(--ink)' } : undefined}>
-                  {b.titleKey ? t(b.titleKey) : b.label}
-                </span>
-              </span>
-            ))
-          ) : (
-            <span>{today}</span>
-          )}
-        </div>
+        {/* On the root /dashboard route the greeting (rendered inside the
+            page) takes the place of a page title. Skip the redundant
+            "Home" / "Dashboard" header text per design mockup. */}
+        {pathname !== '/dashboard' && (
+          <>
+            <h1
+              className="text-lg font-bold leading-tight truncate"
+              style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
+            >
+              {pageTitle}
+            </h1>
+            <div className="hidden md:flex items-center gap-1 mt-0.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              {breadcrumb.length > 1 ? (
+                breadcrumb.map((b, i) => (
+                  <span key={b.href} className="flex items-center gap-1">
+                    {i > 0 && <span className="opacity-40">/</span>}
+                    <span className={i === breadcrumb.length - 1 ? 'font-medium' : ''} style={i === breadcrumb.length - 1 ? { color: 'var(--ink)' } : undefined}>
+                      {b.titleKey ? t(b.titleKey) : b.label}
+                    </span>
+                  </span>
+                ))
+              ) : (
+                <span>{today}</span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="hidden md:flex items-center gap-3">
