@@ -65,9 +65,12 @@ const ACCENT_COLORS = [
 ]
 
 const PLAN_BADGES: Record<string, { label: string; bg: string; fg: string }> = {
-  solo:   { label: 'Solo',   bg: '#f1f5f9', fg: '#475569' },
-  pro:    { label: 'Pro',    bg: '#fef3c7', fg: '#92400e' },
-  family: { label: 'Family', bg: '#dbeafe', fg: '#1e40af' },
+  basic:  { label: 'Basic',        bg: '#f1f5f9', fg: '#475569' },
+  full:   { label: 'Full Service', bg: '#d1fae5', fg: '#047857' },
+  // Legacy slugs kept for backward compatibility (pre-migration 020)
+  solo:   { label: 'Solo',         bg: '#f1f5f9', fg: '#475569' },
+  pro:    { label: 'Pro',          bg: '#fef3c7', fg: '#92400e' },
+  family: { label: 'Family',       bg: '#dbeafe', fg: '#1e40af' },
 }
 
 export default function ProfilePage() {
@@ -140,7 +143,7 @@ export default function ProfilePage() {
         .from('subscriptions')
         .select('plan_id, status, started_at, expires_at')
         .eq('user_id', u.id)
-        .eq('status', 'active')
+        .in('status', ['active', 'trialing'])
         .order('started_at', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -299,7 +302,9 @@ export default function ProfilePage() {
   }
 
   const today = formatDate(new Date())
-  const planBadge = subscription ? PLAN_BADGES[subscription.plan_id] : PLAN_BADGES.solo
+  const planBadge = subscription
+    ? (PLAN_BADGES[subscription.plan_id] ?? PLAN_BADGES.basic)
+    : PLAN_BADGES.basic
 
   return (
     <div className="space-y-6">
@@ -326,9 +331,10 @@ export default function ProfilePage() {
                   className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
                   style={{ backgroundColor: planBadge.bg, color: planBadge.fg }}
                 >
-                  {subscription?.plan_id === 'pro' && <Crown className="size-3" />}
-                  {subscription?.plan_id === 'family' && <Sparkles className="size-3" />}
+                  {subscription?.plan_id === 'full' && <Crown className="size-3" />}
+                  {subscription?.status === 'trialing' && <Sparkles className="size-3" />}
                   Paket {planBadge.label}
+                  {subscription?.status === 'trialing' && ' (Trial)'}
                 </span>
                 <span className="text-xs" style={{ color: 'var(--on-black-mut)' }}>
                   {accountCount} akun · {txCount} transaksi · sejak {formatDate(new Date(subscription?.started_at ?? Date.now()))}
@@ -342,7 +348,7 @@ export default function ProfilePage() {
             style={{ backgroundColor: 'var(--burgundy-600, #9d1f4a)' }}
           >
             <Crown className="size-4" />
-            {subscription?.plan_id === 'solo' ? 'Upgrade Sekarang' : 'Kelola Langganan'}
+            {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? 'Upgrade ke Full Service' : 'Kelola Langganan'}
           </Link>
         </div>
         <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>{today}</p>

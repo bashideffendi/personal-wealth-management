@@ -23,15 +23,13 @@ interface Plan {
 }
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
-  solo:   <Sparkles className="size-5" />,
-  pro:    <Crown className="size-5" />,
-  family: <Users className="size-5" />,
+  basic: <Sparkles className="size-5" />,
+  full:  <Crown className="size-5" />,
 }
 
 const PLAN_THEMES: Record<string, { bg: string; ring: string; accent: string; price: string; cta: string; ctaHover: string }> = {
-  solo:   { bg: 'bg-white',           ring: 'ring-slate-200',   accent: 'text-slate-700',   price: 'text-slate-900', cta: 'bg-slate-900',     ctaHover: 'hover:bg-slate-800' },
-  pro:    { bg: 'bg-amber-50',        ring: 'ring-amber-300',   accent: 'text-amber-700',   price: 'text-amber-900', cta: 'bg-amber-600',     ctaHover: 'hover:bg-amber-700' },
-  family: { bg: 'bg-blue-50',         ring: 'ring-blue-300',    accent: 'text-blue-700',    price: 'text-blue-900',  cta: 'bg-blue-700',      ctaHover: 'hover:bg-blue-800' },
+  basic: { bg: 'bg-white',     ring: 'ring-slate-200',   accent: 'text-slate-700',  price: 'text-slate-900',  cta: 'bg-slate-900',  ctaHover: 'hover:bg-slate-800' },
+  full:  { bg: 'bg-emerald-50', ring: 'ring-emerald-400', accent: 'text-emerald-700', price: 'text-emerald-900', cta: 'bg-emerald-600', ctaHover: 'hover:bg-emerald-700' },
 }
 
 const CREDIT_PACKS = [
@@ -44,7 +42,7 @@ export default function PricingPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [plans, setPlans] = useState<Plan[]>([])
-  const [currentPlanId, setCurrentPlanId] = useState<string>('solo')
+  const [currentPlanId, setCurrentPlanId] = useState<string>('basic')
 
   useEffect(() => {
     void load()
@@ -59,7 +57,7 @@ export default function PricingPage() {
     try {
       const [plansRes, subRes] = await Promise.all([
         supabase.from('plans').select('*').order('display_order', { ascending: true }),
-        supabase.from('subscriptions').select('plan_id').eq('user_id', user.id).eq('status', 'active').order('started_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('subscriptions').select('plan_id').eq('user_id', user.id).in('status', ['active', 'trialing']).order('started_at', { ascending: false }).limit(1).maybeSingle(),
       ])
       if (plansRes.data && plansRes.data.length > 0) {
         setPlans(plansRes.data as Plan[])
@@ -78,33 +76,40 @@ export default function PricingPage() {
   function fallbackPlans(): Plan[] {
     return [
       {
-        id: 'solo', name: 'Solo', description: 'Mulai atur keuangan tanpa biaya.',
-        price_idr: 0, original_price_idr: 0, max_seats: 1,
-        features: ['Akun & dompet unlimited', 'Catat transaksi unlimited', 'Anggaran bulanan', 'Dashboard analitik dasar', 'Export CSV'],
-        ai_credits_monthly: 10, is_popular: false, display_order: 1,
+        id: 'basic', name: 'Basic', description: 'Atur keuangan harian dengan fitur dasar.',
+        price_idr: 99000, original_price_idr: 0, max_seats: 1,
+        features: [
+          'Catat transaksi unlimited',
+          'Anggaran bulanan',
+          'Dashboard net worth',
+          'Foto struk basic (OCR)',
+          'Track 1 jenis aset (tabungan)',
+          '50 kredit AI/bulan',
+        ],
+        ai_credits_monthly: 50, is_popular: false, display_order: 1,
       },
       {
-        id: 'pro', name: 'Pro', description: 'Kontrol penuh atas kekayaanmu.',
-        price_idr: 79000, original_price_idr: 149000, max_seats: 1,
-        features: ['Semua di Solo', 'Foto struk → otomatis ke transaksi (AI Vision)', 'AI Advisor — tanya apa saja', 'Tracking aset & investasi lengkap', 'Net worth real-time', 'Goal setting & tracking', 'Update harga saham otomatis', 'Laporan & analisa detail'],
-        ai_credits_monthly: 100, is_popular: true, display_order: 2,
-      },
-      {
-        id: 'family', name: 'Family', description: 'Atur keuangan bareng pasangan & keluarga.',
+        id: 'full', name: 'Full Service', description: 'Akses penuh ke semua fitur Klunting.',
         price_idr: 199000, original_price_idr: 299000, max_seats: 4,
-        features: ['Semua di Pro', 'Hingga 4 anggota keluarga', 'Wallet & budget bersama', 'Tracking per-anggota (siapa belanja apa)', 'Insight pengeluaran keluarga', 'Notifikasi sinkron antar anggota', 'Bonus 200 kredit AI/bulan'],
-        ai_credits_monthly: 250, is_popular: false, display_order: 3,
+        features: [
+          'Semua fitur Basic',
+          'Multi-aset (saham, RD, crypto, emas, SBN, P2P)',
+          'AI Advisor unlimited',
+          'AI Receipt Scanner advanced',
+          'WhatsApp catat & forward struk (segera)',
+          'Family sharing sampai 4 anggota',
+          'Atur utang & cicilan',
+          'Goal setting & laporan detail',
+          '250 kredit AI/bulan',
+        ],
+        ai_credits_monthly: 250, is_popular: true, display_order: 2,
       },
     ]
   }
 
   function handleUpgrade(planId: string) {
     if (planId === currentPlanId) return
-    if (planId === 'solo') {
-      alert('Untuk downgrade ke Solo, hubungi support.')
-      return
-    }
-    alert(`Pembayaran via Midtrans akan segera hadir. Untuk early access ke ${planId.toUpperCase()}, hubungi support@klunting.com.`)
+    alert(`Pembayaran via Xendit akan segera hadir. Untuk early access ke ${planId.toUpperCase()}, hubungi support@klunting.com.`)
   }
 
   if (loading) {
@@ -121,20 +126,19 @@ export default function PricingPage() {
       <div className="dark-card p-6 sm:p-7 text-center">
         <p className="caps">Pilih Paketmu</p>
         <h2 className="text-white text-3xl sm:text-4xl font-semibold tracking-tight mt-3 max-w-2xl mx-auto">
-          Tingkatkan kontrol keuanganmu — sendiri atau bersama keluarga.
+          Pilih paket yang cocok buat kebutuhanmu.
         </h2>
         <p className="text-sm mt-3 max-w-xl mx-auto" style={{ color: 'var(--on-black-mut)' }}>
-          Tagihan tahunan. Bisa upgrade atau downgrade kapan saja. Pembayaran aman lewat Midtrans (segera hadir).
+          Tagihan bulanan. Trial 14 hari akses Full Service. Bisa upgrade kapan saja.
         </p>
       </div>
 
-      {/* 3-tier cards (side-by-side comparison — clearer than tabbed UI) */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      {/* 2-tier cards */}
+      <div className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
         {plans.map((plan) => {
-          const theme = PLAN_THEMES[plan.id] ?? PLAN_THEMES.solo
+          const theme = PLAN_THEMES[plan.id] ?? PLAN_THEMES.basic
           const isCurrent = plan.id === currentPlanId
           const isFree = plan.price_idr === 0
-          const monthlyEq = plan.price_idr > 0 ? Math.round(plan.price_idr / 12) : 0
           const discountPct = plan.original_price_idr && plan.original_price_idr > plan.price_idr
             ? Math.round((1 - plan.price_idr / plan.original_price_idr) * 100)
             : 0
@@ -172,11 +176,8 @@ export default function PricingPage() {
                     )}
                     <div className="flex items-baseline gap-2">
                       <span className={`text-4xl font-bold tabular-nums ${theme.price}`}>{formatCurrency(plan.price_idr)}</span>
-                      <span className="text-sm text-muted-foreground">/tahun</span>
+                      <span className="text-sm text-muted-foreground">/bulan</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Setara {formatCurrency(monthlyEq)}/bulan
-                    </p>
                   </>
                 )}
               </div>
@@ -196,24 +197,22 @@ export default function PricingPage() {
                     <Check className="size-4" />
                     Paket Saat Ini
                   </>
-                ) : isFree ? (
-                  'Mulai Gratis'
-                ) : plan.id === 'family' ? (
+                ) : plan.id === 'full' ? (
                   <>
-                    <Users className="size-4" />
-                    Pilih Family
+                    <Crown className="size-4" />
+                    Pilih Full Service
                   </>
                 ) : (
                   <>
                     <Zap className="size-4" />
-                    Upgrade ke {plan.name}
+                    Pilih {plan.name}
                   </>
                 )}
               </button>
 
               {plan.max_seats > 1 && (
-                <p className="text-xs text-center mt-2 text-blue-700 font-medium">
-                  👨‍👩‍👧 Hingga {plan.max_seats} anggota keluarga
+                <p className="text-xs text-center mt-2 text-emerald-700 font-medium">
+                  👨‍👩‍👧 Sampai {plan.max_seats} anggota keluarga
                 </p>
               )}
 
@@ -247,35 +246,35 @@ export default function PricingPage() {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 font-medium text-muted-foreground">Fitur</th>
-                <th className="text-center py-3 font-medium">Solo</th>
-                <th className="text-center py-3 font-medium">Pro</th>
-                <th className="text-center py-3 font-medium">Family</th>
+                <th className="text-center py-3 font-medium">Basic</th>
+                <th className="text-center py-3 font-medium">Full Service</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { f: 'Akun & dompet unlimited',           solo: true, pro: true, fam: true },
-                { f: 'Catat transaksi unlimited',         solo: true, pro: true, fam: true },
-                { f: 'Anggaran bulanan',                  solo: true, pro: true, fam: true },
-                { f: 'Dashboard analitik dasar',          solo: true, pro: true, fam: true },
-                { f: 'Export CSV',                        solo: true, pro: true, fam: true },
-                { f: 'Foto struk → auto-input (AI)',      solo: false, pro: true, fam: true },
-                { f: 'AI Advisor (chat keuangan)',        solo: false, pro: true, fam: true },
-                { f: 'Tracking aset & investasi',         solo: false, pro: true, fam: true },
-                { f: 'Net worth real-time',               solo: false, pro: true, fam: true },
-                { f: 'Goal setting & tracking',           solo: false, pro: true, fam: true },
-                { f: 'Update harga saham otomatis',       solo: false, pro: true, fam: true },
-                { f: 'Anggota keluarga',                  solo: '1', pro: '1', fam: '4' },
-                { f: 'Wallet & budget bersama',           solo: false, pro: false, fam: true },
-                { f: 'Tracking per-anggota',              solo: false, pro: false, fam: true },
-                { f: 'Notifikasi sinkron antar anggota',  solo: false, pro: false, fam: true },
-                { f: 'Kredit AI bulanan',                 solo: '10', pro: '100', fam: '250' },
+                { f: 'Catat transaksi unlimited',         basic: true,  full: true },
+                { f: 'Anggaran bulanan',                  basic: true,  full: true },
+                { f: 'Dashboard net worth',               basic: true,  full: true },
+                { f: 'Export CSV',                        basic: true,  full: true },
+                { f: 'Foto struk basic (OCR)',            basic: true,  full: true },
+                { f: 'Track 1 jenis aset (tabungan)',     basic: true,  full: true },
+                { f: 'Multi-aset (saham, RD, crypto, dll)', basic: false, full: true },
+                { f: 'AI Advisor (chat keuangan)',        basic: false, full: true },
+                { f: 'AI Receipt Scanner advanced',       basic: false, full: true },
+                { f: 'WhatsApp catat & forward struk',    basic: false, full: 'Segera' },
+                { f: 'Atur utang & cicilan',              basic: false, full: true },
+                { f: 'Goal setting & laporan detail',     basic: false, full: true },
+                { f: 'Update harga saham otomatis',       basic: false, full: true },
+                { f: 'Family sharing',                    basic: false, full: true },
+                { f: 'Anggota keluarga',                  basic: '1',   full: '4' },
+                { f: 'Wallet & budget bersama',           basic: false, full: true },
+                { f: 'Tracking per-anggota',              basic: false, full: true },
+                { f: 'Kredit AI bulanan',                 basic: '50',  full: '250' },
               ].map((row, i) => (
                 <tr key={i} className="border-b last:border-b-0">
                   <td className="py-2.5 text-foreground/90">{row.f}</td>
-                  <td className="text-center">{renderCell(row.solo)}</td>
-                  <td className="text-center">{renderCell(row.pro)}</td>
-                  <td className="text-center">{renderCell(row.fam)}</td>
+                  <td className="text-center">{renderCell(row.basic)}</td>
+                  <td className="text-center">{renderCell(row.full)}</td>
                 </tr>
               ))}
             </tbody>
@@ -333,7 +332,7 @@ export default function PricingPage() {
             <ShieldCheck className="size-5 text-emerald-600 mt-0.5" />
             <div>
               <p className="font-semibold text-sm">Pembayaran Aman</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Midtrans (PCI-DSS compliant). Tidak menyimpan data kartumu.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Xendit (PCI-DSS compliant). Tidak menyimpan data kartumu.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -357,10 +356,11 @@ export default function PricingPage() {
       <section className="rounded-2xl border bg-white p-6">
         <h3 className="font-semibold text-lg mb-4">Pertanyaan Umum</h3>
         <div className="space-y-4 text-sm">
-          <Faq q="Apa beda Pro dan Family?" a="Pro untuk 1 user (kamu doang). Family untuk 4 user — pasangan & anak bisa sama-sama nyatet ke 1 budget keluarga, lihat insight bersama, tapi tetap punya tracking per-anggota (jadi tau siapa belanja apa)." />
-          <Faq q="Bagaimana sistem AI credit?" a="Tiap kali kamu pakai fitur AI (scan struk, chat AI Advisor, dll), 1 kredit dipotong. Paket Pro dapat 100 kredit/bulan, Family 250/bulan. Kalau habis, bisa top-up paket terpisah." />
-          <Faq q="Bisa downgrade nggak?" a="Bisa. Downgrade berlaku di akhir periode billing. Data tetap aman, fitur premium akan dimatikan setelah masa langganan habis." />
-          <Faq q="Pembayarannya gimana?" a="Midtrans (segera hadir): kartu kredit/debit, transfer bank, e-wallet (GoPay/OVO/Dana), QRIS, virtual account. Sementara waktu, hubungi support untuk pembayaran manual." />
+          <Faq q="Apa beda Basic dan Full Service?" a="Basic Rp 99rb/bulan untuk catat transaksi & track 1 jenis aset (tabungan). Full Service Rp 199rb/bulan unlock semua fitur: multi-aset (saham, RD, crypto, emas, dll), AI Advisor unlimited, family sharing sampai 4 anggota, WhatsApp catat (segera), goal & laporan detail." />
+          <Faq q="Trial 14 hari itu gimana?" a="Setiap user baru otomatis dapat akses penuh Full Service selama 14 hari, tanpa kartu kredit. Setelah trial habis, kamu pilih plan Basic atau Full Service untuk lanjut." />
+          <Faq q="Bagaimana sistem AI credit?" a="Tiap kali pakai fitur AI (scan struk advanced, chat AI Advisor, dll), 1 kredit dipotong. Basic dapat 50 kredit/bulan, Full Service 250/bulan. Kalau habis, bisa top-up terpisah (paket di bawah)." />
+          <Faq q="Bisa downgrade dari Full ke Basic?" a="Bisa. Downgrade berlaku di akhir periode billing. Data tetap aman, fitur Full Service akan dimatikan setelah masa langganan habis." />
+          <Faq q="Pembayarannya gimana?" a="Xendit (segera hadir): kartu kredit/debit, transfer bank, e-wallet (GoPay/OVO/Dana), QRIS, virtual account. Sementara waktu, hubungi support untuk pembayaran manual." />
           <Faq q="Data saya aman?" a="Aman. Database di Supabase (Asia Pacific), enkripsi at-rest dan in-transit, isolasi per-user via Row Level Security. Tidak dijual ke pihak ketiga, tidak ada iklan." />
         </div>
       </section>

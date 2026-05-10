@@ -70,7 +70,7 @@ export default function RegisterPage() {
             Klunting.
           </h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
-            Bikin akun gratis. 2 menit selesai.
+            Coba 14 hari gratis. Tanpa kartu kredit.
           </p>
         </div>
 
