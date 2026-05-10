@@ -206,7 +206,7 @@ export function CashFlowForecast({
 
   return (
     <div
-      className="rounded-2xl border p-5 sm:p-6"
+      className="rounded-2xl border p-4 sm:p-5"
       style={{
         background: hasNegative
           ? 'linear-gradient(135deg, rgba(220,38,38,0.04), var(--surface) 50%)'
@@ -214,141 +214,117 @@ export function CashFlowForecast({
         borderColor: hasNegative ? 'rgba(220,38,38,0.20)' : 'var(--border)',
       }}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-1">
-        <div className="flex items-start gap-3">
-          <div
-            className="size-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: `${accentColor}1A` }}
-          >
-            <Calendar className="size-4" style={{ color: accentColor }} />
-          </div>
-          <div>
-            <p className="caps flex items-center gap-1.5">
-              Forecast Saldo
-              <EduTip topic="cash-flow" side="bottom" />
-            </p>
-            <h3 className="font-display text-lg mt-0.5" style={{ color: 'var(--ink)' }}>
-              30 Hari ke Depan
-            </h3>
-          </div>
+      {/* Compact header — title + status badge in one row, mini sparkline beside */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <Calendar className="size-3.5 shrink-0" style={{ color: accentColor }} />
+          <p className="caps flex items-center gap-1.5">
+            Forecast Saldo 30h
+            <EduTip topic="cash-flow" side="bottom" />
+          </p>
         </div>
         {hasNegative ? (
           <span
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
             style={{ background: 'rgba(220,38,38,0.10)', color: '#DC2626' }}
           >
-            <AlertTriangle className="size-3" />
+            <AlertTriangle className="size-2.5" />
             Risiko Negatif
           </span>
         ) : hasRisk ? (
           <span
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
             style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}
           >
             Saldo Tipis
           </span>
-        ) : null}
+        ) : (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide shrink-0"
+            style={{ background: 'rgba(16,185,129,0.08)', color: '#059669' }}
+          >
+            <TrendingUp className="size-2.5" />
+            Aman
+          </span>
+        )}
       </div>
 
-      {/* Stats row */}
-      <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]">
-        <Stat
-          label="Saldo Sekarang"
-          value={formatCurrency(liquidBalance)}
-          color="var(--ink)"
-        />
-        <Stat
-          label="Akhir Periode"
-          value={formatCurrency(endBalance)}
-          color={endBalance < liquidBalance ? '#DC2626' : '#10B981'}
-          icon={endBalance < liquidBalance ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />}
-        />
-        <Stat
-          label="Saldo Terendah"
-          value={formatCurrency(minPoint?.balance ?? liquidBalance)}
-          color={minPoint && minPoint.balance < safetyBuffer ? accentColor : 'var(--ink)'}
-          sub={minPoint?.balance !== undefined && minPoint.balance < liquidBalance
-            ? `H+${forecast.indexOf(minPoint)}`
-            : undefined}
-        />
-      </div>
+      {/* Side-by-side: stats (left) + mini sparkline (right) */}
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-center">
+        <div className="grid grid-cols-3 gap-3 text-[11px]">
+          <Stat
+            label="Sekarang"
+            value={formatCurrency(liquidBalance)}
+            color="var(--ink)"
+          />
+          <Stat
+            label="Akhir 30h"
+            value={formatCurrency(endBalance)}
+            color={endBalance < liquidBalance ? '#DC2626' : '#10B981'}
+            icon={endBalance < liquidBalance ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />}
+          />
+          <Stat
+            label="Terendah"
+            value={formatCurrency(minPoint?.balance ?? liquidBalance)}
+            color={minPoint && minPoint.balance < safetyBuffer ? accentColor : 'var(--ink)'}
+            sub={minPoint?.balance !== undefined && minPoint.balance < liquidBalance
+              ? `H+${forecast.indexOf(minPoint)}`
+              : undefined}
+          />
+        </div>
 
-      {/* Sparkline chart */}
-      <div className="mt-4 relative">
-        <svg
-          viewBox={`0 0 ${chartW} ${chartH}`}
-          className="w-full"
-          style={{ height: chartH, overflow: 'visible' }}
-          preserveAspectRatio="none"
-        >
-          {/* Buffer line */}
-          {bufferY > 0 && bufferY < chartH && (
-            <line
-              x1="0" y1={bufferY} x2={chartW} y2={bufferY}
-              stroke="#F59E0B" strokeWidth="0.5" strokeDasharray="3,3"
-              opacity="0.5"
+        {/* Mini sparkline — visible only on sm+ to save mobile space */}
+        <div className="hidden sm:block w-32 shrink-0">
+          <svg
+            viewBox={`0 0 ${chartW} ${chartH}`}
+            className="w-full h-12"
+            preserveAspectRatio="none"
+          >
+            {bufferY > 0 && bufferY < chartH && (
+              <line
+                x1="0" y1={bufferY} x2={chartW} y2={bufferY}
+                stroke="#F59E0B" strokeWidth="0.5" strokeDasharray="3,3"
+                opacity="0.5"
+              />
+            )}
+            {minBal < 0 && (
+              <line
+                x1="0" y1={zeroY} x2={chartW} y2={zeroY}
+                stroke="#DC2626" strokeWidth="0.8" opacity="0.7"
+              />
+            )}
+            <polygon
+              points={`0,${chartH} ${points} ${chartW},${chartH}`}
+              fill={accentColor}
+              fillOpacity="0.12"
             />
-          )}
-          {/* Zero line (only if range crosses zero) */}
-          {minBal < 0 && (
-            <line
-              x1="0" y1={zeroY} x2={chartW} y2={zeroY}
-              stroke="#DC2626" strokeWidth="0.8"
-              opacity="0.7"
+            <polyline
+              points={points}
+              fill="none"
+              stroke={accentColor}
+              strokeWidth="1.5"
             />
-          )}
-          {/* Filled area */}
-          <polygon
-            points={`0,${chartH} ${points} ${chartW},${chartH}`}
-            fill={accentColor}
-            fillOpacity="0.10"
-          />
-          {/* Forecast line */}
-          <polyline
-            points={points}
-            fill="none"
-            stroke={accentColor}
-            strokeWidth="1.5"
-          />
-        </svg>
-        <div className="flex justify-between mt-1 text-[10px]" style={{ color: 'var(--ink-soft)' }}>
-          <span>Hari ini</span>
-          <span>+15h</span>
-          <span>+30h</span>
+          </svg>
         </div>
       </div>
 
-      {/* Upcoming events list (top 3 nearest) */}
+      {/* Upcoming events list — actionable bit */}
       {eventDays.length > 0 && (
         <div
-          className="mt-4 pt-3 border-t"
+          className="mt-3 pt-2 border-t"
           style={{ borderColor: 'var(--border-soft)' }}
         >
-          <p
-            className="text-[10px] uppercase tracking-wider font-semibold mb-2"
-            style={{ color: 'var(--ink-soft)' }}
-          >
-            Event terdekat
-          </p>
-          <div className="space-y-1.5">
-            {eventDays.slice(0, 3).map((p) => (
-              <div key={p.iso} className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="num font-medium shrink-0" style={{ color: 'var(--ink-soft)' }}>
-                    {p.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                  </span>
-                  <span className="truncate" style={{ color: 'var(--ink)' }}>
-                    {p.events[0].name}
-                    {p.events.length > 1 && (
-                      <span style={{ color: 'var(--ink-soft)' }}>
-                        {' '}+{p.events.length - 1}
-                      </span>
-                    )}
-                  </span>
-                </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+            {eventDays.slice(0, 4).map((p) => (
+              <div key={p.iso} className="flex items-center gap-1.5">
+                <span className="num font-medium" style={{ color: 'var(--ink-soft)' }}>
+                  {p.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                </span>
+                <span className="truncate max-w-[100px]" style={{ color: 'var(--ink)' }}>
+                  {p.events[0].name}
+                </span>
                 <span
-                  className="num font-semibold shrink-0"
+                  className="num font-semibold"
                   style={{ color: p.inflow > p.outflow ? '#10B981' : '#DC2626' }}
                 >
                   {p.inflow > p.outflow ? '+' : '-'}
@@ -356,6 +332,11 @@ export function CashFlowForecast({
                 </span>
               </div>
             ))}
+            {eventDays.length > 4 && (
+              <span className="text-[10px] italic" style={{ color: 'var(--ink-soft)' }}>
+                +{eventDays.length - 4} event lain
+              </span>
+            )}
           </div>
         </div>
       )}

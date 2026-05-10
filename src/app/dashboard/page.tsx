@@ -11,8 +11,6 @@ import { GettingStarted } from '@/components/dashboard/getting-started'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
-import { WealthPyramid } from '@/components/dashboard/wealth-pyramid'
-import { SaveMoreTomorrow } from '@/components/dashboard/save-more-tomorrow'
 import { computeFinancialHealth } from '@/lib/financial-health'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { StockLogo } from '@/components/investment/stock-logo'
@@ -438,34 +436,22 @@ export default function DashboardPage() {
         onMonthChange={setSelectedMonth}
       />
 
-      {/* Financial Health Score — FinHealth Network methodology, 7 indicators
-          covering Spend / Save / Borrow / Plan. Replaces the legacy 5-pillar
-          HealthScorePanel with a more rigorous, diagnostic version. */}
-      <FinancialHealthCard result={fhsResult} />
+      {/* Financial Health Score — 3-column inline layout: score + bars + burn
+          rate. All visible without click. Burn rate (cash coverage in months)
+          sits next to score because it's the most actionable safety metric. */}
+      <FinancialHealthCard
+        result={fhsResult}
+        liquidBalance={liquidTotal}
+        monthlyExpense={totals.expense}
+      />
 
-      {/* Cash-flow forecast + Wealth pyramid — diagnostic widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CashFlowForecast
-          liquidBalance={liquidTotal}
-          recurringItems={recurringItems}
-          contracts={contracts}
-        />
-        <WealthPyramid
-          input={{
-            monthlyNet: totals.income - totals.expense,
-            liquidMonths: totals.expense > 0 ? liquidTotal / totals.expense : 0,
-            hasInsurance: contracts.some((c) => c.category === 'insurance' && !c.is_archived),
-            investmentValue: investments.reduce((s, i) => s + (i.total_value || 0), 0),
-            annualIncome: totals.income * 12,
-            hasGoals: activeGoals.length > 0,
-            hasRetirementPlan: activeGoals.some((g) => g.name.toLowerCase().includes('pensiun'))
-              || investments.some((i) => i.category === 'pension'),
-          }}
-        />
-      </div>
-
-      {/* Save More Tomorrow commitment widget */}
-      <SaveMoreTomorrow currentRate={totals.savingRate} />
+      {/* Cash-flow forecast — compact reminder of upcoming events.
+          Less of a hero, more of a "heads-up" bar. */}
+      <CashFlowForecast
+        liquidBalance={liquidTotal}
+        recurringItems={recurringItems}
+        contracts={contracts}
+      />
 
       {/* Onboarding mission card — auto-hides when user completes setup */}
       <GettingStarted />
