@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, LogOut, ChevronDown, Search, Crown, Sun, Moon, Monitor, Eye, EyeOff } from 'lucide-react'
+import { Menu, LogOut, ChevronDown, Search, Crown, Sun, Moon, Monitor, Eye, EyeOff, Plus } from 'lucide-react'
 import { useTheme } from '@/components/theme/theme-provider'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
@@ -148,24 +148,46 @@ export function Header({ user }: HeaderProps) {
       </div>
 
       <div className="hidden md:flex items-center gap-3">
+        {/* Search trigger styled as a search-input per dashboard-refine.jsx
+            line 78 — wider, more input-like, with placeholder microcopy. */}
         <button
           type="button"
           onClick={() => {
             const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true })
             window.dispatchEvent(event)
           }}
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs border transition-colors hover:bg-[var(--surface-2)]"
-          style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+          className="flex items-center gap-2 px-3 py-2 rounded-[10px] text-[13px] border transition-colors hover:bg-[var(--surface-2)] min-w-[200px]"
+          style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           aria-label={t('common.search')}
           title="⌘K / Ctrl+K"
         >
           <Search className="h-3.5 w-3.5" />
-          <span>{t('common.search')}</span>
-          <kbd className="text-[10px] ml-3 px-1 rounded font-mono" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>⌘K</kbd>
+          <span className="flex-1 text-left">Cari semuanya...</span>
+          <kbd
+            className="text-[10px] px-1.5 py-0.5 rounded font-mono"
+            style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
+          >
+            ⌘K
+          </kbd>
         </button>
 
         {/* AI Credits badge — current balance + cap, drops down for detail */}
         <AICreditsBadge />
+
+        {/* "+ Catat transaksi" black CTA per mockup line 84 — primary action
+            in the header, dispatches Cmd+K to open command palette quick-add. */}
+        <button
+          type="button"
+          onClick={() => {
+            const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true })
+            window.dispatchEvent(event)
+          }}
+          className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold transition hover:opacity-90"
+          style={{ background: 'var(--ink)', color: 'var(--surface)' }}
+        >
+          <Plus className="size-3.5" />
+          Catat transaksi
+        </button>
 
         {/* Privacy toggle — hide all monetary numbers when in public */}
         <button
