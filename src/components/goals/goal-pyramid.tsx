@@ -61,7 +61,7 @@ export function GoalPyramid({ goals }: Props) {
             Behavioral Portfolio
             <EduTip topic="goal-based-investing" side="bottom" />
           </p>
-          <h3 className="font-display text-lg mt-0.5" style={{ color: 'var(--ink)' }}>
+          <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             Piramida Tujuan
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>

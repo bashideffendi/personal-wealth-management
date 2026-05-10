@@ -96,7 +96,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
             DTI / DSR
             <EduTip topic="dti-ratio" side="bottom" />
           </p>
-          <h3 className="font-display text-xl mt-0.5" style={{ color: 'var(--ink)' }}>
+          <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             Beban Cicilan
           </h3>
         </div>

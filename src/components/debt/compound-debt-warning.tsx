@@ -101,7 +101,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
             Bunga Berbunga
             <EduTip topic="compound-interest" side="bottom" />
           </p>
-          <h3 className="font-display text-base sm:text-lg mt-0.5" style={{ color: 'var(--ink)' }}>
+          <h3 className="text-base sm:text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             Kalau cuma bayar minimum…
           </h3>
         </div>

@@ -132,7 +132,7 @@ export function WealthPyramid({ input }: Props) {
             Hierarchy of Financial Needs
             <EduTip topic="wealth-pyramid" side="bottom" />
           </p>
-          <h3 className="font-display text-lg mt-0.5" style={{ color: 'var(--ink)' }}>
+          <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             Piramida Kekayaan
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
