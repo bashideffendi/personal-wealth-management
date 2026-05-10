@@ -40,16 +40,18 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-// Finspine chart palette — fresh lime + orange + modern
+// Chart palette per design handoff tokens.css — emerald led, then sky,
+// amber, coral, violet for categorical variety. Replaces the older
+// "lime + orange + black" palette which clashed with the new design tokens.
 const CHART_PALETTE = [
-  '#0A0A0A', // near-black
-  '#A3E635', // lime-400 (primary pop)
-  '#F97316', // orange-500 (secondary pop)
-  '#10B981', // emerald-500
-  '#3B82F6', // blue-500
-  '#737373', // neutral-500
-  '#8B5CF6', // violet-500
-  '#EF4444', // red-500
+  '#10B981', // emerald-500 — main / income
+  '#0EA5E9', // sky-500 — investment / info
+  '#F59E0B', // amber-500 — savings
+  '#F43F5E', // coral-500 — debt / expense
+  '#8B5CF6', // violet-500 — other
+  '#34D399', // emerald-400 — secondary green
+  '#7DD3FC', // sky-300 — secondary blue
+  '#FCD34D', // amber-300 — secondary yellow
 ]
 
 const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
