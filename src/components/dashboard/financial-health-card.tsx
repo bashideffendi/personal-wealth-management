@@ -76,21 +76,27 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                   className="size-[84%] rounded-full flex flex-col items-center justify-center"
                   style={{ background: 'var(--surface)' }}
                 >
+                  {/* Sans-serif bold (Inter) instead of .num mono — feels
+                      friendlier/less spreadsheet-y. Tabular for alignment.
+                      Slight gradient on the digit for personality. */}
                   <span
-                    className="num tabular leading-none font-bold"
+                    className="leading-none font-extrabold tabular-nums"
                     style={{
-                      color: tierMeta.color,
-                      fontSize: 88,
-                      letterSpacing: '-0.04em',
+                      fontSize: 92,
+                      letterSpacing: '-0.06em',
+                      background: `linear-gradient(180deg, ${tierMeta.color}, ${tierMeta.color}DD)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
                     }}
                   >
                     {score}
                   </span>
                   <span
-                    className="text-[10px] uppercase tracking-wider mt-1 font-semibold"
-                    style={{ color: 'var(--ink-soft)' }}
+                    className="text-[11px] mt-0.5 font-medium opacity-60"
+                    style={{ color: tierMeta.color }}
                   >
-                    /100
+                    dari 100
                   </span>
                 </div>
               </div>
