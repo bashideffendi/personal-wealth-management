@@ -89,27 +89,27 @@ export interface FHSResult {
 }
 
 /**
- * Tier metadata used for display. Colors picked to match PWM's existing
- * palette (lime/emerald for good, amber for warning, coral for poor).
+ * Tier metadata used for display. Indonesian labels for clarity (English
+ * "Coping" was confusing — user feedback). Colors match PWM palette.
  */
 const TIER_META: Record<FHSTier, { label: string; color: string; description: string }> = {
   vulnerable: {
-    label: 'Vulnerable',
+    label: 'Rentan',
     color: '#DC2626',
     description: 'Keuangan rentan — fokus stabilkan cashflow & buffer dulu.',
   },
   coping: {
-    label: 'Coping',
+    label: 'Bertahan',
     color: '#F59E0B',
     description: 'Bertahan, tapi belum aman. Ada beberapa area yg perlu diperkuat.',
   },
   healthy: {
-    label: 'Healthy',
+    label: 'Sehat',
     color: '#10B981',
     description: 'Sehat secara finansial — pertahankan & mulai pikirkan growth.',
   },
   thriving: {
-    label: 'Thriving',
+    label: 'Prima',
     color: '#059669',
     description: 'Kondisi prima. Optimasi pajak & estate planning mungkin next step.',
   },

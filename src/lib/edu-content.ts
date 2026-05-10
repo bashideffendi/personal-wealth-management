@@ -139,8 +139,8 @@ export const EDU_TIPS: Record<string, EduContent> = {
   // ── Financial Health Score ──────────────────────────────────────
   'financial-health': {
     title: 'Skor Kesehatan Finansial',
-    body: 'Score 0-100 yang ringkas kondisi keuanganmu di 7 indikator: savings rate, dana darurat, DTI, status utang, asuransi, investasi jangka panjang, dan progress goal. Tier: Vulnerable <40, Coping 40-59, Healthy 60-79, Thriving 80+. Bukan vonis — ini diagnostic tool untuk tau prioritas mana yang harus diperkuat.',
-    applied: 'Indikator yg datanya belum ada (misal asuransi, atau kalau belum catat income) ditandai N/A — bukan diitung 0. Jadi user baru ngga langsung kena skor jelek.',
+    body: 'Score 0-100 yang ringkas kondisi keuanganmu di 7 indikator: savings rate, dana darurat, DTI, status utang, asuransi, investasi jangka panjang, dan progress goal. Tier: Rentan (<40) keuangan rapuh, Bertahan (40-59) belum aman, Sehat (60-79) terkendali, Prima (80+) optimal. Bukan vonis — ini diagnostic tool untuk tau prioritas mana yang harus diperkuat.',
+    applied: 'Indikator yg datanya belum ada (misal asuransi, atau belum catat income) ditandai N/A — bukan diitung 0. User baru ngga langsung kena skor jelek.',
     source: 'Financial Health Network (CFSI 2016, refined 2024) — adaptasi konteks Indonesia',
   },
 

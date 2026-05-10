@@ -55,34 +55,32 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
   return (
     <div className="s-card p-6 sm:p-7">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
-        {/* ─── Col 1: Hero score (BIG italic number) ─────────────── */}
-        <div className="lg:col-span-4 flex flex-col">
-          <div className="flex items-center gap-1.5 mb-4">
+        {/* ─── Col 1: BIG score centered + tier label below ─────────── */}
+        <div className="lg:col-span-4 flex flex-col items-center text-center">
+          <div className="flex items-center gap-1.5 mb-4 self-stretch justify-center">
             <p className="caps">Skor Kesehatan Finansial</p>
             <EduTip topic="financial-health" side="bottom" />
           </div>
 
-          <div className="flex items-center gap-5 flex-1">
-            {/* Score ring with conic-gradient arc */}
+          <div className="flex flex-col items-center justify-center flex-1">
+            {/* BIG centered score ring — much larger than before per
+                user feedback "angka center diperbesar agar ke highlight" */}
             <div className="relative shrink-0">
               <div
-                className="size-32 sm:size-36 rounded-full flex items-center justify-center"
+                className="size-44 sm:size-48 rounded-full flex items-center justify-center"
                 style={{
                   background: `conic-gradient(${tierMeta.color} ${arcAngle}deg, var(--surface-2) 0deg)`,
                 }}
               >
                 <div
-                  className="size-[80%] rounded-full flex flex-col items-center justify-center"
+                  className="size-[84%] rounded-full flex flex-col items-center justify-center"
                   style={{ background: 'var(--surface)' }}
                 >
-                  {/* Hero number — .num (JetBrains Mono) per actual mockup.
-                      Italic serif reserved for text moments (empty states,
-                      taglines), not numbers. */}
                   <span
                     className="num tabular leading-none font-bold"
                     style={{
                       color: tierMeta.color,
-                      fontSize: 60,
+                      fontSize: 88,
                       letterSpacing: '-0.04em',
                     }}
                   >
@@ -98,25 +96,19 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
               </div>
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
-                {/* Chip pattern from 03-component-patterns.md § Chip */}
-                <span
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.06em]"
-                  style={tierChipStyle(tierMeta.color)}
-                >
-                  {tierMeta.label}
-                </span>
-                {tier === 'thriving' && (
-                  <Sparkles className="size-3.5" style={{ color: tierMeta.color }} />
-                )}
-              </div>
-              <p
-                className="text-[13px] leading-[1.5]"
-                style={{ color: 'var(--ink-muted)' }}
+            {/* Tier label DIBAWAH angka per user feedback. Indonesian
+                label (Rentan/Bertahan/Sehat/Prima). Description moved
+                into the EduTip popover (click ⓘ above). */}
+            <div className="mt-4 flex items-center gap-1.5">
+              <span
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                style={tierChipStyle(tierMeta.color)}
               >
-                {tierMeta.description}
-              </p>
+                {tierMeta.label}
+              </span>
+              {tier === 'thriving' && (
+                <Sparkles className="size-4" style={{ color: tierMeta.color }} />
+              )}
             </div>
           </div>
         </div>
