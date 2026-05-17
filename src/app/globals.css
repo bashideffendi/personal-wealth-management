@@ -175,7 +175,7 @@
   --stone-light: #A1A1AA;
 
   /* ── Fonts ───────────────────────────────────── */
-  --font-sans:    var(--font-sans-brand), "Inter", "Plus Jakarta Sans",
+  --font-sans:    var(--font-sans-brand), "Plus Jakarta Sans", "Inter",
                   system-ui, -apple-system, sans-serif;
   /* Display = Instrument Serif (italic) — for moments of personality:
      hero numbers, milestone modals, empty states. Per design handoff. */
