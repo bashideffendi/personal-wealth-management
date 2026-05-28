@@ -207,7 +207,7 @@ export default function ContractsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="s-card p-12 text-center">
+        <div className="kl-card p-12 text-center">
           <CalendarClock className="h-10 w-10 mx-auto mb-3" style={{ color: 'var(--ink-soft)' }} />
           <p className="font-semibold">Belum ada kontrak</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>

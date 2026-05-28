@@ -121,13 +121,13 @@ export default function CategoryDrilldownPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : stats.count === 0 ? (
-        <div className="s-card p-12 text-center">
+        <div className="kl-card p-12 text-center">
           <p className="font-semibold">Tidak ada transaksi</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Belum ada data di kategori ini.</p>
         </div>
       ) : (
         <>
-          <div className="s-card p-5">
+          <div className="kl-card p-5">
             <p className="caps">Trend 12 Bulan</p>
             <h3 className="text-lg font-semibold mt-0.5">Per Bulan</h3>
             <ResponsiveContainer width="100%" height={200}>
@@ -145,7 +145,7 @@ export default function CategoryDrilldownPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="s-card p-5">
+            <div className="kl-card p-5">
               <p className="caps">Breakdown</p>
               <h3 className="text-lg font-semibold mt-0.5">Top Merchant / Deskripsi</h3>
               <ul className="mt-4 space-y-2">
@@ -166,7 +166,7 @@ export default function CategoryDrilldownPage() {
               </ul>
             </div>
 
-            <div className="s-card p-5">
+            <div className="kl-card p-5">
               <p className="caps">Transaksi Terbaru</p>
               <h3 className="text-lg font-semibold mt-0.5">Recent</h3>
               <ul className="mt-4 divide-y" style={{ borderColor: 'var(--border-soft)' }}>

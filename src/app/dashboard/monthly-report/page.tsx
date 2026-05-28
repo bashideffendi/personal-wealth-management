@@ -269,7 +269,7 @@ export default function MonthlyReportPage() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 print-page-break">
-              <div className="s-card p-5 lg:col-span-3 print-avoid-break">
+              <div className="kl-card p-5 lg:col-span-3 print-avoid-break">
                 <p className="caps">Aktivitas Harian</p>
                 <h3 className="font-semibold mt-0.5">Pemasukan vs Pengeluaran per Hari</h3>
                 <ResponsiveContainer width="100%" height={240}>
@@ -288,7 +288,7 @@ export default function MonthlyReportPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="s-card p-5 lg:col-span-2 print-avoid-break">
+              <div className="kl-card p-5 lg:col-span-2 print-avoid-break">
                 <p className="caps">Komposisi Pengeluaran</p>
                 <h3 className="font-semibold mt-0.5">Top Kategori</h3>
                 {expenseDonut.length === 0 ? (
@@ -324,7 +324,7 @@ export default function MonthlyReportPage() {
 
             {/* Top categories table */}
             {recap.expense_by_category.length > 0 && (
-              <div className="s-card p-5 print-avoid-break">
+              <div className="kl-card p-5 print-avoid-break">
                 <p className="caps">Pengeluaran per Kategori</p>
                 <h3 className="font-semibold mt-0.5">Lengkap Diurutkan dari Terbesar</h3>
                 <div className="mt-4 space-y-2">
@@ -345,7 +345,7 @@ export default function MonthlyReportPage() {
 
             {/* Top transactions table — for PDF reference */}
             {recap.top_expenses.length > 0 && (
-              <div className="s-card p-5 print-page-break print-avoid-break">
+              <div className="kl-card p-5 print-page-break print-avoid-break">
                 <p className="caps">Transaksi Pengeluaran Terbesar</p>
                 <h3 className="font-semibold mt-0.5">Top 10 Single Transactions</h3>
                 <div className="mt-4 overflow-x-auto">
@@ -401,7 +401,7 @@ function KpiCard({ label, value, accent, icon, note }: { label: string; value: s
   }
   const c = colors[accent]
   return (
-    <div className="s-card p-5">
+    <div className="kl-card p-5">
       <div className="flex items-center justify-between">
         <p className="caps">{label}</p>
         <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>

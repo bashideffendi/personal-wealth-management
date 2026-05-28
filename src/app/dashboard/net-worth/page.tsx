@@ -424,7 +424,7 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
   }
 
   return (
-    <div className="s-card p-5 sm:p-6">
+    <div className="kl-card p-5 sm:p-6">
       <div className="mb-4 flex items-start justify-between flex-wrap gap-3">
         <div>
           <p className="caps">Riwayat</p>

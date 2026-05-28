@@ -242,7 +242,7 @@ export default function CreditCardsPage() {
               </div>
 
               {cards.length === 0 ? (
-                <div className="s-card p-12 text-center">
+                <div className="kl-card p-12 text-center">
                   <p className="font-semibold">Belum ada kartu kredit</p>
                   <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
                     Tambahkan kartu pertama Anda untuk mulai melacak.
@@ -332,11 +332,11 @@ export default function CreditCardsPage() {
           <TabsContent value="payments">
             <div className="pt-4">
               {payments.length === 0 ? (
-                <div className="s-card p-12 text-center">
+                <div className="kl-card p-12 text-center">
                   <p className="font-semibold">Belum ada riwayat pembayaran</p>
                 </div>
               ) : (
-                <div className="s-card overflow-hidden">
+                <div className="kl-card overflow-hidden">
                   <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                     {payments.map((p) => {
                       const c = cards.find((x) => x.id === p.card_id)

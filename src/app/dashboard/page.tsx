@@ -558,7 +558,7 @@ export default function DashboardPage() {
       />
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <div className="s-card p-4 sm:p-6">
+      <div className="kl-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="caps">Aliran Uang</p>
@@ -623,7 +623,7 @@ export default function DashboardPage() {
       {/* Calendar + Budget Progress */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
-        <div className="s-card p-5 sm:p-6 lg:col-span-3">
+        <div className="kl-card p-5 sm:p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="caps">Aktivitas Bulan Ini</p>
@@ -757,7 +757,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Budget Progress */}
-        <div className="s-card p-6 lg:col-span-2">
+        <div className="kl-card p-6 lg:col-span-2">
           <div className="mb-4">
             <p className="caps">{t('dashboard.budget_progress')}</p>
             <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -823,7 +823,7 @@ export default function DashboardPage() {
           Per dashboard-refine.jsx — twin bars per month (emerald + coral)
           show clearer comparison than overlapping area chart. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="s-card p-6 lg:col-span-3">
+        <div className="kl-card p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="caps">{t('dashboard.cashflow_yearly')}</p>
@@ -887,7 +887,7 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
+        <div className="kl-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="caps">Portofolio</p>

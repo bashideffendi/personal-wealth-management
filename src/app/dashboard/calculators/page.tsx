@@ -151,7 +151,7 @@ function PensionGapCalculator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Parameter Pensiun</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
           Estimasi 3 pilar: BPJS JHT (5.7% upah) + Jaminan Pensiun + DPLK sukarela.
@@ -168,7 +168,7 @@ function PensionGapCalculator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="font-semibold">Replacement Ratio Pensiun</h3>
@@ -275,7 +275,7 @@ function FireCalculator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Parameter FIRE</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
           4% rule: butuh 25× pengeluaran tahunan untuk financial independence.
@@ -300,7 +300,7 @@ function FireCalculator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Hasil</h3>
         <div className="mt-4 space-y-2">
           <ResultRow label={`Target (25× annual expense)`} v={result.targetCorpus} />
@@ -343,7 +343,7 @@ function KidsEducationCalculator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Parameter</h3>
         <div className="mt-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -371,7 +371,7 @@ function KidsEducationCalculator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Hasil</h3>
         <div className="mt-4 space-y-2">
           <ResultRow label={`Kebutuhan ${result.years} tahun lagi`} v={result.futureCost} />
@@ -415,7 +415,7 @@ function DCASimulator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">DCA Input</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
           Dollar Cost Averaging — invest jumlah tetap setiap bulan.
@@ -435,7 +435,7 @@ function DCASimulator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Hasil {years} Tahun</h3>
         <div className="mt-4 space-y-2">
           <ResultRow label="Total diinvestasikan" v={result.invested} />
@@ -484,7 +484,7 @@ function ZakatCalculator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Zakat Maal (Harta)</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
           2.5% dari aset bersih, jika mencapai nisab (senilai 85gr emas).
@@ -514,7 +514,7 @@ function ZakatCalculator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Zakat Profesi</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
           2.5% dari gaji bulanan (jika setahun ≥ nisab).
@@ -592,7 +592,7 @@ function TaxCalculator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Input</h3>
         <div className="mt-4 space-y-3">
           <Row label="Gaji Bulanan Bruto" v={monthlyGross} onChange={setMonthlyGross} />
@@ -617,7 +617,7 @@ function TaxCalculator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Hasil</h3>
         <div className="mt-4 space-y-2">
           <ResultRow label="Gross / tahun" v={result.annualGross} />
@@ -677,7 +677,7 @@ function LoanCalculator() {
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Input</h3>
         <div className="mt-4 space-y-3">
           <Row label="Pokok Pinjaman (Rp)" v={principal} onChange={setPrincipal} />
@@ -697,7 +697,7 @@ function LoanCalculator() {
         </div>
       </div>
 
-      <div className="s-card p-6">
+      <div className="kl-card p-6">
         <h3 className="font-semibold">Skedul Amortisasi (24 bulan pertama)</h3>
         {result.schedule.length > 0 ? (
           <div className="mt-4 overflow-x-auto">

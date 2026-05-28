@@ -956,7 +956,7 @@ export default function TransactionsPage() {
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
-        <div className="s-card flex flex-col items-center text-center py-16 px-8">
+        <div className="kl-card flex flex-col items-center text-center py-16 px-8">
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--emerald-50)' }}

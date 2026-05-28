@@ -148,7 +148,7 @@ export default function NonLiquidAssetsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="s-card p-12 text-center">
+        <div className="kl-card p-12 text-center">
           <p className="font-semibold">Belum ada aset non-likuid</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
             Tambahkan properti, kendaraan, atau barang berharga Anda.
