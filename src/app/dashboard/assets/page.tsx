@@ -91,14 +91,35 @@ export default function AssetsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Total Kekayaan Tercatat</p>
-        <p
-          className="num tabular mt-4 leading-none font-bold"
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: 'var(--on-black)',
-            fontSize: 'clamp(40px, 6vw, 56px)',
-            letterSpacing: '-0.035em',
+            top: -100, right: -60, width: 400, height: 400,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-8">
+        <p
+          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          style={{ color: '#6EE7B7' }}
+        >
+          Total Kekayaan Tercatat
+        </p>
+        <p
+          className="num tabular font-bold mt-4 leading-none whitespace-nowrap"
+          style={{
+            color: '#FFFFFF',
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            letterSpacing: '-0.04em',
           }}
         >
           {formatCurrency(totals.total)}
@@ -110,27 +131,31 @@ export default function AssetsOverviewPage() {
               <Link
                 key={b.label}
                 href={b.href}
-                className="block rounded-lg p-4 transition border"
-                style={{ background: 'var(--black-2)', borderColor: 'var(--black-line)' }}
+                className="block rounded-xl p-4 transition"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                }}
               >
-                <p className="caps">{b.label}</p>
-                <p className="num mt-2 text-white text-lg sm:text-xl font-semibold">
+                <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>{b.label}</p>
+                <p className="num tabular mt-2 font-bold" style={{ fontSize: 20, color: '#FFFFFF' }}>
                   {formatCurrency(b.value)}
                 </p>
                 <div className="mt-3 flex items-center gap-2">
-                  <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--lime-400)' }} />
+                  <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#34D399' }} />
                   </div>
-                  <span className="text-[11px] num" style={{ color: 'var(--on-black-mut)' }}>{pct.toFixed(0)}%</span>
+                  <span className="text-[11px] num font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>{pct.toFixed(0)}%</span>
                 </div>
-                <div className="mt-2 flex items-center gap-0.5 text-[11px]" style={{ color: 'var(--on-black-mut)' }}>
+                <div className="mt-2 flex items-center gap-0.5 text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   Lihat detail
                 </div>
               </Link>
             )
           })}
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Row: Investment allocation + Non-liquid breakdown */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">

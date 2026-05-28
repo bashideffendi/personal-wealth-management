@@ -83,17 +83,46 @@ export default function DebtPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Pembayaran Utang</p>
-        <p className="num tabular mt-3 text-4xl sm:text-5xl font-semibold" style={{ color: 'var(--ink)' }}>
-          {formatCurrency(totalPaid)}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-3 text-sm" style={{ color: 'var(--on-black-mut)' }}>
-          <span>{payments.length} transaksi</span>
-          <span>·</span>
-          <span>Bulan ini: <span className="num">{formatCurrency(thisMonth)}</span></span>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Pembayaran Utang
+          </p>
+          <p
+            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
+            style={{
+              fontSize: 'clamp(36px, 5vw, 56px)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.04em',
+            }}
+          >
+            {formatCurrency(totalPaid)}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <span>{payments.length} transaksi</span>
+            <span>·</span>
+            <span>Bulan ini: <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(thisMonth)}</span></span>
+          </div>
         </div>
-      </div>
+      </section>
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>

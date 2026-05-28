@@ -41,17 +41,46 @@ export default function DebtStrategyPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Strategi Pelunasan</p>
-        <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
-          Atur Prioritas Utang
-          <EduTip topic="debt-strategy" side="bottom" iconSize={18} />
-        </h2>
-        <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--on-black-mut)' }}>
-          Pilih Snowball (saldo terkecil dulu) atau Avalanche (bunga tertinggi dulu). Tambahkan pembayaran
-          ekstra untuk mempercepat lunas.
-        </p>
-      </div>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(245, 158, 11, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#FCD34D' }}
+          >
+            Strategi Pelunasan
+          </p>
+          <h1
+            className="font-bold tracking-tight mt-2 flex items-center gap-2"
+            style={{
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.035em',
+            }}
+          >
+            Atur Prioritas Utang
+            <EduTip topic="debt-strategy" side="bottom" iconSize={18} />
+          </h1>
+          <p className="text-sm mt-2 max-w-xl" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Pilih Snowball (saldo terkecil dulu) atau Avalanche (bunga tertinggi dulu). Tambahkan pembayaran
+            ekstra untuk mempercepat lunas.
+          </p>
+        </div>
+      </section>
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} /></div>
