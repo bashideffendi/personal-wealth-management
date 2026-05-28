@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog'
 import { Loader2, SlidersHorizontal, Check } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
+import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
 
 const SHORT_MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
@@ -111,6 +112,27 @@ export default function BudgetingPage() {
   const [enabled, setEnabled] = useState<EnabledCats>(defaultEnabled)
   const [custom, setCustom] = useState<EnabledCats>(emptyCustom)
   const [selectorOpen, setSelectorOpen] = useState(false)
+
+  // Drawer state — klik header bulan buka drawer per design handoff
+  const [drawerMonth, setDrawerMonth] = useState<number | null>(null)
+  const drawerOpen = drawerMonth !== null
+
+  function openDrawer(m: number) {
+    setDrawerMonth(m)
+  }
+  function closeDrawer() {
+    setDrawerMonth(null)
+  }
+  function prevDrawerMonth() {
+    if (drawerMonth === null) return
+    const next = drawerMonth === 1 ? 12 : drawerMonth - 1
+    setDrawerMonth(next)
+  }
+  function nextDrawerMonth() {
+    if (drawerMonth === null) return
+    const next = drawerMonth === 12 ? 1 : drawerMonth + 1
+    setDrawerMonth(next)
+  }
 
   useEffect(() => {
     setEnabled(loadEnabled())
@@ -514,11 +536,21 @@ export default function BudgetingPage() {
                   return (
                     <th
                       key={m}
-                      className="border border-[color:var(--border-soft)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative"
+                      className="border border-[color:var(--border-soft)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
                       style={{
                         background: isCurrent ? 'var(--c-primary-soft)' : undefined,
                         color: isCurrent ? 'var(--c-primary)' : undefined,
                         borderBottom: isCurrent ? '2px solid var(--c-primary)' : undefined,
+                      }}
+                      onClick={() => openDrawer(monthNum)}
+                      role="button"
+                      tabIndex={0}
+                      title={`Klik untuk detail ${m}`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          openDrawer(monthNum)
+                        }
                       }}
                     >
                       {m}
@@ -662,6 +694,25 @@ export default function BudgetingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Anggaran Month Drawer — klik header bulan trigger ─── */}
+      {drawerMonth !== null && (
+        <AnggaranMonthDrawer
+          open={drawerOpen}
+          onOpenChange={(open) => {
+            if (!open) closeDrawer()
+          }}
+          month={drawerMonth}
+          year={Number(year)}
+          getValue={getValue}
+          visibleIncome={visibleIncome}
+          visibleExpense={visibleExpense}
+          visibleSaving={visibleSaving}
+          visibleInvestment={visibleInvestment}
+          onPrevMonth={prevDrawerMonth}
+          onNextMonth={nextDrawerMonth}
+        />
+      )}
     </div>
   )
 }
