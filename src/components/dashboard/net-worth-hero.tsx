@@ -148,7 +148,7 @@ export function NetWorthHero({
             <span
               className="ml-1"
               style={{
-                fontStyle: 'italic',
+                /* italic dropped per fintech revert */
                 color: 'var(--text-mute)',
                 fontSize: 22,
               }}

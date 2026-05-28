@@ -564,7 +564,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
                 {recap.topExpenses.map((t) => (
                   <tr key={t.id}>
                     <td>{new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</td>
-                    <td>{t.description || <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>(tanpa deskripsi)</span>}</td>
+                    <td>{t.description || <span style={{ color: '#9CA3AF',  }}>(tanpa deskripsi)</span>}</td>
                     <td style={{ color: '#6B7280' }}>{t.category}</td>
                     <td className="num">{formatCurrency(t.amount)}</td>
                   </tr>

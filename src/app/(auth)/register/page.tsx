@@ -53,7 +53,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <Link href="/" className="inline-block">
             <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
-              <span style={{ fontSize: 32 }}>k</span>
+              <span>K</span>
             </div>
           </Link>
           <h1

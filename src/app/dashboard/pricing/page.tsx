@@ -134,7 +134,7 @@ export default function PricingPage() {
           }}
         >
           Pilih paket yang{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--c-primary)' }}>cocok</em>{' '}
+          <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>cocok</em>{' '}
           buat kebutuhanmu.
         </h1>
         <p className="text-sm mt-3 max-w-xl mx-auto" style={{ color: 'var(--text-mute)' }}>

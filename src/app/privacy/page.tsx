@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       >
         <Link href="/" className="flex items-center gap-2.5">
           <div className="kl-brandmark" style={{ width: 32, height: 32, borderRadius: 10 }}>
-            <span style={{ fontSize: 20 }}>k</span>
+            <span>K</span>
           </div>
           <span
             style={{

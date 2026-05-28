@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <Link href="/" className="inline-block">
             <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
-              <span style={{ fontSize: 32 }}>k</span>
+              <span>K</span>
             </div>
           </Link>
           <h1
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
               fontSize: 28,
               color: 'var(--ink)',
               letterSpacing: '-0.02em',
-              fontStyle: 'italic',
+              /* italic dropped per fintech revert */
             }}
           >
             Reset password

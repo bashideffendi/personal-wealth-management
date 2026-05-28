@@ -36,7 +36,7 @@ export default async function LandingPage() {
       >
         <div className="flex items-center gap-2.5">
           <div className="kl-brandmark">
-            <span>k</span>
+            <span>K</span>
           </div>
           <div
             style={{
@@ -87,7 +87,7 @@ export default async function LandingPage() {
               }}
             >
               Total kekayaanmu,<br />
-              <em style={{ color: 'var(--c-primary)', fontStyle: 'italic' }}>di satu app.</em>
+              <em style={{ color: 'var(--c-primary)',  }}>di satu app.</em>
             </h1>
             <p
               className="mt-6 text-lg leading-relaxed max-w-lg"
@@ -234,7 +234,7 @@ export default async function LandingPage() {
               }}
             >
               Semua yang kamu butuh,{' '}
-              <em style={{ color: 'var(--text-mute)', fontStyle: 'italic' }}>tanpa pindah app.</em>
+              <em style={{ color: 'var(--text-mute)',  }}>tanpa pindah app.</em>
             </h2>
           </div>
 
@@ -331,7 +331,7 @@ export default async function LandingPage() {
               className="kl-display mt-3"
               style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
-              Pilih yang <em style={{ fontStyle: 'italic', color: 'var(--c-primary)' }}>cocok</em>{' '}
+              Pilih yang <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>cocok</em>{' '}
               buat kamu.
             </h2>
             <p className="mt-3 text-base" style={{ color: 'var(--text-mute)' }}>
@@ -482,7 +482,7 @@ export default async function LandingPage() {
               className="kl-display mt-3"
               style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
-              Yang <em style={{ fontStyle: 'italic', color: 'var(--c-primary)' }}>sering ditanya</em>.
+              Yang <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>sering ditanya</em>.
             </h2>
             <p className="mt-3 text-base" style={{ color: 'var(--text-mute)' }}>
               Belum jawab pertanyaanmu? Kirim ke{' '}
@@ -615,7 +615,7 @@ export default async function LandingPage() {
               }}
             >
               Mulai atur uangmu{' '}
-              <em style={{ color: 'var(--c-mint)', fontStyle: 'italic' }}>hari ini.</em>
+              <em style={{ color: 'var(--c-mint)',  }}>hari ini.</em>
             </h2>
             <Link
               href="/register"
@@ -646,7 +646,7 @@ export default async function LandingPage() {
               className="kl-brandmark"
               style={{ width: 28, height: 28, borderRadius: 8 }}
             >
-              <span style={{ fontSize: 16 }}>k</span>
+              <span>K</span>
             </div>
             <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
               <span className="font-semibold" style={{ color: 'var(--ink)' }}>Klunting</span>

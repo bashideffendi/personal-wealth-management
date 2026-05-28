@@ -448,7 +448,7 @@ export default function BudgetingPage() {
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               color: 'var(--ink)',
-              fontStyle: 'italic',
+              /* italic dropped per fintech revert */
             }}
           >
             Anggaran Tahunan

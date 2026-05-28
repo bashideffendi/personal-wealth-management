@@ -137,7 +137,7 @@ export function TopNav({ user }: TopNavProps) {
           {/* ─── Brand left ─── */}
           <Link href="/dashboard" className="flex items-center gap-2.5">
             <div className="kl-brandmark">
-              <span>k</span>
+              <span>K</span>
             </div>
             <div className="hidden sm:flex flex-col" style={{ lineHeight: 1 }}>
               <span
@@ -391,7 +391,7 @@ export function TopNav({ user }: TopNavProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="kl-brandmark">
-                  <span>k</span>
+                  <span>K</span>
                 </div>
                 <span
                   style={{

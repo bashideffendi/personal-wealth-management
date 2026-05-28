@@ -365,7 +365,7 @@ export default function ProfilePage() {
                 background: 'var(--c-ink)',
                 fontFamily: 'var(--font-display)',
                 fontSize: 32,
-                fontStyle: 'italic',
+                /* italic dropped per fintech revert */
                 lineHeight: 1,
               }}
             >
