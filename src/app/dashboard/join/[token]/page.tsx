@@ -140,7 +140,10 @@ export default function JoinHouseholdPage() {
           <div>
             <div
               className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: 'var(--c-ink)' }}
+              style={{
+                background: 'linear-gradient(135deg, #10B981, #047857)',
+                boxShadow: '0 10px 28px -10px rgba(16, 185, 129, 0.50)',
+              }}
             >
               <Home className="size-8 text-white" />
             </div>

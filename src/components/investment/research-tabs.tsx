@@ -1026,8 +1026,9 @@ function GenerateResearchEmpty({
         <div
           className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
           style={{
-            background: 'var(--c-ink)',
+            background: 'linear-gradient(135deg, #10B981, #047857)',
             color: '#FFFFFF',
+            boxShadow: '0 10px 28px -10px rgba(16, 185, 129, 0.50)',
           }}
         >
           <Sparkles className="size-6" />

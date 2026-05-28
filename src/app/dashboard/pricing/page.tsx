@@ -29,7 +29,7 @@ const PLAN_ICONS: Record<string, React.ReactNode> = {
 
 const PLAN_THEMES: Record<string, { bg: string; ring: string; accent: string; price: string; cta: string; ctaHover: string }> = {
   basic: { bg: 'bg-[var(--surface)]', ring: 'ring-[var(--line)]', accent: 'text-[var(--ink-muted)]', price: 'text-[var(--ink)]', cta: 'bg-[var(--surface-2)] text-[var(--ink)]', ctaHover: 'hover:bg-[var(--surface-3)]' },
-  full:  { bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary)]', accent: 'text-[var(--c-primary)]', price: 'text-[var(--ink)]', cta: 'bg-[var(--c-ink)] text-[var(--bg)]', ctaHover: 'hover:opacity-90' },
+  full:  { bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary)]', accent: 'text-[var(--c-primary)]', price: 'text-[var(--ink)]', cta: 'bg-gradient-to-br from-[#10B981] to-[#047857] text-white shadow-[0_4px_12px_-4px_rgba(16,185,129,0.40)]', ctaHover: 'hover:opacity-90' },
 }
 
 const CREDIT_PACKS = [

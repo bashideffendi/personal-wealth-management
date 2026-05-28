@@ -105,9 +105,9 @@ export function LockScreen() {
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
             style={{
-              background: 'var(--c-ink)',
+              background: 'linear-gradient(135deg, #10B981, #047857)',
               color: '#FFFFFF',
-              boxShadow: '0 10px 28px -10px rgba(16,185,129,0.50)',
+              boxShadow: '0 10px 28px -10px rgba(16, 185, 129, 0.50)',
             }}
           >
             <Lock className="size-6" />
@@ -175,8 +175,9 @@ export function LockScreen() {
             disabled={pin.length < 4}
             className="mt-3 h-11 w-full rounded-lg text-sm font-semibold transition disabled:opacity-50"
             style={{
-              background: 'var(--c-ink)',
+              background: 'linear-gradient(135deg, #10B981, #047857)',
               color: '#FFFFFF',
+              boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
             }}
           >
             Buka

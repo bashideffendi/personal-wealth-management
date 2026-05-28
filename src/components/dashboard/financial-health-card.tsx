@@ -1,16 +1,13 @@
 'use client'
 
 /**
- * Financial Health Score card — applies PWM Redesign v2 design language:
+ * Financial Health Score card — fintech v2 design language:
  *   - Soft minimalism: s-card wrapper, soft shadow, generous whitespace
- *   - Typography hierarchy: caps eyebrow + Instrument Serif italic hero
- *     number + JetBrains Mono for indicator scores
- *   - Chip patterns from design handoff (emerald/amber/coral tints)
+ *   - Typography hierarchy: eyebrow + bold sans display hero number
+ *     + JetBrains Mono for indicator scores
+ *   - Chip patterns: tone-aware (emerald/amber/coral) soft tints
  *   - Three logical zones: Score (left), Breakdown (middle), Cash Coverage
  *     (right) — equal-height columns
- *
- * Reference: design handoff 03-component-patterns.md (KPIStat, Chip,
- * Card patterns) + dashboard-refine.jsx visual style.
  */
 
 import { Sparkles } from 'lucide-react'

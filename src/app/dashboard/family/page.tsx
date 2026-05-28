@@ -260,10 +260,16 @@ export default function FamilyPage() {
           </div>
         </section>
 
-        <div className="rounded-2xl border-2 border-dashed border-burgundy-300 bg-gradient-to-br from-burgundy-50/40 to-amber-50/40 p-8 sm:p-10 text-center"
-          style={{ borderColor: 'rgba(139, 21, 56, 0.2)', background: 'linear-gradient(135deg, rgba(139, 21, 56, 0.04), rgba(217, 119, 6, 0.04))' }}
+        <div className="rounded-2xl border-2 border-dashed p-8 sm:p-10 text-center"
+          style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)' }}
         >
-          <div className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-ink)' }}>
+          <div
+            className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{
+              background: 'linear-gradient(135deg, #10B981, #047857)',
+              boxShadow: '0 10px 28px -10px rgba(16, 185, 129, 0.50)',
+            }}
+          >
             <Home className="size-8 text-white" />
           </div>
           <h3 className="text-2xl font-bold">Belum di Keluarga</h3>
@@ -384,10 +390,17 @@ export default function FamilyPage() {
         <h3 className="font-semibold text-base">Anggota</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {members.map((m) => (
-            <div key={m.user_id} className="rounded-xl border bg-white p-4 flex items-center gap-3">
+            <div key={m.user_id} className="rounded-xl border p-4 flex items-center gap-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white shrink-0"
-                style={{ background: m.role === 'owner' ? 'var(--c-amber)' : 'var(--c-ink)' }}
+                style={{
+                  background: m.role === 'owner'
+                    ? 'linear-gradient(135deg, #10B981, #047857)'
+                    : 'linear-gradient(135deg, #475569, #1E293B)',
+                  boxShadow: m.role === 'owner'
+                    ? '0 4px 12px -4px rgba(16, 185, 129, 0.40)'
+                    : '0 4px 12px -4px rgba(15, 23, 42, 0.30)',
+                }}
               >
                 {(m.full_name || m.email || '?').slice(0, 1).toUpperCase()}
               </div>

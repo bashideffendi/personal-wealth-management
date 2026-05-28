@@ -236,8 +236,8 @@ export function HealthScorePanel({
           <span
             className="chip mt-2.5"
             style={{
-              background: `var(--c-${burnTone})`,
-              color: 'var(--c-ink)',
+              background: `var(--c-${burnTone}-soft)`,
+              color: `var(--c-${burnTone})`,
             }}
           >
             {burnLabel}

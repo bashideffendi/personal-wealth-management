@@ -392,8 +392,22 @@ export function TopNav({ user }: TopNavProps) {
               style={{ borderColor: 'var(--line)' }}
             >
               <div className="flex items-center gap-2">
-                <div className="kl-brandmark">
-                  <span>K</span>
+                <div
+                  className="grid place-items-center"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'linear-gradient(135deg, #10B981, #047857)',
+                    color: '#FFFFFF',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: 800,
+                    fontSize: 16,
+                    letterSpacing: '-0.04em',
+                    boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                  }}
+                >
+                  K
                 </div>
                 <span
                   style={{

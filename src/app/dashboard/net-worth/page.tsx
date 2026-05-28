@@ -353,16 +353,22 @@ export default function NetWorthPage() {
 
       {/* Bottom Net Worth Summary */}
       <div className="s-card p-6 flex items-center justify-between">
+        <div>
+          <p
+            className="text-[11px] font-semibold tracking-[0.14em] uppercase"
+            style={{ color: 'var(--ink-soft)' }}
+          >
+            Kekayaan Bersih
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+            Aset − Liabilitas
+          </p>
+        </div>
         <span
-          className="display-italic"
-          style={{ fontSize: 22, color: 'var(--ink)' }}
-        >
-          Kekayaan Bersih (Aset − Liabilitas)
-        </span>
-        <span
-          className="display num tabular"
+          className="num tabular font-bold"
           style={{
             fontSize: 32,
+            letterSpacing: '-0.02em',
             color: isPositive ? 'var(--ink)' : 'var(--c-coral)',
           }}
         >

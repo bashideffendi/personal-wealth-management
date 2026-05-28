@@ -385,7 +385,7 @@ export default async function LandingPage() {
               className="display mt-3"
               style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
-              Pilih yang <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>cocok</em>{' '}
+              Pilih yang <span style={{ fontStyle: 'normal', color: 'var(--c-primary)' }}>cocok</span>{' '}
               buat kamu.
             </h2>
             <p className="mt-3 text-base" style={{ color: 'var(--text-mute)' }}>
@@ -536,7 +536,7 @@ export default async function LandingPage() {
               className="display mt-3"
               style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
-              Yang <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>sering ditanya</em>.
+              Yang <span style={{ fontStyle: 'normal', color: 'var(--c-primary)' }}>sering ditanya</span>.
             </h2>
             <p className="mt-3 text-base" style={{ color: 'var(--text-mute)' }}>
               Belum jawab pertanyaanmu? Kirim ke{' '}
@@ -649,34 +649,59 @@ export default async function LandingPage() {
         <div
           className="max-w-5xl mx-auto rounded-3xl p-10 sm:p-14 relative overflow-hidden text-center"
           style={{
-            background: 'var(--c-ink)',
-            color: 'var(--bg)',
+            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+            color: '#F5F5F7',
+            boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
           }}
         >
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: -80,
+              right: -60,
+              width: 320,
+              height: 320,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.20), transparent 65%)',
+            }}
+          />
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              bottom: -80,
+              left: -60,
+              width: 280,
+              height: 280,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12), transparent 65%)',
+            }}
+          />
           <div className="relative">
             <p
-              className="eyebrow"
-              style={{ color: 'rgba(255,255,255,0.55)' }}
+              className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+              style={{ color: '#6EE7B7' }}
             >
               Mulai sekarang
             </p>
             <h2
-              className="display mt-3"
+              className="font-bold tracking-tight mt-3"
               style={{
-                color: 'var(--bg)',
+                color: '#FFFFFF',
                 fontSize: 'clamp(32px, 4.5vw, 56px)',
                 lineHeight: 1.05,
+                letterSpacing: '-0.035em',
               }}
             >
               Mulai atur uangmu{' '}
-              <em style={{ color: 'var(--c-mint)',  }}>hari ini.</em>
+              <span style={{ color: '#6EE7B7' }}>hari ini.</span>
             </h2>
             <Link
               href="/register"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold mt-7 transition hover:opacity-90"
               style={{
-                background: 'var(--bg)',
-                color: 'var(--ink)',
+                background: '#FFFFFF',
+                color: '#0A0A0F',
+                boxShadow: '0 10px 28px -10px rgba(255,255,255,0.30)',
               }}
             >
               Coba 14 hari gratis
@@ -697,10 +722,21 @@ export default async function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div
-              className="kl-brandmark"
-              style={{ width: 28, height: 28, borderRadius: 8 }}
+              className="grid place-items-center"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #10B981, #047857)',
+                color: '#FFFFFF',
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 800,
+                fontSize: 14,
+                letterSpacing: '-0.04em',
+                boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+              }}
             >
-              <span>K</span>
+              K
             </div>
             <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
               <span className="font-semibold" style={{ color: 'var(--ink)' }}>Klunting</span>
