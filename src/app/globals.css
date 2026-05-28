@@ -600,7 +600,8 @@
   background: linear-gradient(135deg, #14141A 0%, #1C1C24 100%);
   border-color: var(--border);
 }
-.dark-card .caps       { color: var(--c-mint); }
+.dark-card .caps,
+.dark-card .eyebrow    { color: var(--c-mint); }
 .dark-card .text-white { color: var(--on-black); }
 .dark-card .text-white\/60,
 .dark-card .text-white\/70,
@@ -627,7 +628,8 @@
   background-color: var(--surface);
   border-color: var(--border);
 }
-.ink-card .caps { color: var(--on-black-mut); }
+.ink-card .caps,
+.ink-card .eyebrow { color: var(--on-black-mut); }
 
 /* Accent chip — uses emerald now */
 .chip-lime {
