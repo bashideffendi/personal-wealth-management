@@ -232,33 +232,22 @@ export function AIInsightsCard({
 
   return (
     <div
-      className="rounded-2xl border p-5 sm:p-6 relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(160deg, var(--surface), var(--c-mint-soft))',
-        borderColor: 'var(--emerald-100)',
-      }}
+      className="kl-card p-5 sm:p-6 relative overflow-hidden"
+      style={{ background: 'var(--c-violet-soft)' }}
     >
-      {/* Soft ambient glow per design handoff signature pattern */}
-      <div
-        className="absolute -top-16 -right-16 size-48 rounded-full opacity-40 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, var(--emerald-100), transparent 70%)' }}
-      />
       <div className="relative flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          {/* Per 03-component-patterns.md § AI Insight Card — emerald
-              filled circle with sparkle, 28px size */}
+          {/* AI Insight card per design handoff InsightsBarA pattern —
+              violet filled square (AI/langganan accent, per semantic rule) */}
           <div
-            className="size-7 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--emerald-500)' }}
+            className="size-8 rounded-[10px] flex items-center justify-center"
+            style={{ background: 'var(--c-violet)' }}
           >
             <Sparkles className="size-3.5 text-white" />
           </div>
           <div>
-            <p
-              className="text-[11px] uppercase tracking-[0.14em] font-semibold"
-              style={{ color: 'var(--c-mint)' }}
-            >
-              AI Insights
+            <p className="kl-eyebrow" style={{ color: 'var(--c-violet)' }}>
+              Insight Klunting AI
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               {generatedAt
@@ -413,25 +402,19 @@ const WELCOME_TIPS: Array<{
 
 function WelcomeInsights() {
   return (
-    <div
-      className="rounded-2xl border p-5"
-      style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04), rgba(14, 165, 233, 0.04))',
-        borderColor: 'var(--border)',
-      }}
-    >
+    <div className="kl-card p-5" style={{ background: 'var(--c-violet-soft)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div
           className="size-8 rounded-lg flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, var(--c-primary), var(--c-mint))' }}
+          style={{ background: 'var(--c-violet)' }}
         >
           <Sparkles className="size-4 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-            Insight AI personal — siap kapan kamu mau.
+          <p className="kl-eyebrow" style={{ color: 'var(--c-violet)' }}>
+            Insight AI personal
           </p>
-          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-mute)' }}>
             Catat transaksi pertama, AI bakal kasih analisis pola pengeluaran dan saran konkret.
           </p>
         </div>
