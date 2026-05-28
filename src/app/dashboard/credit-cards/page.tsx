@@ -209,38 +209,62 @@ export default function CreditCardsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — italic display for the "moment of personality" per typography */}
-      <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Kartu Kredit</p>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${totals.utilization < 30 ? 'rgba(16, 185, 129, 0.18)' : totals.utilization < 70 ? 'rgba(245, 158, 11, 0.16)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
+          }}
+        />
+        <div className="relative p-6 sm:p-8">
+        <p
+          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          style={{ color: totals.utilization < 30 ? '#6EE7B7' : totals.utilization < 70 ? '#FCD34D' : '#FDA4AF' }}
+        >
+          Kartu Kredit · Total Tagihan
+        </p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p
-            className="num tabular leading-none font-bold"
+            className="num tabular leading-none font-bold whitespace-nowrap"
             style={{
-              color: 'var(--on-black)',
-              fontSize: 'clamp(40px, 6vw, 56px)',
-              letterSpacing: '-0.035em',
+              color: '#FFFFFF',
+              fontSize: 'clamp(40px, 6vw, 64px)',
+              letterSpacing: '-0.04em',
             }}
           >
             {formatCurrency(totals.outstanding)}
           </p>
           <span
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide mb-2"
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold mb-2"
             style={{
               background: totals.utilization < 30 ? 'rgba(16,185,129,0.18)'
                 : totals.utilization < 70 ? 'rgba(245,158,11,0.18)'
-                : 'rgba(244,63,94,0.18)',
-              color: totals.utilization < 30 ? 'var(--text-mute)'
-                : totals.utilization < 70 ? 'var(--amber-300)'
-                : 'var(--coral-400)',
+                : 'rgba(251,113,133,0.18)',
+              color: totals.utilization < 30 ? '#6EE7B7'
+                : totals.utilization < 70 ? '#FCD34D'
+                : '#FDA4AF',
             }}
           >
             {totals.utilization.toFixed(0)}% utilisasi
           </span>
         </div>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          {totals.count} kartu aktif · limit total <span className="num font-semibold" style={{ color: 'var(--on-black)' }}>{formatCurrency(totals.limit)}</span>
+        <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          {totals.count} kartu aktif · limit total{' '}
+          <span className="num font-semibold" style={{ color: '#FFFFFF' }}>
+            {formatCurrency(totals.limit)}
+          </span>
         </p>
-      </div>
+        </div>
+      </section>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

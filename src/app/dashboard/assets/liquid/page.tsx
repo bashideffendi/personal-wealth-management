@@ -114,19 +114,40 @@ export default function LiquidAssetsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Aset Likuid</p>
-        <p
-          className="num tabular mt-3 leading-none font-bold"
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: 'var(--on-black)',
-            fontSize: 'clamp(36px, 5vw, 48px)',
-            letterSpacing: '-0.035em',
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+        <p
+          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          style={{ color: '#6EE7B7' }}
+        >
+          Aset Likuid
+        </p>
+        <p
+          className="num tabular mt-3 leading-none font-bold whitespace-nowrap"
+          style={{
+            color: '#FFFFFF',
+            fontSize: 'clamp(36px, 5vw, 56px)',
+            letterSpacing: '-0.04em',
           }}
         >
           {formatCurrency(total)}
         </p>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
+        <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
           {entries.length} aset · dapat dicairkan cepat
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -137,9 +158,9 @@ export default function LiquidAssetsPage() {
                 key={type}
                 className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium"
                 style={{
-                  background: 'var(--black-2)',
-                  color: 'var(--on-black)',
-                  border: '1px solid var(--black-line)',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(255,255,255,0.12)',
                 }}
               >
                 {info?.label ?? type} <span className="num opacity-70">· {formatCurrency(val)}</span>
@@ -147,7 +168,8 @@ export default function LiquidAssetsPage() {
             )
           })}
         </div>
-      </div>
+        </div>
+      </section>
 
       {duplicates.length > 0 && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
