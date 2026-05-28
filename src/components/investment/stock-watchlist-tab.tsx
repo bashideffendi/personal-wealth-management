@@ -1,9 +1,20 @@
 'use client'
 
+/**
+ * Watchlist tab di halaman Saham — pantau emiten IDX yang lagi diincar
+ * tanpa harus dimiliki dulu. Harga live dari Yahoo (.JK suffix), cached 5 min.
+ *
+ * Data source: src/data/invest/emitten-info.json (~990 emiten) — dipake
+ * buat autocomplete. Live price via /api/quotes.
+ *
+ * Server actions ada di stock-actions.ts (sibling file di [slug] route).
+ */
+
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Search, Loader2, Star, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react'
+import { Plus, X, Search, Loader2, Star, TrendingUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +23,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/utils'
-import { addWatchlistAction, removeWatchlistAction, updateWatchlistNoteAction } from './actions'
 
 interface WatchlistRow {
   ticker: string
@@ -35,19 +45,59 @@ interface Quote {
   marketState: string | null
 }
 
-interface WatchlistClientProps {
-  initialRows: WatchlistRow[]
-  emiten: EmittenSlim[]
-}
-
-export function WatchlistClient({ initialRows, emiten }: WatchlistClientProps) {
+export function StockWatchlistTab() {
+  const supabase = createClient()
   const router = useRouter()
-  const [rows] = useState<WatchlistRow[]>(initialRows)
+
+  const [emiten, setEmiten] = useState<EmittenSlim[]>([])
+  const [rows, setRows] = useState<WatchlistRow[]>([])
+  const [loadingRows, setLoadingRows] = useState(true)
   const [quotes, setQuotes] = useState<Map<string, Quote>>(new Map())
   const [loadingQuotes, setLoadingQuotes] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [editTicker, setEditTicker] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+
+  // Load IDX emiten list once (cached by browser for 1 hour)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/idx-emiten')
+      .then((r) => r.json())
+      .then((data: { emiten?: EmittenSlim[] }) => {
+        if (!cancelled) setEmiten(data.emiten ?? [])
+      })
+      .catch((err) => console.error('Failed to load emiten:', err))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Load watchlist rows on mount
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      setLoadingRows(true)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        if (!cancelled) setLoadingRows(false)
+        return
+      }
+      const { data } = await supabase
+        .from('watchlist')
+        .select('ticker, note, target_price, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+      if (!cancelled) {
+        setRows((data ?? []) as WatchlistRow[])
+        setLoadingRows(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [supabase])
 
   // Fetch live prices for all watchlist tickers (Yahoo .JK suffix)
   useEffect(() => {
@@ -64,7 +114,6 @@ export function WatchlistClient({ initialRows, emiten }: WatchlistClientProps) {
         if (cancelled) return
         const map = new Map<string, Quote>()
         for (const q of data.quotes ?? []) {
-          // Normalize back: BBCA.JK → BBCA
           const t = q.ticker.replace(/\.JK$/, '')
           map.set(t, q)
         }
@@ -81,29 +130,73 @@ export function WatchlistClient({ initialRows, emiten }: WatchlistClientProps) {
     }
   }, [rows])
 
+  async function refresh() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase
+      .from('watchlist')
+      .select('ticker, note, target_price, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+    setRows((data ?? []) as WatchlistRow[])
+    router.refresh()
+  }
+
   function add(ticker: string) {
     startTransition(async () => {
-      const res = await addWatchlistAction(ticker)
-      if (res.ok) {
-        toast.success(`${ticker} ditambahkan ke watchlist`)
-        setAddOpen(false)
-        router.refresh()
-      } else {
-        toast.error(res.error)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Belum login')
+        return
       }
+      const t = ticker.trim().toUpperCase()
+      const { error } = await supabase
+        .from('watchlist')
+        .upsert(
+          { user_id: user.id, ticker: t, note: null },
+          { onConflict: 'user_id,ticker', ignoreDuplicates: true },
+        )
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success(`${t} ditambah ke watchlist`)
+      setAddOpen(false)
+      await refresh()
     })
   }
 
   function remove(ticker: string) {
     startTransition(async () => {
-      const res = await removeWatchlistAction(ticker)
-      if (res.ok) {
-        toast.success(`${ticker} dihapus`)
-        router.refresh()
-      } else {
-        toast.error(res.error)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+      const { error } = await supabase
+        .from('watchlist')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('ticker', ticker.toUpperCase())
+      if (error) {
+        toast.error(error.message)
+        return
       }
+      toast.success(`${ticker} dihapus`)
+      await refresh()
     })
+  }
+
+  if (loadingRows) {
+    return (
+      <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
+        <Loader2 className="size-5 mx-auto animate-spin mb-2" />
+        Memuat watchlist…
+      </div>
+    )
   }
 
   return (
@@ -117,7 +210,7 @@ export function WatchlistClient({ initialRows, emiten }: WatchlistClientProps) {
           <Plus className="size-4" /> Tambah saham
         </Button>
         <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-          {rows.length} saham · {loadingQuotes ? 'memuat harga…' : 'harga live'}
+          {rows.length} saham · {loadingQuotes ? 'memuat harga…' : 'harga live (cache 5 menit)'}
         </p>
       </div>
 
@@ -255,7 +348,7 @@ export function WatchlistClient({ initialRows, emiten }: WatchlistClientProps) {
           initialNote={rows.find((r) => r.ticker === editTicker)?.note ?? ''}
           initialTarget={rows.find((r) => r.ticker === editTicker)?.target_price ?? null}
           onClose={() => setEditTicker(null)}
-          onSaved={() => router.refresh()}
+          onSaved={refresh}
         />
       )}
     </div>
@@ -293,12 +386,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 function AddDialog({
-  open,
-  onClose,
-  emiten,
-  existing,
-  onAdd,
-  pending,
+  open, onClose, emiten, existing, onAdd, pending,
 }: {
   open: boolean
   onClose: () => void
@@ -398,38 +486,46 @@ function AddDialog({
 }
 
 function EditNoteDialog({
-  ticker,
-  initialNote,
-  initialTarget,
-  onClose,
-  onSaved,
+  ticker, initialNote, initialTarget, onClose, onSaved,
 }: {
   ticker: string
   initialNote: string
   initialTarget: number | null
   onClose: () => void
-  onSaved: () => void
+  onSaved: () => Promise<void>
 }) {
+  const supabase = createClient()
   const [note, setNote] = useState(initialNote)
   const [target, setTarget] = useState<string>(initialTarget ? String(initialTarget) : '')
   const [saving, setSaving] = useState(false)
 
   async function save() {
     setSaving(true)
-    const targetNum = target.trim() ? parseFloat(target) : null
-    const res = await updateWatchlistNoteAction(
-      ticker,
-      note.trim() || null,
-      Number.isFinite(targetNum) ? targetNum : null,
-    )
-    setSaving(false)
-    if (res.ok) {
-      toast.success('Tersimpan.')
-      onSaved()
-      onClose()
-    } else {
-      toast.error(res.error)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      setSaving(false)
+      toast.error('Belum login')
+      return
     }
+    const targetNum = target.trim() ? parseFloat(target) : null
+    const { error } = await supabase
+      .from('watchlist')
+      .update({
+        note: note.trim() || null,
+        target_price: Number.isFinite(targetNum) ? targetNum : null,
+      })
+      .eq('user_id', user.id)
+      .eq('ticker', ticker.toUpperCase())
+    setSaving(false)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+    toast.success('Tersimpan.')
+    await onSaved()
+    onClose()
   }
 
   return (
@@ -439,7 +535,7 @@ function EditNoteDialog({
           <DialogTitle>Edit {ticker}</DialogTitle>
           <DialogDescription>
             Tambah catatan + target harga (opsional). Kalau harga live turun ke
-            target, dapet badge "tercapai" di watchlist.
+            target, dapet badge &ldquo;tercapai&rdquo;.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">

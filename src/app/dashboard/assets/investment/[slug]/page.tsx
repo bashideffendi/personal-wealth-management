@@ -23,12 +23,16 @@ import {
 } from '@/components/ui/select'
 import {
   Loader2, Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown,
-  LineChart, Coins, LayoutGrid, List,
+  LineChart, Coins, LayoutGrid, List, Star, FileSearch, GitCompare, Calendar,
 } from 'lucide-react'
 import { NumberInput } from '@/components/ui/number-input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StockLogPanel } from '@/components/investment/stock-log-panel'
 import { DividendsPanel } from '@/components/investment/dividends-panel'
+import { StockWatchlistTab } from '@/components/investment/stock-watchlist-tab'
+import { StockResearchTab } from '@/components/investment/stock-research-tab'
+import { StockCompareTab } from '@/components/investment/stock-compare-tab'
+import { StockDividendCalendar } from '@/components/investment/stock-dividend-calendar'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { getCategoryFormConfig } from '@/lib/investment-forms'
@@ -288,11 +292,17 @@ export default function InvestmentCategoryPage() {
 
       <Tabs defaultValue="holdings" className="w-full">
         {category === 'stock' && (
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />Posisi</TabsTrigger>
-            <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />Stock Log</TabsTrigger>
-            <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />Dividen</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-1 px-1 pb-1">
+            <TabsList className="inline-flex gap-1 w-auto">
+              <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />Posisi</TabsTrigger>
+              <TabsTrigger value="watchlist"><Star className="size-3.5 mr-1.5" />Watchlist</TabsTrigger>
+              <TabsTrigger value="research"><FileSearch className="size-3.5 mr-1.5" />Research</TabsTrigger>
+              <TabsTrigger value="compare"><GitCompare className="size-3.5 mr-1.5" />Compare</TabsTrigger>
+              <TabsTrigger value="dividen-pro"><Calendar className="size-3.5 mr-1.5" />Dividen</TabsTrigger>
+              <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />Log Manual</TabsTrigger>
+              <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />Log Dividen</TabsTrigger>
+            </TabsList>
+          </div>
         )}
 
         <TabsContent value="holdings" className="space-y-6 mt-6">
@@ -527,6 +537,18 @@ export default function InvestmentCategoryPage() {
 
         {category === 'stock' && (
           <>
+            <TabsContent value="watchlist" className="mt-6">
+              <StockWatchlistTab />
+            </TabsContent>
+            <TabsContent value="research" className="mt-6">
+              <StockResearchTab />
+            </TabsContent>
+            <TabsContent value="compare" className="mt-6">
+              <StockCompareTab />
+            </TabsContent>
+            <TabsContent value="dividen-pro" className="mt-6">
+              <StockDividendCalendar />
+            </TabsContent>
             <TabsContent value="log" className="mt-6">
               <StockLogPanel />
             </TabsContent>
