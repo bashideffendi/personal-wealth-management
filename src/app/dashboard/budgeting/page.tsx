@@ -411,37 +411,42 @@ export default function BudgetingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="dark-card p-6 sm:p-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="caps" style={{ color: 'var(--emerald-300)' }}>Perencanaan · {year}</p>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2 text-white">
-              Anggaran Tahunan
-            </h2>
-            <p className="text-sm mt-3 flex items-center gap-1.5" style={{ color: 'var(--on-black-mut)' }}>
-              Distribusi pendapatan, pengeluaran, tabungan, & investasi sepanjang tahun.
-              <EduTip topic="budget-method" side="bottom" />
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setSelectorOpen(true)}
-              className="bg-[var(--black-2)] border-[var(--black-line)] text-white hover:bg-[var(--black-soft)] hover:text-white"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Pilih Kategori
-            </Button>
-            <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
-              <SelectTrigger className="w-[120px] bg-[var(--black-2)] border-[var(--black-line)] text-white hover:bg-[var(--black-soft)]">
-                <SelectValue placeholder="Tahun" />
-              </SelectTrigger>
-              <SelectContent>
-                {YEAR_OPTIONS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Header — editorial page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="kl-eyebrow">Perencanaan · {year}</p>
+          <h1
+            className="kl-display mt-1"
+            style={{
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              color: 'var(--ink)',
+              fontStyle: 'italic',
+            }}
+          >
+            Anggaran Tahunan
+          </h1>
+          <p className="text-sm mt-2 flex items-center gap-1.5" style={{ color: 'var(--text-mute)' }}>
+            Distribusi pendapatan, pengeluaran, tabungan, &amp; investasi sepanjang tahun.
+            <EduTip topic="budget-method" side="bottom" />
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setSelectorOpen(true)}
+            className="kl-btn"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Pilih Kategori
+          </Button>
+          <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Tahun" />
+            </SelectTrigger>
+            <SelectContent>
+              {YEAR_OPTIONS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

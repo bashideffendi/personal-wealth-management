@@ -163,34 +163,43 @@ export default function InvestmentOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Portofolio Investasi</p>
+      <div className="kl-card p-6 sm:p-9">
+        <p className="kl-eyebrow">Portofolio Investasi</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p
-            className="num tabular leading-none font-bold"
+            className="kl-display kl-num"
             style={{
-              color: 'var(--on-black)',
-              fontSize: 'clamp(40px, 6vw, 56px)',
-              letterSpacing: '-0.035em',
+              color: 'var(--ink)',
+              fontSize: 'clamp(40px, 6vw, 64px)',
+              lineHeight: 1,
             }}
           >
             {formatCurrency(totals.market)}
           </p>
           <span
-            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide mb-2"
+            className="kl-chip mb-2"
             style={{
-              background: up ? 'rgba(16,185,129,0.18)' : 'rgba(244,63,94,0.18)',
-              color: up ? 'var(--emerald-300)' : 'var(--coral-400)',
+              background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+              color: up ? 'var(--c-mint)' : 'var(--c-coral)',
             }}
           >
             {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
             {up ? '+' : ''}{totals.plPct.toFixed(2)}%
           </span>
         </div>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          Modal <span className="num font-semibold" style={{ color: 'var(--on-black)' }}>{formatCurrency(totals.invested)}</span>
+        <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
+          Modal{' '}
+          <span className="kl-num font-semibold" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(totals.invested)}
+          </span>
           {' · '}
-          P/L <span className="num font-semibold" style={{ color: up ? 'var(--emerald-300)' : 'var(--coral-400)' }}>{formatCurrency(totals.pl)}</span>
+          P/L{' '}
+          <span
+            className="kl-num font-semibold"
+            style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}
+          >
+            {formatCurrency(totals.pl)}
+          </span>
         </p>
       </div>
 

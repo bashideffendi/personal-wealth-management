@@ -116,21 +116,28 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Tujuan Keuangan</p>
+      <div className="kl-card p-6 sm:p-9">
+        <p className="kl-eyebrow">Tujuan Keuangan</p>
         <p
-          className="num tabular mt-3 leading-none font-bold"
+          className="kl-display kl-num mt-3"
           style={{
-            color: 'var(--on-black)',
-            fontSize: 'clamp(40px, 6vw, 56px)',
-            letterSpacing: '-0.035em',
+            color: 'var(--ink)',
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            lineHeight: 1,
           }}
         >
           {formatCurrency(totals.current)}
         </p>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          dari target <span className="num font-semibold" style={{ color: 'var(--on-black)' }}>{formatCurrency(totals.target)}</span>
-          {' · '}{totals.pct.toFixed(1)}% tercapai · {goals.length} goal
+        <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
+          dari target{' '}
+          <span className="kl-num font-semibold" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(totals.target)}
+          </span>
+          {' · '}
+          <span className="kl-num" style={{ color: 'var(--c-mint)', fontWeight: 700 }}>
+            {totals.pct.toFixed(1)}%
+          </span>
+          {' tercapai · '}{goals.length} goal
         </p>
       </div>
 
@@ -151,9 +158,9 @@ export default function GoalsPage() {
         <div className="kl-card flex flex-col items-center text-center py-16 px-8">
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'var(--emerald-50)' }}
+            style={{ background: 'var(--c-primary-soft)' }}
           >
-            <TrendingUp className="size-7" style={{ color: 'var(--emerald-600)' }} />
+            <TrendingUp className="size-7" style={{ color: 'var(--c-primary)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
             Belum ada tujuan

@@ -184,37 +184,39 @@ export default function NetWorthPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-10">
-        <p className="caps text-center" style={{ color: 'var(--emerald-300)' }}>
-          Total Kekayaan · {today}
+      <div className="kl-card p-6 sm:p-10">
+        <p className="kl-eyebrow text-center">
+          Kekayaan Bersih · {today}
         </p>
-        {/* Hero number — .num (JetBrains Mono) at clamp(48-72px) per
-            dashboard-refine mockup. Mono > serif for currency. */}
+        {/* Hero number — Instrument Serif clamp(48-72px) per editorial pivot */}
         <p
-          className="num tabular text-center mt-4 leading-none font-bold"
+          className="kl-display kl-num text-center mt-4"
           style={{
-            color: isPositive ? 'var(--on-black)' : 'var(--coral-400)',
-            fontSize: 'clamp(48px, 8vw, 72px)',
-            letterSpacing: '-0.035em',
+            color: isPositive ? 'var(--ink)' : 'var(--c-coral)',
+            fontSize: 'clamp(48px, 8vw, 80px)',
+            lineHeight: 1,
           }}
         >
           {formatCurrency(netWorth)}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-8">
           <div className="text-center">
-            <p className="caps" style={{ color: 'var(--on-black-mut)' }}>Total Aset</p>
-            <p className="num mt-1.5 text-lg font-semibold" style={{ color: 'var(--on-black)' }}>
+            <p className="kl-eyebrow">Total Aset</p>
+            <p className="kl-num mt-1.5 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totalAssets)}
             </p>
           </div>
           <span
             className="w-px h-12 self-center"
-            style={{ background: 'rgba(255,255,255,0.2)' }}
+            style={{ background: 'var(--line)' }}
           />
           <div className="text-center">
-            <p className="caps" style={{ color: 'var(--on-black-mut)' }}>Total Utang</p>
-            <p className="num mt-1.5 text-lg font-semibold" style={{ color: 'var(--coral-400)' }}>
-              −{formatCurrency(totalDebt)}
+            <p className="kl-eyebrow">Total Utang</p>
+            <p
+              className="kl-num mt-1.5 text-lg font-semibold"
+              style={{ color: totalDebt > 0 ? 'var(--c-coral)' : 'var(--ink)' }}
+            >
+              {totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}
             </p>
           </div>
         </div>
