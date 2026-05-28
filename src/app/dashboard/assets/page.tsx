@@ -77,7 +77,7 @@ export default function AssetsOverviewPage() {
   }, [investmentByCategory])
 
   const categoryColors: Record<string, string> = {
-    property: '#0A0A0A', vehicle: '#737373', personal_item: '#A3E635',
+    property: '#10B981', vehicle: '#0EA5E9', personal_item: '#F59E0B',
   }
 
   if (loading) {
@@ -172,7 +172,7 @@ export default function AssetsOverviewPage() {
                 <PieChart>
                   <Pie data={allocation} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" stroke="transparent">
                     {allocation.map((_, i) => (
-                      <Cell key={i} fill={['#A3E635','#F97316','#10B981','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#737373'][i % 8]} />
+                      <Cell key={i} fill={['#10B981','#0EA5E9','#F59E0B','#F43F5E','#8B5CF6','#34D399','#7DD3FC','#737373'][i % 8]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -184,7 +184,7 @@ export default function AssetsOverviewPage() {
               </ResponsiveContainer>
               <div className="mt-3 space-y-1.5">
                 {allocation.map((row, i) => {
-                  const color = ['#A3E635','#F97316','#10B981','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#737373'][i % 8]
+                  const color = ['#10B981','#0EA5E9','#F59E0B','#F43F5E','#8B5CF6','#34D399','#7DD3FC','#737373'][i % 8]
                   const pct = totals.inv > 0 ? (row.value / totals.inv) * 100 : 0
                   return (
                     <div key={row.name} className="flex items-center justify-between text-xs">
@@ -210,11 +210,11 @@ export default function AssetsOverviewPage() {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={Object.entries(nonLiquidByCategory).map(([k, v]) => ({ name: ({ property: 'Properti', vehicle: 'Kendaraan', personal_item: 'Barang Pribadi' } as Record<string, string>)[k] ?? k, value: v, color: categoryColors[k] ?? '#6366F1' }))}>
+              <BarChart data={Object.entries(nonLiquidByCategory).map(([k, v]) => ({ name: ({ property: 'Properti', vehicle: 'Kendaraan', personal_item: 'Barang Pribadi' } as Record<string, string>)[k] ?? k, value: v, color: categoryColors[k] ?? '#10B981' }))}>
                 <defs>
                   <linearGradient id="bar-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0A0A0A" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#0A0A0A" stopOpacity={0.75} />
+                    <stop offset="0%" stopColor="#10B981" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#047857" stopOpacity={0.85} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
