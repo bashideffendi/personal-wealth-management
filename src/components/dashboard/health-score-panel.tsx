@@ -93,10 +93,10 @@ export function HealthScorePanel({
     <section className="grid gap-4 lg:grid-cols-[0.9fr_1.4fr_0.85fr]">
       {/* ─── Score gauge ─── */}
       <article
-        className="kl-card flex flex-col items-center justify-center"
+        className="s-card flex flex-col items-center justify-center"
         style={{ padding: 24 }}
       >
-        <p className="kl-eyebrow self-start">Skor Kesehatan</p>
+        <p className="eyebrow self-start">Skor Kesehatan</p>
         <div className="relative my-2" style={{ width: SIZE, height: SIZE * 0.8 }}>
           <svg
             width={SIZE}
@@ -124,7 +124,7 @@ export function HealthScorePanel({
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span
-              className="kl-display kl-num"
+              className="display num tabular"
               style={{ fontSize: 56, color: 'var(--ink)' }}
             >
               {total}
@@ -156,7 +156,7 @@ export function HealthScorePanel({
             {grade}
           </span>
           <span
-            className="kl-chip"
+            className="chip"
             style={{
               background: `var(--c-${scoreTone}-soft)`,
               color: `var(--c-${scoreTone})`,
@@ -174,8 +174,8 @@ export function HealthScorePanel({
       </article>
 
       {/* ─── Breakdown bars ─── */}
-      <article className="kl-card" style={{ padding: 24 }}>
-        <p className="kl-eyebrow">Breakdown · 5 Pilar</p>
+      <article className="s-card s-card-pad-lg">
+        <p className="eyebrow">Breakdown · 5 Pilar</p>
         <div className="flex flex-col gap-3 mt-4">
           {components.map((s) => {
             const v = Math.round(s.v)
@@ -194,7 +194,7 @@ export function HealthScorePanel({
                   <i style={{ width: `${(s.v / s.max) * 100}%` }} />
                 </div>
                 <span
-                  className="kl-num text-right"
+                  className="num tabular text-right"
                   style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}
                 >
                   {v}
@@ -207,7 +207,7 @@ export function HealthScorePanel({
 
       {/* ─── Cash Coverage ─── */}
       <article
-        className="kl-card flex flex-col justify-between"
+        className="s-card flex flex-col justify-between"
         style={{
           padding: 24,
           background: `var(--c-${burnTone}-soft)`,
@@ -215,14 +215,14 @@ export function HealthScorePanel({
       >
         <div>
           <p
-            className="kl-eyebrow"
+            className="eyebrow"
             style={{ color: `var(--c-${burnTone})` }}
           >
             Cash Coverage
           </p>
           <div className="flex items-baseline gap-2 mt-3">
             <span
-              className="kl-display kl-num"
+              className="display num tabular"
               style={{ fontSize: 56, color: 'var(--ink)', lineHeight: 1 }}
             >
               {burnMonths.toFixed(1)}
@@ -234,7 +234,7 @@ export function HealthScorePanel({
             </span>
           </div>
           <span
-            className="kl-chip mt-2.5"
+            className="chip mt-2.5"
             style={{
               background: `var(--c-${burnTone})`,
               color: 'var(--c-ink)',
@@ -265,7 +265,7 @@ export function HealthScorePanel({
             >
               Kas Likuid
             </p>
-            <p className="kl-num mt-1" style={{ fontSize: 14, fontWeight: 700 }}>
+            <p className="num tabular mt-1" style={{ fontSize: 14, fontWeight: 700 }}>
               {formatCurrency(liquidTotal)}
             </p>
           </div>
@@ -281,7 +281,7 @@ export function HealthScorePanel({
             >
               Per Bulan
             </p>
-            <p className="kl-num mt-1" style={{ fontSize: 14, fontWeight: 700 }}>
+            <p className="num tabular mt-1" style={{ fontSize: 14, fontWeight: 700 }}>
               {formatCurrency(monthExpense)}
             </p>
           </div>
