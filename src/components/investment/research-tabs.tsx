@@ -300,7 +300,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
             <div className="grid gap-4 md:grid-cols-4">
               {oneYear && (
                 <div>
-                  <p className="caps">52-Week Range</p>
+                  <p className="eyebrow">52-Week Range</p>
                   <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
                     {formatPrice(oneYear.low)} – {formatPrice(oneYear.high)}
                   </p>
@@ -319,7 +319,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               )}
               {stats?.freeFloatPct != null && (
                 <div>
-                  <p className="caps">Free Float</p>
+                  <p className="eyebrow">Free Float</p>
                   <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
                     {(stats.freeFloatPct * 100).toFixed(2)}%
                   </p>
@@ -330,7 +330,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               )}
               {stats?.currentShareOutstanding != null && (
                 <div>
-                  <p className="caps">Saham Beredar</p>
+                  <p className="eyebrow">Saham Beredar</p>
                   <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
                     {formatIDRCompact(stats.currentShareOutstanding).replace('Rp ', '')}
                   </p>
@@ -341,7 +341,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               )}
               {nextDividend && (
                 <div>
-                  <p className="caps">Dividen Mendatang</p>
+                  <p className="eyebrow">Dividen Mendatang</p>
                   <p className="num font-semibold mt-1" style={{ color: 'var(--c-mint)' }}>
                     Rp {formatPrice(nextDividend.dividend)}
                   </p>
@@ -398,7 +398,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           >
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
-                <p className="caps">Rekomendasi (Equity Research)</p>
+                <p className="eyebrow">Rekomendasi (Equity Research)</p>
                 <p className="text-2xl font-bold tracking-tight mt-1" style={{ color: 'var(--ink)' }}>
                   {String(research.frontmatter.recommendation).toUpperCase()}
                 </p>
@@ -411,7 +411,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               </div>
               {(research.frontmatter.fair_value_low || research.frontmatter.fair_value_high) && (
                 <div className="text-right">
-                  <p className="caps">Fair Value Range</p>
+                  <p className="eyebrow">Fair Value Range</p>
                   <p className="num text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
                     Rp {formatPrice(research.frontmatter.fair_value_low ?? null)}
                     {' – '}
@@ -434,7 +434,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           >
             <div className="flex items-baseline justify-between flex-wrap gap-2 mb-4">
               <div>
-                <p className="caps">Valuasi Consensus</p>
+                <p className="eyebrow">Valuasi Consensus</p>
                 <h2 className="text-lg font-bold mt-0.5" style={{ color: 'var(--ink)' }}>
                   8 Metode Independen
                 </h2>
@@ -485,19 +485,19 @@ export function ResearchTabs(props: ResearchTabsProps) {
               style={{ borderColor: 'var(--border-soft)' }}
             >
               <div>
-                <p className="caps">Median Fair Value</p>
+                <p className="eyebrow">Median Fair Value</p>
                 <p className="num text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
                   {formatIDRCompact(valuation.medianFairValue)}
                 </p>
               </div>
               <div>
-                <p className="caps">Average Fair Value</p>
+                <p className="eyebrow">Average Fair Value</p>
                 <p className="num text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
                   {formatIDRCompact(valuation.avgFairValue)}
                 </p>
               </div>
               <div>
-                <p className="caps">Avg Margin of Safety</p>
+                <p className="eyebrow">Avg Margin of Safety</p>
                 <p className="num text-xl font-bold mt-1" style={{ color: signColorVar(avgMoS) }}>
                   {formatPercentValue(avgMoS)}
                 </p>
@@ -727,7 +727,7 @@ function ChartCard({
         className="rounded-xl border p-4"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
-        <p className="caps">{title}</p>
+        <p className="eyebrow">{title}</p>
         <p className="text-sm py-8 text-center" style={{ color: 'var(--ink-soft)' }}>
           Data tidak tersedia
         </p>
@@ -780,7 +780,7 @@ function QuarterlyCard({
         className="rounded-xl border p-4"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
-        <p className="caps">{title}</p>
+        <p className="eyebrow">{title}</p>
         <p className="text-sm py-8 text-center" style={{ color: 'var(--ink-soft)' }}>
           Data quarterly tidak tersedia
         </p>
@@ -840,7 +840,7 @@ function ResearchView({
           }}
         >
           <div>
-            <p className="caps">Equity Research · {ticker}</p>
+            <p className="eyebrow">Equity Research · {ticker}</p>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
                 {String(recommendation).toUpperCase()}
@@ -859,7 +859,7 @@ function ResearchView({
           </div>
           {(research.frontmatter.fair_value_low || research.frontmatter.fair_value_high) && (
             <div className="text-right">
-              <p className="caps">Fair Value Range</p>
+              <p className="eyebrow">Fair Value Range</p>
               <p className="num text-lg font-bold mt-1" style={{ color: 'var(--ink)' }}>
                 Rp {formatPrice(research.frontmatter.fair_value_low ?? null)}
                 {' – '}
