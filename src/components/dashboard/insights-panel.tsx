@@ -139,9 +139,9 @@ export function InsightsPanel({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Alerts */}
-      <div className="s-card p-5 lg:col-span-2">
-        <p className="caps">Insights & Alerts</p>
-        <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+      <div className="s-card s-card-pad-lg lg:col-span-2">
+        <p className="eyebrow">Insights & Alerts</p>
+        <h3 className="font-bold mt-1" style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.015em' }}>
           Perlu Perhatian
         </h3>
         {alerts.length === 0 ? (
@@ -153,25 +153,25 @@ export function InsightsPanel({
             {alerts.slice(0, 6).map((a, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2.5 text-sm rounded-lg p-2.5 border"
+                className="flex items-start gap-2.5 text-sm rounded-lg p-2.5"
                 style={{
-                  borderColor:
-                    a.level === 'critical' ? 'var(--danger)'
-                    : a.level === 'warn' ? 'var(--ink)'
-                    : 'var(--lime-500)',
                   background:
-                    a.level === 'critical' ? 'var(--danger-bg)'
-                    : a.level === 'warn' ? 'var(--surface-2)'
-                    : 'var(--lime-50)',
+                    a.level === 'critical' ? 'var(--c-coral-soft)'
+                    : a.level === 'warn' ? 'var(--c-amber-soft)'
+                    : 'var(--c-mint-soft)',
+                  border:
+                    a.level === 'critical' ? '1px solid color-mix(in srgb, var(--c-coral) 25%, transparent)'
+                    : a.level === 'warn' ? '1px solid color-mix(in srgb, var(--c-amber) 25%, transparent)'
+                    : '1px solid color-mix(in srgb, var(--c-mint) 25%, transparent)',
                 }}
               >
                 <span
                   className="inline-block h-1.5 w-1.5 rounded-full mt-1.5 shrink-0"
                   style={{
                     background:
-                      a.level === 'critical' ? 'var(--danger)'
-                      : a.level === 'warn' ? 'var(--ink)'
-                      : 'var(--lime-500)',
+                      a.level === 'critical' ? 'var(--c-coral)'
+                      : a.level === 'warn' ? 'var(--c-amber)'
+                      : 'var(--c-mint)',
                   }}
                 />
                 <span style={{ color: 'var(--ink)' }}>{a.text}</span>
@@ -182,9 +182,9 @@ export function InsightsPanel({
       </div>
 
       {/* Cashflow forecast 3 bulan */}
-      <div className="s-card p-5">
-        <p className="caps">Proyeksi 3 Bulan</p>
-        <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+      <div className="s-card s-card-pad-lg">
+        <p className="eyebrow">Proyeksi 3 Bulan</p>
+        <h3 className="font-bold mt-1" style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.015em' }}>
           Forecast Arus Kas
         </h3>
         {avg3mo ? (
@@ -195,13 +195,13 @@ export function InsightsPanel({
               <Row2
                 label="Net /bln"
                 value={avg3mo.net}
-                accent={avg3mo.net >= 0 ? 'var(--lime-700)' : 'var(--danger)'}
+                accent={avg3mo.net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'}
                 bold
               />
             </div>
             <div className="pt-2 mt-2 border-t text-[11px]" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
               Estimasi saldo bersih 3 bulan ke depan:
-              <span className="num font-semibold ml-1" style={{ color: avg3mo.net >= 0 ? 'var(--lime-700)' : 'var(--danger)' }}>
+              <span className="num font-semibold ml-1" style={{ color: avg3mo.net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>
                 {formatCurrency(avg3mo.net * 3)}
               </span>
             </div>
