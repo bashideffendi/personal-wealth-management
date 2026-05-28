@@ -1,119 +1,132 @@
 'use client'
 
+/**
+ * KpiCard — editorial StatsRowA tile per design handoff (2026-05-28).
+ *
+ * Pattern: tone dot di kiri-atas + label + value besar tabular + sub
+ * note dengan accent color. Icon box di kanan-atas dengan soft bg.
+ * Hover lift shadow ke shadow-lg, transition 150ms.
+ *
+ * Color tones (semantic):
+ *   income   → mint    (income/surplus/sehat)
+ *   expense  → coral   (expense/defisit/warning)
+ *   saving   → amber   (streak/perhatian/savings tier)
+ *   net      → primary (akumulasi/arus kas bersih) → coral kalau negatif
+ */
+
 import { useT } from '@/lib/i18n/context'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import {
+  ArrowDownToLine, ArrowUpFromLine, Wallet, TrendingUp, TrendingDown, ArrowLeftRight,
+} from 'lucide-react'
 
 interface KpiCardProps {
   label: string
   value: number
   note?: string
   direction?: 'up' | 'down'
-  /** Color identity: tints background + accent indicator */
+  /** Color identity: tints accent + tone dot + icon box */
   kind?: 'income' | 'expense' | 'saving' | 'net'
+}
+
+const ICONS: Record<NonNullable<KpiCardProps['kind']>, React.ComponentType<{ className?: string }>> = {
+  income: ArrowDownToLine,
+  expense: ArrowUpFromLine,
+  saving: Wallet,
+  net: ArrowLeftRight,
 }
 
 export function KpiCard({ label, value, note, direction, kind }: KpiCardProps) {
   const t = useT()
-  // Per-kind palette: gradient hero card with tinted bg + icon-box +
-  // delta chip. Combines the previous colorful hero look (user prefers)
-  // with the dashboard-refine.jsx icon-box + delta chip pattern.
-  const palette = (() => {
-    switch (kind) {
-      case 'income':
-        return {
-          cardBg: 'linear-gradient(135deg, var(--emerald-50), var(--surface) 70%)',
-          ring: 'var(--emerald-100)',
-          iconBg: 'var(--emerald-100)',
-          accent: 'var(--emerald-700)',
-          chipBg: 'var(--emerald-100)',
-          icon: '💰',
-        }
-      case 'expense':
-        return {
-          cardBg: 'linear-gradient(135deg, var(--coral-50), var(--surface) 70%)',
-          ring: 'var(--coral-100)',
-          iconBg: 'var(--coral-100)',
-          accent: 'var(--coral-700)',
-          chipBg: 'var(--coral-100)',
-          icon: '💸',
-        }
-      case 'saving':
-        return {
-          cardBg: 'linear-gradient(135deg, var(--amber-50), var(--surface) 70%)',
-          ring: 'var(--amber-100)',
-          iconBg: 'var(--amber-100)',
-          accent: 'var(--amber-700)',
-          chipBg: 'var(--amber-100)',
-          icon: '🏦',
-        }
-      case 'net':
-        return value >= 0 ? {
-          cardBg: 'linear-gradient(135deg, var(--sky-50), var(--surface) 70%)',
-          ring: 'var(--sky-100)',
-          iconBg: 'var(--sky-100)',
-          accent: 'var(--sky-600)',
-          chipBg: 'var(--sky-100)',
-          icon: '📈',
-        } : {
-          cardBg: 'linear-gradient(135deg, var(--coral-50), var(--surface) 70%)',
-          ring: 'var(--coral-100)',
-          iconBg: 'var(--coral-100)',
-          accent: 'var(--coral-700)',
-          chipBg: 'var(--coral-100)',
-          icon: '📉',
-        }
-      default:
-        return {
-          cardBg: 'var(--surface)',
-          ring: 'var(--border)',
-          iconBg: 'var(--surface-2)',
-          accent: 'var(--ink)',
-          chipBg: 'var(--surface-2)',
-          icon: '•',
-        }
-    }
+
+  // Tone token mapping per kind (semantic editorial accents)
+  const tone = (() => {
+    if (kind === 'income') return 'mint'
+    if (kind === 'expense') return 'coral'
+    if (kind === 'saving') return 'amber'
+    if (kind === 'net') return value >= 0 ? 'primary' : 'coral'
+    return 'primary'
   })()
 
+  const IconCmp = kind ? ICONS[kind] : ArrowLeftRight
+  // Net negative → flip ke TrendingDown
+  const IconResolved = kind === 'net' && value < 0 ? TrendingDown : kind === 'net' ? TrendingUp : IconCmp
+
   return (
-    <div
-      className="rounded-2xl p-5 transition-all hover:shadow-md hover:-translate-y-0.5"
+    <article
+      className="kl-card transition-shadow"
       style={{
-        background: palette.cardBg,
-        border: `1px solid ${palette.ring}`,
+        padding: 18,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = 'var(--shadow-lg)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = 'var(--shadow-card)'
       }}
     >
-      {/* Header row — icon-box left + delta chip right (per mockup) */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div
-          className="size-10 rounded-[10px] flex items-center justify-center text-base"
-          style={{ background: palette.iconBg }}
-        >
-          {palette.icon}
-        </div>
-        {direction && (
-          <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold"
-            style={{ background: palette.chipBg, color: palette.accent }}
+      <div className="flex justify-between items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 2,
+                background: `var(--c-${tone})`,
+              }}
+            />
+            <p
+              style={{
+                fontSize: 11,
+                color: 'var(--text-mute)',
+                fontWeight: 600,
+              }}
+            >
+              {label}
+            </p>
+          </div>
+          <p
+            className="kl-num mt-2"
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: 'var(--text)',
+              letterSpacing: '-0.02em',
+            }}
           >
-            {direction === 'up' ? '↑' : '↓'}
-          </span>
-        )}
+            <span className="sm:hidden">{formatCompactCurrency(value)}</span>
+            <span className="hidden sm:inline">{formatCurrency(value)}</span>
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            {direction && (
+              <span
+                className="kl-num"
+                style={{ fontSize: 11, color: `var(--c-${tone})`, fontWeight: 700 }}
+              >
+                {direction === 'up' ? '↑' : '↓'}
+              </span>
+            )}
+            <span style={{ fontSize: 11, color: 'var(--text-mute)' }}>
+              {note ?? t('dashboard.current_month')}
+            </span>
+          </div>
+        </div>
+        <div
+          className="grid place-items-center shrink-0"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            background: `var(--c-${tone}-soft)`,
+            color: `var(--c-${tone})`,
+          }}
+        >
+          <IconResolved className="size-[15px]" />
+        </div>
       </div>
-      {/* Label small + Value big — per dashboard-refine.jsx spec */}
-      <p className="text-xs font-medium mb-1" style={{ color: 'var(--ink-muted)' }}>
-        {label}
-      </p>
-      <p
-        className="num tabular text-xl sm:text-[22px] leading-tight font-bold"
-        style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
-      >
-        {/* Compact on mobile, full on sm+ */}
-        <span className="sm:hidden">{formatCompactCurrency(value)}</span>
-        <span className="hidden sm:inline">{formatCurrency(value)}</span>
-      </p>
-      <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
-        {note ?? t('dashboard.current_month')}
-      </p>
-    </div>
+    </article>
   )
 }

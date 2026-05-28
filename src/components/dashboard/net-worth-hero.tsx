@@ -1,14 +1,20 @@
 'use client'
 
 /**
- * Net Worth Hero — dashboard's top card. Greeting + total net worth +
- * 12-month synthetic growth chart + simple "kapan capai Rp 1B?" forecast.
+ * Net Worth Hero — editorial redesign (2026-05-28).
  *
- * The growth chart is a sparkline derived from monthly net cashflow (we
- * don't snapshot net_worth yet; this is a proxy until that table is wired).
+ * Per design handoff Dashboard A. Drop dark-card hero, ganti ke
+ * warm white kl-card dengan 2-col grid: numeric kiri (Instrument
+ * Serif 64px hero number + mint delta chip + Total Aset/Utang split)
+ * dan chart kanan (period chips + area chart).
+ *
+ * Net worth growth chart = synthesized dari monthly cashflow (proxy
+ * sampai net_worth_snapshots table wired). 12 bulan default.
  */
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { ArrowUp, ArrowDown, ArrowUpRight, Send } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 
 interface MonthlyData {
@@ -23,10 +29,14 @@ interface NetWorthHeroProps {
   nonLiquidTotal: number
   investmentsTotal: number
   debtTotal: number
-  /** User name for the greeting (first name preferred) */
   userName?: string
-  /** Monthly cashflow trend for the 12-month sparkline on the right */
   monthlyTrend?: MonthlyData[]
+}
+
+const PERIODS = ['1B', '3B', '6B', '1T', 'Semua'] as const
+type Period = (typeof PERIODS)[number]
+const PERIOD_TO_MONTHS: Record<Period, number> = {
+  '1B': 1, '3B': 3, '6B': 6, '1T': 12, Semua: 12,
 }
 
 export function NetWorthHero({
@@ -40,10 +50,10 @@ export function NetWorthHero({
   const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
   const netWorth = totalAssets - debtTotal
 
-  // Time-aware witty greeting per design handoff microcopy library.
+  // Time-aware greeting — editorial tone tetap casual hangat.
   const now = new Date()
   const hour = now.getHours()
-  const dateSeed = now.getDate() + now.getMonth() * 31  // stable per day
+  const dateSeed = now.getDate() + now.getMonth() * 31
   const greetingMain = hour >= 4 && hour < 11 ? 'Pagi'
     : hour >= 11 && hour < 15 ? 'Siang'
     : hour >= 15 && hour < 18 ? 'Sore'
@@ -58,26 +68,16 @@ export function NetWorthHero({
   })()
   const subGreeting = subOptions[dateSeed % subOptions.length]
 
-  // Period filter for the chart — chip-style selector per mockup ("1Y" active).
-  // Filters the monthlyTrend slice shown in the sparkline.
-  const [chartPeriod, setChartPeriod] = useState<'1M' | '3M' | '6M' | '1Y' | 'ALL'>('1Y')
-  const periodToMonths = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12, 'ALL': 12 } as const
+  const [chartPeriod, setChartPeriod] = useState<Period>('1T')
   const filteredTrend = useMemo(() => {
-    const months = periodToMonths[chartPeriod]
+    const months = PERIOD_TO_MONTHS[chartPeriod]
     if (months >= monthlyTrend.length) return monthlyTrend
     return monthlyTrend.slice(-months)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chartPeriod, monthlyTrend])
 
-  // Build CUMULATIVE net worth growth trend (proxy):
-  //   - Anchor: current netWorth at the LAST month
-  //   - Each prior month = current - sum(net cashflow forward)
-  // This synthesizes a "Net Worth growth" line from monthly net cashflow,
-  // since we don't have actual net_worth_snapshots wired here yet.
-  const sparklineData = (() => {
+  // Synthesize cumulative growth from monthly cashflow.
+  const sparkline = useMemo(() => {
     if (filteredTrend.length === 0) return null
-    // Walk backward: start at netWorth, subtract net cashflow of each
-    // forward month to reconstruct prior month's value.
     const cumulative: number[] = []
     let running = netWorth
     for (let i = filteredTrend.length - 1; i >= 0; i--) {
@@ -87,173 +87,274 @@ export function NetWorthHero({
     const max = Math.max(...cumulative)
     const min = Math.min(...cumulative)
     const range = max - min || 1
-    const W = 600
-    const H = 160
+    const W = 640
+    const H = 220
     const points = cumulative.map((v, i) => {
       const x = (i / Math.max(1, cumulative.length - 1)) * W
-      const y = H - ((v - min) / range) * (H - 24) - 12
+      const y = H - ((v - min) / range) * (H - 32) - 16
       return { x, y, v }
     })
     const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
     const areaPath = `${linePath} L${W},${H} L0,${H} Z`
-    // Compute % change from start to end of period
     const startVal = cumulative[0]
     const endVal = cumulative[cumulative.length - 1]
     const change = endVal - startVal
     const changePct = startVal !== 0 ? (change / Math.abs(startVal)) * 100 : 0
     return { points, linePath, areaPath, W, H, change, changePct }
-  })()
+  }, [filteredTrend, netWorth])
 
-  // Forecast: if recent 3-month avg net trend continues, when do we hit Rp 1B?
-  const forecastText = (() => {
-    if (monthlyTrend.length < 3) return null
-    const recentAvg = monthlyTrend.slice(-3).reduce((s, m) => s + m.net, 0) / 3
-    if (recentAvg <= 0) return null
-    const target = 1_000_000_000  // Rp 1 miliar
-    if (netWorth >= target) return null
-    const monthsToTarget = Math.ceil((target - netWorth) / recentAvg)
-    if (monthsToTarget > 60 || monthsToTarget < 1) return null
-    return monthsToTarget
-  })()
+  // Bulan-ini delta (selalu pakai bulan terakhir di trend, terlepas dari period filter)
+  const monthDelta = monthlyTrend.length > 0 ? monthlyTrend[monthlyTrend.length - 1].net : 0
 
-  const PERIODS = ['1M', '3M', '6M', '1Y', 'ALL'] as const
+  // YTD percent — compare net worth now vs net worth start of year
+  const ytdPct = (() => {
+    if (monthlyTrend.length < 2) return 0
+    const ytdMonths = Math.min(now.getMonth() + 1, monthlyTrend.length)
+    const ytdSum = monthlyTrend.slice(-ytdMonths).reduce((s, m) => s + m.net, 0)
+    const yearStart = netWorth - ytdSum
+    if (yearStart === 0) return 0
+    return (ytdSum / Math.abs(yearStart)) * 100
+  })()
 
   return (
     <div className="space-y-5">
-      {/* Greeting row — page-level h1 (replaces "Home" header title per
-          mockup). Date moved to header top-left bar (per user feedback). */}
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
-        {greetingMain}{userName ? `, ${userName}` : ''}.
-        <span
-          className="ml-2 font-normal text-base sm:text-lg"
-          style={{ color: 'var(--ink-muted)' }}
-        >
-          {subGreeting}.
-        </span>
-      </h1>
-
-      {/* Net Worth Hero card */}
-      <div className="dark-card p-6 sm:p-8 relative overflow-hidden">
-        {/* Subtle ambient emerald glow */}
-        <div
-          className="absolute -top-20 -right-20 size-72 rounded-full opacity-20 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, var(--emerald-400), transparent 70%)' }}
-        />
-
-        <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 items-start">
-          {/* LEFT: Net Worth value + delta chips + forecast */}
-          <div className="min-w-0">
-            <p className="caps" style={{ fontSize: '0.625rem', color: 'rgba(255,255,255,0.5)' }}>Net Worth</p>
-            <p
-              className="num tabular mt-2 leading-none font-bold whitespace-nowrap"
+      {/* ─── Greeting bar (editorial) ─── */}
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <p
+            style={{
+              fontSize: 11,
+              color: 'var(--text-mute)',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+            }}
+          >
+            {new Date().toLocaleDateString('id-ID', {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            })}
+          </p>
+          <h1
+            className="mt-1"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 32,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              color: 'var(--ink)',
+            }}
+          >
+            {greetingMain}{userName ? `, ${userName}` : ''}
+            <span
+              className="ml-1"
               style={{
-                color: 'var(--on-black)',
-                fontSize: 'clamp(36px, 5.5vw, 52px)',
-                letterSpacing: '-0.035em',
+                fontStyle: 'italic',
+                color: 'var(--text-mute)',
+                fontSize: 22,
+              }}
+            >
+              — {subGreeting}.
+            </span>
+          </h1>
+        </div>
+      </div>
+
+      {/* ─── Net Worth hero card (2-col editorial) ─── */}
+      <section
+        className="kl-card overflow-hidden"
+        style={{ padding: 0 }}
+      >
+        <div
+          className="grid lg:grid-cols-[1fr_1.2fr]"
+          style={{ minHeight: 320 }}
+        >
+          {/* ───── LEFT: Numeric block ───── */}
+          <div
+            className="px-7 py-8 sm:px-9 sm:py-10"
+            style={{ borderRight: '1px solid var(--line)' }}
+          >
+            <p className="kl-eyebrow">Kekayaan Bersih</p>
+            <p
+              className="kl-display kl-num"
+              style={{
+                fontSize: 'clamp(40px, 6vw, 64px)',
+                marginTop: 12,
+                lineHeight: 1,
+                color: 'var(--text)',
               }}
             >
               {formatCurrency(netWorth)}
             </p>
-            {/* Delta chips — emerald increase + percentage */}
-            {sparklineData && sparklineData.change !== 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+
+            <div className="flex items-center flex-wrap gap-3 mt-4">
+              {monthDelta !== 0 && (
                 <span
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                  className="kl-chip kl-num"
                   style={{
-                    background: sparklineData.change >= 0 ? 'rgba(16,185,129,0.18)' : 'rgba(244,63,94,0.18)',
-                    color: sparklineData.change >= 0 ? '#6EE7B7' : '#FB7185',
+                    background: monthDelta > 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+                    color: monthDelta > 0 ? 'var(--c-mint)' : 'var(--c-coral)',
                   }}
                 >
-                  {sparklineData.change >= 0 ? '↑' : '↓'} {formatCompactCurrency(Math.abs(sparklineData.change))} {chartPeriod === 'ALL' ? 'all-time' : chartPeriod === '1M' ? 'bulan ini' : chartPeriod}
+                  {monthDelta > 0 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+                  {monthDelta > 0 ? '+' : '−'}{formatCompactCurrency(Math.abs(monthDelta))} bulan ini
                 </span>
-                <span
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+              )}
+              {ytdPct !== 0 && (
+                <span style={{ fontSize: 12, color: 'var(--text-mute)' }}>
+                  YTD{' '}
+                  <strong
+                    className="kl-num"
+                    style={{ color: ytdPct >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                  >
+                    {ytdPct >= 0 ? '+' : ''}{ytdPct.toFixed(1)}%
+                  </strong>
+                </span>
+              )}
+            </div>
+
+            {/* Aset/Utang split */}
+            <div
+              className="grid grid-cols-2 gap-0 mt-7 pt-5"
+              style={{ borderTop: '1px solid var(--line)' }}
+            >
+              <div>
+                <p
                   style={{
-                    background: 'rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: 11,
+                    color: 'var(--text-mute)',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  {sparklineData.changePct >= 0 ? '+' : ''}{sparklineData.changePct.toFixed(1)}%
-                </span>
+                  Total Aset
+                </p>
+                <p
+                  className="kl-num mt-1.5"
+                  style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)' }}
+                >
+                  {formatCurrency(totalAssets)}
+                </p>
               </div>
-            )}
-            {/* Forecast text per mockup line 111-113 */}
-            {forecastText && (
-              <p className="text-[13px] mt-5 leading-[1.5]" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                Kalau kecepatan ini lanjut, kamu akan capai{' '}
-                <span className="font-semibold" style={{ color: 'var(--emerald-400)' }}>Rp 1 miliar</span>{' '}
-                dalam {forecastText} bulan.
-              </p>
-            )}
-            {/* Asset/debt sub line */}
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
-              <span style={{ color: 'rgba(255,255,255,0.5)' }}>
-                Aset <span className="num font-semibold ml-1" style={{ color: 'var(--on-black)' }}>{formatCurrency(totalAssets)}</span>
-              </span>
-              <span style={{ color: 'rgba(255,255,255,0.5)' }}>
-                Utang <span className="num font-semibold ml-1" style={{ color: '#FB7185' }}>−{formatCurrency(debtTotal)}</span>
-              </span>
+              <div>
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--text-mute)',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Total Utang
+                </p>
+                <p
+                  className="kl-num mt-1.5"
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: debtTotal > 0 ? 'var(--c-coral)' : 'var(--ink)',
+                  }}
+                >
+                  {debtTotal > 0 ? `−${formatCurrency(debtTotal)}` : formatCurrency(0)}
+                </p>
+              </div>
+            </div>
+
+            {/* CTAs */}
+            <div className="flex gap-2 mt-6 flex-wrap">
+              <Link href="/dashboard/net-worth" className="kl-btn kl-btn-primary">
+                <ArrowUpRight className="size-3.5" />
+                Rincian kekayaan
+              </Link>
+              <Link href="/dashboard/transactions/import" className="kl-btn">
+                <Send className="size-3.5" />
+                Import mutasi
+              </Link>
             </div>
           </div>
 
-          {/* RIGHT: Net Worth growth chart with period chip selector */}
-          <div className="min-w-0">
-            <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-              <p className="caps" style={{ fontSize: '0.625rem', color: 'rgba(255,255,255,0.5)' }}>
-                {chartPeriod === 'ALL' ? 'All Time' : chartPeriod === '1M' ? '1 Bulan Terakhir' : chartPeriod === '3M' ? '3 Bulan Terakhir' : chartPeriod === '6M' ? '6 Bulan Terakhir' : '12 Bulan Terakhir'}
-              </p>
-              {/* Period chip selector per mockup line 119-122 */}
-              <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                {PERIODS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setChartPeriod(p)}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
-                    style={{
-                      background: chartPeriod === p ? 'rgba(255,255,255,0.12)' : 'transparent',
-                      color: chartPeriod === p ? '#FFFFFF' : 'rgba(255,255,255,0.55)',
-                    }}
-                  >
-                    {p}
-                  </button>
-                ))}
+          {/* ───── RIGHT: Chart block ───── */}
+          <div className="px-7 py-8 sm:px-9 sm:py-10 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="kl-eyebrow">12 Bulan Terakhir</p>
+              <div
+                className="flex gap-0.5 p-1 rounded-full"
+                style={{ background: 'var(--surface-2)' }}
+              >
+                {PERIODS.map((p) => {
+                  const active = chartPeriod === p
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setChartPeriod(p)}
+                      className="text-[11px] font-semibold px-3 py-1 rounded-full transition-colors"
+                      style={{
+                        background: active ? 'var(--surface)' : 'transparent',
+                        color: active ? 'var(--ink)' : 'var(--text-mute)',
+                        boxShadow: active ? 'var(--shadow-sm)' : 'none',
+                        border: 0,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {p}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {sparklineData ? (
-              <svg viewBox={`0 0 ${sparklineData.W} ${sparklineData.H}`} className="w-full" style={{ height: 160 }} preserveAspectRatio="none">
+            {sparkline ? (
+              <svg
+                viewBox={`0 0 ${sparkline.W} ${sparkline.H}`}
+                preserveAspectRatio="none"
+                className="w-full"
+                style={{ height: 220 }}
+              >
                 <defs>
                   <linearGradient id="nw-spark-grad" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.30" />
-                    <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                    <stop offset="0%" stopColor="var(--c-primary)" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="var(--c-primary)" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <path d={sparklineData.areaPath} fill="url(#nw-spark-grad)" />
-                <path d={sparklineData.linePath} fill="none" stroke="#34D399" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-                {sparklineData.points.length > 0 && (
+                <path d={sparkline.areaPath} fill="url(#nw-spark-grad)" />
+                <path
+                  d={sparkline.linePath}
+                  fill="none"
+                  stroke="var(--c-primary)"
+                  strokeWidth="2.5"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+                {sparkline.points.length > 0 && (
                   <>
                     <circle
-                      cx={sparklineData.points[sparklineData.points.length - 1].x}
-                      cy={sparklineData.points[sparklineData.points.length - 1].y}
-                      r="5" fill="#34D399"
+                      cx={sparkline.points[sparkline.points.length - 1].x}
+                      cy={sparkline.points[sparkline.points.length - 1].y}
+                      r="5"
+                      fill="var(--c-primary)"
                     />
                     <circle
-                      cx={sparklineData.points[sparklineData.points.length - 1].x}
-                      cy={sparklineData.points[sparklineData.points.length - 1].y}
-                      r="10" fill="#34D399" opacity="0.30"
+                      cx={sparkline.points[sparkline.points.length - 1].x}
+                      cy={sparkline.points[sparkline.points.length - 1].y}
+                      r="10"
+                      fill="var(--c-primary)"
+                      opacity="0.25"
                     />
                   </>
                 )}
               </svg>
             ) : (
-              <div className="h-[160px] flex items-center justify-center text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <div
+                className="flex-1 flex items-center justify-center"
+                style={{ minHeight: 220, color: 'var(--text-mute)', fontSize: 13 }}
+              >
                 Catat transaksi untuk lihat trend
               </div>
             )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
