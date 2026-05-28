@@ -28,24 +28,26 @@ export default async function LandingPage() {
   if (isAuthed) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--paper)', color: 'var(--ink)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--ink)' }}>
       {/* ─── NAV ───────────────────────────────────────────────── */}
       <header
         className="flex items-center justify-between px-6 sm:px-12 py-5 border-b"
-        style={{ borderColor: 'var(--border-soft)' }}
+        style={{ borderColor: 'var(--line)' }}
       >
         <div className="flex items-center gap-2.5">
+          <div className="kl-brandmark">
+            <span>k</span>
+          </div>
           <div
-            className="size-8 rounded-[9px] flex items-center justify-center font-extrabold text-base text-white"
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
-              letterSpacing: '-0.04em',
-              boxShadow: '0 8px 24px -8px rgba(16,185,129,0.45)',
+              fontFamily: 'var(--font-display)',
+              fontSize: 22,
+              letterSpacing: '-0.02em',
+              color: 'var(--ink)',
             }}
           >
-            K
+            Klunting
           </div>
-          <div className="font-bold text-base tracking-tight">Klunting</div>
         </div>
         <nav className="hidden md:flex gap-7 text-sm" style={{ color: 'var(--ink-muted)' }}>
           <a href="#fitur" className="hover:text-[var(--ink)] transition-colors">Fitur</a>
@@ -73,28 +75,19 @@ export default async function LandingPage() {
 
       {/* ─── HERO ──────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-6 sm:px-12 py-16 sm:py-24">
-        <div
-          className="absolute -top-10 -right-16 size-[480px] rounded-full opacity-50 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.18), transparent 60%)' }}
-        />
-        <div
-          className="absolute top-[200px] -left-20 size-[360px] rounded-full opacity-40 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.08), transparent 60%)' }}
-        />
-
         <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
           {/* LEFT — copy */}
           <div>
             <h1
-              className="font-bold tracking-tight"
+              className="kl-display"
               style={{
-                fontSize: 'clamp(40px, 6.5vw, 72px)',
+                fontSize: 'clamp(40px, 6.5vw, 80px)',
                 lineHeight: 1.04,
-                letterSpacing: '-0.04em',
+                letterSpacing: '-0.03em',
               }}
             >
               Total kekayaanmu,<br />
-              <span style={{ color: 'var(--emerald-700)' }}>di satu app.</span>
+              <em style={{ color: 'var(--c-primary)', fontStyle: 'italic' }}>di satu app.</em>
             </h1>
             <p
               className="mt-6 text-lg leading-relaxed max-w-lg"
