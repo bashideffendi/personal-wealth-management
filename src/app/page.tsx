@@ -399,14 +399,14 @@ export default async function LandingPage() {
             <div
               className="rounded-2xl p-7 border-2 relative"
               style={{
-                background: 'linear-gradient(135deg, var(--emerald-50, #ECFDF5), var(--surface))',
-                borderColor: 'var(--emerald-500)',
+                background: 'linear-gradient(135deg, var(--c-primary-soft), var(--surface))',
+                borderColor: 'var(--c-primary)',
               }}
             >
               <span
                 className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap"
                 style={{
-                  background: 'var(--emerald-600)',
+                  background: 'var(--c-primary)',
                   color: '#FFFFFF',
                   letterSpacing: '0.08em',
                 }}
@@ -596,39 +596,40 @@ export default async function LandingPage() {
         <div
           className="max-w-5xl mx-auto rounded-3xl p-10 sm:p-14 relative overflow-hidden text-center"
           style={{
-            background: 'linear-gradient(135deg, var(--emerald-600), var(--emerald-800))',
-            boxShadow: '0 24px 48px -16px rgba(16,185,129,0.40)',
+            background: 'var(--c-ink)',
+            color: 'var(--bg)',
           }}
         >
-          <div
-            className="absolute -top-20 -right-20 size-80 rounded-full opacity-40 pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.20), transparent 60%)' }}
-          />
           <div className="relative">
+            <p
+              className="kl-eyebrow"
+              style={{ color: 'rgba(255,255,255,0.55)' }}
+            >
+              Mulai sekarang
+            </p>
             <h2
-              className="font-bold tracking-tight"
+              className="kl-display mt-3"
               style={{
-                color: '#FFFFFF',
-                fontSize: 'clamp(28px, 4vw, 40px)',
-                letterSpacing: '-0.025em',
-                lineHeight: 1.15,
+                color: 'var(--bg)',
+                fontSize: 'clamp(32px, 4.5vw, 56px)',
+                lineHeight: 1.05,
               }}
             >
-              Mulai atur uangmu hari ini.
+              Mulai atur uangmu{' '}
+              <em style={{ color: 'var(--c-mint)', fontStyle: 'italic' }}>hari ini.</em>
             </h2>
             <Link
               href="/register"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold mt-7 transition hover:opacity-90"
               style={{
-                background: '#FFFFFF',
-                color: 'var(--emerald-700)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                background: 'var(--bg)',
+                color: 'var(--ink)',
               }}
             >
               Coba 14 hari gratis
               <ArrowRight className="size-4" />
             </Link>
-            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
               Trial 14 hari akses penuh · Tanpa kartu kredit
             </p>
           </div>
@@ -643,10 +644,10 @@ export default async function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div
-              className="size-7 rounded-[8px] flex items-center justify-center font-extrabold text-sm text-white"
-              style={{ background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))' }}
+              className="kl-brandmark"
+              style={{ width: 28, height: 28, borderRadius: 8 }}
             >
-              K
+              <span style={{ fontSize: 16 }}>k</span>
             </div>
             <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
               <span className="font-semibold" style={{ color: 'var(--ink)' }}>Klunting</span>
