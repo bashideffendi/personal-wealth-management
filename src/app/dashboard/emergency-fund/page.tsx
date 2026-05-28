@@ -218,33 +218,70 @@ export default function EmergencyFundPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <div className="flex items-end gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <p className="caps">Proteksi Finansial</p>
-            <div className="mt-2 flex items-end gap-3">
-              <Shield className="h-7 w-7" style={{ color: 'var(--c-mint)' }} />
-              <h2
-                className="text-3xl sm:text-4xl font-semibold tracking-tight flex items-center gap-2"
-                style={{ color: 'var(--on-black)' }}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+          <div className="flex items-end gap-4 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+                style={{ color: '#6EE7B7' }}
               >
-                Dana Darurat
-                <EduTip topic="emergency-fund" side="bottom" iconSize={18} />
-              </h2>
+                Proteksi Finansial
+              </p>
+              <div className="mt-2 flex items-end gap-3">
+                <Shield className="h-7 w-7" style={{ color: '#34D399' }} />
+                <h1
+                  className="font-bold tracking-tight flex items-center gap-2"
+                  style={{
+                    fontSize: 'clamp(28px, 4vw, 40px)',
+                    color: '#FFFFFF',
+                    letterSpacing: '-0.035em',
+                  }}
+                >
+                  Dana Darurat
+                  <EduTip topic="emergency-fund" side="bottom" iconSize={18} />
+                </h1>
+              </div>
+              <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>{today}</p>
             </div>
-            <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>{today}</p>
-          </div>
-          <div
-            className="rounded-lg px-5 py-3 border"
-            style={{ background: 'var(--black-2)', borderColor: 'var(--black-line)' }}
-          >
-            <p className="caps">Progress</p>
-            <p className="num mt-1 text-2xl font-semibold" style={{ color: 'var(--lime-400)' }}>
-              {progressPercent}%
-            </p>
+            <div
+              className="rounded-xl px-5 py-3"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+              }}
+            >
+              <p
+                className="text-[10px] font-bold tracking-[0.14em] uppercase"
+                style={{ color: 'rgba(255,255,255,0.55)' }}
+              >
+                Progress
+              </p>
+              <p
+                className="num tabular mt-1 font-bold"
+                style={{ fontSize: 24, color: '#34D399' }}
+              >
+                {progressPercent}%
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

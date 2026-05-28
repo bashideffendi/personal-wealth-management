@@ -165,35 +165,57 @@ export default function ContractsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Kontrak & Jatuh Tempo</p>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+        <p
+          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          style={{ color: '#6EE7B7' }}
+        >
+          Kontrak & Jatuh Tempo
+        </p>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <p className="num tabular text-3xl sm:text-4xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="num tabular font-bold" style={{ fontSize: 36, color: '#FFFFFF', letterSpacing: '-0.04em' }}>
               {summary.total}
             </p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--on-black-mut)' }}>Kontrak aktif</p>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Kontrak aktif</p>
           </div>
           <div>
-            <p className="num tabular text-3xl sm:text-4xl font-semibold" style={{ color: summary.overdue > 0 ? 'var(--danger)' : 'var(--ink)' }}>
+            <p className="num tabular font-bold" style={{ fontSize: 36, color: summary.overdue > 0 ? '#FDA4AF' : '#FFFFFF', letterSpacing: '-0.04em' }}>
               {summary.overdue}
             </p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--on-black-mut)' }}>Lewat jatuh tempo</p>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Lewat jatuh tempo</p>
           </div>
           <div>
-            <p className="num tabular text-3xl sm:text-4xl font-semibold" style={{ color: summary.expiring > 0 ? 'var(--orange-400)' : 'var(--ink)' }}>
+            <p className="num tabular font-bold" style={{ fontSize: 36, color: summary.expiring > 0 ? '#FCD34D' : '#FFFFFF', letterSpacing: '-0.04em' }}>
               {summary.expiring}
             </p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--on-black-mut)' }}>Segera jatuh tempo</p>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Segera jatuh tempo</p>
           </div>
           <div>
-            <p className="num tabular text-3xl sm:text-4xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="num tabular font-bold" style={{ fontSize: 26, color: '#FFFFFF', letterSpacing: '-0.04em' }}>
               {formatCurrency(summary.monthlyCost)}
             </p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--on-black-mut)' }}>Beban/bulan rata²</p>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Beban/bulan rata²</p>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>

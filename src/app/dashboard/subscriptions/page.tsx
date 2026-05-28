@@ -62,22 +62,48 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Audit Subscription · per bulan</p>
-        <p
-          className="num tabular mt-3 leading-none font-bold"
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: 'var(--on-black)',
-            fontSize: 'clamp(36px, 5vw, 48px)',
-            letterSpacing: '-0.035em',
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.16), transparent 65%)',
           }}
-        >
-          {formatCurrency(totals.monthEquivalent)}
-        </p>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          ≈ <span className="num font-semibold" style={{ color: 'var(--on-black)' }}>{formatCurrency(totals.yearEquivalent)}</span>/thn · {totals.count} subscription aktif — review mana yang masih kepakai.
-        </p>
-      </div>
+        />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#C4B5FD' }}
+          >
+            Audit Subscription · per bulan
+          </p>
+          <p
+            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
+            style={{
+              color: '#FFFFFF',
+              fontSize: 'clamp(36px, 5vw, 56px)',
+              letterSpacing: '-0.04em',
+            }}
+          >
+            {formatCurrency(totals.monthEquivalent)}
+          </p>
+          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            ≈{' '}
+            <span className="num font-semibold" style={{ color: '#FFFFFF' }}>
+              {formatCurrency(totals.yearEquivalent)}
+            </span>
+            /thn · {totals.count} subscription aktif — review mana yang masih kepakai.
+          </p>
+        </div>
+      </section>
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
