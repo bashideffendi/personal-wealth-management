@@ -1,8 +1,7 @@
 'use client'
 
 /**
- * Register page — same minimalist treatment as login.
- * Logo → nama → tagline → form (nama + email + password) → link masuk.
+ * Register page — Wise/Bibit-inspired clean fintech.
  */
 
 import { useState } from 'react'
@@ -48,38 +47,55 @@ export default function RegisterPage() {
       className="flex min-h-screen items-center justify-center px-4 py-12"
       style={{ background: 'var(--bg)' }}
     >
-      <div className="w-full" style={{ maxWidth: 420 }}>
-        {/* Brand */}
-        <div className="text-center">
-          <Link href="/" className="inline-block">
-            <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
-              <span>K</span>
+      <div className="w-full" style={{ maxWidth: 400 }}>
+        {/* Brand lock-up */}
+        <div className="flex flex-col items-center mb-8">
+          <Link href="/" aria-label="Klunting">
+            <div
+              className="grid place-items-center mb-4"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: 'linear-gradient(135deg, #10B981, #047857)',
+                color: '#FFFFFF',
+                boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.45)',
+                fontWeight: 800,
+                fontSize: 28,
+                fontFamily: 'var(--font-sans)',
+                letterSpacing: '-0.04em',
+              }}
+            >
+              K
             </div>
           </Link>
           <h1
-            className="mt-4 kl-display"
+            className="font-bold tracking-tight"
             style={{
-              fontSize: 32,
+              fontSize: 28,
               color: 'var(--ink)',
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.025em',
             }}
           >
-            Klunting<em style={{ color: 'var(--c-mint)', fontStyle: 'normal' }}>.</em>
+            Bikin akun
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-mute)' }}>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
             Coba 14 hari gratis. Tanpa kartu kredit.
           </p>
         </div>
 
-        {/* Form / Success */}
-        <div className="kl-card mt-8 p-6 sm:p-7">
+        {/* Form / Success card */}
+        <div className="s-card s-card-pad-lg">
           {success ? (
             <div className="text-center py-2">
               <div
-                className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"
+                className="mx-auto grid place-items-center"
                 style={{
-                  background: 'var(--success-bg)',
-                  color: 'var(--success)',
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  background: 'var(--c-mint-soft)',
+                  color: 'var(--c-mint)',
                 }}
               >
                 <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -90,8 +106,8 @@ export default function RegisterPage() {
                 Cek inbox kamu
               </h2>
               <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-                Link konfirmasi udah dikirim ke <strong style={{ color: 'var(--ink)' }}>{email}</strong>.
-                Klik link itu buat aktifkan akun & masuk ke dashboard.
+                Link konfirmasi udah dikirim ke{' '}
+                <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Klik link itu buat aktifkan akun.
               </p>
               <p className="mt-4 text-xs" style={{ color: 'var(--ink-soft)' }}>
                 Belum dapet dalam 5 menit? Cek folder spam.
@@ -116,50 +132,79 @@ export default function RegisterPage() {
                 <div
                   className="rounded-lg border p-3 text-sm"
                   style={{
-                    background: 'var(--danger-bg)',
-                    borderColor: 'color-mix(in srgb, var(--danger) 30%, transparent)',
-                    color: 'var(--danger)',
+                    background: 'var(--c-coral-soft)',
+                    borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)',
+                    color: 'var(--c-coral)',
                   }}
                 >
                   {error}
                 </div>
               )}
 
-              <Input
-                type="text"
-                placeholder="Nama lengkap"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="h-11"
-                autoComplete="name"
-              />
+              <div>
+                <label
+                  className="text-xs font-semibold block mb-1.5"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  Nama lengkap
+                </label>
+                <Input
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="h-11"
+                  autoComplete="name"
+                />
+              </div>
 
-              <Input
-                type="email"
-                placeholder="Alamat email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11"
-                autoComplete="email"
-              />
+              <div>
+                <label
+                  className="text-xs font-semibold block mb-1.5"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="kamu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-11"
+                  autoComplete="email"
+                />
+              </div>
 
-              <Input
-                type="password"
-                placeholder="Password (minimal 6 karakter)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-11"
-                autoComplete="new-password"
-              />
+              <div>
+                <label
+                  className="text-xs font-semibold block mb-1.5"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  Password
+                </label>
+                <Input
+                  type="password"
+                  placeholder="Minimal 6 karakter"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="h-11"
+                  autoComplete="new-password"
+                />
+              </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="mt-2 h-11 w-full text-sm font-semibold kl-btn-primary"
+                className="mt-2 h-11 w-full text-sm font-semibold"
+                style={{
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 0,
+                }}
               >
                 {loading ? 'Memproses…' : 'Daftar'}
               </Button>
@@ -177,7 +222,6 @@ export default function RegisterPage() {
           )}
         </div>
 
-        {/* Login link — only show when not in success state */}
         {!success && (
           <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
             Udah punya akun?{' '}

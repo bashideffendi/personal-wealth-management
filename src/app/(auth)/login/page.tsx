@@ -1,10 +1,8 @@
 'use client'
 
 /**
- * Login page — Budggt-inspired: minimal, centered, single column.
- *
- * Direction: form yang fokus ke fungsi (masuk), bukan landing page kedua.
- * Logo → nama → tagline 1 baris → card form → link daftar. Done.
+ * Login page — Wise/Bibit-inspired clean fintech.
+ * Logo lock-up → 1-line tagline → form card → register link.
  */
 
 import { useState } from 'react'
@@ -45,89 +43,120 @@ export default function LoginPage() {
       className="flex min-h-screen items-center justify-center px-4 py-12"
       style={{ background: 'var(--bg)' }}
     >
-      <div className="w-full" style={{ maxWidth: 420 }}>
-        {/* Brand — editorial "k" + mint dot per design handoff */}
-        <div className="text-center">
-          <Link href="/" className="inline-block">
-            <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
-              <span>K</span>
+      <div className="w-full" style={{ maxWidth: 400 }}>
+        {/* Brand lock-up */}
+        <div className="flex flex-col items-center mb-8">
+          <Link href="/" aria-label="Klunting">
+            <div
+              className="grid place-items-center mb-4"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: 'linear-gradient(135deg, #10B981, #047857)',
+                color: '#FFFFFF',
+                boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.45)',
+                fontWeight: 800,
+                fontSize: 28,
+                fontFamily: 'var(--font-sans)',
+                letterSpacing: '-0.04em',
+              }}
+            >
+              K
             </div>
           </Link>
           <h1
-            className="mt-4 kl-display"
+            className="font-bold tracking-tight"
             style={{
-              fontSize: 32,
+              fontSize: 28,
               color: 'var(--ink)',
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.025em',
             }}
           >
-            Klunting<em style={{ color: 'var(--c-mint)', fontStyle: 'normal' }}>.</em>
+            Selamat datang
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-mute)' }}>
-            Atur uang & aset di satu tempat.
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
+            Masuk ke akun Klunting kamu.
           </p>
         </div>
 
-        {/* Form */}
-        <div
-          className="kl-card mt-8 p-6 sm:p-7"
-        >
-          <p className="kl-eyebrow mb-4">Masuk</p>
+        {/* Form card */}
+        <div className="s-card s-card-pad-lg">
           <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
             {error && (
               <div
                 className="rounded-lg border p-3 text-sm"
                 style={{
-                  background: 'var(--danger-bg)',
-                  borderColor: 'color-mix(in srgb, var(--danger) 30%, transparent)',
-                  color: 'var(--danger)',
+                  background: 'var(--c-coral-soft)',
+                  borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)',
+                  color: 'var(--c-coral)',
                 }}
               >
                 {error}
               </div>
             )}
 
-            <Input
-              type="email"
-              placeholder="Alamat email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-11"
-              autoComplete="email"
-            />
-
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="h-11"
-              autoComplete="current-password"
-            />
-
-            <div className="flex items-center justify-end text-sm pt-1">
-              <Link
-                href="/forgot-password"
-                className="font-medium hover:underline"
-                style={{ color: 'var(--c-primary)' }}
+            <div>
+              <label
+                className="text-xs font-semibold block mb-1.5"
+                style={{ color: 'var(--ink-muted)' }}
               >
-                Lupa password?
-              </Link>
+                Email
+              </label>
+              <Input
+                type="email"
+                placeholder="kamu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11"
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  className="text-xs font-semibold"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  Password
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium hover:underline"
+                  style={{ color: 'var(--c-mint)' }}
+                >
+                  Lupa?
+                </Link>
+              </div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-11"
+                autoComplete="current-password"
+              />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="mt-2 h-11 w-full text-sm font-semibold kl-btn-primary"
+              className="mt-2 h-11 w-full text-sm font-semibold"
+              style={{
+                background: '#10B981',
+                color: '#FFFFFF',
+                border: 0,
+              }}
             >
               {loading ? 'Memproses…' : 'Masuk'}
             </Button>
           </form>
         </div>
 
-        {/* Register */}
+        {/* Register link */}
         <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
           Belum punya akun?{' '}
           <Link
@@ -135,7 +164,7 @@ export default function LoginPage() {
             className="font-semibold hover:underline"
             style={{ color: 'var(--ink)' }}
           >
-            Daftar
+            Daftar gratis
           </Link>
         </p>
       </div>
