@@ -280,7 +280,7 @@ export default function NetWorthPage() {
           <CardContent className="space-y-4">
             {/* Aset Lancar */}
             <div>
-              <h3 className="caps mb-2" style={{ color: 'var(--ink-muted)' }}>Aset Lancar</h3>
+              <h3 className="eyebrow mb-2" style={{ color: 'var(--ink-muted)' }}>Aset Lancar</h3>
               <div className="space-y-1">
                 <Row label="Kas & Setara Kas" value={data.cashAndEquivalent} />
                 <Row label="Piutang" value={data.receivable} />
@@ -291,7 +291,7 @@ export default function NetWorthPage() {
 
             {/* Aset Tidak Lancar */}
             <div>
-              <h3 className="caps mb-2" style={{ color: 'var(--ink-muted)' }}>Aset Tidak Lancar</h3>
+              <h3 className="eyebrow mb-2" style={{ color: 'var(--ink-muted)' }}>Aset Tidak Lancar</h3>
               <div className="space-y-1">
                 <Row label="Properti" value={data.property} />
                 <Row label="Kendaraan & Peralatan" value={data.vehicle} />
@@ -315,7 +315,7 @@ export default function NetWorthPage() {
           <CardContent className="space-y-4">
             {/* Utang Lancar */}
             <div>
-              <h3 className="caps mb-2" style={{ color: 'var(--ink-muted)' }}>Utang Lancar</h3>
+              <h3 className="eyebrow mb-2" style={{ color: 'var(--ink-muted)' }}>Utang Lancar</h3>
               <div className="space-y-1">
                 <Row label="Utang Konsumer" value={data.consumerDebt} />
                 <Row label="Utang Pinjaman Tunai" value={data.cashLoan} />
@@ -326,7 +326,7 @@ export default function NetWorthPage() {
 
             {/* Utang Jangka Panjang */}
             <div>
-              <h3 className="caps mb-2" style={{ color: 'var(--ink-muted)' }}>Utang Jangka Panjang</h3>
+              <h3 className="eyebrow mb-2" style={{ color: 'var(--ink-muted)' }}>Utang Jangka Panjang</h3>
               <div className="space-y-1">
                 <Row label="Utang Jangka Panjang" value={data.longTermDebt} />
               </div>

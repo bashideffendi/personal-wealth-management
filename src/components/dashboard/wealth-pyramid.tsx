@@ -128,7 +128,7 @@ export function WealthPyramid({ input }: Props) {
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <p className="caps flex items-center gap-1.5">
+          <p className="eyebrow flex items-center gap-1.5">
             Hierarchy of Financial Needs
             <EduTip topic="wealth-pyramid" side="bottom" />
           </p>

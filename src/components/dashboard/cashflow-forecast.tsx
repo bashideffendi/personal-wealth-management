@@ -172,7 +172,7 @@ export function CashFlowForecast({
         <a
           href="/dashboard/recurring"
           className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold transition hover:underline"
-          style={{ color: '#6366F1' }}
+          style={{ color: 'var(--c-mint)' }}
         >
           Set up recurring →
         </a>
@@ -183,7 +183,7 @@ export function CashFlowForecast({
   // Color the chart based on health
   const hasNegative = negativeDays.length > 0
   const hasRisk = riskDays.length > 0
-  const accentColor = hasNegative ? '#DC2626' : hasRisk ? '#F59E0B' : '#10B981'
+  const accentColor = hasNegative ? '#F43F5E' : hasRisk ? '#F59E0B' : '#10B981'
 
   // SVG chart dimensions
   const chartH = 80
@@ -218,7 +218,7 @@ export function CashFlowForecast({
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <Calendar className="size-3.5 shrink-0" style={{ color: accentColor }} />
-          <p className="caps flex items-center gap-1.5">
+          <p className="eyebrow flex items-center gap-1.5">
             Forecast Saldo 30h
             <EduTip topic="cash-flow" side="bottom" />
           </p>
@@ -226,7 +226,7 @@ export function CashFlowForecast({
         {hasNegative ? (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
-            style={{ background: 'rgba(220,38,38,0.10)', color: '#DC2626' }}
+            style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral)' }}
           >
             <AlertTriangle className="size-2.5" />
             Risiko Negatif
@@ -234,14 +234,14 @@ export function CashFlowForecast({
         ) : hasRisk ? (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
-            style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}
+            style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber)' }}
           >
             Saldo Tipis
           </span>
         ) : (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide shrink-0"
-            style={{ background: 'rgba(16,185,129,0.08)', color: '#059669' }}
+            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}
           >
             <TrendingUp className="size-2.5" />
             Aman
@@ -260,7 +260,7 @@ export function CashFlowForecast({
           <Stat
             label="Akhir 30h"
             value={formatCurrency(endBalance)}
-            color={endBalance < liquidBalance ? '#DC2626' : '#10B981'}
+            color={endBalance < liquidBalance ? 'var(--c-coral)' : 'var(--c-mint)'}
             icon={endBalance < liquidBalance ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />}
           />
           <Stat
@@ -325,7 +325,7 @@ export function CashFlowForecast({
                 </span>
                 <span
                   className="num font-semibold"
-                  style={{ color: p.inflow > p.outflow ? '#10B981' : '#DC2626' }}
+                  style={{ color: p.inflow > p.outflow ? 'var(--c-mint)' : 'var(--c-coral)' }}
                 >
                   {p.inflow > p.outflow ? '+' : '-'}
                   {formatCurrency(Math.max(p.inflow, p.outflow))}

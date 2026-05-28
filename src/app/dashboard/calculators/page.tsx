@@ -470,7 +470,7 @@ function DCASimulator() {
         </div>
         {result.data.length > 0 && (
           <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="caps mb-2">Proyeksi per Tahun</p>
+            <p className="eyebrow mb-2">Proyeksi per Tahun</p>
             <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
               {result.data.map((d) => (
                 <div key={d.year} className="flex items-center justify-between" style={{ color: 'var(--ink-muted)' }}>
@@ -654,7 +654,7 @@ function TaxCalculator() {
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
           {result.breakdown.length > 0 && (
             <>
-              <p className="caps mb-2">Breakdown Tarif</p>
+              <p className="eyebrow mb-2">Breakdown Tarif</p>
               <div className="space-y-1 text-xs">
                 {result.breakdown.map((b, i) => (
                   <div key={i} className="flex items-center justify-between" style={{ color: 'var(--ink-muted)' }}>

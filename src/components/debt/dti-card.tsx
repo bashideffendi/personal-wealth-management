@@ -92,7 +92,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <p className="caps flex items-center gap-1.5">
+          <p className="eyebrow flex items-center gap-1.5">
             DTI / DSR
             <EduTip topic="dti-ratio" side="bottom" />
           </p>

@@ -57,7 +57,7 @@ export function GoalPyramid({ goals }: Props) {
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <p className="caps flex items-center gap-1.5">
+          <p className="eyebrow flex items-center gap-1.5">
             Behavioral Portfolio
             <EduTip topic="goal-based-investing" side="bottom" />
           </p>

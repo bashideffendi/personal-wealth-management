@@ -360,7 +360,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
             className="rounded-xl border p-4"
             style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
           >
-            <p className="caps mb-3">Performance Saham</p>
+            <p className="eyebrow mb-3">Performance Saham</p>
             <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
               {(['1M', '3M', '6M', '1Y', '3Y', '5Y'] as const).map((p) => {
                 const period = pricePerf[p]
@@ -745,7 +745,7 @@ function ChartCard({
       className="rounded-xl border p-4"
       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
-      <p className="caps mb-2">{title}</p>
+      <p className="eyebrow mb-2">{title}</p>
       <ResponsiveContainer width="100%" height={150}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" />
@@ -794,7 +794,7 @@ function QuarterlyCard({
       className="rounded-xl border p-4"
       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
-      <p className="caps mb-2">{title}</p>
+      <p className="eyebrow mb-2">{title}</p>
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" />

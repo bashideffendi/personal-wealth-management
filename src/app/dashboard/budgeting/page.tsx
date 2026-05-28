@@ -771,7 +771,7 @@ function CategoryGroup({
   return (
     <div>
       <p
-        className="caps mb-2 flex items-center gap-2"
+        className="eyebrow mb-2 flex items-center gap-2"
         style={{ color: 'var(--ink-muted)' }}
       >
         <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: accent }} />

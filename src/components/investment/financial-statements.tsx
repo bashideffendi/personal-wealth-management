@@ -421,7 +421,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
           −
         </Button>
         <div className="min-w-[120px] px-2 text-center">
-          <span className="caps text-[10px]">Skala</span>
+          <span className="eyebrow text-[10px]">Skala</span>
           <div className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{SCALE_LABEL[scale]}</div>
         </div>
         <Button

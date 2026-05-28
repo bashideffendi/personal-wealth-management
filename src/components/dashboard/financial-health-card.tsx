@@ -130,7 +130,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
           className="lg:col-span-5 lg:border-l lg:border-r lg:px-6 flex flex-col"
           style={{ borderColor: 'var(--border-soft)' }}
         >
-          <p className="caps mb-4">Breakdown</p>
+          <p className="eyebrow mb-4">Breakdown</p>
           <div className="space-y-2.5 flex-1">
             {breakdown.map((ind) => (
               <IndicatorBar key={ind.key} indicator={ind} />
@@ -140,7 +140,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
 
         {/* ─── Col 3: Cash Coverage (BIG hero, fills column) ───────── */}
         <div className="lg:col-span-3 flex flex-col">
-          <p className="caps mb-4">Cash Coverage</p>
+          <p className="eyebrow mb-4">Cash Coverage</p>
           <div
             className="rounded-xl p-4 flex-1 flex flex-col"
             style={{

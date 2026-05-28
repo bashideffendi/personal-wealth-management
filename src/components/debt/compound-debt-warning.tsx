@@ -97,7 +97,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="caps flex items-center gap-1.5">
+          <p className="eyebrow flex items-center gap-1.5">
             Bunga Berbunga
             <EduTip topic="compound-interest" side="bottom" />
           </p>

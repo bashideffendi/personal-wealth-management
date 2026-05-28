@@ -472,7 +472,7 @@ export default function InvestmentOverviewPage() {
         </div>
 
         <div className="lg:col-span-3">
-          <p className="caps mb-3">Kategori</p>
+          <p className="eyebrow mb-3">Kategori</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {INVESTMENT_SUBCATS.map((sc) => {
               const cat = sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug
