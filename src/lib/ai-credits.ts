@@ -24,6 +24,11 @@ export const AI_COSTS = {
   // Marked-up biar coherent dengan per-line economics (mutasi 50 baris bisa
   // jadi cost ~Rp 5 kalau dipecah jadi 50× nl_parse; 25 credits = setara).
   mutasi_import: 25,
+  // Stock research generation = long-form prompt, big output (~3000 tokens).
+  // Sharing model: first user pays, semua user lain free dari cache.
+  // 30 credits = around 6× receipt_scan, accounts for sonnet pricing kalau
+  // suatu hari kita switch dari haiku ke sonnet untuk quality.
+  stock_research: 30,
 } as const
 
 export type AICostKey = keyof typeof AI_COSTS
@@ -76,6 +81,7 @@ export async function consumeAICredits(
         costKey === 'receipt_scan' ? 'scan struk'
         : costKey === 'insights' ? 'AI insight'
         : costKey === 'mutasi_import' ? 'import mutasi'
+        : costKey === 'stock_research' ? 'generate research saham'
         : 'AI parse'
       }. Upgrade ke paket lebih tinggi atau tunggu reset bulanan.`,
     }

@@ -42,8 +42,32 @@ export default async function StockResearchPage({ params }: RouteProps) {
   const stats = getEmittenStat(ticker)
   const pricePerf = getPricePerformanceFor(ticker)
   const dividends = getDividendsForTicker(ticker)
-  const research = getResearchMarkdown(ticker)
+  const bundledResearch = getResearchMarkdown(ticker)
   const quarterly = getQuarterlyFinancialsFor(ticker)
+
+  // Fallback: cek cache Supabase kalau gak ada bundled markdown.
+  // Cache di-populate oleh /api/idx-research/[ticker]/generate (AI-generated).
+  let cachedResearch: { frontmatter: Record<string, string | number>; body: string } | null = null
+  if (!bundledResearch) {
+    const { data } = await supabase
+      .from('stock_research_cache')
+      .select('content, frontmatter, generated_at, model')
+      .eq('ticker', ticker)
+      .maybeSingle()
+    if (data) {
+      const row = data as {
+        content: string
+        frontmatter: Record<string, string | number>
+        generated_at: string
+        model: string
+      }
+      cachedResearch = {
+        frontmatter: { ...row.frontmatter, generated: row.generated_at.slice(0, 10) },
+        body: row.content.replace(/^---\n[\s\S]*?\n---\n/, ''), // strip frontmatter from body
+      }
+    }
+  }
+  const research = bundledResearch ?? cachedResearch
 
   if (!stock && !valuation && !emiten) {
     notFound()

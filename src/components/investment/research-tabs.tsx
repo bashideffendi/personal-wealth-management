@@ -15,9 +15,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import {
-  BookOpen, BarChart3, Calculator, FileText, TrendingUp, TrendingDown,
-  Calendar, Sparkles, AlertCircle,
+  BookOpen, BarChart3, Calculator, FileText, TrendingUp,
+  Calendar, Sparkles, AlertCircle, Loader2, Zap,
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
 } from 'recharts'
@@ -162,8 +165,12 @@ export function ResearchTabs(props: ResearchTabsProps) {
   const {
     ticker, name, sector, price, latestYear, metrics5Y,
     valuation, valuationDetail, stats, pricePerf, dividends,
-    quarterlyRevenue, quarterlyNetIncome, quarterlyEPS, research,
+    quarterlyRevenue, quarterlyNetIncome, quarterlyEPS, research: initialResearch,
   } = props
+
+  // Research bisa di-generate ulang di client (lokal state). Initial value
+  // dari server (bundled markdown OR cached AI generation).
+  const [research, setResearch] = useState(initialResearch)
 
   const verdict = valuation?.verdict ?? null
   const verdictColor = verdictStyle(verdict)
@@ -200,15 +207,13 @@ export function ResearchTabs(props: ResearchTabsProps) {
   const nextDividend = upcomingDividends[0] ?? null
 
   return (
-    <Tabs defaultValue={research ? 'research' : 'overview'} className="w-full">
+    <Tabs defaultValue="research" className="w-full">
       <div className="overflow-x-auto -mx-1 px-1 pb-1">
         <TabsList className="inline-flex gap-1 w-auto">
-          {research && (
-            <TabsTrigger value="research">
-              <BookOpen className="size-3.5 mr-1.5" />
-              Research
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="research">
+            <BookOpen className="size-3.5 mr-1.5" />
+            Research
+          </TabsTrigger>
           <TabsTrigger value="overview">
             <BarChart3 className="size-3.5 mr-1.5" />
             Overview
@@ -228,12 +233,19 @@ export function ResearchTabs(props: ResearchTabsProps) {
         </TabsList>
       </div>
 
-      {/* ─── Research (markdown narrative) ─── */}
-      {research && (
-        <TabsContent value="research" className="mt-4">
-          <ResearchView research={research} ticker={ticker} />
-        </TabsContent>
-      )}
+      {/* ─── Research (markdown narrative + Generate button kalau kosong) ─── */}
+      <TabsContent value="research" className="mt-4">
+        {research ? (
+          <ResearchView research={research} ticker={ticker} onRegenerated={setResearch} />
+        ) : (
+          <GenerateResearchEmpty
+            ticker={ticker}
+            name={name}
+            sector={sector}
+            onGenerated={setResearch}
+          />
+        )}
+      </TabsContent>
 
       {/* ─── Overview ─── */}
       <TabsContent value="overview" className="mt-4 space-y-4">
@@ -879,9 +891,11 @@ function QuarterlyCard({
 function ResearchView({
   research,
   ticker,
+  onRegenerated,
 }: {
   research: { frontmatter: ResearchFrontmatter; body: string }
   ticker: string
+  onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {
   const recommendation = research.frontmatter.recommendation
   const conviction = research.frontmatter.conviction
@@ -937,6 +951,8 @@ function ResearchView({
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{research.body}</ReactMarkdown>
         </div>
       </article>
+
+      <RegenerateBar ticker={ticker} onRegenerated={onRegenerated} />
 
       <DisclaimerBox />
 
@@ -1026,6 +1042,126 @@ function ResearchView({
       `}</style>
     </div>
   )
+}
+
+// ─── Generate Research (empty state + regenerate bar) ─────────
+
+const RESEARCH_CREDIT_COST = 30
+
+function GenerateResearchEmpty({
+  ticker,
+  name,
+  sector,
+  onGenerated,
+}: {
+  ticker: string
+  name: string
+  sector: string | null
+  onGenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
+}) {
+  const [generating, setGenerating] = useState(false)
+
+  async function generate() {
+    setGenerating(true)
+    try {
+      const res = await fetch(`/api/idx-research/${ticker}/generate`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) {
+        toast.error(json.error ?? `Gagal generate: ${res.status}`)
+        return
+      }
+      // Strip frontmatter dari body (sudah disimpan terpisah)
+      const body = String(json.content ?? '').replace(/^---\n[\s\S]*?\n---\n?/, '').trim()
+      onGenerated({
+        frontmatter: (json.frontmatter as ResearchFrontmatter) ?? {},
+        body,
+      })
+      toast.success('Research selesai di-generate.', {
+        description: json.cached ? 'Diambil dari cache (gratis).' : 'Tersimpan ke cache, user lain bisa baca tanpa bayar credits.',
+      })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="rounded-2xl border p-8 sm:p-10 text-center"
+        style={{
+          background: 'linear-gradient(135deg, var(--emerald-50), var(--surface) 60%)',
+          borderColor: 'var(--border)',
+        }}
+      >
+        <div
+          className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
+          style={{
+            background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
+            color: '#FFFFFF',
+          }}
+        >
+          <Sparkles className="size-6" />
+        </div>
+        <h3 className="mt-4 text-lg font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+          Belum ada research untuk {ticker}
+        </h3>
+        <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
+          Generate research AI berdasarkan data laporan keuangan {name}
+          {sector ? ` (sektor ${sector})` : ''}. AI bakal kasih ringkasan
+          eksekutif, bull/bear case, katalis, dan risiko material.
+        </p>
+
+        <div
+          className="mt-5 mx-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+          style={{ background: 'var(--amber-100)', color: 'var(--amber-700)' }}
+        >
+          <Zap className="size-3.5" />
+          {RESEARCH_CREDIT_COST} kredit AI · ~30 detik
+        </div>
+
+        <Button
+          onClick={generate}
+          disabled={generating}
+          className="mt-5"
+          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+        >
+          {generating ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              AI lagi nyusun research...
+            </>
+          ) : (
+            <>
+              <Sparkles className="size-4" />
+              Generate research
+            </>
+          )}
+        </Button>
+
+        <p className="mt-4 text-[11px] max-w-md mx-auto" style={{ color: 'var(--ink-soft)' }}>
+          Hasil generate disimpan di cache shared — user lain yang buka {ticker} bakal lihat
+          hasil yang sama tanpa bayar credit lagi (sampai kamu regenerate dengan data baru).
+        </p>
+      </div>
+
+      <DisclaimerBox />
+    </div>
+  )
+}
+
+function RegenerateBar({
+  ticker,
+  onRegenerated,
+}: {
+  ticker: string
+  onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
+}) {
+  // Note: regenerate behavior bypasses cache (server logic akan dipindah)
+  // For now, this just hints to user — actual regenerate butuh delete cache + call API
+  // Disable for now untuk simplicity; tinggal kirim pesan kalau mau update content
+  return null
 }
 
 function DisclaimerBox() {
