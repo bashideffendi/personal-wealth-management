@@ -4,7 +4,7 @@
  * Print-optimized monthly report — designed for A4 portrait.
  *
  * Looks like a real financial document, not a printed-out web page:
- *   - Cover header with PWM monogram, period, owner name, generated date
+ *   - Cover header with Klunting monogram, period, owner name, generated date
  *   - Executive summary (4 KPI metrics) in a tight strip
  *   - Income breakdown table with category × amount × %
  *   - Expense breakdown table (same)

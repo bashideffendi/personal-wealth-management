@@ -7,7 +7,7 @@
  * journaling method. Core idea: before any non-essential purchase, ask
  * 4 reflection questions. The pause itself is the intervention.
  *
- * In PWM: trigger when user creates an expense transaction over a
+ * In Klunting: trigger when user creates an expense transaction over a
  * threshold (default Rp 500k, configurable). Modal blocks save until
  * user reflects — they can either confirm or cancel the transaction.
  *

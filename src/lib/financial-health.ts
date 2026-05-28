@@ -90,7 +90,7 @@ export interface FHSResult {
 
 /**
  * Tier metadata used for display. Indonesian labels for clarity (English
- * "Coping" was confusing — user feedback). Colors match PWM palette.
+ * "Coping" was confusing — user feedback). Colors match Klunting palette.
  */
 const TIER_META: Record<FHSTier, { label: string; color: string; description: string }> = {
   vulnerable: {

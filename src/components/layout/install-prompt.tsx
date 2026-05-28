@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * PWA install prompt — bottom sheet that nudges users to install PWM on home screen.
+ * PWA install prompt — bottom sheet that nudges users to install Klunting on home screen.
  *
  * Two paths:
  * 1. Android / desktop Chrome: listen for `beforeinstallprompt`, show "Pasang" button

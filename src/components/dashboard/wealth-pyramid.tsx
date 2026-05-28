@@ -11,7 +11,7 @@
  *   5. Legacy         — estate planning, waqf, bequest
  *
  * Tier "unlocks" berurutan — user idealnya kuatkan dasar dulu sebelum
- * naik. Status check per tier dari data PWM yang udah ada.
+ * naik. Status check per tier dari data Klunting yang udah ada.
  *
  * Reference: Mission Asset Fund Hierarchy of Financial Needs (HFN);
  * adaptasi Maslow (1943) untuk financial planning oleh CFP community.

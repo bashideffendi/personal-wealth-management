@@ -6,7 +6,7 @@
  *   - Casual Indonesian tone, not academic lecture
  *   - 50-80 words body max — anything longer kills the popover
  *   - 1 source citation in italic at the bottom for credibility
- *   - Optional "applied" line that ties theory back to what PWM does
+ *   - Optional "applied" line that ties theory back to what Klunting does
  *
  * If an entry is missing or you want to A/B test copy, change it here
  * and every site picks up the update automatically.
@@ -17,7 +17,7 @@ export interface EduContent {
   title: string
   /** 50-80 word explanation in casual Indonesian */
   body: string
-  /** How PWM applies this theory — optional but recommended */
+  /** How Klunting applies this theory — optional but recommended */
   applied?: string
   /** Source citation — author, work, year */
   source: string
@@ -28,7 +28,7 @@ export const EDU_TIPS: Record<string, EduContent> = {
   'budget-method': {
     title: 'Metode Budgeting',
     body: 'Ada banyak filosofi budgeting. Yang populer: 50/30/20 (Warren) — 50% needs, 30% wants, 20% saving. Atau Zero-Based Budgeting (Pyhrr/YNAB) — setiap rupiah dapat "pekerjaan" sampai sisa = 0. Atau Kakeibo (Jepang) — refleksi sebelum belanja besar.',
-    applied: 'PWM pakai grid 12-bulan supaya kamu bisa pilih sendiri — bisa pakai 50/30/20 (set 3 kategori) atau ZBB (alokasi semua kategori sampai habis).',
+    applied: 'Klunting pakai grid 12-bulan supaya kamu bisa pilih sendiri — bisa pakai 50/30/20 (set 3 kategori) atau ZBB (alokasi semua kategori sampai habis).',
     source: 'Warren & Tyagi, "All Your Worth" (2005); Pyhrr (1970), YNAB',
   },
 
@@ -36,7 +36,7 @@ export const EDU_TIPS: Record<string, EduContent> = {
   'mental-accounting': {
     title: 'Mental Accounting',
     body: 'Otak manusia naluri memisahkan uang ke "kantong" mental berdasarkan tujuan — meskipun secara matematis semua = uang. Memberi nama spesifik ("Dana Umroh", "DP Rumah") meningkatkan disiplin saving karena bikin uangnya terasa "bukan untuk dipakai".',
-    applied: 'Goals di PWM sengaja dipisah-pisah — bukan satu pot tabungan. Itu bukan inefisiensi, tapi behavioral feature.',
+    applied: 'Goals di Klunting sengaja dipisah-pisah — bukan satu pot tabungan. Itu bukan inefisiensi, tapi behavioral feature.',
     source: 'Thaler, "Mental Accounting Matters" (1999)',
   },
 
@@ -44,7 +44,7 @@ export const EDU_TIPS: Record<string, EduContent> = {
   'goal-based-investing': {
     title: 'Goal-Based Investing',
     body: 'Daripada cuma kejar return tinggi, setiap goal punya horizon dan risk profile berbeda. Dana darurat (1 thn) ≠ dana pensiun (30 thn). Behavioral Portfolio Theory bilang investor sehat punya 3 lapisan: pelindung (cash, deposito), stabil (RD campuran, SBN), dan agresif (saham, kripto).',
-    applied: 'PWM mengizinkan kamu set goals terpisah — supaya kamu nggak tergoda jual saham buat darurat (yg bisa bikin rugi karena timing).',
+    applied: 'Klunting mengizinkan kamu set goals terpisah — supaya kamu nggak tergoda jual saham buat darurat (yg bisa bikin rugi karena timing).',
     source: 'Shefrin & Statman, "Behavioral Portfolio Theory" (2000)',
   },
 
@@ -68,7 +68,7 @@ export const EDU_TIPS: Record<string, EduContent> = {
   'debt-strategy': {
     title: 'Snowball vs Avalanche',
     body: 'Dua filosofi pelunasan utang. Snowball: bayar saldo terkecil dulu — secara psikologis dapat "quick wins" yang mempertahankan motivasi. Avalanche: bayar bunga tertinggi dulu — secara matematika paling hemat. Avalanche unggul angka, Snowball unggul retention.',
-    applied: 'PWM kasih kamu toggle — pilih sesuai tipe kamu. Default Avalanche (matematis), tapi nggak ada salahnya pilih Snowball kalau butuh motivasi.',
+    applied: 'Klunting kasih kamu toggle — pilih sesuai tipe kamu. Default Avalanche (matematis), tapi nggak ada salahnya pilih Snowball kalau butuh motivasi.',
     source: 'Ramsey, "Total Money Makeover" (2003); McAllister (2018)',
   },
 
@@ -92,7 +92,7 @@ export const EDU_TIPS: Record<string, EduContent> = {
   'loss-aversion': {
     title: 'Loss Aversion',
     body: 'Otak kita merasakan kerugian sekitar 2× lebih sakit daripada keuntungan setara. Inilah kenapa banyak investor "panic sell" saat market turun, atau menahan saham loser kelamaan berharap balik. Kesimpulan: hindari decision investasi saat emosi tinggi — tunggu 24 jam.',
-    applied: 'PWM tunjukin progress goal (gain framing), bukan cuma P/L harian — ini supaya kamu nggak overreact ke noise jangka pendek.',
+    applied: 'Klunting tunjukin progress goal (gain framing), bukan cuma P/L harian — ini supaya kamu nggak overreact ke noise jangka pendek.',
     source: 'Kahneman & Tversky, "Prospect Theory" (1979)',
   },
 

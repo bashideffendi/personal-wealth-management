@@ -127,7 +127,7 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
             {tip.body}
           </p>
 
-          {/* Applied (PWM context) — only if present */}
+          {/* Applied (Klunting context) — only if present */}
           {tip.applied && (
             <p
               className="text-[12px] leading-relaxed mt-2 pt-2 border-t"
