@@ -14,13 +14,28 @@ export default function PrivacyPage() {
         style={{ borderColor: 'var(--border-soft)' }}
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="kl-brandmark" style={{ width: 32, height: 32, borderRadius: 10 }}>
-            <span>K</span>
+          <div
+            className="grid place-items-center"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #10B981, #047857)',
+              color: '#FFFFFF',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 800,
+              fontSize: 16,
+              letterSpacing: '-0.04em',
+              boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+            }}
+          >
+            K
           </div>
           <span
             style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 700,
-              fontSize: 20,
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
+              fontSize: 18,
               letterSpacing: '-0.02em',
               color: 'var(--ink)',
             }}
