@@ -664,8 +664,8 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                   <stop offset="100%" stopColor="#10B981" stopOpacity={0.55} />
                 </linearGradient>
                 <linearGradient id="g-debts" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor="#EF4444" stopOpacity={0.85} />
-                  <stop offset="100%" stopColor="#EF4444" stopOpacity={0.55} />
+                  <stop offset="0%" stopColor="#FB7185" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#FB7185" stopOpacity={0.55} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -703,15 +703,15 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                       </p>
                       <div className="space-y-0.5">
                         <p className="num tabular flex justify-between gap-3">
-                          <span style={{ color: '#10B981' }}>● Aset</span>
+                          <span style={{ color: 'var(--c-mint)' }}>● Aset</span>
                           <span>{formatCurrency(p.assets)}</span>
                         </p>
                         <p className="num tabular flex justify-between gap-3">
-                          <span style={{ color: '#EF4444' }}>● Utang</span>
+                          <span style={{ color: 'var(--c-coral)' }}>● Utang</span>
                           <span>{formatCurrency(Math.abs(p.debts))}</span>
                         </p>
                         <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-                          <span style={{ color: '#6366F1' }}>● Net Worth</span>
+                          <span style={{ color: 'var(--c-primary)' }}>● Net Worth</span>
                           <span>{formatCurrency(p.net)}</span>
                         </p>
                       </div>
@@ -725,9 +725,9 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                 type="monotone"
                 dataKey="net"
                 name="Net Worth"
-                stroke="#6366F1"
+                stroke="#4F46E5"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: '#6366F1', stroke: 'var(--surface)', strokeWidth: 2 }}
+                dot={{ r: 3, fill: '#4F46E5', stroke: 'var(--surface)', strokeWidth: 2 }}
                 activeDot={{ r: 5 }}
               />
             </ComposedChart>
