@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import {
   ArrowRight, MessageCircle, Camera, TrendingUp, CreditCard,
-  Users, Sparkles, Check, Crown, Lock,
+  Users, Sparkles, Check, Crown, Lock, Shield, ChevronDown,
 } from 'lucide-react'
 
 export default async function LandingPage() {
@@ -50,6 +50,7 @@ export default async function LandingPage() {
         <nav className="hidden md:flex gap-7 text-sm" style={{ color: 'var(--ink-muted)' }}>
           <a href="#fitur" className="hover:text-[var(--ink)] transition-colors">Fitur</a>
           <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
+          <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
         </nav>
         <div className="flex gap-2 items-center">
           <Link
@@ -477,6 +478,126 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ─── FAQ ───────────────────────────────────────────────── */}
+      <section id="faq" className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-10">
+            <span className="caps">Pertanyaan</span>
+            <h2
+              className="font-bold mt-3 tracking-tight"
+              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+            >
+              Yang sering ditanya.
+            </h2>
+            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
+              Belum jawab pertanyaanmu? Kirim ke{' '}
+              <a href="mailto:support@klunting.com" className="font-medium underline" style={{ color: 'var(--ink)' }}>
+                support@klunting.com
+              </a>
+              .
+            </p>
+          </div>
+
+          {/* Security trust banner — visible reassurance before users dive into Q&A */}
+          <div
+            className="rounded-2xl p-5 mb-8 flex items-start gap-3 border"
+            style={{
+              background: 'var(--emerald-50)',
+              borderColor: 'color-mix(in srgb, var(--emerald-500) 25%, transparent)',
+            }}
+          >
+            <Shield
+              className="size-5 shrink-0 mt-0.5"
+              style={{ color: 'var(--emerald-700)' }}
+            />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                Data finansialmu aman.
+              </p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+                Komunikasi enkripsi TLS, password di-hash (bukan plaintext), database isolated per user
+                pakai Row Level Security, dan kami tidak jual data ke pihak ketiga. PIN device-level
+                opsional buat proteksi tambahan kalau HP dipinjem.
+              </p>
+            </div>
+          </div>
+
+          {/* FAQ accordion — native <details>/<summary> biar SEO-friendly + zero JS */}
+          <div className="space-y-2">
+            {[
+              {
+                q: 'Datanya beneran aman? Aku takut data finansial bocor.',
+                a: 'Wajar khawatir. Yang kami lakukan: (1) Semua komunikasi browser ke server dienkripsi TLS (HTTPS). (2) Password kamu disimpan dalam bentuk hash satu-arah pakai bcrypt — bahkan tim Klunting tidak bisa baca. (3) Database pakai Row Level Security — data antar-user terisolasi di level engine, bukan filter aplikasi. (4) Foto struk disimpan di Supabase Storage dengan akses cuma untuk pemilik. (5) Tidak ada iklan, tidak jual data ke pihak ketiga. Buat proteksi tambahan, aktifin PIN device-level di setting Keamanan.',
+              },
+              {
+                q: 'Aku perlu kasih password mobile banking ke Klunting?',
+                a: 'Tidak. Klunting tidak terkoneksi langsung ke rekening bank kamu — kami hanya simpan apa yang kamu input atau upload manual. Buat input cepat, pakai foto struk (AI baca) atau ketik natural language ("indomaret 47rb cash"). Buat bulk, upload PDF mutasi bank dari mobile banking — kami parse tapi tidak akses akun bank-mu.',
+              },
+              {
+                q: 'AI nya pake apa? Datanya dikirim ke pihak ketiga?',
+                a: 'Fitur AI (foto struk, parse transaksi, insight bulanan) pakai Claude dari Anthropic. Konten yang dikirim untuk diproses adalah teks atau gambar struk yang kamu kasih — Anthropic menjamin konten API tidak disimpan untuk training model mereka. Detail di Kebijakan Privasi.',
+              },
+              {
+                q: 'Kalau aku cancel, data ku gimana?',
+                a: 'Trial 14 hari bisa cancel kapan saja, tidak ada potongan. Setelah cancel, akun kamu tetap aktif di mode read-only sampai akhir periode billing. Kalau ingin hapus akun permanen, kamu bisa export semua data ke CSV dulu, lalu hapus akun dari Profil. Setelah dihapus, data disimpan 30 hari sebelum dihapus permanen — jaga-jaga kalau berubah pikiran.',
+              },
+              {
+                q: 'Bisa export semua transaksi saya?',
+                a: 'Bisa. Buka menu Transaksi, klik "Export CSV" — file diunduh langsung ke device kamu. Format CSV bisa dibuka di Excel, Google Sheets, atau diimport ke app lain. Data finansial kamu milik kamu.',
+              },
+              {
+                q: 'Bedanya sama Money Lover / Wallet by BudgetBakers / Spendee?',
+                a: 'Tiga hal: (1) Bahasa & konteks Indonesia — kategori, format Rupiah, kalender hijriyah, integrasi nantinya ke ewallet lokal. (2) AI yang ngerti merchant lokal (Indomaret, GoPay, BCA, Tokopedia) bukan harus manual kategorisasi. (3) Family sharing 4 orang built-in (banyak kompetitor cuma 1 user). Tapi kalau kamu sudah nyaman di app lain, tidak masalah — kami tidak ngotot pindah.',
+              },
+              {
+                q: 'Aku tinggal di luar negeri tapi punya rekening Indonesia, bisa?',
+                a: 'Bisa. Klunting web-based jadi akses dari negara mana saja. Multi-currency support — bisa tambah rekening USD/SGD/EUR di samping IDR. Foto struk AI bisa baca struk Indonesia + bahasa Inggris.',
+              },
+              {
+                q: 'Ada free tier?',
+                a: 'Belum. Sekarang model Coba 14 hari gratis akses penuh, lalu pilih Basic Rp 99rb atau Full Service Rp 199rb per bulan. Free tier sedang dievaluasi untuk Q4 2026 — pengen pastikan dulu unit economics sustainable sebelum kasih free forever.',
+              },
+              {
+                q: 'Bisa pakai bareng pasangan / keluarga?',
+                a: 'Bisa, fitur Family sharing di paket Full Service. Sampai 4 anggota keluarga bisa akses akun, transaksi, dan budget bersama. Tetap ada split personal vs family — pengeluaran pribadi tetap private kalau kamu mau.',
+              },
+              {
+                q: 'Mobile app-nya kapan?',
+                a: 'Klunting adalah PWA — bisa di-install sebagai app di home screen iPhone/Android tanpa download dari store. Caranya: buka klunting.com di Safari/Chrome → menu → "Tambah ke Layar Utama". Punya pengalaman seperti native app, akses kamera buat foto struk, dan bisa offline view.',
+              },
+            ].map((item, i) => (
+              <details
+                key={i}
+                className="group rounded-xl border overflow-hidden transition-colors"
+                style={{
+                  background: 'var(--paper)',
+                  borderColor: 'var(--border)',
+                }}
+              >
+                <summary
+                  className="flex items-center justify-between gap-4 p-4 sm:p-5 cursor-pointer list-none select-none"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <span className="text-[15px] font-semibold leading-snug pr-2">
+                    {item.q}
+                  </span>
+                  <ChevronDown
+                    className="size-5 shrink-0 transition-transform group-open:rotate-180"
+                    style={{ color: 'var(--ink-muted)' }}
+                  />
+                </summary>
+                <div
+                  className="px-4 sm:px-5 pb-4 sm:pb-5 text-sm leading-relaxed"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  {item.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ─── CTA STRIP ──────────────────────────────────────────── */}
       <section className="px-6 sm:px-12 pb-20">
         <div
@@ -541,6 +662,9 @@ export default async function LandingPage() {
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
             <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
+            <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
+            <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privasi</Link>
+            <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Syarat</Link>
             <a href="mailto:support@klunting.com" className="hover:text-[var(--ink)] transition-colors">Support</a>
             <span>Built in Indonesia 🇮🇩</span>
           </div>
