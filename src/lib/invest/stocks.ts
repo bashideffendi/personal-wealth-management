@@ -1,8 +1,13 @@
 import 'server-only'
+import fs from 'node:fs'
+import path from 'node:path'
 import valuationsRaw from '@/data/invest/valuations.json'
 import valuationDetailsRaw from '@/data/invest/valuation-details.json'
 import dividendEventsRaw from '@/data/invest/dividend-events.json'
 import emittenStatsRaw from '@/data/invest/emitten-stats.json'
+import stocksRaw from '@/data/invest/stocks.json'
+import quarterlyFinancialsRaw from '@/data/invest/quarterly-financials.json'
+import pricePerformanceRaw from '@/data/invest/price-performance.json'
 
 /**
  * Server-only data loaders untuk IDX stocks.
@@ -61,6 +66,129 @@ const VALUATIONS = valuationsRaw as Valuation[]
 const VALUATION_DETAILS = valuationDetailsRaw as unknown as ValuationDetail[]
 const DIVIDEND_EVENTS = dividendEventsRaw as DividendEvent[]
 const STATS = emittenStatsRaw as Record<string, EmittenStat>
+
+// ─── Full stock metrics (5Y historical) ─────────────────────────
+
+export interface Stock {
+  ticker: string
+  name: string | null
+  type: string | null
+  listingDate: string | null
+  board: string | null
+  sector: string | null
+  currentPrice: number | null
+  /** Metrics map: metric name → { year → value }. Years are string ("2024", "2025"). */
+  metrics: Record<string, Record<string, number>>
+}
+
+const STOCKS = stocksRaw as Stock[]
+
+export function getStock(ticker: string): Stock | undefined {
+  const t = ticker.toUpperCase()
+  return STOCKS.find((s) => s.ticker === t)
+}
+
+/** Return the most recent year with non-zero value from a metric series. */
+export function latestMetricYear(
+  series: Record<string, number> | undefined,
+  skipZero = true,
+): { year: number; value: number } | null {
+  if (!series) return null
+  const entries = Object.entries(series)
+    .map(([y, v]) => [parseInt(y, 10), v] as const)
+    .filter(([, v]) => v != null && (!skipZero || v !== 0))
+    .sort((a, b) => b[0] - a[0])
+  if (entries.length === 0) return null
+  const [year, value] = entries[0]
+  return { year, value }
+}
+
+/** Get last N years of a metric, oldest-to-newest. */
+export function getMetricSeries(
+  stock: Stock,
+  metric: string,
+  years = 5,
+): Array<{ year: number; value: number }> {
+  const series = stock.metrics[metric]
+  if (!series) return []
+  return Object.entries(series)
+    .map(([y, v]) => ({ year: parseInt(y, 10), value: v }))
+    .filter((e) => Number.isFinite(e.value))
+    .sort((a, b) => a.year - b.year)
+    .slice(-years)
+}
+
+// ─── Quarterly financials ──────────────────────────────────────
+
+export type QuarterlyFinancials = Record<string, Record<string, number>>
+// Outer key: metric name (Revenue, Net Income, EPS)
+// Inner key: "2025-Q2", "2024-Q4", etc.
+// Value: numeric value (cumulative within year)
+
+const QUARTERLY = quarterlyFinancialsRaw as Record<string, QuarterlyFinancials>
+
+export function getQuarterlyFinancialsFor(ticker: string): QuarterlyFinancials {
+  return QUARTERLY[ticker.toUpperCase()] ?? {}
+}
+
+// ─── Price performance ────────────────────────────────────────
+
+export interface PricePerformancePeriod {
+  high: number | null
+  low: number | null
+  percentage: number | null  // change % over period
+}
+
+export interface PricePerformance {
+  '1M'?: PricePerformancePeriod
+  '3M'?: PricePerformancePeriod
+  '6M'?: PricePerformancePeriod
+  '1Y'?: PricePerformancePeriod
+  '3Y'?: PricePerformancePeriod
+  '5Y'?: PricePerformancePeriod
+}
+
+const PRICE_PERF = pricePerformanceRaw as Record<string, PricePerformance>
+
+export function getPricePerformanceFor(ticker: string): PricePerformance | undefined {
+  return PRICE_PERF[ticker.toUpperCase()]
+}
+
+// ─── Research markdown ────────────────────────────────────────
+
+export interface ResearchDoc {
+  ticker: string
+  frontmatter: Record<string, string | number>
+  body: string
+  generated?: string
+}
+
+export function getResearchMarkdown(ticker: string): ResearchDoc | null {
+  const filepath = path.join(process.cwd(), 'src', 'data', 'invest', 'research', `${ticker.toUpperCase()}.md`)
+  if (!fs.existsSync(filepath)) return null
+
+  const raw = fs.readFileSync(filepath, 'utf-8')
+  const fmMatch = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
+
+  if (!fmMatch) {
+    return { ticker: ticker.toUpperCase(), frontmatter: {}, body: raw }
+  }
+
+  const frontmatter: Record<string, string | number> = {}
+  for (const line of fmMatch[1].split('\n')) {
+    const m = line.match(/^([a-z_]+):\s*(.+)$/)
+    if (!m) continue
+    const value = m[2].trim()
+    frontmatter[m[1]] = /^-?\d+(\.\d+)?$/.test(value) ? Number(value) : value
+  }
+
+  return {
+    ticker: ticker.toUpperCase(),
+    frontmatter,
+    body: fmMatch[2].trim(),
+    generated: frontmatter.generated as string | undefined,
+  }
+}
 
 export function getValuations(): Valuation[] {
   return VALUATIONS
