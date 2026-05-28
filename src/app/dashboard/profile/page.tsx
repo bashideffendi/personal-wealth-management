@@ -354,63 +354,99 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header card — editorial profile */}
-      <div className="s-card p-6 sm:p-7">
-        <p className="eyebrow">Profil</p>
-        <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold text-white"
-              style={{
-                background: 'var(--c-ink)',
-                fontFamily: 'var(--font-sans)', fontWeight: 700,
-                fontSize: 32,
-                /* italic dropped per fintech revert */
-                lineHeight: 1,
-              }}
-            >
-              {(profile.full_name || user.email).slice(0, 1).toLowerCase()}
-            </div>
-            <div>
-              <h1
-                className="display"
+      {/* Header — dark gradient profile anchor */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100,
+            right: -60,
+            width: 360,
+            height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Profil
+          </p>
+          <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold"
                 style={{
-                  fontSize: 'clamp(28px, 4vw, 40px)',
-                  color: 'var(--ink)',
-                  letterSpacing: '-0.02em',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
+                  color: '#FFFFFF',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 800,
+                  fontSize: 28,
+                  letterSpacing: '-0.04em',
+                  lineHeight: 1,
+                  boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.50)',
                 }}
               >
-                {profile.full_name?.trim() || 'Pengguna'}
-              </h1>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--text-mute)' }}>
-                {user.email}
-              </p>
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span
-                  className="chip"
-                  style={{ background: planBadge.bg, color: planBadge.fg }}
+                {(profile.full_name || user.email).slice(0, 1).toUpperCase()}
+              </div>
+              <div>
+                <h1
+                  className="font-bold"
+                  style={{
+                    fontSize: 'clamp(28px, 4vw, 40px)',
+                    color: '#FFFFFF',
+                    letterSpacing: '-0.035em',
+                  }}
                 >
-                  {subscription?.plan_id === 'full' && <Crown className="size-3" />}
-                  {subscription?.status === 'trialing' && <Sparkles className="size-3" />}
-                  Paket {planBadge.label}
-                  {subscription?.status === 'trialing' && ' (Trial)'}
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-mute)' }}>
-                  {accountCount} akun · {txCount} transaksi · sejak {formatDate(new Date(subscription?.started_at ?? Date.now()))}
-                </span>
+                  {profile.full_name?.trim() || 'Pengguna'}
+                </h1>
+                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                  {user.email}
+                </p>
+                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                    style={{
+                      background: subscription?.plan_id === 'full' ? 'rgba(16,185,129,0.20)' : 'rgba(255,255,255,0.10)',
+                      color: subscription?.plan_id === 'full' ? '#6EE7B7' : 'rgba(255,255,255,0.85)',
+                    }}
+                  >
+                    {subscription?.plan_id === 'full' && <Crown className="size-3" />}
+                    {subscription?.status === 'trialing' && <Sparkles className="size-3" />}
+                    Paket {planBadge.label}
+                    {subscription?.status === 'trialing' && ' (Trial)'}
+                  </span>
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {accountCount} akun · {txCount} transaksi · sejak {formatDate(new Date(subscription?.started_at ?? Date.now()))}
+                  </span>
+                </div>
               </div>
             </div>
+            <Link
+              href="/dashboard/pricing"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
+              style={{
+                background: '#10B981',
+                color: '#FFFFFF',
+                boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+              }}
+            >
+              <Crown className="size-4" />
+              {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? 'Upgrade ke Full Service' : 'Kelola Langganan'}
+            </Link>
           </div>
-          <Link
-            href="/dashboard/pricing"
-            className="btn-outline btn-primary"
-          >
-            <Crown className="size-4" />
-            {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? 'Upgrade ke Full Service' : 'Kelola Langganan'}
-          </Link>
+          <p className="text-xs mt-3" style={{ color: 'rgba(255,255,255,0.45)' }}>{today}</p>
         </div>
-        <p className="text-xs mt-3" style={{ color: 'var(--text-mute)' }}>{today}</p>
-      </div>
+      </section>
 
       {/* AI Credits card */}
       <div className="rounded-xl border bg-gradient-to-br from-amber-50 to-orange-50 p-5">
