@@ -89,14 +89,29 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
     <Link
       href={tab.href}
       className={cn(
-        'flex flex-col items-center justify-center gap-0.5 h-full pt-2 pb-1 transition-colors',
+        'flex flex-col items-center justify-center gap-0.5 h-full pt-2 pb-1 transition-colors relative',
       )}
-      style={{ color: active ? 'var(--c-mint)' : 'var(--ink-soft)' }}
+      style={{ color: active ? 'var(--ink)' : 'var(--ink-soft)' }}
     >
       <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
       <span className={cn('text-[10px] leading-tight', active && 'font-semibold')}>
         {tab.label}
       </span>
+      {active && (
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 16,
+            height: 2,
+            borderRadius: '0 0 2px 2px',
+            background: 'var(--c-primary)',
+          }}
+        />
+      )}
     </Link>
   )
 }
