@@ -246,7 +246,7 @@ export default function DebtsOverviewPage() {
           <ArrowUpRight className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
         </Link>
         <div className="relative overflow-hidden rounded-2xl p-5 bg-white border border-[var(--border-soft)]">
-          <p className="caps">Breakdown Kategori</p>
+          <p className="eyebrow">Breakdown Kategori</p>
           <div className="mt-2 space-y-1.5">
             {Object.entries(byCategory).length === 0 ? (
               <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Tidak ada utang.</p>

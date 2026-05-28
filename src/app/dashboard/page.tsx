@@ -509,7 +509,7 @@ export default function DashboardPage() {
           Removed from the hero per mockup; lives here as a compact pill row. */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <p className="caps">Periode</p>
+          <p className="eyebrow">Periode</p>
           <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {currentMonthYear}
           </p>
@@ -561,7 +561,7 @@ export default function DashboardPage() {
       <div className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="caps">Aliran Uang</p>
+            <p className="eyebrow">Aliran Uang</p>
             <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               Dari mana datangnya, ke mana perginya — bulan ini
             </p>
@@ -626,7 +626,7 @@ export default function DashboardPage() {
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
-              <p className="caps">Aktivitas Bulan Ini</p>
+              <p className="eyebrow">Aktivitas Bulan Ini</p>
               <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 {MONTHS[selectedMonth - 1]} {selectedYear}
               </h3>
@@ -759,7 +759,7 @@ export default function DashboardPage() {
         {/* Budget Progress */}
         <div className="s-card p-6 lg:col-span-2">
           <div className="mb-4">
-            <p className="caps">{t('dashboard.budget_progress')}</p>
+            <p className="eyebrow">{t('dashboard.budget_progress')}</p>
             <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
               {t('dashboard.expense_categories')}
             </h3>
@@ -826,7 +826,7 @@ export default function DashboardPage() {
         <div className="s-card p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
-              <p className="caps">{t('dashboard.cashflow_yearly')}</p>
+              <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
               <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 {t('dashboard.income_vs_expense')}
               </h3>
@@ -890,7 +890,7 @@ export default function DashboardPage() {
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="caps">Portofolio</p>
+              <p className="eyebrow">Portofolio</p>
               <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 Alokasi Investasi
               </h3>

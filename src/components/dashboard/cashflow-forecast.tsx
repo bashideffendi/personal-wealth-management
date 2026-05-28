@@ -158,7 +158,7 @@ export function CashFlowForecast({
             <Calendar className="size-4" style={{ color: 'var(--sky-600)' }} />
           </div>
           <div>
-            <p className="caps">Forecast Saldo</p>
+            <p className="eyebrow">Forecast Saldo</p>
             <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
               30 Hari ke Depan
             </h3>

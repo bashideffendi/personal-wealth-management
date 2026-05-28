@@ -13,7 +13,7 @@ export function TopCategoriesBar({ monthTransactions }: { monthTransactions: Tra
 
   return (
     <div className="s-card p-5">
-      <p className="caps">Paling Boros</p>
+      <p className="eyebrow">Paling Boros</p>
       <h3 className="text-base font-semibold mt-0.5">Top 5 Kategori</h3>
       {sorted.length === 0 ? (
         <div className="flex h-[160px] items-center justify-center text-sm" style={{ color: 'var(--ink-soft)' }}>

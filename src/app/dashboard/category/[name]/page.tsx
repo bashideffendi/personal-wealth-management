@@ -157,7 +157,7 @@ export default function CategoryDrilldownPage() {
       ) : (
         <>
           <div className="s-card p-5">
-            <p className="caps">Trend 12 Bulan</p>
+            <p className="eyebrow">Trend 12 Bulan</p>
             <h3 className="text-lg font-semibold mt-0.5">Per Bulan</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlyData}>
@@ -175,7 +175,7 @@ export default function CategoryDrilldownPage() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="s-card p-5">
-              <p className="caps">Breakdown</p>
+              <p className="eyebrow">Breakdown</p>
               <h3 className="text-lg font-semibold mt-0.5">Top Merchant / Deskripsi</h3>
               <ul className="mt-4 space-y-2">
                 {merchants.map(([name, amt]) => {
@@ -196,7 +196,7 @@ export default function CategoryDrilldownPage() {
             </div>
 
             <div className="s-card p-5">
-              <p className="caps">Transaksi Terbaru</p>
+              <p className="eyebrow">Transaksi Terbaru</p>
               <h3 className="text-lg font-semibold mt-0.5">Recent</h3>
               <ul className="mt-4 divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {txs.slice(0, 8).map((t) => (

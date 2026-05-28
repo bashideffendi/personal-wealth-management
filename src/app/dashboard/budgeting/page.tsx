@@ -511,13 +511,13 @@ export default function BudgetingPage() {
       {/* Summary Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-lg">
         <div className="rounded-lg p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-          <span className="caps">Dialokasikan</span>
+          <span className="eyebrow">Dialokasikan</span>
           <p className="num text-xl tabular font-semibold mt-1.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(allocated)}
           </p>
         </div>
         <div className="rounded-lg p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-          <span className="caps">Sisa Alokasi</span>
+          <span className="eyebrow">Sisa Alokasi</span>
           <p
             className="num text-xl tabular font-semibold mt-1.5"
             style={{ color: remaining >= 0 ? 'var(--ink)' : 'var(--danger)' }}

@@ -101,7 +101,7 @@ export function ReflectiveSpendingModal({
               <Pause className="size-4" style={{ color: '#F59E0B' }} />
             </div>
             <div>
-              <p className="caps">Kakeibo Reflection</p>
+              <p className="eyebrow">Kakeibo Reflection</p>
               <DialogTitle className="text-base mt-0.5">Berhenti sejenak…</DialogTitle>
             </div>
           </div>

@@ -187,7 +187,7 @@ function Statement({
         className="rounded-2xl border p-5"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
-        <p className="caps">{title}</p>
+        <p className="eyebrow">{title}</p>
         <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
           Data tidak tersedia untuk ticker ini.
         </p>
@@ -455,7 +455,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
           {toolbar}
           {hasQuarterly && (
             <div className="mb-3 flex items-center gap-2">
-              <span className="caps">Period:</span>
+              <span className="eyebrow">Period:</span>
               <div
                 className="inline-flex rounded-md border p-0.5"
                 style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}

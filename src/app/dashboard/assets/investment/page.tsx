@@ -246,7 +246,7 @@ export default function InvestmentOverviewPage() {
         >
           <div className="flex items-end justify-between flex-wrap gap-3 mb-3">
             <div>
-              <p className="caps">Dana di RDN / RDI</p>
+              <p className="eyebrow">Dana di RDN / RDI</p>
               <p className="num tabular text-2xl font-semibold mt-1" style={{ color: 'var(--ink)' }}>
                 {formatCurrency(rdnTotal)}
               </p>
@@ -311,7 +311,7 @@ export default function InvestmentOverviewPage() {
         <div className="glass-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>
-              <p className="caps">Alokasi</p>
+              <p className="eyebrow">Alokasi</p>
               <h3 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5">
                 Komposisi Portofolio
                 <EduTip topic="diversification" side="bottom" />
@@ -570,7 +570,7 @@ function MiniStat({
   return (
     <div className={`glass-card p-4 ${glow ?? ''}`}>
       <div className="flex items-center justify-between">
-        <p className="caps">{label}</p>
+        <p className="eyebrow">{label}</p>
         <div
           className="flex h-7 w-7 items-center justify-center rounded-lg"
           style={{ background: 'var(--indigo-50)', color: accent ?? 'var(--indigo-600)' }}

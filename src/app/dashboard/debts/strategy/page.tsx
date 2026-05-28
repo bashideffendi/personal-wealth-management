@@ -341,7 +341,7 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
         borderColor: highlight ? 'var(--indigo-200)' : 'var(--border-soft)',
       }}
     >
-      <p className="caps" style={{ fontSize: '0.625rem' }}>{label}</p>
+      <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{label}</p>
       <p className="text-sm font-semibold tabular mt-0.5" style={{ color: highlight ? 'var(--indigo-700)' : 'var(--ink)' }}>
         {value}
       </p>

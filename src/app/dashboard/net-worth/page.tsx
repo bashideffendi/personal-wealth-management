@@ -636,7 +636,7 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
     <div className="s-card p-5 sm:p-6">
       <div className="mb-4 flex items-start justify-between flex-wrap gap-3">
         <div>
-          <p className="caps">Riwayat</p>
+          <p className="eyebrow">Riwayat</p>
           <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             Net Worth dari Waktu ke Waktu
           </h3>

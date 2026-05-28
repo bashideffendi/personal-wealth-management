@@ -924,7 +924,7 @@ function MiniStat({
 }) {
   return (
     <div className={`glass-card p-4 ${glow ?? ''}`}>
-      <p className="caps">{label}</p>
+      <p className="eyebrow">{label}</p>
       <p className="num text-xl mt-2 tabular font-bold" style={{ color: accent ?? 'var(--ink)' }}>
         {value}
       </p>

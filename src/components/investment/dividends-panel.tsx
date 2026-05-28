@@ -115,19 +115,19 @@ export function DividendsPanel() {
       {/* Stats inline (no dark hero — parent page already has one) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-white p-5">
         <div>
-          <p className="caps" style={{ fontSize: '0.625rem' }}>YTD Dividen</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>YTD Dividen</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.ytd)}
           </p>
         </div>
         <div>
-          <p className="caps" style={{ fontSize: '0.625rem' }}>Total All-Time</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Total All-Time</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.total)}
           </p>
         </div>
         <div>
-          <p className="caps" style={{ fontSize: '0.625rem' }}>Rata-rata / Bulan</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Rata-rata / Bulan</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.avgMonthly)}
           </p>
@@ -145,7 +145,7 @@ export function DividendsPanel() {
 
       {monthlyData.length > 0 && (
         <div className="s-card p-5">
-          <p className="caps">Riwayat Pembayaran</p>
+          <p className="eyebrow">Riwayat Pembayaran</p>
           <h3 className="text-lg font-semibold mt-0.5">Per Bulan</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlyData}>

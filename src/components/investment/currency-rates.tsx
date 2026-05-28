@@ -81,7 +81,7 @@ export function CurrencyRates() {
     <div className="s-card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="caps">Kurs Mata Uang</p>
+          <p className="eyebrow">Kurs Mata Uang</p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
             1 unit ke Rupiah · update {updatedAt
               ? updatedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })

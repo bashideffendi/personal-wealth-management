@@ -629,7 +629,7 @@ function PreviewStage({
         style={{ borderColor: 'var(--border-soft)' }}
       >
         <div>
-          <p className="caps">
+          <p className="eyebrow">
             Preview · {selected} / {rows.length} dipilih
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>

@@ -21,7 +21,7 @@ export function SavingRateRing({ savingRate, income, savings }: SavingRateRingPr
 
   return (
     <div className="s-card p-5">
-      <p className="caps">Saving Rate</p>
+      <p className="eyebrow">Saving Rate</p>
       <h3 className="text-base font-semibold mt-0.5">Tabungan / Pemasukan</h3>
       <div className="mt-4 flex items-center gap-4">
         <div className="relative shrink-0">

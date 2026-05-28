@@ -58,7 +58,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
         {/* ─── Col 1: BIG score centered + tier label below ─────────── */}
         <div className="lg:col-span-4 flex flex-col items-center text-center">
           <div className="flex items-center gap-1.5 mb-4 self-stretch justify-center">
-            <p className="caps">Skor Kesehatan Finansial</p>
+            <p className="eyebrow">Skor Kesehatan Finansial</p>
             <EduTip topic="financial-health" side="bottom" />
           </div>
 

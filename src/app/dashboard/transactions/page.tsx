@@ -762,7 +762,7 @@ export default function TransactionsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <div className="flex flex-col gap-1">
-          <label className="caps" style={{ fontSize: '0.625rem' }}>Bulan</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Bulan</label>
           <Select value={filterMonth} onValueChange={(v) => setFilterMonth(v ?? 'all')}>
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Semua Bulan">
@@ -781,7 +781,7 @@ export default function TransactionsPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="caps" style={{ fontSize: '0.625rem' }}>Akun</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Akun</label>
           <Select value={filterAccount} onValueChange={(v) => setFilterAccount(v ?? 'all')}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Semua Akun">
@@ -809,7 +809,7 @@ export default function TransactionsPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="caps" style={{ fontSize: '0.625rem' }}>Tipe</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Tipe</label>
           <Select
             value={filterType}
             onValueChange={(v) => {
@@ -834,7 +834,7 @@ export default function TransactionsPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="caps" style={{ fontSize: '0.625rem' }}>Kategori</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Kategori</label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? 'all')}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Semua Kategori">

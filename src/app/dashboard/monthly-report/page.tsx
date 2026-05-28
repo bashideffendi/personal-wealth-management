@@ -305,7 +305,7 @@ export default function MonthlyReportPage() {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 print-page-break">
               <div className="s-card p-5 lg:col-span-3 print-avoid-break">
-                <p className="caps">Aktivitas Harian</p>
+                <p className="eyebrow">Aktivitas Harian</p>
                 <h3 className="font-semibold mt-0.5">Pemasukan vs Pengeluaran per Hari</h3>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={recap.dailyExp} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
@@ -324,7 +324,7 @@ export default function MonthlyReportPage() {
               </div>
 
               <div className="s-card p-5 lg:col-span-2 print-avoid-break">
-                <p className="caps">Komposisi Pengeluaran</p>
+                <p className="eyebrow">Komposisi Pengeluaran</p>
                 <h3 className="font-semibold mt-0.5">Top Kategori</h3>
                 {expenseDonut.length === 0 ? (
                   <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
@@ -360,7 +360,7 @@ export default function MonthlyReportPage() {
             {/* Top categories table */}
             {recap.expense_by_category.length > 0 && (
               <div className="s-card p-5 print-avoid-break">
-                <p className="caps">Pengeluaran per Kategori</p>
+                <p className="eyebrow">Pengeluaran per Kategori</p>
                 <h3 className="font-semibold mt-0.5">Lengkap Diurutkan dari Terbesar</h3>
                 <div className="mt-4 space-y-2">
                   {recap.expense_by_category.map((row, i) => (
@@ -381,7 +381,7 @@ export default function MonthlyReportPage() {
             {/* Top transactions table — for PDF reference */}
             {recap.top_expenses.length > 0 && (
               <div className="s-card p-5 print-page-break print-avoid-break">
-                <p className="caps">Transaksi Pengeluaran Terbesar</p>
+                <p className="eyebrow">Transaksi Pengeluaran Terbesar</p>
                 <h3 className="font-semibold mt-0.5">Top 10 Single Transactions</h3>
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-sm">
@@ -438,7 +438,7 @@ function KpiCard({ label, value, accent, icon, note }: { label: string; value: s
   return (
     <div className="s-card p-5">
       <div className="flex items-center justify-between">
-        <p className="caps">{label}</p>
+        <p className="eyebrow">{label}</p>
         <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>
           {icon}
         </div>
@@ -462,7 +462,7 @@ function Highlight({ icon, label, main, value, sub, tone }: {
     <div className="rounded-xl border p-4" style={{ background: t.bg, borderColor: t.border }}>
       <div className="flex items-center gap-2">
         {icon}
-        <p className="caps">{label}</p>
+        <p className="eyebrow">{label}</p>
       </div>
       <p className="font-semibold mt-2 line-clamp-1">{main}</p>
       <p className="text-lg font-bold mt-0.5 tabular-nums">{value}</p>

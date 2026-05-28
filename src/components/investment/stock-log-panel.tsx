@@ -149,19 +149,19 @@ export function StockLogPanel() {
       {/* Stats inline (no dark hero — parent page already has one) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-white p-5">
         <div>
-          <p className="caps" style={{ fontSize: '0.625rem' }}>Total Buy</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Total Buy</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.totalBuys)}
           </p>
         </div>
         <div>
-          <p className="caps" style={{ fontSize: '0.625rem' }}>Total Sell</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Total Sell</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.totalSells)}
           </p>
         </div>
         <div>
-          <p className="caps" style={{ fontSize: '0.625rem' }}>Realized P/L (FIFO)</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Realized P/L (FIFO)</p>
           <p className="num tabular text-xl font-semibold flex items-center gap-1 mt-0.5" style={{ color: plPositive ? 'var(--lime-700)' : 'var(--danger)' }}>
             {plPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             {formatCurrency(stats.realizedPL)}
