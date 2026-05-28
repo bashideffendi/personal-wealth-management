@@ -839,7 +839,7 @@ export default function TransactionsPage() {
       {!loading && accounts.length + creditCards.length > 0 && (
         <div className="rounded-xl border bg-white p-3" style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
-            <Plus className="size-3.5" style={{ color: 'var(--emerald-600)' }} />
+            <Plus className="size-3.5" style={{ color: 'var(--c-mint)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
               Tambah Cepat
             </p>
@@ -961,7 +961,7 @@ export default function TransactionsPage() {
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--emerald-50)' }}
           >
-            <Wallet className="size-7" style={{ color: 'var(--emerald-600)' }} />
+            <Wallet className="size-7" style={{ color: 'var(--c-mint)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
             Belum ada transaksi
@@ -1035,7 +1035,7 @@ export default function TransactionsPage() {
           <div className="md:hidden space-y-2">
             {filteredTransactions.map((tx) => {
               const amountColor = tx.type === 'income'
-                ? 'var(--emerald-600)'
+                ? 'var(--c-mint)'
                 : tx.type === 'expense'
                   ? 'var(--coral-600)'
                   : tx.type === 'saving'

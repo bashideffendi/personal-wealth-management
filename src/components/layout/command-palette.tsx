@@ -485,7 +485,7 @@ export function CommandPalette() {
                             color: isSelected
                               ? isAI
                                 ? '#8B5CF6'
-                                : 'var(--emerald-700)'
+                                : 'var(--c-mint)'
                               : 'var(--ink-muted)',
                           }}
                         >
@@ -607,7 +607,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
       <div className="px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="size-3.5" style={{ color: 'var(--emerald-500)' }} />
-          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--emerald-700)' }}>
+          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--c-mint)' }}>
             AI Quick Add — Konfirmasi
           </p>
         </div>
@@ -679,7 +679,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
           className="size-12 mx-auto rounded-full flex items-center justify-center"
           style={{ background: 'var(--emerald-100)' }}
         >
-          <Check className="size-6" style={{ color: 'var(--emerald-600)' }} />
+          <Check className="size-6" style={{ color: 'var(--c-mint)' }} />
         </div>
         <p className="text-sm mt-3 font-semibold" style={{ color: 'var(--ink)' }}>
           Tercatat.

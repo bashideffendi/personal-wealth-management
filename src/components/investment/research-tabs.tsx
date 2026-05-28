@@ -342,7 +342,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               {nextDividend && (
                 <div>
                   <p className="caps">Dividen Mendatang</p>
-                  <p className="num font-semibold mt-1" style={{ color: 'var(--emerald-700)' }}>
+                  <p className="num font-semibold mt-1" style={{ color: 'var(--c-mint)' }}>
                     Rp {formatPrice(nextDividend.dividend)}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
@@ -525,7 +525,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
             {upcomingDividends.length > 0 && (
               <>
                 <div className="px-5 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                  <Calendar className="size-4" style={{ color: 'var(--emerald-700)' }} />
+                  <Calendar className="size-4" style={{ color: 'var(--c-mint)' }} />
                   <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                     Dividen Mendatang
                   </p>
@@ -547,7 +547,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
                         <TableCell className="font-medium">{e.exDate}</TableCell>
                         <TableCell>{e.payDate}</TableCell>
                         <TableCell className="text-right num">Rp {formatPrice(e.dividend)}</TableCell>
-                        <TableCell className="text-right num" style={{ color: 'var(--emerald-700)' }}>
+                        <TableCell className="text-right num" style={{ color: 'var(--c-mint)' }}>
                           {price > 0 ? formatPercentValue(e.dividend / price) : '—'}
                         </TableCell>
                       </TableRow>
@@ -615,7 +615,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           <ChartCard
             title="ROE (5Y Annual)"
             data={metrics5Y.roe}
-            color="var(--emerald-600)"
+            color="var(--c-mint)"
             format="percent"
           />
           <ChartCard
@@ -942,7 +942,7 @@ function ResearchView({
           font-size: 0.85em;
         }
         :global(.prose-research a) {
-          color: var(--emerald-700);
+          color: var(--c-mint);
           text-decoration: underline;
         }
         :global(.prose-research table) {
@@ -1053,7 +1053,7 @@ function GenerateResearchEmpty({
           onClick={generate}
           disabled={generating}
           className="mt-5"
-          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
           {generating ? (
             <>

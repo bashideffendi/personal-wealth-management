@@ -104,7 +104,7 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
           <Link
             href="/dashboard/transactions"
             className="text-[11px] font-medium hover:underline inline-flex items-center gap-0.5"
-            style={{ color: 'var(--emerald-700)' }}
+            style={{ color: 'var(--c-mint)' }}
           >
             Lihat semua
             <ArrowRight className="size-3" />

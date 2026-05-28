@@ -123,7 +123,7 @@ export function StockDividendCalendar() {
           color: 'var(--ink-muted)',
         }}
       >
-        <Calendar className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+        <Calendar className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
         <span>
           Data dari kelolainvestasi (~3000 event). Ex-date = tanggal terakhir
           kamu harus pegang saham buat dapet dividen. Pay date = transfer cash ke RDN.
@@ -213,7 +213,7 @@ function DividendList({ events }: { events: DividendEvent[] }) {
                   <td className="px-3 py-2.5">
                     <Link
                       href={`/dashboard/assets/investment/stock/research/${ev.ticker}`}
-                      className="inline-flex items-center text-[var(--ink-soft)] hover:text-[var(--emerald-600)]"
+                      className="inline-flex items-center text-[var(--ink-soft)] hover:text-[var(--c-mint)]"
                     >
                       <ArrowUpRight className="size-3.5" />
                     </Link>

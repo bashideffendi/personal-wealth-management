@@ -200,7 +200,7 @@ export default async function LandingPage() {
             >
               <div
                 className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'var(--emerald-100)', color: 'var(--emerald-700)' }}
+                style={{ background: 'var(--emerald-100)', color: 'var(--c-mint)' }}
               >
                 <Camera className="size-4" />
               </div>
@@ -385,7 +385,7 @@ export default async function LandingPage() {
                     {f.locked ? (
                       <Lock className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} />
                     ) : (
-                      <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+                      <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
                     )}
                     <span style={{ color: f.locked ? 'var(--ink-soft)' : 'var(--ink-muted)' }}>
                       {f.text}
@@ -414,7 +414,7 @@ export default async function LandingPage() {
                 Unlock semua fitur
               </span>
               <div className="flex items-center gap-2 mb-3">
-                <Crown className="size-5" style={{ color: 'var(--emerald-700)' }} />
+                <Crown className="size-5" style={{ color: 'var(--c-mint)' }} />
                 <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Full Service</h3>
               </div>
               <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
@@ -430,14 +430,14 @@ export default async function LandingPage() {
                 <span className="text-sm ml-1" style={{ color: 'var(--ink-muted)' }}>
                   /bulan
                 </span>
-                <p className="text-xs mt-1" style={{ color: 'var(--emerald-700)' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--c-mint)' }}>
                   Harga early access. Akan naik ke Rp 299rb setelah Q3 2026.
                 </p>
               </div>
               <Link
                 href="/register"
                 className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
-                style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+                style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
               >
                 Coba 14 hari gratis
               </Link>
@@ -454,7 +454,7 @@ export default async function LandingPage() {
                   '250 kredit AI/bulan',
                 ].map((f) => (
                   <li key={f} className="flex gap-2">
-                    <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+                    <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
                     {f}
                   </li>
                 ))}
@@ -501,7 +501,7 @@ export default async function LandingPage() {
           >
             <Shield
               className="size-5 shrink-0 mt-0.5"
-              style={{ color: 'var(--emerald-700)' }}
+              style={{ color: 'var(--c-mint)' }}
             />
             <div>
               <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>

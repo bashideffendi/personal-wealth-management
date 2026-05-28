@@ -91,7 +91,7 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
       className={cn(
         'flex flex-col items-center justify-center gap-0.5 h-full pt-2 pb-1 transition-colors',
       )}
-      style={{ color: active ? 'var(--emerald-600)' : 'var(--ink-soft)' }}
+      style={{ color: active ? 'var(--c-mint)' : 'var(--ink-soft)' }}
     >
       <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
       <span className={cn('text-[10px] leading-tight', active && 'font-semibold')}>

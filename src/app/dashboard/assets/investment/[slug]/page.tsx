@@ -448,16 +448,16 @@ export default function InvestmentCategoryPage() {
                       <Td className="text-right tabular">
                         <div style={{ color: 'var(--ink)' }}>{formatCurrency(e.live)}</div>
                         {e.q?.changePct !== null && e.q?.changePct !== undefined && (
-                          <div className="text-[10px] tabular" style={{ color: e.q.changePct >= 0 ? 'var(--emerald-600)' : 'var(--danger)' }}>
+                          <div className="text-[10px] tabular" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}>
                             {formatPercent(e.q.changePct)}
                           </div>
                         )}
                       </Td>
                       <Td className="text-right tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</Td>
-                      <Td className="text-right tabular font-medium" style={{ color: pos ? 'var(--emerald-600)' : 'var(--danger)' }}>
+                      <Td className="text-right tabular font-medium" style={{ color: pos ? 'var(--c-mint)' : 'var(--danger)' }}>
                         {formatCurrency(e.pl)}
                       </Td>
-                      <Td className="text-right tabular" style={{ color: pos ? 'var(--emerald-600)' : 'var(--danger)' }}>
+                      <Td className="text-right tabular" style={{ color: pos ? 'var(--c-mint)' : 'var(--danger)' }}>
                         {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                       </Td>
                       <Td style={{ color: 'var(--ink-muted)' }}>{e.i.platform || '—'}</Td>

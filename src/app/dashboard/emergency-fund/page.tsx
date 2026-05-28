@@ -330,7 +330,7 @@ export default function EmergencyFundPage() {
               <span className="text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>Kekurangan Dana</span>
               <span
                 className="text-sm font-semibold tabular"
-                style={{ color: deficit > 0 ? 'var(--danger)' : 'var(--emerald-600)' }}
+                style={{ color: deficit > 0 ? 'var(--danger)' : 'var(--c-mint)' }}
               >
                 {formatCurrency(Math.abs(deficit))}
                 {deficit <= 0 && ' (Tercapai)'}

@@ -842,7 +842,7 @@ export default function DashboardPage() {
                   className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
                   style={{
                     background: isSurplus ? 'var(--emerald-50)' : 'var(--coral-50)',
-                    color: isSurplus ? 'var(--emerald-700)' : 'var(--coral-700)',
+                    color: isSurplus ? 'var(--c-mint)' : 'var(--coral-700)',
                   }}
                 >
                   {isSurplus ? 'Surplus' : 'Defisit'} {formatCompactCurrency(Math.abs(yearNet))}

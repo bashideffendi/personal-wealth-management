@@ -466,7 +466,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
                   onClick={() => setIncomeView('annual')}
                   className="h-7 px-3 text-xs"
                   style={{
-                    background: incomeView === 'annual' ? 'var(--emerald-600)' : 'transparent',
+                    background: incomeView === 'annual' ? 'var(--c-mint)' : 'transparent',
                     color: incomeView === 'annual' ? '#FFFFFF' : 'var(--ink)',
                   }}
                 >
@@ -478,7 +478,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
                   onClick={() => setIncomeView('quarterly')}
                   className="h-7 px-3 text-xs"
                   style={{
-                    background: incomeView === 'quarterly' ? 'var(--emerald-600)' : 'transparent',
+                    background: incomeView === 'quarterly' ? 'var(--c-mint)' : 'transparent',
                     color: incomeView === 'quarterly' ? '#FFFFFF' : 'var(--ink)',
                   }}
                 >

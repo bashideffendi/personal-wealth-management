@@ -111,7 +111,7 @@ export function StockCompareTab() {
         <Button
           onClick={() => setPickerOpen(true)}
           disabled={selected.length >= MAX_COMPARE}
-          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
           size="sm"
         >
           <Plus className="size-3.5" /> Tambah saham
@@ -358,7 +358,7 @@ function PickerDialog({
                         </span>
                       )}
                     </span>
-                    <Plus className="size-4 shrink-0" style={{ color: 'var(--emerald-600)' }} />
+                    <Plus className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} />
                   </button>
                 </li>
               ))}

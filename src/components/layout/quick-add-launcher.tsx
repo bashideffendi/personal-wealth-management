@@ -633,7 +633,7 @@ function PreviewView({
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
           style={{
             background: 'var(--emerald-100)',
-            color: 'var(--emerald-700)',
+            color: 'var(--c-mint)',
             letterSpacing: '0.06em',
           }}
         >
@@ -718,7 +718,7 @@ function PreviewView({
           onClick={onSave}
           disabled={saving || accounts.length === 0}
           className="sm:flex-none flex-1"
-          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
           {saving ? (
             <>
@@ -912,7 +912,7 @@ function ManualForm({
               className="self-start mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition hover:opacity-80"
               style={{
                 background: 'var(--emerald-50)',
-                color: 'var(--emerald-700)',
+                color: 'var(--c-mint)',
                 border: '1px solid color-mix(in srgb, var(--emerald-500) 25%, transparent)',
               }}
               title="Klik untuk pakai kategori ini"
@@ -931,7 +931,7 @@ function ManualForm({
         <Button
           onClick={onSave}
           disabled={saving || !form.account_id || form.amount <= 0}
-          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
           {saving && <Loader2 className="size-4 animate-spin" />}
           Simpan

@@ -65,7 +65,7 @@ function setCache(cached: CachedInsights) {
 }
 
 const TONE_STYLES: Record<Insight['tone'], { bg: string; border: string; emoji_bg: string; tint: string }> = {
-  positive:    { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.25)', emoji_bg: 'rgba(16, 185, 129, 0.15)', tint: 'var(--emerald-700)' },
+  positive:    { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.25)', emoji_bg: 'rgba(16, 185, 129, 0.15)', tint: 'var(--c-mint)' },
   observation: { bg: 'rgba(14, 165, 233, 0.06)', border: 'rgba(14, 165, 233, 0.25)', emoji_bg: 'rgba(14, 165, 233, 0.15)', tint: 'var(--sky-600)' },
   warning:     { bg: 'rgba(245, 158, 11, 0.06)', border: 'rgba(245, 158, 11, 0.30)', emoji_bg: 'rgba(245, 158, 11, 0.18)', tint: 'var(--amber-700)' },
 }
@@ -256,7 +256,7 @@ export function AIInsightsCard({
           <div>
             <p
               className="text-[11px] uppercase tracking-[0.14em] font-semibold"
-              style={{ color: 'var(--emerald-700)' }}
+              style={{ color: 'var(--c-mint)' }}
             >
               AI Insights
             </p>

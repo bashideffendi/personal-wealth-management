@@ -205,7 +205,7 @@ export function StockWatchlistTab() {
         <Button
           onClick={() => setAddOpen(true)}
           disabled={pending}
-          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
           <Plus className="size-4" /> Tambah saham
         </Button>
@@ -272,7 +272,7 @@ export function StockWatchlistTab() {
                           <span
                             className="inline-flex items-center gap-0.5 font-semibold"
                             style={{
-                              color: changePct >= 0 ? 'var(--emerald-600)' : 'var(--coral-600)',
+                              color: changePct >= 0 ? 'var(--c-mint)' : 'var(--coral-600)',
                             }}
                           >
                             {changePct >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
@@ -284,7 +284,7 @@ export function StockWatchlistTab() {
                       </td>
                       <td className="px-3 py-2.5 text-right num tabular text-xs">
                         {row.target_price ? (
-                          <span style={{ color: reachedTarget ? 'var(--emerald-700)' : 'var(--ink-muted)' }}>
+                          <span style={{ color: reachedTarget ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
                             {formatCurrency(row.target_price)}
                             {reachedTarget && (
                               <Badge className="ml-1 bg-emerald-100 text-emerald-700">tercapai</Badge>
@@ -377,7 +377,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <Button
         onClick={onAdd}
         className="mt-4"
-        style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+        style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
       >
         <Plus className="size-4" /> Tambah saham pertama
       </Button>
@@ -473,7 +473,7 @@ function AddDialog({
                         </span>
                       )}
                     </span>
-                    <Plus className="size-4 shrink-0" style={{ color: 'var(--emerald-600)' }} />
+                    <Plus className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} />
                   </button>
                 </li>
               ))}
@@ -563,7 +563,7 @@ function EditNoteDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
-          <Button onClick={save} disabled={saving} style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}>
+          <Button onClick={save} disabled={saving} style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}>
             {saving && <Loader2 className="size-4 animate-spin" />}
             Simpan
           </Button>

@@ -377,7 +377,7 @@ export default function ImportMutasiPage() {
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
             style={{
               background: 'var(--emerald-100)',
-              color: 'var(--emerald-700)',
+              color: 'var(--c-mint)',
             }}
           >
             <Check className="size-7" />
@@ -405,7 +405,7 @@ export default function ImportMutasiPage() {
             </Button>
             <Button
               onClick={() => router.push('/dashboard/transactions')}
-              style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+              style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
             >
               Lihat transaksi
             </Button>
@@ -508,7 +508,7 @@ function InputStage({
             <Button
               onClick={() => onProcess('pdf')}
               disabled={!pdfFile || !accountId}
-              style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+              style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
             >
               <Sparkles className="size-4" />
               Parse mutasi
@@ -548,7 +548,7 @@ function InputStage({
             <Button
               onClick={() => onProcess('text')}
               disabled={text.trim().length < 20 || !accountId}
-              style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+              style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
             >
               <Sparkles className="size-4" />
               Parse mutasi
@@ -725,7 +725,7 @@ function PreviewStage({
                   </Select>
                 </td>
                 <td className="px-3 py-2 text-right num text-xs whitespace-nowrap" style={{ color: 'var(--ink)' }}>
-                  <span style={{ color: r.type === 'expense' ? 'var(--coral-600)' : 'var(--emerald-600)' }}>
+                  <span style={{ color: r.type === 'expense' ? 'var(--coral-600)' : 'var(--c-mint)' }}>
                     {r.type === 'expense' ? '−' : '+'}{formatCurrency(r.amount)}
                   </span>
                 </td>
@@ -755,7 +755,7 @@ function PreviewStage({
         <Button
           onClick={onImport}
           disabled={selected === 0}
-          style={{ background: 'var(--emerald-600)', color: '#FFFFFF' }}
+          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
           Import {selected} transaksi
         </Button>

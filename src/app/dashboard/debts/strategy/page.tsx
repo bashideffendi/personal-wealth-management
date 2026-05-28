@@ -214,7 +214,7 @@ export default function DebtStrategyPage() {
                       <span
                         className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold"
                         style={{
-                          background: focus ? 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))' : 'var(--surface-alt)',
+                          background: focus ? 'var(--c-primary)' : 'var(--surface-alt)',
                           color: focus ? '#FFF' : 'var(--ink-muted)',
                         }}
                       >

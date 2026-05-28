@@ -241,7 +241,7 @@ export function StockResearchTab() {
                     <td className="px-3 py-2.5">
                       <Link
                         href={`/dashboard/assets/investment/stock/research/${r.ticker}`}
-                        className="inline-flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--emerald-600)] transition"
+                        className="inline-flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--c-mint)] transition"
                         aria-label={`Buka research ${r.ticker}`}
                       >
                         <ArrowUpRight className="size-4" />
@@ -269,7 +269,7 @@ export function StockResearchTab() {
           color: 'var(--ink-muted)',
         }}
       >
-        <Sparkles className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--emerald-600)' }} />
+        <Sparkles className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
         <span>
           MoS = Margin of Safety. Positif berarti fair value di atas harga pasar
           (undervalued). Data dihitung dari 8 metode valuasi (DCF, Graham, EPV,

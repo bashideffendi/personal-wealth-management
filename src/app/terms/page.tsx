@@ -14,16 +14,19 @@ export default function TermsPage() {
         style={{ borderColor: 'var(--border-soft)' }}
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <div
-            className="size-8 rounded-[9px] flex items-center justify-center font-extrabold text-base text-white"
+          <div className="kl-brandmark" style={{ width: 32, height: 32, borderRadius: 10 }}>
+            <span style={{ fontSize: 20 }}>k</span>
+          </div>
+          <span
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
-              letterSpacing: '-0.04em',
+              fontFamily: 'var(--font-display)',
+              fontSize: 20,
+              letterSpacing: '-0.02em',
+              color: 'var(--ink)',
             }}
           >
-            K
-          </div>
-          <span className="font-bold text-base tracking-tight">Klunting</span>
+            Klunting
+          </span>
         </Link>
       </header>
 
@@ -147,7 +150,7 @@ export default function TermsPage() {
           <Link
             href="/"
             className="text-sm font-medium hover:underline"
-            style={{ color: 'var(--emerald-700)' }}
+            style={{ color: 'var(--c-mint)' }}
           >
             ← Kembali ke beranda
           </Link>
