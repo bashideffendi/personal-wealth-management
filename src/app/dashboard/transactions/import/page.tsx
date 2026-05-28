@@ -283,18 +283,45 @@ export default function ImportMutasiPage() {
         Kembali ke Transaksi
       </Link>
 
-      <header>
-        <h1
-          className="text-2xl font-bold tracking-tight"
-          style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
-        >
-          Import mutasi rekening
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Upload PDF mutasi dari bank atau paste text dari mobile banking. AI
-          parse jadi list transaksi, kamu konfirmasi, terus import bulk.
-        </p>
-      </header>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-8">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#C4B5FD' }}
+          >
+            Bulk Import · AI
+          </p>
+          <h1
+            className="font-bold tracking-tight mt-2"
+            style={{
+              fontSize: 'clamp(28px, 4vw, 36px)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.035em',
+            }}
+          >
+            Import mutasi rekening
+          </h1>
+          <p className="mt-2 text-sm max-w-xl" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Upload PDF mutasi dari bank atau paste text dari mobile banking. AI
+            parse jadi list transaksi, kamu konfirmasi, terus import bulk.
+          </p>
+        </div>
+      </section>
 
       {error && (
         <div
