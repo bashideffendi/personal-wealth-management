@@ -116,30 +116,56 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="s-card p-6 sm:p-9">
-        <p className="eyebrow">Tujuan Keuangan</p>
-        <p
-          className="display num tabular mt-3"
+      {/* Dark gradient hero */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: 'var(--ink)',
-            fontSize: 'clamp(40px, 6vw, 64px)',
-            lineHeight: 1,
+            top: -120,
+            right: -80,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
           }}
-        >
-          {formatCurrency(totals.current)}
-        </p>
-        <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
-          dari target{' '}
-          <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
-            {formatCurrency(totals.target)}
-          </span>
-          {' · '}
-          <span className="num tabular" style={{ color: 'var(--c-mint)', fontWeight: 700 }}>
-            {totals.pct.toFixed(1)}%
-          </span>
-          {' tercapai · '}{goals.length} goal
-        </p>
-      </div>
+        />
+        <div className="relative p-6 sm:p-9">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Tujuan Keuangan
+          </p>
+          <p
+            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
+            style={{
+              color: '#FFFFFF',
+              fontSize: 'clamp(40px, 6vw, 64px)',
+              letterSpacing: '-0.04em',
+            }}
+          >
+            {formatCurrency(totals.current)}
+          </p>
+          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            dari target{' '}
+            <span className="num tabular font-semibold" style={{ color: '#FFFFFF' }}>
+              {formatCurrency(totals.target)}
+            </span>
+            {' · '}
+            <span className="num tabular font-bold" style={{ color: '#6EE7B7' }}>
+              {totals.pct.toFixed(1)}%
+            </span>
+            {' tercapai · '}{goals.length} goal
+          </p>
+        </div>
+      </section>
 
       <div className="flex items-center justify-between">
         <p className="text-sm flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>

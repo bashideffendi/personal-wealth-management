@@ -248,37 +248,63 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="s-card p-6 sm:p-9">
-        <p className="eyebrow">Akun & Saldo</p>
-        {!loading && accounts.length > 0 ? (
-          <>
-            <p
-              className="display num tabular mt-3"
+      {/* Dark gradient hero */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -120,
+            right: -80,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-9">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Akun & Saldo
+          </p>
+          {!loading && accounts.length > 0 ? (
+            <>
+              <p
+                className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: 'clamp(36px, 5vw, 56px)',
+                  letterSpacing: '-0.04em',
+                }}
+              >
+                {formatCurrency(totalBalance)}
+              </p>
+              <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                Total saldo gabungan dari {accounts.length} akun · {today}
+              </p>
+            </>
+          ) : (
+            <h1
+              className="font-bold mt-2"
               style={{
-                color: 'var(--ink)',
-                fontSize: 'clamp(36px, 5vw, 56px)',
-                lineHeight: 1,
+                fontSize: 'clamp(28px, 4vw, 40px)',
+                color: '#FFFFFF',
+                letterSpacing: '-0.035em',
               }}
             >
-              {formatCurrency(totalBalance)}
-            </p>
-            <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
-              Total saldo gabungan dari {accounts.length} akun · {today}
-            </p>
-          </>
-        ) : (
-          <h1
-            className="display mt-2"
-            style={{
-              fontSize: 'clamp(28px, 4vw, 40px)',
-              color: 'var(--ink)',
-              /* italic dropped per fintech revert */
-            }}
-          >
-            Kelola Akun
-          </h1>
-        )}
-      </div>
+              Kelola Akun
+            </h1>
+          )}
+        </div>
+      </section>
 
       <div className="flex justify-end">
         <Button onClick={openAddDialog}>

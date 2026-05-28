@@ -138,39 +138,74 @@ export default function DebtsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="s-card p-6 sm:p-9">
-        <p className="eyebrow">Utang Aktif</p>
-        <p
-          className="display num tabular mt-3"
+      {/* Dark gradient hero */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: totalRemaining > 0 ? 'var(--c-coral)' : 'var(--ink)',
-            fontSize: 'clamp(40px, 6vw, 64px)',
-            lineHeight: 1,
+            top: -120,
+            right: -80,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${totalRemaining > 0 ? 'rgba(251, 113, 133, 0.16)' : 'rgba(16, 185, 129, 0.18)'}, transparent 65%)`,
           }}
-        >
-          {totalRemaining > 0 ? `−${formatCurrency(totalRemaining)}` : formatCurrency(0)}
-        </p>
-        <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
-          {active.length} utang aktif · cicilan{' '}
-          <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
-            {formatCurrency(totalMonthly)}
-          </span>
-          /bln
-        </p>
-        {totalPrincipal > 0 && (
-          <div className="mt-5 max-w-md">
-            <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: 'var(--text-mute)' }}>
-              <span>Progress pelunasan</span>
-              <span className="num tabular font-semibold" style={{ color: 'var(--c-mint)' }}>
-                {paidPct.toFixed(1)}%
-              </span>
+        />
+        <div className="relative p-6 sm:p-9">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: totalRemaining > 0 ? '#FDA4AF' : '#6EE7B7' }}
+          >
+            Utang Aktif
+          </p>
+          <p
+            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
+            style={{
+              color: totalRemaining > 0 ? '#FDA4AF' : '#FFFFFF',
+              fontSize: 'clamp(40px, 6vw, 64px)',
+              letterSpacing: '-0.04em',
+            }}
+          >
+            {totalRemaining > 0 ? `−${formatCurrency(totalRemaining)}` : formatCurrency(0)}
+          </p>
+          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {active.length} utang aktif · cicilan{' '}
+            <span className="num tabular font-semibold" style={{ color: '#FFFFFF' }}>
+              {formatCurrency(totalMonthly)}
+            </span>
+            /bln
+          </p>
+          {totalPrincipal > 0 && (
+            <div className="mt-5 max-w-md">
+              <div
+                className="flex items-center justify-between text-[11px] mb-1.5"
+                style={{ color: 'rgba(255,255,255,0.55)' }}
+              >
+                <span>Progress pelunasan</span>
+                <span className="num tabular font-semibold" style={{ color: '#6EE7B7' }}>
+                  {paidPct.toFixed(1)}%
+                </span>
+              </div>
+              <div
+                className="h-1.5 rounded-full overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.10)' }}
+              >
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${paidPct}%`, background: '#34D399' }}
+                />
+              </div>
             </div>
-            <div className="kl-bar" style={{ color: 'var(--c-mint)' }}>
-              <i style={{ width: `${paidPct}%` }} />
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
 
       {/* DTI/DSR + Compound warning — diagnostic widgets */}
       {(monthlyIncome > 0 || worstDebt) && (
