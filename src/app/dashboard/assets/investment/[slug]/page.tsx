@@ -251,9 +251,28 @@ export default function InvestmentCategoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-8">
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${up ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
+          }}
+        />
+        <div className="relative p-6 sm:p-8">
         <div className="flex items-start justify-between gap-3">
-          <p className="caps flex items-center gap-1.5">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase inline-flex items-center gap-1.5"
+            style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}
+          >
             {subcat.label}
             {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && (
               <EduTip topic="dca" side="bottom" />
@@ -264,15 +283,23 @@ export default function InvestmentCategoryPage() {
           )}
         </div>
         <div className="mt-3 flex flex-wrap items-end gap-4">
-          <p className="num tabular text-4xl sm:text-5xl lg:text-6xl font-semibold" style={{ color: 'var(--ink)' }}>
+          <p
+            className="num tabular font-bold leading-none whitespace-nowrap"
+            style={{
+              fontSize: 'clamp(40px, 6vw, 64px)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.04em',
+            }}
+          >
             {formatCurrency(totals.market)}
           </p>
           {totals.invested > 0 && (
             <span
-              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold"
+              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold mb-2"
               style={{
-                background: 'var(--black)',
-                color: up ? 'var(--lime-400)' : '#F87171',
+                background: up ? 'rgba(16,185,129,0.18)' : 'rgba(251,113,133,0.18)',
+                color: up ? '#6EE7B7' : '#FDA4AF',
+                fontVariantNumeric: 'tabular-nums',
               }}
             >
               {up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -280,15 +307,16 @@ export default function InvestmentCategoryPage() {
             </span>
           )}
         </div>
-        <p className="text-sm mt-2 inline-flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--on-black-mut)' }}>
-          <span>{items.length} posisi · Modal <span className="num">{formatCurrency(totals.invested)}</span>
+        <p className="text-sm mt-2 inline-flex items-center gap-1.5 flex-wrap" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <span>{items.length} posisi · Modal <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(totals.invested)}</span>
           {' · '}
-          P/L <span className="num">{formatCurrency(totals.pl)}</span></span>
+          P/L <span className="num font-semibold" style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}>{formatCurrency(totals.pl)}</span></span>
           {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && totals.invested > 0 && (
             <EduTip topic="loss-aversion" side="bottom" />
           )}
         </p>
-      </div>
+        </div>
+      </section>
 
       <Tabs defaultValue="holdings" className="w-full">
         {category === 'stock' && (
