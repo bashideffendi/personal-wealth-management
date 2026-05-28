@@ -93,16 +93,45 @@ export default function RulesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Auto-Categorize</p>
-        <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2" style={{ color: 'var(--ink)' }}>
-          Aturan Kategori
-        </h2>
-        <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--on-black-mut)' }}>
-          Saat deskripsi transaksi mengandung teks yang cocok, kategori & tipe otomatis diisi.
-          Contoh: deskripsi &ldquo;GRAB RIDE 25K&rdquo; → auto Transportasi.
-        </p>
-      </div>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#C4B5FD' }}
+          >
+            Auto-Categorize
+          </p>
+          <h1
+            className="font-bold tracking-tight mt-2"
+            style={{
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              color: '#FFFFFF',
+              letterSpacing: '-0.035em',
+            }}
+          >
+            Aturan Kategori
+          </h1>
+          <p className="text-sm mt-2 max-w-xl" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Saat deskripsi transaksi mengandung teks yang cocok, kategori &amp; tipe otomatis diisi.
+            Contoh: deskripsi &ldquo;GRAB RIDE 25K&rdquo; → auto Transportasi.
+          </p>
+        </div>
+      </section>
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>

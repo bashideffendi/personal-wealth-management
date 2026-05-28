@@ -85,38 +85,67 @@ export default function CategoryDrilldownPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Transaksi
       </Link>
 
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Drill-Down Kategori</p>
-        <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2" style={{ color: 'var(--ink)' }}>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+        <p
+          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          style={{ color: '#6EE7B7' }}
+        >
+          Drill-Down Kategori
+        </p>
+        <h1
+          className="font-bold tracking-tight mt-2"
+          style={{
+            fontSize: 'clamp(28px, 4vw, 40px)',
+            color: '#FFFFFF',
+            letterSpacing: '-0.035em',
+          }}
+        >
           {category}
-        </h2>
+        </h1>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>Total</p>
-            <p className="num tabular text-xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>Total</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.total)}
             </p>
           </div>
           <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>YTD</p>
-            <p className="num tabular text-xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>YTD</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.thisYear)}
             </p>
           </div>
           <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>Bulan Ini</p>
-            <p className="num tabular text-xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>Bulan Ini</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.thisMonth)}
             </p>
           </div>
           <div>
-            <p className="caps" style={{ fontSize: '0.625rem' }}>Rata-rata/tx</p>
-            <p className="num tabular text-xl font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>Rata-rata/tx</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.avg)}
             </p>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
