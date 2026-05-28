@@ -356,34 +356,40 @@ export default function BudgetingPage() {
     )
   }
 
-  // Color tokens per kind — used by section header + total row tinting.
-  // Matches the dashboard Sankey palette for cross-page consistency.
+  // Color tokens per kind — editorial semantic per design handoff
+  // Pendapatan=mint, Pengeluaran=coral, Tabungan=amber, Investasi=primary
+  // (indigo, bukan sky lagi)
   const KIND_COLOR: Record<BudgetType, { hex: string; bgSoft: string; bgFirm: string; textOnFirm: string }> = {
     income: {
-      hex: '#10B981', // emerald
-      bgSoft: 'rgba(16, 185, 129, 0.06)',
-      bgFirm: 'rgba(16, 185, 129, 0.14)',
-      textOnFirm: '#065F46',
+      hex: '#10B981', // mint
+      bgSoft: 'rgba(16, 185, 129, 0.05)',
+      bgFirm: 'rgba(16, 185, 129, 0.16)',
+      textOnFirm: '#064E3B',
     },
     expense: {
-      hex: '#EF4444', // coral / red
-      bgSoft: 'rgba(239, 68, 68, 0.05)',
-      bgFirm: 'rgba(239, 68, 68, 0.13)',
-      textOnFirm: '#991B1B',
+      hex: '#FB7185', // coral (editorial, bukan red harsh)
+      bgSoft: 'rgba(251, 113, 133, 0.05)',
+      bgFirm: 'rgba(251, 113, 133, 0.14)',
+      textOnFirm: '#9F1239',
     },
     saving: {
       hex: '#F59E0B', // amber
       bgSoft: 'rgba(245, 158, 11, 0.06)',
-      bgFirm: 'rgba(245, 158, 11, 0.16)',
+      bgFirm: 'rgba(245, 158, 11, 0.18)',
       textOnFirm: '#92400E',
     },
     investment: {
-      hex: '#0EA5E9', // sky
-      bgSoft: 'rgba(14, 165, 233, 0.05)',
-      bgFirm: 'rgba(14, 165, 233, 0.14)',
-      textOnFirm: '#075985',
+      hex: '#4F46E5', // indigo primary
+      bgSoft: 'rgba(79, 70, 229, 0.05)',
+      bgFirm: 'rgba(79, 70, 229, 0.15)',
+      textOnFirm: '#312E81',
     },
   }
+
+  // Current month index (1-12) for highlighting current column
+  const currentMonth = new Date().getMonth() + 1
+  const currentYear = new Date().getFullYear()
+  const isCurrentYearActive = Number(year) === currentYear
 
   function renderSectionHeader(label: string, kind: BudgetType) {
     const color = KIND_COLOR[kind]
@@ -499,17 +505,40 @@ export default function BudgetingPage() {
             </colgroup>
             <thead>
               <tr className="bg-[color:var(--surface-alt)]">
-                <th className="sticky left-0 z-20 border border-[color:var(--border-soft)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap">
+                <th className="sticky left-0 z-20 border border-[color:var(--border-soft)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap kl-eyebrow">
                   Kategori
                 </th>
-                {SHORT_MONTHS.map((m) => (
-                  <th
-                    key={m}
-                    className="border border-[color:var(--border-soft)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap"
-                  >
-                    {m}
-                  </th>
-                ))}
+                {SHORT_MONTHS.map((m, i) => {
+                  const monthNum = i + 1
+                  const isCurrent = isCurrentYearActive && monthNum === currentMonth
+                  return (
+                    <th
+                      key={m}
+                      className="border border-[color:var(--border-soft)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative"
+                      style={{
+                        background: isCurrent ? 'var(--c-primary-soft)' : undefined,
+                        color: isCurrent ? 'var(--c-primary)' : undefined,
+                        borderBottom: isCurrent ? '2px solid var(--c-primary)' : undefined,
+                      }}
+                    >
+                      {m}
+                      {isCurrent && (
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            marginTop: 1,
+                            color: 'var(--c-primary)',
+                          }}
+                        >
+                          Sekarang
+                        </div>
+                      )}
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody>
@@ -526,16 +555,16 @@ export default function BudgetingPage() {
               )}
               {renderSpacer()}
 
-              {/* EXPENSE — coral */}
+              {/* EXPENSE — coral editorial */}
               {renderSectionHeader('Pengeluaran', 'expense')}
               {visibleExpense.map((c, i) =>
-                renderCategoryRow('expense', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(239,68,68,0.04)]'),
+                renderCategoryRow('expense', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(251,113,133,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Pengeluaran',
                 visibleExpense,
                 'expense',
-                'bg-[rgba(239,68,68,0.12)]',
+                'bg-[rgba(251,113,133,0.14)]',
               )}
               {renderPercentRow()}
               {renderSpacer()}
@@ -549,20 +578,20 @@ export default function BudgetingPage() {
                 'Total Tabungan',
                 visibleSaving,
                 'saving',
-                'bg-[rgba(245,158,11,0.14)]',
+                'bg-[rgba(245,158,11,0.16)]',
               )}
               {renderSpacer()}
 
-              {/* INVESTMENT — sky */}
+              {/* INVESTMENT — primary indigo editorial */}
               {renderSectionHeader('Investasi', 'investment')}
               {visibleInvestment.map((c, i) =>
-                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(14,165,233,0.04)]'),
+                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(79,70,229,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Investasi',
                 visibleInvestment,
                 'investment',
-                'bg-[rgba(14,165,233,0.12)]',
+                'bg-[rgba(79,70,229,0.14)]',
               )}
             </tbody>
           </table>
