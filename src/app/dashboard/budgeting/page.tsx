@@ -439,21 +439,21 @@ export default function BudgetingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header — editorial page header */}
+      {/* Header — clean fintech page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Perencanaan · {year}</p>
           <h1
-            className="display mt-1"
+            className="font-bold tracking-tight mt-1"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               color: 'var(--ink)',
-              /* italic dropped per fintech revert */
+              letterSpacing: '-0.035em',
             }}
           >
             Anggaran Tahunan
           </h1>
-          <p className="text-sm mt-2 flex items-center gap-1.5" style={{ color: 'var(--text-mute)' }}>
+          <p className="text-sm mt-2 flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>
             Distribusi pendapatan, pengeluaran, tabungan, &amp; investasi sepanjang tahun.
             <EduTip topic="budget-method" side="bottom" />
           </p>
