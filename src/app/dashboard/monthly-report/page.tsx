@@ -125,7 +125,7 @@ export default function MonthlyReportPage() {
   const periodLabel = `${MONTHS[month - 1]} ${year}`
 
   const expenseDonut = recap.expense_by_category.slice(0, 6).map((c) => ({ name: c.name, value: c.amount }))
-  const PIE_COLORS = ['#8B1538', '#D97706', '#10B981', '#4F46E5', '#E11D48', '#737373']
+  const PIE_COLORS = ['#10B981', '#0EA5E9', '#F59E0B', '#F43F5E', '#8B5CF6', '#737373']
 
   if (loading) {
     return (
@@ -317,8 +317,8 @@ export default function MonthlyReportPage() {
                       labelFormatter={(d) => `Tgl ${d}`}
                       contentStyle={{ background: 'white', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }}
                     />
-                    <Bar dataKey="income" fill="#059669" radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="expense" fill="#E11D48" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="income" fill="#10B981" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="expense" fill="#F43F5E" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -399,7 +399,7 @@ export default function MonthlyReportPage() {
                           <td className="py-2 text-muted-foreground text-xs">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                           <td className="py-2">{tx.description || '—'}</td>
                           <td className="py-2 text-muted-foreground text-xs">{tx.category}</td>
-                          <td className="py-2 text-right font-semibold tabular-nums" style={{ color: '#E11D48' }}>{formatCurrency(tx.amount)}</td>
+                          <td className="py-2 text-right font-semibold tabular-nums" style={{ color: 'var(--c-coral)' }}>{formatCurrency(tx.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -430,8 +430,8 @@ export default function MonthlyReportPage() {
 function KpiCard({ label, value, accent, icon, note }: { label: string; value: string; accent: 'emerald' | 'rose' | 'amber' | 'indigo'; icon: React.ReactNode; note?: string }) {
   const colors: Record<string, { bg: string; fg: string }> = {
     emerald: { bg: '#D1FAE5', fg: '#10B981' },
-    rose:    { bg: '#FFE4E6', fg: '#E11D48' },
-    amber:   { bg: '#FEF3C7', fg: '#D97706' },
+    rose:    { bg: '#FFE4E6', fg: '#F43F5E' },
+    amber:   { bg: '#FEF3C7', fg: '#B45309' },
     indigo:  { bg: '#E0E7FF', fg: '#4F46E5' },
   }
   const c = colors[accent]

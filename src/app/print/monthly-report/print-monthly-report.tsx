@@ -489,7 +489,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
                   <td className="num">{formatCurrency(r.amount)}</td>
                   <td className="num">
                     {r.pct.toFixed(1)}%
-                    <span className="row-bar" style={{ width: Math.min(50, r.pct * 0.5), background: '#EF4444' }} />
+                    <span className="row-bar" style={{ width: Math.min(50, r.pct * 0.5), background: '#F43F5E' }} />
                   </td>
                 </tr>
               ))}
