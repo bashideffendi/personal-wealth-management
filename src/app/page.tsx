@@ -35,13 +35,27 @@ export default async function LandingPage() {
         style={{ borderColor: 'var(--line)' }}
       >
         <div className="flex items-center gap-2.5">
-          <div className="kl-brandmark">
-            <span>K</span>
+          <div
+            className="grid place-items-center"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #10B981, #047857)',
+              color: '#FFFFFF',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 800,
+              fontSize: 16,
+              letterSpacing: '-0.04em',
+            }}
+          >
+            K
           </div>
           <div
             style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 700,
-              fontSize: 22,
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
+              fontSize: 18,
               letterSpacing: '-0.02em',
               color: 'var(--ink)',
             }}
@@ -49,7 +63,7 @@ export default async function LandingPage() {
             Klunting
           </div>
         </div>
-        <nav className="hidden md:flex gap-7 text-sm" style={{ color: 'var(--ink-muted)' }}>
+        <nav className="hidden md:flex gap-7 text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>
           <a href="#fitur" className="hover:text-[var(--ink)] transition-colors">Fitur</a>
           <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
           <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
@@ -64,8 +78,8 @@ export default async function LandingPage() {
           </Link>
           <Link
             href="/register"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition hover:opacity-90"
-            style={{ background: 'var(--ink)', color: 'var(--surface)' }}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
+            style={{ background: '#10B981', color: '#FFFFFF' }}
           >
             Daftar gratis
             <ArrowRight className="size-3.5" />
@@ -75,19 +89,50 @@ export default async function LandingPage() {
 
       {/* ─── HERO ──────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-6 sm:px-12 py-16 sm:py-24">
+        {/* Subtle emerald ambient blob */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -80,
+            right: -60,
+            width: 480,
+            height: 480,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.08), transparent 65%)',
+          }}
+        />
         <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
           {/* LEFT — copy */}
           <div>
-            <h1
-              className="kl-display"
+            {/* Eyebrow badge */}
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-6"
               style={{
-                fontSize: 'clamp(40px, 6.5vw, 80px)',
-                lineHeight: 1.04,
-                letterSpacing: '-0.03em',
+                background: 'var(--c-mint-soft)',
+                color: 'var(--c-mint)',
+                border: '1px solid color-mix(in srgb, var(--c-mint) 20%, transparent)',
               }}
             >
-              Total kekayaanmu,<br />
-              <em style={{ color: 'var(--c-primary)',  }}>di satu app.</em>
+              <span
+                className="size-1.5 rounded-full"
+                style={{ background: 'var(--c-mint)' }}
+              />
+              <span className="text-xs font-semibold tracking-tight">
+                Beta · Trial 14 hari gratis
+              </span>
+            </div>
+
+            <h1
+              className="font-bold tracking-tight"
+              style={{
+                fontSize: 'clamp(40px, 6.5vw, 76px)',
+                lineHeight: 1.02,
+                letterSpacing: '-0.035em',
+                color: 'var(--ink)',
+              }}
+            >
+              Wealth management <br />
+              <span style={{ color: 'var(--c-mint)' }}>untuk semua aset kamu.</span>
             </h1>
             <p
               className="mt-6 text-lg leading-relaxed max-w-lg"
@@ -101,9 +146,9 @@ export default async function LandingPage() {
                 href="/register"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90"
                 style={{
-                  background: 'var(--ink)',
-                  color: 'var(--surface)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.45)',
                 }}
               >
                 Coba 14 hari gratis
@@ -117,11 +162,20 @@ export default async function LandingPage() {
                 Lihat fitur
               </a>
             </div>
-            <div
-              className="mt-6 text-[13px]"
-              style={{ color: 'var(--ink-muted)' }}
-            >
-              Trial 14 hari akses penuh · Tanpa kartu kredit
+            {/* Trust strip */}
+            <div className="mt-6 flex items-center gap-4 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+                Trial 14 hari akses penuh
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+                Tanpa kartu kredit
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+                Enkripsi AES-256
+              </span>
             </div>
           </div>
 
