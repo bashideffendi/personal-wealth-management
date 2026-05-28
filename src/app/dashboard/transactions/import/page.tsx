@@ -331,7 +331,7 @@ export default function ImportMutasiPage() {
         >
           <Loader2
             className="size-8 mx-auto animate-spin"
-            style={{ color: 'var(--emerald-500)' }}
+            style={{ color: 'var(--c-mint)' }}
           />
           <p className="text-sm font-medium mt-3" style={{ color: 'var(--ink)' }}>
             AI lagi parse mutasi...
@@ -360,7 +360,7 @@ export default function ImportMutasiPage() {
         >
           <Loader2
             className="size-8 mx-auto animate-spin"
-            style={{ color: 'var(--emerald-500)' }}
+            style={{ color: 'var(--c-mint)' }}
           />
           <p className="text-sm font-medium mt-3" style={{ color: 'var(--ink)' }}>
             Lagi simpan transaksi...
@@ -376,7 +376,7 @@ export default function ImportMutasiPage() {
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
             style={{
-              background: 'var(--emerald-100)',
+              background: 'var(--c-mint-soft)',
               color: 'var(--c-mint)',
             }}
           >
@@ -478,7 +478,7 @@ function InputStage({
         <TabsContent value="pdf" className="mt-4 space-y-3">
           <label
             htmlFor="mutasi-pdf"
-            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center transition hover:border-[var(--emerald-500)] hover:bg-[var(--emerald-50)]"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center transition hover:border-[var(--c-mint)] hover:bg-[var(--c-mint-soft)]"
             style={{
               borderColor: 'var(--border)',
               background: 'var(--surface-2)',
@@ -691,7 +691,7 @@ function PreviewStage({
                     <div className="mt-1 flex gap-1 flex-wrap">
                       {r.is_transfer && <Tag color="var(--sky-600)" bg="var(--sky-100)">Transfer</Tag>}
                       {r.isDuplicate && <Tag color="var(--amber-700)" bg="var(--amber-100)">Duplikat</Tag>}
-                      {r.confidence === 'low' && <Tag color="var(--coral-600)" bg="var(--coral-100)">Akurasi rendah</Tag>}
+                      {r.confidence === 'low' && <Tag color="var(--c-coral)" bg="var(--c-coral-soft)">Akurasi rendah</Tag>}
                     </div>
                   )}
                 </td>
@@ -725,7 +725,7 @@ function PreviewStage({
                   </Select>
                 </td>
                 <td className="px-3 py-2 text-right num text-xs whitespace-nowrap" style={{ color: 'var(--ink)' }}>
-                  <span style={{ color: r.type === 'expense' ? 'var(--coral-600)' : 'var(--c-mint)' }}>
+                  <span style={{ color: r.type === 'expense' ? 'var(--c-coral)' : 'var(--c-mint)' }}>
                     {r.type === 'expense' ? '−' : '+'}{formatCurrency(r.amount)}
                   </span>
                 </td>

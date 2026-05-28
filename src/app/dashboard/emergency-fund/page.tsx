@@ -223,7 +223,7 @@ export default function EmergencyFundPage() {
           <div className="flex-1 min-w-0">
             <p className="caps">Proteksi Finansial</p>
             <div className="mt-2 flex items-end gap-3">
-              <Shield className="h-7 w-7" style={{ color: 'var(--emerald-400)' }} />
+              <Shield className="h-7 w-7" style={{ color: 'var(--c-mint)' }} />
               <h2
                 className="text-3xl sm:text-4xl font-semibold tracking-tight flex items-center gap-2"
                 style={{ color: 'var(--on-black)' }}

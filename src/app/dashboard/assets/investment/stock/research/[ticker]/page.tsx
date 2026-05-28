@@ -181,7 +181,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
       <header
         className="rounded-2xl border p-6"
         style={{
-          background: 'linear-gradient(135deg, var(--emerald-50) 0%, var(--surface) 60%)',
+          background: 'linear-gradient(135deg, var(--c-mint-soft) 0%, var(--surface) 60%)',
           borderColor: 'var(--border)',
         }}
       >

@@ -200,7 +200,7 @@ export default async function LandingPage() {
             >
               <div
                 className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'var(--emerald-100)', color: 'var(--c-mint)' }}
+                style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}
               >
                 <Camera className="size-4" />
               </div>
@@ -257,8 +257,8 @@ export default async function LandingPage() {
             },
             {
               icon: Camera,
-              color: 'var(--emerald-500)',
-              bg: 'var(--emerald-100)',
+              color: 'var(--c-mint)',
+              bg: 'var(--c-mint-soft)',
               title: 'Foto struk auto-fill',
               body: 'Foto struk Indomaret atau Alfamart, AI baca total dan kategori dalam 3 detik.',
             },
@@ -271,8 +271,8 @@ export default async function LandingPage() {
             },
             {
               icon: CreditCard,
-              color: 'var(--coral-500)',
-              bg: 'var(--coral-100)',
+              color: 'var(--c-coral)',
+              bg: 'var(--c-coral-soft)',
               title: 'Atur utang & cicilan',
               body: 'KPR, KTA, kartu kredit. Lihat sisa, jadwal pembayaran, dan strategi pelunasan tercepat.',
             },

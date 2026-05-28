@@ -841,8 +841,8 @@ export default function DashboardPage() {
                 <span
                   className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
                   style={{
-                    background: isSurplus ? 'var(--emerald-50)' : 'var(--coral-50)',
-                    color: isSurplus ? 'var(--c-mint)' : 'var(--coral-700)',
+                    background: isSurplus ? 'var(--c-mint-soft)' : 'var(--coral-50)',
+                    color: isSurplus ? 'var(--c-mint)' : 'var(--c-coral)',
                   }}
                 >
                   {isSurplus ? 'Surplus' : 'Defisit'} {formatCompactCurrency(Math.abs(yearNet))}

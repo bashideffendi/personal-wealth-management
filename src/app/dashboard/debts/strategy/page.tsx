@@ -203,8 +203,8 @@ export default function DebtStrategyPage() {
                     key={d.id}
                     className={`relative overflow-hidden rounded-xl p-4 border flex items-center justify-between transition-all ${focus ? 'ring-2' : ''}`}
                     style={{
-                      background: focus ? 'var(--emerald-50)' : 'var(--surface)',
-                      borderColor: focus ? 'var(--emerald-500)' : 'var(--border-soft)',
+                      background: focus ? 'var(--c-mint-soft)' : 'var(--surface)',
+                      borderColor: focus ? 'var(--c-mint)' : 'var(--border-soft)',
                     }}
                   >
                     {focus && (

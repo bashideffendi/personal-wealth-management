@@ -959,7 +959,7 @@ export default function TransactionsPage() {
         <div className="kl-card flex flex-col items-center text-center py-16 px-8">
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'var(--emerald-50)' }}
+            style={{ background: 'var(--c-mint-soft)' }}
           >
             <Wallet className="size-7" style={{ color: 'var(--c-mint)' }} />
           </div>
@@ -1037,7 +1037,7 @@ export default function TransactionsPage() {
               const amountColor = tx.type === 'income'
                 ? 'var(--c-mint)'
                 : tx.type === 'expense'
-                  ? 'var(--coral-600)'
+                  ? 'var(--c-coral)'
                   : tx.type === 'saving'
                     ? 'var(--amber-600)'
                     : 'var(--sky-600)'
@@ -1082,7 +1082,7 @@ export default function TransactionsPage() {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
                         className="text-[11px] mt-1 inline-flex items-center gap-0.5 font-medium"
-                        style={{ color: 'var(--coral-600)' }}
+                        style={{ color: 'var(--c-coral)' }}
                       >
                         <Trash2 className="size-3" /> Hapus
                       </button>
