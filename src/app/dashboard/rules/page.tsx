@@ -162,7 +162,7 @@ export default function RulesPage() {
                   checked={r.is_active}
                   onChange={() => toggle(r)}
                   className="h-4 w-4"
-                  style={{ accentColor: 'var(--lime-500)' }}
+                  style={{ accentColor: 'var(--c-mint)' }}
                 />
                 <div className="flex-1 flex items-center gap-2 min-w-0 flex-wrap">
                   <span className="num text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>
@@ -174,7 +174,7 @@ export default function RulesPage() {
                   </span>
                   <span className="text-xs font-semibold">{r.category}</span>
                   {r.priority > 1 && (
-                    <span className="text-[10px] px-1.5 rounded font-semibold" style={{ background: 'var(--lime-100)', color: 'var(--lime-700)' }}>
+                    <span className="text-[10px] px-1.5 rounded font-semibold" style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}>
                       P{r.priority}
                     </span>
                   )}

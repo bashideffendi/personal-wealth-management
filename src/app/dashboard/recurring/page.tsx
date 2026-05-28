@@ -267,7 +267,7 @@ export default function RecurringPage() {
                 <div key={r.id} className="flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-2)]/60 transition-colors">
                   <span
                     className="inline-block h-2 w-2 rounded-full shrink-0"
-                    style={{ background: r.is_active ? 'var(--lime-400)' : 'var(--ink-soft)' }}
+                    style={{ background: r.is_active ? 'var(--c-mint)' : 'var(--ink-soft)' }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

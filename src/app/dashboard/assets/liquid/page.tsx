@@ -188,7 +188,7 @@ export default function LiquidAssetsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} />
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
         </div>
       ) : (
         <>
@@ -215,7 +215,7 @@ export default function LiquidAssetsPage() {
               <div className="glass-card p-8 text-center">
                 <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
                   Belum ada akun.{' '}
-                  <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--indigo-600)' }}>
+                  <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>
                     Bikin akun pertama →
                   </Link>
                 </p>
@@ -343,7 +343,7 @@ export default function LiquidAssetsPage() {
             <DialogTitle>{form.id ? 'Edit Aset Lain' : 'Tambah Aset Lain'}</DialogTitle>
             <DialogDescription>
               Untuk akun yang dipakai transaksi rutin (BCA/Cash/GoPay), buka menu{' '}
-              <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--indigo-600)' }}>
+              <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>
                 Akun
               </Link>
               {' '}— saldo-nya auto update dari transaksi.

@@ -154,7 +154,7 @@ export default function InvestmentOverviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
       </div>
     )
   }
@@ -573,7 +573,7 @@ function MiniStat({
         <p className="eyebrow">{label}</p>
         <div
           className="flex h-7 w-7 items-center justify-center rounded-lg"
-          style={{ background: 'var(--indigo-50)', color: accent ?? 'var(--indigo-600)' }}
+          style={{ background: 'var(--c-mint)', color: accent ?? 'var(--c-mint)' }}
         >
           {icon}
         </div>

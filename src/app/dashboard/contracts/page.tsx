@@ -22,11 +22,11 @@ import {
 } from 'lucide-react'
 
 const CAT: Record<ContractCategory, { label: string; icon: LucideIcon; accent: string }> = {
-  insurance:    { label: 'Asuransi',     icon: Shield,    accent: 'var(--butter-300)' },
-  subscription: { label: 'Langganan',    icon: Clock,     accent: 'var(--moss-300)' },
-  loan:         { label: 'Kredit/KPR',   icon: Landmark,  accent: 'var(--orange-300)' },
-  warranty:     { label: 'Garansi',      icon: Package,   accent: 'var(--butter-200)' },
-  lease:        { label: 'Sewa',         icon: KeyRound,  accent: 'var(--moss-100)' },
+  insurance:    { label: 'Asuransi',     icon: Shield,    accent: 'var(--c-mint)' },
+  subscription: { label: 'Langganan',    icon: Clock,     accent: 'var(--c-mint)' },
+  loan:         { label: 'Kredit/KPR',   icon: Landmark,  accent: 'var(--c-amber)' },
+  warranty:     { label: 'Garansi',      icon: Package,   accent: 'var(--c-mint)' },
+  lease:        { label: 'Sewa',         icon: KeyRound,  accent: 'var(--c-mint)' },
   other:        { label: 'Lainnya',      icon: FileText,  accent: 'var(--surface-3)' },
 }
 
@@ -255,7 +255,7 @@ export default function ContractsPage() {
             title="Segera Jatuh Tempo"
             note="Dalam rentang pengingat"
             icon={Clock}
-            accent="var(--orange-300)"
+            accent="var(--c-amber)"
             items={grouped.expiring}
             today={today}
             onEdit={openEdit}
@@ -267,7 +267,7 @@ export default function ContractsPage() {
             title="Aktif"
             note="Masih jauh dari jatuh tempo"
             icon={CalendarClock}
-            accent="var(--moss-300)"
+            accent="var(--c-mint)"
             items={grouped.upcoming}
             today={today}
             onEdit={openEdit}
@@ -543,10 +543,10 @@ function ContractCard({ contract: c, status, today, onEdit, onRemove, onToggleAr
       return { text: `${Math.abs(days)} hari lewat`, bg: '#FBE5E1', color: 'var(--danger)' }
     }
     if (status === 'expiring') {
-      return { text: days === 0 ? 'Hari ini' : `${days} hari lagi`, bg: 'var(--orange-100)', color: 'var(--orange-700)' }
+      return { text: days === 0 ? 'Hari ini' : `${days} hari lagi`, bg: 'var(--c-amber)', color: 'var(--c-amber)' }
     }
     if (status === 'upcoming') {
-      return { text: `${days} hari lagi`, bg: 'var(--moss-100)', color: 'var(--moss-700)' }
+      return { text: `${days} hari lagi`, bg: 'var(--c-mint)', color: 'var(--c-mint)' }
     }
     return { text: 'Diarsip', bg: 'var(--surface-2)', color: 'var(--ink-muted)' }
   })()

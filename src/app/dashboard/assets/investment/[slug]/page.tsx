@@ -394,7 +394,7 @@ export default function InvestmentCategoryPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} /></div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : items.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <p className="text-5xl">{subcat.emoji}</p>
@@ -551,7 +551,7 @@ export default function InvestmentCategoryPage() {
                 <div className="mt-1.5 flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-muted)' }}>
                   <span>{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}</span>
                   {e.invested > 0 && (
-                    <span className="num font-medium" style={{ color: pos ? 'var(--lime-700)' : 'var(--danger)' }}>
+                    <span className="num font-medium" style={{ color: pos ? 'var(--c-mint)' : 'var(--danger)' }}>
                       {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                     </span>
                   )}

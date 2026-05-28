@@ -335,10 +335,10 @@ export default function EmergencyFundPage() {
             </div>
 
             {/* Recommendation */}
-            <div className="rounded-lg p-4 space-y-1 border" style={{ backgroundColor: 'var(--indigo-50)', borderColor: 'var(--indigo-100)' }}>
+            <div className="rounded-lg p-4 space-y-1 border" style={{ backgroundColor: 'var(--c-mint)', borderColor: 'var(--c-mint)' }}>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>Rekomendasi</span>
-                <span className="text-sm font-semibold tabular" style={{ color: 'var(--indigo-700)' }}>{formatCurrency(recommendation)}</span>
+                <span className="text-sm font-semibold tabular" style={{ color: 'var(--c-mint)' }}>{formatCurrency(recommendation)}</span>
               </div>
               <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
                 {multiplier}× pengeluaran bulanan

@@ -83,7 +83,7 @@ export default function DebtStrategyPage() {
       </section>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} /></div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : active.length === 0 ? (
         // Educational empty state — show users WHAT the feature does even
         // before they have debts. Bebas utang is great, but they should
@@ -192,7 +192,7 @@ export default function DebtStrategyPage() {
           {/* Extra payment */}
           <div className="glass-card p-5">
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4" style={{ color: 'var(--indigo-600)' }} />
+              <Zap className="h-4 w-4" style={{ color: 'var(--c-mint)' }} />
               <Label htmlFor="extra" className="text-sm font-semibold">Pembayaran Ekstra per Bulan</Label>
             </div>
             <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
@@ -337,12 +337,12 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
     <div
       className="rounded-xl p-2.5 border"
       style={{
-        background: highlight ? 'var(--indigo-50)' : 'var(--surface)',
-        borderColor: highlight ? 'var(--indigo-200)' : 'var(--border-soft)',
+        background: highlight ? 'var(--c-mint)' : 'var(--surface)',
+        borderColor: highlight ? 'var(--c-mint)' : 'var(--border-soft)',
       }}
     >
       <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{label}</p>
-      <p className="text-sm font-semibold tabular mt-0.5" style={{ color: highlight ? 'var(--indigo-700)' : 'var(--ink)' }}>
+      <p className="text-sm font-semibold tabular mt-0.5" style={{ color: highlight ? 'var(--c-mint)' : 'var(--ink)' }}>
         {value}
       </p>
     </div>

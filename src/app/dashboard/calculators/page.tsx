@@ -334,7 +334,7 @@ function FireCalculator() {
           <ResultRow label="Kekurangan" v={result.needed} accent="var(--danger)" />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--lime-700)" />
+          <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--c-mint)" />
           <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
             Dengan menabung/investasi <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>/bulan selama {result.yearsToRetire} tahun pada return {annualReturn}%/tahun, Anda bisa pensiun umur {retireAge}.
           </p>
@@ -405,7 +405,7 @@ function KidsEducationCalculator() {
           <ResultRow label="Kekurangan" v={result.needed} accent="var(--danger)" />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--lime-700)" />
+          <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--c-mint)" />
         </div>
       </div>
     </div>
@@ -465,8 +465,8 @@ function DCASimulator() {
         <h3 className="font-semibold">Hasil {years} Tahun</h3>
         <div className="mt-4 space-y-2">
           <ResultRow label="Total diinvestasikan" v={result.invested} />
-          <ResultRow label="Nilai akhir (compounding)" v={result.fv} big accent="var(--lime-700)" />
-          <ResultRow label="Capital gain" v={result.gain} accent="var(--lime-700)" />
+          <ResultRow label="Nilai akhir (compounding)" v={result.fv} big accent="var(--c-mint)" />
+          <ResultRow label="Capital gain" v={result.gain} accent="var(--c-mint)" />
         </div>
         {result.data.length > 0 && (
           <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
@@ -669,7 +669,7 @@ function TaxCalculator() {
         <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
           <ResultRow label="Pajak / tahun" v={result.tax} accent="var(--danger)" big />
           <ResultRow label="Pajak / bulan" v={result.monthlyTax} accent="var(--ink)" />
-          <ResultRow label="Take home / tahun" v={result.takeHome} accent="var(--lime-700)" />
+          <ResultRow label="Take home / tahun" v={result.takeHome} accent="var(--c-mint)" />
         </div>
       </div>
     </div>

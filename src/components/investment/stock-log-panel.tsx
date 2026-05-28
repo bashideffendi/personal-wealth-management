@@ -162,7 +162,7 @@ export function StockLogPanel() {
         </div>
         <div>
           <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Realized P/L (FIFO)</p>
-          <p className="num tabular text-xl font-semibold flex items-center gap-1 mt-0.5" style={{ color: plPositive ? 'var(--lime-700)' : 'var(--danger)' }}>
+          <p className="num tabular text-xl font-semibold flex items-center gap-1 mt-0.5" style={{ color: plPositive ? 'var(--c-mint)' : 'var(--danger)' }}>
             {plPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             {formatCurrency(stats.realizedPL)}
           </p>
@@ -224,8 +224,8 @@ export function StockLogPanel() {
                     <span
                       className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase"
                       style={{
-                        background: t.side === 'buy' ? 'var(--lime-100)' : 'var(--danger-bg)',
-                        color: t.side === 'buy' ? 'var(--lime-700)' : 'var(--danger)',
+                        background: t.side === 'buy' ? 'var(--c-mint)' : 'var(--danger-bg)',
+                        color: t.side === 'buy' ? 'var(--c-mint)' : 'var(--danger)',
                       }}
                     >
                       {t.side}

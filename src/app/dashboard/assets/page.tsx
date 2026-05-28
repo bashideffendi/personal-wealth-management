@@ -83,7 +83,7 @@ export default function AssetsOverviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
         <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>Memuat aset...</span>
       </div>
     )

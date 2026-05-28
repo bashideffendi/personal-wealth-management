@@ -123,7 +123,7 @@ export default function LeafletMap({
             onClick={search}
             disabled={searching || !query.trim()}
             className="h-8 px-3 text-xs font-medium rounded border transition disabled:opacity-40"
-            style={{ background: 'var(--lime-400)', borderColor: 'transparent', color: 'var(--ink)' }}
+            style={{ background: 'var(--c-mint)', borderColor: 'transparent', color: 'var(--ink)' }}
           >
             {searching ? 'Mencari…' : 'Cari'}
           </button>
@@ -172,7 +172,7 @@ export default function LeafletMap({
               className="px-2 py-1 text-[10px] font-semibold transition-colors uppercase tracking-wider"
               style={{
                 background: mapStyle === key ? 'var(--ink)' : 'transparent',
-                color: mapStyle === key ? 'var(--lime-400)' : 'var(--ink-muted)',
+                color: mapStyle === key ? 'var(--c-mint)' : 'var(--ink-muted)',
               }}
               title={TILE_LAYERS[key].label}
             >

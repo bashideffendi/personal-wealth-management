@@ -134,7 +134,7 @@ export default function DebtPaymentsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} /></div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : payments.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <p className="text-5xl">✅</p>
@@ -150,7 +150,7 @@ export default function DebtPaymentsPage() {
                 <div key={p.id} className="flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-2)]/60 transition-colors">
                   <span
                     className="inline-block h-2 w-2 rounded-full shrink-0"
-                    style={{ background: 'var(--lime-400)' }}
+                    style={{ background: 'var(--c-mint)' }}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>

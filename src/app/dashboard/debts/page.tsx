@@ -279,7 +279,7 @@ export default function DebtsOverviewPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} /></div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : debts.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <p className="text-5xl">🎉</p>
@@ -321,7 +321,7 @@ export default function DebtsOverviewPage() {
                     <span>Lunas <span className="num">{paidDebtPct.toFixed(0)}%</span></span>
                     <Badge
                       className="rounded-sm px-1.5 py-0 border-0 text-[10px] font-semibold"
-                      style={{ background: 'var(--lime-100)', color: 'var(--lime-700)' }}
+                      style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}
                     >
                       <span className="num">{d.interest_rate}%</span> bunga
                     </Badge>

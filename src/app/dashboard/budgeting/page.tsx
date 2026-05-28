@@ -674,7 +674,7 @@ export default function BudgetingPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1">
             <CategoryGroup
               title="Pendapatan"
-              accent="var(--lime-500)"
+              accent="var(--c-mint)"
               all={allIncome}
               customList={custom.income}
               selected={enabled.income}

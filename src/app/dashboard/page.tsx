@@ -448,7 +448,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--indigo-600)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
         <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>
           Memuat dashboard...
         </span>
@@ -768,7 +768,7 @@ export default function DashboardPage() {
             <div className="flex h-[200px] items-center justify-center text-center text-sm px-4" style={{ color: 'var(--ink-soft)' }}>
               <span>
                 {t('dashboard.no_budget')}.{' '}
-                <a href="/dashboard/budgeting" className="inline-flex items-center gap-1 font-medium" style={{ color: 'var(--indigo-600)' }}>
+                <a href="/dashboard/budgeting" className="inline-flex items-center gap-1 font-medium" style={{ color: 'var(--c-mint)' }}>
                   {t('dashboard.set_now')} <ArrowRight className="h-3 w-3" />
                 </a>
               </span>
@@ -778,7 +778,7 @@ export default function DashboardPage() {
               {budgetProgress.map((row) => {
                 const overBudget = row.pct > 100
                 const pctCapped = Math.min(row.pct, 120)
-                const barColor = overBudget ? 'var(--danger)' : row.pct > 80 ? 'var(--ink)' : 'var(--lime-400)'
+                const barColor = overBudget ? 'var(--danger)' : row.pct > 80 ? 'var(--ink)' : 'var(--c-mint)'
                 return (
                   <div key={row.category}>
                     <div className="flex items-center justify-between text-xs mb-1">

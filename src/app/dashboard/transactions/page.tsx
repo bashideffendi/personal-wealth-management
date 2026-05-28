@@ -1434,7 +1434,7 @@ export default function TransactionsPage() {
                           next[i] = { ...r, apply: e.target.checked }
                           setImportRows(next)
                         }}
-                        style={{ accentColor: 'var(--lime-500)' }}
+                        style={{ accentColor: 'var(--c-mint)' }}
                       />
                     </div>
                     <div className="col-span-2 num">{r.date}</div>

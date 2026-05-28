@@ -185,7 +185,7 @@ export default function CategoryDrilldownPage() {
                       <span className="text-sm flex-1 truncate">{name}</span>
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="h-1 w-20 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--lime-400)' }} />
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
                         </div>
                         <span className="num text-xs tabular w-24 text-right">{formatCurrency(amt)}</span>
                       </div>

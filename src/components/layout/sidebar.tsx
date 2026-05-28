@@ -231,7 +231,7 @@ export function Sidebar({ user }: SidebarProps) {
             <Avatar size="sm">
               <AvatarFallback
                 className="text-[11px] font-semibold"
-                style={{ background: 'var(--lime-400)', color: 'var(--black)' }}
+                style={{ background: 'var(--c-mint)', color: 'var(--black)' }}
               >
                 {initials}
               </AvatarFallback>

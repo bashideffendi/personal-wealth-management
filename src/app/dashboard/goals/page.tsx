@@ -248,18 +248,18 @@ export default function GoalsPage() {
                       className="h-full rounded-full"
                       style={{
                         width: `${Math.min(pct, 100)}%`,
-                        background: done ? 'var(--lime-400)' : 'var(--ink)',
+                        background: done ? 'var(--c-mint)' : 'var(--ink)',
                       }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-[11px] mt-1.5">
-                    <span className="num" style={{ color: done ? 'var(--lime-700)' : 'var(--ink-muted)' }}>
+                    <span className="num" style={{ color: done ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
                       {pct.toFixed(1)}% {done ? '(Tercapai 🎯)' : 'tercapai'}
                     </span>
                     {perMonth !== null && !done && (
                       <span
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium"
-                        style={{ background: 'var(--lime-100)', color: 'var(--lime-700)' }}
+                        style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}
                       >
                         <TrendingUp className="h-2.5 w-2.5" />
                         Tabung <span className="num">{formatCurrency(perMonth)}</span>/bln

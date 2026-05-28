@@ -519,7 +519,7 @@ export default function CreditCardsPage() {
                         <div key={p.id} className="flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-2)]/60 transition-colors">
                           <span
                             className="inline-block h-2 w-2 rounded-full shrink-0"
-                            style={{ background: 'var(--lime-400)' }}
+                            style={{ background: 'var(--c-mint)' }}
                           />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>

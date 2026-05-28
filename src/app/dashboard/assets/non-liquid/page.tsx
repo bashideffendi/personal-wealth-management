@@ -21,9 +21,9 @@ import { LeafletMap } from '@/components/map/map-client'
 type Category = 'property' | 'vehicle' | 'personal_item'
 
 const CAT: Record<Category, { label: string; note: string; icon: LucideIcon; accent: string }> = {
-  property:      { label: 'Properti',       note: 'Rumah, apartemen, tanah',      icon: Home, accent: 'var(--butter-300)' },
-  vehicle:       { label: 'Kendaraan',      note: 'Mobil, motor, kendaraan lain', icon: Car,  accent: 'var(--orange-300)' },
-  personal_item: { label: 'Barang Pribadi', note: 'Elektronik, perhiasan, seni',  icon: Gem,  accent: 'var(--moss-300)' },
+  property:      { label: 'Properti',       note: 'Rumah, apartemen, tanah',      icon: Home, accent: 'var(--c-mint)' },
+  vehicle:       { label: 'Kendaraan',      note: 'Mobil, motor, kendaraan lain', icon: Car,  accent: 'var(--c-amber)' },
+  personal_item: { label: 'Barang Pribadi', note: 'Elektronik, perhiasan, seni',  icon: Gem,  accent: 'var(--c-mint)' },
 }
 
 interface FormState {
@@ -286,8 +286,8 @@ export default function NonLiquidAssetsPage() {
                             <Badge
                               className="rounded-sm px-1.5 py-0 border-0 font-semibold"
                               style={{
-                                background: up ? 'var(--lime-100)' : '#FBE5E1',
-                                color: up ? 'var(--lime-700)' : 'var(--danger)',
+                                background: up ? 'var(--c-mint)' : '#FBE5E1',
+                                color: up ? 'var(--c-mint)' : 'var(--danger)',
                               }}
                             >
                               {up ? '+' : ''}{deltaPct.toFixed(1)}%
