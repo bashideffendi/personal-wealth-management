@@ -120,21 +120,25 @@ export function GettingStarted() {
   ]
 
   return (
-    <div className="rounded-2xl border-2 border-dashed border-burgundy-300 bg-gradient-to-br from-burgundy-50 to-amber-50 p-5 sm:p-6"
-      style={{
-        borderColor: 'rgba(139, 21, 56, 0.25)',
-        background: 'linear-gradient(135deg, rgba(139, 21, 56, 0.04), rgba(217, 119, 6, 0.04))',
-      }}
+    <div
+      className="kl-card p-5 sm:p-6"
+      style={{ background: 'var(--c-primary-soft)' }}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="rounded-lg bg-white p-2 shadow-sm">
-            <Sparkles className="size-4" style={{ color: 'var(--burgundy-700, #8b1538)' }} />
+          <div
+            className="size-8 rounded-[10px] flex items-center justify-center"
+            style={{ background: 'var(--c-primary)' }}
+          >
+            <Sparkles className="size-4 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-base">Selangkah Lagi</h3>
-            <p className="text-xs text-muted-foreground">
-              {completedCount} dari 3 langkah selesai · {Math.round(progressPct)}%
+            <p className="kl-eyebrow" style={{ color: 'var(--c-primary)' }}>
+              Selangkah Lagi
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-mute)' }}>
+              {completedCount} dari 3 langkah selesai ·{' '}
+              <span className="kl-num font-semibold">{Math.round(progressPct)}%</span>
             </p>
           </div>
         </div>
@@ -142,7 +146,8 @@ export function GettingStarted() {
           type="button"
           onClick={dismiss}
           disabled={dismissing}
-          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          className="text-xs inline-flex items-center gap-1 transition"
+          style={{ color: 'var(--text-mute)' }}
         >
           {dismissing ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
           Sembunyikan
@@ -150,14 +155,8 @@ export function GettingStarted() {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 rounded-full bg-white/60 overflow-hidden mb-4">
-        <div
-          className="h-full rounded-full transition-all duration-500 ease-out"
-          style={{
-            width: `${progressPct}%`,
-            background: 'linear-gradient(90deg, var(--burgundy-600, #9d1f4a), var(--burgundy-400, #d04976))',
-          }}
-        />
+      <div className="kl-bar mb-4" style={{ color: 'var(--c-primary)' }}>
+        <i style={{ width: `${progressPct}%` }} />
       </div>
 
       {/* Steps */}
@@ -165,33 +164,42 @@ export function GettingStarted() {
         {steps.map((step) => (
           <div
             key={step.key}
-            className={`flex items-center gap-3 rounded-lg border bg-white px-4 py-3 transition ${
+            className={`flex items-center gap-3 rounded-lg px-4 py-3 transition ${
               step.done ? 'opacity-60' : ''
             }`}
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
+            }}
           >
             <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
-                step.done
-                  ? 'bg-[var(--c-mint-soft)]0 border-emerald-500 text-white'
-                  : 'border-muted-foreground/30 bg-white text-muted-foreground'
-              }`}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+              style={{
+                background: step.done ? 'var(--c-mint)' : 'transparent',
+                border: step.done ? 'none' : '2px solid var(--line-strong)',
+                color: '#FFFFFF',
+              }}
             >
               {step.done ? <Check className="size-4" /> : null}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${step.done ? 'line-through text-muted-foreground' : ''}`}>
+              <p
+                className="text-sm font-medium"
+                style={{
+                  color: step.done ? 'var(--text-mute)' : 'var(--ink)',
+                  textDecoration: step.done ? 'line-through' : undefined,
+                }}
+              >
                 {step.title}
               </p>
               {!step.done && (
-                <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-mute)' }}>
+                  {step.desc}
+                </p>
               )}
             </div>
             {!step.done && (
-              <Link
-                href={step.href}
-                className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
-                style={{ backgroundColor: 'var(--burgundy-700, #8b1538)' }}
-              >
+              <Link href={step.href} className="kl-btn kl-btn-primary" style={{ padding: '6px 12px', fontSize: 12 }}>
                 {step.cta}
                 <ChevronRight className="size-3" />
               </Link>
