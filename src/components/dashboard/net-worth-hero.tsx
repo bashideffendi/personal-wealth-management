@@ -137,7 +137,7 @@ export function NetWorthHero({
           <h1
             className="mt-1"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)', fontWeight: 700,
               fontSize: 32,
               letterSpacing: '-0.02em',
               lineHeight: 1.1,

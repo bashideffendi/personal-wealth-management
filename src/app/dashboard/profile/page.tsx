@@ -363,7 +363,7 @@ export default function ProfilePage() {
               className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold text-white"
               style={{
                 background: 'var(--c-ink)',
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sans)', fontWeight: 700,
                 fontSize: 32,
                 /* italic dropped per fintech revert */
                 lineHeight: 1,

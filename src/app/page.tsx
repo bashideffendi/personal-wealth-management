@@ -40,7 +40,7 @@ export default async function LandingPage() {
           </div>
           <div
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)', fontWeight: 700,
               fontSize: 22,
               letterSpacing: '-0.02em',
               color: 'var(--ink)',
