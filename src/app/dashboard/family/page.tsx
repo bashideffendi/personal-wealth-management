@@ -234,7 +234,7 @@ export default function FamilyPage() {
         <div className="rounded-2xl border-2 border-dashed border-burgundy-300 bg-gradient-to-br from-burgundy-50/40 to-amber-50/40 p-8 sm:p-10 text-center"
           style={{ borderColor: 'rgba(139, 21, 56, 0.2)', background: 'linear-gradient(135deg, rgba(139, 21, 56, 0.04), rgba(217, 119, 6, 0.04))' }}
         >
-          <div className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'linear-gradient(135deg, var(--burgundy-700, #8b1538), #4f1d2c)' }}>
+          <div className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-ink)' }}>
             <Home className="size-8 text-white" />
           </div>
           <h3 className="text-2xl font-bold">Belum di Keluarga</h3>
@@ -265,7 +265,7 @@ export default function FamilyPage() {
             { icon: <Users className="size-5" />, title: 'Atur bareng', desc: 'Wallet, transaksi, & budget langsung ke-share.' },
           ].map((step, i) => (
             <div key={i} className="rounded-xl border bg-white p-5">
-              <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--burgundy-700, #8b1538)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--c-mint)' }}>
                 {step.icon}
                 <span className="text-xs font-bold uppercase tracking-wider">Langkah {i + 1}</span>
               </div>
@@ -323,7 +323,7 @@ export default function FamilyPage() {
             <div key={m.user_id} className="rounded-xl border bg-white p-4 flex items-center gap-3">
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white shrink-0"
-                style={{ background: m.role === 'owner' ? 'linear-gradient(135deg, #b45309, #78350f)' : 'linear-gradient(135deg, var(--burgundy-700, #8b1538), #4f1d2c)' }}
+                style={{ background: m.role === 'owner' ? 'var(--c-amber)' : 'var(--c-ink)' }}
               >
                 {(m.full_name || m.email || '?').slice(0, 1).toUpperCase()}
               </div>

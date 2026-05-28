@@ -140,7 +140,7 @@ export default function JoinHouseholdPage() {
           <div>
             <div
               className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: 'linear-gradient(135deg, var(--burgundy-700, #8b1538), #4f1d2c)' }}
+              style={{ background: 'var(--c-ink)' }}
             >
               <Home className="size-8 text-white" />
             </div>
@@ -148,7 +148,7 @@ export default function JoinHouseholdPage() {
             <p className="text-muted-foreground mt-2">
               Kamu diundang bergabung dengan
             </p>
-            <p className="text-2xl font-bold mt-1" style={{ color: 'var(--burgundy-700, #8b1538)' }}>
+            <p className="text-2xl font-bold mt-1" style={{ color: 'var(--c-mint)' }}>
               {state.data.household_name}
             </p>
 
