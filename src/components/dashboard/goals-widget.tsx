@@ -1,30 +1,20 @@
 'use client'
 
-import { ArrowRight } from 'lucide-react'
+/**
+ * Goals widget — editorial GoalsCardA per design handoff.
+ * Each goal = standalone tinted card dengan borderLeft accent, progress
+ * percent ditampilkan besar (kl-display 36px) di kanan, bar di kiri.
+ */
+
+import Link from 'next/link'
 import { formatCompactCurrency } from '@/lib/utils'
 
 interface GoalsWidgetProps {
   goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }>
 }
 
-// Per dashboard-refine.jsx — emoji per goal name + tier-colored progress
-// bars (emerald → amber → coral cycling). ETA shown as small text on right.
-function goalEmoji(name: string): string {
-  const n = name.toLowerCase()
-  if (n.includes('rumah') || n.includes('dp') || n.includes('kpr')) return '🏡'
-  if (n.includes('liburan') || n.includes('travel') || n.includes('honeymoon')) return '✈️'
-  if (n.includes('pensiun') || n.includes('retire')) return '🌴'
-  if (n.includes('mobil') || n.includes('motor') || n.includes('kendaraan')) return '🚗'
-  if (n.includes('pendidikan') || n.includes('sekolah') || n.includes('kuliah')) return '🎓'
-  if (n.includes('umroh') || n.includes('haji')) return '🕌'
-  if (n.includes('darurat') || n.includes('emergency')) return '🛡️'
-  if (n.includes('bisnis') || n.includes('usaha')) return '💼'
-  if (n.includes('gadget') || n.includes('hp') || n.includes('iphone')) return '📱'
-  if (n.includes('nikah') || n.includes('wedding')) return '💒'
-  return '🎯'
-}
-
-const GOAL_COLORS = ['var(--emerald-500)', 'var(--amber-500)', 'var(--coral-500)']
+// Cycle warna semantic per index (per design — 3 goals → 3 tones)
+const GOAL_TONES = ['primary', 'mint', 'amber'] as const
 
 function etaLabel(deadline: string | null): string | null {
   if (!deadline) return null
@@ -35,74 +25,112 @@ function etaLabel(deadline: string | null): string | null {
 export function GoalsWidget({ goals }: GoalsWidgetProps) {
   if (goals.length === 0) {
     return (
-      <div className="s-card p-5">
+      <article className="kl-card" style={{ padding: 24 }}>
         <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="caps">Tujuan Keuangan</p>
-            <h3 className="text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-              Belum ada goal
-            </h3>
-          </div>
-          <a href="/dashboard/goals" className="text-xs font-medium hover:underline" style={{ color: 'var(--emerald-700)' }}>
-            Buat sekarang →
-          </a>
+          <p className="kl-eyebrow">Tujuan Aktif</p>
+          <Link
+            href="/dashboard/goals"
+            className="kl-btn"
+            style={{ fontSize: 11, padding: '6px 10px' }}
+          >
+            Buat tujuan
+          </Link>
         </div>
-        <p className="text-sm py-4 text-center" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-sm py-4 text-center" style={{ color: 'var(--text-mute)' }}>
           Set target keuangan biar ada arah — &ldquo;DP Rumah&rdquo;, &ldquo;Liburan Bali&rdquo;, dll.
         </p>
-      </div>
+      </article>
     )
   }
 
   return (
-    <div className="s-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-          Goals aktif
-        </h3>
-        <a href="/dashboard/goals" className="text-xs font-semibold hover:underline inline-flex items-center gap-1" style={{ color: 'var(--emerald-700)' }}>
-          Lihat semua <ArrowRight className="size-3" />
-        </a>
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between px-1.5">
+        <p className="kl-eyebrow">Tujuan Aktif</p>
+        <Link
+          href="/dashboard/goals"
+          className="text-[11px] font-semibold"
+          style={{ color: 'var(--text-mute)' }}
+        >
+          Lihat semua ›
+        </Link>
       </div>
-      <div className="space-y-4">
-        {goals.slice(0, 3).map((g, i) => {
-          const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0
-          const color = GOAL_COLORS[i % GOAL_COLORS.length]
-          const eta = etaLabel(g.deadline)
-          return (
-            <div key={g.id}>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
-                  <span>{goalEmoji(g.name)}</span>
+      {goals.slice(0, 3).map((g, i) => {
+        const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0
+        const remaining = Math.max(0, g.target_amount - g.current_amount)
+        const tone = GOAL_TONES[i % GOAL_TONES.length]
+        const eta = etaLabel(g.deadline)
+
+        return (
+          <Link
+            key={g.id}
+            href="/dashboard/goals"
+            className="kl-card"
+            style={{
+              padding: 16,
+              background: `var(--c-${tone}-soft)`,
+              borderLeft: `4px solid var(--c-${tone})`,
+              display: 'block',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div className="grid items-center gap-3.5" style={{ gridTemplateColumns: '1fr auto' }}>
+              <div className="min-w-0">
+                <p
+                  className="truncate"
+                  style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}
+                >
                   {g.name}
-                </span>
-                <span className="num text-xs shrink-0" style={{ color: 'var(--ink-muted)' }}>
-                  {pct.toFixed(0)}%
-                </span>
-              </div>
-              <div className="h-2 w-full rounded-full overflow-hidden mb-1" style={{ background: 'var(--surface-2)' }}>
+                </p>
                 <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${pct}%`, background: color }}
-                />
+                  className="kl-bar mt-2"
+                  style={{ color: `var(--c-${tone})`, background: 'rgba(255,255,255,0.6)' }}
+                >
+                  <i style={{ width: `${pct}%` }} />
+                </div>
+                <p
+                  className="kl-num mt-1.5"
+                  style={{ fontSize: 10.5, color: 'var(--text-2)' }}
+                >
+                  {formatCompactCurrency(g.current_amount)}
+                  <span style={{ opacity: 0.6 }}> / {formatCompactCurrency(g.target_amount)}</span>
+                </p>
+                <p
+                  className="kl-num"
+                  style={{ fontSize: 10.5, color: 'var(--text-mute)', marginTop: 2 }}
+                >
+                  Sisa{' '}
+                  <strong style={{ color: `var(--c-${tone})` }}>
+                    {formatCompactCurrency(remaining)}
+                  </strong>
+                  {eta && <span> · est. {eta}</span>}
+                </p>
               </div>
-              <div className="flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                <span className="num">
-                  {formatCompactCurrency(g.current_amount)} / {formatCompactCurrency(g.target_amount)}
-                </span>
-                {eta && <span>est. {eta}</span>}
+              <div className="text-right">
+                <p
+                  className="kl-display kl-num"
+                  style={{ fontSize: 36, color: `var(--c-${tone})`, lineHeight: 1 }}
+                >
+                  {pct.toFixed(0)}
+                </p>
+                <p
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: 'var(--text-mute)',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    marginTop: 2,
+                  }}
+                >
+                  persen
+                </p>
               </div>
             </div>
-          )
-        })}
-      </div>
-      <a
-        href="/dashboard/goals"
-        className="mt-4 w-full inline-flex items-center justify-center py-2 rounded-lg border-dashed text-xs font-medium transition hover:bg-[var(--surface-2)]"
-        style={{ borderWidth: 1, borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
-      >
-        + Tambah goal baru
-      </a>
+          </Link>
+        )
+      })}
     </div>
   )
 }

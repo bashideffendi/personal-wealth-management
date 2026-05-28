@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Calendar } from 'lucide-react'
+import Link from 'next/link'
+import { FileText, CreditCard as CreditCardIcon, Repeat, Target } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { Contract, CreditCard } from '@/types'
 
@@ -11,7 +12,7 @@ interface BillItem {
   amount: number | null
   dueDate: Date
   daysUntil: number
-  emoji: string
+  Icon: React.ComponentType<{ className?: string }>
   href: string
 }
 
@@ -22,51 +23,32 @@ interface UpcomingBillsProps {
   recurring: Array<{ id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number }>
 }
 
+const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+
 export function UpcomingBills({ contracts, debts, creditCards, recurring }: UpcomingBillsProps) {
   const bills = useMemo<BillItem[]>(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const horizonMs = 14 * 86_400_000 // 14 days
+    const horizonMs = 14 * 86_400_000
     const cutoff = today.getTime() + horizonMs
     const out: BillItem[] = []
 
-    // 1) Contracts ending in next 14 days (renewal/expiry reminder)
     for (const c of contracts) {
       if (!c.end_date) continue
       const dueDate = new Date(c.end_date)
       dueDate.setHours(0, 0, 0, 0)
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
-      out.push({
-        source: 'contract',
-        title: c.name,
-        amount: c.cost ?? null,
-        dueDate,
-        daysUntil: days,
-        emoji: '📄',
-        href: '/dashboard/contracts',
-      })
+      out.push({ source: 'contract', title: c.name, amount: c.cost ?? null, dueDate, daysUntil: days, Icon: FileText, href: '/dashboard/contracts' })
     }
-
-    // 2) Debts with due_date in next 14 days
     for (const d of debts) {
       if (!d.due_date) continue
       const dueDate = new Date(d.due_date)
       dueDate.setHours(0, 0, 0, 0)
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
-      out.push({
-        source: 'debt',
-        title: d.name,
-        amount: d.monthly_payment > 0 ? d.monthly_payment : d.remaining,
-        dueDate,
-        daysUntil: days,
-        emoji: '💳',
-        href: '/dashboard/debts',
-      })
+      out.push({ source: 'debt', title: d.name, amount: d.monthly_payment > 0 ? d.monthly_payment : d.remaining, dueDate, daysUntil: days, Icon: CreditCardIcon, href: '/dashboard/debts' })
     }
-
-    // 3) Credit cards — compute next due_day from today
     for (const c of creditCards) {
       if (c.current_balance <= 0) continue
       const y = today.getFullYear()
@@ -79,18 +61,8 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
       }
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
-      out.push({
-        source: 'cc',
-        title: `${c.name}${c.last_four ? ` ••${c.last_four}` : ''}`,
-        amount: c.current_balance,
-        dueDate,
-        daysUntil: days,
-        emoji: '💳',
-        href: '/dashboard/credit-cards',
-      })
+      out.push({ source: 'cc', title: `${c.name}${c.last_four ? ` ••${c.last_four}` : ''}`, amount: c.current_balance, dueDate, daysUntil: days, Icon: CreditCardIcon, href: '/dashboard/credit-cards' })
     }
-
-    // 4) Monthly recurring (only expense type — income reminders are nice but less urgent)
     for (const r of recurring) {
       if (r.frequency !== 'monthly' || r.type === 'income') continue
       const y = today.getFullYear()
@@ -103,102 +75,100 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
       }
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
-      out.push({
-        source: 'recurring',
-        title: r.name,
-        amount: r.amount,
-        dueDate,
-        daysUntil: days,
-        emoji: r.type === 'saving' || r.type === 'investment' ? '🎯' : '🔁',
-        href: '/dashboard/recurring',
-      })
+      out.push({ source: 'recurring', title: r.name, amount: r.amount, dueDate, daysUntil: days, Icon: r.type === 'saving' || r.type === 'investment' ? Target : Repeat, href: '/dashboard/recurring' })
     }
-
-    // Sort by due date ascending, then by amount desc
     return out.sort((a, b) => a.daysUntil - b.daysUntil || (b.amount ?? 0) - (a.amount ?? 0))
   }, [contracts, debts, creditCards, recurring])
 
-  const totalThisWeek = bills
-    .filter((b) => b.daysUntil <= 7)
-    .reduce((s, b) => s + (b.amount ?? 0), 0)
-
   if (bills.length === 0) {
     return (
-      <div className="s-card p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Calendar className="size-4" style={{ color: 'var(--ink-muted)' }} />
-          <p className="caps">Tagihan Mendatang</p>
-        </div>
-        <p className="text-sm py-6 text-center" style={{ color: 'var(--ink-soft)' }}>
+      <article className="kl-card" style={{ padding: 24 }}>
+        <p className="kl-eyebrow">Tagihan Mendatang</p>
+        <p className="text-sm py-6 text-center" style={{ color: 'var(--text-mute)' }}>
           Tidak ada tagihan dalam 14 hari ke depan.
         </p>
-      </div>
+      </article>
     )
   }
 
   return (
-    <div className="s-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="size-4" style={{ color: 'var(--ink-muted)' }} />
-          <div>
-            <p className="caps">Tagihan Mendatang</p>
-            <h3 className="text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-              {bills.length} dalam 14 hari
-            </h3>
-          </div>
-        </div>
-        {totalThisWeek > 0 && (
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--ink-soft)' }}>Total minggu ini</p>
-            <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--coral-600)' }}>
-              {formatCurrency(totalThisWeek)}
-            </p>
-          </div>
-        )}
-      </div>
-      <ul className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
-        {bills.slice(0, 7).map((b, i) => {
-          const urgency = b.daysUntil <= 3 ? 'critical' : b.daysUntil <= 7 ? 'warn' : 'normal'
-          const colors = {
-            critical: { bg: 'rgba(244,63,94,0.10)', text: 'var(--coral-700)', accent: 'var(--coral-500)' },
-            warn:     { bg: 'rgba(245,158,11,0.10)', text: 'var(--amber-700)', accent: 'var(--amber-500)' },
-            normal:   { bg: 'var(--surface-2)',     text: 'var(--ink-muted)',  accent: 'var(--ink-muted)' },
-          }[urgency]
-          const dueLabel = b.daysUntil === 0 ? 'Hari ini' : b.daysUntil === 1 ? 'Besok' : `${b.daysUntil} hari lagi`
-
+    <article className="kl-card" style={{ padding: 24 }}>
+      <p className="kl-eyebrow">Tagihan Mendatang</p>
+      <div className="flex flex-col mt-3">
+        {bills.slice(0, 6).map((b, i) => {
+          const urgent = b.daysUntil <= 3
+          const day = b.dueDate.getDate()
+          const monthLabel = MONTH_SHORT_ID[b.dueDate.getMonth()]
           return (
-            <li key={`${b.source}-${i}`} className="flex items-center gap-3 py-2.5">
-              <span
-                className="text-base shrink-0 size-8 rounded-lg flex items-center justify-center"
-                style={{ background: colors.bg }}
+            <Link
+              key={`${b.source}-${i}`}
+              href={b.href}
+              className="grid items-center gap-2.5 py-2.5 transition-colors"
+              style={{
+                gridTemplateColumns: '48px 1fr auto',
+                borderTop: i ? '1px solid var(--line)' : 'none',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <div
+                style={{
+                  width: 44,
+                  borderRadius: 10,
+                  background: urgent ? 'var(--c-coral-soft)' : 'var(--surface-2)',
+                  color: urgent ? 'var(--c-coral)' : 'var(--text-2)',
+                  textAlign: 'center',
+                  padding: '4px 0',
+                }}
               >
-                {b.emoji}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {monthLabel}
+                </div>
+                <div className="kl-num" style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.1 }}>
+                  {day}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p
+                  className="truncate"
+                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}
+                >
                   {b.title}
                 </p>
-                <p className="text-[11px] truncate" style={{ color: colors.text }}>
-                  {dueLabel} · {b.dueDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: urgent ? 'var(--c-coral)' : 'var(--text-mute)',
+                  }}
+                >
+                  {urgent ? 'Mendesak' : b.daysUntil === 0 ? 'Hari ini' : `${b.daysUntil} hari lagi`}
                 </p>
               </div>
-              {b.amount && b.amount > 0 ? (
-                <p className="text-sm font-semibold tabular-nums shrink-0" style={{ color: 'var(--ink)' }}>
-                  {formatCurrency(b.amount)}
-                </p>
-              ) : (
-                <span className="text-[10px] shrink-0" style={{ color: 'var(--ink-soft)' }}>—</span>
-              )}
-            </li>
+              <p
+                className="kl-num text-right"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}
+              >
+                {b.amount && b.amount > 0 ? formatCurrency(b.amount) : '—'}
+              </p>
+            </Link>
           )
         })}
-      </ul>
-      {bills.length > 7 && (
-        <p className="text-[11px] text-center pt-2" style={{ color: 'var(--ink-soft)' }}>
-          +{bills.length - 7} tagihan lainnya
+      </div>
+      {bills.length > 6 && (
+        <p
+          className="text-[11px] text-center mt-2"
+          style={{ color: 'var(--text-mute)' }}
+        >
+          +{bills.length - 6} tagihan lainnya
         </p>
       )}
-    </div>
+    </article>
   )
 }
