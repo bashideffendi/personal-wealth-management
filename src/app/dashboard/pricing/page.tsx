@@ -122,22 +122,38 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header — editorial page header */}
+      {/* Header — clean fintech page header (no dark anchor, biar pricing
+          cards yang jadi visual anchor) */}
       <div className="text-center max-w-2xl mx-auto">
-        <p className="eyebrow">Pilih Paketmu</p>
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
+          style={{
+            background: 'var(--c-mint-soft)',
+            color: 'var(--c-mint)',
+          }}
+        >
+          <span
+            className="size-1.5 rounded-full"
+            style={{ background: 'var(--c-mint)' }}
+          />
+          <span className="text-xs font-semibold">
+            Trial 14 hari · Tanpa kartu kredit
+          </span>
+        </div>
         <h1
-          className="display mt-2"
+          className="font-bold tracking-tight"
           style={{
             fontSize: 'clamp(32px, 4.5vw, 52px)',
             color: 'var(--ink)',
             lineHeight: 1.1,
+            letterSpacing: '-0.035em',
           }}
         >
           Pilih paket yang{' '}
-          <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>cocok</em>{' '}
+          <span style={{ color: 'var(--c-mint)' }}>cocok</span>{' '}
           buat kebutuhanmu.
         </h1>
-        <p className="text-sm mt-3 max-w-xl mx-auto" style={{ color: 'var(--text-mute)' }}>
+        <p className="text-base mt-4 max-w-xl mx-auto" style={{ color: 'var(--ink-muted)' }}>
           Tagihan bulanan. Trial 14 hari akses Full Service. Bisa upgrade kapan saja.
         </p>
       </div>

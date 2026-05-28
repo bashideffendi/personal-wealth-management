@@ -682,20 +682,18 @@ export default function TransactionsPage() {
       {/* Header per design handoff §1 — eyebrow + h1 + utility actions */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <p className="eyebrow">
-            {today}
-          </p>
+          <p className="eyebrow">{today}</p>
           <h1
-            className="display mt-1"
+            className="font-bold tracking-tight mt-1"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               color: 'var(--ink)',
-              /* italic dropped per fintech revert */
+              letterSpacing: '-0.035em',
             }}
           >
             Transaksi
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-mute)' }}>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
             Semua aktivitas finansial — pemasukan, pengeluaran, tabungan, investasi.
           </p>
         </div>
