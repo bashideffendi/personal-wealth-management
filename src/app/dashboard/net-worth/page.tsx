@@ -176,7 +176,7 @@ export default function NetWorthPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin" style={{ color: 'var(--burgundy-700)' }} />
+        <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
         <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>Memuat data...</span>
       </div>
     )
@@ -235,7 +235,7 @@ export default function NetWorthPage() {
         {/* Asset Breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif" style={{ color: 'var(--burgundy-700)' }}>Rincian Aset</CardTitle>
+            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Rincian Aset</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Aset Lancar */}
@@ -270,7 +270,7 @@ export default function NetWorthPage() {
         {/* Debt Breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif" style={{ color: 'var(--burgundy-700)' }}>Rincian Utang</CardTitle>
+            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Rincian Utang</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Utang Lancar */}
@@ -304,12 +304,12 @@ export default function NetWorthPage() {
       <Card style={{ borderColor: 'var(--gold-300)' }}>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
-            <span className="font-serif text-[20px]" style={{ color: 'var(--burgundy-700)' }}>
+            <span className="font-serif text-[20px]" style={{ color: 'var(--ink)' }}>
               Kekayaan Bersih (Aset − Liabilitas)
             </span>
             <span
               className="font-serif text-[28px] tabular"
-              style={{ color: isPositive ? 'var(--burgundy-700)' : 'var(--danger)' }}
+              style={{ color: isPositive ? 'var(--ink)' : 'var(--danger)' }}
             >
               {formatCurrency(netWorth)}
             </span>

@@ -290,7 +290,7 @@ export default function CreditCardsPage() {
                               className="h-full rounded-full"
                               style={{
                                 width: `${Math.min(util, 100)}%`,
-                                background: util > 80 ? 'var(--danger)' : util > 50 ? 'var(--ink)' : 'var(--lime-400)',
+                                background: util > 80 ? 'var(--c-coral)' : util > 50 ? 'var(--c-amber)' : 'var(--c-mint)',
                               }}
                             />
                           </div>

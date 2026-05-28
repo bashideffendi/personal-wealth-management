@@ -951,7 +951,7 @@ export default function TransactionsPage() {
       {/* Transactions list — table on md+, cards on mobile */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-6 animate-spin" style={{ color: 'var(--burgundy-700)' }} />
+          <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
           <span className="ml-2 text-gray-500">Memuat data...</span>
         </div>
       ) : filteredTransactions.length === 0 ? (

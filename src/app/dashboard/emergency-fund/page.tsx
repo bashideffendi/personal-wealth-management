@@ -210,7 +210,7 @@ export default function EmergencyFundPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin" style={{ color: 'var(--burgundy-700)' }} />
+        <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
         <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>Memuat data...</span>
       </div>
     )
@@ -251,7 +251,7 @@ export default function EmergencyFundPage() {
         {/* Left Column - Calculator */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif" style={{ color: 'var(--burgundy-700)' }}>Kalkulator Dana Darurat</CardTitle>
+            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Kalkulator Dana Darurat</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Job Stability */}
@@ -353,7 +353,7 @@ export default function EmergencyFundPage() {
         {accountAllocations.length > 0 && (
           <Card style={{ background: 'rgba(16,185,129,0.04)', borderColor: 'rgba(16,185,129,0.20)' }}>
             <CardHeader className="pb-3">
-              <CardTitle className="font-serif text-base" style={{ color: 'var(--emerald-700, #047857)' }}>
+              <CardTitle className="font-serif text-base" style={{ color: 'var(--c-mint)' }}>
                 Dari Akun ({formatCurrency(allocatedFromAccounts)})
               </CardTitle>
             </CardHeader>
@@ -377,7 +377,7 @@ export default function EmergencyFundPage() {
         )}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-serif" style={{ color: 'var(--burgundy-700)' }}>Lokasi Dana Darurat (Manual)</CardTitle>
+            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Lokasi Dana Darurat (Manual)</CardTitle>
             <Button
               size="sm"
               className=""
