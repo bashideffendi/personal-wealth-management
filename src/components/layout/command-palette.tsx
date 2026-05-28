@@ -351,11 +351,11 @@ export function CommandPalette() {
             <div className="relative size-4 shrink-0 flex items-center justify-center">
               <span
                 className="absolute inset-0 rounded-full animate-ping"
-                style={{ background: 'var(--coral-500, #EF4444)', opacity: 0.4 }}
+                style={{ background: 'var(--c-coral)', opacity: 0.4 }}
               />
               <span
                 className="relative size-2 rounded-full"
-                style={{ background: 'var(--coral-500, #EF4444)' }}
+                style={{ background: 'var(--c-coral)' }}
               />
             </div>
           ) : (
@@ -384,7 +384,7 @@ export function CommandPalette() {
               className="shrink-0 size-7 rounded-md flex items-center justify-center transition"
               style={{
                 background: speech.listening
-                  ? 'var(--coral-500, #EF4444)'
+                  ? 'var(--c-coral)'
                   : 'var(--surface-2)',
                 color: speech.listening ? '#FFFFFF' : 'var(--ink-muted)',
               }}
@@ -470,7 +470,7 @@ export function CommandPalette() {
                           background: isSelected
                             ? isAI
                               ? 'rgba(139, 92, 246, 0.10)'
-                              : 'var(--emerald-50)'
+                              : 'var(--c-mint-soft)'
                             : 'transparent',
                         }}
                       >
@@ -480,7 +480,7 @@ export function CommandPalette() {
                             background: isSelected
                               ? isAI
                                 ? 'rgba(139, 92, 246, 0.20)'
-                                : 'var(--emerald-100)'
+                                : 'var(--c-mint-soft)'
                               : 'var(--surface-2)',
                             color: isSelected
                               ? isAI
@@ -583,7 +583,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
   if (state.kind === 'parsing') {
     return (
       <div className="px-6 py-12 text-center">
-        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--emerald-500)' }} />
+        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint)' }} />
         <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
           AI sedang parse transaksi...
         </p>
@@ -606,7 +606,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
     return (
       <div className="px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="size-3.5" style={{ color: 'var(--emerald-500)' }} />
+          <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
           <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--c-mint)' }}>
             AI Quick Add — Konfirmasi
           </p>
@@ -650,7 +650,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             type="button"
             onClick={() => onConfirm(d)}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
-            style={{ background: 'var(--emerald-500)' }}
+            style={{ background: 'var(--c-mint)' }}
           >
             <Check className="size-4" />
             Simpan ke Akun Default
@@ -666,7 +666,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
   if (state.kind === 'saving') {
     return (
       <div className="px-6 py-12 text-center">
-        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--emerald-500)' }} />
+        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint)' }} />
         <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>Menyimpan...</p>
       </div>
     )
@@ -677,7 +677,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
       <div className="px-6 py-12 text-center">
         <div
           className="size-12 mx-auto rounded-full flex items-center justify-center"
-          style={{ background: 'var(--emerald-100)' }}
+          style={{ background: 'var(--c-mint-soft)' }}
         >
           <Check className="size-6" style={{ color: 'var(--c-mint)' }} />
         </div>
