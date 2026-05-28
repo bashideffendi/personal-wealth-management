@@ -28,8 +28,8 @@ const PLAN_ICONS: Record<string, React.ReactNode> = {
 }
 
 const PLAN_THEMES: Record<string, { bg: string; ring: string; accent: string; price: string; cta: string; ctaHover: string }> = {
-  basic: { bg: 'bg-white',     ring: 'ring-slate-200',   accent: 'text-slate-700',  price: 'text-slate-900',  cta: 'bg-slate-900',  ctaHover: 'hover:bg-slate-800' },
-  full:  { bg: 'bg-[var(--c-mint-soft)]', ring: 'ring-emerald-400', accent: 'text-[var(--c-mint)]', price: 'text-emerald-900', cta: 'bg-emerald-600', ctaHover: 'hover:bg-emerald-700' },
+  basic: { bg: 'bg-[var(--surface)]', ring: 'ring-[var(--line)]', accent: 'text-[var(--ink-muted)]', price: 'text-[var(--ink)]', cta: 'bg-[var(--surface-2)] text-[var(--ink)]', ctaHover: 'hover:bg-[var(--surface-3)]' },
+  full:  { bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary)]', accent: 'text-[var(--c-primary)]', price: 'text-[var(--ink)]', cta: 'bg-[var(--c-ink)] text-[var(--bg)]', ctaHover: 'hover:opacity-90' },
 }
 
 const CREDIT_PACKS = [
@@ -122,13 +122,22 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="dark-card p-6 sm:p-7 text-center">
-        <p className="caps">Pilih Paketmu</p>
-        <h2 className="text-white text-3xl sm:text-4xl font-semibold tracking-tight mt-3 max-w-2xl mx-auto">
-          Pilih paket yang cocok buat kebutuhanmu.
-        </h2>
-        <p className="text-sm mt-3 max-w-xl mx-auto" style={{ color: 'var(--on-black-mut)' }}>
+      {/* Header — editorial page header */}
+      <div className="text-center max-w-2xl mx-auto">
+        <p className="kl-eyebrow">Pilih Paketmu</p>
+        <h1
+          className="kl-display mt-2"
+          style={{
+            fontSize: 'clamp(32px, 4.5vw, 52px)',
+            color: 'var(--ink)',
+            lineHeight: 1.1,
+          }}
+        >
+          Pilih paket yang{' '}
+          <em style={{ fontStyle: 'italic', color: 'var(--c-primary)' }}>cocok</em>{' '}
+          buat kebutuhanmu.
+        </h1>
+        <p className="text-sm mt-3 max-w-xl mx-auto" style={{ color: 'var(--text-mute)' }}>
           Tagihan bulanan. Trial 14 hari akses Full Service. Bisa upgrade kapan saja.
         </p>
       </div>
