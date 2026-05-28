@@ -136,33 +136,35 @@ export function TopNav({ user }: TopNavProps) {
         >
           {/* ─── Brand left ─── */}
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="kl-brandmark">
-              <span>K</span>
+            <div
+              className="grid place-items-center"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, #10B981, #047857)',
+                color: '#FFFFFF',
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 800,
+                fontSize: 16,
+                letterSpacing: '-0.04em',
+                boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+              }}
+            >
+              K
             </div>
-            <div className="hidden sm:flex flex-col" style={{ lineHeight: 1 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-sans)', fontWeight: 700,
-                  fontSize: 22,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                }}
-              >
-                Klunting
-              </span>
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-mute)',
-                  marginTop: 4,
-                }}
-              >
-                Wealth Management
-              </span>
-            </div>
+            <span
+              className="hidden sm:inline"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 700,
+                fontSize: 18,
+                letterSpacing: '-0.02em',
+                color: 'var(--ink)',
+              }}
+            >
+              Klunting
+            </span>
           </Link>
 
           {/* ─── Nav center (desktop) ─── */}
