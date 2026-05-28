@@ -354,35 +354,48 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header card */}
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps">Profil</p>
-        <div className="mt-2 flex items-end justify-between gap-4 flex-wrap">
+      {/* Header card — editorial profile */}
+      <div className="kl-card p-6 sm:p-7">
+        <p className="kl-eyebrow">Profil</p>
+        <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div
-              className="flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, var(--burgundy-700, #8b1538), #4f1d2c)' }}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold text-white"
+              style={{
+                background: 'var(--c-ink)',
+                fontFamily: 'var(--font-display)',
+                fontSize: 32,
+                fontStyle: 'italic',
+                lineHeight: 1,
+              }}
             >
-              {(profile.full_name || user.email).slice(0, 1).toUpperCase()}
+              {(profile.full_name || user.email).slice(0, 1).toLowerCase()}
             </div>
             <div>
-              <h2 className="text-white text-2xl sm:text-3xl font-semibold tracking-tight">
+              <h1
+                className="kl-display"
+                style={{
+                  fontSize: 'clamp(28px, 4vw, 40px)',
+                  color: 'var(--ink)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
                 {profile.full_name?.trim() || 'Pengguna'}
-              </h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--on-black-mut)' }}>
+              </h1>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--text-mute)' }}>
                 {user.email}
               </p>
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                  style={{ backgroundColor: planBadge.bg, color: planBadge.fg }}
+                  className="kl-chip"
+                  style={{ background: planBadge.bg, color: planBadge.fg }}
                 >
                   {subscription?.plan_id === 'full' && <Crown className="size-3" />}
                   {subscription?.status === 'trialing' && <Sparkles className="size-3" />}
                   Paket {planBadge.label}
                   {subscription?.status === 'trialing' && ' (Trial)'}
                 </span>
-                <span className="text-xs" style={{ color: 'var(--on-black-mut)' }}>
+                <span className="text-xs" style={{ color: 'var(--text-mute)' }}>
                   {accountCount} akun · {txCount} transaksi · sejak {formatDate(new Date(subscription?.started_at ?? Date.now()))}
                 </span>
               </div>
@@ -390,14 +403,13 @@ export default function ProfilePage() {
           </div>
           <Link
             href="/dashboard/pricing"
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-            style={{ backgroundColor: 'var(--burgundy-600, #9d1f4a)' }}
+            className="kl-btn kl-btn-primary"
           >
             <Crown className="size-4" />
             {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? 'Upgrade ke Full Service' : 'Kelola Langganan'}
           </Link>
         </div>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>{today}</p>
+        <p className="text-xs mt-3" style={{ color: 'var(--text-mute)' }}>{today}</p>
       </div>
 
       {/* AI Credits card */}
