@@ -47,6 +47,34 @@ const EMPTY_PAY: PayFormState = {
   date: new Date().toISOString().split('T')[0], notes: '',
 }
 
+/**
+ * Issuer → gradient mapping per design handoff visual credit card.
+ * Match by issuer name substring (case-insensitive), fallback ke ink dark.
+ *
+ * BCA Platinum → biru navy
+ * Mandiri Skyz → emerald deep
+ * Jenius Signature → slate dark (BTPN)
+ * BNI → orange warm
+ * BRI → sky blue
+ * CIMB → coral
+ * default → ink slate
+ */
+function issuerGradient(issuer: string): string {
+  const i = (issuer ?? '').toLowerCase()
+  if (i.includes('bca'))     return 'linear-gradient(135deg, #1E3A8A, #1E40AF 60%, #3B82F6)'
+  if (i.includes('mandiri')) return 'linear-gradient(135deg, #064E3B, #047857 60%, #10B981)'
+  if (i.includes('jenius') || i.includes('btpn')) return 'linear-gradient(135deg, #0F172A, #1E293B 60%, #334155)'
+  if (i.includes('bni'))     return 'linear-gradient(135deg, #7C2D12, #9A3412 60%, #EA580C)'
+  if (i.includes('bri'))     return 'linear-gradient(135deg, #0C4A6E, #0369A1 60%, #0EA5E9)'
+  if (i.includes('cimb'))    return 'linear-gradient(135deg, #881337, #9F1239 60%, #E11D48)'
+  if (i.includes('danamon')) return 'linear-gradient(135deg, #422006, #713F12 60%, #CA8A04)'
+  if (i.includes('permata') || i.includes('hsbc') || i.includes('uob')) {
+    return 'linear-gradient(135deg, #3B0764, #581C87 60%, #9333EA)'
+  }
+  // Default — ink slate
+  return 'linear-gradient(135deg, #18181B, #27272A 60%, #3F3F46)'
+}
+
 export default function CreditCardsPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
@@ -249,77 +277,199 @@ export default function CreditCardsPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {cards.map((c) => {
                     const util = c.credit_limit > 0 ? (c.current_balance / c.credit_limit) * 100 : 0
                     const due = nextDueDate(c.due_day)
                     const daysLeft = daysUntil(due)
-                    const urgency = daysLeft <= 3 ? 'var(--danger)' : daysLeft <= 7 ? 'var(--ink)' : 'var(--ink-muted)'
+                    const urgency = daysLeft <= 3 ? 'var(--c-coral)' : daysLeft <= 7 ? 'var(--c-amber)' : 'var(--ink-muted)'
+                    const gradient = issuerGradient(c.issuer)
                     return (
-                      <div
-                        key={c.id}
-                        className="group rounded-xl p-5 bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                              {c.issuer}{c.last_four ? ` · •••• ${c.last_four}` : ''}
-                            </p>
-                          </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                            <Button variant="ghost" size="icon-sm" onClick={() => openEditCard(c)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon-sm" onClick={() => removeCard(c.id)}>
-                              <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
-                            </Button>
-                          </div>
-                        </div>
+                      <div key={c.id} className="group flex flex-col gap-3">
+                        {/* Visual gradient card per design handoff */}
+                        <div
+                          className="relative rounded-2xl p-5 overflow-hidden"
+                          style={{
+                            background: gradient,
+                            color: '#FFFFFF',
+                            aspectRatio: '1.6 / 1',
+                            boxShadow: '0 8px 24px -8px rgba(15,23,42,0.35)',
+                          }}
+                        >
+                          {/* Top-right chip mock */}
+                          <div
+                            className="absolute top-4 right-4"
+                            style={{
+                              width: 36,
+                              height: 28,
+                              borderRadius: 4,
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,255,255,0.50))',
+                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4)',
+                            }}
+                          />
 
-                        <p className="num text-2xl tabular font-semibold mt-4" style={{ color: 'var(--ink)' }}>
-                          {formatCurrency(c.current_balance)}
-                        </p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                          dari <span className="num">{formatCurrency(c.credit_limit)}</span>
-                        </p>
-
-                        <div className="mt-3">
-                          <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(util, 100)}%`,
-                                background: util > 80 ? 'var(--c-coral)' : util > 50 ? 'var(--c-amber)' : 'var(--c-mint)',
-                              }}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] mt-1.5">
-                            <span className="num" style={{ color: 'var(--ink-muted)' }}>
-                              {util.toFixed(0)}% terpakai
-                            </span>
-                            <span className="num" style={{ color: 'var(--ink-muted)' }}>
-                              {c.interest_rate}% bunga
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
-                          <div>
-                            <p className="caps" style={{ fontSize: '0.625rem' }}>Jatuh Tempo</p>
-                            <p className="num font-medium mt-0.5" style={{ color: urgency }}>
-                              {formatDate(due.toISOString())}
-                              <span className="ml-1 opacity-70">({daysLeft}h lagi)</span>
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openPayCard(c)}
-                            disabled={c.current_balance === 0}
+                          {/* Edit/delete actions (top-left, show on hover) */}
+                          <div
+                            className="absolute top-3 left-3 flex gap-1 opacity-0 group-hover:opacity-100 transition"
                           >
-                            Bayar
-                          </Button>
+                            <button
+                              onClick={() => openEditCard(c)}
+                              aria-label="Edit"
+                              className="grid place-items-center rounded-md"
+                              style={{
+                                width: 24,
+                                height: 24,
+                                background: 'rgba(255,255,255,0.18)',
+                                color: '#FFFFFF',
+                                backdropFilter: 'blur(4px)',
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => removeCard(c.id)}
+                              aria-label="Hapus"
+                              className="grid place-items-center rounded-md"
+                              style={{
+                                width: 24,
+                                height: 24,
+                                background: 'rgba(255,255,255,0.18)',
+                                color: '#FFFFFF',
+                                backdropFilter: 'blur(4px)',
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          {/* Issuer wordmark (top) */}
+                          <p
+                            className="absolute top-5 left-5"
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              letterSpacing: '0.16em',
+                              textTransform: 'uppercase',
+                              color: 'rgba(255,255,255,0.85)',
+                            }}
+                          >
+                            {c.issuer}
+                          </p>
+
+                          {/* Card number (DM Mono per design) */}
+                          <div
+                            className="absolute bottom-12 left-5 right-5"
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 15,
+                              letterSpacing: '0.08em',
+                              color: 'rgba(255,255,255,0.95)',
+                            }}
+                          >
+                            •••• •••• •••• {c.last_four || '••••'}
+                          </div>
+
+                          {/* Card name + due (bottom) */}
+                          <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between">
+                            <div>
+                              <p
+                                style={{
+                                  fontSize: 9,
+                                  fontWeight: 700,
+                                  letterSpacing: '0.12em',
+                                  textTransform: 'uppercase',
+                                  color: 'rgba(255,255,255,0.65)',
+                                }}
+                              >
+                                Card holder
+                              </p>
+                              <p
+                                style={{
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  marginTop: 2,
+                                  color: '#FFFFFF',
+                                }}
+                              >
+                                {c.name}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p
+                                style={{
+                                  fontSize: 9,
+                                  fontWeight: 700,
+                                  letterSpacing: '0.12em',
+                                  textTransform: 'uppercase',
+                                  color: 'rgba(255,255,255,0.65)',
+                                }}
+                              >
+                                Tagihan
+                              </p>
+                              <p
+                                className="kl-num"
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  marginTop: 2,
+                                  color: '#FFFFFF',
+                                }}
+                              >
+                                {formatCurrency(c.current_balance).replace('Rp', 'Rp ')}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats card below visual */}
+                        <div className="kl-card px-4 py-3.5">
+                          <div className="flex items-center justify-between">
+                            <p className="kl-eyebrow">Limit terpakai</p>
+                            <p className="kl-num" style={{ fontSize: 11, color: 'var(--ink-muted)' }}>
+                              {util.toFixed(0)}% · {c.interest_rate}% bunga
+                            </p>
+                          </div>
+                          <div
+                            className="kl-bar mt-2"
+                            style={{
+                              color:
+                                util > 80
+                                  ? 'var(--c-coral)'
+                                  : util > 50
+                                    ? 'var(--c-amber)'
+                                    : 'var(--c-mint)',
+                            }}
+                          >
+                            <i style={{ width: `${Math.min(util, 100)}%` }} />
+                          </div>
+                          <p className="kl-num mt-1.5" style={{ fontSize: 11, color: 'var(--ink-soft)' }}>
+                            {formatCurrency(c.current_balance)} dari {formatCurrency(c.credit_limit)}
+                          </p>
+
+                          <div
+                            className="mt-3 pt-3 border-t flex items-center justify-between"
+                            style={{ borderColor: 'var(--line)' }}
+                          >
+                            <div>
+                              <p className="kl-eyebrow">Jatuh Tempo</p>
+                              <p
+                                className="kl-num font-medium mt-0.5"
+                                style={{ fontSize: 12, color: urgency }}
+                              >
+                                {formatDate(due.toISOString())}
+                                <span className="ml-1 opacity-70">({daysLeft}h lagi)</span>
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openPayCard(c)}
+                              disabled={c.current_balance === 0}
+                              className="kl-btn"
+                            >
+                              Bayar
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )
