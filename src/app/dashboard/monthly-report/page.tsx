@@ -170,18 +170,46 @@ export default function MonthlyReportPage() {
       `}</style>
 
       <div className="space-y-6">
-        {/* Header — print-friendly */}
-        <div className="dark-card p-6 sm:p-7 print-avoid-break">
-          <p className="caps" style={{ color: 'var(--text-mute)' }}>Laporan Bulanan</p>
+        {/* Header — dark gradient anchor */}
+        <section
+          className="relative overflow-hidden rounded-3xl print-avoid-break"
+          style={{
+            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+            color: '#F5F5F7',
+            boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          }}
+        >
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: -100, right: -60, width: 360, height: 360,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+            }}
+          />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Laporan Bulanan
+          </p>
           <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+              <h1
+                className="font-bold tracking-tight"
+                style={{
+                  fontSize: 'clamp(28px, 4vw, 40px)',
+                  color: '#FFFFFF',
+                  letterSpacing: '-0.035em',
+                }}
+              >
                 {periodLabel}
-              </h2>
-              <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
+              </h1>
+              <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 {recap.tx_count} transaksi · disiapkan untuk {user?.name ?? 'Anda'}
               </p>
-              <p className="text-xs mt-1 hidden print:block" style={{ color: 'var(--on-black-mut)' }}>
+              <p className="text-xs mt-1 hidden print:block" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 Dibuat: {generatedDate}
               </p>
             </div>
@@ -209,6 +237,12 @@ export default function MonthlyReportPage() {
               <Button
                 onClick={() => window.open(`/print/monthly-report?year=${year}&month=${month}`, '_blank')}
                 disabled={recap.tx_count === 0}
+                style={{
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 0,
+                  boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                }}
               >
                 <Printer className="size-4" data-icon="inline-start" />
                 Cetak / Simpan PDF
@@ -216,6 +250,7 @@ export default function MonthlyReportPage() {
             </div>
           </div>
         </div>
+        </section>
 
         {recap.tx_count === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-muted bg-muted/20 p-10 sm:p-14 text-center">

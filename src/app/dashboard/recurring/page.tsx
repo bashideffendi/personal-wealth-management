@@ -184,31 +184,62 @@ export default function RecurringPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — italic display Net/bln as the headline number */}
-      <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Transaksi Berulang · Net/bln</p>
-        <p
-          className="num tabular mt-3 leading-none font-bold"
+      {/* Dark gradient hero */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: totals.monthlyNet >= 0 ? 'var(--on-black)' : 'var(--coral-400)',
-            fontSize: 'clamp(36px, 5vw, 48px)',
-            letterSpacing: '-0.035em',
+            top: -120,
+            right: -80,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${totals.monthlyNet >= 0 ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
           }}
-        >
-          {formatCurrency(totals.monthlyNet)}
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
-          <span style={{ color: 'var(--on-black-mut)' }}>
-            Masuk <span className="num font-semibold ml-1" style={{ color: 'var(--text-mute)' }}>+{formatCurrency(totals.monthlyIn)}</span>
-          </span>
-          <span style={{ color: 'var(--on-black-mut)' }}>
-            Keluar <span className="num font-semibold ml-1" style={{ color: 'var(--coral-400)' }}>−{formatCurrency(totals.monthlyOut)}</span>
-          </span>
+        />
+        <div className="relative p-6 sm:p-9">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: totals.monthlyNet >= 0 ? '#6EE7B7' : '#FDA4AF' }}
+          >
+            Recurring · Net per Bulan
+          </p>
+          <p
+            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
+            style={{
+              color: totals.monthlyNet >= 0 ? '#FFFFFF' : '#FDA4AF',
+              fontSize: 'clamp(36px, 5vw, 56px)',
+              letterSpacing: '-0.04em',
+            }}
+          >
+            {formatCurrency(totals.monthlyNet)}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
+            <span style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Masuk{' '}
+              <span className="num font-semibold ml-1" style={{ color: '#6EE7B7' }}>
+                +{formatCurrency(totals.monthlyIn)}
+              </span>
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Keluar{' '}
+              <span className="num font-semibold ml-1" style={{ color: '#FDA4AF' }}>
+                −{formatCurrency(totals.monthlyOut)}
+              </span>
+            </span>
+          </div>
+          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {totals.active} recurring aktif — otomatis generate transaksi sesuai jadwal.
+          </p>
         </div>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          {totals.active} recurring aktif — otomatis generate transaksi sesuai jadwal.
-        </p>
-      </div>
+      </section>
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>

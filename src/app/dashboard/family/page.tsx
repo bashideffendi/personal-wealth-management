@@ -223,13 +223,42 @@ export default function FamilyPage() {
   if (!household) {
     return (
       <div className="space-y-6">
-        <div className="dark-card p-6 sm:p-7">
-          <p className="caps" style={{ color: 'var(--text-mute)' }}>Keluarga</p>
-          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mt-2">
-            Atur Keuangan Bersama
-          </h2>
-          <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>{today}</p>
-        </div>
+        <section
+          className="relative overflow-hidden rounded-3xl"
+          style={{
+            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+            color: '#F5F5F7',
+            boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          }}
+        >
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: -100, right: -60, width: 360, height: 360,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+            }}
+          />
+          <div className="relative p-6 sm:p-7">
+            <p
+              className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+              style={{ color: '#6EE7B7' }}
+            >
+              Keluarga
+            </p>
+            <h1
+              className="font-bold tracking-tight mt-2"
+              style={{
+                fontSize: 'clamp(28px, 4vw, 40px)',
+                color: '#FFFFFF',
+                letterSpacing: '-0.035em',
+              }}
+            >
+              Atur Keuangan Bersama
+            </h1>
+            <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>{today}</p>
+          </div>
+        </section>
 
         <div className="rounded-2xl border-2 border-dashed border-burgundy-300 bg-gradient-to-br from-burgundy-50/40 to-amber-50/40 p-8 sm:p-10 text-center"
           style={{ borderColor: 'rgba(139, 21, 56, 0.2)', background: 'linear-gradient(135deg, rgba(139, 21, 56, 0.04), rgba(217, 119, 6, 0.04))' }}
@@ -292,28 +321,63 @@ export default function FamilyPage() {
   // ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--text-mute)' }}>Keluarga</p>
-        <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
-          <div>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-              {household.name}
-            </h2>
-            <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-              {members.length} dari {household.max_seats} anggota · dibuat {formatDate(new Date(household.created_at))}
-            </p>
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-7">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Keluarga
+          </p>
+          <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <h1
+                className="font-bold tracking-tight"
+                style={{
+                  fontSize: 'clamp(28px, 4vw, 40px)',
+                  color: '#FFFFFF',
+                  letterSpacing: '-0.035em',
+                }}
+              >
+                {household.name}
+              </h1>
+              <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {members.length} dari {household.max_seats} anggota · dibuat {formatDate(new Date(household.created_at))}
+              </p>
+            </div>
+            {isUserOwner && (
+              <Button
+                onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }}
+                disabled={members.length >= household.max_seats}
+                style={{
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 0,
+                  boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                }}
+              >
+                <UserPlus className="size-4" data-icon="inline-start" />
+                Undang Anggota
+              </Button>
+            )}
           </div>
-          {isUserOwner && (
-            <Button
-              onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }}
-              disabled={members.length >= household.max_seats}
-            >
-              <UserPlus className="size-4" data-icon="inline-start" />
-              Undang Anggota
-            </Button>
-          )}
         </div>
-      </div>
+      </section>
 
       {/* Members list */}
       <section className="space-y-3">
