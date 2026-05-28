@@ -40,39 +40,61 @@ export default function ForgotPasswordPage() {
       className="flex min-h-screen items-center justify-center px-4 py-12"
       style={{ background: 'var(--bg)' }}
     >
-      <div className="w-full" style={{ maxWidth: 420 }}>
-        <div className="text-center">
-          <Link href="/" className="inline-block">
-            <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
-              <span>K</span>
+      <div className="w-full" style={{ maxWidth: 400 }}>
+        {/* Brand lock-up */}
+        <div className="flex flex-col items-center mb-8">
+          <Link href="/" aria-label="Klunting">
+            <div
+              className="grid place-items-center mb-4"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: 'linear-gradient(135deg, #10B981, #047857)',
+                color: '#FFFFFF',
+                boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.45)',
+                fontWeight: 800,
+                fontSize: 28,
+                fontFamily: 'var(--font-sans)',
+                letterSpacing: '-0.04em',
+              }}
+            >
+              K
             </div>
           </Link>
           <h1
-            className="mt-4 kl-display"
+            className="font-bold tracking-tight"
             style={{
               fontSize: 28,
               color: 'var(--ink)',
-              letterSpacing: '-0.02em',
-              /* italic dropped per fintech revert */
+              letterSpacing: '-0.025em',
             }}
           >
             Reset password
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-mute)' }}>
-            Masukin email kamu, link reset bakal dikirim ke inbox.
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
+            Masukin email, link reset bakal dikirim ke inbox.
           </p>
         </div>
 
-        <div
-          className="mt-8 rounded-2xl border p-6"
-          style={{
-            background: 'var(--surface)',
-            borderColor: 'var(--border-soft)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          }}
-        >
+        {/* Form card */}
+        <div className="s-card s-card-pad-lg">
           {sent ? (
             <div className="text-center py-2">
+              <div
+                className="mx-auto grid place-items-center mb-4"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  background: 'var(--c-mint-soft)',
+                  color: 'var(--c-mint)',
+                }}
+              >
+                <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
               <p className="text-sm" style={{ color: 'var(--ink)' }}>
                 Link reset terkirim ke <strong>{email}</strong>.
               </p>
@@ -83,7 +105,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={() => setSent(false)}
                 className="mt-3 text-sm font-semibold hover:underline"
-                style={{ color: 'var(--c-primary)' }}
+                style={{ color: 'var(--c-mint)' }}
               >
                 Kirim ulang
               </button>
@@ -94,32 +116,41 @@ export default function ForgotPasswordPage() {
                 <div
                   className="rounded-lg border p-3 text-sm"
                   style={{
-                    background: 'var(--danger-bg)',
-                    borderColor: 'color-mix(in srgb, var(--danger) 30%, transparent)',
-                    color: 'var(--danger)',
+                    background: 'var(--c-coral-soft)',
+                    borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)',
+                    color: 'var(--c-coral)',
                   }}
                 >
                   {error}
                 </div>
               )}
 
-              <Input
-                type="email"
-                placeholder="Alamat email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11"
-                autoComplete="email"
-              />
+              <div>
+                <label
+                  className="text-xs font-semibold block mb-1.5"
+                  style={{ color: 'var(--ink-muted)' }}
+                >
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="kamu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-11"
+                  autoComplete="email"
+                />
+              </div>
 
               <Button
                 type="submit"
                 disabled={loading}
                 className="mt-2 h-11 w-full text-sm font-semibold"
                 style={{
-                  background: 'var(--c-ink)',
-                  color: 'var(--bg)',
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 0,
                 }}
               >
                 {loading ? 'Memproses…' : 'Kirim link reset'}
