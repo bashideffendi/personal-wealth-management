@@ -6,11 +6,11 @@
  * outside to close.
  *
  * Design tenets:
- *   - Visually subtle (slate icon, no background) — must NOT distract
+ *   - Visually subtle (muted icon, no background) — must NOT distract
  *     from the primary content next to it.
  *   - Casual Indonesian tone — no academic intimidation.
- *   - Citation in italic at the bottom for credibility & to make the
- *     content feel grounded, not arbitrary.
+ *   - Citation at the bottom for credibility — makes the content feel
+ *     grounded, not arbitrary.
  *
  * Usage:
  *   <EduTip topic="mental-accounting" />
@@ -133,8 +133,8 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
               className="text-[12px] leading-relaxed mt-2 pt-2 border-t"
               style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
             >
-              <span className="font-semibold" style={{ color: 'var(--emerald-600, #059669)' }}>
-                Di PWM:{' '}
+              <span className="font-semibold" style={{ color: 'var(--c-mint)' }}>
+                Di Klunting:{' '}
               </span>
               {tip.applied}
             </p>

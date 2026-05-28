@@ -366,7 +366,7 @@ export function StockLogPanel() {
                         type="button"
                         onClick={() => setForm({ ...form, fee })}
                         className="ml-1.5 underline hover:no-underline"
-                        style={{ color: 'var(--emerald-600, #059669)' }}
+                        style={{ color: 'var(--c-mint)' }}
                       >
                         Pakai
                       </button>
