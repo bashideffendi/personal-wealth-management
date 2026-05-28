@@ -177,20 +177,29 @@ export default async function StockResearchPage({ params }: RouteProps) {
         Kembali ke Saham
       </Link>
 
-      {/* Hero card — ticker + name + price + verdict + MoS */}
+      {/* Hero — dark gradient ticker anchor */}
       <header
-        className="rounded-2xl border p-6"
+        className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, var(--c-mint-soft) 0%, var(--surface) 60%)',
-          borderColor: 'var(--border)',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
         }}
       >
-        <div className="flex items-start justify-between flex-wrap gap-4">
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${isUp ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
+          }}
+        />
+        <div className="relative p-6 sm:p-8 flex items-start justify-between flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <p
-                className="font-mono font-bold text-2xl tracking-tight"
-                style={{ color: 'var(--ink)' }}
+                className="font-mono font-bold text-3xl tracking-tight"
+                style={{ color: '#FFFFFF' }}
               >
                 {ticker}
               </p>
@@ -203,27 +212,33 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 </span>
               )}
             </div>
-            <p className="mt-1 text-base font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="mt-1.5 text-base font-semibold" style={{ color: '#FFFFFF' }}>
               {name}
             </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-              {sector && <span>Sektor <strong style={{ color: 'var(--ink)' }}>{sector}</strong></span>}
-              {stock?.board && <span>Papan <strong style={{ color: 'var(--ink)' }}>{stock.board}</strong></span>}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              {sector && <span>Sektor <strong style={{ color: '#FFFFFF' }}>{sector}</strong></span>}
+              {stock?.board && <span>Papan <strong style={{ color: '#FFFFFF' }}>{stock.board}</strong></span>}
               {stock?.listingDate && <span>Listing {stock.listingDate}</span>}
             </div>
           </div>
 
           <div className="text-right">
-            <p className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'var(--ink-soft)' }}>
+            <p
+              className="text-[10px] font-bold tracking-[0.14em] uppercase"
+              style={{ color: 'rgba(255,255,255,0.55)' }}
+            >
               Harga snapshot
             </p>
-            <p className="num tabular text-3xl font-bold leading-none mt-1" style={{ color: 'var(--ink)' }}>
+            <p
+              className="num tabular font-bold leading-none mt-1"
+              style={{ fontSize: 36, color: '#FFFFFF', letterSpacing: '-0.035em' }}
+            >
               Rp {formatPrice(price)}
             </p>
             {avgMoS != null && (
               <p
-                className="text-xs font-semibold mt-2 inline-flex items-center gap-1"
-                style={{ color: signColorVar(avgMoS) }}
+                className="text-xs font-bold mt-2 inline-flex items-center gap-1"
+                style={{ color: isUp ? '#6EE7B7' : '#FDA4AF' }}
               >
                 {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
                 Avg MoS {(avgMoS * 100).toFixed(1)}%
@@ -235,7 +250,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-0.5 hover:underline"
-                style={{ color: 'var(--ink-muted)' }}
+                style={{ color: 'rgba(255,255,255,0.55)' }}
               >
                 Stockbit <ArrowUpRight className="size-2.5" />
               </a>
@@ -244,7 +259,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-0.5 hover:underline"
-                style={{ color: 'var(--ink-muted)' }}
+                style={{ color: 'rgba(255,255,255,0.55)' }}
               >
                 Yahoo <ArrowUpRight className="size-2.5" />
               </a>
