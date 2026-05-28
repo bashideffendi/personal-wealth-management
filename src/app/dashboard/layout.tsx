@@ -1,12 +1,19 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/sidebar'
-import { Header } from '@/components/layout/header'
+import { TopNav } from '@/components/layout/top-nav'
 import { QuickAddLauncher } from '@/components/layout/quick-add-launcher'
 import { CommandPalette } from '@/components/layout/command-palette'
 import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
 import { InstallPrompt } from '@/components/layout/install-prompt'
 
+/**
+ * Dashboard layout — editorial top-nav variant (2026-05-28 redesign).
+ *
+ * Layout pattern berubah: sidebar dihapus, TopNav horizontal jadi shell
+ * utama. Konten halaman scroll vertikal di main (bukan flex column
+ * dengan sidebar di kiri). Mobile dapet hamburger di TopNav + bottom
+ * tab bar tetap untuk quick-access daily-use.
+ */
 export default async function DashboardLayout({
   children,
 }: {
@@ -21,21 +28,20 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
-      style={{ backgroundColor: 'var(--bg)' }}
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--bg)' }}
     >
-      <Sidebar user={user} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header user={user} />
-        <main
-          className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8"
-          style={{ backgroundColor: 'var(--bg)' }}
-        >
-          <div className="mx-auto max-w-[1400px]">{children}</div>
-        </main>
-      </div>
+      <TopNav user={user} />
+      <main
+        className="flex-1 px-4 md:px-8 pt-6 md:pt-7 pb-24 md:pb-16"
+        style={{ background: 'var(--bg)' }}
+      >
+        <div className="mx-auto" style={{ maxWidth: 1400 }}>
+          {children}
+        </div>
+      </main>
       {/* QuickAddLauncher — renders FAB on desktop, listens to klunting:quick-add
-          event on mobile (fired from BottomTabBar center button). */}
+          event on mobile (fired from BottomTabBar center button + TopNav +). */}
       <div className="hidden md:block">
         <QuickAddLauncher variant="desktop" />
       </div>
