@@ -222,12 +222,12 @@ export default function RecurringPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="kl-card p-12 text-center">
+        <div className="s-card p-12 text-center">
           <p className="font-semibold">Belum ada recurring transaction</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambahkan gaji, cicilan, atau subscription.</p>
         </div>
       ) : (
-        <div className="kl-card overflow-hidden">
+        <div className="s-card overflow-hidden">
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
             {items.map((r) => {
               const acc = accounts.find((a) => a.id === r.account_id)

@@ -82,8 +82,8 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
 
   if (bills.length === 0) {
     return (
-      <article className="kl-card" style={{ padding: 24 }}>
-        <p className="kl-eyebrow">Tagihan Mendatang</p>
+      <article className="s-card" style={{ padding: 24 }}>
+        <p className="eyebrow">Tagihan Mendatang</p>
         <p className="text-sm py-6 text-center" style={{ color: 'var(--text-mute)' }}>
           Tidak ada tagihan dalam 14 hari ke depan.
         </p>
@@ -92,8 +92,8 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
   }
 
   return (
-    <article className="kl-card" style={{ padding: 24 }}>
-      <p className="kl-eyebrow">Tagihan Mendatang</p>
+    <article className="s-card" style={{ padding: 24 }}>
+      <p className="eyebrow">Tagihan Mendatang</p>
       <div className="flex flex-col mt-3">
         {bills.slice(0, 6).map((b, i) => {
           const urgent = b.daysUntil <= 3
@@ -131,7 +131,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
                 >
                   {monthLabel}
                 </div>
-                <div className="kl-num" style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.1 }}>
+                <div className="num tabular" style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.1 }}>
                   {day}
                 </div>
               </div>
@@ -152,7 +152,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
                 </p>
               </div>
               <p
-                className="kl-num text-right"
+                className="num tabular text-right"
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}
               >
                 {b.amount && b.amount > 0 ? formatCurrency(b.amount) : '—'}

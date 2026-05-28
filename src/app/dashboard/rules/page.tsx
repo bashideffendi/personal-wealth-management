@@ -116,7 +116,7 @@ export default function RulesPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : rules.length === 0 ? (
-        <div className="kl-card p-12 text-center">
+        <div className="s-card p-12 text-center">
           <Sparkles className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--ink-soft)' }} />
           <p className="font-semibold">Belum ada aturan</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
@@ -124,7 +124,7 @@ export default function RulesPage() {
           </p>
         </div>
       ) : (
-        <div className="kl-card overflow-hidden">
+        <div className="s-card overflow-hidden">
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
             {rules.map((r) => (
               <div key={r.id} className="flex items-center gap-4 px-5 py-3" style={{ opacity: r.is_active ? 1 : 0.4 }}>

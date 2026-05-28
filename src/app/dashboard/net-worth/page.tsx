@@ -184,13 +184,13 @@ export default function NetWorthPage() {
 
   return (
     <div className="space-y-6">
-      <div className="kl-card p-6 sm:p-10">
-        <p className="kl-eyebrow text-center">
+      <div className="s-card p-6 sm:p-10">
+        <p className="eyebrow text-center">
           Kekayaan Bersih · {today}
         </p>
         {/* Hero number — Instrument Serif clamp(48-72px) per editorial pivot */}
         <p
-          className="kl-display kl-num text-center mt-4"
+          className="display num tabular text-center mt-4"
           style={{
             color: isPositive ? 'var(--ink)' : 'var(--c-coral)',
             fontSize: 'clamp(48px, 8vw, 80px)',
@@ -201,8 +201,8 @@ export default function NetWorthPage() {
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-8">
           <div className="text-center">
-            <p className="kl-eyebrow">Total Aset</p>
-            <p className="kl-num mt-1.5 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="eyebrow">Total Aset</p>
+            <p className="num tabular mt-1.5 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totalAssets)}
             </p>
           </div>
@@ -211,9 +211,9 @@ export default function NetWorthPage() {
             style={{ background: 'var(--line)' }}
           />
           <div className="text-center">
-            <p className="kl-eyebrow">Total Utang</p>
+            <p className="eyebrow">Total Utang</p>
             <p
-              className="kl-num mt-1.5 text-lg font-semibold"
+              className="num tabular mt-1.5 text-lg font-semibold"
               style={{ color: totalDebt > 0 ? 'var(--c-coral)' : 'var(--ink)' }}
             >
               {totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}
@@ -312,15 +312,15 @@ export default function NetWorthPage() {
       />
 
       {/* Bottom Net Worth Summary */}
-      <div className="kl-card p-6 flex items-center justify-between">
+      <div className="s-card p-6 flex items-center justify-between">
         <span
-          className="kl-display-italic"
+          className="display-italic"
           style={{ fontSize: 22, color: 'var(--ink)' }}
         >
           Kekayaan Bersih (Aset − Liabilitas)
         </span>
         <span
-          className="kl-display kl-num"
+          className="display num tabular"
           style={{
             fontSize: 32,
             color: isPositive ? 'var(--ink)' : 'var(--c-coral)',
@@ -410,9 +410,9 @@ function HealthRatiosCard({
   ]
 
   return (
-    <div className="kl-card overflow-hidden">
+    <div className="s-card overflow-hidden">
       <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--line)' }}>
-        <p className="kl-eyebrow">4 Rasio Kesehatan</p>
+        <p className="eyebrow">4 Rasio Kesehatan</p>
         <p className="text-sm mt-1" style={{ color: 'var(--text-mute)' }}>
           Indikator kunci yang dipakai bank & financial planner buat ukur kondisi finansialmu.
         </p>
@@ -439,10 +439,10 @@ function HealthRatiosCard({
                   background: `var(--c-${r.tone})`,
                 }}
               />
-              <p className="kl-eyebrow">{r.label}</p>
+              <p className="eyebrow">{r.label}</p>
             </div>
             <p
-              className="kl-display kl-num mt-3"
+              className="display num tabular mt-3"
               style={{
                 fontSize: 36,
                 color: 'var(--ink)',
@@ -459,7 +459,7 @@ function HealthRatiosCard({
             </p>
             <div className="mt-2 flex items-center justify-between">
               <span
-                className="kl-chip"
+                className="chip"
                 style={{
                   background: `var(--c-${r.tone}-soft)`,
                   color: `var(--c-${r.tone})`,
@@ -593,7 +593,7 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
   }
 
   return (
-    <div className="kl-card p-5 sm:p-6">
+    <div className="s-card p-5 sm:p-6">
       <div className="mb-4 flex items-start justify-between flex-wrap gap-3">
         <div>
           <p className="caps">Riwayat</p>

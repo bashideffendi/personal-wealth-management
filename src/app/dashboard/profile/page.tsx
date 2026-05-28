@@ -355,8 +355,8 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Header card — editorial profile */}
-      <div className="kl-card p-6 sm:p-7">
-        <p className="kl-eyebrow">Profil</p>
+      <div className="s-card p-6 sm:p-7">
+        <p className="eyebrow">Profil</p>
         <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div
@@ -373,7 +373,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <h1
-                className="kl-display"
+                className="display"
                 style={{
                   fontSize: 'clamp(28px, 4vw, 40px)',
                   color: 'var(--ink)',
@@ -387,7 +387,7 @@ export default function ProfilePage() {
               </p>
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <span
-                  className="kl-chip"
+                  className="chip"
                   style={{ background: planBadge.bg, color: planBadge.fg }}
                 >
                   {subscription?.plan_id === 'full' && <Crown className="size-3" />}
@@ -403,7 +403,7 @@ export default function ProfilePage() {
           </div>
           <Link
             href="/dashboard/pricing"
-            className="kl-btn kl-btn-primary"
+            className="btn-outline btn-primary"
           >
             <Crown className="size-4" />
             {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? 'Upgrade ke Full Service' : 'Kelola Langganan'}

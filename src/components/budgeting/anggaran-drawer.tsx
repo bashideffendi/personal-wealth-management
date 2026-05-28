@@ -145,13 +145,13 @@ export function AnggaranMonthDrawer({
                 <ArrowLeft className="size-4" />
               </button>
               <div>
-                <p className="kl-eyebrow">Anggaran · {year}</p>
+                <p className="eyebrow">Anggaran · {year}</p>
                 {/* Visually-rich title; sr-only SheetTitle for a11y */}
                 <SheetTitle className="sr-only">
                   Anggaran {MONTHS_FULL[month - 1]} {year}
                 </SheetTitle>
                 <h2
-                  className="kl-display"
+                  className="display"
                   style={{
                     fontSize: 28,
                     color: 'var(--ink)',
@@ -162,7 +162,7 @@ export function AnggaranMonthDrawer({
                   {MONTHS_FULL[month - 1]}
                   {isCurrentMonth && (
                     <span
-                      className="kl-chip ml-2"
+                      className="chip ml-2"
                       style={{
                         background: 'var(--c-primary-soft)',
                         color: 'var(--c-primary)',
@@ -232,11 +232,11 @@ export function AnggaranMonthDrawer({
 
           {/* ─── Bar alokasi pendapatan tersegmen ─── */}
           {inc > 0 && (
-            <div className="kl-card p-5">
+            <div className="s-card p-5">
               <div className="flex items-center justify-between">
-                <p className="kl-eyebrow">Alokasi Pendapatan</p>
+                <p className="eyebrow">Alokasi Pendapatan</p>
                 <p
-                  className="kl-num"
+                  className="num tabular"
                   style={{ fontSize: 11, color: 'var(--text-mute)' }}
                 >
                   Sisa{' '}
@@ -281,8 +281,8 @@ export function AnggaranMonthDrawer({
 
           {/* ─── Aturan 50/30/20 ─── */}
           {inc > 0 && (
-            <div className="kl-card p-5">
-              <p className="kl-eyebrow">Aturan 50/30/20</p>
+            <div className="s-card p-5">
+              <p className="eyebrow">Aturan 50/30/20</p>
               <p className="text-xs mt-1" style={{ color: 'var(--text-mute)' }}>
                 Pedoman alokasi pendapatan ala financial planner.
               </p>
@@ -317,11 +317,11 @@ export function AnggaranMonthDrawer({
 
           {/* ─── Top 8 Pengeluaran ─── */}
           {topExpenses.length > 0 && (
-            <div className="kl-card p-5">
+            <div className="s-card p-5">
               <div className="flex items-center justify-between">
-                <p className="kl-eyebrow">Top Pengeluaran Kategori</p>
+                <p className="eyebrow">Top Pengeluaran Kategori</p>
                 <p
-                  className="kl-num"
+                  className="num tabular"
                   style={{ fontSize: 11, color: 'var(--text-mute)' }}
                 >
                   {topExpenses.length} kategori
@@ -347,7 +347,7 @@ export function AnggaranMonthDrawer({
                           </span>
                           {isOver && (
                             <span
-                              className="kl-chip"
+                              className="chip"
                               style={{
                                 background: 'var(--c-coral-soft)',
                                 color: 'var(--c-coral)',
@@ -361,7 +361,7 @@ export function AnggaranMonthDrawer({
                           )}
                           {!isOver && isWarn && (
                             <span
-                              className="kl-chip"
+                              className="chip"
                               style={{
                                 background: 'var(--c-amber-soft)',
                                 color: 'var(--c-amber)',
@@ -385,13 +385,13 @@ export function AnggaranMonthDrawer({
                       </div>
                       <div className="text-right shrink-0" style={{ minWidth: 90 }}>
                         <p
-                          className="kl-num"
+                          className="num tabular"
                           style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}
                         >
                           {formatCompactCurrency(e.val)}
                         </p>
                         <p
-                          className="kl-num"
+                          className="num tabular"
                           style={{ fontSize: 10, color: 'var(--text-mute)' }}
                         >
                           {pctOfTotal.toFixed(0)}%
@@ -407,25 +407,25 @@ export function AnggaranMonthDrawer({
           {/* ─── Proyeksi Akhir Bulan (current month only) ─── */}
           {projection && (
             <div
-              className="kl-card p-5"
+              className="s-card p-5"
               style={{ background: 'var(--c-primary-soft)' }}
             >
               <div className="flex items-center justify-between">
                 <p
-                  className="kl-eyebrow"
+                  className="eyebrow"
                   style={{ color: 'var(--c-primary)' }}
                 >
                   Proyeksi Akhir Bulan
                 </p>
                 <p
-                  className="text-[11px] kl-num"
+                  className="text-[11px] num tabular"
                   style={{ color: 'var(--c-primary)' }}
                 >
                   {projection.daysLeft} hari lagi
                 </p>
               </div>
               <p
-                className="kl-display kl-num mt-2"
+                className="display num tabular mt-2"
                 style={{ fontSize: 28, color: 'var(--ink)' }}
               >
                 {formatCurrency(projection.projectedExpense)}
@@ -441,14 +441,14 @@ export function AnggaranMonthDrawer({
           <div className="flex gap-2">
             <Link
               href={`/dashboard/transactions?year=${year}&month=${month}`}
-              className="kl-btn flex-1"
+              className="btn-outline flex-1"
             >
               <ExternalLink className="size-3.5" />
               Buka di Transaksi
             </Link>
             <button
               type="button"
-              className="kl-btn"
+              className="btn-outline"
               onClick={() => {
                 // Future: implement copy-to-other-month
                 onOpenChange(false)
@@ -479,7 +479,7 @@ function SummaryTile({
   isReference?: boolean
 }) {
   return (
-    <div className="kl-card p-4">
+    <div className="s-card p-4">
       <div className="flex items-center gap-1.5">
         <span
           style={{
@@ -489,16 +489,16 @@ function SummaryTile({
             background: `var(--c-${tone})`,
           }}
         />
-        <p className="kl-eyebrow">{label}</p>
+        <p className="eyebrow">{label}</p>
       </div>
       <p
-        className="kl-num mt-2"
+        className="num tabular mt-2"
         style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}
       >
         {formatCompactCurrency(value)}
       </p>
       <p
-        className="kl-num mt-0.5"
+        className="num tabular mt-0.5"
         style={{ fontSize: 11, color: `var(--c-${tone})`, fontWeight: 700 }}
       >
         {isReference ? 'Referensi' : `${pct.toFixed(0)}% dari pemasukan`}
@@ -522,7 +522,7 @@ function LegendItem({
       />
       <span style={{ color: 'var(--text-2)' }}>{label}</span>
       <span
-        className="kl-num ml-auto"
+        className="num tabular ml-auto"
         style={{ color: `var(--c-${tone})`, fontWeight: 700 }}
       >
         {pct.toFixed(0)}%
@@ -560,7 +560,7 @@ function Rule50Row({
       <div className="flex items-baseline justify-between mb-1.5">
         <span style={{ fontSize: 13, color: 'var(--ink)' }}>{label}</span>
         <span
-          className="kl-num"
+          className="num tabular"
           style={{ fontSize: 11, color: 'var(--text-mute)' }}
         >
           Target <strong style={{ color: 'var(--ink)' }}>{target}%</strong>{' '}
@@ -575,7 +575,7 @@ function Rule50Row({
           <i style={{ width: `${Math.min(actual, 100)}%` }} />
         </div>
         <span
-          className="kl-num"
+          className="num tabular"
           style={{
             fontSize: 12,
             fontWeight: 700,
@@ -588,7 +588,7 @@ function Rule50Row({
         </span>
       </div>
       <p
-        className="kl-num"
+        className="num tabular"
         style={{ fontSize: 10, color: statusColor, marginTop: 2 }}
       >
         {statusLabel} · aktual {formatCompactCurrency(actualAmount)}

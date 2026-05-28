@@ -52,12 +52,12 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
   )
 
   return (
-    <article className="kl-card" style={{ padding: 24 }}>
+    <article className="s-card" style={{ padding: 24 }}>
       <div className="flex items-center justify-between">
-        <p className="kl-eyebrow">Transaksi Terkini</p>
+        <p className="eyebrow">Transaksi Terkini</p>
         <Link
           href="/dashboard/transactions"
-          className="kl-btn"
+          className="btn-outline"
           style={{ fontSize: 11, padding: '6px 10px' }}
         >
           Semua transaksi <ChevronRight className="size-3" />
@@ -109,7 +109,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                   </p>
                 </div>
                 <p
-                  className="kl-num text-right"
+                  className="num tabular text-right"
                   style={{
                     fontSize: 13.5,
                     fontWeight: 700,

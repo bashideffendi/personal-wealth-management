@@ -82,7 +82,7 @@ export default function SubscriptionsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : subscriptions.length === 0 ? (
-        <div className="kl-card p-12 text-center">
+        <div className="s-card p-12 text-center">
           <p className="font-semibold">Tidak ada subscription terdeteksi</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
             Tambahkan recurring dengan kategori &ldquo;Langganan&rdquo;.

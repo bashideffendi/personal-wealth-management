@@ -53,7 +53,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
     : 'Risiko tinggi'
 
   return (
-    <div className="kl-card p-6 sm:p-7">
+    <div className="s-card p-6 sm:p-7">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
         {/* ─── Col 1: BIG score centered + tier label below ─────────── */}
         <div className="lg:col-span-4 flex flex-col items-center text-center">

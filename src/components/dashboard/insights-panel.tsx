@@ -139,7 +139,7 @@ export function InsightsPanel({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Alerts */}
-      <div className="kl-card p-5 lg:col-span-2">
+      <div className="s-card p-5 lg:col-span-2">
         <p className="caps">Insights & Alerts</p>
         <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
           Perlu Perhatian
@@ -182,7 +182,7 @@ export function InsightsPanel({
       </div>
 
       {/* Cashflow forecast 3 bulan */}
-      <div className="kl-card p-5">
+      <div className="s-card p-5">
         <p className="caps">Proyeksi 3 Bulan</p>
         <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
           Forecast Arus Kas

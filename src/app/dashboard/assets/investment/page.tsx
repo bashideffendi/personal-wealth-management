@@ -163,11 +163,11 @@ export default function InvestmentOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="kl-card p-6 sm:p-9">
-        <p className="kl-eyebrow">Portofolio Investasi</p>
+      <div className="s-card p-6 sm:p-9">
+        <p className="eyebrow">Portofolio Investasi</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p
-            className="kl-display kl-num"
+            className="display num tabular"
             style={{
               color: 'var(--ink)',
               fontSize: 'clamp(40px, 6vw, 64px)',
@@ -177,7 +177,7 @@ export default function InvestmentOverviewPage() {
             {formatCurrency(totals.market)}
           </p>
           <span
-            className="kl-chip mb-2"
+            className="chip mb-2"
             style={{
               background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
               color: up ? 'var(--c-mint)' : 'var(--c-coral)',
@@ -189,13 +189,13 @@ export default function InvestmentOverviewPage() {
         </div>
         <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
           Modal{' '}
-          <span className="kl-num font-semibold" style={{ color: 'var(--ink)' }}>
+          <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
             {formatCurrency(totals.invested)}
           </span>
           {' · '}
           P/L{' '}
           <span
-            className="kl-num font-semibold"
+            className="num tabular font-semibold"
             style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}
           >
             {formatCurrency(totals.pl)}

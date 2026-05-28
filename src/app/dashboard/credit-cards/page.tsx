@@ -270,7 +270,7 @@ export default function CreditCardsPage() {
               </div>
 
               {cards.length === 0 ? (
-                <div className="kl-card p-12 text-center">
+                <div className="s-card p-12 text-center">
                   <p className="font-semibold">Belum ada kartu kredit</p>
                   <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
                     Tambahkan kartu pertama Anda untuk mulai melacak.
@@ -407,7 +407,7 @@ export default function CreditCardsPage() {
                                 Tagihan
                               </p>
                               <p
-                                className="kl-num"
+                                className="num tabular"
                                 style={{
                                   fontSize: 14,
                                   fontWeight: 700,
@@ -422,10 +422,10 @@ export default function CreditCardsPage() {
                         </div>
 
                         {/* Stats card below visual */}
-                        <div className="kl-card px-4 py-3.5">
+                        <div className="s-card px-4 py-3.5">
                           <div className="flex items-center justify-between">
-                            <p className="kl-eyebrow">Limit terpakai</p>
-                            <p className="kl-num" style={{ fontSize: 11, color: 'var(--ink-muted)' }}>
+                            <p className="eyebrow">Limit terpakai</p>
+                            <p className="num tabular" style={{ fontSize: 11, color: 'var(--ink-muted)' }}>
                               {util.toFixed(0)}% · {c.interest_rate}% bunga
                             </p>
                           </div>
@@ -442,7 +442,7 @@ export default function CreditCardsPage() {
                           >
                             <i style={{ width: `${Math.min(util, 100)}%` }} />
                           </div>
-                          <p className="kl-num mt-1.5" style={{ fontSize: 11, color: 'var(--ink-soft)' }}>
+                          <p className="num tabular mt-1.5" style={{ fontSize: 11, color: 'var(--ink-soft)' }}>
                             {formatCurrency(c.current_balance)} dari {formatCurrency(c.credit_limit)}
                           </p>
 
@@ -451,9 +451,9 @@ export default function CreditCardsPage() {
                             style={{ borderColor: 'var(--line)' }}
                           >
                             <div>
-                              <p className="kl-eyebrow">Jatuh Tempo</p>
+                              <p className="eyebrow">Jatuh Tempo</p>
                               <p
-                                className="kl-num font-medium mt-0.5"
+                                className="num tabular font-medium mt-0.5"
                                 style={{ fontSize: 12, color: urgency }}
                               >
                                 {formatDate(due.toISOString())}
@@ -465,7 +465,7 @@ export default function CreditCardsPage() {
                               variant="outline"
                               onClick={() => openPayCard(c)}
                               disabled={c.current_balance === 0}
-                              className="kl-btn"
+                              className="btn-outline"
                             >
                               Bayar
                             </Button>
@@ -482,11 +482,11 @@ export default function CreditCardsPage() {
           <TabsContent value="payments">
             <div className="pt-4">
               {payments.length === 0 ? (
-                <div className="kl-card p-12 text-center">
+                <div className="s-card p-12 text-center">
                   <p className="font-semibold">Belum ada riwayat pembayaran</p>
                 </div>
               ) : (
-                <div className="kl-card overflow-hidden">
+                <div className="s-card overflow-hidden">
                   <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                     {payments.map((p) => {
                       const c = cards.find((x) => x.id === p.card_id)

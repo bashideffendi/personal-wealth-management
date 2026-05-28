@@ -19,7 +19,7 @@ export function DayOfWeekChart({ monthTransactions }: { monthTransactions: Trans
   const maxIdx = sums.indexOf(Math.max(...sums))
 
   return (
-    <div className="kl-card p-5">
+    <div className="s-card p-5">
       <p className="caps">Pola Harian</p>
       <h3 className="text-base font-semibold mt-0.5">Pengeluaran per Hari</h3>
       <div className="mt-4 flex items-end justify-between gap-2 h-[140px]">

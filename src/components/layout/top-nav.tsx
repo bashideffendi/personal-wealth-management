@@ -317,7 +317,7 @@ export function TopNav({ user }: TopNavProps) {
             {/* Quick-add (+) — primary button per design */}
             <button
               onClick={openQuickAdd}
-              className="kl-btn kl-btn-primary"
+              className="btn-outline btn-primary"
               style={{ padding: '9px 12px' }}
               aria-label="Tambah cepat"
             >

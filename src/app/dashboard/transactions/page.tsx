@@ -682,11 +682,11 @@ export default function TransactionsPage() {
       {/* Header per design handoff §1 — eyebrow + h1 + utility actions */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <p className="kl-eyebrow">
+          <p className="eyebrow">
             {today}
           </p>
           <h1
-            className="kl-display mt-1"
+            className="display mt-1"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               color: 'var(--ink)',
@@ -956,7 +956,7 @@ export default function TransactionsPage() {
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
-        <div className="kl-card flex flex-col items-center text-center py-16 px-8">
+        <div className="s-card flex flex-col items-center text-center py-16 px-8">
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--c-mint-soft)' }}
@@ -993,7 +993,7 @@ export default function TransactionsPage() {
                     <TableCell>{getAccountName(tx.account_id)}</TableCell>
                     <TableCell>
                       <span
-                        className="kl-chip"
+                        className="chip"
                         style={{
                           background: TYPE_BADGE_STYLES[tx.type].bg,
                           color: TYPE_BADGE_STYLES[tx.type].color,
@@ -1052,7 +1052,7 @@ export default function TransactionsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span
-                          className="kl-chip"
+                          className="chip"
                           style={{
                             background: TYPE_BADGE_STYLES[tx.type].bg,
                             color: TYPE_BADGE_STYLES[tx.type].color,

@@ -121,7 +121,7 @@ export function GettingStarted() {
 
   return (
     <div
-      className="kl-card p-5 sm:p-6"
+      className="s-card p-5 sm:p-6"
       style={{ background: 'var(--c-primary-soft)' }}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -133,12 +133,12 @@ export function GettingStarted() {
             <Sparkles className="size-4 text-white" />
           </div>
           <div>
-            <p className="kl-eyebrow" style={{ color: 'var(--c-primary)' }}>
+            <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>
               Selangkah Lagi
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-mute)' }}>
               {completedCount} dari 3 langkah selesai ·{' '}
-              <span className="kl-num font-semibold">{Math.round(progressPct)}%</span>
+              <span className="num tabular font-semibold">{Math.round(progressPct)}%</span>
             </p>
           </div>
         </div>
@@ -199,7 +199,7 @@ export function GettingStarted() {
               )}
             </div>
             {!step.done && (
-              <Link href={step.href} className="kl-btn kl-btn-primary" style={{ padding: '6px 12px', fontSize: 12 }}>
+              <Link href={step.href} className="btn-outline btn-primary" style={{ padding: '6px 12px', fontSize: 12 }}>
                 {step.cta}
                 <ChevronRight className="size-3" />
               </Link>

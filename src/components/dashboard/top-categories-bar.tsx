@@ -12,7 +12,7 @@ export function TopCategoriesBar({ monthTransactions }: { monthTransactions: Tra
   const max = sorted[0]?.[1] ?? 1
 
   return (
-    <div className="kl-card p-5">
+    <div className="s-card p-5">
       <p className="caps">Paling Boros</p>
       <h3 className="text-base font-semibold mt-0.5">Top 5 Kategori</h3>
       {sorted.length === 0 ? (

@@ -279,9 +279,9 @@ export default async function LandingPage() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="max-w-2xl mb-10">
-            <p className="kl-eyebrow">Fitur</p>
+            <p className="eyebrow">Fitur</p>
             <h2
-              className="kl-display mt-3"
+              className="display mt-3"
               style={{
                 fontSize: 'clamp(28px, 4vw, 48px)',
                 lineHeight: 1.1,
@@ -340,7 +340,7 @@ export default async function LandingPage() {
           ].map((f) => (
             <div
               key={f.title}
-              className="kl-card p-5 transition-all hover:shadow-lg hover:-translate-y-0.5"
+              className="s-card p-5 transition-all hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
@@ -351,7 +351,7 @@ export default async function LandingPage() {
                 </div>
                 {f.badge && (
                   <span
-                    className="kl-chip"
+                    className="chip"
                     style={{
                       background: 'var(--c-amber-soft)',
                       color: 'var(--c-amber)',
@@ -380,9 +380,9 @@ export default async function LandingPage() {
       <section id="harga" className="px-6 sm:px-12 py-16 sm:py-20">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-2xl mb-10">
-            <p className="kl-eyebrow">Harga</p>
+            <p className="eyebrow">Harga</p>
             <h2
-              className="kl-display mt-3"
+              className="display mt-3"
               style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
               Pilih yang <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>cocok</em>{' '}
@@ -493,7 +493,7 @@ export default async function LandingPage() {
               </div>
               <Link
                 href="/register"
-                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90 kl-btn-primary"
+                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90 btn-primary"
               >
                 Coba 14 hari gratis
               </Link>
@@ -531,9 +531,9 @@ export default async function LandingPage() {
       <section id="faq" className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
         <div className="max-w-3xl mx-auto">
           <div className="mb-10">
-            <p className="kl-eyebrow">Pertanyaan</p>
+            <p className="eyebrow">Pertanyaan</p>
             <h2
-              className="kl-display mt-3"
+              className="display mt-3"
               style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
               Yang <em style={{ /* italic dropped per fintech revert */ color: 'var(--c-primary)' }}>sering ditanya</em>.
@@ -549,7 +549,7 @@ export default async function LandingPage() {
 
           {/* Security trust banner — visible reassurance before users dive into Q&A */}
           <div
-            className="kl-card p-5 mb-8 flex items-start gap-3"
+            className="s-card p-5 mb-8 flex items-start gap-3"
             style={{ background: 'var(--c-mint-soft)', borderColor: 'color-mix(in srgb, var(--c-mint) 25%, transparent)' }}
           >
             <Shield
@@ -655,13 +655,13 @@ export default async function LandingPage() {
         >
           <div className="relative">
             <p
-              className="kl-eyebrow"
+              className="eyebrow"
               style={{ color: 'rgba(255,255,255,0.55)' }}
             >
               Mulai sekarang
             </p>
             <h2
-              className="kl-display mt-3"
+              className="display mt-3"
               style={{
                 color: 'var(--bg)',
                 fontSize: 'clamp(32px, 4.5vw, 56px)',

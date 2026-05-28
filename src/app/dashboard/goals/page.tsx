@@ -116,10 +116,10 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="kl-card p-6 sm:p-9">
-        <p className="kl-eyebrow">Tujuan Keuangan</p>
+      <div className="s-card p-6 sm:p-9">
+        <p className="eyebrow">Tujuan Keuangan</p>
         <p
-          className="kl-display kl-num mt-3"
+          className="display num tabular mt-3"
           style={{
             color: 'var(--ink)',
             fontSize: 'clamp(40px, 6vw, 64px)',
@@ -130,11 +130,11 @@ export default function GoalsPage() {
         </p>
         <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
           dari target{' '}
-          <span className="kl-num font-semibold" style={{ color: 'var(--ink)' }}>
+          <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
             {formatCurrency(totals.target)}
           </span>
           {' · '}
-          <span className="kl-num" style={{ color: 'var(--c-mint)', fontWeight: 700 }}>
+          <span className="num tabular" style={{ color: 'var(--c-mint)', fontWeight: 700 }}>
             {totals.pct.toFixed(1)}%
           </span>
           {' tercapai · '}{goals.length} goal
@@ -155,7 +155,7 @@ export default function GoalsPage() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : goals.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
-        <div className="kl-card flex flex-col items-center text-center py-16 px-8">
+        <div className="s-card flex flex-col items-center text-center py-16 px-8">
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--c-primary-soft)' }}

@@ -248,12 +248,12 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="kl-card p-6 sm:p-9">
-        <p className="kl-eyebrow">Akun & Saldo</p>
+      <div className="s-card p-6 sm:p-9">
+        <p className="eyebrow">Akun & Saldo</p>
         {!loading && accounts.length > 0 ? (
           <>
             <p
-              className="kl-display kl-num mt-3"
+              className="display num tabular mt-3"
               style={{
                 color: 'var(--ink)',
                 fontSize: 'clamp(36px, 5vw, 56px)',
@@ -268,7 +268,7 @@ export default function AccountsPage() {
           </>
         ) : (
           <h1
-            className="kl-display mt-2"
+            className="display mt-2"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               color: 'var(--ink)',

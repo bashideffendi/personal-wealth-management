@@ -232,7 +232,7 @@ export function AIInsightsCard({
 
   return (
     <div
-      className="kl-card p-5 sm:p-6 relative overflow-hidden"
+      className="s-card p-5 sm:p-6 relative overflow-hidden"
       style={{ background: 'var(--c-violet-soft)' }}
     >
       <div className="relative flex items-center justify-between mb-4">
@@ -246,7 +246,7 @@ export function AIInsightsCard({
             <Sparkles className="size-3.5 text-white" />
           </div>
           <div>
-            <p className="kl-eyebrow" style={{ color: 'var(--c-violet)' }}>
+            <p className="eyebrow" style={{ color: 'var(--c-violet)' }}>
               Insight Klunting AI
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
@@ -402,7 +402,7 @@ const WELCOME_TIPS: Array<{
 
 function WelcomeInsights() {
   return (
-    <div className="kl-card p-5" style={{ background: 'var(--c-violet-soft)' }}>
+    <div className="s-card p-5" style={{ background: 'var(--c-violet-soft)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div
           className="size-8 rounded-lg flex items-center justify-center"
@@ -411,7 +411,7 @@ function WelcomeInsights() {
           <Sparkles className="size-4 text-white" />
         </div>
         <div>
-          <p className="kl-eyebrow" style={{ color: 'var(--c-violet)' }}>
+          <p className="eyebrow" style={{ color: 'var(--c-violet)' }}>
             Insight AI personal
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-mute)' }}>

@@ -3,7 +3,7 @@
 /**
  * Goals widget — editorial GoalsCardA per design handoff.
  * Each goal = standalone tinted card dengan borderLeft accent, progress
- * percent ditampilkan besar (kl-display 36px) di kanan, bar di kiri.
+ * percent ditampilkan besar (display 36px) di kanan, bar di kiri.
  */
 
 import Link from 'next/link'
@@ -25,12 +25,12 @@ function etaLabel(deadline: string | null): string | null {
 export function GoalsWidget({ goals }: GoalsWidgetProps) {
   if (goals.length === 0) {
     return (
-      <article className="kl-card" style={{ padding: 24 }}>
+      <article className="s-card" style={{ padding: 24 }}>
         <div className="flex items-center justify-between mb-3">
-          <p className="kl-eyebrow">Tujuan Aktif</p>
+          <p className="eyebrow">Tujuan Aktif</p>
           <Link
             href="/dashboard/goals"
-            className="kl-btn"
+            className="btn-outline"
             style={{ fontSize: 11, padding: '6px 10px' }}
           >
             Buat tujuan
@@ -46,7 +46,7 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between px-1.5">
-        <p className="kl-eyebrow">Tujuan Aktif</p>
+        <p className="eyebrow">Tujuan Aktif</p>
         <Link
           href="/dashboard/goals"
           className="text-[11px] font-semibold"
@@ -65,7 +65,7 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
           <Link
             key={g.id}
             href="/dashboard/goals"
-            className="kl-card"
+            className="s-card"
             style={{
               padding: 16,
               background: `var(--c-${tone}-soft)`,
@@ -90,14 +90,14 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
                   <i style={{ width: `${pct}%` }} />
                 </div>
                 <p
-                  className="kl-num mt-1.5"
+                  className="num tabular mt-1.5"
                   style={{ fontSize: 10.5, color: 'var(--text-2)' }}
                 >
                   {formatCompactCurrency(g.current_amount)}
                   <span style={{ opacity: 0.6 }}> / {formatCompactCurrency(g.target_amount)}</span>
                 </p>
                 <p
-                  className="kl-num"
+                  className="num tabular"
                   style={{ fontSize: 10.5, color: 'var(--text-mute)', marginTop: 2 }}
                 >
                   Sisa{' '}
@@ -109,7 +109,7 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
               </div>
               <div className="text-right">
                 <p
-                  className="kl-display kl-num"
+                  className="display num tabular"
                   style={{ fontSize: 36, color: `var(--c-${tone})`, lineHeight: 1 }}
                 >
                   {pct.toFixed(0)}

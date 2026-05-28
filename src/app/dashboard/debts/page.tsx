@@ -138,10 +138,10 @@ export default function DebtsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="kl-card p-6 sm:p-9">
-        <p className="kl-eyebrow">Utang Aktif</p>
+      <div className="s-card p-6 sm:p-9">
+        <p className="eyebrow">Utang Aktif</p>
         <p
-          className="kl-display kl-num mt-3"
+          className="display num tabular mt-3"
           style={{
             color: totalRemaining > 0 ? 'var(--c-coral)' : 'var(--ink)',
             fontSize: 'clamp(40px, 6vw, 64px)',
@@ -152,7 +152,7 @@ export default function DebtsOverviewPage() {
         </p>
         <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
           {active.length} utang aktif · cicilan{' '}
-          <span className="kl-num font-semibold" style={{ color: 'var(--ink)' }}>
+          <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
             {formatCurrency(totalMonthly)}
           </span>
           /bln
@@ -161,7 +161,7 @@ export default function DebtsOverviewPage() {
           <div className="mt-5 max-w-md">
             <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: 'var(--text-mute)' }}>
               <span>Progress pelunasan</span>
-              <span className="kl-num font-semibold" style={{ color: 'var(--c-mint)' }}>
+              <span className="num tabular font-semibold" style={{ color: 'var(--c-mint)' }}>
                 {paidPct.toFixed(1)}%
               </span>
             </div>

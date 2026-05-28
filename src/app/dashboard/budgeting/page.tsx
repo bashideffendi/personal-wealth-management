@@ -442,9 +442,9 @@ export default function BudgetingPage() {
       {/* Header — editorial page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="kl-eyebrow">Perencanaan · {year}</p>
+          <p className="eyebrow">Perencanaan · {year}</p>
           <h1
-            className="kl-display mt-1"
+            className="display mt-1"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
               color: 'var(--ink)',
@@ -462,7 +462,7 @@ export default function BudgetingPage() {
           <Button
             variant="outline"
             onClick={() => setSelectorOpen(true)}
-            className="kl-btn"
+            className="btn-outline"
           >
             <SlidersHorizontal className="h-4 w-4" />
             Pilih Kategori
@@ -527,7 +527,7 @@ export default function BudgetingPage() {
             </colgroup>
             <thead>
               <tr className="bg-[color:var(--surface-alt)]">
-                <th className="sticky left-0 z-20 border border-[color:var(--border-soft)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap kl-eyebrow">
+                <th className="sticky left-0 z-20 border border-[color:var(--border-soft)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap eyebrow">
                   Kategori
                 </th>
                 {SHORT_MONTHS.map((m, i) => {
