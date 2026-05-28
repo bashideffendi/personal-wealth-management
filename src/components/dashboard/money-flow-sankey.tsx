@@ -55,13 +55,16 @@ interface MoneyFlowSankeyProps {
   compact?: boolean
 }
 
-// ─── Color palette ──────────────────────────────────────────────────────
+// ─── Color palette — editorial semantic per design handoff ──────────────
+// income=mint, expense=coral, saving=amber, investment=primary (indigo
+// ganti sky karena indigo = primary brand, sky reserved untuk supplementary),
+// middle=ink (hub node) — link ribbons fillOpacity ~0.45
 const COLORS: Record<FlowKind, { node: string; link: string }> = {
-  income:     { node: '#10B981', link: 'rgba(16, 185, 129, 0.42)' }, // emerald
-  expense:    { node: '#EF4444', link: 'rgba(239, 68, 68, 0.40)' },  // coral
-  saving:     { node: '#F59E0B', link: 'rgba(245, 158, 11, 0.42)' }, // amber
-  investment: { node: '#0EA5E9', link: 'rgba(14, 165, 233, 0.42)' }, // sky
-  middle:     { node: '#6366F1', link: 'rgba(99, 102, 241, 0.32)' }, // indigo (hub + balancing)
+  income:     { node: '#10B981', link: 'rgba(16, 185, 129, 0.42)' },  // mint
+  expense:    { node: '#FB7185', link: 'rgba(251, 113, 133, 0.40)' }, // coral editorial
+  saving:     { node: '#F59E0B', link: 'rgba(245, 158, 11, 0.42)' },  // amber
+  investment: { node: '#4F46E5', link: 'rgba(79, 70, 229, 0.38)' },   // primary indigo
+  middle:     { node: '#18181B', link: 'rgba(24, 24, 27, 0.20)' },    // ink hub
 }
 
 function trunc(s: string, max: number): string {
