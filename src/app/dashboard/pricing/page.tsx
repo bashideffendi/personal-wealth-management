@@ -29,7 +29,7 @@ const PLAN_ICONS: Record<string, React.ReactNode> = {
 
 const PLAN_THEMES: Record<string, { bg: string; ring: string; accent: string; price: string; cta: string; ctaHover: string }> = {
   basic: { bg: 'bg-white',     ring: 'ring-slate-200',   accent: 'text-slate-700',  price: 'text-slate-900',  cta: 'bg-slate-900',  ctaHover: 'hover:bg-slate-800' },
-  full:  { bg: 'bg-emerald-50', ring: 'ring-emerald-400', accent: 'text-emerald-700', price: 'text-emerald-900', cta: 'bg-emerald-600', ctaHover: 'hover:bg-emerald-700' },
+  full:  { bg: 'bg-[var(--c-mint-soft)]', ring: 'ring-emerald-400', accent: 'text-[var(--c-mint)]', price: 'text-emerald-900', cta: 'bg-emerald-600', ctaHover: 'hover:bg-emerald-700' },
 }
 
 const CREDIT_PACKS = [
@@ -211,7 +211,7 @@ export default function PricingPage() {
               </button>
 
               {plan.max_seats > 1 && (
-                <p className="text-xs text-center mt-2 text-emerald-700 font-medium">
+                <p className="text-xs text-center mt-2 text-[var(--c-mint)] font-medium">
                   👨‍👩‍👧 Sampai {plan.max_seats} anggota keluarga
                 </p>
               )}
@@ -329,7 +329,7 @@ export default function PricingPage() {
       <section className="rounded-2xl border bg-white p-6">
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="flex items-start gap-3">
-            <ShieldCheck className="size-5 text-emerald-600 mt-0.5" />
+            <ShieldCheck className="size-5 text-[var(--c-mint)] mt-0.5" />
             <div>
               <p className="font-semibold text-sm">Pembayaran Aman</p>
               <p className="text-xs text-muted-foreground mt-0.5">Xendit (PCI-DSS compliant). Tidak menyimpan data kartumu.</p>
@@ -375,7 +375,7 @@ export default function PricingPage() {
 function renderCell(v: boolean | string) {
   if (typeof v === 'string') return <span className="font-medium tabular-nums">{v}</span>
   return v
-    ? <Check className="size-4 mx-auto text-emerald-600" />
+    ? <Check className="size-4 mx-auto text-[var(--c-mint)]" />
     : <span className="text-muted-foreground/40">—</span>
 }
 

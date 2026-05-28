@@ -263,7 +263,7 @@ export default function NetWorthPage() {
             </div>
 
             <Separator />
-            <Row label="Total Aset" value={totalAssets} bold className="text-emerald-700" />
+            <Row label="Total Aset" value={totalAssets} bold className="text-[var(--c-mint)]" />
           </CardContent>
         </Card>
 

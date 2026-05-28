@@ -466,7 +466,7 @@ export default function FamilyPage() {
           ) : (
             <>
               <div className="space-y-3 py-2">
-                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-900">
+                <div className="rounded-lg bg-[var(--c-mint-soft)] border border-emerald-200 p-3 text-sm text-emerald-900">
                   ✅ Link undangan berhasil dibuat. Salin & kirim ke calon anggota.
                 </div>
                 <div className="grid gap-1.5">

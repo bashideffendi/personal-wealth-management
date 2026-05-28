@@ -48,7 +48,7 @@ const TYPE_BADGE: Record<AccountType, string> = {
   bank: 'bg-blue-100 text-blue-700',
   digital_wallet: 'bg-purple-100 text-purple-700',
   rdn: 'bg-teal-100 text-teal-700',
-  investment: 'bg-emerald-100 text-emerald-700',
+  investment: 'bg-[var(--c-mint-soft)] text-[var(--c-mint)]',
 }
 
 const emptyForm = {

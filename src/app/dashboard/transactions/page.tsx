@@ -1007,7 +1007,7 @@ export default function TransactionsPage() {
                     <TableCell
                       className={`text-right font-medium whitespace-nowrap ${
                         tx.type === 'income'
-                          ? 'text-emerald-600'
+                          ? 'text-[var(--c-mint)]'
                           : tx.type === 'expense'
                             ? 'text-red-600'
                             : 'text-gray-700'
@@ -1159,7 +1159,7 @@ export default function TransactionsPage() {
                         )}
                         {!extracting && !extractError && extractConfidence && (
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1 text-emerald-700">
+                            <div className="flex items-center gap-1 text-[var(--c-mint)]">
                               <Sparkles className="size-3" />
                               <span className="font-medium">Form terisi otomatis</span>
                             </div>

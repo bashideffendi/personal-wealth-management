@@ -846,7 +846,7 @@ function ResearchView({
                 {String(recommendation).toUpperCase()}
               </span>
               {conviction && (
-                <Badge className="bg-emerald-100 text-emerald-700">
+                <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">
                   Conviction: {conviction}
                 </Badge>
               )}

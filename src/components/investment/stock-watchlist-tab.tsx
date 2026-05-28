@@ -287,7 +287,7 @@ export function StockWatchlistTab() {
                           <span style={{ color: reachedTarget ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
                             {formatCurrency(row.target_price)}
                             {reachedTarget && (
-                              <Badge className="ml-1 bg-emerald-100 text-emerald-700">tercapai</Badge>
+                              <Badge className="ml-1 bg-[var(--c-mint-soft)] text-[var(--c-mint)]">tercapai</Badge>
                             )}
                           </span>
                         ) : (

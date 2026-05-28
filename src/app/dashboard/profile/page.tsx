@@ -501,7 +501,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setProfile({ ...profile, show_decimals: !profile.show_decimals })}
-                  className={`h-10 rounded-lg border text-sm font-medium transition ${profile.show_decimals ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-muted/40 border-muted text-muted-foreground'}`}
+                  className={`h-10 rounded-lg border text-sm font-medium transition ${profile.show_decimals ? 'bg-[var(--c-mint-soft)] border-emerald-300 text-[var(--c-mint)]' : 'bg-muted/40 border-muted text-muted-foreground'}`}
                 >
                   {profile.show_decimals ? `Aktif (${formatCurrency(12500.5)})` : `Nonaktif (${formatCurrency(12500)})`}
                 </button>
@@ -585,7 +585,7 @@ export default function ProfilePage() {
               </div>
               {lock.hasPin ? (
                 <div className="flex gap-2">
-                  <Badge className="bg-emerald-100 text-emerald-700">Aktif</Badge>
+                  <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">Aktif</Badge>
                   <Button variant="outline" size="sm" onClick={() => setPinRemoveDialogOpen(true)}>
                     Matikan PIN
                   </Button>
@@ -647,7 +647,7 @@ export default function ProfilePage() {
                 </div>
                 {lock.hasBiometric ? (
                   <div className="flex gap-2">
-                    <Badge className="bg-emerald-100 text-emerald-700">Aktif</Badge>
+                    <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">Aktif</Badge>
                     <Button variant="outline" size="sm" onClick={disableBiometric}>
                       Matikan
                     </Button>
@@ -678,7 +678,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => toggleDailyReminder(!profile.daily_reminder_enabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${profile.daily_reminder_enabled ? 'bg-emerald-500' : 'bg-muted'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${profile.daily_reminder_enabled ? 'bg-[var(--c-mint-soft)]0' : 'bg-muted'}`}
               >
                 <span className={`inline-block h-4 w-4 rounded-full bg-white transition ${profile.daily_reminder_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>

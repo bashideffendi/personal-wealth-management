@@ -194,8 +194,8 @@ export default function JoinHouseholdPage() {
 
         {state.kind === 'accepted' && (
           <div>
-            <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center mb-3">
-              <CheckCircle className="size-7 text-emerald-600" />
+            <div className="mx-auto h-14 w-14 rounded-full bg-[var(--c-mint-soft)] flex items-center justify-center mb-3">
+              <CheckCircle className="size-7 text-[var(--c-mint)]" />
             </div>
             <h2 className="text-xl font-bold">🎉 Selamat Bergabung!</h2>
             <p className="text-muted-foreground mt-2 text-sm">

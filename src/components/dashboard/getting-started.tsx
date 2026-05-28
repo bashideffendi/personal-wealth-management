@@ -172,7 +172,7 @@ export function GettingStarted() {
             <div
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${
                 step.done
-                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  ? 'bg-[var(--c-mint-soft)]0 border-emerald-500 text-white'
                   : 'border-muted-foreground/30 bg-white text-muted-foreground'
               }`}
             >
