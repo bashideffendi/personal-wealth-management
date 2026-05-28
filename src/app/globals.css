@@ -452,33 +452,35 @@
 
 /* Hero "dark-card" — always renders dark even in light mode page.
    In dark mode, slightly different shade so it stands out from page bg. */
+/* Editorial pivot 2026-05-28: .dark-card sekarang render seperti
+   .kl-card (warm surface, ink hitam). Override on-black-* token jadi
+   ink editorial supaya child elements yang masih pakai var(--on-black)
+   tetap kebaca. Untuk halaman-halaman yang belum di-rewrite total,
+   ini ngasih editorial direction otomatis tanpa per-page edit. */
 .dark-card {
-  background: linear-gradient(135deg, #0A0A0F 0%, #14141A 100%);
-  color: var(--on-black);
+  background-color: var(--surface);
+  color: var(--ink);
   border-radius: var(--radius-xl);
-  border: 1px solid #1C1C24;
-  --on-black:      #F5F5F7;
-  --on-black-mut:  #A1A1AA;
-  --ink:           #F5F5F7;
-  --ink-muted:     #A1A1AA;
-  --ink-soft:      #71717A;
-  --border:        rgba(255, 255, 255, 0.14);
-  --border-soft:   rgba(255, 255, 255, 0.08);
-  --black-2:       rgba(255, 255, 255, 0.10);
-  --black-soft:    rgba(255, 255, 255, 0.06);
-  --black-line:    rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+  /* Remap inherited dark tokens → ink editorial */
+  --on-black:      var(--ink);
+  --on-black-mut:  var(--text-mute);
+  --black-2:       var(--surface-2);
+  --black-soft:    var(--surface-2);
+  --black-line:    var(--line);
 }
 .dark .dark-card {
-  background: linear-gradient(135deg, #14141A 0%, #1C1C24 100%);
-  border-color: var(--border);
+  background-color: var(--surface);
+  border-color: var(--line);
 }
-.dark-card .caps       { color: var(--emerald-300); }
-.dark-card .text-white { color: var(--on-black); }
+.dark-card .caps       { color: var(--text-mute); }
+.dark-card .text-white { color: var(--ink); }
 .dark-card .text-white\/60,
 .dark-card .text-white\/70,
 .dark-card .text-white\/75,
 .dark-card .text-white\/80 {
-  color: var(--on-black-mut);
+  color: var(--text-mute);
 }
 
 /* True dark card variant */
