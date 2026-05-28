@@ -224,7 +224,7 @@ export default function FamilyPage() {
     return (
       <div className="space-y-6">
         <div className="dark-card p-6 sm:p-7">
-          <p className="caps" style={{ color: 'var(--emerald-300)' }}>Keluarga</p>
+          <p className="caps" style={{ color: 'var(--text-mute)' }}>Keluarga</p>
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mt-2">
             Atur Keuangan Bersama
           </h2>
@@ -293,7 +293,7 @@ export default function FamilyPage() {
   return (
     <div className="space-y-6">
       <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Keluarga</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Keluarga</p>
         <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">

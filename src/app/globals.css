@@ -151,7 +151,7 @@
   --butter-50:   var(--emerald-50);
   --butter-100:  var(--emerald-100);
   --butter-200:  var(--emerald-200);
-  --butter-300:  var(--emerald-300);
+  --butter-300:  var(--text-mute);
   --butter-400:  var(--emerald-400);
   --butter-500:  var(--emerald-500);
   --butter-600:  var(--c-mint);
@@ -161,7 +161,7 @@
   --lime-50:     var(--emerald-50);
   --lime-100:    var(--emerald-100);
   --lime-200:    var(--emerald-200);
-  --lime-300:    var(--emerald-300);
+  --lime-300:    var(--text-mute);
   --lime-400:    var(--emerald-400);
   --lime-500:    var(--emerald-500);
   --lime-600:    var(--c-mint);
@@ -172,7 +172,7 @@
   --indigo-50:   var(--emerald-50);
   --indigo-100:  var(--emerald-100);
   --indigo-200:  var(--emerald-200);
-  --indigo-300:  var(--emerald-300);
+  --indigo-300:  var(--text-mute);
   --indigo-400:  var(--emerald-400);
   --indigo-500:  var(--emerald-500);
   --indigo-600:  var(--c-mint);
@@ -182,7 +182,7 @@
   --olive-50:    var(--emerald-50);
   --olive-100:   var(--emerald-100);
   --olive-200:   var(--emerald-200);
-  --olive-300:   var(--emerald-300);
+  --olive-300:   var(--text-mute);
   --olive-400:   var(--emerald-400);
   --olive-500:   var(--emerald-500);
   --olive-600:   var(--c-mint);
@@ -192,7 +192,7 @@
   --gold-50:   var(--emerald-50);
   --gold-100:  var(--emerald-100);
   --gold-200:  var(--emerald-200);
-  --gold-300:  var(--emerald-300);
+  --gold-300:  var(--text-mute);
   --gold-400:  var(--emerald-400);
   --gold-500:  var(--emerald-500);
   --gold-600:  var(--c-mint);
@@ -213,7 +213,7 @@
   /* moss → emerald */
   --moss-50:     var(--emerald-50);
   --moss-100:    var(--emerald-100);
-  --moss-300:    var(--emerald-300);
+  --moss-300:    var(--text-mute);
   --moss-500:    var(--emerald-500);
   --moss-600:    var(--c-mint);
   --moss-700:    var(--c-mint);
@@ -518,7 +518,7 @@
 }
 .dark .chip-lime {
   background: rgba(16, 185, 129, 0.16);
-  color: var(--emerald-300);
+  color: var(--text-mute);
 }
 
 .accent-underline {
@@ -574,7 +574,7 @@
 .chip-sky     { background: var(--sky-100);     color: var(--sky-600); }
 .chip-violet  { background: #EDE9FE;             color: #6D28D9; }
 .chip-neutral { background: var(--surface-2);   color: var(--ink); }
-.dark .chip-emerald { background: rgba(16,185,129,0.16); color: var(--emerald-300); }
+.dark .chip-emerald { background: rgba(16,185,129,0.16); color: var(--text-mute); }
 .dark .chip-coral   { background: rgba(244,63,94,0.16);  color: var(--coral-200); }
 .dark .chip-amber   { background: rgba(245,158,11,0.16); color: var(--amber-200); }
 .dark .chip-sky     { background: rgba(14,165,233,0.16); color: var(--sky-300); }

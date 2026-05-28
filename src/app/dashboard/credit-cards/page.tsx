@@ -211,7 +211,7 @@ export default function CreditCardsPage() {
     <div className="space-y-6">
       {/* Hero — italic display for the "moment of personality" per typography */}
       <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Kartu Kredit</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Kartu Kredit</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p
             className="num tabular leading-none font-bold"
@@ -229,7 +229,7 @@ export default function CreditCardsPage() {
               background: totals.utilization < 30 ? 'rgba(16,185,129,0.18)'
                 : totals.utilization < 70 ? 'rgba(245,158,11,0.18)'
                 : 'rgba(244,63,94,0.18)',
-              color: totals.utilization < 30 ? 'var(--emerald-300)'
+              color: totals.utilization < 30 ? 'var(--text-mute)'
                 : totals.utilization < 70 ? 'var(--amber-300)'
                 : 'var(--coral-400)',
             }}

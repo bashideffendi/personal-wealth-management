@@ -248,31 +248,35 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Akun & Saldo</p>
+      <div className="kl-card p-6 sm:p-9">
+        <p className="kl-eyebrow">Akun & Saldo</p>
         {!loading && accounts.length > 0 ? (
           <>
             <p
-              className="num tabular mt-3 leading-none font-bold"
+              className="kl-display kl-num mt-3"
               style={{
-                color: 'var(--on-black)',
-                fontSize: 'clamp(36px, 5vw, 48px)',
-                letterSpacing: '-0.03em',
+                color: 'var(--ink)',
+                fontSize: 'clamp(36px, 5vw, 56px)',
+                lineHeight: 1,
               }}
             >
               {formatCurrency(totalBalance)}
             </p>
-            <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
+            <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
               Total saldo gabungan dari {accounts.length} akun · {today}
             </p>
           </>
         ) : (
-          <h2
-            className="text-3xl sm:text-4xl font-semibold tracking-tight mt-3"
-            style={{ color: 'var(--on-black)' }}
+          <h1
+            className="kl-display mt-2"
+            style={{
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              color: 'var(--ink)',
+              fontStyle: 'italic',
+            }}
           >
             Kelola Akun
-          </h2>
+          </h1>
         )}
       </div>
 

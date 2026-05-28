@@ -166,7 +166,7 @@ export default function ContractsPage() {
   return (
     <div className="space-y-6">
       <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Kontrak & Jatuh Tempo</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Kontrak & Jatuh Tempo</p>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <p className="num tabular text-3xl sm:text-4xl font-semibold" style={{ color: 'var(--ink)' }}>

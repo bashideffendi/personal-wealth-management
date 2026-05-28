@@ -138,29 +138,35 @@ export default function DebtsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Utang Aktif</p>
+      <div className="kl-card p-6 sm:p-9">
+        <p className="kl-eyebrow">Utang Aktif</p>
         <p
-          className="num tabular mt-3 leading-none font-bold"
+          className="kl-display kl-num mt-3"
           style={{
-            color: 'var(--on-black)',
-            fontSize: 'clamp(40px, 6vw, 56px)',
-            letterSpacing: '-0.035em',
+            color: totalRemaining > 0 ? 'var(--c-coral)' : 'var(--ink)',
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            lineHeight: 1,
           }}
         >
-          {formatCurrency(totalRemaining)}
+          {totalRemaining > 0 ? `−${formatCurrency(totalRemaining)}` : formatCurrency(0)}
         </p>
-        <p className="text-sm mt-3" style={{ color: 'var(--on-black-mut)' }}>
-          {active.length} utang aktif · cicilan <span className="num font-semibold" style={{ color: 'var(--on-black)' }}>{formatCurrency(totalMonthly)}</span>/bln
+        <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>
+          {active.length} utang aktif · cicilan{' '}
+          <span className="kl-num font-semibold" style={{ color: 'var(--ink)' }}>
+            {formatCurrency(totalMonthly)}
+          </span>
+          /bln
         </p>
         {totalPrincipal > 0 && (
           <div className="mt-5 max-w-md">
-            <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: 'var(--on-black-mut)' }}>
+            <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: 'var(--text-mute)' }}>
               <span>Progress pelunasan</span>
-              <span className="num font-semibold">{paidPct.toFixed(1)}%</span>
+              <span className="kl-num font-semibold" style={{ color: 'var(--c-mint)' }}>
+                {paidPct.toFixed(1)}%
+              </span>
             </div>
-            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
-              <div className="h-full rounded-full" style={{ width: `${paidPct}%`, background: 'var(--butter-400)' }} />
+            <div className="kl-bar" style={{ color: 'var(--c-mint)' }}>
+              <i style={{ width: `${paidPct}%` }} />
             </div>
           </div>
         )}

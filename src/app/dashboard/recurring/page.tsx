@@ -186,7 +186,7 @@ export default function RecurringPage() {
     <div className="space-y-6">
       {/* Hero — italic display Net/bln as the headline number */}
       <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Transaksi Berulang · Net/bln</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Transaksi Berulang · Net/bln</p>
         <p
           className="num tabular mt-3 leading-none font-bold"
           style={{
@@ -199,7 +199,7 @@ export default function RecurringPage() {
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
           <span style={{ color: 'var(--on-black-mut)' }}>
-            Masuk <span className="num font-semibold ml-1" style={{ color: 'var(--emerald-300)' }}>+{formatCurrency(totals.monthlyIn)}</span>
+            Masuk <span className="num font-semibold ml-1" style={{ color: 'var(--text-mute)' }}>+{formatCurrency(totals.monthlyIn)}</span>
           </span>
           <span style={{ color: 'var(--on-black-mut)' }}>
             Keluar <span className="num font-semibold ml-1" style={{ color: 'var(--coral-400)' }}>−{formatCurrency(totals.monthlyOut)}</span>

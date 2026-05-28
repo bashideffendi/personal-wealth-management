@@ -172,7 +172,7 @@ export default function MonthlyReportPage() {
       <div className="space-y-6">
         {/* Header — print-friendly */}
         <div className="dark-card p-6 sm:p-7 print-avoid-break">
-          <p className="caps" style={{ color: 'var(--emerald-300)' }}>Laporan Bulanan</p>
+          <p className="caps" style={{ color: 'var(--text-mute)' }}>Laporan Bulanan</p>
           <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
             <div>
               <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">

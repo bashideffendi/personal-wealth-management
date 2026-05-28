@@ -14,7 +14,7 @@ export default function CalculatorsPage() {
   return (
     <div className="space-y-6">
       <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Alat Hitung</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Alat Hitung</p>
         <h2
           className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2"
           style={{ color: 'var(--on-black)' }}

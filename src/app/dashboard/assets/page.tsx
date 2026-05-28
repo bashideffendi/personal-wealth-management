@@ -92,7 +92,7 @@ export default function AssetsOverviewPage() {
   return (
     <div className="space-y-6">
       <div className="dark-card p-6 sm:p-8">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Total Kekayaan Tercatat</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Total Kekayaan Tercatat</p>
         <p
           className="num tabular mt-4 leading-none font-bold"
           style={{

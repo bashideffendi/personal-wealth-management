@@ -109,7 +109,7 @@ export default function NonLiquidAssetsPage() {
   return (
     <div className="space-y-6">
       <div className="dark-card p-6 sm:p-7">
-        <p className="caps" style={{ color: 'var(--emerald-300)' }}>Aset Non-Likuid</p>
+        <p className="caps" style={{ color: 'var(--text-mute)' }}>Aset Non-Likuid</p>
         <p
           className="num tabular mt-3 leading-none font-bold"
           style={{
