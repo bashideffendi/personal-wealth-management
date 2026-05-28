@@ -59,11 +59,13 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   investment: 'Investasi',
 }
 
-const TYPE_BADGE_COLORS: Record<TransactionType, string> = {
-  income: 'bg-emerald-100 text-emerald-700',
-  expense: 'bg-red-100 text-red-700',
-  saving: 'bg-amber-100 text-amber-700',
-  investment: 'bg-blue-100 text-blue-700',
+// Editorial semantic chips per design handoff (mint=income, coral=expense,
+// amber=saving/streak, primary indigo=investment/akumulasi).
+const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string }> = {
+  income:     { bg: 'var(--c-mint-soft)',    color: 'var(--c-mint)' },
+  expense:    { bg: 'var(--c-coral-soft)',   color: 'var(--c-coral)' },
+  saving:     { bg: 'var(--c-amber-soft)',   color: 'var(--c-amber)' },
+  investment: { bg: 'var(--c-primary-soft)', color: 'var(--c-primary)' },
 }
 
 function getCategoriesForType(type: TransactionType): readonly string[] {
@@ -680,19 +682,20 @@ export default function TransactionsPage() {
       {/* Header per design handoff §1 — eyebrow + h1 + utility actions */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <span
-            className="text-[11px] uppercase tracking-[0.14em] font-semibold"
-            style={{ color: 'var(--ink-muted)' }}
-          >
+          <p className="kl-eyebrow">
             {today}
-          </span>
+          </p>
           <h1
-            className="text-3xl sm:text-4xl font-semibold tracking-tight mt-1"
-            style={{ color: 'var(--ink)' }}
+            className="kl-display mt-1"
+            style={{
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              color: 'var(--ink)',
+              fontStyle: 'italic',
+            }}
           >
             Transaksi
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-mute)' }}>
             Semua aktivitas finansial — pemasukan, pengeluaran, tabungan, investasi.
           </p>
         </div>
@@ -989,9 +992,15 @@ export default function TransactionsPage() {
                     <TableCell className="whitespace-nowrap">{formatDate(tx.date)}</TableCell>
                     <TableCell>{getAccountName(tx.account_id)}</TableCell>
                     <TableCell>
-                      <Badge className={TYPE_BADGE_COLORS[tx.type]}>
+                      <span
+                        className="kl-chip"
+                        style={{
+                          background: TYPE_BADGE_STYLES[tx.type].bg,
+                          color: TYPE_BADGE_STYLES[tx.type].color,
+                        }}
+                      >
                         {TYPE_LABELS[tx.type]}
-                      </Badge>
+                      </span>
                     </TableCell>
                     <TableCell>{tx.category}</TableCell>
                     <TableCell>{tx.description}</TableCell>
@@ -1042,9 +1051,18 @@ export default function TransactionsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <Badge className={`${TYPE_BADGE_COLORS[tx.type]} text-[10px] px-1.5 py-0`}>
+                        <span
+                          className="kl-chip"
+                          style={{
+                            background: TYPE_BADGE_STYLES[tx.type].bg,
+                            color: TYPE_BADGE_STYLES[tx.type].color,
+                            height: 20,
+                            fontSize: 10,
+                            padding: '0 8px',
+                          }}
+                        >
                           {TYPE_LABELS[tx.type]}
-                        </Badge>
+                        </span>
                         <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
                           {formatDate(tx.date)}
                         </span>
