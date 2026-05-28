@@ -40,7 +40,7 @@ interface MobileBudgetingViewProps {
 
 const SECTIONS: { key: BudgetType; label: string; tint: string }[] = [
   { key: 'income',     label: 'Pendapatan',  tint: '#10B981' }, // emerald
-  { key: 'expense',    label: 'Pengeluaran', tint: '#EF4444' }, // coral
+  { key: 'expense',    label: 'Pengeluaran', tint: '#F43F5E' }, // coral
   { key: 'saving',     label: 'Tabungan',    tint: '#F59E0B' }, // amber
   { key: 'investment', label: 'Investasi',   tint: '#0EA5E9' }, // sky
 ]

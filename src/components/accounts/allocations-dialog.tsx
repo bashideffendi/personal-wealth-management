@@ -273,14 +273,14 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                 style={{
                   width: `${Math.min(100, (totalAllocated / balance) * 100)}%`,
                   background: overAllocated
-                    ? 'linear-gradient(90deg, #F59E0B, #EF4444)'
-                    : 'linear-gradient(90deg, #10B981, #6366F1)',
+                    ? 'linear-gradient(90deg, #F59E0B, #F43F5E)'
+                    : 'linear-gradient(90deg, #10B981, #047857)',
                 }}
               />
             </div>
           )}
           {overAllocated && (
-            <p className="text-[11px] mt-2" style={{ color: '#991B1B' }}>
+            <p className="text-[11px] mt-2" style={{ color: 'var(--c-coral)' }}>
               Total alokasi melebihi saldo akun. Cek lagi saldo atau kurangi alokasi.
             </p>
           )}
