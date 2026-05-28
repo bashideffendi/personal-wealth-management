@@ -43,43 +43,36 @@ export default function LoginPage() {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4 py-12"
-      style={{ background: 'var(--paper)' }}
+      style={{ background: 'var(--bg)' }}
     >
-      <div className="w-full max-w-sm">
-        {/* Brand */}
+      <div className="w-full" style={{ maxWidth: 420 }}>
+        {/* Brand — editorial "k" + mint dot per design handoff */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <div
-              className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-extrabold text-white"
-              style={{
-                background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
-                letterSpacing: '-0.04em',
-                boxShadow: '0 10px 28px -10px rgba(16,185,129,0.50)',
-              }}
-            >
-              K
+            <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
+              <span style={{ fontSize: 32 }}>k</span>
             </div>
           </Link>
           <h1
-            className="mt-4 text-2xl font-bold tracking-tight"
-            style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
+            className="mt-4 kl-display"
+            style={{
+              fontSize: 32,
+              color: 'var(--ink)',
+              letterSpacing: '-0.02em',
+            }}
           >
-            Klunting.
+            Klunting<em style={{ color: 'var(--c-mint)', fontStyle: 'normal' }}>.</em>
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-mute)' }}>
             Atur uang & aset di satu tempat.
           </p>
         </div>
 
         {/* Form */}
         <div
-          className="mt-8 rounded-2xl border p-6"
-          style={{
-            background: 'var(--surface)',
-            borderColor: 'var(--border-soft)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          }}
+          className="kl-card mt-8 p-6 sm:p-7"
         >
+          <p className="kl-eyebrow mb-4">Masuk</p>
           <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
             {error && (
               <div
@@ -118,7 +111,7 @@ export default function LoginPage() {
               <Link
                 href="/forgot-password"
                 className="font-medium hover:underline"
-                style={{ color: 'var(--emerald-700)' }}
+                style={{ color: 'var(--c-primary)' }}
               >
                 Lupa password?
               </Link>
@@ -127,11 +120,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="mt-2 h-11 w-full text-sm font-semibold"
-              style={{
-                background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
-                color: '#FFFFFF',
-              }}
+              className="mt-2 h-11 w-full text-sm font-semibold kl-btn-primary"
             >
               {loading ? 'Memproses…' : 'Masuk'}
             </Button>

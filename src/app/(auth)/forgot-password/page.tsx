@@ -38,29 +38,27 @@ export default function ForgotPasswordPage() {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4 py-12"
-      style={{ background: 'var(--paper)' }}
+      style={{ background: 'var(--bg)' }}
     >
-      <div className="w-full max-w-sm">
+      <div className="w-full" style={{ maxWidth: 420 }}>
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <div
-              className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-extrabold text-white"
-              style={{
-                background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
-                letterSpacing: '-0.04em',
-                boxShadow: '0 10px 28px -10px rgba(16,185,129,0.50)',
-              }}
-            >
-              K
+            <div className="kl-brandmark mx-auto" style={{ width: 56, height: 56, borderRadius: 16 }}>
+              <span style={{ fontSize: 32 }}>k</span>
             </div>
           </Link>
           <h1
-            className="mt-4 text-2xl font-bold tracking-tight"
-            style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}
+            className="mt-4 kl-display"
+            style={{
+              fontSize: 28,
+              color: 'var(--ink)',
+              letterSpacing: '-0.02em',
+              fontStyle: 'italic',
+            }}
           >
             Reset password
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-mute)' }}>
             Masukin email kamu, link reset bakal dikirim ke inbox.
           </p>
         </div>
@@ -85,7 +83,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={() => setSent(false)}
                 className="mt-3 text-sm font-semibold hover:underline"
-                style={{ color: 'var(--emerald-700)' }}
+                style={{ color: 'var(--c-primary)' }}
               >
                 Kirim ulang
               </button>
@@ -120,8 +118,8 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="mt-2 h-11 w-full text-sm font-semibold"
                 style={{
-                  background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
-                  color: '#FFFFFF',
+                  background: 'var(--c-ink)',
+                  color: 'var(--bg)',
                 }}
               >
                 {loading ? 'Memproses…' : 'Kirim link reset'}
