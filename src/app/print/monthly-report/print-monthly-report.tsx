@@ -177,7 +177,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
           gap: 6px;
           padding: 8px 14px;
           border-radius: 8px;
-          background: linear-gradient(135deg, #10B981, #059669);
+          background: linear-gradient(135deg, #10B981, #047857);
           color: #fff;
           font-size: 13px;
           font-weight: 600;
@@ -244,7 +244,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
           width: 44px;
           height: 44px;
           border-radius: 10px;
-          background: linear-gradient(135deg, #10B981, #059669);
+          background: linear-gradient(135deg, #10B981, #047857);
           color: #fff;
           font-weight: 800;
           font-size: 22px;
@@ -390,7 +390,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
       <div className="paper">
         <header className="doc-header avoid-break">
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div className="doc-monogram">P</div>
+            <div className="doc-monogram">K</div>
             <div>
               <h1 className="doc-title">Laporan Bulanan</h1>
               <p className="doc-period">{periodLabel}</p>
