@@ -184,43 +184,83 @@ export default function NetWorthPage() {
 
   return (
     <div className="space-y-6">
-      <div className="s-card p-6 sm:p-10">
-        <p className="eyebrow text-center">
-          Kekayaan Bersih · {today}
-        </p>
-        {/* Hero number — Instrument Serif clamp(48-72px) per editorial pivot */}
-        <p
-          className="display num tabular text-center mt-4"
+      {/* Dark gradient hero anchor (fintech Mercury-style) */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        {/* Emerald ambient glow */}
+        <div
+          className="absolute pointer-events-none"
           style={{
-            color: isPositive ? 'var(--ink)' : 'var(--c-coral)',
-            fontSize: 'clamp(48px, 8vw, 80px)',
-            lineHeight: 1,
+            top: -120,
+            right: -80,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
           }}
-        >
-          {formatCurrency(netWorth)}
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-8">
-          <div className="text-center">
-            <p className="eyebrow">Total Aset</p>
-            <p className="num tabular mt-1.5 text-lg font-semibold" style={{ color: 'var(--ink)' }}>
-              {formatCurrency(totalAssets)}
-            </p>
-          </div>
-          <span
-            className="w-px h-12 self-center"
-            style={{ background: 'var(--line)' }}
-          />
-          <div className="text-center">
-            <p className="eyebrow">Total Utang</p>
-            <p
-              className="num tabular mt-1.5 text-lg font-semibold"
-              style={{ color: totalDebt > 0 ? 'var(--c-coral)' : 'var(--ink)' }}
-            >
-              {totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}
-            </p>
+        />
+        <div className="relative p-6 sm:p-10 text-center">
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Kekayaan Bersih · {today}
+          </p>
+          <p
+            className="num tabular font-bold mt-4 leading-none whitespace-nowrap"
+            style={{
+              fontSize: 'clamp(48px, 8vw, 80px)',
+              letterSpacing: '-0.04em',
+              color: isPositive ? '#FFFFFF' : '#FDA4AF',
+            }}
+          >
+            {formatCurrency(netWorth)}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-8">
+            <div className="text-center">
+              <p
+                className="text-[10px] font-bold tracking-[0.14em] uppercase"
+                style={{ color: 'rgba(255,255,255,0.45)' }}
+              >
+                Total Aset
+              </p>
+              <p
+                className="num tabular mt-1.5 font-semibold"
+                style={{ fontSize: 18, color: '#FFFFFF' }}
+              >
+                {formatCurrency(totalAssets)}
+              </p>
+            </div>
+            <span
+              className="w-px h-12 self-center"
+              style={{ background: 'rgba(255,255,255,0.10)' }}
+            />
+            <div className="text-center">
+              <p
+                className="text-[10px] font-bold tracking-[0.14em] uppercase"
+                style={{ color: 'rgba(255,255,255,0.45)' }}
+              >
+                Total Utang
+              </p>
+              <p
+                className="num tabular mt-1.5 font-semibold"
+                style={{
+                  fontSize: 18,
+                  color: totalDebt > 0 ? '#FDA4AF' : '#FFFFFF',
+                }}
+              >
+                {totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Historical Timeline */}
       <NetWorthHistoryCard

@@ -82,7 +82,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
 
   if (bills.length === 0) {
     return (
-      <article className="s-card" style={{ padding: 24 }}>
+      <article className="s-card s-card-pad-lg">
         <p className="eyebrow">Tagihan Mendatang</p>
         <p className="text-sm py-6 text-center" style={{ color: 'var(--text-mute)' }}>
           Tidak ada tagihan dalam 14 hari ke depan.
@@ -92,8 +92,16 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
   }
 
   return (
-    <article className="s-card" style={{ padding: 24 }}>
-      <p className="eyebrow">Tagihan Mendatang</p>
+    <article className="s-card s-card-pad-lg">
+      <div className="flex items-center justify-between">
+        <p className="eyebrow">Tagihan Mendatang</p>
+        <span
+          className="chip chip-neutral"
+          style={{ fontSize: 10 }}
+        >
+          {bills.length} dalam 14 hari
+        </span>
+      </div>
       <div className="flex flex-col mt-3">
         {bills.slice(0, 6).map((b, i) => {
           const urgent = b.daysUntil <= 3
