@@ -416,9 +416,9 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg flex items-center justify-center z-30 transition-all hover:scale-110 active:scale-95"
           style={{
-            background: 'var(--c-ink)',
+            background: 'linear-gradient(135deg, #10B981, #047857)',
             color: '#FFFFFF',
-            boxShadow: '0 10px 24px -6px rgba(16,185,129,0.40)',
+            boxShadow: '0 10px 24px -6px rgba(16, 185, 129, 0.50)',
           }}
           aria-label="Tambah transaksi"
           title="Tambah transaksi"
