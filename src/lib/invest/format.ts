@@ -4,11 +4,21 @@
  */
 
 const NUM_NO_FRAC = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
+const NUM_2_FRAC = new Intl.NumberFormat('id-ID', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+})
 const PCT = new Intl.NumberFormat('id-ID', {
   style: 'percent',
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
+
+export function formatNumber(value: number | null | undefined, fractionDigits = 2): string {
+  if (value == null || isNaN(value)) return '—'
+  if (fractionDigits === 0) return NUM_NO_FRAC.format(value)
+  return NUM_2_FRAC.format(value)
+}
 
 export function formatPrice(value: number | null | undefined): string {
   if (value === null || value === undefined || isNaN(value)) return '—'

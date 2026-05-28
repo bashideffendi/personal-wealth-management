@@ -8,7 +8,6 @@
  */
 
 import { useMemo, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -19,7 +18,6 @@ import {
   Calendar, Sparkles, AlertCircle, Loader2, Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
@@ -35,6 +33,7 @@ import {
   signColorVar,
   verdictStyle,
 } from '@/lib/invest/format'
+import { FinancialStatements } from './financial-statements'
 
 interface MetricSeries {
   year: number
@@ -110,7 +109,7 @@ export interface ResearchTabsProps {
   sector: string | null
   price: number
   latestYear: number | null
-  // Annual metrics — last 5 years
+  // Annual metrics — last 5 years (derived series for charts/overview)
   metrics5Y: {
     revenue: MetricSeries[]
     netProfit: MetricSeries[]
@@ -126,6 +125,10 @@ export interface ResearchTabsProps {
     der: MetricSeries[]
     marketCap: MetricSeries[]
   }
+  // Raw stock metrics (full history per metric) — buat FinancialStatements
+  stockMetrics: Record<string, Record<string, number>>
+  // Raw quarterly financials (period → metric → value) — buat FinancialStatements
+  quarterly: Record<string, Record<string, number>>
   valuation: ValuationData | null
   valuationDetail: ValuationDetailData | null
   stats: EmittenStat | null
@@ -164,6 +167,7 @@ const METHOD_LABELS: Record<string, string> = {
 export function ResearchTabs(props: ResearchTabsProps) {
   const {
     ticker, name, sector, price, latestYear, metrics5Y,
+    stockMetrics, quarterly,
     valuation, valuationDetail, stats, pricePerf, dividends,
     quarterlyRevenue, quarterlyNetIncome, quarterlyEPS, research: initialResearch,
   } = props
@@ -505,51 +509,12 @@ export function ResearchTabs(props: ResearchTabsProps) {
         <DisclaimerBox />
       </TabsContent>
 
-      {/* ─── Laporan (5Y annual + dividends) ─── */}
+      {/* ─── Laporan (full financial statements: Laba Rugi / Neraca / Arus Kas / Market) ─── */}
       <TabsContent value="laporan" className="mt-4 space-y-4">
-        {/* 5Y Annual Highlights */}
-        {metrics5Y.revenue.length > 0 && (
-          <div
-            className="rounded-2xl border overflow-hidden"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-              <p className="caps">Financial Highlights</p>
-              <h2 className="text-lg font-bold mt-0.5" style={{ color: 'var(--ink)' }}>
-                5 Tahun Terakhir (Annual)
-              </h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr
-                    className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
-                    style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
-                  >
-                    <th className="px-3 py-2.5">Metrik</th>
-                    {metrics5Y.revenue.map((m) => (
-                      <th key={m.year} className="px-3 py-2.5 text-right">{m.year}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <FinancialRow label="Revenue" data={metrics5Y.revenue} format="idr-compact" />
-                  <FinancialRow label="Revenue YoY" data={metrics5Y.revenueYoY} format="percent" signed />
-                  <FinancialRow label="Net Profit" data={metrics5Y.netProfit} format="idr-compact" />
-                  <FinancialRow label="Net Profit YoY" data={metrics5Y.netProfitYoY} format="percent" signed />
-                  <FinancialRow label="NPM" data={metrics5Y.npm} format="percent" />
-                  <FinancialRow label="ROE" data={metrics5Y.roe} format="percent" />
-                  <FinancialRow label="EPS" data={metrics5Y.eps} format="price" />
-                  <FinancialRow label="BVPS" data={metrics5Y.bvps} format="price" />
-                  <FinancialRow label="DPS" data={metrics5Y.dps} format="price" />
-                  <FinancialRow label="PER" data={metrics5Y.perRatio} format="ratio" />
-                  <FinancialRow label="PBV" data={metrics5Y.pbv} format="ratio" />
-                  <FinancialRow label="DER" data={metrics5Y.der} format="ratio" />
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        <FinancialStatements
+          stock={{ ticker, metrics: stockMetrics }}
+          quarterly={quarterly}
+        />
 
         {/* Dividend history */}
         {dividends.length > 0 && (
@@ -745,43 +710,6 @@ function MethodCard({
         {mos != null ? `${mos >= 0 ? '+' : ''}${(mos * 100).toFixed(0)}% MoS` : ''}
       </p>
     </div>
-  )
-}
-
-function FinancialRow({
-  label,
-  data,
-  format,
-  signed = false,
-}: {
-  label: string
-  data: MetricSeries[]
-  format: 'idr-compact' | 'percent' | 'price' | 'ratio'
-  signed?: boolean
-}) {
-  if (data.length === 0) return null
-  function fmt(v: number | null): string {
-    if (v == null || !Number.isFinite(v)) return '—'
-    if (format === 'idr-compact') return formatIDRCompact(v)
-    if (format === 'percent') return formatPercentValue(v)
-    if (format === 'ratio') return formatRatio(v)
-    return formatPrice(v)
-  }
-  return (
-    <tr className="border-t" style={{ borderColor: 'var(--border-soft)' }}>
-      <td className="px-3 py-2 text-xs font-medium" style={{ color: 'var(--ink)' }}>
-        {label}
-      </td>
-      {data.map((m) => (
-        <td
-          key={m.year}
-          className="px-3 py-2 text-right num tabular text-xs"
-          style={{ color: signed ? signColorVar(m.value) : 'var(--ink)' }}
-        >
-          {fmt(m.value)}
-        </td>
-      ))}
-    </tr>
   )
 }
 

@@ -124,6 +124,8 @@ export default async function StockResearchPage({ params }: RouteProps) {
     price,
     latestYear,
     metrics5Y,
+    stockMetrics: stock?.metrics ?? {},
+    quarterly,
     valuation: valuation
       ? {
           ticker: valuation.ticker,
