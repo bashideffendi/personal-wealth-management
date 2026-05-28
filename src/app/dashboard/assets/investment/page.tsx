@@ -7,7 +7,7 @@ import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
-import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Percent, Wallet } from 'lucide-react'
+import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Percent, Wallet, Star } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
@@ -192,6 +192,17 @@ export default function InvestmentOverviewPage() {
           {' · '}
           P/L <span className="num font-semibold" style={{ color: up ? 'var(--emerald-300)' : 'var(--coral-400)' }}>{formatCurrency(totals.pl)}</span>
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/dashboard/assets/investment/watchlist"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition hover:opacity-90"
+            style={{ background: 'rgba(255,255,255,0.10)', color: 'var(--on-black)' }}
+          >
+            <Star className="size-3.5" />
+            Watchlist
+            <ArrowUpRight className="size-3" />
+          </Link>
+        </div>
       </div>
 
       {/* Currency rates strip — moved here from the bottom (was after categories).
