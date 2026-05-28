@@ -300,22 +300,189 @@ export default function NetWorthPage() {
         </Card>
       </div>
 
-      {/* Bottom Net Worth */}
-      <Card style={{ borderColor: 'var(--gold-300)' }}>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <span className="font-serif text-[20px]" style={{ color: 'var(--ink)' }}>
-              Kekayaan Bersih (Aset − Liabilitas)
-            </span>
-            <span
-              className="font-serif text-[28px] tabular"
-              style={{ color: isPositive ? 'var(--ink)' : 'var(--danger)' }}
+      {/* 4 Rasio Kesehatan — per design handoff Net Worth spec */}
+      <HealthRatiosCard
+        liquidAssets={totalCurrentAssets}
+        totalAssets={totalAssets}
+        totalDebt={totalDebt}
+        longTermDebt={totalLongTermDebt}
+        currentDebt={totalCurrentDebt}
+        investmentValue={data.longTermInvestment}
+        netWorth={netWorth}
+      />
+
+      {/* Bottom Net Worth Summary */}
+      <div className="kl-card p-6 flex items-center justify-between">
+        <span
+          className="kl-display-italic"
+          style={{ fontSize: 22, color: 'var(--ink)' }}
+        >
+          Kekayaan Bersih (Aset − Liabilitas)
+        </span>
+        <span
+          className="kl-display kl-num"
+          style={{
+            fontSize: 32,
+            color: isPositive ? 'var(--ink)' : 'var(--c-coral)',
+          }}
+        >
+          {formatCurrency(netWorth)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ─── 4 Rasio Kesehatan Card per design handoff ────────────────────────
+interface HealthRatiosProps {
+  liquidAssets: number
+  totalAssets: number
+  totalDebt: number
+  longTermDebt: number
+  currentDebt: number
+  investmentValue: number
+  netWorth: number
+}
+
+function HealthRatiosCard({
+  liquidAssets, totalAssets, totalDebt, longTermDebt, currentDebt,
+  investmentValue, netWorth,
+}: HealthRatiosProps) {
+  // Likuiditas = aset lancar / utang lancar
+  const liquidityRatio = currentDebt > 0 ? liquidAssets / currentDebt : liquidAssets > 0 ? 99 : 0
+  const liquidityTone = liquidityRatio >= 2 ? 'mint' : liquidityRatio >= 1 ? 'amber' : 'coral'
+  const liquidityLabel = liquidityRatio >= 2 ? 'Sangat sehat'
+    : liquidityRatio >= 1 ? 'Aman' : 'Tipis'
+
+  // Solvabilitas = total aset / total utang (≥2 sehat)
+  const solvencyRatio = totalDebt > 0 ? totalAssets / totalDebt : 99
+  const solvencyTone = solvencyRatio >= 2 ? 'mint' : solvencyRatio >= 1 ? 'amber' : 'coral'
+  const solvencyLabel = solvencyRatio >= 2 ? 'Sangat sehat'
+    : solvencyRatio >= 1 ? 'Cukup' : 'Insolven'
+
+  // DTI = total utang / total aset (≤30% sehat)
+  const dtiPct = totalAssets > 0 ? (totalDebt / totalAssets) * 100 : 0
+  const dtiTone = dtiPct <= 30 ? 'mint' : dtiPct <= 50 ? 'amber' : 'coral'
+  const dtiLabel = dtiPct <= 30 ? 'Sehat' : dtiPct <= 50 ? 'Sedang' : 'Tinggi'
+
+  // Investasi/NW = investasi / net worth (≥30% sehat untuk wealth building)
+  const investRatio = netWorth > 0 ? (investmentValue / netWorth) * 100 : 0
+  const investTone = investRatio >= 30 ? 'mint' : investRatio >= 15 ? 'amber' : 'coral'
+  const investLabel = investRatio >= 30 ? 'Agresif' : investRatio >= 15 ? 'Moderat' : 'Konservatif'
+
+  const ratios = [
+    {
+      key: 'liq',
+      label: 'Likuiditas',
+      desc: 'Aset lancar / utang lancar',
+      value: liquidityRatio >= 99 ? '∞' : `${liquidityRatio.toFixed(1)}x`,
+      target: '≥ 2.0x',
+      tone: liquidityTone,
+      verdict: liquidityLabel,
+    },
+    {
+      key: 'sol',
+      label: 'Solvabilitas',
+      desc: 'Total aset / total utang',
+      value: solvencyRatio >= 99 ? '∞' : `${solvencyRatio.toFixed(1)}x`,
+      target: '≥ 2.0x',
+      tone: solvencyTone,
+      verdict: solvencyLabel,
+    },
+    {
+      key: 'dti',
+      label: 'DTI',
+      desc: 'Total utang / total aset',
+      value: `${dtiPct.toFixed(0)}%`,
+      target: '≤ 30%',
+      tone: dtiTone,
+      verdict: dtiLabel,
+    },
+    {
+      key: 'inv',
+      label: 'Investasi / NW',
+      desc: 'Investasi jangka panjang',
+      value: `${investRatio.toFixed(0)}%`,
+      target: '≥ 30%',
+      tone: investTone,
+      verdict: investLabel,
+    },
+  ]
+
+  return (
+    <div className="kl-card overflow-hidden">
+      <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--line)' }}>
+        <p className="kl-eyebrow">4 Rasio Kesehatan</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-mute)' }}>
+          Indikator kunci yang dipakai bank & financial planner buat ukur kondisi finansialmu.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4" style={{ borderTop: '0' }}>
+        {ratios.map((r, i) => (
+          <div
+            key={r.key}
+            className="p-5"
+            style={{
+              borderRight:
+                i % 2 === 0 ? '1px solid var(--line)' : undefined,
+              borderBottom:
+                i < 2 ? '1px solid var(--line)' : undefined,
+              // On md+: only vertical separators between 4 cols
+            }}
+          >
+            <div className="flex items-center gap-1.5">
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 2,
+                  background: `var(--c-${r.tone})`,
+                }}
+              />
+              <p className="kl-eyebrow">{r.label}</p>
+            </div>
+            <p
+              className="kl-display kl-num mt-3"
+              style={{
+                fontSize: 36,
+                color: 'var(--ink)',
+                lineHeight: 1,
+              }}
             >
-              {formatCurrency(netWorth)}
-            </span>
+              {r.value}
+            </p>
+            <p
+              className="text-[11px] mt-1.5"
+              style={{ color: 'var(--text-mute)' }}
+            >
+              {r.desc}
+            </p>
+            <div className="mt-2 flex items-center justify-between">
+              <span
+                className="kl-chip"
+                style={{
+                  background: `var(--c-${r.tone}-soft)`,
+                  color: `var(--c-${r.tone})`,
+                  height: 20,
+                  fontSize: 10,
+                  padding: '0 8px',
+                }}
+              >
+                {r.verdict}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: 'var(--text-mute)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                target {r.target}
+              </span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
     </div>
   )
 }
