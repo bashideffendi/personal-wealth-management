@@ -201,9 +201,10 @@ export default function RegisterPage() {
                 disabled={loading}
                 className="mt-2 h-11 w-full text-sm font-semibold"
                 style={{
-                  background: '#10B981',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
                   color: '#FFFFFF',
                   border: 0,
+                  boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
                 }}
               >
                 {loading ? 'Memproses…' : 'Daftar'}

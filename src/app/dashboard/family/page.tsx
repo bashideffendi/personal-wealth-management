@@ -371,7 +371,7 @@ export default function FamilyPage() {
                 onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }}
                 disabled={members.length >= household.max_seats}
                 style={{
-                  background: '#10B981',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
                   color: '#FFFFFF',
                   border: 0,
                   boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',

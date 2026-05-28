@@ -146,7 +146,7 @@ export default async function LandingPage() {
                 href="/register"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90"
                 style={{
-                  background: '#10B981',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
                   color: '#FFFFFF',
                   boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.45)',
                 }}

@@ -238,7 +238,7 @@ export default function MonthlyReportPage() {
                 onClick={() => window.open(`/print/monthly-report?year=${year}&month=${month}`, '_blank')}
                 disabled={recap.tx_count === 0}
                 style={{
-                  background: '#10B981',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
                   color: '#FFFFFF',
                   border: 0,
                   boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',

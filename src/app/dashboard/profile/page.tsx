@@ -435,7 +435,7 @@ export default function ProfilePage() {
               href="/dashboard/pricing"
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
               style={{
-                background: '#10B981',
+                background: 'linear-gradient(135deg, #10B981, #047857)',
                 color: '#FFFFFF',
                 boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
               }}
