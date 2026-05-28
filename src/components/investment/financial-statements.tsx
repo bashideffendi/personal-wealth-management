@@ -153,7 +153,7 @@ function Row({
           className="text-right tabular-nums text-xs"
           style={{
             color: v != null && v < 0 && !line.subtle
-              ? 'var(--coral-600)'
+              ? 'var(--c-coral)'
               : line.subtle
                 ? 'var(--ink-muted)'
                 : 'var(--ink)',
@@ -368,7 +368,7 @@ function QuarterlyStatement({
                     <TableCell
                       key={p}
                       className="text-right tabular-nums text-xs"
-                      style={{ color: v != null && v < 0 ? 'var(--coral-600)' : 'var(--ink)' }}
+                      style={{ color: v != null && v < 0 ? 'var(--c-coral)' : 'var(--ink)' }}
                     >
                       {fmtScaled(v, line.format, scale)}
                     </TableCell>

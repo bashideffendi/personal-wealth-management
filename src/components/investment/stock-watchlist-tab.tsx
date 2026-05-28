@@ -272,7 +272,7 @@ export function StockWatchlistTab() {
                           <span
                             className="inline-flex items-center gap-0.5 font-semibold"
                             style={{
-                              color: changePct >= 0 ? 'var(--c-mint)' : 'var(--coral-600)',
+                              color: changePct >= 0 ? 'var(--c-mint)' : 'var(--c-coral)',
                             }}
                           >
                             {changePct >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}

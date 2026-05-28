@@ -184,7 +184,7 @@ function DividendList({ events }: { events: DividendEvent[] }) {
                         className="text-[10px] mt-0.5"
                         style={{
                           color:
-                            urgency === 'critical' ? 'var(--coral-600)'
+                            urgency === 'critical' ? 'var(--c-coral)'
                             : urgency === 'warn' ? 'var(--amber-700)'
                             : 'var(--ink-soft)',
                         }}

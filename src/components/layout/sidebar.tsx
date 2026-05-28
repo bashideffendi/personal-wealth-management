@@ -127,7 +127,7 @@ export function Sidebar({ user }: SidebarProps) {
             {active && depth === 0 && (
               <span
                 className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r"
-                style={{ background: 'var(--emerald-400)' }}
+                style={{ background: 'var(--c-mint)' }}
               />
             )}
             {Icon && (
@@ -136,7 +136,7 @@ export function Sidebar({ user }: SidebarProps) {
               // via parent currentColor since the Icon prop type is strict.
               <span
                 className="shrink-0 inline-flex"
-                style={{ color: active ? 'var(--emerald-400)' : '#71717A' }}
+                style={{ color: active ? 'var(--c-mint)' : '#71717A' }}
               >
                 <Icon className={iconSize} />
               </span>
@@ -183,7 +183,7 @@ export function Sidebar({ user }: SidebarProps) {
             Klunting
             <span
               className="inline-block h-1.5 w-1.5 rounded-full"
-              style={{ background: 'var(--emerald-400)' }}
+              style={{ background: 'var(--c-mint)' }}
             />
           </p>
           <p

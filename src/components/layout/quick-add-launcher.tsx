@@ -98,8 +98,8 @@ const TYPE_LABEL: Record<TxType, string> = {
 }
 
 const TYPE_TINT: Record<TxType, string> = {
-  income: 'var(--emerald-500)',
-  expense: 'var(--coral-500)',
+  income: 'var(--c-mint)',
+  expense: 'var(--c-coral)',
   saving: 'var(--amber-500)',
   investment: 'var(--sky-500)',
 }
@@ -488,8 +488,8 @@ function MenuView({
       icon: Camera,
       title: 'Foto struk',
       body: 'Buka kamera, AI baca total & kategori.',
-      tint: 'var(--emerald-500)',
-      bg: 'var(--emerald-100)',
+      tint: 'var(--c-mint)',
+      bg: 'var(--c-mint-soft)',
       onSelect: onPickReceipt,
     },
     {
@@ -578,11 +578,11 @@ function ScanningView() {
       <div className="relative mx-auto size-12 flex items-center justify-center">
         <span
           className="absolute inset-0 rounded-full animate-ping"
-          style={{ background: 'var(--emerald-500)', opacity: 0.15 }}
+          style={{ background: 'var(--c-mint)', opacity: 0.15 }}
         />
         <Loader2
           className="size-8 animate-spin relative"
-          style={{ color: 'var(--emerald-500)' }}
+          style={{ color: 'var(--c-mint)' }}
         />
       </div>
       <p className="mt-4 text-sm font-medium" style={{ color: 'var(--ink)' }}>
@@ -632,7 +632,7 @@ function PreviewView({
         <span
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
           style={{
-            background: 'var(--emerald-100)',
+            background: 'var(--c-mint-soft)',
             color: 'var(--c-mint)',
             letterSpacing: '0.06em',
           }}
@@ -911,9 +911,9 @@ function ManualForm({
               onClick={() => setForm((p) => ({ ...p, category: suggested }))}
               className="self-start mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition hover:opacity-80"
               style={{
-                background: 'var(--emerald-50)',
+                background: 'var(--c-mint-soft)',
                 color: 'var(--c-mint)',
-                border: '1px solid color-mix(in srgb, var(--emerald-500) 25%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--c-mint) 25%, transparent)',
               }}
               title="Klik untuk pakai kategori ini"
             >

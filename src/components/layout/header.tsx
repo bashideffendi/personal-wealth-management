@@ -262,7 +262,7 @@ export function Header({ user }: HeaderProps) {
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-2xl font-bold text-[15px]"
-                style={{ background: 'var(--emerald-400)', color: 'var(--black)' }}
+                style={{ background: 'var(--c-mint)', color: 'var(--black)' }}
               >
                 K
               </div>

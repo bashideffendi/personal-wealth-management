@@ -278,7 +278,7 @@ export function AIInsightsCard({
       {error && (
         <div
           className="rounded-lg border p-3 flex items-start gap-2 text-xs"
-          style={{ background: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.25)', color: 'var(--coral-700)' }}
+          style={{ background: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.25)', color: 'var(--c-coral)' }}
         >
           <AlertCircle className="size-3.5 mt-0.5 shrink-0" />
           <span>{error}</span>
@@ -305,7 +305,7 @@ export function AIInsightsCard({
         const main = insights[0]
         const rest = insights.slice(1, 4)  // up to 3 saran
         // Colored dots cycling through tone-coded palette per mockup
-        const dotColors = ['var(--emerald-500)', 'var(--amber-500)', 'var(--sky-500)', 'var(--coral-500)']
+        const dotColors = ['var(--c-mint)', 'var(--amber-500)', 'var(--sky-500)', 'var(--c-coral)']
         return (
           <>
             {/* MAIN insight — featured */}

@@ -127,7 +127,7 @@ function ChangeRow({
 }) {
   const up = row.abs > 0
   const Icon = up ? TrendingUp : TrendingDown
-  const colorVar = up ? 'var(--coral-600)' : 'var(--c-mint)'
+  const colorVar = up ? 'var(--c-coral)' : 'var(--c-mint)'
   const bgTint = up ? 'rgba(244,63,94,0.10)' : 'rgba(16,185,129,0.12)'
   const sign = up ? '+' : '−'
 

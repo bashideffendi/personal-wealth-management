@@ -94,7 +94,7 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
           <AvatarFallback
             className="text-xs font-bold"
             style={{
-              background: 'var(--emerald-500)',
+              background: 'var(--c-mint)',
               color: '#FFFFFF',
             }}
           >

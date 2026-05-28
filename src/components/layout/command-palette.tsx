@@ -695,7 +695,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         className="size-10 mx-auto rounded-full flex items-center justify-center"
         style={{ background: 'rgba(244,63,94,0.12)' }}
       >
-        <AlertCircle className="size-5" style={{ color: 'var(--coral-500)' }} />
+        <AlertCircle className="size-5" style={{ color: 'var(--c-coral)' }} />
       </div>
       <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
         Gagal parse

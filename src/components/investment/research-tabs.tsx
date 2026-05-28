@@ -310,7 +310,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
                         className="absolute inset-y-0 w-0.5"
                         style={{
                           left: `${((price - oneYear.low) / (oneYear.high - oneYear.low)) * 100}%`,
-                          background: 'var(--emerald-500)',
+                          background: 'var(--c-mint)',
                         }}
                       />
                     </div>
@@ -597,7 +597,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           <ChartCard
             title="Revenue (5Y Annual)"
             data={metrics5Y.revenue}
-            color="var(--emerald-500)"
+            color="var(--c-mint)"
             format="idr-compact"
           />
           <ChartCard
@@ -621,7 +621,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           <ChartCard
             title="PER (5Y Annual)"
             data={metrics5Y.perRatio}
-            color="var(--coral-500)"
+            color="var(--c-coral)"
             format="ratio"
           />
           <ChartCard
@@ -809,7 +809,7 @@ function QuarterlyCard({
             }}
             formatter={(v) => fmtVal(Number(v))}
           />
-          <Bar dataKey="value" fill="var(--emerald-500)" />
+          <Bar dataKey="value" fill="var(--c-mint)" />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -929,7 +929,7 @@ function ResearchView({
           color: var(--ink);
         }
         :global(.prose-research blockquote) {
-          border-left: 3px solid var(--emerald-500);
+          border-left: 3px solid var(--c-mint);
           padding-left: 1em;
           margin: 1em 0;
           color: var(--ink-muted);

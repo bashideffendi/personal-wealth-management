@@ -115,7 +115,7 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
           <Stat
             label="Total spending"
             value={spendToday > 0 ? formatCurrency(spendToday) : 'Rp 0'}
-            tint="var(--coral-600)"
+            tint="var(--c-coral)"
           />
           <Stat
             label="Top kategori"

@@ -215,7 +215,7 @@ export function LockScreen() {
                 type="button"
                 onClick={handleLogout}
                 className="mt-2 text-sm font-semibold hover:underline"
-                style={{ color: 'var(--coral-600)' }}
+                style={{ color: 'var(--c-coral)' }}
               >
                 Keluar dari akun
               </button>

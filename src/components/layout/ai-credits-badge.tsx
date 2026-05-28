@@ -73,8 +73,8 @@ export function AICreditsBadge() {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors hover:opacity-90"
         style={{
-          background: empty ? 'rgba(239,68,68,0.10)' : low ? 'rgba(245,158,11,0.12)' : 'var(--emerald-100)',
-          color: empty ? 'var(--coral-700)' : low ? 'var(--amber-700)' : 'var(--emerald-800)',
+          background: empty ? 'rgba(239,68,68,0.10)' : low ? 'rgba(245,158,11,0.12)' : 'var(--c-mint-soft)',
+          color: empty ? 'var(--c-coral)' : low ? 'var(--amber-700)' : 'var(--emerald-800)',
         }}
         title="Kredit AI — buat scan struk, AI parse, & insight"
         aria-label="AI credit balance"
