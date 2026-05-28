@@ -416,10 +416,18 @@
   font-weight: 500;
 }
 
-/* Display utility — Instrument Serif italic for "personality moments".
-   Per design handoff: net-worth hero, empty-state headlines, milestones.
-   Use sparingly — italic only, never roman. */
+/* Display utility — bold sans untuk hero net worth & H1.
+   Drop italic serif sebagai default per fintech redesign 2026-05-28.
+   Use Plus Jakarta 800 untuk maximum impact, tight tracking. */
 .font-display,
+.display {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+/* Display-italic — moments-of-personality only (landing tagline, modal). */
 .display-italic {
   font-family: var(--font-display);
   font-style: italic;
@@ -427,15 +435,96 @@
   letter-spacing: -0.02em;
 }
 
-/* Cards */
+/* ─── Fintech component primitives ─────────────────────────────────
+   Wise/Mercury/Linear-inspired clean cards + stat tiles. */
+
+/* Card — Wise-style pure white with soft shadow + line border */
 .s-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
 }
+.s-card-pad     { padding: 20px; }
+.s-card-pad-lg  { padding: 24px; }
+.s-card-pad-xl  { padding: 28px 32px; }
 
 .dark .s-card {
   border-color: var(--border-soft);
+  box-shadow: none;
+}
+
+/* Wise-style stat tile — used in KPI rows + dashboard stats */
+.stat-tile {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.stat-tile:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+}
+
+/* Delta chip — small inline ±% indicator */
+.delta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.delta-chip-positive {
+  background: var(--c-mint-soft);
+  color: var(--c-mint);
+}
+.delta-chip-negative {
+  background: var(--c-coral-soft);
+  color: var(--c-coral);
+}
+.delta-chip-neutral {
+  background: var(--surface-2);
+  color: var(--ink-muted);
+}
+
+/* Chip base — pill rounded-full small */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.chip-emerald { background: var(--c-mint-soft); color: var(--c-mint); }
+.chip-coral   { background: var(--c-coral-soft); color: var(--c-coral); }
+.chip-amber   { background: var(--c-amber-soft); color: var(--c-amber); }
+.chip-sky     { background: rgba(14, 165, 233, 0.10); color: #0284C7; }
+.chip-violet  { background: var(--c-violet-soft); color: var(--c-violet); }
+.chip-neutral { background: var(--surface-2); color: var(--ink-muted); }
+.dark .chip-emerald { background: rgba(16, 185, 129, 0.18); color: #6EE7B7; }
+.dark .chip-coral   { background: rgba(244, 63, 94, 0.18); color: #FDA4AF; }
+.dark .chip-amber   { background: rgba(245, 158, 11, 0.18); color: #FCD34D; }
+.dark .chip-sky     { background: rgba(14, 165, 233, 0.18); color: #7DD3FC; }
+.dark .chip-violet  { background: rgba(139, 92, 246, 0.18); color: #C4B5FD; }
+.dark .chip-neutral { background: rgba(255, 255, 255, 0.08); color: var(--ink-muted); }
+
+/* Section eyebrow */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 /* Hero "dark-card" — always renders dark even in light mode page.
