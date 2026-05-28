@@ -40,20 +40,20 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
 
   // Burn rate
   const burnMonths = monthlyExpense > 0 ? liquidBalance / monthlyExpense : 0
-  const burnColor = burnMonths >= 6 ? 'var(--emerald-600)'
-    : burnMonths >= 3 ? 'var(--amber-600)'
-    : burnMonths >= 1 ? 'var(--coral-600)'
-    : 'var(--coral-700)'
-  const burnTint = burnMonths >= 6 ? 'var(--emerald-50)'
-    : burnMonths >= 3 ? 'var(--amber-50)'
-    : 'var(--coral-50)'
+  const burnColor = burnMonths >= 6 ? 'var(--c-mint)'
+    : burnMonths >= 3 ? 'var(--c-amber)'
+    : burnMonths >= 1 ? 'var(--c-coral)'
+    : 'var(--c-coral)'
+  const burnTint = burnMonths >= 6 ? 'var(--c-mint-soft)'
+    : burnMonths >= 3 ? 'var(--c-amber-soft)'
+    : 'var(--c-coral-soft)'
   const burnVerdict = burnMonths >= 6 ? 'Sangat aman'
     : burnMonths >= 3 ? 'Cukup aman'
     : burnMonths >= 1 ? 'Tipis'
     : 'Risiko tinggi'
 
   return (
-    <div className="s-card p-6 sm:p-7">
+    <div className="kl-card p-6 sm:p-7">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
         {/* ─── Col 1: BIG score centered + tier label below ─────────── */}
         <div className="lg:col-span-4 flex flex-col items-center text-center">
@@ -220,9 +220,9 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
   const isNa = indicator.status === 'na'
   const barColor = (() => {
     if (isNa) return 'var(--ink-soft)'
-    if (indicator.score >= 75) return 'var(--emerald-500)'
-    if (indicator.score >= 50) return 'var(--amber-500)'
-    return 'var(--coral-500)'
+    if (indicator.score >= 75) return 'var(--c-mint)'
+    if (indicator.score >= 50) return 'var(--c-amber)'
+    return 'var(--c-coral)'
   })()
   const pct = isNa ? 0 : Math.min(100, Math.max(0, indicator.score))
 

@@ -19,7 +19,7 @@ export function DayOfWeekChart({ monthTransactions }: { monthTransactions: Trans
   const maxIdx = sums.indexOf(Math.max(...sums))
 
   return (
-    <div className="s-card p-5">
+    <div className="kl-card p-5">
       <p className="caps">Pola Harian</p>
       <h3 className="text-base font-semibold mt-0.5">Pengeluaran per Hari</h3>
       <div className="mt-4 flex items-end justify-between gap-2 h-[140px]">
@@ -33,7 +33,7 @@ export function DayOfWeekChart({ monthTransactions }: { monthTransactions: Trans
                   className="w-full rounded-t transition-all"
                   style={{
                     height: `${Math.max(h, 2)}%`,
-                    background: isPeak ? 'var(--ink)' : 'var(--lime-400)',
+                    background: isPeak ? 'var(--ink)' : 'var(--c-primary)',
                     minHeight: sums[i] > 0 ? 4 : 0,
                   }}
                   title={privacyHidden ? lbl : `${lbl}: ${formatCurrency(sums[i])} total, ${formatCurrency(averages[i])} rata-rata`}

@@ -12,7 +12,7 @@ export function TopCategoriesBar({ monthTransactions }: { monthTransactions: Tra
   const max = sorted[0]?.[1] ?? 1
 
   return (
-    <div className="s-card p-5">
+    <div className="kl-card p-5">
       <p className="caps">Paling Boros</p>
       <h3 className="text-base font-semibold mt-0.5">Top 5 Kategori</h3>
       {sorted.length === 0 ? (
@@ -30,8 +30,8 @@ export function TopCategoriesBar({ monthTransactions }: { monthTransactions: Tra
                     <span
                       className="flex h-5 w-5 items-center justify-center rounded text-[9px] font-bold shrink-0"
                       style={{
-                        background: i === 0 ? 'var(--ink)' : 'var(--surface-2)',
-                        color: i === 0 ? 'var(--lime-400)' : 'var(--ink-muted)',
+                        background: i === 0 ? 'var(--c-coral)' : 'var(--surface-2)',
+                        color: i === 0 ? '#FFFFFF' : 'var(--ink-muted)',
                       }}
                     >
                       {i + 1}
@@ -45,7 +45,7 @@ export function TopCategoriesBar({ monthTransactions }: { monthTransactions: Tra
                 <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${pct}%`, background: i === 0 ? 'var(--ink)' : 'var(--lime-400)' }}
+                    style={{ width: `${pct}%`, background: i === 0 ? 'var(--c-coral)' : 'var(--c-amber)' }}
                   />
                 </div>
               </li>

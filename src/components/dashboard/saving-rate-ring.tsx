@@ -12,7 +12,7 @@ export function SavingRateRing({ savingRate, income, savings }: SavingRateRingPr
   const rateCapped = Math.min(100, Math.max(0, savingRate))
   const circumference = 2 * Math.PI * 44
   const offset = circumference - (rateCapped / 100) * circumference
-  const color = savingRate >= 20 ? 'var(--lime-600)' : savingRate >= 10 ? 'var(--ink)' : 'var(--warning)'
+  const color = savingRate >= 20 ? 'var(--c-mint)' : savingRate >= 10 ? 'var(--c-amber)' : 'var(--c-coral)'
   const verdict = savingRate >= 30 ? 'Excellent'
     : savingRate >= 20 ? 'Sehat'
     : savingRate >= 10 ? 'Cukup'
@@ -20,7 +20,7 @@ export function SavingRateRing({ savingRate, income, savings }: SavingRateRingPr
     : 'Negatif'
 
   return (
-    <div className="s-card p-5">
+    <div className="kl-card p-5">
       <p className="caps">Saving Rate</p>
       <h3 className="text-base font-semibold mt-0.5">Tabungan / Pemasukan</h3>
       <div className="mt-4 flex items-center gap-4">
@@ -62,7 +62,7 @@ export function SavingRateRing({ savingRate, income, savings }: SavingRateRingPr
           </div>
           <div className="flex items-center justify-between">
             <span style={{ color: 'var(--ink-muted)' }}>Ditabung</span>
-            <span className="num tabular font-semibold" style={{ color: 'var(--lime-700)' }}>
+            <span className="num tabular font-semibold" style={{ color: 'var(--c-mint)' }}>
               {formatCurrency(savings)}
             </span>
           </div>
