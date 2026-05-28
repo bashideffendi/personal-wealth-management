@@ -225,12 +225,16 @@ export default async function LandingPage() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="max-w-2xl mb-10">
-            <span className="caps">Fitur</span>
+            <p className="kl-eyebrow">Fitur</p>
             <h2
-              className="font-bold mt-3 tracking-tight"
-              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+              className="kl-display mt-3"
+              style={{
+                fontSize: 'clamp(28px, 4vw, 48px)',
+                lineHeight: 1.1,
+              }}
             >
-              Semua yang kamu butuh, <span style={{ color: 'var(--ink-muted)' }}>tanpa pindah app.</span>
+              Semua yang kamu butuh,{' '}
+              <em style={{ color: 'var(--text-mute)', fontStyle: 'italic' }}>tanpa pindah app.</em>
             </h2>
           </div>
 
@@ -282,8 +286,7 @@ export default async function LandingPage() {
           ].map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl p-5 border transition-all hover:shadow-md hover:-translate-y-0.5"
-              style={{ background: 'var(--paper)', borderColor: 'var(--border)' }}
+              className="kl-card p-5 transition-all hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
@@ -294,11 +297,10 @@ export default async function LandingPage() {
                 </div>
                 {f.badge && (
                   <span
-                    className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                    className="kl-chip"
                     style={{
-                      background: 'var(--surface-2)',
-                      color: 'var(--ink-muted)',
-                      letterSpacing: '0.06em',
+                      background: 'var(--c-amber-soft)',
+                      color: 'var(--c-amber)',
                     }}
                   >
                     {f.badge}
@@ -306,12 +308,12 @@ export default async function LandingPage() {
                 )}
               </div>
               <h3
-                className="text-base font-bold tracking-tight mb-1.5"
-                style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}
+                className="font-bold mb-1.5"
+                style={{ color: 'var(--ink)', fontSize: 15, letterSpacing: '-0.01em' }}
               >
                 {f.title}
               </h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mute)' }}>
                 {f.body}
               </p>
             </div>
@@ -324,14 +326,15 @@ export default async function LandingPage() {
       <section id="harga" className="px-6 sm:px-12 py-16 sm:py-20">
         <div className="max-w-5xl mx-auto">
           <div className="max-w-2xl mb-10">
-            <span className="caps">Harga</span>
+            <p className="kl-eyebrow">Harga</p>
             <h2
-              className="font-bold mt-3 tracking-tight"
-              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+              className="kl-display mt-3"
+              style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
-              Pilih yang cocok buat kamu.
+              Pilih yang <em style={{ fontStyle: 'italic', color: 'var(--c-primary)' }}>cocok</em>{' '}
+              buat kamu.
             </h2>
-            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
+            <p className="mt-3 text-base" style={{ color: 'var(--text-mute)' }}>
               Coba dulu 14 hari, gratis. Tanpa kartu kredit.
             </p>
           </div>
@@ -436,8 +439,7 @@ export default async function LandingPage() {
               </div>
               <Link
                 href="/register"
-                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
-                style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
+                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90 kl-btn-primary"
               >
                 Coba 14 hari gratis
               </Link>
@@ -475,14 +477,14 @@ export default async function LandingPage() {
       <section id="faq" className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
         <div className="max-w-3xl mx-auto">
           <div className="mb-10">
-            <span className="caps">Pertanyaan</span>
+            <p className="kl-eyebrow">Pertanyaan</p>
             <h2
-              className="font-bold mt-3 tracking-tight"
-              style={{ fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+              className="kl-display mt-3"
+              style={{ fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.1 }}
             >
-              Yang sering ditanya.
+              Yang <em style={{ fontStyle: 'italic', color: 'var(--c-primary)' }}>sering ditanya</em>.
             </h2>
-            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
+            <p className="mt-3 text-base" style={{ color: 'var(--text-mute)' }}>
               Belum jawab pertanyaanmu? Kirim ke{' '}
               <a href="mailto:support@klunting.com" className="font-medium underline" style={{ color: 'var(--ink)' }}>
                 support@klunting.com
@@ -493,11 +495,8 @@ export default async function LandingPage() {
 
           {/* Security trust banner — visible reassurance before users dive into Q&A */}
           <div
-            className="rounded-2xl p-5 mb-8 flex items-start gap-3 border"
-            style={{
-              background: 'var(--emerald-50)',
-              borderColor: 'color-mix(in srgb, var(--emerald-500) 25%, transparent)',
-            }}
+            className="kl-card p-5 mb-8 flex items-start gap-3"
+            style={{ background: 'var(--c-mint-soft)', borderColor: 'color-mix(in srgb, var(--c-mint) 25%, transparent)' }}
           >
             <Shield
               className="size-5 shrink-0 mt-0.5"
