@@ -288,7 +288,7 @@ export default async function LandingPage() {
               }}
             >
               Semua yang kamu butuh,{' '}
-              <em style={{ color: 'var(--text-mute)',  }}>tanpa pindah app.</em>
+              <span style={{ fontStyle: 'normal', color: 'var(--ink-muted)' }}>tanpa pindah app.</span>
             </h2>
           </div>
 

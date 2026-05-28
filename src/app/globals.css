@@ -699,7 +699,7 @@
 .chip-sky     { background: var(--sky-100);     color: var(--sky-600); }
 .chip-violet  { background: #EDE9FE;             color: #6D28D9; }
 .chip-neutral { background: var(--surface-2);   color: var(--ink); }
-.dark .chip-emerald { background: rgba(16,185,129,0.16); color: var(--text-mute); }
+.dark .chip-emerald { background: rgba(16,185,129,0.16); color: var(--emerald-200); }
 .dark .chip-coral   { background: rgba(244,63,94,0.16);  color: var(--coral-200); }
 .dark .chip-amber   { background: rgba(245,158,11,0.16); color: var(--amber-200); }
 .dark .chip-sky     { background: rgba(14,165,233,0.16); color: var(--sky-300); }

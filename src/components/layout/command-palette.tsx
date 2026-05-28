@@ -650,7 +650,10 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             type="button"
             onClick={() => onConfirm(d)}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
-            style={{ background: 'var(--c-mint)' }}
+            style={{
+              background: 'linear-gradient(135deg, #10B981, #047857)',
+              boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+            }}
           >
             <Check className="size-4" />
             Simpan ke Akun Default

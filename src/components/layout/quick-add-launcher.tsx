@@ -718,7 +718,11 @@ function PreviewView({
           onClick={onSave}
           disabled={saving || accounts.length === 0}
           className="sm:flex-none flex-1"
-          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
+          style={{
+            background: 'linear-gradient(135deg, #10B981, #047857)',
+            color: '#FFFFFF',
+            boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+          }}
         >
           {saving ? (
             <>
@@ -931,7 +935,11 @@ function ManualForm({
         <Button
           onClick={onSave}
           disabled={saving || !form.account_id || form.amount <= 0}
-          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
+          style={{
+            background: 'linear-gradient(135deg, #10B981, #047857)',
+            color: '#FFFFFF',
+            boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+          }}
         >
           {saving && <Loader2 className="size-4 animate-spin" />}
           Simpan
