@@ -368,7 +368,7 @@ export default function PricingPage() {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Users className="size-5 text-blue-600 mt-0.5" />
+            <Users className="size-5 mt-0.5" style={{ color: 'var(--sky-600)' }} />
             <div>
               <p className="font-semibold text-sm">Data Tetap Milikmu</p>
               <p className="text-xs text-muted-foreground mt-0.5">Cancel kapan saja. Export semua data sebagai CSV — no lock-in.</p>

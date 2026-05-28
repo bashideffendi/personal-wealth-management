@@ -335,7 +335,7 @@ export default function NetWorthPage() {
             </div>
 
             <Separator />
-            <Row label="Total Utang" value={totalDebt} bold className="text-red-600" />
+            <Row label="Total Utang" value={totalDebt} bold className="text-[var(--c-coral)]" />
           </CardContent>
         </Card>
       </div>

@@ -426,7 +426,7 @@ export default function FamilyPage() {
                 >
                   {removingMemberId === m.user_id
                     ? <Loader2 className="size-3.5 animate-spin" />
-                    : <Trash2 className="size-3.5 text-red-600" />}
+                    : <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />}
                 </Button>
               )}
             </div>
@@ -443,8 +443,15 @@ export default function FamilyPage() {
               const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
               const link = `${baseUrl}/dashboard/join/${inv.token}`
               return (
-                <div key={inv.id} className="flex items-center gap-3 rounded-lg border bg-amber-50 border-amber-200 p-3">
-                  <Mail className="size-4 text-amber-700 shrink-0" />
+                <div
+                  key={inv.id}
+                  className="flex items-center gap-3 rounded-lg border p-3"
+                  style={{
+                    background: 'var(--c-amber-soft)',
+                    borderColor: 'color-mix(in srgb, var(--c-amber) 25%, transparent)',
+                  }}
+                >
+                  <Mail className="size-4 shrink-0" style={{ color: 'var(--amber-700)' }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{inv.email || 'Tanpa email (link sharing)'}</p>
                     <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
@@ -456,7 +463,7 @@ export default function FamilyPage() {
                     <Copy className="size-3.5" data-icon="inline-start" /> Salin Link
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => revokeInvite(inv.id)}>
-                    <Trash2 className="size-3.5 text-red-600" />
+                    <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />
                   </Button>
                 </div>
               )
@@ -466,18 +473,24 @@ export default function FamilyPage() {
       )}
 
       {/* What's shared */}
-      <section className="rounded-xl border bg-blue-50 border-blue-200 p-5">
+      <section
+        className="rounded-xl border p-5"
+        style={{
+          background: 'var(--sky-50)',
+          borderColor: 'color-mix(in srgb, var(--sky-500) 25%, transparent)',
+        }}
+      >
         <div className="flex items-start gap-3">
-          <Users className="size-5 text-blue-700 mt-0.5 shrink-0" />
-          <div className="text-sm">
-            <p className="font-semibold text-blue-900">Apa yang ke-share dengan anggota keluarga?</p>
-            <ul className="mt-2 space-y-1 text-blue-800">
-              <li>✅ <strong>Akun & dompet keluarga</strong> — semua anggota bisa lihat saldo, tambah/edit akun</li>
-              <li>✅ <strong>Transaksi</strong> — semua nyatet, semua bisa lihat. Tetep ada label siapa yang nyatet</li>
-              <li>✅ <strong>Anggaran (budget)</strong> — set bersama, terpakai bersama</li>
-              <li className="text-blue-700/80">⚪ Aset, investasi, utang, goal — tetap personal di MVP ini</li>
+          <Users className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--sky-600)' }} />
+          <div className="text-sm" style={{ color: 'var(--sky-600)' }}>
+            <p className="font-semibold" style={{ color: 'var(--ink)' }}>Apa yang ke-share dengan anggota keluarga?</p>
+            <ul className="mt-2 space-y-1.5">
+              <li className="flex gap-1.5"><Check className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} /><span><strong>Akun &amp; dompet keluarga</strong> — semua anggota bisa lihat saldo, tambah/edit akun</span></li>
+              <li className="flex gap-1.5"><Check className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} /><span><strong>Transaksi</strong> — semua nyatet, semua bisa lihat. Tetep ada label siapa yang nyatet</span></li>
+              <li className="flex gap-1.5"><Check className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} /><span><strong>Anggaran (budget)</strong> — set bersama, terpakai bersama</span></li>
+              <li className="flex gap-1.5" style={{ opacity: 0.7 }}><span className="size-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'currentColor' }} /><span>Aset, investasi, utang, goal — tetap personal di MVP ini</span></li>
             </ul>
-            <p className="mt-3 text-xs text-blue-700/80">
+            <p className="mt-3 text-xs" style={{ opacity: 0.8 }}>
               Data personal-mu sebelum gabung keluarga tetep aman dan personal. Yang baru kamu input setelah ini otomatis ke-share.
             </p>
           </div>
@@ -485,14 +498,20 @@ export default function FamilyPage() {
       </section>
 
       {/* Danger zone */}
-      <section className="rounded-xl border-2 border-red-200 bg-red-50 p-5">
+      <section
+        className="rounded-xl border-2 p-5"
+        style={{
+          background: 'var(--c-coral-soft)',
+          borderColor: 'color-mix(in srgb, var(--c-coral) 25%, transparent)',
+        }}
+      >
         <div className="flex items-start gap-3">
-          <AlertCircle className="size-5 text-red-600 mt-0.5 shrink-0" />
+          <AlertCircle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
           <div className="flex-1">
-            <h3 className="font-semibold text-red-900">Zona Berbahaya</h3>
+            <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>Zona Berbahaya</h3>
             {isUserOwner ? (
               <>
-                <p className="text-sm text-red-800 mt-1">
+                <p className="text-sm mt-1" style={{ color: 'var(--c-coral)' }}>
                   Sebagai owner, kamu bisa <strong>hapus keluarga</strong>. Semua anggota otomatis keluar dan data shared akan jadi orphan (household_id null) — tetap bisa diakses kamu sebagai pemilik.
                 </p>
                 <Button variant="destructive" size="sm" className="mt-3" onClick={deleteHousehold}>
@@ -502,7 +521,7 @@ export default function FamilyPage() {
               </>
             ) : (
               <>
-                <p className="text-sm text-red-800 mt-1">
+                <p className="text-sm mt-1" style={{ color: 'var(--c-coral)' }}>
                   Keluar dari keluarga. Data yang udah ke-share akan tetap dimiliki keluarga (kamu kehilangan akses).
                 </p>
                 <Button variant="destructive" size="sm" className="mt-3" onClick={() => setLeaveDialogOpen(true)}>
@@ -543,8 +562,16 @@ export default function FamilyPage() {
           ) : (
             <>
               <div className="space-y-3 py-2">
-                <div className="rounded-lg bg-[var(--c-mint-soft)] border border-emerald-200 p-3 text-sm text-emerald-900">
-                  ✅ Link undangan berhasil dibuat. Salin & kirim ke calon anggota.
+                <div
+                  className="rounded-lg border p-3 text-sm flex items-start gap-2"
+                  style={{
+                    background: 'var(--c-mint-soft)',
+                    borderColor: 'color-mix(in srgb, var(--c-mint) 25%, transparent)',
+                    color: 'var(--emerald-800)',
+                  }}
+                >
+                  <Check className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--c-mint)' }} />
+                  <span>Link undangan berhasil dibuat. Salin & kirim ke calon anggota.</span>
                 </div>
                 <div className="grid gap-1.5">
                   <Label>Link undangan</Label>

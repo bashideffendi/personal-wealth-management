@@ -226,14 +226,15 @@
   --font-sans:    var(--font-sans-brand), "Plus Jakarta Sans",
                   system-ui, -apple-system, sans-serif;
   --font-ui:      var(--font-sans);
-  /* Display = Instrument Serif — sekarang dipakai bebas per editorial
-     pivot 2026-05-28: hero numbers 40-88px, heading section italic
-     22-32px, brand wordmark. Bukan cuma "moments of personality" lagi. */
+  /* Display = Instrument Serif — restricted to "moments of personality"
+     only (per fintech revert): brand wordmark italic spot, milestone
+     modals, empty-state hero. NEVER body, buttons, hero numbers,
+     headings, page titles. */
   --font-display: var(--font-display-brand), "Instrument Serif",
                   Georgia, serif;
-  /* Mono = DM Mono (ganti dari JetBrains Mono). Tabular numerics,
-     kbd, nomor rekening. */
-  --font-mono:    var(--font-mono-brand), "DM Mono",
+  /* Mono = JetBrains Mono — professional fintech standard (Stockbit,
+     Mercury, Linear). Tabular numerics, kbd, account numbers, tickers. */
+  --font-mono:    var(--font-mono-brand), "JetBrains Mono",
                   ui-monospace, "SF Mono", Menlo, monospace;
 
   --radius: 1rem;       /* 16px — editorial card baseline */

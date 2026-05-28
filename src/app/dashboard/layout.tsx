@@ -7,12 +7,11 @@ import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
 import { InstallPrompt } from '@/components/layout/install-prompt'
 
 /**
- * Dashboard layout — editorial top-nav variant (2026-05-28 redesign).
+ * Dashboard layout — fintech top-nav shell.
  *
- * Layout pattern berubah: sidebar dihapus, TopNav horizontal jadi shell
- * utama. Konten halaman scroll vertikal di main (bukan flex column
- * dengan sidebar di kiri). Mobile dapet hamburger di TopNav + bottom
- * tab bar tetap untuk quick-access daily-use.
+ * Sidebar dihapus, TopNav horizontal jadi shell utama. Konten halaman
+ * scroll vertikal di main. Mobile dapet hamburger di TopNav + bottom
+ * tab bar untuk quick-access daily-use.
  */
 export default async function DashboardLayout({
   children,

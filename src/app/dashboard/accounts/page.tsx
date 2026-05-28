@@ -44,10 +44,10 @@ import { InstitutionSearch } from '@/components/accounts/institution-search'
 type AccountType = keyof typeof ACCOUNT_TYPES
 
 const TYPE_BADGE: Record<AccountType, string> = {
-  cash: 'bg-amber-100 text-amber-700',
-  bank: 'bg-blue-100 text-blue-700',
-  digital_wallet: 'bg-purple-100 text-purple-700',
-  rdn: 'bg-teal-100 text-teal-700',
+  cash: 'bg-[var(--c-amber-soft)] text-[var(--c-amber)]',
+  bank: 'bg-[var(--sky-50)] text-[var(--sky-600)]',
+  digital_wallet: 'bg-[var(--c-violet-soft)] text-[var(--c-violet)]',
+  rdn: 'bg-[var(--c-mint-soft)] text-[var(--c-mint)]',
   investment: 'bg-[var(--c-mint-soft)] text-[var(--c-mint)]',
 }
 
@@ -415,7 +415,7 @@ export default function AccountsPage() {
                           <Pencil className="size-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(a.id)} title="Hapus">
-                          <Trash2 className="size-3.5 text-red-600" />
+                          <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />
                         </Button>
                       </div>
                     </div>

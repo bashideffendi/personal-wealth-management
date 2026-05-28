@@ -768,12 +768,18 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <section className="rounded-xl border-2 border-red-200 bg-red-50 p-5 space-y-3">
+          <section
+            className="rounded-xl border-2 p-5 space-y-3"
+            style={{
+              background: 'var(--c-coral-soft)',
+              borderColor: 'color-mix(in srgb, var(--c-coral) 25%, transparent)',
+            }}
+          >
             <div className="flex items-start gap-2">
-              <AlertTriangle className="size-5 mt-0.5 text-red-600 shrink-0" />
+              <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-900">Zona Berbahaya</h3>
-                <p className="text-sm text-red-800 mt-1">
+                <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>Zona Berbahaya</h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--c-coral)' }}>
                   Hapus semua transaksi, akun, budget, goal, investasi, dan aset. Akun login & profil tetap. Aksi ini <strong>tidak bisa dibatalkan</strong>.
                 </p>
                 <Button
@@ -906,7 +912,7 @@ export default function ProfilePage() {
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-red-900">Reset Semua Data?</DialogTitle>
+            <DialogTitle style={{ color: 'var(--c-coral)' }}>Reset Semua Data?</DialogTitle>
             <DialogDescription>
               Semua transaksi, akun, budget, goal, investasi, aset, dan utang akan <strong>dihapus permanen</strong>.
               Akun login + email + paket langganan tetap aman.

@@ -467,7 +467,7 @@ export default function EmergencyFundPage() {
                               size="icon-sm"
                               onClick={() => handleDeleteLocation(loc.id)}
                             >
-                              <Trash2 className="size-4 text-red-500" />
+                              <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
                             </Button>
                           </div>
                         </TableCell>

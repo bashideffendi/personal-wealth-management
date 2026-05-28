@@ -284,7 +284,7 @@ export default function MonthlyReportPage() {
               )}
               {recap.busiest_day && (
                 <Highlight
-                  icon={<Activity className="size-4 text-blue-700" />}
+                  icon={<Activity className="size-4" style={{ color: 'var(--sky-600)' }} />}
                   label="Hari Paling Aktif"
                   main={new Date(recap.busiest_day.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
                   value={`${recap.busiest_day.count} transaksi`}
@@ -293,7 +293,7 @@ export default function MonthlyReportPage() {
                 />
               )}
               <Highlight
-                icon={<PieIcon className="size-4 text-purple-700" />}
+                icon={<PieIcon className="size-4" style={{ color: 'var(--c-violet)' }} />}
                 label="Kategori Dominan"
                 main={recap.expense_by_category[0]?.name ?? '—'}
                 value={recap.expense_by_category[0] ? formatCurrency(recap.expense_by_category[0].amount) : '—'}

@@ -125,8 +125,8 @@ export default function JoinHouseholdPage() {
 
         {state.kind === 'invalid' && (
           <div>
-            <div className="mx-auto h-14 w-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
-              <AlertCircle className="size-7 text-red-600" />
+            <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--c-coral-soft)' }}>
+              <AlertCircle className="size-7" style={{ color: 'var(--c-coral)' }} />
             </div>
             <h2 className="text-xl font-bold">Undangan Tidak Valid</h2>
             <p className="text-muted-foreground mt-2 text-sm">{state.reason}</p>
@@ -171,7 +171,14 @@ export default function JoinHouseholdPage() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-lg bg-blue-50 border border-blue-200 p-3 text-left text-xs text-blue-900">
+            <div
+              className="mt-5 rounded-lg border p-3 text-left text-xs"
+              style={{
+                background: 'var(--sky-50)',
+                borderColor: 'color-mix(in srgb, var(--sky-500) 25%, transparent)',
+                color: 'var(--sky-600)',
+              }}
+            >
               Setelah gabung, kamu akan punya akses bersama ke <strong>akun, transaksi, dan budget</strong> keluarga.
               Data personalmu yang sudah ada tetap aman dan tidak ter-share.
             </div>
@@ -200,7 +207,7 @@ export default function JoinHouseholdPage() {
             <div className="mx-auto h-14 w-14 rounded-full bg-[var(--c-mint-soft)] flex items-center justify-center mb-3">
               <CheckCircle className="size-7 text-[var(--c-mint)]" />
             </div>
-            <h2 className="text-xl font-bold">🎉 Selamat Bergabung!</h2>
+            <h2 className="text-xl font-bold">Selamat bergabung!</h2>
             <p className="text-muted-foreground mt-2 text-sm">
               Kamu sekarang anggota keluarga. Mengarahkan ke halaman keluarga...
             </p>
@@ -209,8 +216,8 @@ export default function JoinHouseholdPage() {
 
         {state.kind === 'error' && (
           <div>
-            <div className="mx-auto h-14 w-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
-              <AlertCircle className="size-7 text-red-600" />
+            <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--c-coral-soft)' }}>
+              <AlertCircle className="size-7" style={{ color: 'var(--c-coral)' }} />
             </div>
             <h2 className="text-xl font-bold">Gagal Terima Undangan</h2>
             <p className="text-muted-foreground mt-2 text-sm">{state.message}</p>

@@ -1028,8 +1028,8 @@ export default function TransactionsPage() {
                         tx.type === 'income'
                           ? 'text-[var(--c-mint)]'
                           : tx.type === 'expense'
-                            ? 'text-red-600'
-                            : 'text-gray-700'
+                            ? 'text-[var(--c-coral)]'
+                            : 'text-[var(--ink-muted)]'
                       }`}
                     >
                       {formatCurrency(tx.amount)}
@@ -1037,10 +1037,10 @@ export default function TransactionsPage() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(tx)}>
-                          <Pencil className="size-4 text-gray-500" />
+                          <Pencil className="size-4" style={{ color: 'var(--ink-soft)' }} />
                         </Button>
                         <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(tx.id)}>
-                          <Trash2 className="size-4 text-red-500" />
+                          <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
                         </Button>
                       </div>
                     </TableCell>
@@ -1174,7 +1174,7 @@ export default function TransactionsPage() {
                           </div>
                         )}
                         {!extracting && extractError && (
-                          <div className="text-red-600">{extractError}</div>
+                          <div style={{ color: 'var(--c-coral)' }}>{extractError}</div>
                         )}
                         {!extracting && !extractError && extractConfidence && (
                           <div className="space-y-0.5">
@@ -1253,17 +1253,26 @@ export default function TransactionsPage() {
                 <div className="flex items-center justify-between text-xs">
                   <span>
                     {accountSource === 'ai' && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-purple-700">
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                        style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}
+                      >
                         <Sparkles className="size-3" /> AI deteksi dari struk
                       </span>
                     )}
                     {accountSource === 'default' && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-blue-700">
-                        <Star className="size-3 fill-blue-700" /> Akun default
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                        style={{ background: 'var(--sky-50)', color: 'var(--sky-600)' }}
+                      >
+                        <Star className="size-3" style={{ fill: 'var(--sky-600)' }} /> Akun default
                       </span>
                     )}
                     {accountSource === 'last_used' && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                        style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                      >
                         Terakhir dipakai
                       </span>
                     )}
