@@ -5,74 +5,64 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================
-   Klunting — Design System v3 (Editorial pivot, 2026-05-28)
-   "Tenang & terang" — warm cream paper, indigo primary, semantic
-   accents (mint/coral/amber/violet). Inspired by: Instrument Serif
-   editorial magazines + warm consumer-finance apps. Per design
-   handoff klunting_new_design/.
+   Klunting — Design System v4 (Modern fintech pivot, 2026-05-28 revert)
+   Restore emerald primary brand + clean near-white bg + JetBrains Mono.
+   Reference: Wise (light, friendly fintech), Mercury (professional),
+   Bibit/Stockbit (Indonesia investment, emerald-led), Linear (precise).
+   Drop editorial direction — Instrument Serif italic moments-only.
    ============================================ */
 
 :root {
-  /* ── Editorial brand stops (cross-mode) ────────── */
-  --brand-50:    #EEF2FF;
-  --brand-100:   #E0E7FF;
-  --brand-500:   #6366F1;
-  --brand-600:   #4F46E5;      /* primary indigo */
-  --brand-700:   #4338CA;
+  /* ── Brand stops — emerald primary (Klunting signature) ── */
+  --brand-50:    #ECFDF5;
+  --brand-100:   #D1FAE5;
+  --brand-500:   #10B981;      /* primary emerald (Klunting brand) */
+  --brand-600:   #059669;
+  --brand-700:   #047857;
 
   --mint-50:     #ECFDF5;
   --mint-300:    #6EE7B7;
-  --mint-500:    #10B981;      /* income/surplus/sehat */
+  --mint-500:    #10B981;      /* income/positive accent */
   --mint-600:    #059669;
-
-  --coral-50-new: #FFF1F2;
-  --coral-300-new:#FDA4AF;
-  --coral-500-new:#FB7185;     /* expense/defisit/warning */
-  --coral-600-new:#E11D48;
-
-  --amber-50-new: #FFFBEB;
-  --amber-300-new:#FCD34D;
-  --amber-500-new:#F59E0B;     /* streak/perhatian */
-  --amber-600-new:#D97706;
 
   --violet-50:   #F5F3FF;
   --violet-300:  #C4B5FD;
   --violet-500:  #8B5CF6;      /* AI/langganan/kewajiban tetap */
   --violet-600:  #7C3AED;
 
-  /* ── Surfaces (Light) — warm cream paper ─────────── */
-  --paper:       #F6F4EF;    /* warm off-white "kertas hangat" */
-  --bg:          #F6F4EF;
-  --bg-2:        #ECE8DF;
-  --surface:     #FFFFFF;    /* card bg */
-  --surface-2:   #F3EFE7;
-  --surface-3:   #E9E3D6;
+  /* ── Surfaces (Light) — near-white, cool subtle ─────── */
+  --paper:       #FAFAF9;    /* slightly warm white, not cream */
+  --bg:          #FAFAF9;
+  --bg-2:        #F4F4F5;
+  --surface:     #FFFFFF;    /* card bg pure white */
+  --surface-2:   #F4F4F5;
+  --surface-3:   #E4E4E7;
   --line:        rgba(24, 24, 27, 0.08);
   --line-strong: rgba(24, 24, 27, 0.14);
 
   /* ── Text (Light) ─────────────────────────────── */
-  --ink:         #18181B;    /* primary text */
-  --ink-muted:   #3F3F46;    /* secondary text */
-  --ink-soft:    #71717A;    /* tertiary/mute */
-  --text:        #18181B;
-  --text-2:      #3F3F46;
+  --ink:         #0A0A0F;    /* near-black, professional */
+  --ink-muted:   #52525B;
+  --ink-soft:    #A1A1AA;
+  --text:        #0A0A0F;
+  --text-2:      #52525B;
   --text-mute:   #71717A;
   --text-faint:  #A1A1AA;
-  --border:      rgba(24, 24, 27, 0.08);
-  --border-soft: rgba(24, 24, 27, 0.04);
+  --border:      #E4E4E7;
+  --border-soft: #F4F4F5;
 
-  /* ── Semantic editorial tokens ─────────────────── */
-  --c-primary:      #4F46E5;
-  --c-primary-soft: #EEF2FF;
-  --c-mint:         #10B981;
+  /* ── Semantic tokens — emerald primary restored ─── */
+  --c-primary:      #10B981;     /* EMERALD primary (Klunting brand) */
+  --c-primary-soft: #ECFDF5;
+  --c-mint:         #10B981;     /* alias to primary — same hex */
   --c-mint-soft:    #ECFDF5;
-  --c-coral:        #FB7185;
+  --c-coral:        #F43F5E;     /* expense/danger — back to bolder coral-500 */
   --c-coral-soft:   #FFF1F2;
   --c-amber:        #F59E0B;
   --c-amber-soft:   #FFFBEB;
   --c-violet:       #8B5CF6;
   --c-violet-soft:  #F5F3FF;
-  --c-ink:          #18181B;
+  --c-ink:          #0A0A0F;
 
   /* ── Dark inverse (sidebar, hero cards in light mode) ── */
   --black:       #0A0A0F;
@@ -262,30 +252,29 @@
   --color-popover: var(--surface);
   --color-popover-foreground: var(--ink);
 
-  /* Primary editorial: ink hitam (per design — tombol primer = --c-ink) */
-  --color-primary: var(--c-ink);
-  --color-primary-foreground: var(--bg);
+  /* Primary fintech: emerald (Klunting signature brand) */
+  --color-primary: var(--c-mint);
+  --color-primary-foreground: #FFFFFF;
   --color-secondary: var(--surface-2);
   --color-secondary-foreground: var(--ink);
 
   --color-muted: var(--surface-2);
   --color-muted-foreground: var(--ink-muted);
 
-  /* Accent = indigo (--c-primary semantic) untuk highlight non-CTA */
-  --color-accent: var(--c-primary);
+  --color-accent: var(--c-mint);
   --color-accent-foreground: #FFFFFF;
 
   --color-destructive: var(--c-coral);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: var(--c-primary);
+  --color-ring: var(--c-mint);
 
-  /* Chart palette — editorial semantic */
-  --color-chart-1: var(--c-primary);   /* indigo — primary */
-  --color-chart-2: var(--c-mint);      /* mint — income */
+  /* Chart palette — emerald-led, amber/coral/violet/sky for variety */
+  --color-chart-1: var(--c-mint);      /* emerald — main */
+  --color-chart-2: var(--c-amber);     /* amber */
   --color-chart-3: var(--c-coral);     /* coral — expense */
-  --color-chart-4: var(--c-amber);     /* amber — streak */
-  --color-chart-5: var(--c-violet);    /* violet — AI/sub */
+  --color-chart-4: var(--c-violet);    /* violet — AI */
+  --color-chart-5: #0EA5E9;            /* sky — supplementary */
 
   --color-sidebar: var(--surface);
   --color-sidebar-foreground: var(--ink);
@@ -308,14 +297,14 @@
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — editorial dark (per design handoff) */
-  --paper:       #0D0D10;
-  --bg:          #0D0D10;
-  --bg-2:        #15151A;
-  --surface:     #1A1A20;
-  --surface-2:   #232329;
-  --surface-3:   #2C2C34;
-  --line:        rgba(255, 255, 255, 0.07);
+  /* Surfaces — Mercury-inspired premium navy (restored fintech) */
+  --paper:       #0A0A0F;
+  --bg:          #0A0A0F;
+  --bg-2:        #14141A;
+  --surface:     #14141A;
+  --surface-2:   #1C1C24;
+  --surface-3:   #27272F;
+  --line:        rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.14);
 
   /* Text */
@@ -337,9 +326,9 @@
   --on-black:    #0D0D10;
   --on-black-mut:#52525B;
 
-  /* Editorial accents — brighter for dark contrast */
-  --c-primary:      #818CF8;
-  --c-primary-soft: rgba(99, 102, 241, 0.15);
+  /* Accents — emerald primary restored, brighter for dark contrast */
+  --c-primary:      #34D399;      /* emerald-400, brighter on dark */
+  --c-primary-soft: rgba(16, 185, 129, 0.13);
   --c-mint:         #34D399;
   --c-mint-soft:    rgba(52, 211, 153, 0.13);
   --c-coral:        #FB7185;
@@ -348,14 +337,13 @@
   --c-amber-soft:   rgba(251, 191, 36, 0.13);
   --c-violet:       #A78BFA;
   --c-violet-soft:  rgba(167, 139, 250, 0.14);
-  --c-ink:          #F4F4F5;
+  --c-ink:          #F5F5F7;
 
   /* Legacy emerald tokens — boost untuk dark */
   --emerald-400: #34D399;
   --emerald-500: #10B981;
   --emerald-600: #059669;
 
-  /* Semantic — slightly brighter for dark mode visibility */
   --success:     var(--c-mint);
   --success-bg:  var(--c-mint-soft);
   --warning:     var(--c-amber);
@@ -367,12 +355,12 @@
 
   --surface-alt: var(--surface-2);
 
-  /* Theme tokens — dark adapt */
-  --color-primary: var(--ink);        /* dark mode primer = light ink */
-  --color-primary-foreground: var(--bg);
-  --color-accent: var(--c-primary);
+  /* Theme tokens — emerald primary dark */
+  --color-primary: var(--c-mint);
+  --color-primary-foreground: var(--ink);
+  --color-accent: var(--c-mint);
   --color-accent-foreground: var(--ink);
-  --color-ring: var(--c-primary);
+  --color-ring: var(--c-mint);
   --color-border: var(--border);
 
   /* Editorial shadows for dark */
@@ -452,35 +440,36 @@
 
 /* Hero "dark-card" — always renders dark even in light mode page.
    In dark mode, slightly different shade so it stands out from page bg. */
-/* Editorial pivot 2026-05-28: .dark-card sekarang render seperti
-   .kl-card (warm surface, ink hitam). Override on-black-* token jadi
-   ink editorial supaya child elements yang masih pakai var(--on-black)
-   tetap kebaca. Untuk halaman-halaman yang belum di-rewrite total,
-   ini ngasih editorial direction otomatis tanpa per-page edit. */
+/* .dark-card — actual dark hero card (Mercury / Wise style).
+   Reverted dari editorial override karena visual hierarchy yang dipakai
+   per-page (hero = "lihat ini dulu") perlu dark anchor block. */
 .dark-card {
-  background-color: var(--surface);
-  color: var(--ink);
+  background: linear-gradient(135deg, #0A0A0F 0%, #14141A 100%);
+  color: var(--on-black);
   border-radius: var(--radius-xl);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
-  /* Remap inherited dark tokens → ink editorial */
-  --on-black:      var(--ink);
-  --on-black-mut:  var(--text-mute);
-  --black-2:       var(--surface-2);
-  --black-soft:    var(--surface-2);
-  --black-line:    var(--line);
+  border: 1px solid #1C1C24;
+  --on-black:      #F5F5F7;
+  --on-black-mut:  #A1A1AA;
+  --ink:           #F5F5F7;
+  --ink-muted:     #A1A1AA;
+  --ink-soft:      #71717A;
+  --border:        rgba(255, 255, 255, 0.14);
+  --border-soft:   rgba(255, 255, 255, 0.08);
+  --black-2:       rgba(255, 255, 255, 0.10);
+  --black-soft:    rgba(255, 255, 255, 0.06);
+  --black-line:    rgba(255, 255, 255, 0.12);
 }
 .dark .dark-card {
-  background-color: var(--surface);
-  border-color: var(--line);
+  background: linear-gradient(135deg, #14141A 0%, #1C1C24 100%);
+  border-color: var(--border);
 }
-.dark-card .caps       { color: var(--text-mute); }
-.dark-card .text-white { color: var(--ink); }
+.dark-card .caps       { color: var(--c-mint); }
+.dark-card .text-white { color: var(--on-black); }
 .dark-card .text-white\/60,
 .dark-card .text-white\/70,
 .dark-card .text-white\/75,
 .dark-card .text-white\/80 {
-  color: var(--text-mute);
+  color: var(--on-black-mut);
 }
 
 /* True dark card variant */
@@ -546,14 +535,14 @@
   background: var(--border-soft);
 }
 
-/* Legacy compatibility shim — old `.font-serif` callsites map to
-   Instrument Serif now (italic per design handoff). Note: NOT using
-   !important so component-level inline styles can still override. */
+/* Legacy `.font-serif` callsites → bold sans (drop italic auto).
+   Per fintech pivot 2026-05-28: no editorial italic in default styles.
+   Components yang masih pakai `.font-serif` jadi render bold sans
+   (matches Wise/Mercury hero pattern). */
 .font-serif {
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-sans);
+  font-weight: 700;
   letter-spacing: -0.025em;
-  font-weight: 400;
 }
 
 /* Chip variants per 03-component-patterns.md — semantic color tints
@@ -676,16 +665,20 @@ body, .s-card, .dark-card, .ink-card, .glass-card {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Editorial bg — flat warm cream (light) / pure dark (dark).
-   Per design pivot 2026-05-28: ambient radial gradients dilepas.
-   Atmosphere ditangani lewat warm paper tone, bukan glows. */
+/* Fintech bg — clean near-white dengan subtle emerald + violet
+   ambient untuk premium app feel. Restored per fintech pivot. */
 body {
   background-color: var(--bg);
-  background-image: none;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.05), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.04), transparent 45%);
+  background-attachment: fixed;
 }
 
 .dark body {
-  background-image: none;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.04), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.04), transparent 45%);
 }
 
 /* ============================================
@@ -702,13 +695,18 @@ body {
 .kl-card-pad    { padding: 20px; }
 .kl-card-pad-lg { padding: 24px; }
 
-/* Hero numbers + display headings — Instrument Serif */
+/* Hero numbers + display headings — bold sans (fintech style).
+   Drop Instrument Serif default per fintech pivot 2026-05-28.
+   Bold sans = Wise/Mercury/Bibit standard for hero numbers. */
 .kl-display {
-  font-family: var(--font-display);
-  font-weight: 400;
+  font-family: var(--font-sans);
+  font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1;
 }
+/* kl-display-italic — Instrument Serif italic, reserved untuk
+   moments-of-personality only (landing tagline, milestone modals,
+   empty state poetry). NEVER for hero numbers or page titles. */
 .kl-display-italic {
   font-family: var(--font-display);
   font-style: italic;
@@ -790,33 +788,26 @@ body {
   background: var(--c-primary-soft);
 }
 
-/* Brand wordmark "k" with mint dot — landing + onboarding */
+/* Brand wordmark "K" — bold sans on emerald (fintech Klunting brand).
+   Drop italic serif "k" — that was editorial mistake. Bold capital K
+   on emerald = trustworthy brand mark. */
 .kl-brandmark {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
-  background: var(--c-ink);
-  color: var(--bg);
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--c-mint), #047857);
+  color: #FFFFFF;
   display: grid;
   place-items: center;
   position: relative;
+  box-shadow: 0 4px 12px -4px rgba(16, 185, 129, 0.40);
 }
 .kl-brandmark > span {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 22px;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 18px;
   line-height: 1;
-  padding-bottom: 2px;
-}
-.kl-brandmark::after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--c-mint);
+  letter-spacing: -0.02em;
 }
 
 /* ============================================

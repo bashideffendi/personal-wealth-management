@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, DM_Mono, Instrument_Serif } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
@@ -10,19 +10,20 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-// DM Mono — used for tabular numerics, kbd, account numbers. Per
-// editorial redesign 2026-05-28: ganti dari JetBrains Mono biar lebih
-// halus dengan Instrument Serif companion.
-const dmMono = DM_Mono({
+// JetBrains Mono — restored sebagai professional fintech standard
+// (Stockbit, Mercury, Linear pakai mono family). Untuk tabular numerics,
+// kbd, account numbers, ticker codes.
+const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono-brand",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
-// Instrument Serif — sekarang dipakai bebas (free-rein editorial)
-// untuk hero numbers, heading section italic, brand wordmark, accent
-// emosional. Bukan cuma "moments of personality" lagi.
+// Instrument Serif — REVERT ke "moments of personality only" per
+// fintech direction 2026-05-28. Dipakai untuk: brand wordmark italic
+// (1 spot di landing), milestone modals, empty state headlines.
+// NEVER for body, buttons, hero numbers, page titles, default headings.
 const instrumentSerif = Instrument_Serif({
   variable: "--font-display-brand",
   subsets: ["latin"],
@@ -82,8 +83,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f4ef" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d0d10" },
+    { media: "(prefers-color-scheme: light)", color: "#FAFAF9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0A0A0F" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -115,7 +116,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${plusJakartaSans.variable} ${dmMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
