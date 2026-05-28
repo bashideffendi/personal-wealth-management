@@ -573,7 +573,7 @@ export default function DashboardPage() {
               Pemasukan
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: '#EF4444' }} />
+              <span className="size-2.5 rounded-sm" style={{ background: '#F43F5E' }} />
               Pengeluaran
             </span>
             <span className="flex items-center gap-1.5">
@@ -637,7 +637,7 @@ export default function DashboardPage() {
                 Pemasukan
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded" style={{ background: '#EF4444' }} />
+                <span className="size-2.5 rounded" style={{ background: '#F43F5E' }} />
                 Pengeluaran
               </span>
             </div>

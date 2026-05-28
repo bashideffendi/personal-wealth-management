@@ -180,9 +180,9 @@ export function ReflectiveSpendingModal({
               background: verdict.tone === 'good' ? 'rgba(16,185,129,0.08)'
                 : verdict.tone === 'caution' ? 'rgba(245,158,11,0.10)'
                 : 'rgba(244,63,94,0.08)',
-              color: verdict.tone === 'good' ? '#10B981'
-                : verdict.tone === 'caution' ? '#92400E'
-                : '#991B1B',
+              color: verdict.tone === 'good' ? 'var(--c-mint)'
+                : verdict.tone === 'caution' ? 'var(--amber-700)'
+                : 'var(--c-coral)',
             }}
           >
             <span className="font-semibold">{yesCount}/4 ya</span> · {verdict.text}

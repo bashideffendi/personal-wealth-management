@@ -18,11 +18,11 @@
  *   - Deficit (outflow > income) → "Defisit Bulan Ini" pseudo-income.
  *
  * Categories colored by kind:
- *   - Income     → emerald
+ *   - Income     → emerald (Klunting signature)
  *   - Expense    → coral
  *   - Saving     → amber
- *   - Investment → sky
- *   - Hub/Surplus/Deficit → indigo (neutral)
+ *   - Investment → sky/violet
+ *   - Hub/Surplus/Deficit → ink (neutral hub)
  */
 
 import { useMemo } from 'react'
@@ -55,16 +55,15 @@ interface MoneyFlowSankeyProps {
   compact?: boolean
 }
 
-// ─── Color palette — editorial semantic per design handoff ──────────────
-// income=mint, expense=coral, saving=amber, investment=primary (indigo
-// ganti sky karena indigo = primary brand, sky reserved untuk supplementary),
-// middle=ink (hub node) — link ribbons fillOpacity ~0.45
+// ─── Color palette — fintech semantic ──────────────────────────────────
+// income=emerald, expense=coral, saving=amber, investment=violet (AI/long-
+// term accent), middle=ink hub. Link ribbons fillOpacity ~0.42.
 const COLORS: Record<FlowKind, { node: string; link: string }> = {
-  income:     { node: '#10B981', link: 'rgba(16, 185, 129, 0.42)' },  // mint
-  expense:    { node: '#FB7185', link: 'rgba(251, 113, 133, 0.40)' }, // coral editorial
+  income:     { node: '#10B981', link: 'rgba(16, 185, 129, 0.42)' },  // emerald
+  expense:    { node: '#F43F5E', link: 'rgba(244, 63, 94, 0.40)' },   // coral
   saving:     { node: '#F59E0B', link: 'rgba(245, 158, 11, 0.42)' },  // amber
-  investment: { node: '#4F46E5', link: 'rgba(79, 70, 229, 0.38)' },   // primary indigo
-  middle:     { node: '#18181B', link: 'rgba(24, 24, 27, 0.20)' },    // ink hub
+  investment: { node: '#8B5CF6', link: 'rgba(139, 92, 246, 0.38)' },  // violet
+  middle:     { node: '#0A0A0F', link: 'rgba(10, 10, 15, 0.20)' },    // ink hub
 }
 
 function trunc(s: string, max: number): string {
