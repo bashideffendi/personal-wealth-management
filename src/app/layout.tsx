@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono, Instrument_Serif } from "next/font/google";
+import { Plus_Jakarta_Sans, DM_Mono, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
@@ -10,16 +10,19 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+// DM Mono — used for tabular numerics, kbd, account numbers. Per
+// editorial redesign 2026-05-28: ganti dari JetBrains Mono biar lebih
+// halus dengan Instrument Serif companion.
+const dmMono = DM_Mono({
   variable: "--font-mono-brand",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
-// Instrument Serif — used sparingly for "moments of personality" per
-// design handoff. Italic only. Examples: net-worth hero number,
-// landing headline, milestone modals. Never for body or buttons.
+// Instrument Serif — sekarang dipakai bebas (free-rein editorial)
+// untuk hero numbers, heading section italic, brand wordmark, accent
+// emosional. Bukan cuma "moments of personality" lagi.
 const instrumentSerif = Instrument_Serif({
   variable: "--font-display-brand",
   subsets: ["latin"],
@@ -79,8 +82,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#10B981" },
-    { media: "(prefers-color-scheme: dark)", color: "#0A0A0F" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f4ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0d10" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -112,7 +115,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${dmMono.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

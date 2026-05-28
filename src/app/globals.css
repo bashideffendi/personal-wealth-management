@@ -5,27 +5,74 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================
-   Personal Wealth Management — Design System v2
-   "Fun premium" — emerald accent, deep navy dark
-   Inspired by: Mercury (dark), Wise (light), Linear (typography)
+   Klunting — Design System v3 (Editorial pivot, 2026-05-28)
+   "Tenang & terang" — warm cream paper, indigo primary, semantic
+   accents (mint/coral/amber/violet). Inspired by: Instrument Serif
+   editorial magazines + warm consumer-finance apps. Per design
+   handoff klunting_new_design/.
    ============================================ */
 
 :root {
-  /* ── Surfaces (Light) ──────────────────────────
-     Slight cool tint on the page bg picks up the emerald accent
-     and gives the dashboard a "premium app" feel vs flat off-white.
-     Cards stay pure white so kpi tints + section colors pop. */
-  --paper:       #F6F8F7;    /* very subtle cool mint-ish bg */
+  /* ── Editorial brand stops (cross-mode) ────────── */
+  --brand-50:    #EEF2FF;
+  --brand-100:   #E0E7FF;
+  --brand-500:   #6366F1;
+  --brand-600:   #4F46E5;      /* primary indigo */
+  --brand-700:   #4338CA;
+
+  --mint-50:     #ECFDF5;
+  --mint-300:    #6EE7B7;
+  --mint-500:    #10B981;      /* income/surplus/sehat */
+  --mint-600:    #059669;
+
+  --coral-50-new: #FFF1F2;
+  --coral-300-new:#FDA4AF;
+  --coral-500-new:#FB7185;     /* expense/defisit/warning */
+  --coral-600-new:#E11D48;
+
+  --amber-50-new: #FFFBEB;
+  --amber-300-new:#FCD34D;
+  --amber-500-new:#F59E0B;     /* streak/perhatian */
+  --amber-600-new:#D97706;
+
+  --violet-50:   #F5F3FF;
+  --violet-300:  #C4B5FD;
+  --violet-500:  #8B5CF6;      /* AI/langganan/kewajiban tetap */
+  --violet-600:  #7C3AED;
+
+  /* ── Surfaces (Light) — warm cream paper ─────────── */
+  --paper:       #F6F4EF;    /* warm off-white "kertas hangat" */
+  --bg:          #F6F4EF;
+  --bg-2:        #ECE8DF;
   --surface:     #FFFFFF;    /* card bg */
-  --surface-2:   #F1F3F2;    /* hover/secondary, slightly cool */
-  --surface-3:   #E2E5E4;    /* tertiary, subtle dividers */
+  --surface-2:   #F3EFE7;
+  --surface-3:   #E9E3D6;
+  --line:        rgba(24, 24, 27, 0.08);
+  --line-strong: rgba(24, 24, 27, 0.14);
 
   /* ── Text (Light) ─────────────────────────────── */
-  --ink:         #0A0A0F;    /* primary */
-  --ink-muted:   #52525B;    /* secondary */
-  --ink-soft:    #A1A1AA;    /* tertiary, placeholders */
-  --border:      #E4E4E7;
-  --border-soft: #F4F4F5;
+  --ink:         #18181B;    /* primary text */
+  --ink-muted:   #3F3F46;    /* secondary text */
+  --ink-soft:    #71717A;    /* tertiary/mute */
+  --text:        #18181B;
+  --text-2:      #3F3F46;
+  --text-mute:   #71717A;
+  --text-faint:  #A1A1AA;
+  --border:      rgba(24, 24, 27, 0.08);
+  --border-soft: rgba(24, 24, 27, 0.04);
+
+  /* ── Semantic editorial tokens ─────────────────── */
+  --c-primary:      #4F46E5;
+  --c-primary-soft: #EEF2FF;
+  --c-mint:         #10B981;
+  --c-mint-soft:    #ECFDF5;
+  --c-coral:        #FB7185;
+  --c-coral-soft:   #FFF1F2;
+  --c-amber:        #F59E0B;
+  --c-amber-soft:   #FFFBEB;
+  --c-violet:       #8B5CF6;
+  --c-violet-soft:  #F5F3FF;
+  --c-ink:          #18181B;
 
   /* ── Dark inverse (sidebar, hero cards in light mode) ── */
   --black:       #0A0A0F;
@@ -85,8 +132,19 @@
   --info-bg:     var(--sky-50);
 
   /* ── App-wide aliases ─────────────────────────── */
-  --bg:          var(--paper);
   --surface-alt: var(--surface-2);
+
+  /* ── Editorial radius scale (per design handoff) ── */
+  --radius-pill:  999px;     /* button pills, chips */
+  --radius-card:  16px;      /* card biasa */
+  --radius-hero:  22px;      /* card hero / featured */
+  --radius-cta:   28px;      /* CTA section */
+
+  /* ── Editorial shadow scale ───────────────────── */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow:    0 4px 16px -4px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 24px 48px -16px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 0 rgba(15, 23, 42, 0.04), 0 12px 24px -12px rgba(15, 23, 42, 0.08);
 
   /* ── LEGACY alias map — keeps existing components working ── */
   /* Old butter/lime → emerald (the new signature) */
@@ -175,16 +233,20 @@
   --stone-light: #A1A1AA;
 
   /* ── Fonts ───────────────────────────────────── */
-  --font-sans:    var(--font-sans-brand), "Plus Jakarta Sans", "Inter",
+  --font-sans:    var(--font-sans-brand), "Plus Jakarta Sans",
                   system-ui, -apple-system, sans-serif;
-  /* Display = Instrument Serif (italic) — for moments of personality:
-     hero numbers, milestone modals, empty states. Per design handoff. */
+  --font-ui:      var(--font-sans);
+  /* Display = Instrument Serif — sekarang dipakai bebas per editorial
+     pivot 2026-05-28: hero numbers 40-88px, heading section italic
+     22-32px, brand wordmark. Bukan cuma "moments of personality" lagi. */
   --font-display: var(--font-display-brand), "Instrument Serif",
-                  "Fraunces", Georgia, serif;
-  --font-mono:    var(--font-mono-brand), "JetBrains Mono",
-                  var(--font-geist-mono), ui-monospace, monospace;
+                  Georgia, serif;
+  /* Mono = DM Mono (ganti dari JetBrains Mono). Tabular numerics,
+     kbd, nomor rekening. */
+  --font-mono:    var(--font-mono-brand), "DM Mono",
+                  ui-monospace, "SF Mono", Menlo, monospace;
 
-  --radius: 0.625rem;       /* 10px — slightly more rounded for fun */
+  --radius: 1rem;       /* 16px — editorial card baseline */
 }
 
 @theme inline {
@@ -200,44 +262,45 @@
   --color-popover: var(--surface);
   --color-popover-foreground: var(--ink);
 
-  /* Primary now uses emerald instead of ink — brighter, friendlier */
-  --color-primary: var(--emerald-600);
-  --color-primary-foreground: #FFFFFF;
+  /* Primary editorial: ink hitam (per design — tombol primer = --c-ink) */
+  --color-primary: var(--c-ink);
+  --color-primary-foreground: var(--bg);
   --color-secondary: var(--surface-2);
   --color-secondary-foreground: var(--ink);
 
   --color-muted: var(--surface-2);
   --color-muted-foreground: var(--ink-muted);
 
-  --color-accent: var(--emerald-500);
+  /* Accent = indigo (--c-primary semantic) untuk highlight non-CTA */
+  --color-accent: var(--c-primary);
   --color-accent-foreground: #FFFFFF;
 
-  --color-destructive: var(--danger);
+  --color-destructive: var(--c-coral);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: var(--emerald-500);
+  --color-ring: var(--c-primary);
 
-  /* Chart palette — emerald led, coral/amber/sky/violet for variety */
-  --color-chart-1: var(--emerald-500);
-  --color-chart-2: var(--amber-500);
-  --color-chart-3: var(--sky-500);
-  --color-chart-4: var(--coral-500);
-  --color-chart-5: #8B5CF6;            /* violet — supplementary */
+  /* Chart palette — editorial semantic */
+  --color-chart-1: var(--c-primary);   /* indigo — primary */
+  --color-chart-2: var(--c-mint);      /* mint — income */
+  --color-chart-3: var(--c-coral);     /* coral — expense */
+  --color-chart-4: var(--c-amber);     /* amber — streak */
+  --color-chart-5: var(--c-violet);    /* violet — AI/sub */
 
-  --color-sidebar: var(--black);
-  --color-sidebar-foreground: #C0BFC9;
-  --color-sidebar-primary: var(--emerald-400);
-  --color-sidebar-primary-foreground: var(--ink);
-  --color-sidebar-accent: var(--black-2);
-  --color-sidebar-accent-foreground: var(--on-black);
-  --color-sidebar-border: var(--black-line);
-  --color-sidebar-ring: var(--emerald-500);
+  --color-sidebar: var(--surface);
+  --color-sidebar-foreground: var(--ink);
+  --color-sidebar-primary: var(--c-primary);
+  --color-sidebar-primary-foreground: #FFFFFF;
+  --color-sidebar-accent: var(--surface-2);
+  --color-sidebar-accent-foreground: var(--ink);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--c-primary);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.6);
-  --radius-2xl: calc(var(--radius) * 2);
+  --radius-sm: 10px;       /* chips, badge */
+  --radius-md: 12px;
+  --radius-lg: 16px;       /* card biasa */
+  --radius-xl: 22px;       /* card hero */
+  --radius-2xl: 28px;      /* CTA section */
 }
 
 /* ============================================
@@ -245,50 +308,75 @@
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — deep navy, not pure black */
-  --paper:       #0A0A0F;
-  --surface:     #14141A;
-  --surface-2:   #1C1C24;
-  --surface-3:   #27272F;
+  /* Surfaces — editorial dark (per design handoff) */
+  --paper:       #0D0D10;
+  --bg:          #0D0D10;
+  --bg-2:        #15151A;
+  --surface:     #1A1A20;
+  --surface-2:   #232329;
+  --surface-3:   #2C2C34;
+  --line:        rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
 
   /* Text */
-  --ink:         #F5F5F7;
-  --ink-muted:   #A1A1AA;
-  --ink-soft:    #71717A;
-  --border:      #27272F;
-  --border-soft: #1F1F26;
+  --ink:         #F4F4F5;
+  --ink-muted:   #D4D4D8;
+  --ink-soft:    #A1A1AA;
+  --text:        #F4F4F5;
+  --text-2:      #D4D4D8;
+  --text-mute:   #A1A1AA;
+  --text-faint:  #71717A;
+  --border:      rgba(255, 255, 255, 0.07);
+  --border-soft: rgba(255, 255, 255, 0.04);
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
   --black:       #F5F5F7;
   --black-soft:  #E4E4E7;
   --black-2:     #D4D4D8;
   --black-line:  rgba(0, 0, 0, 0.10);
-  --on-black:    #0A0A0F;
+  --on-black:    #0D0D10;
   --on-black-mut:#52525B;
 
-  /* Brighter accents for better contrast on dark bg */
+  /* Editorial accents — brighter for dark contrast */
+  --c-primary:      #818CF8;
+  --c-primary-soft: rgba(99, 102, 241, 0.15);
+  --c-mint:         #34D399;
+  --c-mint-soft:    rgba(52, 211, 153, 0.13);
+  --c-coral:        #FB7185;
+  --c-coral-soft:   rgba(251, 113, 133, 0.13);
+  --c-amber:        #FBBF24;
+  --c-amber-soft:   rgba(251, 191, 36, 0.13);
+  --c-violet:       #A78BFA;
+  --c-violet-soft:  rgba(167, 139, 250, 0.14);
+  --c-ink:          #F4F4F5;
+
+  /* Legacy emerald tokens — boost untuk dark */
   --emerald-400: #34D399;
   --emerald-500: #10B981;
   --emerald-600: #059669;
 
   /* Semantic — slightly brighter for dark mode visibility */
-  --success:     var(--emerald-400);
-  --success-bg:  rgba(16, 185, 129, 0.12);
-  --warning:     var(--amber-400);
-  --warning-bg:  rgba(245, 158, 11, 0.12);
-  --danger:      var(--coral-400);
-  --danger-bg:   rgba(244, 63, 94, 0.12);
+  --success:     var(--c-mint);
+  --success-bg:  var(--c-mint-soft);
+  --warning:     var(--c-amber);
+  --warning-bg:  var(--c-amber-soft);
+  --danger:      var(--c-coral);
+  --danger-bg:   var(--c-coral-soft);
   --info:        var(--sky-300);
   --info-bg:     rgba(14, 165, 233, 0.12);
 
-  --bg:          var(--paper);
   --surface-alt: var(--surface-2);
 
-  /* Update theme color variables for dark mode */
-  --color-primary: var(--emerald-500);
-  --color-accent: var(--emerald-400);
-  --color-ring: var(--emerald-400);
+  /* Theme tokens — dark adapt */
+  --color-primary: var(--ink);        /* dark mode primer = light ink */
+  --color-primary-foreground: var(--bg);
+  --color-accent: var(--c-primary);
+  --color-accent-foreground: var(--ink);
+  --color-ring: var(--c-primary);
   --color-border: var(--border);
+
+  /* Editorial shadows for dark */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 36px -16px rgba(0, 0, 0, 0.5);
 }
 
 @layer base {
@@ -586,22 +674,147 @@ body, .s-card, .dark-card, .ink-card, .glass-card {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Subtle ambient color glows in the page background — adds "premium app"
-   atmosphere without distracting from content. Two soft radial gradients
-   in the corners that fade into transparency. Only on light mode; dark
-   mode handles its own atmosphere via paper color. */
+/* Editorial bg — flat warm cream (light) / pure dark (dark).
+   Per design pivot 2026-05-28: ambient radial gradients dilepas.
+   Atmosphere ditangani lewat warm paper tone, bukan glows. */
 body {
-  background-color: var(--paper);
-  background-image:
-    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.06), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.05), transparent 45%);
-  background-attachment: fixed;
+  background-color: var(--bg);
+  background-image: none;
 }
 
 .dark body {
-  background-image:
-    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.04), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.04), transparent 45%);
+  background-image: none;
+}
+
+/* ============================================
+   Klunting editorial helpers — `kl-*` per design handoff
+   ============================================ */
+
+/* Card editorial — pakai warm surface + line border */
+.kl-card {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.kl-card-pad    { padding: 20px; }
+.kl-card-pad-lg { padding: 24px; }
+
+/* Hero numbers + display headings — Instrument Serif */
+.kl-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.kl-display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Tabular numerics — DM Mono */
+.kl-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Section eyebrow label */
+.kl-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* Editorial chip / pill */
+.kl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Editorial button (pill, outline) */
+.kl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-ui, var(--font-sans));
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+.kl-btn:hover { background: var(--surface-2); }
+.kl-btn-primary {
+  background: var(--c-ink);
+  color: var(--bg);
+  border-color: var(--c-ink);
+}
+.dark .kl-btn-primary { background: var(--text); color: var(--bg); }
+.kl-btn-primary:hover { transform: translateY(-1px); }
+
+/* Progress bar editorial */
+.kl-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.kl-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/* Soft tint surface (used in callouts, AI insight cards) */
+.kl-tint {
+  background: var(--c-primary-soft);
+}
+
+/* Brand wordmark "k" with mint dot — landing + onboarding */
+.kl-brandmark {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--c-ink);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.kl-brandmark > span {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+.kl-brandmark::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-mint);
 }
 
 /* ============================================
