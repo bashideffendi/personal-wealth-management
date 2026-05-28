@@ -94,8 +94,9 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
           <AvatarFallback
             className="text-xs font-bold"
             style={{
-              background: 'var(--c-mint)',
+              background: 'linear-gradient(135deg, #10B981, #047857)',
               color: '#FFFFFF',
+              boxShadow: '0 2px 6px -2px rgba(16, 185, 129, 0.40)',
             }}
           >
             {initials}
@@ -176,7 +177,7 @@ function MenuItem({
       role="menuitem"
       onClick={onClick}
       className="flex w-full items-center gap-2 px-3 py-2 text-sm transition hover:bg-[var(--surface-2)]"
-      style={{ color: destructive ? '#DC2626' : 'var(--ink)' }}
+      style={{ color: destructive ? 'var(--c-coral)' : 'var(--ink)' }}
     >
       <Icon className="size-4 shrink-0" />
       {children}

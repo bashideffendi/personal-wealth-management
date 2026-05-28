@@ -73,7 +73,7 @@ export function AICreditsBadge() {
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors hover:opacity-90"
         style={{
-          background: empty ? 'rgba(239,68,68,0.10)' : low ? 'rgba(245,158,11,0.12)' : 'var(--c-mint-soft)',
+          background: empty ? 'var(--c-coral-soft)' : low ? 'var(--c-amber-soft)' : 'var(--c-mint-soft)',
           color: empty ? 'var(--c-coral)' : low ? 'var(--amber-700)' : 'var(--emerald-800)',
         }}
         title="Kredit AI — buat scan struk, AI parse, & insight"
@@ -112,7 +112,7 @@ export function AICreditsBadge() {
                   {status.current}
                 </p>
               </div>
-              <Zap className="size-5 fill-current" style={{ color: low ? '#F59E0B' : '#10B981' }} />
+              <Zap className="size-5 fill-current" style={{ color: low ? 'var(--c-amber)' : 'var(--c-mint)' }} />
             </div>
 
             {/* Progress bar — current vs cap, capped at 100% visual */}
@@ -122,10 +122,10 @@ export function AICreditsBadge() {
                 style={{
                   width: `${Math.min(100, pct)}%`,
                   background: empty
-                    ? '#EF4444'
+                    ? 'var(--c-coral)'
                     : low
-                      ? 'linear-gradient(90deg, #F59E0B, #EF4444)'
-                      : 'linear-gradient(90deg, #10B981, #6366F1)',
+                      ? 'linear-gradient(90deg, #F59E0B, #F43F5E)'
+                      : 'linear-gradient(90deg, #10B981, #047857)',
                 }}
               />
             </div>
@@ -160,8 +160,9 @@ export function AICreditsBadge() {
                 onClick={() => setOpen(false)}
                 className="mt-3 flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
                   color: '#FFFFFF',
+                  boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
                 }}
               >
                 <span>Upgrade ke Pro/Family</span>
