@@ -64,9 +64,9 @@ export function BottomTabBar() {
             onClick={openQuickAdd}
             className="relative -translate-y-3 size-14 rounded-full flex items-center justify-center shadow-lg transition active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-600))',
-              color: '#FFFFFF',
-              boxShadow: '0 8px 20px -4px rgba(16, 185, 129, 0.40)',
+              background: 'var(--c-ink)',
+              color: 'var(--bg)',
+              boxShadow: '0 8px 20px -4px rgba(0, 0, 0, 0.35)',
             }}
             aria-label="Tambah transaksi"
           >

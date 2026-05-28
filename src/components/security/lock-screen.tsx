@@ -105,7 +105,7 @@ export function LockScreen() {
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
+              background: 'var(--c-ink)',
               color: '#FFFFFF',
               boxShadow: '0 10px 28px -10px rgba(16,185,129,0.50)',
             }}
@@ -175,7 +175,7 @@ export function LockScreen() {
             disabled={pin.length < 4}
             className="mt-3 h-11 w-full rounded-lg text-sm font-semibold transition disabled:opacity-50"
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
+              background: 'var(--c-ink)',
               color: '#FFFFFF',
             }}
           >

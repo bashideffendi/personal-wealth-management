@@ -392,7 +392,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           <div
             className="rounded-2xl border p-5"
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-50), var(--surface) 60%)',
+              background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
               borderColor: 'var(--border)',
             }}
           >
@@ -835,7 +835,7 @@ function ResearchView({
         <div
           className="rounded-xl border p-4 flex items-start justify-between flex-wrap gap-3"
           style={{
-            background: 'linear-gradient(135deg, var(--emerald-50), var(--surface) 60%)',
+            background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
             borderColor: 'var(--border)',
           }}
         >
@@ -1019,14 +1019,14 @@ function GenerateResearchEmpty({
       <div
         className="rounded-2xl border p-8 sm:p-10 text-center"
         style={{
-          background: 'linear-gradient(135deg, var(--emerald-50), var(--surface) 60%)',
+          background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
           borderColor: 'var(--border)',
         }}
       >
         <div
           className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
           style={{
-            background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-700))',
+            background: 'var(--c-ink)',
             color: '#FFFFFF',
           }}
         >

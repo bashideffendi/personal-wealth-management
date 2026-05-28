@@ -122,7 +122,7 @@ export function InstallPrompt() {
           <div
             className="flex size-10 shrink-0 items-center justify-center rounded-xl"
             style={{
-              background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-600))',
+              background: 'var(--c-ink)',
               color: '#FFFFFF',
             }}
           >
@@ -152,7 +152,7 @@ export function InstallPrompt() {
                 onClick={handleInstall}
                 className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition active:scale-[0.98]"
                 style={{
-                  background: 'linear-gradient(135deg, var(--emerald-500), var(--emerald-600))',
+                  background: 'var(--c-ink)',
                   color: '#FFFFFF',
                 }}
               >

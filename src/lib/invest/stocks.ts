@@ -81,7 +81,9 @@ export interface Stock {
   metrics: Record<string, Record<string, number>>
 }
 
-const STOCKS = stocksRaw as Stock[]
+// Cast via unknown first — stocksRaw is JSON with optional year keys
+// that TS infers as undefined-prone; runtime data is always number.
+const STOCKS = stocksRaw as unknown as Stock[]
 
 export function getStock(ticker: string): Stock | undefined {
   const t = ticker.toUpperCase()

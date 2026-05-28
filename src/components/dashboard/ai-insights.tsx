@@ -234,7 +234,7 @@ export function AIInsightsCard({
     <div
       className="rounded-2xl border p-5 sm:p-6 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(160deg, var(--surface), var(--emerald-50))',
+        background: 'linear-gradient(160deg, var(--surface), var(--c-mint-soft))',
         borderColor: 'var(--emerald-100)',
       }}
     >
@@ -423,7 +423,7 @@ function WelcomeInsights() {
       <div className="flex items-center gap-2 mb-4">
         <div
           className="size-8 rounded-lg flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, var(--emerald-500), var(--sky-500))' }}
+          style={{ background: 'linear-gradient(135deg, var(--c-primary), var(--c-mint))' }}
         >
           <Sparkles className="size-4 text-white" />
         </div>
