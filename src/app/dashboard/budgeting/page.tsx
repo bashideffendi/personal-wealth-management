@@ -439,21 +439,42 @@ export default function BudgetingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header — clean fintech page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {/* Dark gradient hero */}
+      <section
+        className="relative overflow-hidden rounded-3xl"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          color: '#F5F5F7',
+          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+        }}
+      >
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: -100, right: -60, width: 360, height: 360,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+          }}
+        />
+        <div className="relative p-6 sm:p-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="eyebrow">Perencanaan · {year}</p>
+          <p
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            style={{ color: '#6EE7B7' }}
+          >
+            Perencanaan · {year}
+          </p>
           <h1
-            className="font-bold tracking-tight mt-1"
+            className="font-bold tracking-tight mt-2"
             style={{
               fontSize: 'clamp(28px, 4vw, 40px)',
-              color: 'var(--ink)',
+              color: '#FFFFFF',
               letterSpacing: '-0.035em',
             }}
           >
             Anggaran Tahunan
           </h1>
-          <p className="text-sm mt-2 flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <p className="text-sm mt-2 flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
             Distribusi pendapatan, pengeluaran, tabungan, &amp; investasi sepanjang tahun.
             <EduTip topic="budget-method" side="bottom" />
           </p>
@@ -462,13 +483,21 @@ export default function BudgetingPage() {
           <Button
             variant="outline"
             onClick={() => setSelectorOpen(true)}
-            className="btn-outline"
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.14)',
+            }}
           >
             <SlidersHorizontal className="h-4 w-4" />
             Pilih Kategori
           </Button>
           <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[120px]" style={{
+              background: 'rgba(255,255,255,0.08)',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.14)',
+            }}>
               <SelectValue placeholder="Tahun" />
             </SelectTrigger>
             <SelectContent>
@@ -476,7 +505,8 @@ export default function BudgetingPage() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Summary Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-lg">
