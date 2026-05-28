@@ -23,13 +23,13 @@ const CAT_LABELS: Record<string, string> = {
 // Vivid palette tuned for distinguishability across 8 categories.
 // Order matters — 1st category gets emerald (the brand color).
 const DONUT_PALETTE = [
-  '#10B981', // emerald
+  '#10B981', // emerald — main
   '#0EA5E9', // sky
   '#F59E0B', // amber
   '#8B5CF6', // violet
-  '#EF4444', // coral
-  '#EC4899', // pink
-  '#14B8A6', // teal
+  '#F43F5E', // coral
+  '#34D399', // emerald-400 — secondary
+  '#7DD3FC', // sky-300
   '#737373', // gray (last resort)
 ]
 
@@ -293,14 +293,14 @@ export default function InvestmentOverviewPage() {
           value={formatCurrency(totals.pl)}
           icon={up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           glow={up ? 'glow-emerald' : 'glow-rose'}
-          accent={up ? '#10B981' : '#E11D48'}
+          accent={up ? '#10B981' : '#F43F5E'}
         />
         <MiniStat
           label="Return"
           value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
           icon={<Percent className="h-4 w-4" />}
           glow={up ? 'glow-emerald' : 'glow-rose'}
-          accent={up ? '#10B981' : '#E11D48'}
+          accent={up ? '#10B981' : '#F43F5E'}
         />
       </div>
 
@@ -326,9 +326,9 @@ export default function InvestmentOverviewPage() {
                     : diversification === 'sedang' ? 'rgba(245,158,11,0.14)'
                     : 'rgba(239,68,68,0.12)',
                   color:
-                    diversification === 'tinggi' ? '#065F46'
-                    : diversification === 'sedang' ? '#92400E'
-                    : '#991B1B',
+                    diversification === 'tinggi' ? 'var(--c-mint)'
+                    : diversification === 'sedang' ? 'var(--amber-700)'
+                    : 'var(--c-coral)',
                 }}
                 title={`Top kategori = ${topCatPct.toFixed(0)}% dari portofolio`}
               >
@@ -437,7 +437,7 @@ export default function InvestmentOverviewPage() {
                   {worstPerformer && worstPerformer.invested > 0 && worstPerformer.pl < 0 && (
                     <div
                       className="rounded-lg p-2.5 border"
-                      style={{ background: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.20)' }}
+                      style={{ background: 'rgba(244,63,94,0.05)', borderColor: 'rgba(244,63,94,0.20)' }}
                       title={privacyHidden ? worstPerformer.i.name : `${worstPerformer.i.name}: ${formatCurrency(worstPerformer.market)}`}
                     >
                       <p className="text-[9px] uppercase tracking-wide" style={{ color: '#F43F5E' }}>
@@ -540,7 +540,7 @@ export default function InvestmentOverviewPage() {
                         className="num font-semibold tabular px-1.5 py-0.5 rounded"
                         style={{
                           color: plUp ? '#10B981' : '#F43F5E',
-                          background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(239,68,68,0.10)',
+                          background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)',
                         }}
                       >
                         {plUp ? '+' : ''}{pct.toFixed(2)}%
