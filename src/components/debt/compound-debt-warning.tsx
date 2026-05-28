@@ -80,20 +80,20 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
       className="rounded-2xl border p-5 sm:p-6"
       style={{
         background: isHighRate
-          ? 'linear-gradient(135deg, rgba(220,38,38,0.04), var(--surface) 50%)'
+          ? 'linear-gradient(135deg, rgba(244,63,94,0.04), var(--surface) 50%)'
           : 'var(--surface)',
-        borderColor: isHighRate ? 'rgba(220,38,38,0.20)' : 'var(--border)',
+        borderColor: isHighRate ? 'rgba(244,63,94,0.20)' : 'var(--border)',
       }}
     >
       <div className="flex items-start gap-3 mb-3">
         <div
           className="size-9 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: isHighRate ? 'rgba(220,38,38,0.10)' : 'rgba(245,158,11,0.10)' }}
+          style={{ background: isHighRate ? 'rgba(244,63,94,0.10)' : 'rgba(245,158,11,0.12)' }}
         >
           {isHighRate ? (
-            <AlertCircle className="size-4" style={{ color: '#DC2626' }} />
+            <AlertCircle className="size-4" style={{ color: 'var(--c-coral)' }} />
           ) : (
-            <TrendingUp className="size-4" style={{ color: '#F59E0B' }} />
+            <TrendingUp className="size-4" style={{ color: 'var(--c-amber)' }} />
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -110,7 +110,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
       {/* Headline scenario — what 1 month of interest looks like */}
       <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--ink)' }}>
         {label ? <span className="font-semibold">{label}</span> : 'Utang ini'} dengan bunga{' '}
-        <span className="font-bold" style={{ color: isHighRate ? '#DC2626' : '#F59E0B' }}>
+        <span className="font-bold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--c-amber)' }}>
           {annualRate.toFixed(1)}%/thn
         </span>
         {' '}generate{' '}
@@ -150,7 +150,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
       {after5y && after5y.totalInterest > 0 && (
         <p className="text-[11px] leading-relaxed mt-3 pt-3 border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
           Total bunga yang kamu bayar dalam 5 tahun:{' '}
-          <span className="num font-semibold" style={{ color: isHighRate ? '#DC2626' : 'var(--ink)' }}>
+          <span className="num font-semibold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--ink)' }}>
             {formatCurrency(after5y.totalInterest)}
           </span>
           . Bayar di atas minimum bisa potong total bunga drastis.
@@ -175,7 +175,7 @@ function ProjectionStat({
       </p>
       <p
         className="num tabular text-sm font-bold mt-1"
-        style={{ color: highlight ? '#DC2626' : 'var(--ink)' }}
+        style={{ color: highlight ? 'var(--c-coral)' : 'var(--ink)' }}
       >
         {formatCurrency(balance)}
       </p>

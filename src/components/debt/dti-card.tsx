@@ -66,8 +66,8 @@ function getZone(ratio: number, hasNoDebt: boolean): Zone {
   }
   return {
     label: 'At Risk',
-    color: '#DC2626',
-    bg: 'rgba(220,38,38,0.10)',
+    color: '#F43F5E',
+    bg: 'rgba(244,63,94,0.10)',
     description: 'Cicilan >50% income. Risiko tinggi — prioritas pelunasan utang.',
   }
 }
@@ -131,7 +131,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
         <div
           className="relative h-3 rounded-full overflow-hidden"
           style={{
-            background: 'linear-gradient(90deg, #10B981 0%, #10B981 33%, #F59E0B 50%, #F59E0B 60%, #EA580C 75%, #DC2626 100%)',
+            background: 'linear-gradient(90deg, #10B981 0%, #10B981 33%, #F59E0B 50%, #F59E0B 60%, #FB7185 80%, #F43F5E 100%)',
           }}
         >
           {/* Marker */}
