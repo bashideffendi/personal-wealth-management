@@ -77,7 +77,7 @@ export function GoalProbabilityMeter({
   }
 
   const prob = result.probability
-  const probColor = prob >= 70 ? '#10B981' : prob >= 40 ? '#F59E0B' : '#DC2626'
+  const probColor = prob >= 70 ? '#10B981' : prob >= 40 ? '#F59E0B' : '#F43F5E'
   const probLabel = prob >= 80 ? 'Sangat mungkin'
     : prob >= 60 ? 'Mungkin tercapai'
     : prob >= 40 ? 'Berisiko meleset'

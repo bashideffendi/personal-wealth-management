@@ -59,7 +59,7 @@ interface Plan {
 const ACCENT_COLORS = [
   { id: 'burgundy', name: 'Burgundy', hex: '#8b1538' },
   { id: 'indigo',   name: 'Indigo',   hex: '#4f46e5' },
-  { id: 'emerald',  name: 'Emerald',  hex: '#059669' },
+  { id: 'emerald',  name: 'Emerald',  hex: '#10B981' },
   { id: 'amber',    name: 'Amber',    hex: '#d97706' },
   { id: 'rose',     name: 'Rose',     hex: '#e11d48' },
   { id: 'slate',    name: 'Graphite', hex: '#475569' },

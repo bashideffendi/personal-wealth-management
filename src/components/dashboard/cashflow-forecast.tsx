@@ -209,9 +209,9 @@ export function CashFlowForecast({
       className="rounded-2xl border p-4 sm:p-5"
       style={{
         background: hasNegative
-          ? 'linear-gradient(135deg, rgba(220,38,38,0.04), var(--surface) 50%)'
+          ? 'linear-gradient(135deg, rgba(244,63,94,0.04), var(--surface) 50%)'
           : 'var(--surface)',
-        borderColor: hasNegative ? 'rgba(220,38,38,0.20)' : 'var(--border)',
+        borderColor: hasNegative ? 'rgba(244,63,94,0.20)' : 'var(--border)',
       }}
     >
       {/* Compact header — title + status badge in one row, mini sparkline beside */}
@@ -290,7 +290,7 @@ export function CashFlowForecast({
             {minBal < 0 && (
               <line
                 x1="0" y1={zeroY} x2={chartW} y2={zeroY}
-                stroke="#DC2626" strokeWidth="0.8" opacity="0.7"
+                stroke="#F43F5E" strokeWidth="0.8" opacity="0.7"
               />
             )}
             <polygon

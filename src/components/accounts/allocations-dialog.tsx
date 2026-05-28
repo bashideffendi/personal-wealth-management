@@ -259,7 +259,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
               </p>
               <p
                 className="num tabular text-xl font-semibold mt-0.5"
-                style={{ color: overAllocated ? '#DC2626' : '#059669' }}
+                style={{ color: overAllocated ? 'var(--c-coral)' : 'var(--c-mint)' }}
               >
                 {overAllocated ? '−' : ''}{formatCurrency(Math.abs(free))}
               </p>

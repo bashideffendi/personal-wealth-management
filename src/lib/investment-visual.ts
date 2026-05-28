@@ -93,10 +93,10 @@ export const INVESTMENT_VISUAL: Record<string, InvestmentVisual> = {
   // SBN Ritel — Indonesian flag colors (red+white restraint), use red on white
   sbn: {
     icon: Landmark,
-    gradient: 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)',
+    gradient: 'linear-gradient(135deg, #F43F5E 0%, #991B1B 100%)',
     bgTint: 'rgba(220, 38, 38, 0.06)',
     borderTint: 'rgba(220, 38, 38, 0.22)',
-    accent: '#DC2626',
+    accent: '#F43F5E',
     fg: '#991B1B',
   },
 

@@ -35,15 +35,15 @@ function getZone(ratio: number, hasNoDebt: boolean): Zone {
   if (hasNoDebt) {
     return {
       label: 'Bebas Utang',
-      color: '#059669',
-      bg: 'rgba(5,150,105,0.10)',
+      color: '#10B981',
+      bg: 'rgba(16,185,129,0.10)',
       description: 'Tidak ada utang aktif. Manfaatkan untuk akselerasi investasi.',
     }
   }
   if (ratio < 0.20) return {
     label: 'Excellent',
-    color: '#059669',
-    bg: 'rgba(5,150,105,0.10)',
+    color: '#10B981',
+    bg: 'rgba(16,185,129,0.10)',
     description: 'Cicilan sangat aman, ada banyak ruang untuk goals lain.',
   }
   if (ratio < 0.30) return {

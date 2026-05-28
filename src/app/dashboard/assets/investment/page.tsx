@@ -293,14 +293,14 @@ export default function InvestmentOverviewPage() {
           value={formatCurrency(totals.pl)}
           icon={up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           glow={up ? 'glow-emerald' : 'glow-rose'}
-          accent={up ? '#059669' : '#E11D48'}
+          accent={up ? '#10B981' : '#E11D48'}
         />
         <MiniStat
           label="Return"
           value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
           icon={<Percent className="h-4 w-4" />}
           glow={up ? 'glow-emerald' : 'glow-rose'}
-          accent={up ? '#059669' : '#E11D48'}
+          accent={up ? '#10B981' : '#E11D48'}
         />
       </div>
 
@@ -390,7 +390,7 @@ export default function InvestmentOverviewPage() {
                   <p className="num tabular text-base font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                     {formatCompactCurrency(totals.market)}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: up ? '#059669' : '#DC2626' }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: up ? '#10B981' : '#F43F5E' }}>
                     {up ? '+' : ''}{totals.plPct.toFixed(2)}%
                   </p>
                 </div>
@@ -423,13 +423,13 @@ export default function InvestmentOverviewPage() {
                       style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.20)' }}
                       title={privacyHidden ? bestPerformer.i.name : `${bestPerformer.i.name}: ${formatCurrency(bestPerformer.market)}`}
                     >
-                      <p className="text-[9px] uppercase tracking-wide" style={{ color: '#059669' }}>
+                      <p className="text-[9px] uppercase tracking-wide" style={{ color: '#10B981' }}>
                         ▲ Top performer
                       </p>
                       <p className="text-[11px] font-semibold truncate mt-0.5" style={{ color: 'var(--ink)' }}>
                         {bestPerformer.i.name || CAT_LABELS[bestPerformer.i.category]}
                       </p>
-                      <p className="num tabular text-xs font-semibold mt-0.5" style={{ color: '#059669' }}>
+                      <p className="num tabular text-xs font-semibold mt-0.5" style={{ color: '#10B981' }}>
                         +{bestPerformer.invested > 0 ? ((bestPerformer.pl / bestPerformer.invested) * 100).toFixed(1) : '0'}%
                       </p>
                     </div>
@@ -440,13 +440,13 @@ export default function InvestmentOverviewPage() {
                       style={{ background: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.20)' }}
                       title={privacyHidden ? worstPerformer.i.name : `${worstPerformer.i.name}: ${formatCurrency(worstPerformer.market)}`}
                     >
-                      <p className="text-[9px] uppercase tracking-wide" style={{ color: '#DC2626' }}>
+                      <p className="text-[9px] uppercase tracking-wide" style={{ color: '#F43F5E' }}>
                         ▼ Underperform
                       </p>
                       <p className="text-[11px] font-semibold truncate mt-0.5" style={{ color: 'var(--ink)' }}>
                         {worstPerformer.i.name || CAT_LABELS[worstPerformer.i.category]}
                       </p>
-                      <p className="num tabular text-xs font-semibold mt-0.5" style={{ color: '#DC2626' }}>
+                      <p className="num tabular text-xs font-semibold mt-0.5" style={{ color: '#F43F5E' }}>
                         {((worstPerformer.pl / worstPerformer.invested) * 100).toFixed(1)}%
                       </p>
                     </div>
@@ -539,7 +539,7 @@ export default function InvestmentOverviewPage() {
                       <span
                         className="num font-semibold tabular px-1.5 py-0.5 rounded"
                         style={{
-                          color: plUp ? '#059669' : '#DC2626',
+                          color: plUp ? '#10B981' : '#F43F5E',
                           background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(239,68,68,0.10)',
                         }}
                       >

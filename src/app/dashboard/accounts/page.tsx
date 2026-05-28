@@ -428,7 +428,7 @@ export default function AccountsPage() {
                     {formatCurrency(a.current_balance ?? 0)}
                   </p>
                   {totalAllocated > 0 && (
-                    <p className="text-[11px] mt-0.5" style={{ color: free < 0 ? '#DC2626' : 'var(--ink-soft)' }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: free < 0 ? '#F43F5E' : 'var(--ink-soft)' }}>
                       Bebas {formatCurrency(free)} · Dialokasi {formatCurrency(totalAllocated)}
                     </p>
                   )}

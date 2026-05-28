@@ -803,7 +803,7 @@ function ChangeStat({ label, change }: { label: string; change: { delta: number;
     )
   }
   const positive = change.delta >= 0
-  const color = positive ? '#059669' : '#DC2626'
+  const color = positive ? 'var(--c-mint)' : 'var(--c-coral)'
   const Icon = positive ? TrendingUp : TrendingDown
   return (
     <div>

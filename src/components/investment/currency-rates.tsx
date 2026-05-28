@@ -121,8 +121,8 @@ export function CurrencyRates() {
               change === null
                 ? 'var(--ink-soft)'
                 : change >= 0
-                  ? '#059669'
-                  : '#DC2626'
+                  ? '#10B981'
+                  : '#F43F5E'
             return (
               <div
                 key={pair.ticker}
@@ -150,7 +150,7 @@ export function CurrencyRates() {
                       className="text-[10px] num tabular font-semibold shrink-0 px-1.5 py-0.5 rounded"
                       style={{
                         color: changeColor,
-                        background: change >= 0 ? 'rgba(5,150,105,0.10)' : 'rgba(220,38,38,0.10)',
+                        background: change >= 0 ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)',
                       }}
                     >
                       {change >= 0 ? '+' : ''}{change.toFixed(2)}%

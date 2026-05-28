@@ -729,17 +729,17 @@ export default function DashboardPage() {
                           <div className="w-full text-right leading-none">
                             {hasIncome && hasExpense ? (
                               <>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: '#059669' }}>
+                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: '#10B981' }}>
                                   +{tight(d.income)}
                                 </p>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: '#DC2626' }}>
+                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: '#F43F5E' }}>
                                   −{tight(d.expense)}
                                 </p>
                               </>
                             ) : (
                               <p
                                 className="num tabular text-[9px] sm:text-[11px] font-semibold"
-                                style={{ color: hasIncome ? '#059669' : '#DC2626' }}
+                                style={{ color: hasIncome ? '#10B981' : '#F43F5E' }}
                               >
                                 {hasIncome ? '+' : '−'}
                                 {tight(hasIncome ? d.income : d.expense)}
@@ -948,8 +948,8 @@ export default function DashboardPage() {
                       className="num tabular text-sm font-semibold mt-0.5"
                       style={{
                         color: investmentSummary.unrealizedPL >= 0
-                          ? '#059669'
-                          : '#DC2626',
+                          ? '#10B981'
+                          : '#F43F5E',
                       }}
                     >
                       {investmentSummary.unrealizedPL >= 0 ? '+' : ''}
@@ -1068,7 +1068,7 @@ export default function DashboardPage() {
                             {h.cost > 0 && (
                               <span
                                 className="text-[10px] tabular shrink-0 font-medium"
-                                style={{ color: h.pl >= 0 ? '#059669' : '#DC2626' }}
+                                style={{ color: h.pl >= 0 ? '#10B981' : '#F43F5E' }}
                               >
                                 {h.pl >= 0 ? '+' : ''}{plPct.toFixed(1)}%
                               </span>

@@ -95,7 +95,7 @@ export interface FHSResult {
 const TIER_META: Record<FHSTier, { label: string; color: string; description: string }> = {
   vulnerable: {
     label: 'Rentan',
-    color: '#DC2626',
+    color: '#F43F5E',
     description: 'Keuangan rentan — fokus stabilkan cashflow & buffer dulu.',
   },
   coping: {
@@ -110,7 +110,7 @@ const TIER_META: Record<FHSTier, { label: string; color: string; description: st
   },
   thriving: {
     label: 'Prima',
-    color: '#059669',
+    color: '#10B981',
     description: 'Kondisi prima. Optimasi pajak & estate planning mungkin next step.',
   },
 }

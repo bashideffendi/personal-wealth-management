@@ -173,7 +173,7 @@ function PensionGapCalculator() {
     : 'At Risk'
   const statusColor = onTrack ? '#10B981'
     : result.replacementActual >= replacementTarget * 0.7 ? '#F59E0B'
-    : '#DC2626'
+    : '#F43F5E'
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
@@ -232,7 +232,7 @@ function PensionGapCalculator() {
           />
           <ResultRow label="Target / bln" v={result.targetMonthly} />
           {result.gap > 0 && (
-            <ResultRow label="GAP / bln" v={result.gap} accent="#DC2626" />
+            <ResultRow label="GAP / bln" v={result.gap} accent="#F43F5E" />
           )}
         </div>
 
@@ -244,7 +244,7 @@ function PensionGapCalculator() {
               background: 'rgba(16,185,129,0.06)',
             }}
           >
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#059669' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#10B981' }}>
               Rekomendasi
             </p>
             <p className="text-sm mt-2" style={{ color: 'var(--ink)' }}>

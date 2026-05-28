@@ -413,13 +413,13 @@ export default function InvestmentCategoryPage() {
                 label="P/L"
                 value={formatCurrency(totals.pl)}
                 glow={up ? 'glow-emerald' : 'glow-rose'}
-                accent={up ? '#059669' : '#E11D48'}
+                accent={up ? '#10B981' : '#E11D48'}
               />
               <MiniStat
                 label="Return"
                 value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
                 glow={up ? 'glow-emerald' : 'glow-rose'}
-                accent={up ? '#059669' : '#E11D48'}
+                accent={up ? '#10B981' : '#E11D48'}
               />
             </div>
           )}

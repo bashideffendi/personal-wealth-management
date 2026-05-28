@@ -125,7 +125,7 @@ export default function MonthlyReportPage() {
   const periodLabel = `${MONTHS[month - 1]} ${year}`
 
   const expenseDonut = recap.expense_by_category.slice(0, 6).map((c) => ({ name: c.name, value: c.amount }))
-  const PIE_COLORS = ['#8B1538', '#D97706', '#059669', '#4F46E5', '#E11D48', '#737373']
+  const PIE_COLORS = ['#8B1538', '#D97706', '#10B981', '#4F46E5', '#E11D48', '#737373']
 
   if (loading) {
     return (
@@ -429,7 +429,7 @@ export default function MonthlyReportPage() {
 
 function KpiCard({ label, value, accent, icon, note }: { label: string; value: string; accent: 'emerald' | 'rose' | 'amber' | 'indigo'; icon: React.ReactNode; note?: string }) {
   const colors: Record<string, { bg: string; fg: string }> = {
-    emerald: { bg: '#D1FAE5', fg: '#059669' },
+    emerald: { bg: '#D1FAE5', fg: '#10B981' },
     rose:    { bg: '#FFE4E6', fg: '#E11D48' },
     amber:   { bg: '#FEF3C7', fg: '#D97706' },
     indigo:  { bg: '#E0E7FF', fg: '#4F46E5' },
