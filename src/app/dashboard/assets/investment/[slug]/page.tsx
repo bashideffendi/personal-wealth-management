@@ -341,7 +341,7 @@ export default function InvestmentCategoryPage() {
             ? 'Saham IDX & US — pakai ticker .JK untuk IDX (contoh: BBCA.JK) atau simbol langsung (AAPL).'
             : category === 'crypto'
               ? 'Harga real-time dari Binance · Format ticker: BTC-USD, ETH-USD, SOL-USD.'
-              : 'Kelola posisi ' + subcat.label.toLowerCase() + ' Anda.'}
+              : 'Kelola posisi ' + subcat.label.toLowerCase() + ' kamu.'}
         </p>
         <div className="flex gap-2 items-center">
           {/* View toggle — Card / List. Hidden when no positions yet. */}
@@ -598,7 +598,7 @@ export default function InvestmentCategoryPage() {
                 ? 'IDX: BBCA.JK, TLKM.JK · US: AAPL, GOOGL'
                 : category === 'crypto'
                   ? 'Cari coin dari Binance · Format ticker: BTC-USD, ETH-USD, SOL-USD'
-                  : 'Isi detail posisi investasi Anda.'}
+                  : 'Isi detail posisi investasi kamu.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">

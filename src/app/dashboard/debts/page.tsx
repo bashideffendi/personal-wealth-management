@@ -271,7 +271,7 @@ export default function DebtsOverviewPage() {
       {/* Action */}
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Daftar semua utang Anda.
+          Daftar semua utang kamu.
         </p>
         <Button onClick={() => { setForm(emptyForm); setDialogOpen(true) }}>
           <Plus className="h-4 w-4" /> Tambah Utang
@@ -345,7 +345,7 @@ export default function DebtsOverviewPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{form.id ? 'Edit Utang' : 'Tambah Utang'}</DialogTitle>
-            <DialogDescription>Isi detail utang Anda.</DialogDescription>
+            <DialogDescription>Isi detail utang kamu.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">

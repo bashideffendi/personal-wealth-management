@@ -177,7 +177,7 @@ export default function NonLiquidAssetsPage() {
         <div className="s-card p-12 text-center">
           <p className="font-semibold">Belum ada aset non-likuid</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Tambahkan properti, kendaraan, atau barang berharga Anda.
+            Tambahkan properti, kendaraan, atau barang berharga kamu.
           </p>
         </div>
       ) : (

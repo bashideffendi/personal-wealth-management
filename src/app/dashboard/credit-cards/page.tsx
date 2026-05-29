@@ -297,7 +297,7 @@ export default function CreditCardsPage() {
                 <div className="s-card p-12 text-center">
                   <p className="font-semibold">Belum ada kartu kredit</p>
                   <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-                    Tambahkan kartu pertama Anda untuk mulai melacak.
+                    Tambahkan kartu pertama kamu untuk mulai melacak.
                   </p>
                 </div>
               ) : (

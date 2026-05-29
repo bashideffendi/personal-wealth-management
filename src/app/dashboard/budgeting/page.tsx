@@ -667,7 +667,7 @@ export default function BudgetingPage() {
           <DialogHeader>
             <DialogTitle>Pilih Kategori yang Dipakai</DialogTitle>
             <DialogDescription>
-              Centang hanya kategori yang ingin Anda gunakan. Kategori yang tidak dicentang akan disembunyikan dari tabel anggaran.
+              Centang hanya kategori yang ingin kamu pakai. Kategori yang tidak dicentang akan disembunyikan dari tabel anggaran.
             </DialogDescription>
           </DialogHeader>
 

@@ -139,7 +139,7 @@ export default function DebtPaymentsPage() {
         <div className="s-card p-12 text-center">
           <Receipt className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
           <p className="mt-3 font-semibold">Belum ada riwayat pembayaran</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat pembayaran pertama Anda.</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat pembayaran pertama kamu.</p>
         </div>
       ) : (
         <div className="s-card overflow-hidden">

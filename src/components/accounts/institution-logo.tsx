@@ -39,7 +39,7 @@ const BANK_GRADIENTS = [
   'linear-gradient(135deg, #14B8A6, #0F766E)',
 ]
 const WALLET_GRADIENTS = [
-  'linear-gradient(135deg, #10B981, #059669)',
+  'linear-gradient(135deg, #10B981, #047857)',
   'linear-gradient(135deg, #8B5CF6, #6D28D9)',
   'linear-gradient(135deg, #F59E0B, #D97706)',
   'linear-gradient(135deg, #EC4899, #BE185D)',

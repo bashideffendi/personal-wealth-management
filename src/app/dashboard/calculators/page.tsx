@@ -336,7 +336,7 @@ function FireCalculator() {
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
           <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--c-mint)" />
           <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
-            Dengan menabung/investasi <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>/bulan selama {result.yearsToRetire} tahun pada return {annualReturn}%/tahun, Anda bisa pensiun umur {retireAge}.
+            Dengan menabung/investasi <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>/bulan selama {result.yearsToRetire} tahun pada return {annualReturn}%/tahun, kamu bisa pensiun umur {retireAge}.
           </p>
         </div>
       </div>

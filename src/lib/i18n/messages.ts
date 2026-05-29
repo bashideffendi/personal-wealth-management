@@ -139,7 +139,7 @@ export const messages = {
     auth: {
       login_page: 'Masuk',
       welcome_back: 'Selamat Datang Kembali',
-      login_description: 'Masuk ke dashboard keuangan Anda.',
+      login_description: 'Masuk ke dashboard keuangan kamu.',
       email: 'Email',
       password: 'Kata Sandi',
       login_button: 'Masuk',
@@ -154,7 +154,7 @@ export const messages = {
       login_link: 'Masuk',
       processing: 'Memproses...',
       error_generic: 'Terjadi kesalahan. Silakan coba lagi.',
-      success_register: 'Registrasi berhasil! Silakan cek email Anda.',
+      success_register: 'Registrasi berhasil! Cek email kamu, ya.',
     },
     transactions: {
       title: 'Log Transaksi',

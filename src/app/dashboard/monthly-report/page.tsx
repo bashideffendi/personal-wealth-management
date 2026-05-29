@@ -207,7 +207,7 @@ export default function MonthlyReportPage() {
                 {periodLabel}
               </h1>
               <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                {recap.tx_count} transaksi · disiapkan untuk {user?.name ?? 'Anda'}
+                {recap.tx_count} transaksi · disiapkan untuk {user?.name ?? 'kamu'}
               </p>
               <p className="text-xs mt-1 hidden print:block" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 Dibuat: {generatedDate}

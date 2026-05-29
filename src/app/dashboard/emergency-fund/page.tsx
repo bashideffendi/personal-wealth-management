@@ -347,7 +347,7 @@ export default function EmergencyFundPage() {
 
             {/* Target */}
             <div className="grid gap-1.5">
-              <Label htmlFor="target">Target Anda (Rp)</Label>
+              <Label htmlFor="target">Target kamu (Rp)</Label>
               <NumberInput
                 id="target"
                 value={targetAmount}
