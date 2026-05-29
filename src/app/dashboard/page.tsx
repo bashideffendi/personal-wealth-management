@@ -1082,8 +1082,5 @@ export default function DashboardPage() {
   )
 }
 
-// InsightsPanel, Row2, HealthScorePanel — extracted to components/dashboard/*.tsx
-
-// NetWorthHero, HealthScorePanel, InsightsPanel, Row2,
-// UpcomingBills, RecentTransactions, GoalsWidget — all extracted to
-// components/dashboard/*.tsx
+// NetWorthHero, InsightsPanel, Row2, UpcomingBills, RecentTransactions,
+// GoalsWidget — all extracted to components/dashboard/*.tsx
