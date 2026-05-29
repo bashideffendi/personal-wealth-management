@@ -1,0 +1,23 @@
+-- ============================================================
+-- 028 — Drop the over-broad invitation read policy (part 2 of 2, FINAL)
+--
+-- Removes the policy that let any authenticated user enumerate every pending
+-- invitation + its token. After this, invitations are readable only via:
+--   - "Members can see invitations of their household" (own household), and
+--   - the get_household_invitation(token) RPC from migration 027 (exact-token,
+--     single-row, no token leaked).
+--
+-- >>> APPLY LAST — only AFTER the updated join page (which uses the RPC from
+-- 027) is DEPLOYED. If you drop this before the new page is live, the OLD
+-- deployed join page (which does a direct `.from('household_invitations')
+-- .select(...).eq('token', ...)`) loses its read path and every invite link
+-- shows "Undangan tidak ditemukan" until the deploy lands.
+--
+-- Rollback if needed:
+--   create policy "Anyone can read invitation by token"
+--     on public.household_invitations for select
+--     to authenticated
+--     using (status = 'pending' and expires_at > now());
+-- ============================================================
+
+drop policy if exists "Anyone can read invitation by token" on public.household_invitations;

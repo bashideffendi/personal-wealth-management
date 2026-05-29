@@ -41,28 +41,30 @@ export default function JoinHouseholdPage() {
     const token = params.token
     if (!token) { setState({ kind: 'invalid', reason: 'Token undangan tidak ada di URL.' }); return }
 
-    // Fetch invitation row + nested household name + inviter profile name
-    const { data: invData, error: invErr } = await supabase
-      .from('household_invitations')
-      .select('id, status, expires_at, household_id, invited_by, households(name, max_seats), profiles!household_invitations_invited_by_fkey(full_name)')
-      .eq('token', token)
+    // Look up the invitation via a SECURITY DEFINER RPC that returns ONLY the
+    // single row matching this exact token (safe display fields, never the
+    // token or a list) — keeps invite tokens un-enumerable. See migrations
+    // 027/028. The RPC also resolves member_count + inviter name server-side,
+    // which the old client query couldn't read under RLS.
+    const { data, error } = await supabase
+      .rpc('get_household_invitation', { invite_token: token })
       .maybeSingle()
 
-    if (invErr || !invData) {
+    if (error || !data) {
       setState({ kind: 'invalid', reason: 'Undangan tidak ditemukan. Mungkin sudah kedaluwarsa atau dibatalkan.' })
       return
     }
 
-    type RawInv = {
-      id: string
+    type InvRow = {
       status: string
       expires_at: string
       household_id: string
-      invited_by: string
-      households: { name: string; max_seats: number } | null
-      profiles: { full_name: string | null } | null
+      household_name: string | null
+      max_seats: number | null
+      invited_by_name: string | null
+      member_count: number | null
     }
-    const inv = invData as RawInv
+    const inv = data as InvRow
 
     if (inv.status !== 'pending') {
       setState({ kind: 'invalid', reason: `Undangan ini sudah ${inv.status === 'accepted' ? 'diterima' : inv.status === 'revoked' ? 'dibatalkan' : 'kedaluwarsa'}.` })
@@ -74,20 +76,14 @@ export default function JoinHouseholdPage() {
       return
     }
 
-    // Member count
-    const { count } = await supabase
-      .from('household_members')
-      .select('user_id', { count: 'exact', head: true })
-      .eq('household_id', inv.household_id)
-
     setState({
       kind: 'preview',
       data: {
-        household_name: inv.households?.name ?? 'Keluarga',
-        member_count: count ?? 0,
-        max_seats: inv.households?.max_seats ?? 4,
+        household_name: inv.household_name ?? 'Keluarga',
+        member_count: inv.member_count ?? 0,
+        max_seats: inv.max_seats ?? 4,
         expires_at: inv.expires_at,
-        invited_by_name: inv.profiles?.full_name ?? null,
+        invited_by_name: inv.invited_by_name ?? null,
       },
     })
   }
