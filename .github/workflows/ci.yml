@@ -1,0 +1,38 @@
+name: CI
+
+# Gate before merge/deploy: type-check + compile (and lint as a signal).
+# Vercel deploys independently; this catches breakage early on push/PR.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Lint (non-blocking signal)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build (TypeScript type-check + compile)
+        run: npm run build
+        env:
+          # Placeholders so the build doesn't require real secrets. The app
+          # reads real values at runtime on Vercel, not at build time.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key-for-ci-build-only
