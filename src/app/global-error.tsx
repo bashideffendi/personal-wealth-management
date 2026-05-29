@@ -84,24 +84,25 @@ export default function GlobalError({
           >
             Coba lagi
           </button>
-          {/* Plain anchor — a full document navigation is robust even if the
-              React tree is broken. */}
-          <a
-            href="/"
+          {/* Hard navigation (not next/link) — after a root-layout crash a
+              full document reload re-initializes everything cleanly. */}
+          <button
+            onClick={() => {
+              window.location.href = '/'
+            }}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
+              cursor: 'pointer',
               borderRadius: 12,
               padding: '10px 20px',
               fontSize: 14,
               fontWeight: 600,
-              textDecoration: 'none',
               color: '#FAFAF9',
+              background: 'transparent',
               border: '1px solid rgba(255,255,255,0.14)',
             }}
           >
             Beranda
-          </a>
+          </button>
         </div>
       </body>
     </html>
