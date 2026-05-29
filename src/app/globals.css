@@ -26,9 +26,11 @@
   --mint-600:    #059669;
 
   --violet-50:   #F5F3FF;
+  --violet-100:  #EDE9FE;
   --violet-300:  #C4B5FD;
   --violet-500:  #8B5CF6;      /* AI/langganan/kewajiban tetap */
   --violet-600:  #7C3AED;
+  --violet-700:  #6D28D9;
 
   /* ── Surfaces (Light) — near-white, cool subtle ─────── */
   --paper:       #FAFAF9;    /* slightly warm white, not cream */
@@ -477,32 +479,6 @@
   color: var(--ink-muted);
 }
 
-/* Chip base — pill rounded-full small */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0;
-  white-space: nowrap;
-}
-.chip-emerald { background: var(--c-mint-soft); color: var(--c-mint); }
-.chip-coral   { background: var(--c-coral-soft); color: var(--c-coral); }
-.chip-amber   { background: var(--c-amber-soft); color: var(--c-amber); }
-.chip-sky     { background: rgba(14, 165, 233, 0.10); color: #0284C7; }
-.chip-violet  { background: var(--c-violet-soft); color: var(--c-violet); }
-.chip-neutral { background: var(--surface-2); color: var(--ink-muted); }
-.dark .chip-emerald { background: rgba(16, 185, 129, 0.18); color: #6EE7B7; }
-.dark .chip-coral   { background: rgba(244, 63, 94, 0.18); color: #FDA4AF; }
-.dark .chip-amber   { background: rgba(245, 158, 11, 0.18); color: #FCD34D; }
-.dark .chip-sky     { background: rgba(14, 165, 233, 0.18); color: #7DD3FC; }
-.dark .chip-violet  { background: rgba(139, 92, 246, 0.18); color: #C4B5FD; }
-.dark .chip-neutral { background: rgba(255, 255, 255, 0.08); color: var(--ink-muted); }
-
 /* Section eyebrow */
 .eyebrow {
   font-size: 11px;
@@ -643,17 +619,19 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  height: 22px;
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .chip-emerald { background: var(--emerald-100); color: var(--emerald-800); }
 .chip-coral   { background: var(--coral-100);   color: var(--coral-700); }
 .chip-amber   { background: var(--amber-100);   color: var(--amber-700); }
 .chip-sky     { background: var(--sky-100);     color: var(--sky-600); }
-.chip-violet  { background: #EDE9FE;             color: #6D28D9; }
+.chip-violet  { background: var(--violet-100);  color: var(--violet-700); }
 .chip-neutral { background: var(--surface-2);   color: var(--ink); }
 .dark .chip-emerald { background: rgba(16,185,129,0.16); color: var(--emerald-200); }
 .dark .chip-coral   { background: rgba(244,63,94,0.16);  color: var(--coral-200); }

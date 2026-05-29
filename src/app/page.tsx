@@ -296,16 +296,16 @@ export default async function LandingPage() {
           {[
             {
               icon: MessageCircle,
-              color: '#16A34A',
-              bg: '#DCFCE7',
+              color: 'var(--c-mint)',
+              bg: 'var(--c-mint-soft)',
               title: 'Catat lewat WhatsApp',
               body: 'Kirim "kopi 35rb" atau forward struk ke nomor Klunting. AI parse dan simpan ke transaksimu.',
               badge: 'Segera',
             },
             {
               icon: Sparkles,
-              color: '#8B5CF6',
-              bg: '#EDE9FE',
+              color: 'var(--c-violet)',
+              bg: 'var(--c-violet-soft)',
               title: 'AI Insight personal',
               body: 'Tiap awal bulan dapet 2-3 insight: "Kopi naik 60% dari biasanya." "Forecast saldo tipis tanggal 24 — Rp 200k."',
             },
