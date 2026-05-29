@@ -970,7 +970,7 @@ export default function TransactionsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
-          <span className="ml-2 text-gray-500">Memuat data...</span>
+          <span className="ml-2" style={{ color: 'var(--ink-soft)' }}>Memuat data...</span>
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub

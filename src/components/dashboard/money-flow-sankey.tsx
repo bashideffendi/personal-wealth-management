@@ -63,7 +63,7 @@ const COLORS: Record<FlowKind, { node: string; link: string }> = {
   expense:    { node: '#F43F5E', link: 'rgba(244, 63, 94, 0.40)' },   // coral
   saving:     { node: '#F59E0B', link: 'rgba(245, 158, 11, 0.42)' },  // amber
   investment: { node: '#8B5CF6', link: 'rgba(139, 92, 246, 0.38)' },  // violet
-  middle:     { node: '#0A0A0F', link: 'rgba(10, 10, 15, 0.20)' },    // ink hub
+  middle:     { node: 'var(--ink)', link: 'color-mix(in srgb, var(--ink) 20%, transparent)' }, // ink hub (theme-aware)
 }
 
 function trunc(s: string, max: number): string {
