@@ -14,6 +14,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const AI_COSTS = {
   receipt_scan: 5,
@@ -57,10 +58,16 @@ export async function consumeAICredits(
   const cost = AI_COSTS[costKey]
 
   // Step 1: top up if renewal due
-  await supabase.rpc('reset_ai_credits_if_due', { p_user_id: userId })
+  // Credit mutations run via the service-role client when configured, so the
+  // metering RPCs are not reachable by users directly (they only have the
+  // user-scoped client). Falls back to the request client until
+  // SUPABASE_SERVICE_ROLE_KEY is provisioned — see migration 026.
+  const privileged = createAdminClient() ?? supabase
+
+  await privileged.rpc('reset_ai_credits_if_due', { p_user_id: userId })
 
   // Step 2: atomic consume
-  const { data: charged, error } = await supabase.rpc('consume_ai_credits', {
+  const { data: charged, error } = await privileged.rpc('consume_ai_credits', {
     p_user_id: userId,
     p_amount: cost,
   })
@@ -112,7 +119,8 @@ export async function refundAICredits(
 ): Promise<void> {
   const amount = AI_COSTS[costKey]
   try {
-    await supabase.rpc('refund_ai_credits', {
+    const privileged = createAdminClient() ?? supabase
+    await privileged.rpc('refund_ai_credits', {
       p_user_id: userId,
       p_amount: amount,
     })
