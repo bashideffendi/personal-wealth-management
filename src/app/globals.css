@@ -603,16 +603,6 @@
   background: var(--border-soft);
 }
 
-/* Legacy `.font-serif` callsites → bold sans (drop italic auto).
-   Per fintech pivot 2026-05-28: no editorial italic in default styles.
-   Components yang masih pakai `.font-serif` jadi render bold sans
-   (matches Wise/Mercury hero pattern). */
-.font-serif {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
 /* Chip variants per 03-component-patterns.md — semantic color tints
    for AI tags, category labels, status indicators. */
 .chip {

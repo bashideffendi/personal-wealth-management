@@ -275,7 +275,7 @@ export default function NetWorthPage() {
         {/* Asset Breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Rincian Aset</CardTitle>
+            <CardTitle style={{ color: 'var(--ink)' }}>Rincian Aset</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Aset Lancar */}
@@ -310,7 +310,7 @@ export default function NetWorthPage() {
         {/* Debt Breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Rincian Utang</CardTitle>
+            <CardTitle style={{ color: 'var(--ink)' }}>Rincian Utang</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Utang Lancar */}

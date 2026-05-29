@@ -288,7 +288,7 @@ export default function EmergencyFundPage() {
         {/* Left Column - Calculator */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Kalkulator Dana Darurat</CardTitle>
+            <CardTitle style={{ color: 'var(--ink)' }}>Kalkulator Dana Darurat</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Job Stability */}
@@ -390,7 +390,7 @@ export default function EmergencyFundPage() {
         {accountAllocations.length > 0 && (
           <Card style={{ background: 'rgba(16,185,129,0.04)', borderColor: 'rgba(16,185,129,0.20)' }}>
             <CardHeader className="pb-3">
-              <CardTitle className="font-serif text-base" style={{ color: 'var(--c-mint)' }}>
+              <CardTitle className="text-base" style={{ color: 'var(--c-mint)' }}>
                 Dari Akun ({formatCurrency(allocatedFromAccounts)})
               </CardTitle>
             </CardHeader>
@@ -414,7 +414,7 @@ export default function EmergencyFundPage() {
         )}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-serif" style={{ color: 'var(--ink)' }}>Lokasi Dana Darurat (Manual)</CardTitle>
+            <CardTitle style={{ color: 'var(--ink)' }}>Lokasi Dana Darurat (Manual)</CardTitle>
             <Button
               size="sm"
               className=""
