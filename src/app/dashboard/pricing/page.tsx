@@ -1,248 +1,178 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
-  Sparkles, Crown, Users, Check, Zap, Loader2, ShieldCheck,
+  Sparkles, Crown, Users, Check, ShieldCheck, RefreshCcw,
 } from 'lucide-react'
 
+// Paid-only, annual billing. NOTE: checkout is still a placeholder (no payment
+// gateway yet) — see Roadmap Fase 2. Trial/paywall enforcement ships WITH the
+// payment gateway; this page is display-only for now.
 interface Plan {
-  id: string
+  id: 'pro' | 'max'
   name: string
-  description: string
+  icon: React.ReactNode
+  popular: boolean
   price_idr: number
-  original_price_idr: number | null
-  max_seats: number
-  features: string[]
+  original_price_idr: number
+  seats: number
   ai_credits_monthly: number
-  is_popular: boolean
-  display_order: number
+  description: string
+  features: string[]
 }
 
-const PLAN_ICONS: Record<string, React.ReactNode> = {
-  basic: <Sparkles className="size-5" />,
-  full:  <Crown className="size-5" />,
-}
-
-const PLAN_THEMES: Record<string, { bg: string; ring: string; accent: string; price: string; cta: string; ctaHover: string }> = {
-  basic: { bg: 'bg-[var(--surface)]', ring: 'ring-[var(--line)]', accent: 'text-[var(--ink-muted)]', price: 'text-[var(--ink)]', cta: 'bg-[var(--surface-2)] text-[var(--ink)]', ctaHover: 'hover:bg-[var(--surface-3)]' },
-  full:  { bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary)]', accent: 'text-[var(--c-primary)]', price: 'text-[var(--ink)]', cta: 'bg-gradient-to-br from-[#10B981] to-[#047857] text-white shadow-[0_4px_12px_-4px_rgba(16,185,129,0.40)]', ctaHover: 'hover:opacity-90' },
-}
+const PLANS: Plan[] = [
+  {
+    id: 'pro',
+    name: 'Pro',
+    icon: <Crown className="size-5" />,
+    popular: true,
+    price_idr: 149000,
+    original_price_idr: 249000,
+    seats: 1,
+    ai_credits_monthly: 100,
+    description: 'Buat kamu yang serius atur keuangan & investasi.',
+    features: [
+      'Catat transaksi & anggaran unlimited',
+      'Dashboard net worth + KPI',
+      'Portfolio investasi: saham IDX, crypto, reksadana, emas, properti',
+      'AI Advisor — tanya apa aja soal keuanganmu',
+      'Scan struk (AI Vision) → otomatis jadi transaksi',
+      'AI insights & laporan bulanan',
+      'Goal setting + forecast probabilitas',
+      'Import mutasi rekening (CSV/PDF)',
+      'Update harga saham & crypto otomatis',
+      '100 kredit AI / bulan',
+    ],
+  },
+  {
+    id: 'max',
+    name: 'Max',
+    icon: <Users className="size-5" />,
+    popular: false,
+    price_idr: 299000,
+    original_price_idr: 499000,
+    seats: 5,
+    ai_credits_monthly: 300,
+    description: 'Buat keluarga — kelola keuangan bareng pasangan & anggota.',
+    features: [
+      'Semua fitur Pro',
+      'Household sharing sampai 5 anggota',
+      'Wallet & budget bersama keluarga',
+      'Tracking per-anggota (siapa belanja apa)',
+      'Insight pengeluaran keluarga',
+      '300 kredit AI / bulan',
+    ],
+  },
+]
 
 const CREDIT_PACKS = [
-  { credits: 100, price: 15000, label: '100 kredit',  perCredit: 150 },
-  { credits: 300, price: 39000, label: '300 kredit',  perCredit: 130, popular: true },
+  { credits: 100, price: 15000, label: '100 kredit', perCredit: 150 },
+  { credits: 300, price: 39000, label: '300 kredit', perCredit: 130, popular: true },
   { credits: 1000, price: 99000, label: '1000 kredit', perCredit: 99 },
 ]
 
+const THEMES: Record<Plan['id'], { bg: string; ring: string; accent: string; cta: string }> = {
+  pro: {
+    bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary)]', accent: 'text-[var(--c-primary)]',
+    cta: 'bg-gradient-to-br from-[#10B981] to-[#047857] text-white shadow-[0_4px_12px_-4px_rgba(16,185,129,0.40)] hover:opacity-90',
+  },
+  max: {
+    bg: 'bg-[var(--surface)]', ring: 'ring-[var(--line)]', accent: 'text-[var(--ink-muted)]',
+    cta: 'bg-[var(--surface-2)] text-[var(--ink)] hover:bg-[var(--surface-3)]',
+  },
+}
+
+function perMonth(annual: number) {
+  return Math.round(annual / 12)
+}
+
 export default function PricingPage() {
-  const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [currentPlanId, setCurrentPlanId] = useState<string>('basic')
-
-  useEffect(() => {
-    void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-
-    try {
-      const [plansRes, subRes] = await Promise.all([
-        supabase.from('plans').select('*').order('display_order', { ascending: true }),
-        supabase.from('subscriptions').select('plan_id').eq('user_id', user.id).in('status', ['active', 'trialing']).order('started_at', { ascending: false }).limit(1).maybeSingle(),
-      ])
-      if (plansRes.data && plansRes.data.length > 0) {
-        setPlans(plansRes.data as Plan[])
-      } else {
-        // Migration 014 not applied — render hard-coded fallback so user still sees pricing
-        setPlans(fallbackPlans())
-      }
-      if (subRes.data) setCurrentPlanId((subRes.data as { plan_id: string }).plan_id)
-    } catch (err) {
-      console.warn('Plans query failed (migration 014 may not be applied):', err)
-      setPlans(fallbackPlans())
-    }
-    setLoading(false)
-  }
-
-  function fallbackPlans(): Plan[] {
-    return [
-      {
-        id: 'basic', name: 'Basic', description: 'Atur keuangan harian dengan fitur dasar.',
-        price_idr: 99000, original_price_idr: 0, max_seats: 1,
-        features: [
-          'Catat transaksi unlimited',
-          'Anggaran bulanan',
-          'Dashboard net worth',
-          'Foto struk basic (OCR)',
-          'Track 1 jenis aset (tabungan)',
-          '50 kredit AI/bulan',
-        ],
-        ai_credits_monthly: 50, is_popular: false, display_order: 1,
-      },
-      {
-        id: 'full', name: 'Full Service', description: 'Akses penuh ke semua fitur Klunting.',
-        price_idr: 199000, original_price_idr: 299000, max_seats: 4,
-        features: [
-          'Semua fitur Basic',
-          'Multi-aset (saham, RD, crypto, emas, SBN, P2P)',
-          'AI Advisor unlimited',
-          'AI Receipt Scanner advanced',
-          'WhatsApp catat & forward struk (segera)',
-          'Family sharing sampai 4 anggota',
-          'Atur utang & cicilan',
-          'Goal setting & laporan detail',
-          '250 kredit AI/bulan',
-        ],
-        ai_credits_monthly: 250, is_popular: true, display_order: 2,
-      },
-    ]
-  }
-
   function handleUpgrade(planId: string) {
-    if (planId === currentPlanId) return
-    alert(`Pembayaran via Xendit akan segera hadir. Untuk early access ke ${planId.toUpperCase()}, hubungi support@klunting.com.`)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="size-5 animate-spin mr-2" /> Memuat harga...
-      </div>
+    alert(
+      `Pembayaran via Xendit/Midtrans akan segera hadir. Untuk early access ke ${planId.toUpperCase()}, hubungi support@klunting.com.`,
     )
   }
 
   return (
     <div className="space-y-8">
-      {/* Header — clean fintech page header (no dark anchor, biar pricing
-          cards yang jadi visual anchor) */}
+      {/* Header */}
       <div className="text-center max-w-2xl mx-auto">
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
-          style={{
-            background: 'var(--c-mint-soft)',
-            color: 'var(--c-mint)',
-          }}
+          style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}
         >
-          <span
-            className="size-1.5 rounded-full"
-            style={{ background: 'var(--c-mint)' }}
-          />
-          <span className="text-xs font-semibold">
-            Trial 14 hari · Tanpa kartu kredit
-          </span>
+          <span className="size-1.5 rounded-full" style={{ background: 'var(--c-mint)' }} />
+          <span className="text-xs font-semibold">Trial 14 hari · Tanpa kartu kredit</span>
         </div>
         <h1
           className="font-bold tracking-tight"
-          style={{
-            fontSize: 'clamp(32px, 4.5vw, 52px)',
-            color: 'var(--ink)',
-            lineHeight: 1.1,
-            letterSpacing: '-0.035em',
-          }}
+          style={{ fontSize: 'clamp(32px, 4.5vw, 52px)', color: 'var(--ink)', lineHeight: 1.1, letterSpacing: '-0.035em' }}
         >
           Pilih paket yang{' '}
           <span style={{ color: 'var(--c-mint)' }}>cocok</span>{' '}
           buat kebutuhanmu.
         </h1>
         <p className="text-base mt-4 max-w-xl mx-auto" style={{ color: 'var(--ink-muted)' }}>
-          Tagihan bulanan. Trial 14 hari akses Full Service. Bisa upgrade kapan saja.
+          Billing <strong>tahunan</strong>, tanpa auto-renew. Coba 14 hari gratis dulu — tanpa kartu kredit.
         </p>
       </div>
 
       {/* 2-tier cards */}
       <div className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
-        {plans.map((plan) => {
-          const theme = PLAN_THEMES[plan.id] ?? PLAN_THEMES.basic
-          const isCurrent = plan.id === currentPlanId
-          const isFree = plan.price_idr === 0
-          const discountPct = plan.original_price_idr && plan.original_price_idr > plan.price_idr
-            ? Math.round((1 - plan.price_idr / plan.original_price_idr) * 100)
-            : 0
-          const featuresList: string[] = Array.isArray(plan.features) ? plan.features : []
-
+        {PLANS.map((plan) => {
+          const theme = THEMES[plan.id]
+          const discountPct = Math.round((1 - plan.price_idr / plan.original_price_idr) * 100)
           return (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl ${theme.bg} p-6 ring-1 ${theme.ring} ${plan.is_popular ? 'shadow-lg lg:scale-105' : 'shadow-sm'} transition`}
+              className={`relative flex flex-col rounded-2xl ${theme.bg} p-6 ring-1 ${theme.ring} ${plan.popular ? 'shadow-lg lg:scale-105' : 'shadow-sm'} transition`}
             >
-              {plan.is_popular && (
+              {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow">
                   Paling Populer
                 </div>
               )}
 
               <div className={`flex items-center gap-2 ${theme.accent}`}>
-                {PLAN_ICONS[plan.id]}
+                {plan.icon}
                 <h3 className="text-xl font-bold">{plan.name}</h3>
               </div>
               <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
 
               <div className="mt-5">
-                {isFree ? (
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-4xl font-bold ${theme.price}`}>Gratis</span>
-                  </div>
-                ) : (
-                  <>
-                    {discountPct > 0 && plan.original_price_idr && (
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm text-muted-foreground line-through">{formatCurrency(plan.original_price_idr)}</span>
-                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">-{discountPct}%</span>
-                      </div>
-                    )}
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-4xl font-bold tabular-nums ${theme.price}`}>{formatCurrency(plan.price_idr)}</span>
-                      <span className="text-sm text-muted-foreground">/bulan</span>
-                    </div>
-                  </>
-                )}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm text-muted-foreground line-through">{formatCurrency(plan.original_price_idr)}</span>
+                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">-{discountPct}%</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{formatCurrency(plan.price_idr)}</span>
+                  <span className="text-sm text-muted-foreground">/tahun</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  ≈ {formatCurrency(perMonth(plan.price_idr))}/bulan · ditagih tahunan
+                </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => handleUpgrade(plan.id)}
-                disabled={isCurrent}
-                className={`mt-5 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition ${
-                  isCurrent
-                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                    : `${theme.cta} ${theme.ctaHover}`
-                }`}
+                className={`mt-5 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${theme.cta}`}
               >
-                {isCurrent ? (
-                  <>
-                    <Check className="size-4" />
-                    Paket Saat Ini
-                  </>
-                ) : plan.id === 'full' ? (
-                  <>
-                    <Crown className="size-4" />
-                    Pilih Full Service
-                  </>
-                ) : (
-                  <>
-                    <Zap className="size-4" />
-                    Pilih {plan.name}
-                  </>
-                )}
+                {plan.icon}
+                Pilih {plan.name}
               </button>
 
-              {plan.max_seats > 1 && (
+              {plan.seats > 1 && (
                 <p className="text-xs text-center mt-2 text-[var(--c-mint)] font-medium inline-flex items-center justify-center gap-1 w-full">
-                  <Users className="size-3.5 shrink-0" /> Sampai {plan.max_seats} anggota keluarga
+                  <Users className="size-3.5 shrink-0" /> Sampai {plan.seats} anggota keluarga
                 </p>
               )}
 
               <div className="mt-6 space-y-2.5 flex-1">
-                {featuresList.map((feature, i) => (
+                {plan.features.map((feature, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm">
                     <Check className={`size-4 mt-0.5 shrink-0 ${theme.accent}`} />
                     <span className="text-foreground/90">{feature}</span>
@@ -250,14 +180,12 @@ export default function PricingPage() {
                 ))}
               </div>
 
-              {plan.ai_credits_monthly > 0 && (
-                <div className="mt-5 pt-4 border-t border-current/10">
-                  <p className="text-xs text-center font-medium text-amber-700 inline-flex items-center justify-center gap-1 w-full">
-                    <Sparkles className="size-3" />
-                    {plan.ai_credits_monthly} kredit AI gratis setiap bulan
-                  </p>
-                </div>
-              )}
+              <div className="mt-5 pt-4 border-t border-current/10">
+                <p className="text-xs text-center font-medium text-amber-700 inline-flex items-center justify-center gap-1 w-full">
+                  <Sparkles className="size-3" />
+                  {plan.ai_credits_monthly} kredit AI gratis setiap bulan
+                </p>
+              </div>
             </div>
           )
         })}
@@ -265,41 +193,36 @@ export default function PricingPage() {
 
       {/* Feature comparison */}
       <section className="rounded-2xl border bg-[var(--surface)] p-6">
-        <h3 className="font-semibold text-lg mb-4">Bandingkan fitur</h3>
+        <h3 className="font-semibold text-lg mb-4">Bandingkan paket</h3>
         <div className="overflow-x-auto -mx-6 px-6">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 font-medium text-muted-foreground">Fitur</th>
-                <th className="text-center py-3 font-medium">Basic</th>
-                <th className="text-center py-3 font-medium">Full Service</th>
+                <th className="text-center py-3 font-medium">Pro</th>
+                <th className="text-center py-3 font-medium">Max</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { f: 'Catat transaksi unlimited',         basic: true,  full: true },
-                { f: 'Anggaran bulanan',                  basic: true,  full: true },
-                { f: 'Dashboard net worth',               basic: true,  full: true },
-                { f: 'Export CSV',                        basic: true,  full: true },
-                { f: 'Foto struk basic (OCR)',            basic: true,  full: true },
-                { f: 'Track 1 jenis aset (tabungan)',     basic: true,  full: true },
-                { f: 'Multi-aset (saham, RD, crypto, dll)', basic: false, full: true },
-                { f: 'AI Advisor (chat keuangan)',        basic: false, full: true },
-                { f: 'AI Receipt Scanner advanced',       basic: false, full: true },
-                { f: 'WhatsApp catat & forward struk',    basic: false, full: 'Segera' },
-                { f: 'Atur utang & cicilan',              basic: false, full: true },
-                { f: 'Goal setting & laporan detail',     basic: false, full: true },
-                { f: 'Update harga saham otomatis',       basic: false, full: true },
-                { f: 'Family sharing',                    basic: false, full: true },
-                { f: 'Anggota keluarga',                  basic: '1',   full: '4' },
-                { f: 'Wallet & budget bersama',           basic: false, full: true },
-                { f: 'Tracking per-anggota',              basic: false, full: true },
-                { f: 'Kredit AI bulanan',                 basic: '50',  full: '250' },
+                { f: 'Catat transaksi & anggaran unlimited', pro: true, max: true },
+                { f: 'Dashboard net worth + KPI', pro: true, max: true },
+                { f: 'Portfolio investasi (saham, crypto, dll)', pro: true, max: true },
+                { f: 'AI Advisor + scan struk', pro: true, max: true },
+                { f: 'AI insights & laporan bulanan', pro: true, max: true },
+                { f: 'Import mutasi rekening', pro: true, max: true },
+                { f: 'Goal setting & forecast', pro: true, max: true },
+                { f: 'Export CSV', pro: true, max: true },
+                { f: 'Household sharing', pro: false, max: true },
+                { f: 'Anggota keluarga', pro: '1', max: '5' },
+                { f: 'Wallet & budget bersama', pro: false, max: true },
+                { f: 'Tracking per-anggota', pro: false, max: true },
+                { f: 'Kredit AI bulanan', pro: '100', max: '300' },
               ].map((row, i) => (
                 <tr key={i} className="border-b last:border-b-0">
                   <td className="py-2.5 text-foreground/90">{row.f}</td>
-                  <td className="text-center">{renderCell(row.basic)}</td>
-                  <td className="text-center">{renderCell(row.full)}</td>
+                  <td className="text-center">{renderCell(row.pro)}</td>
+                  <td className="text-center">{renderCell(row.max)}</td>
                 </tr>
               ))}
             </tbody>
@@ -357,21 +280,21 @@ export default function PricingPage() {
             <ShieldCheck className="size-5 text-[var(--c-mint)] mt-0.5" />
             <div>
               <p className="font-semibold text-sm">Pembayaran Aman</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Xendit (PCI-DSS compliant). Tidak menyimpan data kartumu.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Lewat Xendit/Midtrans. Kami tidak menyimpan data kartumu.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Crown className="size-5 text-amber-600 mt-0.5" />
+            <RefreshCcw className="size-5 text-amber-600 mt-0.5" />
             <div>
-              <p className="font-semibold text-sm">Garansi 14 Hari</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Tidak puas? Refund 100% dalam 14 hari pertama, no questions asked.</p>
+              <p className="font-semibold text-sm">Tanpa Auto-Renew</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Kamu pegang kendali. Kami kirim notif sebelum masa langganan habis.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Users className="size-5 mt-0.5" style={{ color: 'var(--sky-600)' }} />
             <div>
               <p className="font-semibold text-sm">Data Tetap Milikmu</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Cancel kapan saja. Export semua data sebagai CSV — no lock-in.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Export semua data sebagai CSV kapan saja — no lock-in.</p>
             </div>
           </div>
         </div>
@@ -381,12 +304,13 @@ export default function PricingPage() {
       <section className="rounded-2xl border bg-[var(--surface)] p-6">
         <h3 className="font-semibold text-lg mb-4">Pertanyaan Umum</h3>
         <div className="space-y-4 text-sm">
-          <Faq q="Apa beda Basic dan Full Service?" a="Basic Rp 99rb/bulan untuk catat transaksi & track 1 jenis aset (tabungan). Full Service Rp 199rb/bulan unlock semua fitur: multi-aset (saham, RD, crypto, emas, dll), AI Advisor unlimited, family sharing sampai 4 anggota, WhatsApp catat (segera), goal & laporan detail." />
-          <Faq q="Trial 14 hari itu gimana?" a="Setiap user baru otomatis dapat akses penuh Full Service selama 14 hari, tanpa kartu kredit. Setelah trial habis, kamu pilih plan Basic atau Full Service untuk lanjut." />
-          <Faq q="Bagaimana sistem AI credit?" a="Tiap kali pakai fitur AI (scan struk advanced, chat AI Advisor, dll), 1 kredit dipotong. Basic dapat 50 kredit/bulan, Full Service 250/bulan. Kalau habis, bisa top-up terpisah (paket di bawah)." />
-          <Faq q="Bisa downgrade dari Full ke Basic?" a="Bisa. Downgrade berlaku di akhir periode billing. Data tetap aman, fitur Full Service akan dimatikan setelah masa langganan habis." />
-          <Faq q="Pembayarannya gimana?" a="Xendit (segera hadir): kartu kredit/debit, transfer bank, e-wallet (GoPay/OVO/Dana), QRIS, virtual account. Sementara waktu, hubungi support untuk pembayaran manual." />
-          <Faq q="Data saya aman?" a="Aman. Database di Supabase (Asia Pacific), enkripsi at-rest dan in-transit, isolasi per-user via Row Level Security. Tidak dijual ke pihak ketiga, tidak ada iklan." />
+          <Faq q="Kenapa billing tahunan?" a="Lebih hemat (Pro setara ~Rp 12rb/bulan) dan kamu nggak perlu mikirin tagihan tiap bulan. Tanpa auto-renew — kami kirim notifikasi sebelum masa langganan habis, dan kamu yang putuskan untuk perpanjang." />
+          <Faq q="Trial 14 hari itu gimana?" a="Setiap user baru otomatis dapat akses penuh selama 14 hari, tanpa kartu kredit. Setelah trial habis, kamu pilih paket Pro atau Max untuk lanjut." />
+          <Faq q="Apa beda Pro dan Max?" a="Pro untuk individu — semua fitur tracking, portfolio investasi, AI Advisor, scan struk, dan laporan. Max untuk keluarga — semua fitur Pro + household sharing sampai 5 anggota, wallet & budget bersama, dan kredit AI lebih banyak (300/bulan vs 100/bulan)." />
+          <Faq q="Bagaimana sistem AI credit?" a="Setiap kali pakai fitur AI (scan struk, chat AI Advisor, generate insight/laporan), kredit dipotong. Pro dapat 100 kredit/bulan, Max 300/bulan. Kalau habis, bisa top-up terpisah (paket di atas) — berlaku selamanya." />
+          <Faq q="Pembayarannya gimana?" a="Segera hadir lewat Xendit/Midtrans: QRIS, e-wallet (GoPay/OVO/DANA), transfer bank, virtual account, dan kartu. Sementara ini, hubungi support untuk early access." />
+          <Faq q="Bisa upgrade dari Pro ke Max?" a="Bisa kapan saja. Kamu cuma bayar selisihnya, dihitung proporsional dari sisa hari langganan." />
+          <Faq q="Data saya aman?" a="Aman. Database di Supabase (Asia Pacific), enkripsi at-rest & in-transit, isolasi per-user via Row Level Security. Tidak ada iklan, tidak dijual ke pihak ketiga." />
         </div>
       </section>
 
