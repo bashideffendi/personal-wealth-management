@@ -115,7 +115,7 @@ export default function JoinHouseholdPage() {
 
   return (
     <div className="max-w-md mx-auto py-12">
-      <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
+      <div className="rounded-2xl border bg-[var(--surface)] p-8 text-center shadow-sm">
         {state.kind === 'loading' && (
           <div className="py-12">
             <Loader2 className="size-8 mx-auto animate-spin text-muted-foreground" />

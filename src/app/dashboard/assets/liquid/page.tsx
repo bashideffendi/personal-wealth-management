@@ -226,7 +226,7 @@ export default function LiquidAssetsPage() {
                   return (
                     <div
                       key={`acc-${a.id}`}
-                      className="rounded-xl p-4 bg-white border transition-all hover:shadow-md hover:-translate-y-0.5"
+                      className="rounded-xl p-4 bg-[var(--surface)] border transition-all hover:shadow-md hover:-translate-y-0.5"
                       style={{ borderColor: 'var(--border-soft)' }}
                     >
                       <div className="flex items-start gap-3">
@@ -284,7 +284,7 @@ export default function LiquidAssetsPage() {
                   return (
                     <div
                       key={`al-${a.id}`}
-                      className="group relative rounded-xl p-4 bg-white border transition-all hover:shadow-md hover:-translate-y-0.5"
+                      className="group relative rounded-xl p-4 bg-[var(--surface)] border transition-all hover:shadow-md hover:-translate-y-0.5"
                       style={{ borderColor: 'var(--border-soft)' }}
                     >
                       <div className="flex items-start gap-3">

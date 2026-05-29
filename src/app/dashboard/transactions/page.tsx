@@ -855,7 +855,7 @@ export default function TransactionsPage() {
       {/* Quick-add inline bar — fastest way to log a transaction without opening modal.
           Tab between fields, Enter to submit. Modal still available for receipt OCR + edit. */}
       {!loading && accounts.length + creditCards.length > 0 && (
-        <div className="rounded-xl border bg-white p-3" style={{ borderColor: 'var(--border)' }}>
+        <div className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
             <Plus className="size-3.5" style={{ color: 'var(--c-mint)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
@@ -1062,7 +1062,7 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  className="rounded-xl border bg-white p-3 active:bg-[var(--surface-2)] transition"
+                  className="rounded-xl border bg-[var(--surface)] p-3 active:bg-[var(--surface-2)] transition"
                   style={{ borderColor: 'var(--border)' }}
                   onClick={() => openEditDialog(tx)}
                 >

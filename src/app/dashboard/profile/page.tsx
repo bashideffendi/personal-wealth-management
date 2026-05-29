@@ -487,7 +487,7 @@ export default function ProfilePage() {
 
         {/* PREFERENSI */}
         <TabsContent value="preferensi" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <h3 className="font-semibold">Identitas</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
@@ -506,7 +506,7 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <h3 className="font-semibold">Tampilan</h3>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-1.5">
@@ -591,7 +591,7 @@ export default function ProfilePage() {
 
         {/* KEAMANAN */}
         <TabsContent value="keamanan" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Lock className="size-4 text-muted-foreground" />
               <h3 className="font-semibold">Ganti Password</h3>
@@ -606,7 +606,7 @@ export default function ProfilePage() {
             </Button>
           </section>
 
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Mail className="size-4 text-muted-foreground" />
               <h3 className="font-semibold">Email</h3>
@@ -619,7 +619,7 @@ export default function ProfilePage() {
             </p>
           </section>
 
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div className="flex items-start gap-2">
                 <Shield className="size-4 mt-0.5 text-muted-foreground" />
@@ -681,7 +681,7 @@ export default function ProfilePage() {
 
           {/* Biometric — only shown when PIN aktif & device support */}
           {lock.hasPin && lock.biometricSupported && (
-            <section className="rounded-xl border bg-white p-5 space-y-4">
+            <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div className="flex items-start gap-2">
                   <Shield className="size-4 mt-0.5 text-muted-foreground" />
@@ -712,7 +712,7 @@ export default function ProfilePage() {
 
         {/* NOTIFIKASI */}
         <TabsContent value="notifikasi" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div className="flex items-start gap-2">
                 <Bell className="size-4 mt-0.5 text-muted-foreground" />
@@ -726,7 +726,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => toggleDailyReminder(!profile.daily_reminder_enabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${profile.daily_reminder_enabled ? 'bg-[var(--c-mint-soft)]0' : 'bg-muted'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${profile.daily_reminder_enabled ? 'bg-[var(--c-mint)]' : 'bg-muted'}`}
               >
                 <span className={`inline-block h-4 w-4 rounded-full bg-white transition ${profile.daily_reminder_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -753,7 +753,7 @@ export default function ProfilePage() {
 
         {/* DATA */}
         <TabsContent value="data" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-white p-5 space-y-4">
+          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-start gap-2">
               <Download className="size-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
@@ -798,7 +798,7 @@ export default function ProfilePage() {
       </Tabs>
 
       {/* Footer */}
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-[var(--surface)] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex flex-wrap items-center gap-4">
             <Link href="#" className="hover:underline text-muted-foreground">Tutorial</Link>

@@ -264,7 +264,7 @@ export default function PricingPage() {
       </div>
 
       {/* Feature comparison */}
-      <section className="rounded-2xl border bg-white p-6">
+      <section className="rounded-2xl border bg-[var(--surface)] p-6">
         <h3 className="font-semibold text-lg mb-4">Bandingkan fitur</h3>
         <div className="overflow-x-auto -mx-6 px-6">
           <table className="w-full text-sm">
@@ -324,7 +324,7 @@ export default function PricingPage() {
           {CREDIT_PACKS.map((pack) => (
             <div
               key={pack.credits}
-              className={`relative rounded-xl border bg-white p-4 ${pack.popular ? 'ring-2 ring-amber-400' : ''}`}
+              className={`relative rounded-xl border bg-[var(--surface)] p-4 ${pack.popular ? 'ring-2 ring-amber-400' : ''}`}
             >
               {pack.popular && (
                 <span className="absolute -top-2 right-3 rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">
@@ -351,7 +351,7 @@ export default function PricingPage() {
       </section>
 
       {/* Trust signals */}
-      <section className="rounded-2xl border bg-white p-6">
+      <section className="rounded-2xl border bg-[var(--surface)] p-6">
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="flex items-start gap-3">
             <ShieldCheck className="size-5 text-[var(--c-mint)] mt-0.5" />
@@ -378,7 +378,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="rounded-2xl border bg-white p-6">
+      <section className="rounded-2xl border bg-[var(--surface)] p-6">
         <h3 className="font-semibold text-lg mb-4">Pertanyaan Umum</h3>
         <div className="space-y-4 text-sm">
           <Faq q="Apa beda Basic dan Full Service?" a="Basic Rp 99rb/bulan untuk catat transaksi & track 1 jenis aset (tabungan). Full Service Rp 199rb/bulan unlock semua fitur: multi-aset (saham, RD, crypto, emas, dll), AI Advisor unlimited, family sharing sampai 4 anggota, WhatsApp catat (segera), goal & laporan detail." />

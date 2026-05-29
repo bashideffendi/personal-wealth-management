@@ -553,7 +553,7 @@ function ContractCard({ contract: c, status, today, onEdit, onRemove, onToggleAr
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-lg bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors ${c.is_archived ? 'opacity-60' : ''}`}
+      className={`group relative overflow-hidden rounded-lg bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors ${c.is_archived ? 'opacity-60' : ''}`}
     >
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">

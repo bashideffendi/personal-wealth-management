@@ -115,7 +115,7 @@ export default function LeafletMap({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), search())}
             placeholder="Cari alamat... (mis. Bintaro, Kemang)"
-            className="flex-1 h-8 px-2 text-sm rounded border bg-white outline-none focus:border-[var(--ink)]"
+            className="flex-1 h-8 px-2 text-sm rounded border bg-[var(--surface)] outline-none focus:border-[var(--ink)]"
             style={{ borderColor: 'var(--border-soft)', color: 'var(--ink)' }}
           />
           <button

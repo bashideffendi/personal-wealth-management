@@ -317,7 +317,7 @@ export default function BudgetingPage() {
                   handleCellBlur(type, category, month, raw)
                   e.target.value = raw ? idFormatter.format(raw) : ''
                 }}
-                className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-white px-1 tabular"
+                className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-[var(--surface)] px-1 tabular"
                 style={{ color: 'var(--ink)' }}
               />
             </td>
@@ -607,7 +607,7 @@ export default function BudgetingPage() {
               {/* INCOME — emerald */}
               {renderSectionHeader('Pendapatan', 'income')}
               {visibleIncome.map((c, i) =>
-                renderCategoryRow('income', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(16,185,129,0.04)]'),
+                renderCategoryRow('income', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(16,185,129,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Pendapatan',
@@ -620,7 +620,7 @@ export default function BudgetingPage() {
               {/* EXPENSE — coral editorial */}
               {renderSectionHeader('Pengeluaran', 'expense')}
               {visibleExpense.map((c, i) =>
-                renderCategoryRow('expense', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(251,113,133,0.04)]'),
+                renderCategoryRow('expense', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(251,113,133,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Pengeluaran',
@@ -634,7 +634,7 @@ export default function BudgetingPage() {
               {/* SAVING — amber */}
               {renderSectionHeader('Tabungan', 'saving')}
               {visibleSaving.map((c, i) =>
-                renderCategoryRow('saving', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(245,158,11,0.05)]'),
+                renderCategoryRow('saving', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(245,158,11,0.05)]'),
               )}
               {renderTotalRow(
                 'Total Tabungan',
@@ -647,7 +647,7 @@ export default function BudgetingPage() {
               {/* INVESTMENT — primary indigo editorial */}
               {renderSectionHeader('Investasi', 'investment')}
               {visibleInvestment.map((c, i) =>
-                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-white' : 'bg-[rgba(79,70,229,0.04)]'),
+                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(79,70,229,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Investasi',
@@ -834,7 +834,7 @@ function CategoryGroup({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="+ Tambah kategori..."
-            className="flex-1 h-8 px-2 text-sm rounded border bg-white outline-none focus:border-[var(--ink)]"
+            className="flex-1 h-8 px-2 text-sm rounded border bg-[var(--surface)] outline-none focus:border-[var(--ink)]"
             style={{ borderColor: 'var(--border-soft)', color: 'var(--ink)' }}
           />
           <button

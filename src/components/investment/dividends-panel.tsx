@@ -113,7 +113,7 @@ export function DividendsPanel() {
   return (
     <div className="space-y-5">
       {/* Stats inline (no dark hero — parent page already has one) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-white p-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-[var(--surface)] p-5">
         <div>
           <p className="eyebrow" style={{ fontSize: '0.625rem' }}>YTD Dividen</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>

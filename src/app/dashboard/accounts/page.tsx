@@ -342,7 +342,7 @@ export default function AccountsPage() {
             return (
               <div
                 key={a.id}
-                className="group relative rounded-xl border bg-white p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
+                className="group relative rounded-xl border bg-[var(--surface)] p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
                 style={{ borderColor: 'var(--border-soft)' }}
               >
                 {/* Decorative accent stripe by type */}

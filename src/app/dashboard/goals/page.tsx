@@ -210,7 +210,7 @@ export default function GoalsPage() {
             return (
               <div
                 key={g.id}
-                className="group rounded-xl p-5 bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+                className="group rounded-xl p-5 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">

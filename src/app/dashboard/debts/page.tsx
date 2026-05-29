@@ -227,7 +227,7 @@ export default function DebtsOverviewPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Link
           href="/dashboard/debts/strategy"
-          className="group flex items-center justify-between rounded-lg p-4 bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+          className="group flex items-center justify-between rounded-lg p-4 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
         >
           <div>
             <p className="font-semibold" style={{ color: 'var(--ink)' }}>Strategi Pelunasan</p>
@@ -237,7 +237,7 @@ export default function DebtsOverviewPage() {
         </Link>
         <Link
           href="/dashboard/debts/payments"
-          className="group flex items-center justify-between rounded-lg p-4 bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+          className="group flex items-center justify-between rounded-lg p-4 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
         >
           <div>
             <p className="font-semibold" style={{ color: 'var(--ink)' }}>Pembayaran</p>
@@ -245,7 +245,7 @@ export default function DebtsOverviewPage() {
           </div>
           <ArrowUpRight className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
         </Link>
-        <div className="relative overflow-hidden rounded-2xl p-5 bg-white border border-[var(--border-soft)]">
+        <div className="relative overflow-hidden rounded-2xl p-5 bg-[var(--surface)] border border-[var(--border-soft)]">
           <p className="eyebrow">Breakdown Kategori</p>
           <div className="mt-2 space-y-1.5">
             {Object.entries(byCategory).length === 0 ? (
@@ -295,7 +295,7 @@ export default function DebtsOverviewPage() {
             return (
               <div
                 key={d.id}
-                className="group relative rounded-lg p-5 bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+                className="group relative rounded-lg p-5 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div>

@@ -234,7 +234,7 @@ export default function NonLiquidAssetsPage() {
                     return (
                       <div
                         key={a.id}
-                        className="group relative overflow-hidden rounded-lg bg-white border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+                        className="group relative overflow-hidden rounded-lg bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
                       >
                         {hasMap && (
                           <div className="h-28 w-full border-b" style={{ borderColor: 'var(--border-soft)' }}>

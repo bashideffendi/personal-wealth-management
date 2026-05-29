@@ -127,7 +127,7 @@ export default function SubscriptionsPage() {
             return (
               <div
                 key={s.id}
-                className="rounded-lg p-5 bg-white border transition-colors"
+                className="rounded-lg p-5 bg-[var(--surface)] border transition-colors"
                 style={{
                   borderColor: stale ? 'var(--warning)' : 'var(--border-soft)',
                   opacity: s.is_active ? 1 : 0.5,

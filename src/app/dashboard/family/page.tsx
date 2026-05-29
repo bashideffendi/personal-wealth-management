@@ -299,7 +299,7 @@ export default function FamilyPage() {
             { icon: <UserPlus className="size-5" />, title: 'Undang anggota', desc: 'Kirim link unik, hingga 4 anggota total.' },
             { icon: <Users className="size-5" />, title: 'Atur bareng', desc: 'Wallet, transaksi, & budget langsung ke-share.' },
           ].map((step, i) => (
-            <div key={i} className="rounded-xl border bg-white p-5">
+            <div key={i} className="rounded-xl border bg-[var(--surface)] p-5">
               <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--c-mint)' }}>
                 {step.icon}
                 <span className="text-xs font-bold uppercase tracking-wider">Langkah {i + 1}</span>
