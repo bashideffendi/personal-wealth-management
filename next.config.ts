@@ -20,16 +20,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Security headers applied to every route. NOTE: no enforced
-  // Content-Security-Policy here — a strict CSP needs runtime testing against
-  // the inline theme-init script, Supabase connections, and the external image
-  // hosts above, so it's deferred to avoid silently breaking the app. The
-  // headers below are all safe / non-breaking.
+  // Security headers applied to every route, including an enforced
+  // Content-Security-Policy. The allow-lists below were validated at runtime in
+  // Report-Only mode first (authenticated browser session, 2026-05-29) — zero
+  // violations against the inline theme-init script, Supabase connections, the
+  // map tile CDNs, and the external image hosts above — then flipped to enforced.
   async headers() {
-    // Content-Security-Policy in REPORT-ONLY mode: browsers report violations
-    // to the console (and any report-uri) but never block, so it's safe to ship
-    // even to prod. Purpose: validate these allow-lists against real, including
-    // authenticated, usage before flipping to an enforced `Content-Security-Policy`.
+    // Enforced Content-Security-Policy (browsers BLOCK violations). Validated at
+    // runtime in Report-Only mode first — zero violations across landing, auth,
+    // dashboard, map, and investment/stock/crypto pages in an authenticated
+    // session — before this flip. Revert path: rename the key below back to
+    // `Content-Security-Policy-Report-Only` and `npm run build`.
     //
     // Allow-list rationale (client-side loads only — server-side fetches like
     // Binance/Yahoo/Anthropic don't touch the browser, and outbound <a> links
@@ -78,8 +79,8 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'geolocation=(), browsing-topics=()',
           },
-          // Report-only — observe violations, don't block. See note above.
-          { key: 'Content-Security-Policy-Report-Only', value: csp },
+          // Enforced after runtime validation in Report-Only mode. See note above.
+          { key: 'Content-Security-Policy', value: csp },
         ],
       },
     ]
