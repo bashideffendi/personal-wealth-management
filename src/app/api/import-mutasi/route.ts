@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { rateLimit } from '@/lib/rate-limit'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -114,6 +115,15 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Burst guard (AI abuse) — per-user; see src/lib/rate-limit.ts
+  const rl = rateLimit(`ai:${user.id}`)
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
+    )
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
