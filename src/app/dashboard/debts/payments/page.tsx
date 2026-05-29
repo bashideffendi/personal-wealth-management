@@ -136,13 +136,13 @@ export default function DebtPaymentsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : payments.length === 0 ? (
-        <div className="glass-card p-12 text-center">
+        <div className="s-card p-12 text-center">
           <p className="text-5xl">✅</p>
           <p className="mt-3 font-semibold">Belum ada riwayat pembayaran</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat pembayaran pertama Anda.</p>
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
+        <div className="s-card overflow-hidden">
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
             {payments.map((p) => {
               const d = debts.find((x) => x.id === p.debt_id)

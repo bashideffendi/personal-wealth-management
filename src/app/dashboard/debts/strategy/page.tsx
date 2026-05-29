@@ -190,7 +190,7 @@ export default function DebtStrategyPage() {
           </div>
 
           {/* Extra payment */}
-          <div className="glass-card p-5">
+          <div className="s-card p-5">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4" style={{ color: 'var(--c-mint)' }} />
               <Label htmlFor="extra" className="text-sm font-semibold">Pembayaran Ekstra per Bulan</Label>
@@ -216,7 +216,7 @@ export default function DebtStrategyPage() {
           </div>
 
           {/* Ordered queue */}
-          <div className="glass-card p-5">
+          <div className="s-card p-5">
             <div className="flex items-center gap-2 mb-1">
               <Flame className="h-4 w-4" style={{ color: 'var(--danger)' }} />
               <h3 className="text-xl font-bold">Urutan Prioritas</h3>

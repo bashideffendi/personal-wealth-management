@@ -396,7 +396,7 @@ export default function InvestmentCategoryPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : items.length === 0 ? (
-        <div className="glass-card p-12 text-center">
+        <div className="s-card p-12 text-center">
           <p className="text-5xl">{subcat.emoji}</p>
           <p className="mt-3 font-semibold">Belum ada posisi {subcat.label}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Klik Tambah untuk memulai.</p>
@@ -424,7 +424,7 @@ export default function InvestmentCategoryPage() {
             </div>
           )}
 
-          <div className="glass-card overflow-x-auto p-0">
+          <div className="s-card overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
@@ -923,7 +923,7 @@ function MiniStat({
   accent?: string
 }) {
   return (
-    <div className={`glass-card p-4 ${glow ?? ''}`}>
+    <div className={`s-card p-4 ${glow ?? ''}`}>
       <p className="eyebrow">{label}</p>
       <p className="num text-xl mt-2 tabular font-bold" style={{ color: accent ?? 'var(--ink)' }}>
         {value}

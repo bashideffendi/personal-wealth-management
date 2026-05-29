@@ -212,7 +212,7 @@ export default function LiquidAssetsPage() {
               </Link>
             </div>
             {accountEntries.length === 0 ? (
-              <div className="glass-card p-8 text-center">
+              <div className="s-card p-8 text-center">
                 <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
                   Belum ada akun.{' '}
                   <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>
@@ -273,7 +273,7 @@ export default function LiquidAssetsPage() {
               </Button>
             </div>
             {otherEntries.length === 0 ? (
-              <div className="glass-card p-8 text-center">
+              <div className="s-card p-8 text-center">
                 <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
                   Belum ada aset lain. Tambah piutang atau tabungan terkunci di sini.
                 </p>

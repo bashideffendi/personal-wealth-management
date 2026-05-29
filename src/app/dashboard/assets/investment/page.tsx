@@ -308,7 +308,7 @@ export default function InvestmentOverviewPage() {
           its natural height instead of stretching to match the (often taller)
           right column, which leaves blank space below. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 items-start">
-        <div className="glass-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
+        <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>
               <p className="eyebrow">Alokasi</p>
@@ -568,7 +568,7 @@ function MiniStat({
   accent?: string
 }) {
   return (
-    <div className={`glass-card p-4 ${glow ?? ''}`}>
+    <div className={`s-card p-4 ${glow ?? ''}`}>
       <div className="flex items-center justify-between">
         <p className="eyebrow">{label}</p>
         <div

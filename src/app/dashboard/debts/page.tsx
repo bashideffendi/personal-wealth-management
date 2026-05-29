@@ -281,7 +281,7 @@ export default function DebtsOverviewPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : debts.length === 0 ? (
-        <div className="glass-card p-12 text-center">
+        <div className="s-card p-12 text-center">
           <p className="text-5xl">🎉</p>
           <p className="mt-3 font-semibold">Tidak ada utang tercatat</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Selamat!</p>
