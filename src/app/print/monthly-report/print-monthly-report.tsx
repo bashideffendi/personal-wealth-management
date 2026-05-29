@@ -308,7 +308,7 @@ export function PrintMonthlyReport({ year, month, userId }: Props) {
         .paper .kpi.income { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.30); }
         .paper .kpi.expense { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.30); }
         .paper .kpi.saving { background: rgba(245,158,11,0.07); border-color: rgba(245,158,11,0.30); }
-        .paper .kpi.net.positive { background: rgba(99,102,241,0.06); border-color: rgba(99,102,241,0.30); }
+        .paper .kpi.net.positive { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.30); }
         .paper .kpi.net.negative { background: rgba(239,68,68,0.07); border-color: rgba(239,68,68,0.30); }
 
         .paper table.report {

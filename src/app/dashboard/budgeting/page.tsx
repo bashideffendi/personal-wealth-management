@@ -647,13 +647,13 @@ export default function BudgetingPage() {
               {/* INVESTMENT — primary indigo editorial */}
               {renderSectionHeader('Investasi', 'investment')}
               {visibleInvestment.map((c, i) =>
-                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(79,70,229,0.04)]'),
+                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(139,92,246,0.04)]'),
               )}
               {renderTotalRow(
                 'Total Investasi',
                 visibleInvestment,
                 'investment',
-                'bg-[rgba(79,70,229,0.14)]',
+                'bg-[rgba(139,92,246,0.14)]',
               )}
             </tbody>
           </table>
