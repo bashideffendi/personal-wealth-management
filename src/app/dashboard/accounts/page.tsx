@@ -9,18 +9,8 @@ import type { Account } from '@/types'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Dialog,
   DialogContent,
@@ -42,14 +32,6 @@ import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { InstitutionSearch } from '@/components/accounts/institution-search'
 
 type AccountType = keyof typeof ACCOUNT_TYPES
-
-const TYPE_BADGE: Record<AccountType, string> = {
-  cash: 'bg-[var(--c-amber-soft)] text-[var(--c-amber)]',
-  bank: 'bg-[var(--sky-50)] text-[var(--sky-600)]',
-  digital_wallet: 'bg-[var(--c-violet-soft)] text-[var(--c-violet)]',
-  rdn: 'bg-[var(--c-mint-soft)] text-[var(--c-mint)]',
-  investment: 'bg-[var(--c-mint-soft)] text-[var(--c-mint)]',
-}
 
 const emptyForm = {
   name: '',

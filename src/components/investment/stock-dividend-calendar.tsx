@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Calendar, Loader2, Star, ArrowUpRight, ExternalLink } from 'lucide-react'
+import { Calendar, Loader2, Star, ArrowUpRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { formatPrice, formatIDXDate, parseIDXShortDate } from '@/lib/invest/format'

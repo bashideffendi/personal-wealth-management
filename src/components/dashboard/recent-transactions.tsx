@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import {
   ChevronRight, Coffee, ShoppingCart, Fuel, Tv, Lightbulb, BanknoteArrowUp,
-  TrendingUp, Wallet, Heart, Gamepad2, BanknoteArrowDown, ArrowRightLeft, Receipt,
+  TrendingUp, Wallet, Heart, Gamepad2, BanknoteArrowDown, Receipt,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { Transaction } from '@/types'

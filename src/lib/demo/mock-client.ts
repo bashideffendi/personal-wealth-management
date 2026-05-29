@@ -135,7 +135,6 @@ function terminalResult(state: BuilderState): { data: Row[] | Row | null; error:
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Builder extends PromiseLike<{ data: any; error: null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   select: (_cols?: string, _opts?: unknown) => Builder
   eq: (col: string, val: unknown) => Builder
   neq: (col: string, val: unknown) => Builder

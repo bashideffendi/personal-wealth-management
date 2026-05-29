@@ -21,7 +21,6 @@ import { UpcomingBills } from '@/components/dashboard/upcoming-bills'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { GoalsWidget } from '@/components/dashboard/goals-widget'
 import { InsightsPanel } from '@/components/dashboard/insights-panel'
-import { HealthScorePanel } from '@/components/dashboard/health-score-panel'
 import { NetWorthHero } from '@/components/dashboard/net-worth-hero'
 import { computeFinancialHealth } from '@/lib/financial-health'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
@@ -36,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, ArrowRight, Calendar, TrendingUp } from 'lucide-react'
+import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
 import {
   BarChart,
   Bar,
@@ -106,8 +105,6 @@ export default function DashboardPage() {
   const [liquidTotal, setLiquidTotal] = useState(0)
   const [nonLiquidTotal, setNonLiquidTotal] = useState(0)
   const [debtTotal, setDebtTotal] = useState(0)
-  const [emergencyFundCurrent, setEmergencyFundCurrent] = useState(0)
-  const [emergencyFundTarget, setEmergencyFundTarget] = useState(0)
   const [activeGoals, setActiveGoals] = useState<Array<{
     id: string; name: string; target_amount: number; current_amount: number; deadline: string | null
   }>>([])
@@ -139,7 +136,7 @@ export default function DashboardPage() {
     const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
     const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
 
-    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, efRes, ctrRes, nlqRes, goalsRes, recurRes] = await Promise.all([
+    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('*')
@@ -168,11 +165,6 @@ export default function DashboardPage() {
         .select('id, name, remaining, due_date, monthly_payment')
         .eq('user_id', user.id)
         .eq('is_active', true),
-      supabase
-        .from('emergency_funds')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(),
       supabase
         .from('contracts')
         .select('*')
@@ -207,10 +199,6 @@ export default function DashboardPage() {
     setActiveDebts(debtRows)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setRecurringItems((recurRes.data ?? []) as any[])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ef = efRes.data as any
-    setEmergencyFundCurrent(ef?.current_amount ?? 0)
-    setEmergencyFundTarget(ef?.target_amount ?? 0)
 
     const yearTxs = (yearRes.data ?? []) as Transaction[]
     setYearTransactions(yearTxs)

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, TrendingUp, TrendingDown, Camera, Sparkles } from 'lucide-react'
 import {
-  ComposedChart, Bar, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import { Button } from '@/components/ui/button'
@@ -391,7 +391,7 @@ interface HealthRatiosProps {
 }
 
 function HealthRatiosCard({
-  liquidAssets, totalAssets, totalDebt, longTermDebt, currentDebt,
+  liquidAssets, totalAssets, totalDebt, currentDebt,
   investmentValue, netWorth,
 }: HealthRatiosProps) {
   // Likuiditas = aset lancar / utang lancar

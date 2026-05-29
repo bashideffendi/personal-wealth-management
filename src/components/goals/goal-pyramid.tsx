@@ -15,8 +15,6 @@
  */
 
 import { useMemo } from 'react'
-import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import {
   PYRAMID_LAYERS,

@@ -1080,10 +1080,7 @@ function GenerateResearchEmpty({
   )
 }
 
-function RegenerateBar({
-  ticker,
-  onRegenerated,
-}: {
+function RegenerateBar(_props: {
   ticker: string
   onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {

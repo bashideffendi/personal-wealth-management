@@ -72,7 +72,6 @@ export function HealthScorePanel({
   const arcLen = C * sweepPct
   const totalCapped = Math.min(100, Math.max(0, total))
   const progress = (totalCapped / 100) * arcLen
-  const remaining = arcLen - progress
 
   const burnMonths = monthExpense > 0 ? liquidTotal / monthExpense : 0
   const burnTone = burnMonths >= 6 ? 'mint' : burnMonths >= 3 ? 'amber' : 'coral'

@@ -56,6 +56,9 @@ export function StockCompareTab() {
       .catch(() => {
         if (!cancelled) setLoading(false)
       })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const byTicker = useMemo(() => {

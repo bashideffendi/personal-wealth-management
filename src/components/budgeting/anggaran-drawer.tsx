@@ -17,7 +17,7 @@
 
 import { useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, ExternalLink, Copy, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ExternalLink, Copy } from 'lucide-react'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'

@@ -15,11 +15,7 @@ import {
   getMetricSeries,
 } from '@/lib/invest/stocks'
 import { getEmiten } from '@/lib/invest/emitten'
-import {
-  formatPrice,
-  signColorVar,
-  verdictStyle,
-} from '@/lib/invest/format'
+import { formatPrice, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
 
 interface RouteProps {

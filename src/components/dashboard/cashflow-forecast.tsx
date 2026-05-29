@@ -138,7 +138,6 @@ export function CashFlowForecast({
   // Stats
   const minPoint = forecast.reduce((min, p) => (p.balance < min.balance ? p : min), forecast[0])
   const endBalance = forecast[forecast.length - 1]?.balance ?? liquidBalance
-  const change = endBalance - liquidBalance
   const riskDays = forecast.filter((p) => p.balance < safetyBuffer)
   const negativeDays = forecast.filter((p) => p.balance < 0)
   const eventDays = forecast.filter((p) => p.events.length > 0)

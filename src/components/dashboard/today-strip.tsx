@@ -11,7 +11,7 @@
  */
 
 import Link from 'next/link'
-import { ArrowRight, Wallet, AlertTriangle } from 'lucide-react'
+import { ArrowRight, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface Tx {
