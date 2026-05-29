@@ -7,7 +7,7 @@ import type { Debt } from '@/types'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
-import { Snowflake, TrendingDown, Target, Loader2, Zap, Flame, ArrowRight } from 'lucide-react'
+import { Snowflake, TrendingDown, Target, Loader2, Zap, Flame, ArrowRight, PartyPopper } from 'lucide-react'
 import Link from 'next/link'
 import { EduTip } from '@/components/edu/edu-tip'
 
@@ -97,10 +97,10 @@ export default function DebtStrategyPage() {
             }}
           >
             <div
-              className="hidden sm:flex shrink-0 size-12 items-center justify-center rounded-xl text-2xl"
+              className="hidden sm:flex shrink-0 size-12 items-center justify-center rounded-xl"
               style={{ background: 'rgba(16,185,129,0.18)' }}
             >
-              🎉
+              <PartyPopper className="size-6" style={{ color: 'var(--c-mint)' }} />
             </div>
             <div className="flex-1">
               <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
@@ -126,7 +126,6 @@ export default function DebtStrategyPage() {
             <StrategyCard
               active={false}
               onClick={() => {}}
-              emoji="❄️"
               icon={<Snowflake className="h-4 w-4" />}
               title="Snowball"
               subtitle="Saldo Terkecil Dulu"
@@ -136,7 +135,6 @@ export default function DebtStrategyPage() {
             <StrategyCard
               active={false}
               onClick={() => {}}
-              emoji="🔥"
               icon={<TrendingDown className="h-4 w-4" />}
               title="Avalanche"
               subtitle="Bunga Tertinggi Dulu"
@@ -170,7 +168,6 @@ export default function DebtStrategyPage() {
             <StrategyCard
               active={strategy === 'snowball'}
               onClick={() => setStrategy('snowball')}
-              emoji="❄️"
               icon={<Snowflake className="h-4 w-4" />}
               title="Snowball"
               subtitle="Saldo Terkecil Dulu"
@@ -180,7 +177,6 @@ export default function DebtStrategyPage() {
             <StrategyCard
               active={strategy === 'avalanche'}
               onClick={() => setStrategy('avalanche')}
-              emoji="🔥"
               icon={<TrendingDown className="h-4 w-4" />}
               title="Avalanche"
               subtitle="Bunga Tertinggi Dulu"
@@ -285,11 +281,10 @@ export default function DebtStrategyPage() {
 }
 
 function StrategyCard({
-  active, onClick, emoji, icon, title, subtitle, desc, accent,
+  active, onClick, icon, title, subtitle, desc, accent,
 }: {
   active: boolean
   onClick: () => void
-  emoji: string
   icon: React.ReactNode
   title: string
   subtitle: string
@@ -313,7 +308,7 @@ function StrategyCard({
       <div className="relative flex items-start justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-wider opacity-80">{subtitle}</p>
-          <h3 className={`mt-1 text-2xl font-bold tracking-tight ${!active ? '' : ''}`}>{emoji} {title}</h3>
+          <h3 className="mt-1 text-2xl font-bold tracking-tight">{title}</h3>
           <p className={`text-sm mt-2 ${active ? 'opacity-85' : ''}`} style={!active ? { color: 'var(--ink-muted)' } : undefined}>
             {desc}
           </p>

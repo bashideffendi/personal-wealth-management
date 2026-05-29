@@ -224,7 +224,7 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
   const pct = isNa ? 0 : Math.min(100, Math.max(0, indicator.score))
 
   const tooltip = indicator.tip
-    ? `${indicator.explainer}\n\n💡 ${indicator.tip}`
+    ? `${indicator.explainer}\n\nTip: ${indicator.tip}`
     : indicator.explainer
 
   return (

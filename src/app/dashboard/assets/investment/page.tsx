@@ -340,10 +340,10 @@ export default function InvestmentOverviewPage() {
           {donut.length === 0 ? (
             <div className="h-[220px] flex flex-col items-center justify-center text-center px-4">
               <div
-                className="size-12 rounded-2xl flex items-center justify-center text-2xl mb-3"
+                className="size-12 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: 'rgba(14, 165, 233, 0.12)' }}
               >
-                📈
+                <TrendingUp className="size-6" style={{ color: '#0EA5E9' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Belum ada posisi</p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>

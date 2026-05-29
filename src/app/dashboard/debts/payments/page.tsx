@@ -14,7 +14,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2, Receipt } from 'lucide-react'
 
 interface DebtPayment {
   id: string
@@ -137,7 +137,7 @@ export default function DebtPaymentsPage() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : payments.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <p className="text-5xl">✅</p>
+          <Receipt className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
           <p className="mt-3 font-semibold">Belum ada riwayat pembayaran</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat pembayaran pertama Anda.</p>
         </div>

@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, ArrowRight, Calendar } from 'lucide-react'
+import { Loader2, ArrowRight, Calendar, TrendingUp } from 'lucide-react'
 import {
   BarChart,
   Bar,
@@ -906,9 +906,9 @@ export default function DashboardPage() {
 
           {investmentPieData.length === 0 ? (
             <div className="flex flex-1 min-h-[240px] flex-col items-center justify-center text-center px-6">
-              <div className="size-14 rounded-2xl flex items-center justify-center text-2xl mb-3"
+              <div className="size-14 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: 'rgba(14, 165, 233, 0.12)' }}>
-                📈
+                <TrendingUp className="size-7" style={{ color: '#0EA5E9' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                 Belum ada investasi

@@ -24,6 +24,7 @@ import {
 import {
   Loader2, Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown,
   LineChart, Coins, LayoutGrid, List, Star, FileSearch, GitCompare, Calendar,
+  Lightbulb,
 } from 'lucide-react'
 import { NumberInput } from '@/components/ui/number-input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -692,13 +693,14 @@ export default function InvestmentCategoryPage() {
                 <>
                   {cfg.topHint && (
                     <p
-                      className="text-xs leading-relaxed rounded-lg p-2.5"
+                      className="text-xs leading-relaxed rounded-lg p-2.5 flex items-start gap-2"
                       style={{
                         color: 'var(--ink-muted)',
                         background: 'var(--surface-2)',
                       }}
                     >
-                      💡 {cfg.topHint}
+                      <Lightbulb className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-amber, #F59E0B)' }} />
+                      <span>{cfg.topHint}</span>
                     </p>
                   )}
                   <div className={cfg.showTicker ? 'grid grid-cols-2 gap-3' : 'grid gap-3'}>

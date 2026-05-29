@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Plus, X, Search, Loader2, ArrowUpRight } from 'lucide-react'
+import { Plus, X, Search, Loader2, ArrowUpRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -222,8 +222,8 @@ export function StockCompareTab() {
       )}
 
       {selected.length >= 2 && (
-        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-          🟢 = unggul untuk metrik tersebut. Harga termurah & MoS terbesar dihighlight emerald.
+        <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+          <CheckCircle2 className="size-3 shrink-0" style={{ color: 'var(--c-mint)' }} /> = unggul untuk metrik tersebut. Harga termurah & MoS terbesar dihighlight emerald.
         </p>
       )}
 
@@ -264,7 +264,7 @@ function CompareRow({
           }}
         >
           {v.jsx ?? v.raw}
-          {v.isWinner && ' 🟢'}
+          {v.isWinner && <CheckCircle2 className="inline size-3 ml-1 align-text-bottom" style={{ color: 'var(--c-mint)' }} />}
         </td>
       ))}
     </tr>

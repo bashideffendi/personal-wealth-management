@@ -18,7 +18,7 @@
  */
 
 import { useMemo } from 'react'
-import { Lock, CheckCircle2, Circle, ChevronRight } from 'lucide-react'
+import { Lock, CheckCircle2, Circle, ChevronRight, Home, Shield, Coins, TrendingUp, TreePine, Trophy, type LucideIcon } from 'lucide-react'
 import { EduTip } from '@/components/edu/edu-tip'
 
 interface PyramidInput {
@@ -42,7 +42,7 @@ interface Tier {
   key: string
   level: number
   title: string
-  emoji: string
+  Icon: LucideIcon
   color: string
   description: string
   /** true = met, false = not yet, null = N/A (no data) */
@@ -61,7 +61,7 @@ function evaluateTiers(input: PyramidInput): Tier[] {
       key: 'foundation',
       level: 1,
       title: 'Foundation',
-      emoji: '🏠',
+      Icon: Home,
       color: '#0EA5E9',
       description: 'Cashflow stabil, kebutuhan dasar tertutup, mulai catat keuangan.',
       requirement: 'Pengeluaran ≤ pendapatan bulanan',
@@ -71,7 +71,7 @@ function evaluateTiers(input: PyramidInput): Tier[] {
       key: 'safety',
       level: 2,
       title: 'Safety',
-      emoji: '🛡️',
+      Icon: Shield,
       color: '#10B981',
       description: 'Dana darurat 3×, asuransi minimal (BPJS Kesehatan + 1 lain).',
       requirement: 'Dana darurat ≥ 3× pengeluaran + asuransi aktif',
@@ -81,7 +81,7 @@ function evaluateTiers(input: PyramidInput): Tier[] {
       key: 'accumulation',
       level: 3,
       title: 'Accumulation',
-      emoji: '💰',
+      Icon: Coins,
       color: '#F59E0B',
       description: 'Punya goal jangka pendek-menengah + investasi rutin.',
       requirement: 'Minimal 1 goal aktif + ada investasi',
@@ -91,7 +91,7 @@ function evaluateTiers(input: PyramidInput): Tier[] {
       key: 'growth',
       level: 4,
       title: 'Growth',
-      emoji: '📈',
+      Icon: TrendingUp,
       color: '#8B5CF6',
       description: 'Investasi jangka panjang ≥ 3× annual income, dana pensiun aktif.',
       requirement: 'Investasi ≥ 3× annual income + dana pensiun',
@@ -101,7 +101,7 @@ function evaluateTiers(input: PyramidInput): Tier[] {
       key: 'legacy',
       level: 5,
       title: 'Legacy',
-      emoji: '🌳',
+      Icon: TreePine,
       color: '#EC4899',
       description: 'Estate planning, warisan, waqf, financial independence achieved.',
       requirement: 'Investasi ≥ 10× annual income (FI threshold)',
@@ -166,7 +166,7 @@ export function WealthPyramid({ input }: Props) {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-base shrink-0">{tier.emoji}</span>
+                    <tier.Icon className="size-4 shrink-0" style={{ color: reached ? tier.color : 'var(--ink-soft)' }} />
                     <div className="min-w-0">
                       <p
                         className="text-[11px] font-bold uppercase tracking-wide truncate"
@@ -204,8 +204,8 @@ export function WealthPyramid({ input }: Props) {
             <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
               Fokus berikutnya
             </p>
-            <p className="text-sm font-semibold mt-0.5" style={{ color: nextTier.color }}>
-              {nextTier.emoji} {nextTier.title}
+            <p className="text-sm font-semibold mt-0.5 inline-flex items-center gap-1.5" style={{ color: nextTier.color }}>
+              <nextTier.Icon className="size-4 shrink-0" /> {nextTier.title}
             </p>
             <p className="text-[12px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
               {nextTier.description}
@@ -219,7 +219,7 @@ export function WealthPyramid({ input }: Props) {
           className="mt-4 pt-3 border-t text-center"
           style={{ borderColor: 'var(--border-soft)' }}
         >
-          <p className="text-2xl">🎉</p>
+          <Trophy className="size-7 mx-auto" style={{ color: 'var(--c-mint)' }} />
           <p className="text-sm font-semibold mt-1" style={{ color: 'var(--ink)' }}>
             Semua tier tercapai!
           </p>

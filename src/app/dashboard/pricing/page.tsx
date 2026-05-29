@@ -236,8 +236,8 @@ export default function PricingPage() {
               </button>
 
               {plan.max_seats > 1 && (
-                <p className="text-xs text-center mt-2 text-[var(--c-mint)] font-medium">
-                  👨‍👩‍👧 Sampai {plan.max_seats} anggota keluarga
+                <p className="text-xs text-center mt-2 text-[var(--c-mint)] font-medium inline-flex items-center justify-center gap-1 w-full">
+                  <Users className="size-3.5 shrink-0" /> Sampai {plan.max_seats} anggota keluarga
                 </p>
               )}
 

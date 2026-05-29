@@ -18,7 +18,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, ArrowUpRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, ArrowUpRight, PartyPopper } from 'lucide-react'
 
 const DEBT_CATEGORY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
   consumer:  { label: 'Konsumer',       emoji: '💳', color: '#F43F5E' },
@@ -282,7 +282,7 @@ export default function DebtsOverviewPage() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
       ) : debts.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <p className="text-5xl">🎉</p>
+          <PartyPopper className="size-12 mx-auto" style={{ color: 'var(--c-mint)' }} />
           <p className="mt-3 font-semibold">Tidak ada utang tercatat</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Selamat!</p>
         </div>

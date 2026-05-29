@@ -16,7 +16,7 @@ import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import {
   Search, ArrowRight, Sparkles, Receipt, Wallet, Target, Calculator,
   Plus, FileText, History, CornerDownLeft, ChevronUp, ChevronDown,
-  Loader2, Check, AlertCircle, Mic, MicOff,
+  Loader2, Check, AlertCircle, Mic, MicOff, Folder, CreditCard,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
@@ -633,8 +633,8 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             {d.description}
           </p>
           <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: 'var(--ink-muted)' }}>
-            <span>📂 {d.category}</span>
-            {d.payment_hint && <span>💳 {d.payment_hint}</span>}
+            <span className="inline-flex items-center gap-1"><Folder className="size-3 shrink-0" /> {d.category}</span>
+            {d.payment_hint && <span className="inline-flex items-center gap-1"><CreditCard className="size-3 shrink-0" /> {d.payment_hint}</span>}
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-2">

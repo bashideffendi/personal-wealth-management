@@ -254,7 +254,7 @@ export default function GoalsPage() {
                   </div>
                   <div className="flex items-center justify-between text-[11px] mt-1.5">
                     <span className="num" style={{ color: done ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
-                      {pct.toFixed(1)}% {done ? '(Tercapai 🎯)' : 'tercapai'}
+                      {pct.toFixed(1)}% {done ? '(Tercapai)' : 'tercapai'}
                     </span>
                     {perMonth !== null && !done && (
                       <span
