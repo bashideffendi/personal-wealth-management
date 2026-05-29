@@ -15,7 +15,7 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
           color: '#FFFFFF',
           fontSize: 120,
           fontWeight: 800,
@@ -23,7 +23,7 @@ export default function AppleIcon() {
           letterSpacing: '-0.05em',
         }}
       >
-        P
+        K
       </div>
     ),
     { ...size },

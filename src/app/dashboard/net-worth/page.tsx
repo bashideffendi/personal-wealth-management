@@ -710,8 +710,8 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                   <stop offset="100%" stopColor="#10B981" stopOpacity={0.55} />
                 </linearGradient>
                 <linearGradient id="g-debts" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor="#FB7185" stopOpacity={0.85} />
-                  <stop offset="100%" stopColor="#FB7185" stopOpacity={0.55} />
+                  <stop offset="0%" stopColor="#F43F5E" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#F43F5E" stopOpacity={0.55} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -757,7 +757,7 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                           <span>{formatCurrency(Math.abs(p.debts))}</span>
                         </p>
                         <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-                          <span style={{ color: 'var(--c-primary)' }}>● Net Worth</span>
+                          <span style={{ color: 'var(--c-violet)' }}>● Net Worth</span>
                           <span>{formatCurrency(p.net)}</span>
                         </p>
                       </div>
@@ -771,9 +771,9 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                 type="monotone"
                 dataKey="net"
                 name="Net Worth"
-                stroke="#4F46E5"
+                stroke="#8B5CF6"
                 strokeWidth={2.5}
-                dot={{ r: 3, fill: '#4F46E5', stroke: 'var(--surface)', strokeWidth: 2 }}
+                dot={{ r: 3, fill: '#8B5CF6', stroke: 'var(--surface)', strokeWidth: 2 }}
                 activeDot={{ r: 5 }}
               />
             </ComposedChart>

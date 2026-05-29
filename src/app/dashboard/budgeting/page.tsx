@@ -380,7 +380,7 @@ export default function BudgetingPage() {
 
   // Color tokens per kind — editorial semantic per design handoff
   // Pendapatan=mint, Pengeluaran=coral, Tabungan=amber, Investasi=primary
-  // (indigo, bukan sky lagi)
+  // investment = violet, sisanya mint/coral/amber
   const KIND_COLOR: Record<BudgetType, { hex: string; bgSoft: string; bgFirm: string; textOnFirm: string }> = {
     income: {
       hex: '#10B981', // mint
@@ -389,9 +389,9 @@ export default function BudgetingPage() {
       textOnFirm: '#064E3B',
     },
     expense: {
-      hex: '#FB7185', // coral (editorial, bukan red harsh)
-      bgSoft: 'rgba(251, 113, 133, 0.05)',
-      bgFirm: 'rgba(251, 113, 133, 0.14)',
+      hex: '#F43F5E', // coral
+      bgSoft: 'rgba(244, 63, 94, 0.05)',
+      bgFirm: 'rgba(244, 63, 94, 0.14)',
       textOnFirm: '#9F1239',
     },
     saving: {
@@ -401,10 +401,10 @@ export default function BudgetingPage() {
       textOnFirm: '#92400E',
     },
     investment: {
-      hex: '#4F46E5', // indigo primary
-      bgSoft: 'rgba(79, 70, 229, 0.05)',
-      bgFirm: 'rgba(79, 70, 229, 0.15)',
-      textOnFirm: '#312E81',
+      hex: '#8B5CF6', // violet
+      bgSoft: 'rgba(139, 92, 246, 0.05)',
+      bgFirm: 'rgba(139, 92, 246, 0.15)',
+      textOnFirm: '#4C1D95',
     },
   }
 

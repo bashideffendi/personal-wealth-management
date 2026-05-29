@@ -140,7 +140,7 @@ export function MobileBudgetingView({
           </p>
           <p
             className="num tabular text-base font-semibold mt-0.5"
-            style={{ color: remaining >= 0 ? 'var(--emerald-600, #059669)' : 'var(--coral-600, #F43F5E)' }}
+            style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}
           >
             {formatCurrency(remaining)}
           </p>

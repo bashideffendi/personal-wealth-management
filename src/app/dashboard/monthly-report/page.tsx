@@ -427,12 +427,12 @@ export default function MonthlyReportPage() {
   )
 }
 
-function KpiCard({ label, value, accent, icon, note }: { label: string; value: string; accent: 'emerald' | 'rose' | 'amber' | 'indigo'; icon: React.ReactNode; note?: string }) {
+function KpiCard({ label, value, accent, icon, note }: { label: string; value: string; accent: 'emerald' | 'rose' | 'amber' | 'violet'; icon: React.ReactNode; note?: string }) {
   const colors: Record<string, { bg: string; fg: string }> = {
     emerald: { bg: '#D1FAE5', fg: '#10B981' },
     rose:    { bg: '#FFE4E6', fg: '#F43F5E' },
     amber:   { bg: '#FEF3C7', fg: '#B45309' },
-    indigo:  { bg: '#E0E7FF', fg: '#4F46E5' },
+    violet:  { bg: '#EDE9FE', fg: '#8B5CF6' },
   }
   const c = colors[accent]
   return (

@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-// Favicon — 32x32 emerald square with "P" monogram
+// Favicon — 32x32 emerald square with "K" monogram (Klunting)
 export const size = { width: 32, height: 32 }
 export const contentType = 'image/png'
 
@@ -14,7 +14,7 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
           color: '#FFFFFF',
           fontSize: 22,
           fontWeight: 800,
@@ -23,7 +23,7 @@ export default function Icon() {
           letterSpacing: '-0.05em',
         }}
       >
-        P
+        K
       </div>
     ),
     { ...size },

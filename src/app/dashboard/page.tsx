@@ -714,7 +714,7 @@ export default function DashboardPage() {
                         className="aspect-square min-h-[56px] rounded-md relative flex flex-col items-start justify-between p-1 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
                         style={{
                           background: bg || 'var(--surface-2)',
-                          border: isToday ? '2px solid var(--emerald-600, #059669)' : '1px solid var(--border-soft)',
+                          border: isToday ? '2px solid var(--c-mint)' : '1px solid var(--border-soft)',
                         }}
                         title={tooltipParts.join(' · ')}
                       >
@@ -882,7 +882,7 @@ export default function DashboardPage() {
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
               {/* Emerald + coral matching mockup palette (line 181-182) */}
               <Bar dataKey="income" name="Pemasukan" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
-              <Bar dataKey="expense" name="Pengeluaran" fill="#FB7185" radius={[3, 3, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="expense" name="Pengeluaran" fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -898,7 +898,7 @@ export default function DashboardPage() {
             <Link
               href="/dashboard/assets/investment"
               className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
-              style={{ color: 'var(--emerald-600, #059669)' }}
+              style={{ color: 'var(--c-mint)' }}
             >
               Detail <ArrowRight className="size-3" />
             </Link>
@@ -920,7 +920,7 @@ export default function DashboardPage() {
                 href="/dashboard/assets/investment"
                 className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  background: 'linear-gradient(135deg, #10B981, #047857)',
                   color: '#FFFFFF',
                 }}
               >

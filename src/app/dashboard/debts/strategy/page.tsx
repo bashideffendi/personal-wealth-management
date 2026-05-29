@@ -113,7 +113,7 @@ export default function DebtStrategyPage() {
               <Link
                 href="/dashboard/debts"
                 className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium"
-                style={{ color: 'var(--emerald-600, #059669)' }}
+                style={{ color: 'var(--c-mint)' }}
               >
                 Catat utang pertamamu
                 <ArrowRight className="size-3.5" />
@@ -253,7 +253,7 @@ export default function DebtStrategyPage() {
                         <div className="flex items-center gap-2">
                           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{d.name}</p>
                           {focus && (
-                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'linear-gradient(135deg, #6366F1, #EC4899)', color: '#FFF' }}>
+                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: '#FFF' }}>
                               <Target className="h-2.5 w-2.5" /> Fokus
                             </span>
                           )}

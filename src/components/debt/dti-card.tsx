@@ -131,7 +131,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
         <div
           className="relative h-3 rounded-full overflow-hidden"
           style={{
-            background: 'linear-gradient(90deg, #10B981 0%, #10B981 33%, #F59E0B 50%, #F59E0B 60%, #FB7185 80%, #F43F5E 100%)',
+            background: 'linear-gradient(90deg, #10B981 0%, #10B981 33%, #F59E0B 50%, #F59E0B 60%, #F43F5E 80%, #F43F5E 100%)',
           }}
         >
           {/* Marker */}

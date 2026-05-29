@@ -364,7 +364,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                         <div>
                           <Label className="text-[11px]">Status</Label>
                           {emergencyFund ? (
-                            <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--emerald-600, #059669)' }}>
+                            <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--c-mint)' }}>
                               ✓ Terhubung
                             </p>
                           ) : (
