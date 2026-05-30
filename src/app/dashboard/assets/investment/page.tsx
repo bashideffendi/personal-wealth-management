@@ -8,7 +8,7 @@ import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, AreaChart, Area } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
@@ -23,6 +23,14 @@ const CAT_LABELS: Record<string, string> = {
 }
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+
+const CHART_RANGES = [
+  { key: '1B', label: '1B', days: 30 },
+  { key: '3B', label: '3B', days: 90 },
+  { key: '1T', label: '1T', days: 365 },
+  { key: 'all', label: 'Sejak', days: Infinity },
+] as const
+type ChartRangeKey = (typeof CHART_RANGES)[number]['key']
 
 // Asset class for diversification analysis (matches Investment.type schema)
 const FIXED_INCOME_CATS = new Set(['bond', 'sbn', 'time_deposit'])
@@ -42,6 +50,8 @@ export default function InvestmentOverviewPage() {
   const [dividends, setDividends] = useState<{ amount: number; pay_date: string }[]>([])
   const [quotes, setQuotes] = useState<Record<string, { changePct: number | null }>>({})
   const [tab, setTab] = useState<'all' | AssetClassKey>('all')
+  const [snapshots, setSnapshots] = useState<{ snapshot_date: string; market_value: number }[]>([])
+  const [chartRange, setChartRange] = useState<ChartRangeKey>('all')
 
   // useCallback so the function is stable and can be a useEffect dep
   // without re-running every render. Same pattern as [slug]/page.tsx.
@@ -49,7 +59,7 @@ export default function InvestmentOverviewPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const [invRes, rdnRes, divRes] = await Promise.all([
+    const [invRes, rdnRes, divRes, snapRes] = await Promise.all([
       supabase.from('investments').select('*').eq('user_id', user.id),
       supabase
         .from('accounts')
@@ -60,10 +70,18 @@ export default function InvestmentOverviewPage() {
         .from('dividends')
         .select('amount, pay_date')
         .eq('user_id', user.id),
+      // portfolio_snapshots may not exist yet (migration 030) — error is
+      // swallowed by `?? []`, page still works, chart shows placeholder.
+      supabase
+        .from('portfolio_snapshots')
+        .select('snapshot_date, market_value')
+        .eq('user_id', user.id)
+        .order('snapshot_date', { ascending: true }),
     ])
     setItems((invRes.data ?? []) as Investment[])
     setRdnAccounts((rdnRes.data ?? []) as RdnAccount[])
     setDividends((divRes.data ?? []) as { amount: number; pay_date: string }[])
+    setSnapshots((snapRes.data ?? []) as { snapshot_date: string; market_value: number }[])
     setLoading(false)
   }, [supabase])
 
@@ -260,6 +278,43 @@ export default function InvestmentOverviewPage() {
     return prev > 0 ? ((dividen6Total - prev) / prev) * 100 : null
   }, [dividends, dividen6Total])
 
+  // Equity curve: stored daily snapshots + always-included live "today" point.
+  const chartData = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const map = new Map<string, number>()
+    for (const s of snapshots) map.set(s.snapshot_date, Number(s.market_value) || 0)
+    map.set(today, totals.market)
+    const range = CHART_RANGES.find((r) => r.key === chartRange) ?? CHART_RANGES[3]
+    let pts = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+    if (range.days !== Infinity) {
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - range.days)
+      const cutStr = cutoff.toISOString().slice(0, 10)
+      pts = pts.filter(([d]) => d >= cutStr)
+    }
+    return pts.map(([date, value]) => ({
+      label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+      value,
+    }))
+  }, [snapshots, totals.market, chartRange])
+
+  // Record today's portfolio value (one row/day). No-op if table 030 isn't
+  // applied yet — the error is ignored.
+  useEffect(() => {
+    if (loading || items.length === 0) return
+    let cancelled = false
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+      const today = new Date().toISOString().slice(0, 10)
+      await supabase.from('portfolio_snapshots').upsert(
+        { user_id: user.id, snapshot_date: today, market_value: totals.market, invested: totals.invested },
+        { onConflict: 'user_id,snapshot_date' },
+      )
+    })()
+    return () => { cancelled = true }
+  }, [loading, items, totals, supabase])
+
   // Concentration risk: top kategori share of total
   const topCatPct = useMemo(() => {
     const total = donut.reduce((s, d) => s + d.value, 0)
@@ -345,33 +400,82 @@ export default function InvestmentOverviewPage() {
 
       {/* Portfolio hero — light card, value-first */}
       <section className="s-card p-6 sm:p-8">
-        <p className="eyebrow">Total Nilai Portofolio</p>
-        <div className="mt-2 flex flex-wrap items-end gap-3">
-          <p
-            className="num tabular font-bold leading-none whitespace-nowrap"
-            style={{ color: 'var(--ink)', fontSize: 'clamp(34px, 5vw, 54px)', letterSpacing: '-0.035em' }}
-          >
-            {formatCurrency(totals.market)}
-          </p>
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
-            style={{
-              background: up ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
-              color: up ? 'var(--c-mint)' : 'var(--c-coral)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            {up ? '+' : ''}{totals.plPct.toFixed(2)}%
-          </span>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="eyebrow">Total Nilai Portofolio</p>
+            <div className="mt-2 flex flex-wrap items-end gap-3">
+              <p
+                className="num tabular font-bold leading-none whitespace-nowrap"
+                style={{ color: 'var(--ink)', fontSize: 'clamp(34px, 5vw, 54px)', letterSpacing: '-0.035em' }}
+              >
+                {formatCurrency(totals.market)}
+              </p>
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
+                style={{
+                  background: up ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
+                  color: up ? 'var(--c-mint)' : 'var(--c-coral)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {up ? '+' : ''}{totals.plPct.toFixed(2)}%
+              </span>
+            </div>
+            <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
+              Total {up ? 'untung' : 'rugi'}{' '}
+              <span className="num tabular font-semibold" style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                {up ? '+' : ''}{formatCurrency(totals.pl)}
+              </span>{' '}
+              sejak awal investasi
+            </p>
+          </div>
+          <div className="flex gap-0.5 shrink-0 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
+            {CHART_RANGES.map((r) => {
+              const active = chartRange === r.key
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => setChartRange(r.key)}
+                  className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+                  style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(16,24,40,0.08)' } : { color: 'var(--ink-soft)' }}
+                >
+                  {r.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
-        <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
-          Total {up ? 'untung' : 'rugi'}{' '}
-          <span className="num tabular font-semibold" style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}>
-            {up ? '+' : ''}{formatCurrency(totals.pl)}
-          </span>{' '}
-          sejak awal investasi
-        </p>
+
+        {/* Equity curve — real, from daily snapshots */}
+        <div className="mt-4" style={{ height: 150 }}>
+          {chartData.length < 2 ? (
+            <div className="h-full rounded-xl flex flex-col items-center justify-center text-center px-6" style={{ background: 'var(--surface-2)' }}>
+              <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>Grafik riwayat lagi dikumpulin</p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                Nilai portofolio direkam tiap kamu buka halaman ini — balik lagi besok buat lihat kurvanya tumbuh.
+              </p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Tooltip
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Nilai']}
+                  contentStyle={{ background: '#fff', border: '1px solid var(--border-soft)', borderRadius: 10, fontSize: 12 }}
+                />
+                <Area type="monotone" dataKey="value" stroke={up ? '#10B981' : '#F43F5E'} strokeWidth={2} fill="url(#equityFill)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
 
         {/* Sub-stats — modal & P/L primary, dividen supporting */}
         <div
