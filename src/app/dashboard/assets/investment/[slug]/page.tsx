@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { INVESTMENT_SUBCATS, INVESTMENT_SLUG_TO_CATEGORY } from '@/lib/constants'
@@ -37,6 +38,15 @@ import { StockDividendCalendar } from '@/components/investment/stock-dividend-ca
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { getCategoryFormConfig } from '@/lib/investment-forms'
+
+// Yahoo IDX pakai suffix .JK. Helper lokal — emitten.ts `server-only`, gak bisa di client.
+function toYahooTicker(t: string): string {
+  const u = t.trim().toUpperCase()
+  return u.endsWith('.JK') ? u : `${u}.JK`
+}
+function fromYahooTicker(t: string): string {
+  return t.trim().toUpperCase().replace(/\.JK$/, '')
+}
 
 interface FormState {
   id: string | null
@@ -89,6 +99,7 @@ export default function InvestmentCategoryPage() {
     try { localStorage.setItem(`pwm.investmentView.${slug}`, next) } catch {}
   }
   const [quotes, setQuotes] = useState<Record<string, Quote>>({})
+  const [quotesUpdatedAt, setQuotesUpdatedAt] = useState<Date | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -155,6 +166,7 @@ export default function InvestmentCategoryPage() {
       setQuotes(map)
     } finally {
       setRefreshing(false)
+      setQuotesUpdatedAt(new Date())
     }
   }, [category])
 
@@ -188,7 +200,7 @@ export default function InvestmentCategoryPage() {
   }
   function openEdit(inv: Investment) {
     setForm({
-      id: inv.id, name: inv.name, ticker: inv.ticker ?? '',
+      id: inv.id, name: inv.name, ticker: fromYahooTicker(inv.ticker ?? ''),
       platform: inv.platform ?? '', quantity: inv.quantity,
       avg_cost: inv.avg_cost, current_price: inv.current_price || inv.avg_cost,
       sector: (inv as Investment & { sector?: string }).sector ?? '',
@@ -209,7 +221,13 @@ export default function InvestmentCategoryPage() {
       user_id: user.id,
       category,
       name: form.name,
-      ticker: form.ticker.trim().toUpperCase() || null,
+      ticker: (() => {
+        const raw = form.ticker.trim().toUpperCase()
+        if (!raw) return null
+        // Saham: simpan format Yahoo (IDX -> .JK, US -> apa adanya). Selain itu apa adanya.
+        if (category === 'stock') return marketFilter === 'us' ? raw : toYahooTicker(raw)
+        return raw
+      })(),
       platform: form.platform,
       quantity: form.quantity,
       avg_cost: form.avg_cost,
@@ -370,11 +388,11 @@ export default function InvestmentCategoryPage() {
         <TabsContent value="holdings" className="space-y-6 mt-6">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {category === 'stock'
-            ? 'Saham IDX & US — pakai ticker .JK untuk IDX (contoh: BBCA.JK) atau simbol langsung (AAPL).'
-            : category === 'crypto'
-              ? 'Harga real-time dari Binance · Format ticker: BTC-USD, ETH-USD, SOL-USD.'
-              : 'Kelola posisi ' + subcat.label.toLowerCase() + ' kamu.'}
+          {(category === 'stock' || category === 'crypto')
+            ? (quotesUpdatedAt
+                ? `Harga terakhir diperbarui ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · bukan real-time, tekan Refresh Harga untuk memperbarui.`
+                : 'Harga bukan real-time — tekan Refresh Harga untuk memperbarui.')
+            : `Kelola posisi ${subcat.label.toLowerCase()}.`}
         </p>
         <div className="flex gap-2 items-center">
           {/* View toggle — Card / List. Hidden when no positions yet. */}
@@ -482,21 +500,46 @@ export default function InvestmentCategoryPage() {
                   return (
                     <tr key={e.i.id} className="border-b hover:bg-[var(--surface-alt)]/50 transition-colors" style={{ borderColor: 'var(--border-soft)' }}>
                       <Td>
-                        <div className="flex items-center gap-2.5">
-                          {category === 'stock' ? (
-                            <StockLogo ticker={e.i.ticker} size={36} />
-                          ) : category === 'crypto' ? (
-                            <CryptoLogo symbol={e.i.ticker} size={36} />
-                          ) : null}
-                          <Badge
-                            className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular"
-                            style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                        {category === 'stock' && e.i.ticker ? (
+                          <Link
+                            href={`/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`}
+                            className="flex items-center gap-2.5 group/row"
+                            title={`Lihat riset ${fromYahooTicker(e.i.ticker)}`}
                           >
-                            {e.i.ticker ?? '—'}
-                          </Badge>
-                        </div>
+                            <StockLogo ticker={e.i.ticker} size={36} />
+                            <Badge
+                              className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular group-hover/row:underline"
+                              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                            >
+                              {fromYahooTicker(e.i.ticker)}
+                            </Badge>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-2.5">
+                            {category === 'crypto' ? (
+                              <CryptoLogo symbol={e.i.ticker} size={36} />
+                            ) : null}
+                            <Badge
+                              className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular"
+                              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                            >
+                              {e.i.ticker ?? '—'}
+                            </Badge>
+                          </div>
+                        )}
                       </Td>
-                      <Td className="font-medium" style={{ color: 'var(--ink)' }}>{e.i.name}</Td>
+                      <Td className="font-medium" style={{ color: 'var(--ink)' }}>
+                        {category === 'stock' && e.i.ticker ? (
+                          <Link
+                            href={`/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`}
+                            className="hover:underline"
+                          >
+                            {e.i.name}
+                          </Link>
+                        ) : (
+                          e.i.name
+                        )}
+                      </Td>
                       {category === 'stock' && (
                         <Td style={{ color: 'var(--ink-muted)' }}>
                           {(e.i as Investment & { sector?: string }).sector ?? '—'}
@@ -623,15 +666,15 @@ export default function InvestmentCategoryPage() {
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{form.id ? `Edit ${subcat.label}` : `Tambah ${subcat.label}`}</DialogTitle>
             <DialogDescription>
               {category === 'stock'
-                ? 'IDX: BBCA.JK, TLKM.JK · US: AAPL, GOOGL'
+                ? 'Cari emiten, lalu lengkapi jumlah lot dan harga rata-rata.'
                 : category === 'crypto'
-                  ? 'Cari coin dari Binance · Format ticker: BTC-USD, ETH-USD, SOL-USD'
-                  : 'Isi detail posisi investasi kamu.'}
+                  ? 'Cari aset kripto, lalu lengkapi jumlah dan harga rata-rata.'
+                  : 'Lengkapi detail posisi investasi.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
@@ -641,12 +684,12 @@ export default function InvestmentCategoryPage() {
                 <div className="grid gap-1.5">
                   <Label>Cari Saham</Label>
                   <StockTickerSearch
-                    value={form.ticker?.split('.')[0] ?? ''}
+                    value={form.ticker ?? ''}
                     onSelect={(s) =>
                       setForm({
                         ...form,
-                        // Yahoo Finance uses .JK suffix for IDX
-                        ticker: `${s.t}.JK`,
+                        // simpan ticker polos (tanpa .JK); suffix .JK ditambah otomatis saat simpan
+                        ticker: s.t,
                         name: s.n,
                         sector: s.s,
                       })
@@ -667,7 +710,7 @@ export default function InvestmentCategoryPage() {
                     <Input
                       value={form.ticker}
                       onChange={(e) => setForm({ ...form, ticker: e.target.value })}
-                      placeholder="BBCA.JK"
+                      placeholder="BBCA"
                     />
                   </div>
                 </div>
