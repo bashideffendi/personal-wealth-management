@@ -1001,10 +1001,10 @@ export default function TransactionsPage() {
               </colgroup>
               <TableHeader>
                 <TableRow className="bg-[var(--surface-3)] hover:bg-[var(--surface-3)]">
-                  <TableHead className="text-[11px] uppercase tracking-wider text-center whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-center whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-center whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-center" style={{ color: 'var(--ink-muted)' }}>Deskripsi</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>Deskripsi</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Jumlah</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Aksi</TableHead>
                 </TableRow>
