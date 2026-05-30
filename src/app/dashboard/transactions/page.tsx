@@ -999,7 +999,7 @@ export default function TransactionsPage() {
                 <col style={{ width: '8%' }} />
               </colgroup>
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="bg-[var(--surface-2)] hover:bg-[var(--surface-2)]">
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
