@@ -14,25 +14,13 @@ import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
+import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
 
 const CAT_LABELS: Record<string, string> = {
   stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
   gold: 'Emas', bond: 'Obligasi', time_deposit: 'Deposito',
   p2p: 'P2P Lending', business: 'Bisnis',
 }
-
-// Vivid palette tuned for distinguishability across 8 categories.
-// Order matters — 1st category gets emerald (the brand color).
-const DONUT_PALETTE = [
-  '#10B981', // emerald — main
-  '#0EA5E9', // sky
-  '#F59E0B', // amber
-  '#8B5CF6', // violet
-  '#F43F5E', // coral
-  '#34D399', // emerald-400 — secondary
-  '#7DD3FC', // sky-300
-  '#737373', // gray (last resort)
-]
 
 // Asset class for diversification analysis (matches Investment.type schema)
 const FIXED_INCOME_CATS = new Set(['bond', 'sbn', 'time_deposit'])
@@ -124,12 +112,38 @@ export default function InvestmentOverviewPage() {
     return map
   }, [enriched])
 
+  // Finer grouping for allocation + kinerja: `stock` split into IHSG vs US.
+  const byClass = useMemo(() => {
+    const map: Partial<Record<AssetClassKey, { invested: number; market: number; count: number }>> = {}
+    for (const e of enriched) {
+      const k = assetClassKey(e.i)
+      if (!map[k]) map[k] = { invested: 0, market: 0, count: 0 }
+      map[k]!.invested += e.invested
+      map[k]!.market += e.market
+      map[k]!.count += 1
+    }
+    return map
+  }, [enriched])
+
   const donut = useMemo(() => {
-    return Object.entries(byCategory)
+    return (Object.entries(byClass) as [AssetClassKey, { invested: number; market: number; count: number }][])
       .filter(([, v]) => v.market > 0)
       .sort((a, b) => b[1].market - a[1].market)
-      .map(([k, v]) => ({ name: CAT_LABELS[k] ?? k, key: k, value: v.market }))
-  }, [byCategory])
+      .map(([k, v]) => ({ name: ASSET_CLASS_META[k].label, key: k, color: ASSET_CLASS_META[k].color, value: v.market }))
+  }, [byClass])
+
+  // Return-% per asset class (only classes with cost basis), best → worst.
+  const kinerja = useMemo(() => {
+    return (Object.entries(byClass) as [AssetClassKey, { invested: number; market: number; count: number }][])
+      .filter(([, v]) => v.invested > 0)
+      .map(([k, v]) => ({
+        key: k,
+        label: ASSET_CLASS_META[k].label,
+        color: ASSET_CLASS_META[k].color,
+        returnPct: ((v.market - v.invested) / v.invested) * 100,
+      }))
+      .sort((a, b) => b.returnPct - a.returnPct)
+  }, [byClass])
 
   // Concentration risk: top kategori share of total
   const topCatPct = useMemo(() => {
@@ -314,9 +328,78 @@ export default function InvestmentOverviewPage() {
         </div>
       )}
 
-      {/* Allocation + category grid — items-start so the left card stays at
-          its natural height instead of stretching to match the (often taller)
-          right column, which leaves blank space below. */}
+      {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug) */}
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <p className="eyebrow">Kelas Aset</p>
+          <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Klik buat rincian tiap kelas</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {INVESTMENT_SUBCATS.map((sc) => {
+            const cat = sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug
+            const data = byCategory[cat] ?? { invested: 0, market: 0, count: 0 }
+            const pl = data.market - data.invested
+            const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
+            const plUp = pl >= 0
+            const visual = getInvestmentVisual(sc.slug)
+            const Icon = visual.icon
+            const hasPosition = data.count > 0
+            return (
+              <Link
+                key={sc.slug}
+                href={`/dashboard/assets/investment/${sc.slug}`}
+                className="group relative rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
+                style={{
+                  background: hasPosition ? '#FFFFFF' : visual.bgTint,
+                  border: `1px solid ${hasPosition ? visual.borderTint : 'var(--border-soft)'}`,
+                }}
+              >
+                <div
+                  className="absolute -top-6 -right-6 size-20 rounded-full pointer-events-none transition-opacity group-hover:opacity-100"
+                  style={{ background: visual.gradient, opacity: hasPosition ? 0.10 : 0.06, filter: 'blur(8px)' }}
+                  aria-hidden="true"
+                />
+                <div className="relative flex items-start justify-between gap-2">
+                  <div
+                    className="size-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                    style={{ background: visual.gradient, color: '#FFFFFF' }}
+                  >
+                    <Icon className="size-5" strokeWidth={2} />
+                  </div>
+                  <ArrowUpRight
+                    className="size-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0 mt-1.5"
+                    style={{ color: visual.fg }}
+                  />
+                </div>
+                <p className="font-semibold text-sm mt-3 tracking-tight" style={{ color: 'var(--ink)' }}>
+                  {sc.label}
+                </p>
+                <p className="num text-lg mt-1 tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(data.market)}
+                </p>
+                <div className="mt-1.5 flex items-center justify-between text-[11px]">
+                  <span style={{ color: 'var(--ink-soft)' }}>
+                    {hasPosition ? `${data.count} posisi` : 'Belum ada posisi'}
+                  </span>
+                  {data.invested > 0 && (
+                    <span
+                      className="num font-semibold tabular px-1.5 py-0.5 rounded"
+                      style={{
+                        color: plUp ? '#10B981' : '#F43F5E',
+                        background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)',
+                      }}
+                    >
+                      {plUp ? '+' : ''}{pct.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Alokasi donut + Kinerja per kelas */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 items-start">
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4">
@@ -376,8 +459,8 @@ export default function InvestmentOverviewPage() {
                       dataKey="value"
                       stroke="transparent"
                     >
-                      {donut.map((_, i) => (
-                        <Cell key={i} fill={DONUT_PALETTE[i % DONUT_PALETTE.length]} />
+                      {donut.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip
@@ -408,12 +491,12 @@ export default function InvestmentOverviewPage() {
 
               {/* Category share legend */}
               <div className="mt-3 space-y-1.5">
-                {donut.slice(0, 5).map((row, i) => {
+                {donut.slice(0, 5).map((row) => {
                   const pct = totals.market > 0 ? (row.value / totals.market) * 100 : 0
                   return (
                     <div key={row.name} className="flex items-center justify-between text-[11px]">
                       <span className="flex items-center gap-1.5 truncate" style={{ color: 'var(--ink-muted)' }}>
-                        <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: DONUT_PALETTE[i % DONUT_PALETTE.length] }} />
+                        <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: row.color }} />
                         <span className="truncate">{row.name}</span>
                       </span>
                       <span className="tabular shrink-0 ml-2" style={{ color: 'var(--ink)' }}>
@@ -481,86 +564,49 @@ export default function InvestmentOverviewPage() {
           )}
         </div>
 
-        <div className="lg:col-span-3">
-          <p className="eyebrow mb-3">Kategori</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {INVESTMENT_SUBCATS.map((sc) => {
-              const cat = sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug
-              const data = byCategory[cat] ?? { invested: 0, market: 0, count: 0 }
-              const pl = data.market - data.invested
-              const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
-              const plUp = pl >= 0
-              const visual = getInvestmentVisual(sc.slug)
-              const Icon = visual.icon
-              const hasPosition = data.count > 0
-              return (
-                <Link
-                  key={sc.slug}
-                  href={`/dashboard/assets/investment/${sc.slug}`}
-                  className="group relative rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
-                  style={{
-                    background: hasPosition ? '#FFFFFF' : visual.bgTint,
-                    border: `1px solid ${hasPosition ? visual.borderTint : 'var(--border-soft)'}`,
-                  }}
-                >
-                  {/* Decorative gradient orb in corner */}
-                  <div
-                    className="absolute -top-6 -right-6 size-20 rounded-full pointer-events-none transition-opacity group-hover:opacity-100"
-                    style={{
-                      background: visual.gradient,
-                      opacity: hasPosition ? 0.10 : 0.06,
-                      filter: 'blur(8px)',
-                    }}
-                    aria-hidden="true"
-                  />
-
-                  <div className="relative flex items-start justify-between gap-2">
-                    <div
-                      className="size-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                      style={{ background: visual.gradient, color: '#FFFFFF' }}
-                    >
-                      <Icon className="size-5" strokeWidth={2} />
-                    </div>
-                    <ArrowUpRight
-                      className="size-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0 mt-1.5"
-                      style={{ color: visual.fg }}
-                    />
-                  </div>
-
-                  <p
-                    className="font-semibold text-sm mt-3 tracking-tight"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    {sc.label}
-                  </p>
-
-                  <p
-                    className="num text-lg mt-1 tabular font-semibold"
-                    style={{ color: 'var(--ink)' }}
-                  >
-                    {formatCurrency(data.market)}
-                  </p>
-
-                  <div className="mt-1.5 flex items-center justify-between text-[11px]">
-                    <span style={{ color: 'var(--ink-soft)' }}>
-                      {hasPosition ? `${data.count} posisi` : 'Belum ada posisi'}
-                    </span>
-                    {data.invested > 0 && (
-                      <span
-                        className="num font-semibold tabular px-1.5 py-0.5 rounded"
-                        style={{
-                          color: plUp ? '#10B981' : '#F43F5E',
-                          background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)',
-                        }}
-                      >
-                        {plUp ? '+' : ''}{pct.toFixed(2)}%
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              )
-            })}
+        <div className="s-card p-5 sm:p-6 lg:col-span-3">
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <p className="eyebrow">Kinerja</p>
+              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>Return per Kelas Aset</h3>
+            </div>
+            <span className="text-[11px] shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>sejak awal · per kelas</span>
           </div>
+          {kinerja.length === 0 ? (
+            <div className="h-[180px] flex flex-col items-center justify-center text-center">
+              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada posisi dengan modal tercatat.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {(() => {
+                const max = Math.max(...kinerja.map((k) => Math.abs(k.returnPct)), 1)
+                return kinerja.map((row) => {
+                  const positive = row.returnPct >= 0
+                  const width = Math.max((Math.abs(row.returnPct) / max) * 100, 2)
+                  return (
+                    <div key={row.key} className="flex items-center gap-3">
+                      <span className="w-28 shrink-0 text-xs flex items-center gap-1.5 truncate" style={{ color: 'var(--ink-muted)' }}>
+                        <span className="size-2 rounded-full shrink-0" style={{ background: row.color }} />
+                        <span className="truncate">{row.label}</span>
+                      </span>
+                      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${width}%`, background: positive ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                        />
+                      </div>
+                      <span
+                        className="num tabular text-xs font-semibold w-16 text-right shrink-0"
+                        style={{ color: positive ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                      >
+                        {positive ? '+' : ''}{row.returnPct.toFixed(1)}%
+                      </span>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+          )}
         </div>
       </div>
 
