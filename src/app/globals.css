@@ -33,8 +33,8 @@
   --violet-700:  #6D28D9;
 
   /* ── Surfaces (Light) — near-white, cool subtle ─────── */
-  --paper:       #FAFAF9;    /* slightly warm white, not cream */
-  --bg:          #FAFAF9;
+  --paper:       #F6F2E9;    /* warm cream — design review 30 Mei */
+  --bg:          #F6F2E9;
   --bg-2:        #F4F4F5;
   --surface:     #FFFFFF;    /* card bg pure white */
   --surface-2:   #F4F4F5;

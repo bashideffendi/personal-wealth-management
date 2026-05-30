@@ -467,8 +467,10 @@ export default function BudgetingPage() {
         }
       />
 
-      {/* Summary — 4 category totals + allocation (per design feedback 30 Mei) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Summary — annual totals (sum of all 12 months) */}
+      <div className="space-y-2.5">
+        <p className="eyebrow">Total Setahun · {year}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Total Pendapatan', value: totalIncomeYear, dot: '#10B981', sub: 'Setahun' },
           { label: 'Total Pengeluaran', value: totalExpenseYear, dot: '#F43F5E', sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
@@ -486,6 +488,7 @@ export default function BudgetingPage() {
             <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Allocation bar — stacked by category (per design review 30 Mei) */}
