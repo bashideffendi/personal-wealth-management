@@ -794,10 +794,11 @@ export default function TransactionsPage() {
             )
           })}
         </div>
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Rentang</label>
           <Select value={filterRange} onValueChange={(v) => setFilterRange(v ?? 'all')}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Semua waktu">
                 {(v) => v === 'all' ? 'Semua waktu' : v === '365' ? '1 tahun terakhir' : `${v} hari terakhir`}
               </SelectValue>
@@ -814,7 +815,7 @@ export default function TransactionsPage() {
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Akun</label>
           <Select value={filterAccount} onValueChange={(v) => setFilterAccount(v ?? 'all')}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Semua Akun">
                 {(v) => v === 'all'
                   ? 'Semua Akun'
@@ -843,7 +844,7 @@ export default function TransactionsPage() {
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Kategori</label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? 'all')}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Semua Kategori">
                 {(v) => v === 'all' ? 'Semua Kategori' : v}
               </SelectValue>
@@ -857,6 +858,7 @@ export default function TransactionsPage() {
               ))}
             </SelectContent>
           </Select>
+        </div>
         </div>
       </div>
 
@@ -889,7 +891,7 @@ export default function TransactionsPage() {
               value={quickForm.account_id}
               onValueChange={(v) => setQuickForm({ ...quickForm, account_id: v ?? '' })}
             >
-              <SelectTrigger className="h-9 text-xs col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder="Akun">
                   {(v) => {
                     const acc = accounts.find((a) => a.id === v)
@@ -918,7 +920,7 @@ export default function TransactionsPage() {
               value={quickForm.type}
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
-              <SelectTrigger className="h-9 text-xs col-span-1 sm:col-span-1 min-w-0">
+              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-1 min-w-0">
                 <SelectValue placeholder="Tipe">
                   {(v) => TYPE_LABELS[v as TransactionType] ?? 'Tipe'}
                 </SelectValue>
@@ -934,7 +936,7 @@ export default function TransactionsPage() {
               value={quickForm.category}
               onValueChange={(v) => setQuickForm({ ...quickForm, category: v ?? '' })}
             >
-              <SelectTrigger className="h-9 text-xs col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder="Kategori">
                   {(v) => v || 'Kategori'}
                 </SelectValue>
@@ -957,13 +959,13 @@ export default function TransactionsPage() {
               value={quickForm.amount}
               onChange={(n) => setQuickForm({ ...quickForm, amount: n })}
               placeholder="Jumlah"
-              className="h-9 text-xs col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
+              className="h-9 w-full text-xs col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
             />
             {/* Submit */}
             <Button
               type="submit"
               disabled={quickSaving || !quickForm.account_id || !quickForm.category || quickForm.amount <= 0}
-              className="h-9 text-xs col-span-1 sm:col-span-1 min-w-0"
+              className="h-9 w-full text-xs col-span-1 sm:col-span-1 min-w-0"
             >
               {quickSaving ? <Loader2 className="size-3.5 animate-spin" /> : <><Plus className="size-3.5" />Simpan</>}
             </Button>
