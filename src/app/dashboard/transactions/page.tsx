@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
@@ -65,7 +65,7 @@ const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string }> 
   income:     { bg: 'var(--c-mint-soft)',    color: 'var(--c-mint)' },
   expense:    { bg: 'var(--c-coral-soft)',   color: 'var(--c-coral)' },
   saving:     { bg: 'var(--c-amber-soft)',   color: 'var(--c-amber)' },
-  investment: { bg: 'var(--c-primary-soft)', color: 'var(--c-primary)' },
+  investment: { bg: 'var(--c-violet-soft)', color: 'var(--c-violet)' },
 }
 
 function getCategoriesForType(type: TransactionType): readonly string[] {
@@ -958,61 +958,89 @@ export default function TransactionsPage() {
         </div>
       ) : (
         <>
-          {/* Desktop: table */}
-          <div className="hidden md:block">
-            <Table>
+          {/* Desktop: per-day grouped table, in a card */}
+          <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+            <Table className="border-collapse">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">Tanggal</TableHead>
-                  <TableHead className="whitespace-nowrap">Akun</TableHead>
-                  <TableHead className="whitespace-nowrap">Tipe</TableHead>
-                  <TableHead className="whitespace-nowrap">Kategori</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Jumlah</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Aksi</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>Deskripsi</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Jumlah</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((tx) => (
-                  <TableRow key={tx.id}>
-                    <TableCell className="whitespace-nowrap">{formatDate(tx.date)}</TableCell>
-                    <TableCell>{getAccountName(tx.account_id)}</TableCell>
-                    <TableCell>
-                      <span
-                        className="chip"
-                        style={{
-                          background: TYPE_BADGE_STYLES[tx.type].bg,
-                          color: TYPE_BADGE_STYLES[tx.type].color,
-                        }}
-                      >
-                        {TYPE_LABELS[tx.type]}
-                      </span>
-                    </TableCell>
-                    <TableCell>{tx.category}</TableCell>
-                    <TableCell>{tx.description}</TableCell>
-                    <TableCell
-                      className={`text-right font-medium whitespace-nowrap ${
-                        tx.type === 'income'
-                          ? 'text-[var(--c-mint)]'
-                          : tx.type === 'expense'
-                            ? 'text-[var(--c-coral)]'
-                            : 'text-[var(--ink-muted)]'
-                      }`}
-                    >
-                      {formatCurrency(tx.amount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(tx)}>
-                          <Pencil className="size-4" style={{ color: 'var(--ink-soft)' }} />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(tx.id)}>
-                          <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {(() => {
+                  const groups: { date: string; items: typeof filteredTransactions }[] = []
+                  filteredTransactions.forEach((tx) => {
+                    const last = groups[groups.length - 1]
+                    if (last && last.date === tx.date) last.items.push(tx)
+                    else groups.push({ date: tx.date, items: [tx] })
+                  })
+                  return groups.map((g) => (
+                    <Fragment key={g.date}>
+                      <TableRow className="hover:bg-transparent border-[color:var(--border-soft)]">
+                        <TableCell
+                          colSpan={6}
+                          className="px-3 py-2 text-[12px] font-semibold whitespace-nowrap"
+                          style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                        >
+                          {formatDate(g.date)}
+                          <span className="ml-2 font-normal" style={{ color: 'var(--ink-soft)' }}>
+                            · {g.items.length} transaksi
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                      {g.items.map((tx) => (
+                        <TableRow key={tx.id} className="border-[color:var(--border-soft)]">
+                          <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                            {getAccountName(tx.account_id)}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className="chip"
+                              style={{
+                                background: TYPE_BADGE_STYLES[tx.type].bg,
+                                color: TYPE_BADGE_STYLES[tx.type].color,
+                              }}
+                            >
+                              {TYPE_LABELS[tx.type]}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
+                            {tx.category}
+                          </TableCell>
+                          <TableCell className="text-[13px]" style={{ color: 'var(--ink-muted)' }}>
+                            {tx.description}
+                          </TableCell>
+                          <TableCell
+                            className={`text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
+                              tx.type === 'income'
+                                ? 'text-[var(--c-mint)]'
+                                : tx.type === 'expense'
+                                  ? 'text-[var(--c-coral)]'
+                                  : 'text-[var(--ink)]'
+                            }`}
+                          >
+                            {formatCurrency(tx.amount)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(tx)}>
+                                <Pencil className="size-4" style={{ color: 'var(--ink-soft)' }} />
+                              </Button>
+                              <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(tx.id)}>
+                                <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </Fragment>
+                  ))
+                })()}
               </TableBody>
             </Table>
           </div>
