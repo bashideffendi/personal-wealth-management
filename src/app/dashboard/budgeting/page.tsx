@@ -293,14 +293,14 @@ export default function BudgetingPage() {
   ) {
     return (
       <tr key={`${type}-${category}`} className={bgClass}>
-        <td className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-2 py-1 text-xs font-normal bg-inherit whitespace-nowrap truncate" title={category}>
+        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-normal bg-inherit whitespace-nowrap truncate" title={category}>
           {category}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
           const val = getValue(type, category, month)
           return (
-            <td key={month} className="border border-[color:var(--border-soft)] px-0.5 py-0">
+            <td key={month} className="border-b border-[color:var(--border)] px-0.5 py-0">
               <input
                 type="text"
                 inputMode="numeric"
@@ -333,7 +333,7 @@ export default function BudgetingPage() {
   ) {
     return (
       <tr className={bgClass}>
-        <td className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-2 py-1 text-xs font-bold bg-inherit whitespace-nowrap truncate" title={label}>
+        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-bold bg-inherit whitespace-nowrap truncate" title={label}>
           {label}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
@@ -341,7 +341,7 @@ export default function BudgetingPage() {
           return (
             <td
               key={i}
-              className="num border border-[color:var(--border-soft)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
+              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
               {formatCompactCurrency(v)}
@@ -355,7 +355,7 @@ export default function BudgetingPage() {
   function renderPercentRow() {
     return (
       <tr className="bg-[color:var(--surface-2)]">
-        <td className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap">
+        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap">
           % dari Pendapatan
         </td>
         {Array.from({ length: 12 }, (_, i) => {
@@ -366,7 +366,7 @@ export default function BudgetingPage() {
           return (
             <td
               key={month}
-              className="num border border-[color:var(--border-soft)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
+              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
             >
               {pct}%
             </td>
@@ -417,20 +417,11 @@ export default function BudgetingPage() {
       <tr style={{ background: color.bgFirm }}>
         <td
           colSpan={13}
-          className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] bg-inherit"
+          className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] bg-inherit"
           style={{ color: color.textOnFirm }}
         >
           {label}
         </td>
-      </tr>
-    )
-  }
-
-  // Tall spacer row that separates sections visually inside one table.
-  function renderSpacer() {
-    return (
-      <tr aria-hidden="true">
-        <td colSpan={13} style={{ height: 18, background: 'var(--bg)', border: 'none' }} />
       </tr>
     )
   }
@@ -542,7 +533,7 @@ export default function BudgetingPage() {
             </colgroup>
             <thead>
               <tr className="bg-[color:var(--surface-alt)]">
-                <th className="sticky left-0 z-20 border border-[color:var(--border-soft)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap eyebrow">
+                <th className="sticky left-0 z-20 border-b border-[color:var(--border)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap eyebrow">
                   Kategori
                 </th>
                 {SHORT_MONTHS.map((m, i) => {
@@ -551,7 +542,7 @@ export default function BudgetingPage() {
                   return (
                     <th
                       key={m}
-                      className="border border-[color:var(--border-soft)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
+                      className="border-b border-[color:var(--border)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
                       style={{
                         background: isCurrent ? 'var(--c-primary-soft)' : undefined,
                         color: isCurrent ? 'var(--c-primary)' : undefined,
@@ -603,8 +594,6 @@ export default function BudgetingPage() {
                 'income',
                 'bg-[rgba(16,185,129,0.12)]',
               )}
-              {renderSpacer()}
-
               {/* EXPENSE — coral editorial */}
               {renderSectionHeader('Pengeluaran', 'expense')}
               {visibleExpense.map((c, i) =>
@@ -617,8 +606,6 @@ export default function BudgetingPage() {
                 'bg-[rgba(251,113,133,0.14)]',
               )}
               {renderPercentRow()}
-              {renderSpacer()}
-
               {/* SAVING — amber */}
               {renderSectionHeader('Tabungan', 'saving')}
               {visibleSaving.map((c, i) =>
@@ -630,8 +617,6 @@ export default function BudgetingPage() {
                 'saving',
                 'bg-[rgba(245,158,11,0.16)]',
               )}
-              {renderSpacer()}
-
               {/* INVESTMENT — primary indigo editorial */}
               {renderSectionHeader('Investasi', 'investment')}
               {visibleInvestment.map((c, i) =>
