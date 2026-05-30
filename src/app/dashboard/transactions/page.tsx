@@ -727,7 +727,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Bulan</label>
           <Select value={filterMonth} onValueChange={(v) => setFilterMonth(v ?? 'all')}>
@@ -878,7 +878,7 @@ export default function TransactionsPage() {
               value={quickForm.type}
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
-              <SelectTrigger className="h-9 text-xs col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger className="h-9 text-xs col-span-1 sm:col-span-1 min-w-0">
                 <SelectValue placeholder="Tipe">
                   {(v) => TYPE_LABELS[v as TransactionType] ?? 'Tipe'}
                 </SelectValue>
@@ -910,14 +910,14 @@ export default function TransactionsPage() {
               value={quickForm.description}
               onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
               placeholder="Deskripsi (opsional)"
-              className="h-9 text-xs col-span-2 sm:col-span-1 min-w-0"
+              className="h-9 text-xs col-span-2 sm:col-span-3 min-w-0"
             />
             {/* Amount */}
             <NumberInput
               value={quickForm.amount}
               onChange={(n) => setQuickForm({ ...quickForm, amount: n })}
               placeholder="Jumlah"
-              className="h-9 text-xs col-span-1 sm:col-span-2 min-w-0"
+              className="h-9 text-xs col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
             />
             {/* Submit */}
             <Button
@@ -960,7 +960,15 @@ export default function TransactionsPage() {
         <>
           {/* Desktop: per-day grouped table, in a card */}
           <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-            <Table className="border-collapse">
+            <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '170px' }} />
+                <col />
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '84px' }} />
+              </colgroup>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
@@ -984,13 +992,25 @@ export default function TransactionsPage() {
                       <TableRow className="hover:bg-transparent border-[color:var(--border-soft)]">
                         <TableCell
                           colSpan={6}
-                          className="px-3 py-2 text-[12px] font-semibold whitespace-nowrap"
+                          className="px-3 py-2 text-[12px] font-semibold"
                           style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                         >
-                          {formatDate(g.date)}
-                          <span className="ml-2 font-normal" style={{ color: 'var(--ink-soft)' }}>
-                            · {g.items.length} transaksi
-                          </span>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>
+                              {formatDate(g.date)}
+                              <span className="ml-2 font-normal" style={{ color: 'var(--ink-soft)' }}>
+                                · {g.items.length} transaksi
+                              </span>
+                            </span>
+                            {(() => {
+                              const net = g.items.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
+                              return (
+                                <span className="tabular-nums" style={{ color: net >= 0 ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
+                                  Net {net >= 0 ? '+' : '−'}{formatCurrency(Math.abs(net))}
+                                </span>
+                              )
+                            })()}
+                          </div>
                         </TableCell>
                       </TableRow>
                       {g.items.map((tx) => (
