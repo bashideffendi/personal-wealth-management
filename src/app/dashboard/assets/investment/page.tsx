@@ -7,12 +7,13 @@ import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
-import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Percent, Wallet } from 'lucide-react'
+import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { EduTip } from '@/components/edu/edu-tip'
+import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 
 const CAT_LABELS: Record<string, string> = {
   stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
@@ -48,6 +49,7 @@ export default function InvestmentOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Investment[]>([])
   const [rdnAccounts, setRdnAccounts] = useState<RdnAccount[]>([])
+  const [dividends, setDividends] = useState<{ amount: number; pay_date: string }[]>([])
 
   // useCallback so the function is stable and can be a useEffect dep
   // without re-running every render. Same pattern as [slug]/page.tsx.
@@ -55,16 +57,21 @@ export default function InvestmentOverviewPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const [invRes, rdnRes] = await Promise.all([
+    const [invRes, rdnRes, divRes] = await Promise.all([
       supabase.from('investments').select('*').eq('user_id', user.id),
       supabase
         .from('accounts')
         .select('id, name, current_balance')
         .eq('user_id', user.id)
         .eq('type', 'rdn'),
+      supabase
+        .from('dividends')
+        .select('amount, pay_date')
+        .eq('user_id', user.id),
     ])
     setItems((invRes.data ?? []) as Investment[])
     setRdnAccounts((rdnRes.data ?? []) as RdnAccount[])
+    setDividends((divRes.data ?? []) as { amount: number; pay_date: string }[])
     setLoading(false)
   }, [supabase])
 
@@ -75,6 +82,18 @@ export default function InvestmentOverviewPage() {
   useEffect(() => { void load() }, [load])
 
   const rdnTotal = rdnAccounts.reduce((s, a) => s + (a.current_balance ?? 0), 0)
+
+  const dividenYtd = useMemo(() => {
+    const yr = new Date().getFullYear()
+    return dividends
+      .filter((d) => d.pay_date && new Date(d.pay_date).getFullYear() === yr)
+      .reduce((s, d) => s + (d.amount || 0), 0)
+  }, [dividends])
+
+  const institutionCount = useMemo(
+    () => new Set(items.map((i) => i.platform?.trim()).filter(Boolean)).size,
+    [items],
+  )
 
   const enriched = useMemo(() => {
     return items.map((i) => {
@@ -163,70 +182,85 @@ export default function InvestmentOverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* Dark gradient portfolio hero anchor */}
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -120,
-            right: -80,
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${up ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
-          }}
-        />
-        <div className="relative p-6 sm:p-9">
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}
+      {/* Page header */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">
+            Portofolio{institutionCount > 0 ? ` · ${institutionCount} institusi` : ''}
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight mt-1" style={{ color: 'var(--ink)' }}>
+            Investasi
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+            Ringkasan nilai portofolio, alokasi, dan holding kamu.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <CalmModeToggle />
+          <Link
+            href="/dashboard/assets/investment/stock?tab=dividen"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           >
-            Portofolio Investasi
+            <History className="size-3.5" /> Riwayat dividen
+          </Link>
+          <Link
+            href="/dashboard/assets/investment/stock"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
+            style={{ background: 'var(--c-primary)', color: '#fff' }}
+          >
+            <Plus className="size-3.5" /> Tambah holding
+          </Link>
+        </div>
+      </header>
+
+      {/* Portfolio hero — light card, value-first */}
+      <section className="s-card p-6 sm:p-8">
+        <p className="eyebrow">Total Nilai Portofolio</p>
+        <div className="mt-2 flex flex-wrap items-end gap-3">
+          <p
+            className="num tabular font-bold leading-none whitespace-nowrap"
+            style={{ color: 'var(--ink)', fontSize: 'clamp(34px, 5vw, 54px)', letterSpacing: '-0.035em' }}
+          >
+            {formatCurrency(totals.market)}
           </p>
-          <div className="mt-3 flex flex-wrap items-end gap-4">
-            <p
-              className="num tabular font-bold leading-none whitespace-nowrap"
-              style={{
-                color: '#FFFFFF',
-                fontSize: 'clamp(40px, 6vw, 64px)',
-                letterSpacing: '-0.04em',
-              }}
-            >
-              {formatCurrency(totals.market)}
-            </p>
-            <span
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mb-2"
-              style={{
-                background: up ? 'rgba(16,185,129,0.18)' : 'rgba(251,113,133,0.18)',
-                color: up ? '#6EE7B7' : '#FDA4AF',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-              {up ? '+' : ''}{totals.plPct.toFixed(2)}%
-            </span>
-          </div>
-          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Modal{' '}
-            <span className="num tabular font-semibold" style={{ color: '#FFFFFF' }}>
-              {formatCurrency(totals.invested)}
-            </span>
-            {' · '}
-            P/L{' '}
-            <span
-              className="num tabular font-semibold"
-              style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}
-            >
-              {formatCurrency(totals.pl)}
-            </span>
-          </p>
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
+            style={{
+              background: up ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
+              color: up ? 'var(--c-mint)' : 'var(--c-coral)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {up ? '+' : ''}{totals.plPct.toFixed(2)}%
+          </span>
+        </div>
+        <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
+          Total {up ? 'untung' : 'rugi'}{' '}
+          <span className="num tabular font-semibold" style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+            {up ? '+' : ''}{formatCurrency(totals.pl)}
+          </span>{' '}
+          sejak awal investasi
+        </p>
+
+        {/* Sub-stats — modal & P/L primary, dividen supporting */}
+        <div
+          className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl overflow-hidden border"
+          style={{ background: 'var(--border-soft)', borderColor: 'var(--border-soft)' }}
+        >
+          <HeroStat label="Modal Ditanam" value={formatCurrency(totals.invested)} />
+          <HeroStat
+            label="Untung / Rugi"
+            value={`${up ? '+' : ''}${formatCurrency(totals.pl)}`}
+            accent={up ? 'var(--c-mint)' : 'var(--c-coral)'}
+          />
+          <HeroStat
+            label="Return"
+            value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
+            accent={up ? 'var(--c-mint)' : 'var(--c-coral)'}
+          />
+          <HeroStat label="Dividen YTD" value={formatCurrency(dividenYtd)} />
         </div>
       </section>
 
@@ -235,74 +269,50 @@ export default function InvestmentOverviewPage() {
           first, before drilling into the breakdown. */}
       <CurrencyRates />
 
-      {/* RDN/RDI cash card — total broker cash sitting idle, with per-broker breakdown */}
+      {/* Kas di RDN / RDI — compact chip row (scales cleanly to many brokers) */}
       {rdnAccounts.length > 0 && (
-        <div
-          className="rounded-xl border p-4 sm:p-5"
-          style={{
-            background: 'linear-gradient(135deg, rgba(20,184,166,0.06), rgba(14,165,233,0.04))',
-            borderColor: 'rgba(20,184,166,0.25)',
-          }}
-        >
-          <div className="flex items-end justify-between flex-wrap gap-3 mb-3">
+        <div className="s-card p-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="size-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'rgba(20,184,166,0.12)' }}
+            >
+              <Wallet className="size-4" style={{ color: '#0D9488' }} />
+            </div>
             <div>
-              <p className="eyebrow">Dana di RDN / RDI</p>
-              <p className="num tabular text-2xl font-semibold mt-1" style={{ color: 'var(--ink)' }}>
+              <p className="eyebrow">Kas di RDN / RDI</p>
+              <p className="num tabular text-lg font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                 {formatCurrency(rdnTotal)}
               </p>
-              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                Cash di rekening broker — siap dipakai beli/sell
-              </p>
             </div>
-            <Link
-              href="/dashboard/accounts"
-              className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
-              style={{ color: 'var(--emerald-700, #047857)' }}
-            >
-              Kelola akun <ArrowUpRight className="size-3" />
-            </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
             {rdnAccounts.map((a) => (
-              <div
+              <span
                 key={a.id}
-                className="rounded-lg border p-2.5 flex items-center gap-2"
+                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
                 style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+                title={a.name}
               >
-                <InstitutionLogo accountName={a.name} size={32} shape="circle" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium truncate" style={{ color: 'var(--ink)' }}>
-                    {a.name}
-                  </p>
-                  <p className="num tabular text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                    {formatCurrency(a.current_balance)}
-                  </p>
-                </div>
-              </div>
+                <InstitutionLogo accountName={a.name} size={16} shape="circle" />
+                <span className="font-medium truncate max-w-[120px]" style={{ color: 'var(--ink-muted)' }}>
+                  {a.name}
+                </span>
+                <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(a.current_balance)}
+                </span>
+              </span>
             ))}
           </div>
+          <Link
+            href="/dashboard/accounts"
+            className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline shrink-0"
+            style={{ color: '#0D9488' }}
+          >
+            Kelola <ArrowUpRight className="size-3" />
+          </Link>
         </div>
       )}
-
-      {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MiniStat label="Modal" value={formatCurrency(totals.invested)} icon={<Wallet className="h-4 w-4" />} glow="glow-indigo" />
-        <MiniStat label="Nilai Pasar" value={formatCurrency(totals.market)} icon={<Wallet className="h-4 w-4" />} glow="glow-violet" />
-        <MiniStat
-          label="P/L"
-          value={formatCurrency(totals.pl)}
-          icon={up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-          glow={up ? 'glow-emerald' : 'glow-rose'}
-          accent={up ? '#10B981' : '#F43F5E'}
-        />
-        <MiniStat
-          label="Return"
-          value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
-          icon={<Percent className="h-4 w-4" />}
-          glow={up ? 'glow-emerald' : 'glow-rose'}
-          accent={up ? '#10B981' : '#F43F5E'}
-        />
-      </div>
 
       {/* Allocation + category grid — items-start so the left card stays at
           its natural height instead of stretching to match the (often taller)
@@ -558,27 +568,11 @@ export default function InvestmentOverviewPage() {
   )
 }
 
-function MiniStat({
-  label, value, icon, glow, accent,
-}: {
-  label: string
-  value: string
-  icon: React.ReactNode
-  glow?: string
-  accent?: string
-}) {
+function HeroStat({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
-    <div className={`s-card p-4 ${glow ?? ''}`}>
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">{label}</p>
-        <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg"
-          style={{ background: 'var(--c-mint)', color: accent ?? 'var(--c-mint)' }}
-        >
-          {icon}
-        </div>
-      </div>
-      <p className="num text-xl mt-2 tabular font-bold" style={{ color: accent ?? 'var(--ink)' }}>
+    <div className="p-3.5" style={{ background: 'var(--surface)' }}>
+      <p className="eyebrow">{label}</p>
+      <p className="num tabular text-lg font-bold mt-1" style={{ color: accent ?? 'var(--ink)' }}>
         {value}
       </p>
     </div>
