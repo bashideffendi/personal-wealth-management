@@ -911,6 +911,9 @@ function ResearchView({
         :global(.prose-research p) {
           margin: 0.7em 0;
           color: var(--ink-muted);
+          text-align: justify;
+          text-justify: inter-word;
+          hyphens: auto;
         }
         :global(.prose-research strong) {
           color: var(--ink);

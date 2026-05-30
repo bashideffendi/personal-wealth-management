@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Plus, X, Search, Loader2, Star, TrendingUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -253,8 +254,15 @@ export function StockWatchlistTab() {
                       className="border-t transition hover:bg-[var(--surface-2)]"
                       style={{ borderColor: 'var(--border-soft)' }}
                     >
-                      <td className="px-3 py-2.5 font-mono font-semibold" style={{ color: 'var(--ink)' }}>
-                        {row.ticker}
+                      <td className="px-3 py-2.5 font-mono font-semibold">
+                        <Link
+                          href={`/dashboard/assets/investment/stock/research/${row.ticker}`}
+                          className="hover:underline"
+                          style={{ color: 'var(--ink)' }}
+                          title={`Lihat riset ${row.ticker}`}
+                        >
+                          {row.ticker}
+                        </Link>
                       </td>
                       <td className="px-3 py-2.5 max-w-[220px] truncate text-xs" style={{ color: 'var(--ink-muted)' }}>
                         {meta?.name ?? '—'}
