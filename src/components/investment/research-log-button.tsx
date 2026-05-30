@@ -64,7 +64,7 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold transition hover:opacity-90"
-        style={{ background: '#FFFFFF', color: '#0A0A0F' }}
+        style={{ background: 'var(--c-primary)', color: '#fff' }}
       >
         <Plus className="size-3.5" /> Catat Transaksi
       </button>

@@ -213,7 +213,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
   return (
     <Tabs defaultValue="research" className="w-full">
       <div className="overflow-x-auto -mx-1 px-1 pb-1">
-        <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
+        <TabsList variant="line" className="inline-flex gap-1 w-auto">
           <TabsTrigger value="research">
             <BookOpen className="size-3.5 mr-1.5" />
             Research
@@ -825,52 +825,9 @@ function ResearchView({
   ticker: string
   onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {
-  const recommendation = research.frontmatter.recommendation
-  const conviction = research.frontmatter.conviction
-
   return (
     <div className="space-y-4">
-      {/* Recommendation header */}
-      {recommendation && (
-        <div
-          className="rounded-xl border p-4 flex items-start justify-between flex-wrap gap-3"
-          style={{
-            background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
-            borderColor: 'var(--border)',
-          }}
-        >
-          <div>
-            <p className="eyebrow">Equity Research · {ticker}</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
-                {String(recommendation).toUpperCase()}
-              </span>
-              {conviction && (
-                <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">
-                  Conviction: {conviction}
-                </Badge>
-              )}
-            </div>
-            {research.frontmatter.generated && (
-              <p className="text-[11px] mt-1" style={{ color: 'var(--ink-muted)' }}>
-                Generated {research.frontmatter.generated}
-              </p>
-            )}
-          </div>
-          {(research.frontmatter.fair_value_low || research.frontmatter.fair_value_high) && (
-            <div className="text-right">
-              <p className="eyebrow">Fair Value Range</p>
-              <p className="num text-lg font-bold mt-1" style={{ color: 'var(--ink)' }}>
-                Rp {formatPrice(research.frontmatter.fair_value_low ?? null)}
-                {' – '}
-                Rp {formatPrice(research.frontmatter.fair_value_high ?? null)}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Markdown body */}
+      {/* Markdown body (header rekomendasi + fair value sekarang di strip atas) */}
       <article
         className="rounded-2xl border p-5 sm:p-6"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}

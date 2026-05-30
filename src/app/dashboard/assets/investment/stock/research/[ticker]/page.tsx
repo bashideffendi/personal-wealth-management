@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react'
+import { ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import {
   getValuation,
@@ -18,6 +18,7 @@ import { getEmiten } from '@/lib/invest/emitten'
 import { formatPrice, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
 import { ResearchLogButton } from '@/components/investment/research-log-button'
+import { StockLogo } from '@/components/investment/stock-logo'
 
 interface RouteProps {
   params: Promise<{ ticker: string }>
@@ -77,6 +78,8 @@ export default async function StockResearchPage({ params }: RouteProps) {
   const verdictColor = verdictStyle(verdict)
   const avgMoS = valuation?.avgMoS ?? null
   const isUp = (avgMoS ?? 0) > 0
+  const totalMethods = 8
+  const fm = research?.frontmatter ?? {}
 
   // Build last-5-years metric series from stocks.json
   const latestYear = stock ? (latestMetricYear(stock.metrics['Net Profit'])?.year ?? null) : null
@@ -165,108 +168,117 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
   return (
     <div className="space-y-5">
-      <Link
-        href="/dashboard/assets/investment/stock"
-        className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
-        style={{ color: 'var(--ink-muted)' }}
-      >
-        <ArrowLeft className="size-3.5" />
-        Kembali ke Saham
-      </Link>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm flex-wrap" style={{ color: 'var(--ink-muted)' }}>
+        <Link href="/dashboard/assets/investment" className="hover:underline">Investasi</Link>
+        <span style={{ color: 'var(--ink-soft)' }}>›</span>
+        <Link href="/dashboard/assets/investment/stock" className="hover:underline">Saham</Link>
+        <span style={{ color: 'var(--ink-soft)' }}>›</span>
+        <span style={{ color: 'var(--ink)' }}>Research · {ticker}</span>
+      </nav>
 
-      {/* Hero — dark gradient ticker anchor */}
-      <header
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${isUp ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
-          }}
-        />
-        <div className="relative p-6 sm:p-8 flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <p
-                className="font-mono font-bold text-3xl tracking-tight"
-                style={{ color: '#FFFFFF' }}
-              >
-                {ticker}
-              </p>
-              {verdict && (
-                <span
-                  className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
-                  style={{ background: verdictColor.bg, color: verdictColor.fg }}
-                >
-                  {verdict}
-                </span>
-              )}
-            </div>
-            <p className="mt-1.5 text-base font-semibold" style={{ color: '#FFFFFF' }}>
-              {name}
-            </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              {sector && <span>Sektor <strong style={{ color: '#FFFFFF' }}>{sector}</strong></span>}
-              {stock?.board && <span>Papan <strong style={{ color: '#FFFFFF' }}>{stock.board}</strong></span>}
-              {stock?.listingDate && <span>Listing {stock.listingDate}</span>}
+      {/* Header — kartu putih split: identitas | harga snapshot */}
+      <header className="s-card p-6 sm:p-8 flex flex-col gap-6 sm:flex-row sm:items-stretch">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3">
+            <StockLogo ticker={ticker} size={48} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono font-bold text-2xl tracking-tight" style={{ color: 'var(--ink)' }}>{ticker}</span>
+                {verdict && (
+                  <span
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                    style={{ background: verdictColor.bg, color: verdictColor.fg }}
+                  >
+                    {verdict}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--ink-muted)' }}>{name}</p>
             </div>
           </div>
+          <div className="flex flex-wrap gap-x-8 gap-y-3 mt-5">
+            {sector && (
+              <div><p className="eyebrow">Sektor</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{sector}</p></div>
+            )}
+            {stock?.board && (
+              <div><p className="eyebrow">Papan</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stock.board}</p></div>
+            )}
+            {stock?.listingDate && (
+              <div><p className="eyebrow">Listing</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stock.listingDate}</p></div>
+            )}
+          </div>
+        </div>
 
-          <div className="text-right">
-            <p
-              className="text-[10px] font-bold tracking-[0.14em] uppercase"
-              style={{ color: 'rgba(255,255,255,0.55)' }}
-            >
-              Harga snapshot
-            </p>
-            <p
-              className="num tabular font-bold leading-none mt-1"
-              style={{ fontSize: 36, color: '#FFFFFF', letterSpacing: '-0.035em' }}
-            >
+        <div className="sm:border-l sm:pl-6 flex flex-col sm:items-end justify-between gap-4" style={{ borderColor: 'var(--border-soft)' }}>
+          <div className="sm:text-right">
+            <p className="eyebrow">Harga Snapshot</p>
+            <p className="num tabular font-bold leading-none mt-1" style={{ fontSize: 40, color: 'var(--ink)', letterSpacing: '-0.035em' }}>
               Rp {formatPrice(price)}
             </p>
             {avgMoS != null && (
-              <p
-                className="text-xs font-bold mt-2 inline-flex items-center gap-1"
-                style={{ color: isUp ? '#6EE7B7' : '#FDA4AF' }}
-              >
+              <p className="text-xs font-bold mt-2 inline-flex items-center gap-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
                 {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
                 Avg MoS {(avgMoS * 100).toFixed(1)}%
               </p>
             )}
-            <div className="mt-3 flex gap-3 text-[11px] justify-end flex-wrap">
+            <div className="mt-2">
               <a
                 href={`https://stockbit.com/symbol/${ticker}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 hover:underline"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
+                className="inline-flex items-center gap-0.5 text-[11px] hover:underline"
+                style={{ color: 'var(--ink-soft)' }}
               >
                 Stockbit <ArrowUpRight className="size-2.5" />
               </a>
-              <a
-                href={`https://finance.yahoo.com/quote/${ticker}.JK`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 hover:underline"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
-              >
-                Yahoo <ArrowUpRight className="size-2.5" />
-              </a>
-            </div>
-            <div className="mt-3 flex justify-end">
-              <ResearchLogButton ticker={ticker} name={name} />
             </div>
           </div>
+          <ResearchLogButton ticker={ticker} name={name} />
         </div>
       </header>
+
+      {/* Recommendation strip */}
+      <div className="s-card overflow-hidden grid grid-cols-2 lg:grid-cols-4">
+        <div
+          className="p-5 border-b lg:border-b-0 lg:border-r"
+          style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
+        >
+          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Rekomendasi · Equity Research</p>
+          <p className="text-3xl font-bold mt-1 leading-none" style={{ color: 'var(--c-mint)' }}>
+            {fm.recommendation ? String(fm.recommendation).toUpperCase() : '—'}
+          </p>
+          {fm.conviction && (
+            <p className="text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>Conviction <strong style={{ color: 'var(--ink)' }}>{fm.conviction}</strong></p>
+          )}
+          {fm.generated && (
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>Diperbarui {fm.generated}</p>
+          )}
+        </div>
+        <div className="p-5 border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+          <p className="eyebrow">Fair Value</p>
+          <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
+            Rp {formatPrice(Number(fm.fair_value_low ?? valuation?.avgFairValue) || null)}
+          </p>
+          {fm.fair_value_high && (
+            <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>– Rp {formatPrice(Number(fm.fair_value_high) || null)}</p>
+          )}
+        </div>
+        <div className="p-5 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+          <p className="eyebrow">Konsensus</p>
+          <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
+            {valuation?.undervaluedCount ?? '—'}/{totalMethods}
+          </p>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>metode: undervalued</p>
+        </div>
+        <div className="p-5">
+          <p className="eyebrow">Avg MoS</p>
+          <p className="num tabular text-2xl font-bold mt-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+            {avgMoS != null ? `${isUp ? '+' : ''}${(avgMoS * 100).toFixed(1)}%` : '—'}
+          </p>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuation?.methodsValid ?? '—'}/{totalMethods} valid</p>
+        </div>
+      </div>
 
       <ResearchTabs {...tabsProps} />
     </div>
