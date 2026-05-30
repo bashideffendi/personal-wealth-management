@@ -908,7 +908,7 @@ export default function TransactionsPage() {
               value={quickForm.type}
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
-              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-1 min-w-0">
+              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder="Tipe">
                   {(v) => TYPE_LABELS[v as TransactionType] ?? 'Tipe'}
                 </SelectValue>
@@ -940,7 +940,7 @@ export default function TransactionsPage() {
               value={quickForm.description}
               onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
               placeholder="Deskripsi (opsional)"
-              className="h-9 text-xs col-span-2 sm:col-span-3 min-w-0"
+              className="h-9 text-xs col-span-2 sm:col-span-2 min-w-0"
             />
             {/* Amount */}
             <NumberInput
@@ -1360,29 +1360,28 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            {/* Type */}
+            {/* Type — segmented colored chips */}
             <div className="grid gap-1.5">
               <Label>Tipe</Label>
-              <Select
-                value={form.type}
-                onValueChange={(v) => {
-                  const newType = (v ?? 'expense') as TransactionType
-                  setForm({ ...form, type: newType, category: '' })
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih tipe">
-                    {(v) => TYPE_LABELS[v as TransactionType] ?? 'Pilih tipe'}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
-                    <SelectItem key={t} value={t}>
+              <div className="grid grid-cols-4 gap-1.5">
+                {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => {
+                  const active = form.type === t
+                  const c = TYPE_BADGE_STYLES[t]
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setForm({ ...form, type: t, category: '' })}
+                      className="rounded-lg border py-2 text-xs font-semibold transition-colors"
+                      style={active
+                        ? { background: c.bg, color: c.color, borderColor: c.color }
+                        : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
+                    >
                       {TYPE_LABELS[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {/* Category */}
@@ -1416,19 +1415,23 @@ export default function TransactionsPage() {
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
-                placeholder="cth: Belanja groceries di Indomaret"
+                placeholder="Tambah catatan (opsional)"
               />
             </div>
 
-            {/* Amount */}
+            {/* Amount — prominent */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-amount">Jumlah (Rp)</Label>
-              <NumberInput
-                id="tx-amount"
-                value={form.amount}
-                onChange={(n) => setForm({ ...form, amount: n })}
-                placeholder="0"
-              />
+              <Label htmlFor="tx-amount">Jumlah</Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</span>
+                <NumberInput
+                  id="tx-amount"
+                  value={form.amount}
+                  onChange={(n) => setForm({ ...form, amount: n })}
+                  placeholder="0"
+                  className="h-12 pl-10 text-lg font-bold tabular-nums"
+                />
+              </div>
             </div>
           </div>
 
