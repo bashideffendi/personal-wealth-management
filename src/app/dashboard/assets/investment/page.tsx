@@ -539,13 +539,13 @@ export default function InvestmentOverviewPage() {
                   href={c.href}
                 className="group relative rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
                 style={{
-                  background: hasPosition ? '#FFFFFF' : visual.bgTint,
-                  border: `1px solid ${hasPosition ? visual.borderTint : 'var(--border-soft)'}`,
+                  background: visual.bgTint,
+                  border: `1px solid ${visual.borderTint}`,
                 }}
               >
                 <div
                   className="absolute -top-6 -right-6 size-20 rounded-full pointer-events-none transition-opacity group-hover:opacity-100"
-                  style={{ background: visual.gradient, opacity: hasPosition ? 0.10 : 0.06, filter: 'blur(8px)' }}
+                  style={{ background: visual.gradient, opacity: 0.10, filter: 'blur(8px)' }}
                   aria-hidden="true"
                 />
                 <div className="relative flex items-start justify-between gap-2">
