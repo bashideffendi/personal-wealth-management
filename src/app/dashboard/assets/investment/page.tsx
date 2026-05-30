@@ -452,11 +452,8 @@ export default function InvestmentOverviewPage() {
           first, before drilling into the breakdown. */}
       <CurrencyRates />
 
-      {/* Kas di RDN / RDI — dasar krem, chip pakai logo bank, placeholder "+" kalau kosong */}
-      <div
-        className="rounded-xl border p-5 flex flex-wrap items-center gap-x-6 gap-y-3"
-        style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
-      >
+      {/* Kas di RDN / RDI — kartu PUTIH, chip krem + logo bank, tombol "+" selalu ada */}
+      <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-3 shrink-0">
           <div
             className="size-11 rounded-xl flex items-center justify-center shrink-0"
@@ -471,43 +468,41 @@ export default function InvestmentOverviewPage() {
             </p>
           </div>
         </div>
-        {rdnAccounts.length > 0 ? (
-          <>
-            <div className="flex flex-wrap items-center gap-2">
-              {rdnAccounts.map((a) => (
-                <span
-                  key={a.id}
-                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
-                  style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
-                  title={a.name}
-                >
-                  <InstitutionLogo accountName={a.name} size={18} shape="circle" />
-                  <span className="font-medium truncate max-w-[140px]" style={{ color: 'var(--ink-muted)' }}>
-                    {a.name}
-                  </span>
-                  <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                    {formatCurrency(a.current_balance)}
-                  </span>
-                </span>
-              ))}
-            </div>
-            <Link
-              href="/dashboard/accounts"
-              className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
-              style={{ color: '#0D9488' }}
+        <div className="flex flex-wrap items-center gap-2">
+          {rdnAccounts.map((a) => (
+            <span
+              key={a.id}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
+              style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
+              title={a.name}
             >
-              Kelola <ArrowUpRight className="size-3.5" />
-            </Link>
-          </>
-        ) : (
+              <InstitutionLogo accountName={a.name} size={18} shape="circle" />
+              <span className="font-medium truncate max-w-[140px]" style={{ color: 'var(--ink-muted)' }}>
+                {a.name}
+              </span>
+              <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                {formatCurrency(a.current_balance)}
+              </span>
+            </span>
+          ))}
+          {/* tombol tambah RDN — selalu tampil di sebelah chip */}
           <Link
             href="/dashboard/accounts"
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed px-3.5 py-1.5 text-xs font-medium ml-auto transition hover:bg-[var(--surface)]"
-            style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+            title="Tambah rekening RDN"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed px-3 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+            style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
           >
-            <Plus className="size-3.5" /> Tambah rekening RDN
+            <Plus className="size-3.5" />
+            {rdnAccounts.length === 0 ? <span>Tambah rekening RDN</span> : null}
           </Link>
-        )}
+        </div>
+        <Link
+          href="/dashboard/accounts"
+          className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
+          style={{ color: '#0D9488' }}
+        >
+          Kelola <ArrowUpRight className="size-3.5" />
+        </Link>
       </div>
 
       {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug) */}
