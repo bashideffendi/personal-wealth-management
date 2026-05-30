@@ -426,6 +426,15 @@ export default function BudgetingPage() {
     )
   }
 
+  // Spacer row — white gap for breathing room between sections (inside the card)
+  function renderSpacer() {
+    return (
+      <tr aria-hidden="true">
+        <td colSpan={13} style={{ height: 18, background: 'var(--surface)' }} />
+      </tr>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -594,6 +603,7 @@ export default function BudgetingPage() {
                 'income',
                 'bg-[rgba(16,185,129,0.12)]',
               )}
+              {renderSpacer()}
               {/* EXPENSE — coral editorial */}
               {renderSectionHeader('Pengeluaran', 'expense')}
               {visibleExpense.map((c, i) =>
@@ -606,6 +616,7 @@ export default function BudgetingPage() {
                 'bg-[rgba(251,113,133,0.14)]',
               )}
               {renderPercentRow()}
+              {renderSpacer()}
               {/* SAVING — amber */}
               {renderSectionHeader('Tabungan', 'saving')}
               {visibleSaving.map((c, i) =>
@@ -617,6 +628,7 @@ export default function BudgetingPage() {
                 'saving',
                 'bg-[rgba(245,158,11,0.16)]',
               )}
+              {renderSpacer()}
               {/* INVESTMENT — primary indigo editorial */}
               {renderSectionHeader('Investasi', 'investment')}
               {visibleInvestment.map((c, i) =>
