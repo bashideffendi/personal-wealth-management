@@ -17,7 +17,7 @@ import {
 } from '@/lib/constants'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from 'date-fns'
+import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
 
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/page-header'
@@ -57,19 +57,6 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   expense: 'Pengeluaran',
   saving: 'Tabungan',
   investment: 'Investasi',
-}
-
-// Rentang waktu — preset ala Meta (urutan ditampilkan di dropdown)
-const RANGE_LABELS: Record<string, string> = {
-  all: 'Semua waktu',
-  today: 'Hari ini',
-  yesterday: 'Kemarin',
-  '7': '7 hari terakhir',
-  '14': '14 hari terakhir',
-  '28': '28 hari terakhir',
-  thismonth: 'Bulan ini',
-  lastmonth: 'Bulan lalu',
-  thisyear: 'Tahun ini',
 }
 
 // Editorial semantic chips per design handoff (mint=income, coral=expense,
@@ -419,7 +406,7 @@ export default function TransactionsPage() {
   }
 
   // Filter state
-  const [filterRange, setFilterRange] = useState<string>('all')
+  const [dateRange, setDateRange] = useState<DateRange>(null)
   const [filterAccount, setFilterAccount] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
@@ -666,24 +653,11 @@ export default function TransactionsPage() {
     return '-'
   }
 
-  // Filter logic — resolve the selected range preset to [start, end] once
-  const rng: readonly [Date, Date] | null = (() => {
-    if (filterRange === 'all') return null
-    const now = new Date()
-    const end = endOfDay(now)
-    switch (filterRange) {
-      case 'today': return [startOfDay(now), end]
-      case 'yesterday': { const y = subDays(now, 1); return [startOfDay(y), endOfDay(y)] }
-      case 'thismonth': return [startOfMonth(now), end]
-      case 'lastmonth': { const lm = subMonths(now, 1); return [startOfMonth(lm), endOfMonth(lm)] }
-      case 'thisyear': return [startOfYear(now), end]
-      default: return [startOfDay(subDays(now, Number(filterRange) - 1)), end]
-    }
-  })()
+  // Filter logic
   const filteredTransactions = transactions.filter((tx) => {
-    if (rng) {
+    if (dateRange) {
       const d = new Date(tx.date)
-      if (d < rng[0] || d > rng[1]) return false
+      if (d < dateRange.from || d > dateRange.to) return false
     }
     if (filterAccount !== 'all' && tx.account_id !== filterAccount) return false
     if (filterType !== 'all' && tx.type !== filterType) return false
@@ -805,18 +779,7 @@ export default function TransactionsPage() {
         <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Rentang</label>
-          <Select value={filterRange} onValueChange={(v) => setFilterRange(v ?? 'all')}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Semua waktu">
-                {(v) => RANGE_LABELS[v] ?? 'Semua waktu'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(RANGE_LABELS).map(([val, label]) => (
-                <SelectItem key={val} value={val}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <RangePicker value={dateRange} onChange={setDateRange} />
         </div>
 
         <div className="flex flex-col gap-1">
