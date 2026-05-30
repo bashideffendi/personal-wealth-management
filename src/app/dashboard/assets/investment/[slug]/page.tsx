@@ -72,8 +72,14 @@ export default function InvestmentCategoryPage() {
   const slug = params.slug
   // Virtual slugs stock-idx / stock-us = category `stock` filtered by market.
   const marketFilter: 'idx' | 'us' | null = slug === 'stock-us' ? 'us' : slug === 'stock-idx' ? 'idx' : null
-  const subcat = INVESTMENT_SUBCATS.find((s) => s.slug === slug)
-    ?? (marketFilter ? { slug, label: marketFilter === 'us' ? 'Saham US' : 'Saham IHSG', emoji: '📈' } : undefined)
+  // useMemo penting: fallback object harus stabil identity-nya, kalau nggak
+  // `subcat` berubah tiap render -> useEffect(load) loop -> refresh harga terus.
+  const subcat = useMemo(
+    () =>
+      INVESTMENT_SUBCATS.find((s) => s.slug === slug) ??
+      (marketFilter ? { slug, label: marketFilter === 'us' ? 'Saham US' : 'Saham IHSG', emoji: '📈' } : undefined),
+    [slug, marketFilter],
+  )
   const category: Investment['category'] = (INVESTMENT_SLUG_TO_CATEGORY[slug] ?? 'stock') as Investment['category']
 
   const [loading, setLoading] = useState(true)
