@@ -10,17 +10,9 @@ import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, AreaChart, Area } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
-import { InstitutionLogo } from '@/components/accounts/institution-logo'
-import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
-
-const CAT_LABELS: Record<string, string> = {
-  stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
-  gold: 'Emas', bond: 'Obligasi', time_deposit: 'Deposito',
-  p2p: 'P2P Lending', business: 'Bisnis',
-}
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
@@ -32,8 +24,7 @@ const CHART_RANGES = [
 ] as const
 type ChartRangeKey = (typeof CHART_RANGES)[number]['key']
 
-// Asset class for diversification analysis (matches Investment.type schema)
-const FIXED_INCOME_CATS = new Set(['bond', 'sbn', 'time_deposit'])
+const RDN_DOT_COLORS = ['#0D9488', '#0EA5E9', '#F59E0B', '#8B5CF6', '#F43F5E', '#10B981']
 
 interface RdnAccount {
   id: string
@@ -43,7 +34,6 @@ interface RdnAccount {
 
 export default function InvestmentOverviewPage() {
   const supabase = createClient()
-  const { hidden: privacyHidden } = usePrivacy()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Investment[]>([])
   const [rdnAccounts, setRdnAccounts] = useState<RdnAccount[]>([])
@@ -315,45 +305,6 @@ export default function InvestmentOverviewPage() {
     return () => { cancelled = true }
   }, [loading, items, totals, supabase])
 
-  // Concentration risk: top kategori share of total
-  const topCatPct = useMemo(() => {
-    const total = donut.reduce((s, d) => s + d.value, 0)
-    return total > 0 ? (donut[0]?.value ?? 0) / total * 100 : 0
-  }, [donut])
-  const diversification: 'rendah' | 'sedang' | 'tinggi' =
-    topCatPct === 0 ? 'tinggi'
-    : topCatPct > 60 ? 'rendah'
-    : topCatPct > 40 ? 'sedang'
-    : 'tinggi'
-
-  // Best & worst performers (require positive cost basis to compute %)
-  const bestPerformer = useMemo(() => {
-    const candidates = enriched.filter((e) => e.invested > 0 && e.market > 0)
-    if (candidates.length === 0) return null
-    return [...candidates].sort((a, b) => (b.pl / b.invested) - (a.pl / a.invested))[0]
-  }, [enriched])
-  const worstPerformer = useMemo(() => {
-    const candidates = enriched.filter((e) => e.invested > 0 && e.market > 0)
-    if (candidates.length === 0) return null
-    return [...candidates].sort((a, b) => (a.pl / a.invested) - (b.pl / b.invested))[0]
-  }, [enriched])
-
-  // Asset class split for diversification bar
-  const { variableShare, fixedShare } = useMemo(() => {
-    const fixed = enriched
-      .filter((e) => FIXED_INCOME_CATS.has(e.i.category))
-      .reduce((s, e) => s + e.market, 0)
-    const variable = enriched
-      .filter((e) => !FIXED_INCOME_CATS.has(e.i.category))
-      .reduce((s, e) => s + e.market, 0)
-    const total = fixed + variable
-    if (total === 0) return { variableShare: 0, fixedShare: 0 }
-    return {
-      variableShare: (variable / total) * 100,
-      fixedShare: (fixed / total) * 100,
-    }
-  }, [enriched])
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -502,33 +453,33 @@ export default function InvestmentOverviewPage() {
           first, before drilling into the breakdown. */}
       <CurrencyRates />
 
-      {/* Kas di RDN / RDI — compact chip row (scales cleanly to many brokers) */}
+      {/* Kas di RDN / RDI — sesuai referensi: total prominent + chip per broker */}
       {rdnAccounts.length > 0 && (
-        <div className="s-card p-4 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <div className="flex items-center gap-2.5 shrink-0">
+        <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div
-              className="size-9 rounded-xl flex items-center justify-center shrink-0"
+              className="size-11 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: 'rgba(20,184,166,0.12)' }}
             >
-              <Wallet className="size-4" style={{ color: '#0D9488' }} />
+              <Wallet className="size-5" style={{ color: '#0D9488' }} />
             </div>
             <div>
               <p className="eyebrow">Kas di RDN / RDI</p>
-              <p className="num tabular text-lg font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+              <p className="num tabular text-2xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
                 {formatCurrency(rdnTotal)}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
-            {rdnAccounts.map((a) => (
+          <div className="flex flex-wrap items-center gap-2">
+            {rdnAccounts.map((a, i) => (
               <span
                 key={a.id}
-                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
                 style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
                 title={a.name}
               >
-                <InstitutionLogo accountName={a.name} size={16} shape="circle" />
-                <span className="font-medium truncate max-w-[120px]" style={{ color: 'var(--ink-muted)' }}>
+                <span className="size-2 rounded-full shrink-0" style={{ background: RDN_DOT_COLORS[i % RDN_DOT_COLORS.length] }} />
+                <span className="font-medium truncate max-w-[140px]" style={{ color: 'var(--ink-muted)' }}>
                   {a.name}
                 </span>
                 <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
@@ -539,10 +490,10 @@ export default function InvestmentOverviewPage() {
           </div>
           <Link
             href="/dashboard/accounts"
-            className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline shrink-0"
+            className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
             style={{ color: '#0D9488' }}
           >
-            Kelola <ArrowUpRight className="size-3" />
+            Kelola <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
       )}
@@ -619,38 +570,18 @@ export default function InvestmentOverviewPage() {
       </div>
 
       {/* Alokasi donut + Kinerja per kelas */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
-          <div className="flex items-start justify-between gap-2 mb-4">
-            <div>
-              <p className="eyebrow">Alokasi</p>
-              <h3 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5">
-                Komposisi Portofolio
-                <EduTip topic="diversification" side="bottom" />
-              </h3>
-            </div>
-            {totals.market > 0 && (
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                style={{
-                  background:
-                    diversification === 'tinggi' ? 'rgba(16,185,129,0.12)'
-                    : diversification === 'sedang' ? 'rgba(245,158,11,0.14)'
-                    : 'rgba(239,68,68,0.12)',
-                  color:
-                    diversification === 'tinggi' ? 'var(--c-mint)'
-                    : diversification === 'sedang' ? 'var(--amber-700)'
-                    : 'var(--c-coral)',
-                }}
-                title={`Top kategori = ${topCatPct.toFixed(0)}% dari portofolio`}
-              >
-                Diversifikasi {diversification}
-              </span>
-            )}
+          <div className="mb-4">
+            <p className="eyebrow">Alokasi</p>
+            <h3 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+              Komposisi Portofolio
+              <EduTip topic="diversification" side="bottom" />
+            </h3>
           </div>
 
           {donut.length === 0 ? (
-            <div className="h-[220px] flex flex-col items-center justify-center text-center px-4">
+            <div className="flex-1 min-h-[240px] flex flex-col items-center justify-center text-center px-4">
               <div
                 className="size-12 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: 'rgba(14, 165, 233, 0.12)' }}
@@ -664,7 +595,6 @@ export default function InvestmentOverviewPage() {
             </div>
           ) : (
             <>
-              {/* Donut with center label */}
               <div className="relative" style={{ height: 180 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -694,91 +624,34 @@ export default function InvestmentOverviewPage() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Center label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                    Total
+                    {donut.length} Kelas
                   </p>
                   <p className="num tabular text-base font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                     {formatCompactCurrency(totals.market)}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: up ? '#10B981' : '#F43F5E' }}>
-                    {up ? '+' : ''}{totals.plPct.toFixed(2)}%
-                  </p>
                 </div>
               </div>
 
-              {/* Category share legend */}
-              <div className="mt-3 space-y-1.5">
-                {donut.slice(0, 5).map((row) => {
+              {/* Legend: nama · nilai · % (ngikut referensi) */}
+              <div className="mt-4 space-y-2">
+                {donut.map((row) => {
                   const pct = totals.market > 0 ? (row.value / totals.market) * 100 : 0
                   return (
-                    <div key={row.name} className="flex items-center justify-between text-[11px]">
-                      <span className="flex items-center gap-1.5 truncate" style={{ color: 'var(--ink-muted)' }}>
-                        <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: row.color }} />
+                    <div key={row.name} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="flex items-center gap-2 truncate" style={{ color: 'var(--ink-muted)' }}>
+                        <span className="inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ background: row.color }} />
                         <span className="truncate">{row.name}</span>
                       </span>
-                      <span className="tabular shrink-0 ml-2" style={{ color: 'var(--ink)' }}>
-                        {pct.toFixed(1)}%
+                      <span className="flex items-center gap-3 shrink-0">
+                        <span className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(row.value)}</span>
+                        <span className="num tabular w-9 text-right font-semibold" style={{ color: 'var(--ink-muted)' }}>{pct.toFixed(0)}%</span>
                       </span>
                     </div>
                   )
                 })}
               </div>
-
-              {/* Top holding callouts: best & worst performer */}
-              {(bestPerformer || worstPerformer) && (
-                <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-2" style={{ borderColor: 'var(--border-soft)' }}>
-                  {bestPerformer && (
-                    <div
-                      className="rounded-lg p-2.5 border"
-                      style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.20)' }}
-                      title={privacyHidden ? bestPerformer.i.name : `${bestPerformer.i.name}: ${formatCurrency(bestPerformer.market)}`}
-                    >
-                      <p className="text-[9px] uppercase tracking-wide" style={{ color: '#10B981' }}>
-                        ▲ Top performer
-                      </p>
-                      <p className="text-[11px] font-semibold truncate mt-0.5" style={{ color: 'var(--ink)' }}>
-                        {bestPerformer.i.name || CAT_LABELS[bestPerformer.i.category]}
-                      </p>
-                      <p className="num tabular text-xs font-semibold mt-0.5" style={{ color: '#10B981' }}>
-                        +{bestPerformer.invested > 0 ? ((bestPerformer.pl / bestPerformer.invested) * 100).toFixed(1) : '0'}%
-                      </p>
-                    </div>
-                  )}
-                  {worstPerformer && worstPerformer.invested > 0 && worstPerformer.pl < 0 && (
-                    <div
-                      className="rounded-lg p-2.5 border"
-                      style={{ background: 'rgba(244,63,94,0.05)', borderColor: 'rgba(244,63,94,0.20)' }}
-                      title={privacyHidden ? worstPerformer.i.name : `${worstPerformer.i.name}: ${formatCurrency(worstPerformer.market)}`}
-                    >
-                      <p className="text-[9px] uppercase tracking-wide" style={{ color: '#F43F5E' }}>
-                        ▼ Underperform
-                      </p>
-                      <p className="text-[11px] font-semibold truncate mt-0.5" style={{ color: 'var(--ink)' }}>
-                        {worstPerformer.i.name || CAT_LABELS[worstPerformer.i.category]}
-                      </p>
-                      <p className="num tabular text-xs font-semibold mt-0.5" style={{ color: '#F43F5E' }}>
-                        {((worstPerformer.pl / worstPerformer.invested) * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Asset class split: variable income vs fixed income */}
-              {(variableShare > 0 || fixedShare > 0) && (
-                <div className="mt-3">
-                  <div className="flex justify-between text-[10px] mb-1" style={{ color: 'var(--ink-soft)' }}>
-                    <span>Variable income {variableShare.toFixed(0)}%</span>
-                    <span>Fixed income {fixedShare.toFixed(0)}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full overflow-hidden flex" style={{ background: 'var(--surface-2)' }}>
-                    <div style={{ width: `${variableShare}%`, background: '#0EA5E9' }} />
-                    <div style={{ width: `${fixedShare}%`, background: '#F59E0B' }} />
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
