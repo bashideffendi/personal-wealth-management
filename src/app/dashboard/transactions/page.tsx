@@ -711,7 +711,7 @@ export default function TransactionsPage() {
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {cards.map((c) => (
-              <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 10px 28px -14px rgba(16,24,40,0.12)' }}>
+              <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
                 <div className="flex items-start justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
                     <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
@@ -767,7 +767,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
         <div className="relative w-full">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
           <Input
@@ -988,7 +988,7 @@ export default function TransactionsPage() {
       ) : (
         <>
           {/* Desktop: per-day grouped table, in a card */}
-          <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+          <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: '16%' }} />
@@ -1043,7 +1043,7 @@ export default function TransactionsPage() {
                         </TableCell>
                       </TableRow>
                       {g.items.map((tx) => (
-                        <TableRow key={tx.id} className="border-[color:var(--border-soft)]">
+                        <TableRow key={tx.id} className="border-[color:var(--border-soft)] hover:bg-[var(--surface-2)]">
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
                             {getAccountName(tx.account_id)}
                           </TableCell>
