@@ -872,14 +872,14 @@ export default function TransactionsPage() {
               type="date"
               value={quickForm.date}
               onChange={(e) => setQuickForm({ ...quickForm, date: e.target.value })}
-              className="h-9 text-xs col-span-1 sm:col-span-2 min-w-0"
+              className="h-9 col-span-1 sm:col-span-2 min-w-0"
             />
             {/* Account */}
             <Select
               value={quickForm.account_id}
               onValueChange={(v) => setQuickForm({ ...quickForm, account_id: v ?? '' })}
             >
-              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder="Akun">
                   {(v) => {
                     const acc = accounts.find((a) => a.id === v)
@@ -908,7 +908,7 @@ export default function TransactionsPage() {
               value={quickForm.type}
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
-              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder="Tipe">
                   {(v) => TYPE_LABELS[v as TransactionType] ?? 'Tipe'}
                 </SelectValue>
@@ -924,7 +924,7 @@ export default function TransactionsPage() {
               value={quickForm.category}
               onValueChange={(v) => setQuickForm({ ...quickForm, category: v ?? '' })}
             >
-              <SelectTrigger className="h-9 w-full text-xs col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder="Kategori">
                   {(v) => v || 'Kategori'}
                 </SelectValue>
@@ -940,20 +940,20 @@ export default function TransactionsPage() {
               value={quickForm.description}
               onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
               placeholder="Deskripsi (opsional)"
-              className="h-9 text-xs col-span-2 sm:col-span-2 min-w-0"
+              className="h-9 col-span-2 sm:col-span-2 min-w-0"
             />
             {/* Amount */}
             <NumberInput
               value={quickForm.amount}
               onChange={(n) => setQuickForm({ ...quickForm, amount: n })}
               placeholder="Jumlah"
-              className="h-9 w-full text-xs col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
+              className="h-9 w-full col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
             />
             {/* Submit */}
             <Button
               type="submit"
               disabled={quickSaving || !quickForm.account_id || !quickForm.category || quickForm.amount <= 0}
-              className="h-9 w-full text-xs col-span-1 sm:col-span-1 min-w-0"
+              className="h-9 w-full text-sm col-span-1 sm:col-span-1 min-w-0"
             >
               {quickSaving ? <Loader2 className="size-3.5 animate-spin" /> : <><Plus className="size-3.5" />Simpan</>}
             </Button>
@@ -1423,13 +1423,13 @@ export default function TransactionsPage() {
             <div className="grid gap-1.5">
               <Label htmlFor="tx-amount">Jumlah</Label>
               <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</span>
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</span>
                 <NumberInput
                   id="tx-amount"
                   value={form.amount}
                   onChange={(n) => setForm({ ...form, amount: n })}
                   placeholder="0"
-                  className="h-12 pl-10 text-lg font-bold tabular-nums"
+                  className="h-12 pl-11 text-xl md:text-xl font-bold tabular-nums"
                 />
               </div>
             </div>
