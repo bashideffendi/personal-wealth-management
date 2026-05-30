@@ -17,6 +17,7 @@ import {
 import { getEmiten } from '@/lib/invest/emitten'
 import { formatPrice, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
+import { ResearchLogButton } from '@/components/investment/research-log-button'
 
 interface RouteProps {
   params: Promise<{ ticker: string }>
@@ -259,6 +260,9 @@ export default async function StockResearchPage({ params }: RouteProps) {
               >
                 Yahoo <ArrowUpRight className="size-2.5" />
               </a>
+            </div>
+            <div className="mt-3 flex justify-end">
+              <ResearchLogButton ticker={ticker} name={name} />
             </div>
           </div>
         </div>
