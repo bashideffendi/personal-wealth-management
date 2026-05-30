@@ -1000,10 +1000,10 @@ export default function TransactionsPage() {
               </colgroup>
               <TableHeader>
                 <TableRow className="bg-[var(--surface-3)] hover:bg-[var(--surface-3)]">
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>Deskripsi</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-center whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-center whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-center whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-center" style={{ color: 'var(--ink-muted)' }}>Deskripsi</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Jumlah</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Aksi</TableHead>
                 </TableRow>
@@ -1059,15 +1059,15 @@ export default function TransactionsPage() {
                             </span>
                           </TableCell>
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
-                            {tx.category}
-                          </TableCell>
-                          <TableCell className="text-[13px]" style={{ color: 'var(--ink-muted)' }}>
-                            <span className="flex items-center gap-2.5">
-                              <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                            <span className="flex items-center gap-2">
+                              <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: TYPE_BADGE_STYLES[tx.type].bg, color: TYPE_BADGE_STYLES[tx.type].color }}>
                                 <CategoryIcon category={tx.category} className="size-3.5" />
                               </span>
-                              <span className="truncate">{tx.description || tx.category}</span>
+                              {tx.category}
                             </span>
+                          </TableCell>
+                          <TableCell className="text-[13px]" style={{ color: 'var(--ink-muted)' }}>
+                            {tx.description}
                           </TableCell>
                           <TableCell
                             className={`text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
