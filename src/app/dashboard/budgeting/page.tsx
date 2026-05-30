@@ -673,7 +673,7 @@ export default function BudgetingPage() {
             />
             <CategoryGroup
               title="Pengeluaran"
-              accent="var(--ink)"
+              accent="var(--c-coral)"
               all={allExpense}
               customList={custom.expense}
               selected={enabled.expense}
@@ -683,7 +683,7 @@ export default function BudgetingPage() {
             />
             <CategoryGroup
               title="Tabungan"
-              accent="var(--warning)"
+              accent="var(--c-amber)"
               all={allSaving}
               customList={custom.saving}
               selected={enabled.saving}
@@ -693,7 +693,7 @@ export default function BudgetingPage() {
             />
             <CategoryGroup
               title="Investasi"
-              accent="var(--info)"
+              accent="var(--c-violet)"
               all={allInvestment}
               customList={custom.investment}
               selected={enabled.investment}
@@ -761,44 +761,60 @@ function CategoryGroup({
     <div>
       <p
         className="eyebrow mb-2 flex items-center gap-2"
-        style={{ color: 'var(--ink-muted)' }}
+        style={{ color: accent }}
       >
         <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: accent }} />
         {title}
+        <span className="num tabular ml-auto text-[10.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+          {selected.length}/{all.length}
+        </span>
       </p>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1">
         {all.map((c) => {
           const on = selected.includes(c)
           const isCustom = customSet.has(c)
           return (
             <div
               key={c}
-              className="group flex items-center gap-2 text-sm"
-              style={{ color: 'var(--ink)' }}
+              className="group flex items-center rounded-lg transition-colors"
+              style={{ background: on ? `color-mix(in srgb, ${accent} 13%, transparent)` : 'transparent' }}
             >
-              <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                <input
-                  type="checkbox"
-                  checked={on}
-                  onChange={() => onToggle(c)}
-                  className="h-4 w-4 rounded border"
-                  style={{ accentColor: accent }}
-                />
-                <span className="truncate">{c}</span>
+              <button
+                type="button"
+                onClick={() => onToggle(c)}
+                className="flex flex-1 min-w-0 items-center gap-2.5 px-2.5 py-2 text-left"
+              >
+                <span
+                  className="grid shrink-0 place-items-center rounded-md transition-colors"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    background: on ? accent : 'var(--surface)',
+                    border: on ? 'none' : '1.5px solid var(--border)',
+                  }}
+                >
+                  {on && <Check className="size-3" strokeWidth={3} style={{ color: '#FFF' }} />}
+                </span>
+                <span
+                  className="truncate text-sm"
+                  style={{ fontWeight: on ? 600 : 500, color: on ? 'var(--ink)' : 'var(--ink-muted)' }}
+                >
+                  {c}
+                </span>
                 {isCustom && (
                   <span
-                    className="text-[10px] font-medium px-1.5 rounded"
+                    className="shrink-0 rounded px-1.5 text-[10px] font-medium"
                     style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
                   >
                     custom
                   </span>
                 )}
-              </label>
+              </button>
               {isCustom && (
                 <button
                   type="button"
                   onClick={() => onRemove(c)}
-                  className="text-[11px] opacity-0 group-hover:opacity-100 transition hover:underline"
+                  className="shrink-0 pr-2.5 text-[11px] opacity-0 transition hover:underline group-hover:opacity-100"
                   style={{ color: 'var(--danger)' }}
                   aria-label={`Hapus ${c}`}
                 >
@@ -832,7 +848,7 @@ function CategoryGroup({
             className="h-8 px-3 text-xs font-medium rounded border disabled:opacity-40 disabled:cursor-not-allowed transition"
             style={{
               background: draft.trim() ? accent : 'var(--surface-2)',
-              color: draft.trim() && accent !== 'var(--ink)' ? 'var(--ink)' : draft.trim() ? '#FFF' : 'var(--ink-muted)',
+              color: draft.trim() ? '#FFF' : 'var(--ink-muted)',
               borderColor: 'transparent',
             }}
           >
