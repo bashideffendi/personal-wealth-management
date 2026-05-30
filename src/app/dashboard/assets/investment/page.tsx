@@ -8,7 +8,7 @@ import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
@@ -21,6 +21,8 @@ const CAT_LABELS: Record<string, string> = {
   gold: 'Emas', bond: 'Obligasi', time_deposit: 'Deposito',
   p2p: 'P2P Lending', business: 'Bisnis',
 }
+
+const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
 // Asset class for diversification analysis (matches Investment.type schema)
 const FIXED_INCOME_CATS = new Set(['bond', 'sbn', 'time_deposit'])
@@ -226,6 +228,37 @@ export default function InvestmentOverviewPage() {
       .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
       .slice(0, 6)
   }, [enriched, quotes])
+
+  // Dividen per bulan, 6 bulan terakhir (real dari tabel dividends).
+  const dividen6 = useMemo(() => {
+    const now = new Date()
+    const months = Array.from({ length: 6 }, (_, k) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1)
+      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: MONTHS_SHORT_ID[d.getMonth()], total: 0 }
+    })
+    const idx = new Map(months.map((m, i) => [m.key, i]))
+    for (const dv of dividends) {
+      if (!dv.pay_date) continue
+      const pd = new Date(dv.pay_date)
+      const i = idx.get(`${pd.getFullYear()}-${pd.getMonth()}`)
+      if (i != null) months[i].total += dv.amount || 0
+    }
+    return months
+  }, [dividends])
+
+  const dividen6Total = useMemo(() => dividen6.reduce((s, m) => s + m.total, 0), [dividen6])
+
+  const dividen6DeltaPct = useMemo(() => {
+    const now = new Date()
+    let prev = 0
+    for (const dv of dividends) {
+      if (!dv.pay_date) continue
+      const pd = new Date(dv.pay_date)
+      const ago = (now.getFullYear() - pd.getFullYear()) * 12 + (now.getMonth() - pd.getMonth())
+      if (ago >= 6 && ago < 12) prev += dv.amount || 0
+    }
+    return prev > 0 ? ((dividen6Total - prev) / prev) * 100 : null
+  }, [dividends, dividen6Total])
 
   // Concentration risk: top kategori share of total
   const topCatPct = useMemo(() => {
@@ -767,36 +800,90 @@ export default function InvestmentOverviewPage() {
         </div>
       )}
 
-      {/* Pergerakan hari ini — quoted holdings sorted by |Δ%| */}
-      {movers.length > 0 && (
-        <div className="s-card p-5 sm:p-6">
-          <p className="eyebrow">Hari Ini</p>
-          <h3 className="text-xl font-semibold mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>Pergerakan Hari Ini</h3>
-          <div className="grid sm:grid-cols-2 gap-x-6">
-            {movers.map((m) => {
-              const pos = m.changePct >= 0
-              return (
-                <div key={m.id} className="flex items-center justify-between gap-3 py-2 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: `${m.color}1A`, color: m.color }}>
-                      {m.sym.slice(0, 4) || '—'}
-                    </span>
-                    <span className="truncate text-sm" style={{ color: 'var(--ink)' }}>{m.name}</span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="num tabular text-sm font-semibold" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
-                      {pos ? '+' : '−'}{formatCurrency(Math.abs(m.changeRp))}
-                    </p>
-                    <p className="num tabular text-[11px]" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
-                      {pos ? '▲' : '▼'} {Math.abs(m.changePct).toFixed(2)}%
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
+      {/* Bottom row: Dividen 6 bulan + Pergerakan hari ini */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+        {/* Dividen 6 bulan — real dari tabel dividends */}
+        <div className={`s-card p-5 sm:p-6 ${movers.length === 0 ? 'lg:col-span-2' : ''}`}>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <p className="eyebrow">Dividen 6 Bulan</p>
+              <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>{formatCurrency(dividen6Total)}</p>
+            </div>
+            {dividen6DeltaPct != null && (
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                style={{
+                  background: dividen6DeltaPct >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
+                  color: dividen6DeltaPct >= 0 ? 'var(--c-mint)' : 'var(--c-coral)',
+                }}
+              >
+                {dividen6DeltaPct >= 0 ? '+' : ''}{dividen6DeltaPct.toFixed(0)}% vs 6 bln lalu
+              </span>
+            )}
           </div>
+          {dividen6Total === 0 ? (
+            <div className="h-[160px] flex flex-col items-center justify-center text-center">
+              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada dividen tercatat 6 bulan terakhir.</p>
+              <Link href="/dashboard/assets/investment/stock?tab=dividen" className="text-xs mt-1 hover:underline" style={{ color: '#0D9488' }}>
+                Catat dividen →
+              </Link>
+            </div>
+          ) : (
+            <div style={{ height: 160 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dividen6} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
+                  <Tooltip
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Dividen']}
+                    cursor={{ fill: 'var(--surface-2)' }}
+                    contentStyle={{ background: '#fff', border: '1px solid var(--border-soft)', borderRadius: 10, fontSize: 12 }}
+                  />
+                  <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+                    {(() => {
+                      const max = Math.max(...dividen6.map((x) => x.total), 1)
+                      return dividen6.map((m, i) => (
+                        <Cell key={i} fill={m.total >= max && m.total > 0 ? '#10B981' : 'rgba(16,185,129,0.28)'} />
+                      ))
+                    })()}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Pergerakan hari ini */}
+        {movers.length > 0 && (
+          <div className="s-card p-5 sm:p-6">
+            <p className="eyebrow">Hari Ini</p>
+            <h3 className="text-xl font-semibold mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>Pergerakan Hari Ini</h3>
+            <div>
+              {movers.map((m) => {
+                const pos = m.changePct >= 0
+                return (
+                  <div key={m.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: `${m.color}1A`, color: m.color }}>
+                        {m.sym.slice(0, 4) || '—'}
+                      </span>
+                      <span className="truncate text-sm" style={{ color: 'var(--ink)' }}>{m.name}</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="num tabular text-sm font-semibold" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                        {pos ? '+' : '−'}{formatCurrency(Math.abs(m.changeRp))}
+                      </p>
+                      <p className="num tabular text-[11px]" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                        {pos ? '▲' : '▼'} {Math.abs(m.changePct).toFixed(2)}%
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
     </div>
   )
