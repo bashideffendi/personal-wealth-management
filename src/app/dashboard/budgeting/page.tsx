@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Loader2, SlidersHorizontal, Check } from 'lucide-react'
+import { Loader2, SlidersHorizontal, Check, ChevronDown } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
 
@@ -488,40 +488,43 @@ export default function BudgetingPage() {
         ))}
       </div>
 
-      {/* Allocation summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-          <div className="flex items-center justify-between gap-2">
-            <span className="eyebrow">Dialokasikan</span>
-            <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              {totalIncomeYear > 0 ? Math.round((allocated / totalIncomeYear) * 100) : 0}% dari pendapatan
+      {/* Allocation bar — stacked by category (per design review 30 Mei) */}
+      <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+          <span className="eyebrow">Alokasi Anggaran</span>
+          <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+            <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(allocated)}</span>
+            {' dialokasikan · sisa '}
+            <span className="num font-semibold" style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}>
+              {formatCurrency(remaining)}
             </span>
-          </div>
-          <p className="num text-xl tabular font-semibold mt-1.5" style={{ color: 'var(--ink)' }}>
-            {formatCurrency(allocated)}
-          </p>
+          </span>
         </div>
-        <div
-          className="rounded-xl p-4 border"
-          style={{
-            background: remaining >= 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
-            borderColor: 'var(--border-soft)',
-          }}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="eyebrow" style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}>
-              Sisa Alokasi
-            </span>
-            <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              {remaining >= 0 ? 'Belum dialokasikan' : 'Over-budget'}
-            </span>
-          </div>
-          <p
-            className="num text-xl tabular font-semibold mt-1.5"
-            style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}
-          >
-            {formatCurrency(remaining)}
-          </p>
+        <div className="flex h-3 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+          {[
+            { v: totalExpenseYear, c: '#F43F5E' },
+            { v: totalSavingYear, c: '#F59E0B' },
+            { v: totalInvestmentYear, c: '#8B5CF6' },
+          ].map((seg, i) => {
+            const w = totalIncomeYear > 0 ? Math.max(0, (seg.v / totalIncomeYear) * 100) : 0
+            return w > 0 ? <div key={i} style={{ width: `${w}%`, background: seg.c }} /> : null
+          })}
+        </div>
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-[11px]">
+          {[
+            { label: 'Pengeluaran', c: '#F43F5E', v: totalExpenseYear },
+            { label: 'Tabungan', c: '#F59E0B', v: totalSavingYear },
+            { label: 'Investasi', c: '#8B5CF6', v: totalInvestmentYear },
+            { label: 'Sisa', c: 'var(--ink-soft)', v: remaining },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-1.5 min-w-0">
+              <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: s.c }} />
+              <span className="truncate" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+              <span className="num tabular ml-auto font-medium" style={{ color: 'var(--ink)' }}>
+                {formatCompactCurrency(s.v)}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -546,8 +549,30 @@ export default function BudgetingPage() {
           />
         </div>
 
-        {/* Desktop: 12-month spreadsheet grid */}
-        <div className="hidden md:block overflow-x-auto rounded-lg border border-[color:var(--border-soft)]">
+        {/* Desktop: legend band + 12-month spreadsheet grid */}
+        <div className="hidden md:block space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+            <div>
+              <p className="eyebrow">Grid Anggaran 12 Bulan</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                Klik nama bulan buat buka rincian harian, kategori &amp; proyeksi.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+              {[
+                { label: 'Pendapatan', c: '#10B981' },
+                { label: 'Pengeluaran', c: '#F43F5E' },
+                { label: 'Tabungan', c: '#F59E0B' },
+                { label: 'Investasi', c: '#8B5CF6' },
+              ].map((l) => (
+                <span key={l.label} className="inline-flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: l.c }} />
+                  {l.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-[color:var(--border-soft)]">
           <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '160px' }} />
@@ -581,7 +606,10 @@ export default function BudgetingPage() {
                         }
                       }}
                     >
-                      {m}
+                      <span className="inline-flex items-center justify-center gap-0.5">
+                        {m}
+                        <ChevronDown className="size-3 shrink-0" style={{ opacity: 0.45 }} />
+                      </span>
                       {isCurrent && (
                         <div
                           style={{
@@ -655,6 +683,7 @@ export default function BudgetingPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </>
       )}
