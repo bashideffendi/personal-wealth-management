@@ -656,7 +656,7 @@ export default function InvestmentOverviewPage() {
           )}
         </div>
 
-        <div className="s-card p-5 sm:p-6 lg:col-span-3">
+        <div className="s-card p-5 sm:p-6 lg:col-span-3 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>
               <p className="eyebrow">Kinerja</p>
@@ -665,11 +665,11 @@ export default function InvestmentOverviewPage() {
             <span className="text-[11px] shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>sejak awal · per kelas</span>
           </div>
           {kinerja.length === 0 ? (
-            <div className="h-[180px] flex flex-col items-center justify-center text-center">
+            <div className="flex-1 min-h-[180px] flex flex-col items-center justify-center text-center">
               <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada posisi dengan modal tercatat.</p>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-3 flex-1 flex flex-col justify-center">
               {(() => {
                 const max = Math.max(...kinerja.map((k) => Math.abs(k.returnPct)), 1)
                 return kinerja.map((row) => {
