@@ -29,6 +29,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -1096,6 +1097,20 @@ export default function TransactionsPage() {
                   ))
                 })()}
               </TableBody>
+              <TableFooter>
+                <TableRow className="hover:bg-transparent" style={{ background: 'var(--surface-2)' }}>
+                  <TableCell colSpan={4} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                    Total · {filteredTransactions.length} transaksi
+                  </TableCell>
+                  <TableCell className="text-right text-[13px] font-bold tabular-nums">
+                    {(() => {
+                      const n = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
+                      return <span style={{ color: n >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{n >= 0 ? '+' : '−'}{formatCurrency(Math.abs(n))}</span>
+                    })()}
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
             </Table>
           </div>
 
