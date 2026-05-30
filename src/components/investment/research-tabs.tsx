@@ -213,7 +213,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
   return (
     <Tabs defaultValue="research" className="w-full">
       <div className="overflow-x-auto -mx-1 px-1 pb-1">
-        <TabsList className="inline-flex gap-1 w-auto">
+        <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
           <TabsTrigger value="research">
             <BookOpen className="size-3.5 mr-1.5" />
             Research

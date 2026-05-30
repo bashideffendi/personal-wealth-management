@@ -379,7 +379,7 @@ export default function InvestmentCategoryPage() {
       <Tabs defaultValue="holdings" className="w-full">
         {category === 'stock' && (
           <div className="overflow-x-auto -mx-1 px-1 pb-1">
-            <TabsList className="inline-flex gap-1 w-auto">
+            <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
               <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />Posisi</TabsTrigger>
               <TabsTrigger value="watchlist"><Star className="size-3.5 mr-1.5" />Watchlist</TabsTrigger>
               <TabsTrigger value="research"><FileSearch className="size-3.5 mr-1.5" />Research</TabsTrigger>
