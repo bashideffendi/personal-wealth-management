@@ -93,6 +93,7 @@ interface ResearchFrontmatter {
   generated?: string
   recommendation?: string
   conviction?: string
+  thesis?: string
   fair_value_low?: number
   fair_value_high?: number
   current_price?: number
@@ -899,6 +900,17 @@ function ResearchView({
         className="rounded-2xl border p-5 sm:p-6"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
+        {research.frontmatter.thesis && (
+          <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+            <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Tesis Investasi</p>
+            <p
+              className="mt-2 pl-4 border-l-2 italic leading-relaxed text-base sm:text-lg"
+              style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
+            >
+              {research.frontmatter.thesis}
+            </p>
+          </div>
+        )}
         <div className="prose-research max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{research.body}</ReactMarkdown>
         </div>

@@ -5,6 +5,7 @@ sector: Financials
 generated: 2026-04-29
 recommendation: HOLD
 conviction: high
+thesis: BCA tetap bank ritel paling premium di Indonesia — ROE 20-21%, NPM 49%, dan funding murah (CASA dominan) yang sustainable. Tapi keunggulan itu sudah tercermin penuh di harga; konsensus 7 metode menempatkan fair value Rp 3.000–5.950, di bawah harga sekarang.
 fair_value_low: 3000
 fair_value_high: 5950
 current_price: 6700

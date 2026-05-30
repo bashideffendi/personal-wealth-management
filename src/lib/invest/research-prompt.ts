@@ -48,6 +48,7 @@ conviction: <high|medium|low>
 fair_value_low: <integer Rp>
 fair_value_high: <integer Rp>
 current_price: <integer Rp>
+thesis: <1-2 kalimat tesis investasi inti — punchy, kenapa layak beli/hold/avoid. Tanpa tanda kutip, satu baris.>
 ---
 
 ## Ringkasan Eksekutif
