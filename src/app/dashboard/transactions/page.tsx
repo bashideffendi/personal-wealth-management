@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -410,6 +410,7 @@ export default function TransactionsPage() {
   const [filterAccount, setFilterAccount] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [search, setSearch] = useState<string>('')
 
   useEffect(() => {
     fetchData()
@@ -661,6 +662,11 @@ export default function TransactionsPage() {
     if (filterAccount !== 'all' && tx.account_id !== filterAccount) return false
     if (filterType !== 'all' && tx.type !== filterType) return false
     if (filterCategory !== 'all' && tx.category !== filterCategory) return false
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      const hay = `${tx.description ?? ''} ${tx.category} ${tx.amount} ${formatCurrency(tx.amount)}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
     return true
   })
 
@@ -689,6 +695,39 @@ export default function TransactionsPage() {
           </Button>
         }
       />
+
+      {/* Ikhtisar — dari transaksi yang sedang tampil */}
+      {!loading && filteredTransactions.length > 0 && (() => {
+        const inc = filteredTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+        const exp = filteredTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+        const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
+        const cards = [
+          { label: 'Pemasukan', dot: '#10B981', Icon: ArrowDownLeft, val: formatCurrency(inc) },
+          { label: 'Pengeluaran', dot: '#F43F5E', Icon: ArrowUpRight, val: formatCurrency(exp) },
+          { label: 'Arus Kas Bersih', dot: '#8B5CF6', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}` },
+          { label: 'Total Transaksi', dot: '#8B5CF6', Icon: ScanLine, val: String(filteredTransactions.length) },
+        ]
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {cards.map((c) => (
+              <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 10px 28px -14px rgba(16,24,40,0.12)' }}>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
+                    <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
+                    {c.label}
+                  </span>
+                  <span className="grid place-items-center shrink-0 rounded-[10px]" style={{ width: 32, height: 32, background: `color-mix(in srgb, ${c.dot} 14%, transparent)`, color: c.dot }}>
+                    <c.Icon className="size-4" />
+                  </span>
+                </div>
+                <p className="num tabular font-bold mt-2" style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 2.2vw, 24px)', letterSpacing: '-0.02em' }}>
+                  {c.val}
+                </p>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {!loading && accounts.length === 0 && creditCards.length === 0 && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
@@ -728,6 +767,15 @@ export default function TransactionsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3 rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+        <div className="relative w-full">
+          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari merchant, nominal, atau catatan…"
+            className="h-9 w-full pl-9 text-sm"
+          />
+        </div>
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Bulan</label>
           <Select value={filterMonth} onValueChange={(v) => setFilterMonth(v ?? 'all')}>
