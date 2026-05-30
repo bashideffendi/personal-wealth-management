@@ -17,6 +17,7 @@ import {
 } from '@/lib/constants'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
+import { startOfDay, endOfDay, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from 'date-fns'
 
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/page-header'
@@ -56,6 +57,19 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   expense: 'Pengeluaran',
   saving: 'Tabungan',
   investment: 'Investasi',
+}
+
+// Rentang waktu — preset ala Meta (urutan ditampilkan di dropdown)
+const RANGE_LABELS: Record<string, string> = {
+  all: 'Semua waktu',
+  today: 'Hari ini',
+  yesterday: 'Kemarin',
+  '7': '7 hari terakhir',
+  '14': '14 hari terakhir',
+  '28': '28 hari terakhir',
+  thismonth: 'Bulan ini',
+  lastmonth: 'Bulan lalu',
+  thisyear: 'Tahun ini',
 }
 
 // Editorial semantic chips per design handoff (mint=income, coral=expense,
@@ -652,12 +666,24 @@ export default function TransactionsPage() {
     return '-'
   }
 
-  // Filter logic
+  // Filter logic — resolve the selected range preset to [start, end] once
+  const rng: readonly [Date, Date] | null = (() => {
+    if (filterRange === 'all') return null
+    const now = new Date()
+    const end = endOfDay(now)
+    switch (filterRange) {
+      case 'today': return [startOfDay(now), end]
+      case 'yesterday': { const y = subDays(now, 1); return [startOfDay(y), endOfDay(y)] }
+      case 'thismonth': return [startOfMonth(now), end]
+      case 'lastmonth': { const lm = subMonths(now, 1); return [startOfMonth(lm), endOfMonth(lm)] }
+      case 'thisyear': return [startOfYear(now), end]
+      default: return [startOfDay(subDays(now, Number(filterRange) - 1)), end]
+    }
+  })()
   const filteredTransactions = transactions.filter((tx) => {
-    if (filterRange !== 'all') {
-      const cutoff = new Date()
-      cutoff.setDate(cutoff.getDate() - Number(filterRange))
-      if (new Date(tx.date) < cutoff) return false
+    if (rng) {
+      const d = new Date(tx.date)
+      if (d < rng[0] || d > rng[1]) return false
     }
     if (filterAccount !== 'all' && tx.account_id !== filterAccount) return false
     if (filterType !== 'all' && tx.type !== filterType) return false
@@ -782,14 +808,13 @@ export default function TransactionsPage() {
           <Select value={filterRange} onValueChange={(v) => setFilterRange(v ?? 'all')}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Semua waktu">
-                {(v) => v === 'all' ? 'Semua waktu' : v === '365' ? '1 tahun terakhir' : `${v} hari terakhir`}
+                {(v) => RANGE_LABELS[v] ?? 'Semua waktu'}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua waktu</SelectItem>
-              <SelectItem value="30">30 hari terakhir</SelectItem>
-              <SelectItem value="90">90 hari terakhir</SelectItem>
-              <SelectItem value="365">1 tahun terakhir</SelectItem>
+              {Object.entries(RANGE_LABELS).map(([val, label]) => (
+                <SelectItem key={val} value={val}>{label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
