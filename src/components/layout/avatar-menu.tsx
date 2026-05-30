@@ -94,9 +94,9 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
           <AvatarFallback
             className="text-xs font-bold"
             style={{
-              background: 'linear-gradient(135deg, #10B981, #047857)',
-              color: '#FFFFFF',
-              boxShadow: '0 2px 6px -2px rgba(16, 185, 129, 0.40)',
+              background: 'var(--c-primary)',
+              color: 'var(--c-primary-foreground)',
+              boxShadow: '0 2px 6px -2px rgba(16, 24, 40, 0.12)',
             }}
           >
             {initials}

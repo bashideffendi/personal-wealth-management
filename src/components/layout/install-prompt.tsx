@@ -122,9 +122,9 @@ export function InstallPrompt() {
           <div
             className="flex size-10 shrink-0 items-center justify-center rounded-xl"
             style={{
-              background: 'linear-gradient(135deg, #10B981, #047857)',
-              color: '#FFFFFF',
-              boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+              background: 'var(--c-primary)',
+              color: 'var(--c-primary-foreground)',
+              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
             }}
           >
             <Download className="size-5" />
@@ -153,9 +153,9 @@ export function InstallPrompt() {
                 onClick={handleInstall}
                 className="mt-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition active:scale-[0.98]"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #047857)',
-                  color: '#FFFFFF',
-                  boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                  background: 'var(--c-primary)',
+                  color: 'var(--c-primary-foreground)',
+                  boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
                 }}
               >
                 Pasang sekarang

@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import {
   ArrowRight, MessageCircle, Camera, TrendingUp, CreditCard,
-  Users, Sparkles, Check, Crown, Lock, Shield, ChevronDown,
+  Users, Sparkles, Check, Crown, Shield, ChevronDown,
 } from 'lucide-react'
 
 export default async function LandingPage() {
@@ -41,8 +41,8 @@ export default async function LandingPage() {
               width: 32,
               height: 32,
               borderRadius: 10,
-              background: 'linear-gradient(135deg, #10B981, #047857)',
-              color: '#FFFFFF',
+              background: 'var(--c-primary)',
+              color: 'var(--c-primary-foreground)',
               fontFamily: 'var(--font-sans)',
               fontWeight: 800,
               fontSize: 16,
@@ -79,7 +79,7 @@ export default async function LandingPage() {
           <Link
             href="/register"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
-            style={{ background: '#10B981', color: '#FFFFFF' }}
+            style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}
           >
             Daftar gratis
             <ArrowRight className="size-3.5" />
@@ -98,7 +98,7 @@ export default async function LandingPage() {
             width: 480,
             height: 480,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.08), transparent 65%)',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
           }}
         />
         <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
@@ -108,14 +108,14 @@ export default async function LandingPage() {
             <div
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-6"
               style={{
-                background: 'var(--c-mint-soft)',
-                color: 'var(--c-mint)',
-                border: '1px solid color-mix(in srgb, var(--c-mint) 20%, transparent)',
+                background: 'var(--surface-2)',
+                color: 'var(--ink-muted)',
+                border: '1px solid var(--border)',
               }}
             >
               <span
                 className="size-1.5 rounded-full"
-                style={{ background: 'var(--c-mint)' }}
+                style={{ background: 'var(--c-primary)' }}
               />
               <span className="text-xs font-semibold tracking-tight">
                 Beta · Trial 14 hari gratis
@@ -123,16 +123,17 @@ export default async function LandingPage() {
             </div>
 
             <h1
-              className="font-bold tracking-tight"
+              className="tracking-tight"
               style={{
-                fontSize: 'clamp(40px, 6.5vw, 76px)',
-                lineHeight: 1.02,
-                letterSpacing: '-0.035em',
+                fontSize: 'clamp(36px, 5vw, 58px)',
+                lineHeight: 1.06,
+                letterSpacing: '-0.03em',
+                fontWeight: 700,
                 color: 'var(--ink)',
               }}
             >
               Wealth management <br />
-              <span style={{ color: 'var(--c-mint)' }}>untuk semua aset kamu.</span>
+              untuk semua aset kamu.
             </h1>
             <p
               className="mt-6 text-lg leading-relaxed max-w-lg"
@@ -146,9 +147,8 @@ export default async function LandingPage() {
                 href="/register"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #047857)',
-                  color: '#FFFFFF',
-                  boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.45)',
+                  background: 'var(--c-primary)',
+                  color: 'var(--c-primary-foreground)',
                 }}
               >
                 Coba 14 hari gratis
@@ -165,15 +165,15 @@ export default async function LandingPage() {
             {/* Trust strip */}
             <div className="mt-6 flex items-center gap-4 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+                <Check className="size-3.5" style={{ color: 'var(--c-primary)' }} />
                 Trial 14 hari akses penuh
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+                <Check className="size-3.5" style={{ color: 'var(--c-primary)' }} />
                 Tanpa kartu kredit
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+                <Check className="size-3.5" style={{ color: 'var(--c-primary)' }} />
                 Enkripsi AES-256
               </span>
             </div>
@@ -254,7 +254,7 @@ export default async function LandingPage() {
             >
               <div
                 className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}
+                style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
               >
                 <Camera className="size-4" />
               </div>
@@ -345,9 +345,9 @@ export default async function LandingPage() {
               <div className="flex items-start justify-between mb-3">
                 <div
                   className="size-10 rounded-xl flex items-center justify-center"
-                  style={{ background: f.bg }}
+                  style={{ background: 'var(--surface-2)' }}
                 >
-                  <f.icon className="size-5" style={{ color: f.color }} />
+                  <f.icon className="size-5" style={{ color: 'var(--ink)' }} />
                 </div>
                 {f.badge && (
                   <span
@@ -394,29 +394,90 @@ export default async function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Basic */}
+            {/* Pro — popular */}
+            <div
+              className="rounded-2xl p-7 border-2 relative"
+              style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}
+            >
+              <span
+                className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap"
+                style={{
+                  background: 'var(--c-primary)',
+                  color: 'var(--c-primary-foreground)',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Paling populer
+              </span>
+              <div className="flex items-center gap-2 mb-3">
+                <Crown className="size-5" style={{ color: 'var(--ink)' }} />
+                <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Pro</h3>
+              </div>
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+                Buat kamu yang serius atur keuangan & investasi.
+              </p>
+              <div className="mt-5 mb-1 flex items-baseline gap-2">
+                <span
+                  className="text-4xl font-bold tracking-tight"
+                  style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}
+                >
+                  Rp 149rb
+                </span>
+                <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>/tahun</span>
+              </div>
+              <p className="text-xs mb-5" style={{ color: 'var(--ink-soft)' }}>
+                ≈ Rp 12rb/bulan · <span style={{ textDecoration: 'line-through' }}>Rp 249rb</span> · hemat 40%
+              </p>
+              <Link
+                href="/register"
+                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold btn-primary"
+              >
+                Coba 14 hari gratis
+              </Link>
+              <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
+                {[
+                  'Catat & anggaran unlimited',
+                  'Dashboard net worth + KPI',
+                  'Portfolio: saham IDX, crypto, reksadana, emas, properti',
+                  'AI Advisor — tanya apa aja soal keuanganmu',
+                  'Scan struk (AI Vision) → transaksi otomatis',
+                  'AI insights & laporan bulanan',
+                  'Goal setting + forecast probabilitas',
+                  'Import mutasi rekening (CSV/PDF)',
+                  '100 kredit AI / bulan',
+                ].map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink)' }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Max — family */}
             <div
               className="rounded-2xl p-7 border"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="size-5" style={{ color: 'var(--ink-muted)' }} />
-                <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Basic</h3>
+                <Users className="size-5" style={{ color: 'var(--ink-muted)' }} />
+                <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Max</h3>
               </div>
               <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-                Pas buat kamu yang baru mulai catat-catat & atur budget.
+                Buat keluarga — kelola keuangan bareng pasangan & anggota.
               </p>
-              <div className="mt-5 mb-5">
+              <div className="mt-5 mb-1 flex items-baseline gap-2">
                 <span
                   className="text-4xl font-bold tracking-tight"
                   style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}
                 >
-                  Rp 99rb
+                  Rp 299rb
                 </span>
-                <span className="text-sm ml-1" style={{ color: 'var(--ink-muted)' }}>
-                  /bulan
-                </span>
+                <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>/tahun</span>
               </div>
+              <p className="text-xs mb-5" style={{ color: 'var(--ink-soft)' }}>
+                ≈ Rp 25rb/bulan · <span style={{ textDecoration: 'line-through' }}>Rp 499rb</span> · hemat 40%
+              </p>
               <Link
                 href="/register"
                 className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80"
@@ -426,91 +487,15 @@ export default async function LandingPage() {
               </Link>
               <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
                 {[
-                  { text: 'Catat transaksi unlimited', locked: false },
-                  { text: 'Anggaran bulanan', locked: false },
-                  { text: 'Dashboard net worth', locked: false },
-                  { text: 'Foto struk AI', locked: false },
-                  { text: '3 jenis aset (saham, RD, kas)', locked: false },
-                  { text: '100 kredit AI/bulan', locked: false },
-                  { text: 'AI Advisor (15 query/bulan)', locked: false },
-                  { text: 'AI Advisor unlimited', locked: true },
-                  { text: 'Multi-aset lengkap (crypto, emas, SBN, P2P)', locked: true },
-                  { text: 'Family sharing', locked: true },
-                  { text: 'WhatsApp catat & struk', locked: true },
-                ].map((f) => (
-                  <li key={f.text} className="flex gap-2">
-                    {f.locked ? (
-                      <Lock className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} />
-                    ) : (
-                      <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
-                    )}
-                    <span style={{ color: f.locked ? 'var(--ink-soft)' : 'var(--ink-muted)' }}>
-                      {f.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Full Service — popular */}
-            <div
-              className="rounded-2xl p-7 border-2 relative"
-              style={{
-                background: 'linear-gradient(135deg, var(--c-primary-soft), var(--surface))',
-                borderColor: 'var(--c-primary)',
-              }}
-            >
-              <span
-                className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap"
-                style={{
-                  background: 'var(--c-primary)',
-                  color: '#FFFFFF',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Unlock semua fitur
-              </span>
-              <div className="flex items-center gap-2 mb-3">
-                <Crown className="size-5" style={{ color: 'var(--c-mint)' }} />
-                <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Full Service</h3>
-              </div>
-              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-                Akses penuh ke semua fitur Klunting.
-              </p>
-              <div className="mt-5 mb-5">
-                <span
-                  className="text-4xl font-bold tracking-tight"
-                  style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}
-                >
-                  Rp 199rb
-                </span>
-                <span className="text-sm ml-1" style={{ color: 'var(--ink-muted)' }}>
-                  /bulan
-                </span>
-                <p className="text-xs mt-1" style={{ color: 'var(--c-mint)' }}>
-                  Harga early access. Akan naik ke Rp 299rb setelah Q3 2026.
-                </p>
-              </div>
-              <Link
-                href="/register"
-                className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90 btn-primary"
-              >
-                Coba 14 hari gratis
-              </Link>
-              <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-                {[
-                  'Semua fitur Basic',
-                  'Multi-aset (saham, RD, crypto, emas, SBN, P2P)',
-                  'AI Advisor unlimited',
-                  'AI Receipt Scanner advanced',
-                  'WhatsApp catat & forward struk',
-                  'Family sharing sampai 4 anggota',
-                  'Atur utang & cicilan',
-                  'Goal setting & laporan detail',
-                  '250 kredit AI/bulan',
+                  'Semua fitur Pro',
+                  'Household sharing sampai 5 anggota',
+                  'Wallet & budget bersama keluarga',
+                  'Tracking per-anggota (siapa belanja apa)',
+                  'Insight pengeluaran keluarga',
+                  '300 kredit AI / bulan',
                 ].map((f) => (
                   <li key={f} className="flex gap-2">
-                    <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
+                    <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink)' }} />
                     {f}
                   </li>
                 ))}
@@ -522,7 +507,7 @@ export default async function LandingPage() {
             className="mt-6 text-center text-xs"
             style={{ color: 'var(--ink-soft)' }}
           >
-            Trial 14 hari akses Full Service · Tanpa komitmen · Bisa cancel kapan aja
+            Trial 14 hari akses penuh · Billing tahunan, tanpa auto-renew · Bisa cancel kapan aja
           </p>
         </div>
       </section>
@@ -601,11 +586,11 @@ export default async function LandingPage() {
               },
               {
                 q: 'Ada free tier?',
-                a: 'Belum. Sekarang model Coba 14 hari gratis akses penuh, lalu pilih Basic Rp 99rb atau Full Service Rp 199rb per bulan. Free tier sedang dievaluasi untuk Q4 2026 — pengen pastikan dulu unit economics sustainable sebelum kasih free forever.',
+                a: 'Belum. Sekarang model Coba 14 hari gratis akses penuh, lalu pilih Pro Rp 149rb atau Max Rp 299rb per tahun. Free tier sedang dievaluasi untuk Q4 2026 — pengen pastikan dulu unit economics sustainable sebelum kasih free forever.',
               },
               {
                 q: 'Bisa pakai bareng pasangan / keluarga?',
-                a: 'Bisa, fitur Family sharing di paket Full Service. Sampai 4 anggota keluarga bisa akses akun, transaksi, dan budget bersama. Tetap ada split personal vs family — pengeluaran pribadi tetap private kalau kamu mau.',
+                a: 'Bisa, fitur Family sharing di paket Max. Sampai 5 anggota keluarga bisa akses akun, transaksi, dan budget bersama. Tetap ada split personal vs family — pengeluaran pribadi tetap private kalau kamu mau.',
               },
               {
                 q: 'Mobile app-nya kapan?',
@@ -649,7 +634,7 @@ export default async function LandingPage() {
         <div
           className="max-w-5xl mx-auto rounded-3xl p-10 sm:p-14 relative overflow-hidden text-center"
           style={{
-            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
             color: '#F5F5F7',
             boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
           }}
@@ -662,7 +647,7 @@ export default async function LandingPage() {
               width: 320,
               height: 320,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.20), transparent 65%)',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
             }}
           />
           <div
@@ -673,13 +658,13 @@ export default async function LandingPage() {
               width: 280,
               height: 280,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12), transparent 65%)',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
             }}
           />
           <div className="relative">
             <p
               className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-              style={{ color: '#6EE7B7' }}
+              style={{ color: 'rgba(255,255,255,0.55)' }}
             >
               Mulai sekarang
             </p>
@@ -727,13 +712,12 @@ export default async function LandingPage() {
                 width: 28,
                 height: 28,
                 borderRadius: 8,
-                background: 'linear-gradient(135deg, #10B981, #047857)',
-                color: '#FFFFFF',
+                background: 'var(--c-primary)',
+                color: 'var(--c-primary-foreground)',
                 fontFamily: 'var(--font-sans)',
                 fontWeight: 800,
                 fontSize: 14,
                 letterSpacing: '-0.04em',
-                boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
               }}
             >
               K

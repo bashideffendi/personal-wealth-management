@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -13,44 +14,11 @@ import {
 export default function CalculatorsPage() {
   return (
     <div className="space-y-6">
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-7">
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: '#6EE7B7' }}
-          >
-            Alat Hitung
-          </p>
-          <h1
-            className="font-bold tracking-tight mt-2"
-            style={{
-              fontSize: 'clamp(28px, 4vw, 40px)',
-              color: '#FFFFFF',
-              letterSpacing: '-0.035em',
-            }}
-          >
-            Kalkulator
-          </h1>
-          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Zakat, pajak penghasilan, simulasi cicilan KPR/KKB, FIRE, dana pendidikan, DCA, & Pension Gap.
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Alat Hitung"
+        title="Kalkulator"
+        subtitle="Zakat, pajak penghasilan, simulasi cicilan KPR/KKB, FIRE, dana pendidikan, DCA, & Pension Gap."
+      />
 
       <Tabs defaultValue="zakat">
         <TabsList className="flex-wrap">

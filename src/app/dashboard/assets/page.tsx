@@ -94,7 +94,7 @@ export default function AssetsOverviewPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
           color: '#F5F5F7',
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
         }}
@@ -104,13 +104,13 @@ export default function AssetsOverviewPage() {
           style={{
             top: -100, right: -60, width: 400, height: 400,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
           }}
         />
         <div className="relative p-6 sm:p-8">
         <p
           className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-          style={{ color: '#6EE7B7' }}
+          style={{ color: 'rgba(255,255,255,0.55)' }}
         >
           Total Kekayaan Tercatat
         </p>

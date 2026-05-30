@@ -94,7 +94,20 @@ export function TopNav({ user }: TopNavProps) {
   }, [lainnyaOpen])
 
   const primary = NAV_ITEMS.filter((it) => PRIMARY_HREFS.has(it.href))
-  const lainnya = NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href))
+  // Children of primary items (e.g. Kekayaan's Aset Likuid / Aset Non-Likuid /
+  // Utang / Dana Darurat) weren't rendered anywhere — only used for active-state
+  // matching — so they were unreachable from the nav. Surface them in "Lainnya".
+  // Skip any child whose href is itself a primary destination (avoids
+  // duplicating Net Worth, which is Kekayaan's own link).
+  const primaryChildren = NAV_ITEMS.filter(
+    (it) => PRIMARY_HREFS.has(it.href) && it.children?.length,
+  )
+    .flatMap((it) => it.children!)
+    .filter((c) => !PRIMARY_HREFS.has(c.href))
+  const lainnya = [
+    ...primaryChildren,
+    ...NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href)),
+  ]
 
   // Trigger Cmd+K palette by dispatching keyboard event (CommandPalette
   // sudah listen ke ⌘K)
@@ -142,13 +155,12 @@ export function TopNav({ user }: TopNavProps) {
                 width: 32,
                 height: 32,
                 borderRadius: 10,
-                background: 'linear-gradient(135deg, #10B981, #047857)',
-                color: '#FFFFFF',
+                background: 'var(--c-primary)',
+                color: 'var(--c-primary-foreground)',
                 fontFamily: 'var(--font-sans)',
                 fontWeight: 800,
                 fontSize: 16,
                 letterSpacing: '-0.04em',
-                boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
               }}
             >
               K
@@ -398,13 +410,13 @@ export function TopNav({ user }: TopNavProps) {
                     width: 32,
                     height: 32,
                     borderRadius: 10,
-                    background: 'linear-gradient(135deg, #10B981, #047857)',
-                    color: '#FFFFFF',
+                    background: 'var(--c-primary)',
+                    color: 'var(--c-primary-foreground)',
                     fontFamily: 'var(--font-sans)',
                     fontWeight: 800,
                     fontSize: 16,
                     letterSpacing: '-0.04em',
-                    boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                    boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
                   }}
                 >
                   K

@@ -20,10 +20,10 @@ export default function TermsPage() {
             className="grid place-items-center"
             style={{
               width: 32, height: 32, borderRadius: 10,
-              background: 'linear-gradient(135deg, #10B981, #047857)',
-              color: '#FFFFFF', fontFamily: 'var(--font-sans)', fontWeight: 800,
+              background: 'var(--c-primary)',
+              color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800,
               fontSize: 16, letterSpacing: '-0.04em',
-              boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
             }}
           >
             K

@@ -274,7 +274,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                   width: `${Math.min(100, (totalAllocated / balance) * 100)}%`,
                   background: overAllocated
                     ? 'linear-gradient(90deg, #F59E0B, #F43F5E)'
-                    : 'linear-gradient(90deg, #10B981, #047857)',
+                    : 'var(--c-primary)',
                 }}
               />
             </div>

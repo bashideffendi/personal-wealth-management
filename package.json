@@ -6,12 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "email:dev": "email dev --dir src/emails --port 3030",
+    "email:export": "email export --dir src/emails --outDir email-previews --pretty"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
     "@base-ui/react": "^1.3.0",
     "@hookform/resolvers": "^5.2.2",
+    "@react-email/components": "^1.0.12",
+    "@sentry/nextjs": "^10.55.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "@tanstack/react-query": "^5.97.0",
@@ -31,6 +35,7 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
+    "resend": "^6.12.4",
     "shadcn": "^4.2.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
@@ -45,6 +50,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "react-email": "^6.5.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

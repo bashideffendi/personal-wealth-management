@@ -77,7 +77,7 @@ const CREDIT_PACKS = [
 const THEMES: Record<Plan['id'], { bg: string; ring: string; accent: string; cta: string }> = {
   pro: {
     bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary)]', accent: 'text-[var(--c-primary)]',
-    cta: 'bg-gradient-to-br from-[#10B981] to-[#047857] text-white shadow-[0_4px_12px_-4px_rgba(16,185,129,0.40)] hover:opacity-90',
+    cta: 'bg-[var(--c-primary)] text-[var(--c-primary-foreground)] hover:opacity-90',
   },
   max: {
     bg: 'bg-[var(--surface)]', ring: 'ring-[var(--line)]', accent: 'text-[var(--ink-muted)]',

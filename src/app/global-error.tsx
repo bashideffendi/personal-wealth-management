@@ -1,18 +1,26 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
+import { useEffect } from 'react'
+
 // Global error boundary — the last line of defense. Renders INSTEAD of the
 // root layout when the layout itself (or Providers) throws, so it must supply
 // its own <html>/<body> and cannot rely on the theme tokens / CSS vars or the
 // FOUC theme script (those live in the failed root layout). Hardcoded brand
 // colors (dark canvas + emerald) keep it rendering correctly standalone.
-// `error` stays in the prop type but isn't destructured — Next logs it itself.
+// `error` is reported to Sentry in a useEffect, then this standalone fallback renders.
 
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  useEffect(() => {
+    Sentry.captureException(error)
+  }, [error])
+
   return (
     <html lang="id">
       <body
@@ -38,8 +46,8 @@ export default function GlobalError({
             width: 48,
             height: 48,
             borderRadius: 14,
-            background: 'linear-gradient(135deg, #10B981, #047857)',
-            color: '#FFFFFF',
+            background: 'var(--c-primary)',
+            color: 'var(--c-primary-foreground)',
             fontWeight: 800,
             fontSize: 24,
             letterSpacing: '-0.04em',
@@ -79,7 +87,7 @@ export default function GlobalError({
               fontSize: 14,
               fontWeight: 600,
               color: '#FFFFFF',
-              background: 'linear-gradient(135deg, #10B981, #047857)',
+              background: 'var(--c-primary)',
             }}
           >
             Coba lagi

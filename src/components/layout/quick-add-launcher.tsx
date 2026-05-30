@@ -379,16 +379,13 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
   function openCommandPalette() {
     setOpen(false)
-    // small delay so dialog close animation completes before Cmd+K opens
+    // Wait until the sheet's close animation fully finishes before opening the
+    // palette. Opening it mid-close made the two overlays' focus traps fight —
+    // the sheet got stuck open behind the palette. Use an explicit open event
+    // (not a ⌘K toggle) so an already-open palette is never accidentally closed.
     setTimeout(() => {
-      const event = new KeyboardEvent('keydown', {
-        key: 'k',
-        metaKey: true,
-        ctrlKey: true,
-        bubbles: true,
-      })
-      window.dispatchEvent(event)
-    }, 150)
+      window.dispatchEvent(new CustomEvent('klunting:open-command-palette'))
+    }, 320)
   }
 
   // ─── Render ────────────────────────────────────────────────────
@@ -416,9 +413,9 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg flex items-center justify-center z-30 transition-all hover:scale-110 active:scale-95"
           style={{
-            background: 'linear-gradient(135deg, #10B981, #047857)',
-            color: '#FFFFFF',
-            boxShadow: '0 10px 24px -6px rgba(16, 185, 129, 0.50)',
+            background: 'var(--c-primary)',
+            color: 'var(--c-primary-foreground)',
+            boxShadow: '0 10px 24px -6px rgba(16, 24, 40, 0.14)',
           }}
           aria-label="Tambah transaksi"
           title="Tambah transaksi"
@@ -719,9 +716,9 @@ function PreviewView({
           disabled={saving || accounts.length === 0}
           className="sm:flex-none flex-1"
           style={{
-            background: 'linear-gradient(135deg, #10B981, #047857)',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+            background: 'var(--c-primary)',
+            color: 'var(--c-primary-foreground)',
+            boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
           }}
         >
           {saving ? (
@@ -936,9 +933,9 @@ function ManualForm({
           onClick={onSave}
           disabled={saving || !form.account_id || form.amount <= 0}
           style={{
-            background: 'linear-gradient(135deg, #10B981, #047857)',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+            background: 'var(--c-primary)',
+            color: 'var(--c-primary-foreground)',
+            boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
           }}
         >
           {saving && <Loader2 className="size-4 animate-spin" />}

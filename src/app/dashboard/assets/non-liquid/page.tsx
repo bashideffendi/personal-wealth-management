@@ -111,7 +111,7 @@ export default function NonLiquidAssetsPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
           color: '#F5F5F7',
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
         }}
@@ -316,7 +316,7 @@ export default function NonLiquidAssetsPage() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{form.id ? 'Edit Aset Non-Likuid' : 'Tambah Aset Non-Likuid'}</DialogTitle>
             <DialogDescription>Properti, kendaraan, atau barang berharga.</DialogDescription>
@@ -380,7 +380,7 @@ export default function NonLiquidAssetsPage() {
                   lat={form.latitude}
                   lng={form.longitude}
                   onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })}
-                  height={220}
+                  height={180}
                 />
               </div>
             )}

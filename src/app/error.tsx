@@ -62,8 +62,8 @@ export default function Error({
           onClick={() => reset()}
           className="inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
           style={{
-            background: 'linear-gradient(135deg, #10B981, #047857)',
-            color: '#FFFFFF',
+            background: 'var(--c-primary)',
+            color: 'var(--c-primary-foreground)',
           }}
         >
           Coba lagi

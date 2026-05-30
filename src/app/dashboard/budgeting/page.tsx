@@ -14,6 +14,7 @@ import { EduTip } from '@/components/edu/edu-tip'
 import type { Budget } from '@/types'
 
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Select,
   SelectContent,
@@ -416,11 +417,11 @@ export default function BudgetingPage() {
   function renderSectionHeader(label: string, kind: BudgetType) {
     const color = KIND_COLOR[kind]
     return (
-      <tr style={{ background: color.hex }}>
+      <tr style={{ background: color.bgFirm }}>
         <td
           colSpan={13}
           className="sticky left-0 z-10 border border-[color:var(--border-soft)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] bg-inherit"
-          style={{ color: '#FFFFFF' }}
+          style={{ color: color.textOnFirm }}
         >
           {label}
         </td>
@@ -439,74 +440,32 @@ export default function BudgetingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Dark gradient hero */}
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: '#6EE7B7' }}
-          >
-            Perencanaan · {year}
-          </p>
-          <h1
-            className="font-bold tracking-tight mt-2"
-            style={{
-              fontSize: 'clamp(28px, 4vw, 40px)',
-              color: '#FFFFFF',
-              letterSpacing: '-0.035em',
-            }}
-          >
-            Anggaran Tahunan
-          </h1>
-          <p className="text-sm mt-2 flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+      <PageHeader
+        eyebrow={`Perencanaan · ${year}`}
+        title="Anggaran Tahunan"
+        subtitle={
+          <span className="inline-flex items-center gap-1.5">
             Distribusi pendapatan, pengeluaran, tabungan, &amp; investasi sepanjang tahun.
             <EduTip topic="budget-method" side="bottom" />
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setSelectorOpen(true)}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.14)',
-            }}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Pilih Kategori
-          </Button>
-          <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
-            <SelectTrigger className="w-[120px]" style={{
-              background: 'rgba(255,255,255,0.08)',
-              color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.14)',
-            }}>
-              <SelectValue placeholder="Tahun" />
-            </SelectTrigger>
-            <SelectContent>
-              {YEAR_OPTIONS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        </div>
-      </section>
+          </span>
+        }
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setSelectorOpen(true)}>
+              <SlidersHorizontal className="h-4 w-4" />
+              Pilih Kategori
+            </Button>
+            <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Tahun" />
+              </SelectTrigger>
+              <SelectContent>
+                {YEAR_OPTIONS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </>
+        }
+      />
 
       {/* Summary Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-lg">

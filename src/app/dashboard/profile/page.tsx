@@ -28,6 +28,7 @@ import {
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useLock } from '@/components/security/lock-provider'
+import { ExportDataButton } from '@/components/export-data-button'
 
 interface Profile {
   id: string
@@ -358,7 +359,7 @@ export default function ProfilePage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
           color: '#F5F5F7',
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
         }}
@@ -371,13 +372,13 @@ export default function ProfilePage() {
             width: 360,
             height: 360,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
           }}
         />
         <div className="relative p-6 sm:p-7">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: '#6EE7B7' }}
+            style={{ color: 'rgba(255,255,255,0.55)' }}
           >
             Profil
           </p>
@@ -386,14 +387,14 @@ export default function ProfilePage() {
               <div
                 className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #047857)',
-                  color: '#FFFFFF',
+                  background: 'var(--c-primary)',
+                  color: 'var(--c-primary-foreground)',
                   fontFamily: 'var(--font-sans)',
                   fontWeight: 800,
                   fontSize: 28,
                   letterSpacing: '-0.04em',
                   lineHeight: 1,
-                  boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.50)',
+                  boxShadow: '0 8px 24px -8px rgba(16, 24, 40, 0.14)',
                 }}
               >
                 {(profile.full_name || user.email).slice(0, 1).toUpperCase()}
@@ -435,9 +436,9 @@ export default function ProfilePage() {
               href="/dashboard/pricing"
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
               style={{
-                background: 'linear-gradient(135deg, #10B981, #047857)',
-                color: '#FFFFFF',
-                boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                background: 'var(--c-primary)',
+                color: 'var(--c-primary-foreground)',
+                boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
               }}
             >
               <Crown className="size-4" />
@@ -759,10 +760,13 @@ export default function ProfilePage() {
               <div className="flex-1">
                 <h3 className="font-semibold">Export Data</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Unduh semua transaksi & data finansialmu sebagai CSV.
+                  Unduh seluruh datamu — transaksi, akun, investasi, goal, anggaran, dan lainnya — sebagai satu file JSON. Hak akses data pribadi sesuai UU PDP.
                 </p>
+                <div className="mt-3">
+                  <ExportDataButton />
+                </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Buka menu Transaksi → Export CSV. Untuk dataset lengkap (semua tabel), fitur ini akan dipindah ke sini di rilis berikutnya.
+                  Khusus transaksi dalam format CSV, buka menu Transaksi → Export CSV.
                 </p>
               </div>
             </div>

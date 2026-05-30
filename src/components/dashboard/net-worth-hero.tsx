@@ -121,7 +121,7 @@ export function NetWorthHero({
     <section
       className="relative overflow-hidden rounded-3xl"
       style={{
-        background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+        background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
         color: '#F5F5F7',
         boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40), 0 2px 4px rgba(0,0,0,0.06)',
       }}
@@ -135,7 +135,7 @@ export function NetWorthHero({
           width: 380,
           height: 380,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 65%)',
+          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
         }}
       />
 
@@ -154,7 +154,7 @@ export function NetWorthHero({
           {/* Section label */}
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase mt-4"
-            style={{ color: '#6EE7B7' }}
+            style={{ color: 'rgba(255,255,255,0.55)' }}
           >
             Kekayaan Bersih
           </p>

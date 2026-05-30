@@ -20,6 +20,7 @@ import type { Transaction, Account, CreditCard, CategorizationRule } from '@/typ
 import Papa from 'papaparse'
 
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -674,50 +675,20 @@ export default function TransactionsPage() {
           ...INVESTMENT_CATEGORIES,
         ]
 
-  const today = formatDate(new Date())
-
   return (
     <div className="space-y-6">
-      {/* Header per design handoff §1 — eyebrow + h1 + utility actions */}
-      {/* Dark gradient hero */}
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-8">
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: '#6EE7B7' }}
-          >
-            {today}
-          </p>
-          <h1
-            className="font-bold tracking-tight mt-2"
-            style={{
-              fontSize: 'clamp(28px, 4vw, 40px)',
-              color: '#FFFFFF',
-              letterSpacing: '-0.035em',
-            }}
-          >
-            Transaksi
-          </h1>
-          <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Semua aktivitas finansial — pemasukan, pengeluaran, tabungan, investasi.
-          </p>
-        </div>
-      </section>
+      {/* Light functional header (Hybrid pattern) — dark hero reserved for
+          big-number summary pages. Primary action sits inline with title. */}
+      <PageHeader
+        title="Transaksi"
+        subtitle="Semua aktivitas finansial — pemasukan, pengeluaran, tabungan, investasi."
+        actions={
+          <Button onClick={openAddDialog}>
+            <Plus className="size-4" data-icon="inline-start" />
+            Tambah Transaksi
+          </Button>
+        }
+      />
 
       {!loading && accounts.length === 0 && creditCards.length === 0 && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
@@ -737,24 +708,21 @@ export default function TransactionsPage() {
         </div>
       )}
 
+      {/* Utility actions — quieter row, secondary to the primary "Tambah" in header */}
       <div className="flex flex-wrap justify-end gap-2">
         <Link href="/dashboard/transactions/import">
-          <Button variant="outline">
+          <Button variant="outline" size="sm">
             <Sparkles className="size-4" /> Import mutasi AI
           </Button>
         </Link>
-        <Button variant="outline" onClick={() => setImportOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
           <Upload className="size-4" /> Import CSV
         </Button>
-        <Button variant="outline" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
+        <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
           <Download className="size-4" /> Export CSV
         </Button>
-        <Button variant="outline" onClick={() => setTransferDialogOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
           <ArrowLeftRight className="size-4" /> Transfer
-        </Button>
-        <Button onClick={openAddDialog}>
-          <Plus className="size-4" data-icon="inline-start" />
-          Tambah Transaksi
         </Button>
       </div>
 
@@ -857,7 +825,7 @@ export default function TransactionsPage() {
       {!loading && accounts.length + creditCards.length > 0 && (
         <div className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
-            <Plus className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+            <Plus className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
               Tambah Cepat
             </p>
@@ -977,9 +945,9 @@ export default function TransactionsPage() {
         <div className="s-card flex flex-col items-center text-center py-16 px-8">
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'var(--c-mint-soft)' }}
+            style={{ background: 'var(--surface-2)' }}
           >
-            <Wallet className="size-7" style={{ color: 'var(--c-mint)' }} />
+            <Wallet className="size-7" style={{ color: 'var(--ink-muted)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
             Belum ada transaksi

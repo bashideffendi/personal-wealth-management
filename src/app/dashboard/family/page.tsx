@@ -226,7 +226,7 @@ export default function FamilyPage() {
         <section
           className="relative overflow-hidden rounded-3xl"
           style={{
-            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+            background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
             color: '#F5F5F7',
             boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
           }}
@@ -236,13 +236,13 @@ export default function FamilyPage() {
             style={{
               top: -100, right: -60, width: 360, height: 360,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
             }}
           />
           <div className="relative p-6 sm:p-7">
             <p
               className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-              style={{ color: '#6EE7B7' }}
+              style={{ color: 'rgba(255,255,255,0.55)' }}
             >
               Keluarga
             </p>
@@ -266,8 +266,8 @@ export default function FamilyPage() {
           <div
             className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4"
             style={{
-              background: 'linear-gradient(135deg, #10B981, #047857)',
-              boxShadow: '0 10px 28px -10px rgba(16, 185, 129, 0.50)',
+              background: 'var(--c-primary)',
+              boxShadow: '0 10px 28px -10px rgba(16, 24, 40, 0.14)',
             }}
           >
             <Home className="size-8 text-white" />
@@ -330,7 +330,7 @@ export default function FamilyPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
           color: '#F5F5F7',
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
         }}
@@ -340,13 +340,13 @@ export default function FamilyPage() {
           style={{
             top: -100, right: -60, width: 360, height: 360,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 65%)',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
           }}
         />
         <div className="relative p-6 sm:p-7">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: '#6EE7B7' }}
+            style={{ color: 'rgba(255,255,255,0.55)' }}
           >
             Keluarga
           </p>
@@ -371,10 +371,10 @@ export default function FamilyPage() {
                 onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }}
                 disabled={members.length >= household.max_seats}
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #047857)',
-                  color: '#FFFFFF',
+                  background: 'var(--c-primary)',
+                  color: 'var(--c-primary-foreground)',
                   border: 0,
-                  boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+                  boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
                 }}
               >
                 <UserPlus className="size-4" data-icon="inline-start" />
@@ -395,10 +395,10 @@ export default function FamilyPage() {
                 className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white shrink-0"
                 style={{
                   background: m.role === 'owner'
-                    ? 'linear-gradient(135deg, #10B981, #047857)'
+                    ? 'var(--c-primary)'
                     : 'linear-gradient(135deg, #475569, #1E293B)',
                   boxShadow: m.role === 'owner'
-                    ? '0 4px 12px -4px rgba(16, 185, 129, 0.40)'
+                    ? '0 4px 12px -4px rgba(16, 24, 40, 0.12)'
                     : '0 4px 12px -4px rgba(15, 23, 42, 0.30)',
                 }}
               >

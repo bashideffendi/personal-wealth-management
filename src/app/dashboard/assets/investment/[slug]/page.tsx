@@ -255,7 +255,7 @@ export default function InvestmentCategoryPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #0F1F1A 100%)',
+          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
           color: '#F5F5F7',
           boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
         }}

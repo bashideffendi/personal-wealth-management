@@ -212,6 +212,18 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
+  // Explicit-open event — used by QuickAddLauncher's "Ketik dengan AI" hand-off.
+  // A dedicated open (not a ⌘K toggle) so an already-open palette is never
+  // accidentally closed during the hand-off.
+  useEffect(() => {
+    function onOpenEvent() {
+      setOpen(true)
+    }
+    window.addEventListener('klunting:open-command-palette', onOpenEvent)
+    return () =>
+      window.removeEventListener('klunting:open-command-palette', onOpenEvent)
+  }, [])
+
   useEffect(() => {
     if (!open) {
       setQuery('')
@@ -651,8 +663,8 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             onClick={() => onConfirm(d)}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
             style={{
-              background: 'linear-gradient(135deg, #10B981, #047857)',
-              boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.40)',
+              background: 'var(--c-primary)',
+              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
             }}
           >
             <Check className="size-4" />

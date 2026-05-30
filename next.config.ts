@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   images: {
@@ -52,7 +53,9 @@ const nextConfig: NextConfig = {
       // next/font self-hosts, so 'self' + data: (inline) is enough.
       "font-src 'self' data:",
       // Supabase REST + realtime websocket, plus Nominatim geocoding (map search).
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org",
+      // Sentry error-monitoring ingest (EU region). Without this entry the
+      // enforced CSP would silently block all client-side error reporting.
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org https://*.ingest.de.sentry.io",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
     ].join('; ')
@@ -87,4 +90,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "klunting",
+  project: "klunting",
+  // Source-map upload so prod stack traces are readable (not minified).
+  // Optional: set SENTRY_AUTH_TOKEN in .env.local + Vercel to enable; the build
+  // works fine without it (maps just won't upload).
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  // tunnelRoute intentionally omitted — it would need an exemption in the
+  // Supabase auth middleware. Client events go direct; the CSP connect-src
+  // entry above allows the ingest host.
+  silent: !process.env.CI,
+});

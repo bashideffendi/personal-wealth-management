@@ -908,8 +908,8 @@ export default function DashboardPage() {
                 href="/dashboard/assets/investment"
                 className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981, #047857)',
-                  color: '#FFFFFF',
+                  background: 'var(--c-primary)',
+                  color: 'var(--c-primary-foreground)',
                 }}
               >
                 Tambah investasi <ArrowRight className="size-3" />

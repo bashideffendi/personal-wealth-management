@@ -54,8 +54,9 @@
   --border-soft: #F4F4F5;
 
   /* ── Semantic tokens — emerald primary restored ─── */
-  --c-primary:      #10B981;     /* EMERALD primary (Klunting brand) */
-  --c-primary-soft: #ECFDF5;
+  --c-primary:      #0A0A0F;     /* INK primary — Quiet Luxury brand (buttons, logo, nav) */
+  --c-primary-soft: #F4F4F5;     /* neutral tint for active states */
+  --c-primary-foreground: #FFFFFF;
   --c-mint:         #10B981;     /* alias to primary — same hex */
   --c-mint-soft:    #ECFDF5;
   --c-coral:        #F43F5E;     /* expense/danger — back to bolder coral-500 */
@@ -225,19 +226,15 @@
   --stone-light: #A1A1AA;
 
   /* ── Fonts ───────────────────────────────────── */
-  --font-sans:    var(--font-sans-brand), "Plus Jakarta Sans",
+  --font-sans:    var(--font-sans-brand), "Inter",
                   system-ui, -apple-system, sans-serif;
   --font-ui:      var(--font-sans);
-  /* Display = Instrument Serif — restricted to "moments of personality"
-     only (per fintech revert): brand wordmark italic spot, milestone
-     modals, empty-state hero. NEVER body, buttons, hero numbers,
-     headings, page titles. */
-  --font-display: var(--font-display-brand), "Instrument Serif",
-                  Georgia, serif;
-  /* Mono = JetBrains Mono — professional fintech standard (Stockbit,
-     Mercury, Linear). Tabular numerics, kbd, account numbers, tickers. */
-  --font-mono:    var(--font-mono-brand), "JetBrains Mono",
-                  ui-monospace, "SF Mono", Menlo, monospace;
+  /* Calm Premium: ONE typeface (Inter) for everything — display headings
+     and numbers included. Numbers get tabular figures via .num (font-
+     feature "tnum"), not a separate monospace. --font-display and
+     --font-mono alias to Inter so any legacy reference stays consistent. */
+  --font-display: var(--font-sans);
+  --font-mono:    var(--font-sans);
 
   --radius: 1rem;       /* 16px — editorial card baseline */
 }
@@ -255,9 +252,9 @@
   --color-popover: var(--surface);
   --color-popover-foreground: var(--ink);
 
-  /* Primary fintech: emerald (Klunting signature brand) */
-  --color-primary: var(--c-mint);
-  --color-primary-foreground: #FFFFFF;
+  /* Primary: ink (Quiet Luxury) — inverts to light on dark via tokens */
+  --color-primary: var(--c-primary);
+  --color-primary-foreground: var(--c-primary-foreground);
   --color-secondary: var(--surface-2);
   --color-secondary-foreground: var(--ink);
 
@@ -270,7 +267,7 @@
   --color-destructive: var(--c-coral);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: var(--c-mint);
+  --color-ring: var(--c-primary);
 
   /* Chart palette — emerald-led, amber/coral/violet/sky for variety */
   --color-chart-1: var(--c-mint);      /* emerald — main */
@@ -330,8 +327,9 @@
   --on-black-mut:#52525B;
 
   /* Accents — emerald primary restored, brighter for dark contrast */
-  --c-primary:      #34D399;      /* emerald-400, brighter on dark */
-  --c-primary-soft: rgba(16, 185, 129, 0.13);
+  --c-primary:      #F4F4F5;      /* INK inverts to near-white on dark */
+  --c-primary-soft: rgba(255, 255, 255, 0.08);
+  --c-primary-foreground: #0A0A0F;
   --c-mint:         #34D399;
   --c-mint-soft:    rgba(52, 211, 153, 0.13);
   --c-coral:        #FB7185;
@@ -358,12 +356,12 @@
 
   --surface-alt: var(--surface-2);
 
-  /* Theme tokens — emerald primary dark */
-  --color-primary: var(--c-mint);
-  --color-primary-foreground: var(--ink);
+  /* Theme tokens — ink primary inverts to light on dark */
+  --color-primary: var(--c-primary);
+  --color-primary-foreground: var(--c-primary-foreground);
   --color-accent: var(--c-mint);
   --color-accent-foreground: var(--ink);
-  --color-ring: var(--c-mint);
+  --color-ring: var(--c-primary);
   --color-border: var(--border);
 
   /* Editorial shadows for dark */
@@ -377,7 +375,6 @@
   html {
     font-family: var(--font-sans);
     scroll-behavior: smooth;
-    font-feature-settings: "ss01", "cv11";
     color-scheme: light;
   }
   html.dark {
@@ -499,12 +496,12 @@
   font-weight: 600;
   border-radius: 10px;
   border: 0;
-  background: var(--c-mint);
-  color: #FFFFFF;
+  background: var(--c-primary);
+  color: var(--c-primary-foreground);
   padding: 9px 14px;
   cursor: pointer;
-  transition: opacity 150ms, transform 150ms;
-  box-shadow: 0 4px 12px -4px rgba(16, 185, 129, 0.35);
+  transition: opacity 150ms, transform 150ms, box-shadow 150ms;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
 }
 .btn-primary:hover { opacity: 0.92; }
 .btn-primary:active { transform: scale(0.97); }
@@ -560,7 +557,7 @@
   background: linear-gradient(135deg, #14141A 0%, #1C1C24 100%);
   border-color: var(--border);
 }
-.dark-card .eyebrow    { color: var(--c-mint); }
+.dark-card .eyebrow    { color: var(--on-black-mut); }
 .dark-card .text-white { color: var(--on-black); }
 .dark-card .text-white\/60,
 .dark-card .text-white\/70,
@@ -678,20 +675,10 @@ body, .s-card, .dark-card, .ink-card {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Fintech bg — clean near-white dengan subtle emerald + violet
-   ambient untuk premium app feel. Restored per fintech pivot. */
+/* Calm Premium canvas — clean flat surface, no ambient color glows.
+   Premium feel comes from restraint, type, and space — not decoration. */
 body {
   background-color: var(--bg);
-  background-image:
-    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.05), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.04), transparent 45%);
-  background-attachment: fixed;
-}
-
-.dark body {
-  background-image:
-    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.04), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.04), transparent 45%);
 }
 
 /* ============================================

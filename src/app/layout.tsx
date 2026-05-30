@@ -1,34 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono, Instrument_Serif } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+// Calm Premium typography — ONE typeface across the entire product.
+// Inter: hyper-readable, premium-neutral (Linear, Stripe, Copilot Money).
+// Headings, body, and tabular numbers all use Inter — consistency over
+// novelty. No separate mono or serif (dropped Plus Jakarta / JetBrains /
+// Instrument Serif). Variable font, so every weight is available.
+const inter = Inter({
   variable: "--font-sans-brand",
   subsets: ["latin"],
-  display: "swap",
-});
-
-// JetBrains Mono — restored sebagai professional fintech standard
-// (Stockbit, Mercury, Linear pakai mono family). Untuk tabular numerics,
-// kbd, account numbers, ticker codes.
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono-brand",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
-
-// Instrument Serif — REVERT ke "moments of personality only" per
-// fintech direction 2026-05-28. Dipakai untuk: brand wordmark italic
-// (1 spot di landing), milestone modals, empty state headlines.
-// NEVER for body, buttons, hero numbers, page titles, default headings.
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-display-brand",
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -116,7 +99,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
