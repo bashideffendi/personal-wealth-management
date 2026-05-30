@@ -237,10 +237,77 @@ export function ResearchTabs(props: ResearchTabsProps) {
         </TabsList>
       </div>
 
-      {/* ─── Research (markdown narrative + Generate button kalau kosong) ─── */}
+      {/* ─── Research — 2 kolom: sidebar metrik (kiri) + narasi (kanan) ─── */}
       <TabsContent value="research" className="mt-4">
         {research ? (
-          <ResearchView research={research} ticker={ticker} onRegenerated={setResearch} />
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
+            {/* Sidebar metrik */}
+            <aside className="lg:col-span-1 space-y-4">
+              {oneYear?.low != null && oneYear?.high != null && (
+                <div className="s-card p-4">
+                  <p className="eyebrow">Rentang 52 Minggu</p>
+                  <p className="num tabular text-base font-bold mt-1" style={{ color: 'var(--ink)' }}>
+                    Rp {formatPrice(oneYear.low)} – Rp {formatPrice(oneYear.high)}
+                  </p>
+                  {price != null && oneYear.high > oneYear.low && (() => {
+                    const pct = Math.min(100, Math.max(0, ((price - oneYear.low) / (oneYear.high - oneYear.low)) * 100))
+                    return (
+                      <>
+                        <div className="relative h-1.5 rounded-full mt-3" style={{ background: 'var(--surface-2)' }}>
+                          <div className="absolute size-3 rounded-full -top-[3px] -translate-x-1/2" style={{ left: `${pct}%`, background: 'var(--c-primary)' }} />
+                        </div>
+                        <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>Harga kini di {Math.round(pct)}% rentang</p>
+                      </>
+                    )
+                  })()}
+                </div>
+              )}
+
+              <div className="s-card p-4">
+                <p className="eyebrow mb-3">Rasio Kunci</p>
+                <div className="space-y-2.5 text-sm">
+                  {[
+                    { k: 'PER', v: formatRatio(latestPER) },
+                    { k: 'PBV', v: formatRatio(latestPBV) },
+                    { k: 'ROE', v: formatPercentValue(latestROE), accent: true },
+                    { k: 'NPM', v: formatPercentValue(latestNPM) },
+                    { k: 'DER', v: formatRatio(latestDER) },
+                    { k: 'Free Float', v: stats?.freeFloatPct != null ? `${(stats.freeFloatPct * 100).toFixed(1)}%` : '—' },
+                  ].map((r) => (
+                    <div key={r.k} className="flex items-center justify-between gap-2">
+                      <span style={{ color: 'var(--ink-muted)' }}>{r.k}</span>
+                      <span className="num tabular font-semibold" style={{ color: r.accent ? 'var(--c-mint)' : 'var(--ink)' }}>{r.v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="s-card p-4">
+                <p className="eyebrow mb-3">Fundamental</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{latestYear ? `Revenue FY${latestYear}` : 'Revenue'}</p>
+                    <p className="num tabular font-bold" style={{ color: 'var(--ink)' }}>{formatIDRCompact(latestRevenue)}</p>
+                    <p className="text-[11px]" style={{ color: signColorVar(latestRevYoY) }}>YoY {formatPercentValue(latestRevYoY)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Net Profit</p>
+                    <p className="num tabular font-bold" style={{ color: 'var(--ink)' }}>{formatIDRCompact(latestNetProfit)}</p>
+                    <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Margin {formatPercentValue(latestNPM)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Market Cap</p>
+                    <p className="num tabular font-bold" style={{ color: 'var(--ink)' }}>{formatIDRCompact(latestMarketCap ?? stats?.marketCap ?? null)}</p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            {/* Narasi */}
+            <div className="lg:col-span-3 min-w-0">
+              <ResearchView research={research} ticker={ticker} onRegenerated={setResearch} />
+            </div>
+          </div>
         ) : (
           <GenerateResearchEmpty
             ticker={ticker}
