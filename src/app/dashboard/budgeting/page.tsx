@@ -426,15 +426,6 @@ export default function BudgetingPage() {
     )
   }
 
-  // Spacer row — cream gap between sections (breathing room, separates the blocks)
-  function renderSpacer() {
-    return (
-      <tr aria-hidden="true">
-        <td colSpan={13} style={{ height: 18, background: 'var(--bg)' }} />
-      </tr>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -516,110 +507,89 @@ export default function BudgetingPage() {
           />
         </div>
 
-        {/* Desktop: legend band + 12-month spreadsheet grid — one card */}
-        <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 12px 32px -16px rgba(16,24,40,0.12)' }}>
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3" style={{ borderColor: 'var(--border)' }}>
-            <div>
-              <p className="eyebrow">Grid Anggaran 12 Bulan</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                Klik nama bulan buat buka rincian harian, kategori &amp; proyeksi.
-              </p>
-            </div>
+        {/* Desktop: title + month-header strip + per-section standalone cards */}
+        <div className="hidden md:block space-y-3">
+          <div>
+            <p className="eyebrow">Grid Anggaran 12 Bulan</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+              Klik nama bulan buat buka rincian harian, kategori &amp; proyeksi.
+            </p>
           </div>
-          <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: '160px' }} />
-              {SHORT_MONTHS.map((m) => <col key={m} style={{ width: 'auto', minWidth: '64px' }} />)}
-            </colgroup>
-            <thead>
-              <tr className="bg-[color:var(--surface-alt)]">
-                <th className="sticky left-0 z-20 border-b border-[color:var(--border)] bg-[color:var(--surface-alt)] px-2 py-1.5 text-left text-[11px] font-bold whitespace-nowrap eyebrow">
-                  Kategori
-                </th>
-                {SHORT_MONTHS.map((m, i) => {
-                  const monthNum = i + 1
-                  const isCurrent = isCurrentYearActive && monthNum === currentMonth
-                  return (
-                    <th
-                      key={m}
-                      className="border-b border-[color:var(--border)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
-                      style={{
-                        background: isCurrent ? 'color-mix(in srgb, var(--c-primary) 9%, transparent)' : undefined,
-                        color: isCurrent ? 'var(--c-primary)' : undefined,
-                        boxShadow: isCurrent ? 'inset 0 -2px 0 var(--c-primary)' : undefined,
-                      }}
-                      onClick={() => openDrawer(monthNum)}
-                      role="button"
-                      tabIndex={0}
-                      title={`Klik untuk detail ${m}`}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          openDrawer(monthNum)
-                        }
-                      }}
-                    >
-                      <span className="inline-flex items-center justify-center gap-0.5">
-                        {m}
-                        <ChevronDown className="size-3 shrink-0" style={{ opacity: 0.45 }} />
-                      </span>
-                    </th>
-                  )
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {/* INCOME — emerald */}
-              {renderSectionHeader('Pendapatan', 'income')}
-              {visibleIncome.map((c, i) =>
-                renderCategoryRow('income', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(16,185,129,0.04)]'),
-              )}
-              {renderTotalRow(
-                'Total Pendapatan',
-                visibleIncome,
-                'income',
-                'bg-[rgba(16,185,129,0.12)]',
-              )}
-              {renderSpacer()}
-              {/* EXPENSE — coral editorial */}
-              {renderSectionHeader('Pengeluaran', 'expense')}
-              {visibleExpense.map((c, i) =>
-                renderCategoryRow('expense', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(251,113,133,0.04)]'),
-              )}
-              {renderTotalRow(
-                'Total Pengeluaran',
-                visibleExpense,
-                'expense',
-                'bg-[rgba(251,113,133,0.14)]',
-              )}
-              {renderPercentRow()}
-              {renderSpacer()}
-              {/* SAVING — amber */}
-              {renderSectionHeader('Tabungan', 'saving')}
-              {visibleSaving.map((c, i) =>
-                renderCategoryRow('saving', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(245,158,11,0.05)]'),
-              )}
-              {renderTotalRow(
-                'Total Tabungan',
-                visibleSaving,
-                'saving',
-                'bg-[rgba(245,158,11,0.16)]',
-              )}
-              {renderSpacer()}
-              {/* INVESTMENT — primary indigo editorial */}
-              {renderSectionHeader('Investasi', 'investment')}
-              {visibleInvestment.map((c, i) =>
-                renderCategoryRow('investment', c, i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[rgba(139,92,246,0.04)]'),
-              )}
-              {renderTotalRow(
-                'Total Investasi',
-                visibleInvestment,
-                'investment',
-                'bg-[rgba(139,92,246,0.14)]',
-              )}
-            </tbody>
-          </table>
+
+          <div className="overflow-x-auto pb-2">
+            <div className="space-y-3 min-w-[1040px]">
+              {/* Month-label header strip */}
+              <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+                <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '160px' }} />
+                    {SHORT_MONTHS.map((m) => <col key={m} />)}
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th className="sticky left-0 z-20 px-3 py-2 text-left text-[11px] font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
+                        Kategori
+                      </th>
+                      {SHORT_MONTHS.map((m, i) => {
+                        const monthNum = i + 1
+                        const isCurrent = isCurrentYearActive && monthNum === currentMonth
+                        return (
+                          <th
+                            key={m}
+                            className="px-1 py-2 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
+                            style={{
+                              background: isCurrent ? 'color-mix(in srgb, var(--c-primary) 9%, transparent)' : undefined,
+                              color: isCurrent ? 'var(--c-primary)' : undefined,
+                              boxShadow: isCurrent ? 'inset 0 -2px 0 var(--c-primary)' : undefined,
+                            }}
+                            onClick={() => openDrawer(monthNum)}
+                            role="button"
+                            tabIndex={0}
+                            title={`Klik untuk detail ${m}`}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                openDrawer(monthNum)
+                              }
+                            }}
+                          >
+                            <span className="inline-flex items-center justify-center gap-0.5">
+                              {m}
+                              <ChevronDown className="size-3 shrink-0" style={{ opacity: 0.45 }} />
+                            </span>
+                          </th>
+                        )
+                      })}
+                    </tr>
+                  </thead>
+                </table>
+              </div>
+
+              {/* Each section = its own standalone rounded card, dipisah krem */}
+              {[
+                { label: 'Pendapatan', kind: 'income' as BudgetType, visible: visibleIncome, totalLabel: 'Total Pendapatan', oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
+                { label: 'Pengeluaran', kind: 'expense' as BudgetType, visible: visibleExpense, totalLabel: 'Total Pengeluaran', oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
+                { label: 'Tabungan', kind: 'saving' as BudgetType, visible: visibleSaving, totalLabel: 'Total Tabungan', oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: false },
+                { label: 'Investasi', kind: 'investment' as BudgetType, visible: visibleInvestment, totalLabel: 'Total Investasi', oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: false },
+              ].map((sec) => (
+                <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+                  <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
+                    <colgroup>
+                      <col style={{ width: '160px' }} />
+                      {SHORT_MONTHS.map((m) => <col key={m} />)}
+                    </colgroup>
+                    <tbody>
+                      {renderSectionHeader(sec.label, sec.kind)}
+                      {sec.visible.map((c, i) =>
+                        renderCategoryRow(sec.kind, c, i % 2 === 0 ? 'bg-[var(--surface)]' : sec.oddBg),
+                      )}
+                      {renderTotalRow(sec.totalLabel, sec.visible, sec.kind, sec.totalBg)}
+                      {sec.percent && renderPercentRow()}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </>
