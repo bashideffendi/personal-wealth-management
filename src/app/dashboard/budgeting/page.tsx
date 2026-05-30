@@ -467,19 +467,58 @@ export default function BudgetingPage() {
         }
       />
 
-      {/* Summary Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-lg">
-        <div className="rounded-lg p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-          <span className="eyebrow">Dialokasikan</span>
+      {/* Summary — 4 category totals + allocation (per design feedback 30 Mei) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Pendapatan', value: totalIncomeYear, dot: '#10B981', sub: 'Setahun' },
+          { label: 'Total Pengeluaran', value: totalExpenseYear, dot: '#F43F5E', sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+          { label: 'Total Tabungan', value: totalSavingYear, dot: '#F59E0B', sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+          { label: 'Total Investasi', value: totalInvestmentYear, dot: '#8B5CF6', sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+        ].map((c) => (
+          <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
+              {c.label}
+            </span>
+            <p className="num tabular font-bold mt-2" style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 2.2vw, 24px)', letterSpacing: '-0.02em' }}>
+              {formatCurrency(c.value)}
+            </p>
+            <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Allocation summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="eyebrow">Dialokasikan</span>
+            <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              {totalIncomeYear > 0 ? Math.round((allocated / totalIncomeYear) * 100) : 0}% dari pendapatan
+            </span>
+          </div>
           <p className="num text-xl tabular font-semibold mt-1.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(allocated)}
           </p>
         </div>
-        <div className="rounded-lg p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-          <span className="eyebrow">Sisa Alokasi</span>
+        <div
+          className="rounded-xl p-4 border"
+          style={{
+            background: remaining >= 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+            borderColor: 'var(--border-soft)',
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="eyebrow" style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}>
+              Sisa Alokasi
+            </span>
+            <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              {remaining >= 0 ? 'Belum dialokasikan' : 'Over-budget'}
+            </span>
+          </div>
           <p
             className="num text-xl tabular font-semibold mt-1.5"
-            style={{ color: remaining >= 0 ? 'var(--ink)' : 'var(--danger)' }}
+            style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}
           >
             {formatCurrency(remaining)}
           </p>
