@@ -14,7 +14,7 @@ import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
-import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
+import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
 
 const CAT_LABELS: Record<string, string> = {
   stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
@@ -38,6 +38,8 @@ export default function InvestmentOverviewPage() {
   const [items, setItems] = useState<Investment[]>([])
   const [rdnAccounts, setRdnAccounts] = useState<RdnAccount[]>([])
   const [dividends, setDividends] = useState<{ amount: number; pay_date: string }[]>([])
+  const [quotes, setQuotes] = useState<Record<string, { changePct: number | null }>>({})
+  const [tab, setTab] = useState<'all' | AssetClassKey>('all')
 
   // useCallback so the function is stable and can be a useEffect dep
   // without re-running every render. Same pattern as [slug]/page.tsx.
@@ -68,6 +70,24 @@ export default function InvestmentOverviewPage() {
   // unmount guard inside `load` would just add ceremony.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load() }, [load])
+
+  // Live day-change quotes for tickered holdings (stocks/ETF/crypto). The
+  // stored ticker IS the Yahoo symbol (BBCA.JK / AAPL / BTC-USD).
+  useEffect(() => {
+    const tickers = Array.from(new Set(items.map((i) => i.ticker?.trim()).filter(Boolean))) as string[]
+    if (tickers.length === 0) return
+    let cancelled = false
+    fetch(`/api/quotes?tickers=${encodeURIComponent(tickers.join(','))}`)
+      .then((r) => (r.ok ? r.json() : { quotes: [] }))
+      .then((d: { quotes?: { ticker: string; changePct: number | null }[] }) => {
+        if (cancelled) return
+        const map: Record<string, { changePct: number | null }> = {}
+        for (const q of d.quotes ?? []) map[q.ticker.toUpperCase()] = { changePct: q.changePct }
+        setQuotes(map)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [items])
 
   const rdnTotal = rdnAccounts.reduce((s, a) => s + (a.current_balance ?? 0), 0)
 
@@ -144,6 +164,68 @@ export default function InvestmentOverviewPage() {
       }))
       .sort((a, b) => b.returnPct - a.returnPct)
   }, [byClass])
+
+  // Today's P/L estimate = Σ market × changePct (only quoted holdings).
+  const todayPL = useMemo(() => {
+    return enriched.reduce((s, e) => {
+      const t = e.i.ticker?.toUpperCase()
+      const cp = t ? quotes[t]?.changePct : null
+      return cp == null ? s : s + e.market * (cp / 100)
+    }, 0)
+  }, [enriched, quotes])
+
+  // Holding-table tabs: Semua + each class that actually has positions.
+  const holdingTabs = useMemo(() => {
+    const present = ASSET_CLASS_ORDER.filter((k) => (byClass[k]?.count ?? 0) > 0)
+    return [
+      { key: 'all' as const, label: 'Semua' },
+      ...present.map((k) => ({ key: k as 'all' | AssetClassKey, label: ASSET_CLASS_META[k].label })),
+    ]
+  }, [byClass])
+
+  const holdingRows = useMemo(() => {
+    return enriched
+      .filter((e) => tab === 'all' || assetClassKey(e.i) === tab)
+      .map((e) => {
+        const ck = assetClassKey(e.i)
+        const t = e.i.ticker?.toUpperCase()
+        return {
+          id: e.i.id,
+          name: e.i.name,
+          sym: (e.i.ticker ?? '').replace(/\.JK$/i, '').toUpperCase(),
+          classLabel: ASSET_CLASS_META[ck].label,
+          classColor: ASSET_CLASS_META[ck].color,
+          qty: e.i.quantity,
+          price: e.i.current_price || e.i.avg_cost,
+          market: e.market,
+          plPct: e.invested > 0 ? (e.pl / e.invested) * 100 : null,
+          changePct: t ? (quotes[t]?.changePct ?? null) : null,
+        }
+      })
+      .sort((a, b) => b.market - a.market)
+  }, [enriched, tab, quotes])
+
+  // Today's movers — quoted holdings sorted by |Δ%|.
+  const movers = useMemo(() => {
+    return enriched
+      .map((e) => {
+        const t = e.i.ticker?.toUpperCase()
+        const cp = t ? (quotes[t]?.changePct ?? null) : null
+        if (cp == null) return null
+        const ck = assetClassKey(e.i)
+        return {
+          id: e.i.id,
+          name: e.i.name,
+          sym: (e.i.ticker ?? '').replace(/\.JK$/i, '').toUpperCase(),
+          changePct: cp,
+          changeRp: e.market * (cp / 100),
+          color: ASSET_CLASS_META[ck].color,
+        }
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null)
+      .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
+      .slice(0, 6)
+  }, [enriched, quotes])
 
   // Concentration risk: top kategori share of total
   const topCatPct = useMemo(() => {
@@ -270,9 +352,9 @@ export default function InvestmentOverviewPage() {
             accent={up ? 'var(--c-mint)' : 'var(--c-coral)'}
           />
           <HeroStat
-            label="Return"
-            value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
-            accent={up ? 'var(--c-mint)' : 'var(--c-coral)'}
+            label="Hari Ini"
+            value={`${todayPL >= 0 ? '+' : '−'}${formatCurrency(Math.abs(todayPL))}`}
+            accent={todayPL >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'}
           />
           <HeroStat label="Dividen YTD" value={formatCurrency(dividenYtd)} />
         </div>
@@ -609,6 +691,112 @@ export default function InvestmentOverviewPage() {
           )}
         </div>
       </div>
+
+      {/* Daftar Holding — semua posisi, filter per kelas */}
+      {enriched.length > 0 && (
+        <div className="s-card overflow-hidden">
+          <div className="p-5 sm:p-6 pb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow">Holding</p>
+              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>Daftar Holding</h3>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {holdingTabs.map((t) => {
+                const active = tab === t.key
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTab(t.key)}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
+                    style={active
+                      ? { background: 'var(--c-primary)', color: '#fff' }
+                      : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                  >
+                    {t.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse" style={{ minWidth: 640 }}>
+              <thead>
+                <tr style={{ background: 'var(--surface-3)' }}>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Sym</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2" style={{ color: 'var(--ink-muted)' }}>Nama</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Lot/Unit</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Nilai</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>U/R</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Δ Hari</th>
+                </tr>
+              </thead>
+              <tbody>
+                {holdingRows.map((r) => {
+                  const plUp = (r.plPct ?? 0) >= 0
+                  const dUp = (r.changePct ?? 0) >= 0
+                  return (
+                    <tr key={r.id} className="border-b transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <span className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${r.classColor}1A`, color: r.classColor }}>
+                          {r.sym || '—'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[260px]">
+                        <p className="truncate font-medium" style={{ color: 'var(--ink)' }}>{r.name}</p>
+                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{r.classLabel}</p>
+                      </td>
+                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                        {r.qty.toLocaleString('id-ID')}
+                      </td>
+                      <td className="px-3 py-2.5 text-right num tabular font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>
+                        {formatCurrency(r.market)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                        {r.plPct == null ? '—' : `${plUp ? '+' : ''}${r.plPct.toFixed(1)}%`}
+                      </td>
+                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" style={{ color: r.changePct == null ? 'var(--ink-soft)' : dUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                        {r.changePct == null ? '—' : `${dUp ? '+' : ''}${r.changePct.toFixed(2)}%`}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pergerakan hari ini — quoted holdings sorted by |Δ%| */}
+      {movers.length > 0 && (
+        <div className="s-card p-5 sm:p-6">
+          <p className="eyebrow">Hari Ini</p>
+          <h3 className="text-xl font-semibold mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>Pergerakan Hari Ini</h3>
+          <div className="grid sm:grid-cols-2 gap-x-6">
+            {movers.map((m) => {
+              const pos = m.changePct >= 0
+              return (
+                <div key={m.id} className="flex items-center justify-between gap-3 py-2 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: `${m.color}1A`, color: m.color }}>
+                      {m.sym.slice(0, 4) || '—'}
+                    </span>
+                    <span className="truncate text-sm" style={{ color: 'var(--ink)' }}>{m.name}</span>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="num tabular text-sm font-semibold" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                      {pos ? '+' : '−'}{formatCurrency(Math.abs(m.changeRp))}
+                    </p>
+                    <p className="num tabular text-[11px]" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                      {pos ? '▲' : '▼'} {Math.abs(m.changePct).toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
     </div>
   )
