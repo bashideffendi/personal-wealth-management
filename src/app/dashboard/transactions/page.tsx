@@ -18,6 +18,7 @@ import {
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
+import { CategoryIcon } from '@/components/transactions/category-icon'
 
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/page-header'
@@ -1061,7 +1062,12 @@ export default function TransactionsPage() {
                             {tx.category}
                           </TableCell>
                           <TableCell className="text-[13px]" style={{ color: 'var(--ink-muted)' }}>
-                            {tx.description}
+                            <span className="flex items-center gap-2.5">
+                              <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                                <CategoryIcon category={tx.category} className="size-3.5" />
+                              </span>
+                              <span className="truncate">{tx.description || tx.category}</span>
+                            </span>
                           </TableCell>
                           <TableCell
                             className={`text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
