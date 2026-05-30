@@ -60,7 +60,10 @@ export default function InvestmentCategoryPage() {
   const supabase = createClient()
 
   const slug = params.slug
+  // Virtual slugs stock-idx / stock-us = category `stock` filtered by market.
+  const marketFilter: 'idx' | 'us' | null = slug === 'stock-us' ? 'us' : slug === 'stock-idx' ? 'idx' : null
   const subcat = INVESTMENT_SUBCATS.find((s) => s.slug === slug)
+    ?? (marketFilter ? { slug, label: marketFilter === 'us' ? 'Saham US' : 'Saham IHSG', emoji: '📈' } : undefined)
   const category: Investment['category'] = (INVESTMENT_SLUG_TO_CATEGORY[slug] ?? 'stock') as Investment['category']
 
   const [loading, setLoading] = useState(true)
@@ -165,11 +168,14 @@ export default function InvestmentCategoryPage() {
       .eq('user_id', user.id)
       .eq('category', category)
       .order('total_value', { ascending: false })
-    const list = (data ?? []) as Investment[]
+    const all = (data ?? []) as Investment[]
+    const list = marketFilter
+      ? all.filter((i) => (((i.currency ?? '').toUpperCase() === 'USD') ? 'us' : 'idx') === marketFilter)
+      : all
     setItems(list)
     setLoading(false)
     void refreshQuotes(list)
-  }, [supabase, category, refreshQuotes])
+  }, [supabase, category, refreshQuotes, marketFilter])
 
   useEffect(() => {
     if (!subcat) { router.push('/dashboard/assets/investment'); return }
@@ -212,6 +218,9 @@ export default function InvestmentCategoryPage() {
       type,
       sector: form.sector,
       notes: form.notes,
+      // On the IDX/US pages, stamp currency so the new holding lands in the
+      // right market bucket (overview split + this page's filter).
+      ...(marketFilter ? { currency: marketFilter === 'us' ? 'USD' : 'IDR' } : {}),
     }
     if (form.id) await supabase.from('investments').update(payload).eq('id', form.id)
     else await supabase.from('investments').insert(payload)
@@ -283,6 +292,30 @@ export default function InvestmentCategoryPage() {
             <CalmModeToggle compact />
           )}
         </div>
+        {category === 'stock' && (
+          <div className="mt-3 flex gap-1.5">
+            {[
+              { key: 'stock', label: 'Semua', href: '/dashboard/assets/investment/stock' },
+              { key: 'stock-idx', label: 'IHSG', href: '/dashboard/assets/investment/stock-idx' },
+              { key: 'stock-us', label: 'US', href: '/dashboard/assets/investment/stock-us' },
+            ].map((m) => {
+              const active = slug === m.key
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => router.push(m.href)}
+                  className="px-3 py-1 rounded-full text-xs font-semibold transition"
+                  style={active
+                    ? { background: 'rgba(255,255,255,0.18)', color: '#fff' }
+                    : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}
+                >
+                  {m.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <p
             className="num tabular font-bold leading-none whitespace-nowrap"
