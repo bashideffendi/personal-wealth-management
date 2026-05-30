@@ -426,11 +426,11 @@ export default function BudgetingPage() {
     )
   }
 
-  // Spacer row — white gap for breathing room between sections (inside the card)
+  // Spacer row — cream gap between sections (breathing room, separates the blocks)
   function renderSpacer() {
     return (
       <tr aria-hidden="true">
-        <td colSpan={13} style={{ height: 18, background: 'var(--surface)' }} />
+        <td colSpan={13} style={{ height: 18, background: 'var(--bg)' }} />
       </tr>
     )
   }
@@ -448,7 +448,7 @@ export default function BudgetingPage() {
         }
         actions={
           <>
-            <Button variant="outline" onClick={() => setSelectorOpen(true)} style={{ background: 'var(--surface)' }}>
+            <Button onClick={() => setSelectorOpen(true)}>
               <SlidersHorizontal className="h-4 w-4" />
               Pilih Kategori
             </Button>
@@ -513,7 +513,7 @@ export default function BudgetingPage() {
 
         {/* Desktop: legend band + 12-month spreadsheet grid — one card */}
         <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b px-4 py-3" style={{ borderColor: 'var(--border-soft)' }}>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3" style={{ borderColor: 'var(--border)' }}>
             <div>
               <p className="eyebrow">Grid Anggaran 12 Bulan</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
@@ -572,20 +572,6 @@ export default function BudgetingPage() {
                         {m}
                         <ChevronDown className="size-3 shrink-0" style={{ opacity: 0.45 }} />
                       </span>
-                      {isCurrent && (
-                        <div
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            marginTop: 1,
-                            color: 'var(--c-primary)',
-                          }}
-                        >
-                          Sekarang
-                        </div>
-                      )}
                     </th>
                   )
                 })}
