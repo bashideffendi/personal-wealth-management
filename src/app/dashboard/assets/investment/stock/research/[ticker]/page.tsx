@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import {
   getValuation,
@@ -177,14 +177,15 @@ export default async function StockResearchPage({ params }: RouteProps) {
         <span style={{ color: 'var(--ink)' }}>Research · {ticker}</span>
       </nav>
 
-      {/* Header — kartu putih split: identitas | harga snapshot */}
-      <header className="s-card p-6 sm:p-8 flex flex-col gap-6 sm:flex-row sm:items-stretch">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3">
-            <StockLogo ticker={ticker} size={48} />
+      {/* Header — kartu putih: identitas (kiri) · panel harga snapshot (kanan) */}
+      <header className="s-card p-6 sm:p-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        {/* Identitas emiten */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-4">
+            <StockLogo ticker={ticker} size={52} />
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono font-bold text-2xl tracking-tight" style={{ color: 'var(--ink)' }}>{ticker}</span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono font-bold tracking-tight" style={{ fontSize: 26, color: 'var(--ink)' }}>{ticker}</span>
                 {verdict && (
                   <span
                     className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
@@ -194,10 +195,10 @@ export default async function StockResearchPage({ params }: RouteProps) {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--ink-muted)' }}>{name}</p>
+              <p className="text-sm font-medium mt-1" style={{ color: 'var(--ink-muted)' }}>{name}</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-x-8 gap-y-3 mt-5">
+          <div className="flex flex-wrap gap-x-8 gap-y-3 mt-6">
             {sector && (
               <div><p className="eyebrow">Sektor</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{sector}</p></div>
             )}
@@ -210,19 +211,11 @@ export default async function StockResearchPage({ params }: RouteProps) {
           </div>
         </div>
 
-        <div className="sm:border-l sm:pl-6 flex flex-col sm:items-end justify-between gap-4" style={{ borderColor: 'var(--border-soft)' }}>
-          <div className="sm:text-right">
-            <p className="eyebrow">Harga Snapshot</p>
-            <p className="num tabular font-bold leading-none mt-1" style={{ fontSize: 40, color: 'var(--ink)', letterSpacing: '-0.035em' }}>
-              Rp {formatPrice(price)}
-            </p>
-            {avgMoS != null && (
-              <p className="text-xs font-bold mt-2 inline-flex items-center gap-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
-                {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                Avg MoS {(avgMoS * 100).toFixed(1)}%
-              </p>
-            )}
-            <div className="mt-2">
+        {/* Panel harga snapshot */}
+        <div className="lg:w-[300px] shrink-0 flex flex-col gap-3">
+          <div className="rounded-2xl p-5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="eyebrow">Harga Snapshot</p>
               <a
                 href={`https://stockbit.com/symbol/${ticker}`}
                 target="_blank"
@@ -233,6 +226,10 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 Stockbit <ArrowUpRight className="size-2.5" />
               </a>
             </div>
+            <p className="num tabular leading-none mt-2.5" style={{ fontSize: 40, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
+              Rp {formatPrice(price)}
+            </p>
+            <p className="text-[11px] mt-2.5" style={{ color: 'var(--ink-soft)' }}>Snapshot terakhir · bukan harga real-time</p>
           </div>
           <ResearchLogButton ticker={ticker} name={name} />
         </div>

@@ -765,16 +765,16 @@ function MethodCard({
   }
   return (
     <div
-      className="rounded-xl border p-3"
+      className="rounded-xl border p-3.5"
       style={{ background: 'var(--paper)', borderColor: 'var(--border-soft)' }}
     >
-      <p className="text-[10px] uppercase font-semibold" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: 'var(--ink-soft)' }}>
         {label}
       </p>
-      <p className="num text-lg font-bold mt-1" style={{ color: 'var(--ink)' }}>
+      <p className="num text-base font-bold mt-1 tracking-tight" style={{ color: 'var(--ink)' }}>
         Rp {formatPrice(fairValue)}
       </p>
-      <p className="text-xs num font-semibold mt-0.5" style={{ color: signColorVar(mos) }}>
+      <p className="text-xs num font-bold mt-0.5" style={{ color: signColorVar(mos) }}>
         {mos != null ? `${mos >= 0 ? '+' : ''}${(mos * 100).toFixed(0)}% MoS` : ''}
       </p>
     </div>

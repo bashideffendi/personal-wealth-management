@@ -405,45 +405,41 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
   }
 
   const toolbar = (
-    <div className="mb-3 flex flex-wrap items-center gap-3">
+    <div className="mb-3">
       <div
-        className="flex items-center gap-1 rounded-md border p-0.5"
-        style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
+        className="inline-flex items-center gap-0.5 rounded-lg border p-0.5"
+        style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
       >
         <Button
           size="sm"
           variant="ghost"
           onClick={scaleUp}
           disabled={scaleIdx === 0}
-          className="h-7 w-7 p-0 font-mono text-sm"
-          title="Round up (ringkaskan — skala lebih besar)"
+          className="h-7 w-7 p-0 font-mono text-base"
+          title="Skala lebih besar (ringkas)"
         >
           −
         </Button>
-        <div className="min-w-[120px] px-2 text-center">
-          <span className="eyebrow text-[10px]">Skala</span>
-          <div className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{SCALE_LABEL[scale]}</div>
-        </div>
+        <span className="min-w-[60px] text-center text-xs font-semibold" style={{ color: 'var(--ink)' }}>
+          {SCALE_LABEL[scale]}
+        </span>
         <Button
           size="sm"
           variant="ghost"
           onClick={scaleDown}
           disabled={scaleIdx === SCALE_ORDER.length - 1}
-          className="h-7 w-7 p-0 font-mono text-sm"
-          title="Round down (lebih detail)"
+          className="h-7 w-7 p-0 font-mono text-base"
+          title="Skala lebih detail"
         >
           +
         </Button>
       </div>
-      <span className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-        Klik <span className="font-mono">−</span> ringkaskan, atau <span className="font-mono">+</span> detail lebih panjang.
-      </span>
     </div>
   )
 
   return (
     <Tabs defaultValue="income" className="w-full">
-      <TabsList>
+      <TabsList variant="pill">
         <TabsTrigger value="income">Laba Rugi</TabsTrigger>
         <TabsTrigger value="balance">Neraca</TabsTrigger>
         <TabsTrigger value="cashflow">Arus Kas</TabsTrigger>
@@ -454,37 +450,31 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
         <div className="flex flex-wrap items-center justify-between gap-3">
           {toolbar}
           {hasQuarterly && (
-            <div className="mb-3 flex items-center gap-2">
-              <span className="eyebrow">Period:</span>
-              <div
-                className="inline-flex rounded-md border p-0.5"
-                style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
+            <div className="mb-3 inline-flex rounded-lg border p-0.5" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIncomeView('annual')}
+                className="h-7 px-3 text-xs rounded-md"
+                style={{
+                  background: incomeView === 'annual' ? 'var(--c-primary)' : 'transparent',
+                  color: incomeView === 'annual' ? '#FFFFFF' : 'var(--ink-muted)',
+                }}
               >
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIncomeView('annual')}
-                  className="h-7 px-3 text-xs"
-                  style={{
-                    background: incomeView === 'annual' ? 'var(--c-mint)' : 'transparent',
-                    color: incomeView === 'annual' ? '#FFFFFF' : 'var(--ink)',
-                  }}
-                >
-                  Tahunan
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIncomeView('quarterly')}
-                  className="h-7 px-3 text-xs"
-                  style={{
-                    background: incomeView === 'quarterly' ? 'var(--c-mint)' : 'transparent',
-                    color: incomeView === 'quarterly' ? '#FFFFFF' : 'var(--ink)',
-                  }}
-                >
-                  Kuartalan
-                </Button>
-              </div>
+                Tahunan
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIncomeView('quarterly')}
+                className="h-7 px-3 text-xs rounded-md"
+                style={{
+                  background: incomeView === 'quarterly' ? 'var(--c-primary)' : 'transparent',
+                  color: incomeView === 'quarterly' ? '#FFFFFF' : 'var(--ink-muted)',
+                }}
+              >
+                Kuartalan
+              </Button>
             </div>
           )}
         </div>
