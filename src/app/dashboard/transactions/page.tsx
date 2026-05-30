@@ -1045,7 +1045,7 @@ export default function TransactionsPage() {
                       </TableRow>
                       {g.items.map((tx) => (
                         <TableRow key={tx.id} className="border-[color:var(--border-soft)] hover:bg-[var(--surface-2)]">
-                          <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                          <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             {getAccountName(tx.account_id)}
                           </TableCell>
                           <TableCell>
@@ -1067,7 +1067,7 @@ export default function TransactionsPage() {
                               {tx.category}
                             </span>
                           </TableCell>
-                          <TableCell className="text-[13px]" style={{ color: 'var(--ink-muted)' }}>
+                          <TableCell className="text-[13px]" style={{ color: 'var(--ink)' }}>
                             {tx.description}
                           </TableCell>
                           <TableCell
