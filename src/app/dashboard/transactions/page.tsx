@@ -776,25 +776,7 @@ export default function TransactionsPage() {
             className="h-9 w-full pl-9 text-sm"
           />
         </div>
-        <div className="flex w-full flex-wrap gap-1.5">
-          {([['all', 'Semua'], ['income', 'Pemasukan'], ['expense', 'Pengeluaran'], ['saving', 'Tabungan'], ['investment', 'Investasi']] as const).map(([val, label]) => {
-            const active = filterType === val
-            return (
-              <button
-                key={val}
-                type="button"
-                onClick={() => { setFilterType(val); setFilterCategory('all') }}
-                className="h-8 rounded-full border px-3 text-xs font-medium transition-colors"
-                style={active
-                  ? { background: 'var(--ink)', color: '#FFFFFF', borderColor: 'var(--ink)' }
-                  : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
-        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Rentang</label>
           <Select value={filterRange} onValueChange={(v) => setFilterRange(v ?? 'all')}>
@@ -841,6 +823,22 @@ export default function TransactionsPage() {
         </div>
 
 
+        <div className="flex flex-col gap-1">
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Tipe</label>
+          <Select value={filterType} onValueChange={(v) => { setFilterType(v ?? 'all'); setFilterCategory('all') }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Semua Tipe">
+                {(v) => v === 'all' ? 'Semua Tipe' : (TYPE_LABELS[v as TransactionType] ?? v)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Tipe</SelectItem>
+              {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
+                <SelectItem key={t} value={t}>{TYPE_LABELS[t]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Kategori</label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? 'all')}>
@@ -1004,12 +1002,12 @@ export default function TransactionsPage() {
           <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '120px' }} />
-                <col style={{ width: '170px' }} />
-                <col />
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '84px' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '8%' }} />
               </colgroup>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
