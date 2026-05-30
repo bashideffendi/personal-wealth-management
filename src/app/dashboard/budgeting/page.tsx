@@ -282,9 +282,6 @@ export default function BudgetingPage() {
   const totalSavingYear = sectionTotal(visibleSaving, 'saving')
   const totalInvestmentYear = sectionTotal(visibleInvestment, 'investment')
 
-  const allocated = totalExpenseYear + totalSavingYear + totalInvestmentYear
-  const remaining = totalIncomeYear - allocated
-
   // ---- Render helpers ----
 
   const idFormatter = new Intl.NumberFormat('id-ID')
@@ -451,12 +448,12 @@ export default function BudgetingPage() {
         }
         actions={
           <>
-            <Button variant="outline" onClick={() => setSelectorOpen(true)}>
+            <Button variant="outline" onClick={() => setSelectorOpen(true)} style={{ background: 'var(--surface)' }}>
               <SlidersHorizontal className="h-4 w-4" />
               Pilih Kategori
             </Button>
             <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[120px]" style={{ background: 'var(--surface)' }}>
                 <SelectValue placeholder="Tahun" />
               </SelectTrigger>
               <SelectContent>
@@ -491,45 +488,7 @@ export default function BudgetingPage() {
         </div>
       </div>
 
-      {/* Allocation bar — stacked by category (per design review 30 Mei) */}
-      <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-          <span className="eyebrow">Alokasi Anggaran</span>
-          <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-            <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(allocated)}</span>
-            {' dialokasikan · sisa '}
-            <span className="num font-semibold" style={{ color: remaining >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}>
-              {formatCurrency(remaining)}
-            </span>
-          </span>
-        </div>
-        <div className="flex h-3 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
-          {[
-            { v: totalExpenseYear, c: '#F43F5E' },
-            { v: totalSavingYear, c: '#F59E0B' },
-            { v: totalInvestmentYear, c: '#8B5CF6' },
-          ].map((seg, i) => {
-            const w = totalIncomeYear > 0 ? Math.max(0, (seg.v / totalIncomeYear) * 100) : 0
-            return w > 0 ? <div key={i} style={{ width: `${w}%`, background: seg.c }} /> : null
-          })}
-        </div>
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-[11px]">
-          {[
-            { label: 'Pengeluaran', c: '#F43F5E', v: totalExpenseYear },
-            { label: 'Tabungan', c: '#F59E0B', v: totalSavingYear },
-            { label: 'Investasi', c: '#8B5CF6', v: totalInvestmentYear },
-            { label: 'Sisa', c: 'var(--ink-soft)', v: remaining },
-          ].map((s) => (
-            <div key={s.label} className="flex items-center gap-1.5 min-w-0">
-              <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: s.c }} />
-              <span className="truncate" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
-              <span className="num tabular ml-auto font-medium" style={{ color: 'var(--ink)' }}>
-                {formatCompactCurrency(s.v)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Annual allocation summary removed — budgeting is monthly (review 30 Mei); allocation detail lives in the per-month drawer */}
 
       {/* Budget Grid */}
       {loading ? (
@@ -552,9 +511,9 @@ export default function BudgetingPage() {
           />
         </div>
 
-        {/* Desktop: legend band + 12-month spreadsheet grid */}
-        <div className="hidden md:block space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        {/* Desktop: legend band + 12-month spreadsheet grid — one card */}
+        <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b px-4 py-3" style={{ borderColor: 'var(--border-soft)' }}>
             <div>
               <p className="eyebrow">Grid Anggaran 12 Bulan</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
@@ -575,7 +534,7 @@ export default function BudgetingPage() {
               ))}
             </div>
           </div>
-          <div className="overflow-x-auto rounded-lg border border-[color:var(--border-soft)]">
+          <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '160px' }} />
