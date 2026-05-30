@@ -14,7 +14,6 @@ import {
   EXPENSE_CATEGORIES,
   SAVING_CATEGORIES,
   INVESTMENT_CATEGORIES,
-  MONTHS,
 } from '@/lib/constants'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
@@ -406,7 +405,7 @@ export default function TransactionsPage() {
   }
 
   // Filter state
-  const [filterMonth, setFilterMonth] = useState<string>('all')
+  const [filterRange, setFilterRange] = useState<string>('all')
   const [filterAccount, setFilterAccount] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
@@ -655,9 +654,10 @@ export default function TransactionsPage() {
 
   // Filter logic
   const filteredTransactions = transactions.filter((tx) => {
-    if (filterMonth !== 'all') {
-      const txMonth = new Date(tx.date).getMonth() + 1
-      if (txMonth !== Number(filterMonth)) return false
+    if (filterRange !== 'all') {
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - Number(filterRange))
+      if (new Date(tx.date) < cutoff) return false
     }
     if (filterAccount !== 'all' && tx.account_id !== filterAccount) return false
     if (filterType !== 'all' && tx.type !== filterType) return false
@@ -776,21 +776,37 @@ export default function TransactionsPage() {
             className="h-9 w-full pl-9 text-sm"
           />
         </div>
+        <div className="flex w-full flex-wrap gap-1.5">
+          {([['all', 'Semua'], ['income', 'Pemasukan'], ['expense', 'Pengeluaran'], ['saving', 'Tabungan'], ['investment', 'Investasi']] as const).map(([val, label]) => {
+            const active = filterType === val
+            return (
+              <button
+                key={val}
+                type="button"
+                onClick={() => { setFilterType(val); setFilterCategory('all') }}
+                className="h-8 rounded-full border px-3 text-xs font-medium transition-colors"
+                style={active
+                  ? { background: 'var(--ink)', color: '#FFFFFF', borderColor: 'var(--ink)' }
+                  : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Bulan</label>
-          <Select value={filterMonth} onValueChange={(v) => setFilterMonth(v ?? 'all')}>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Rentang</label>
+          <Select value={filterRange} onValueChange={(v) => setFilterRange(v ?? 'all')}>
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Semua Bulan">
-                {(v) => v === 'all' ? 'Semua Bulan' : (MONTHS[Number(v) - 1] ?? v)}
+              <SelectValue placeholder="Semua waktu">
+                {(v) => v === 'all' ? 'Semua waktu' : v === '365' ? '1 tahun terakhir' : `${v} hari terakhir`}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Bulan</SelectItem>
-              {MONTHS.map((m, i) => (
-                <SelectItem key={i} value={String(i + 1)}>
-                  {m}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">Semua waktu</SelectItem>
+              <SelectItem value="30">30 hari terakhir</SelectItem>
+              <SelectItem value="90">90 hari terakhir</SelectItem>
+              <SelectItem value="365">1 tahun terakhir</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -823,30 +839,6 @@ export default function TransactionsPage() {
           </Select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Tipe</label>
-          <Select
-            value={filterType}
-            onValueChange={(v) => {
-              setFilterType(v ?? 'all')
-              setFilterCategory('all')
-            }}
-          >
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Semua Tipe">
-                {(v) => v === 'all' ? 'Semua Tipe' : (TYPE_LABELS[v as TransactionType] ?? v)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Tipe</SelectItem>
-              {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
-                <SelectItem key={t} value={t}>
-                  {TYPE_LABELS[t]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Kategori</label>
