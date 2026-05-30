@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Loader2, SlidersHorizontal, Check, ChevronDown } from 'lucide-react'
+import { Loader2, SlidersHorizontal, Check, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
 
@@ -469,16 +469,21 @@ export default function BudgetingPage() {
         <p className="eyebrow">Total Setahun · {year}</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Pendapatan', value: totalIncomeYear, dot: '#10B981', sub: 'Setahun' },
-          { label: 'Total Pengeluaran', value: totalExpenseYear, dot: '#F43F5E', sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
-          { label: 'Total Tabungan', value: totalSavingYear, dot: '#F59E0B', sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
-          { label: 'Total Investasi', value: totalInvestmentYear, dot: '#8B5CF6', sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+          { label: 'Total Pendapatan', value: totalIncomeYear, dot: '#10B981', Icon: ArrowDownLeft, sub: 'Setahun' },
+          { label: 'Total Pengeluaran', value: totalExpenseYear, dot: '#F43F5E', Icon: ArrowUpRight, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+          { label: 'Total Tabungan', value: totalSavingYear, dot: '#F59E0B', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+          { label: 'Total Investasi', value: totalInvestmentYear, dot: '#8B5CF6', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
         ].map((c) => (
-          <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
-              {c.label}
-            </span>
+          <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 10px 28px -14px rgba(16,24,40,0.12)' }}>
+            <div className="flex items-start justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
+                {c.label}
+              </span>
+              <span className="grid place-items-center shrink-0 rounded-[10px]" style={{ width: 32, height: 32, background: `color-mix(in srgb, ${c.dot} 14%, transparent)`, color: c.dot }}>
+                <c.Icon className="size-4" />
+              </span>
+            </div>
             <p className="num tabular font-bold mt-2" style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 2.2vw, 24px)', letterSpacing: '-0.02em' }}>
               {formatCurrency(c.value)}
             </p>
@@ -512,26 +517,13 @@ export default function BudgetingPage() {
         </div>
 
         {/* Desktop: legend band + 12-month spreadsheet grid — one card */}
-        <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+        <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 12px 32px -16px rgba(16,24,40,0.12)' }}>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3" style={{ borderColor: 'var(--border)' }}>
             <div>
               <p className="eyebrow">Grid Anggaran 12 Bulan</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
                 Klik nama bulan buat buka rincian harian, kategori &amp; proyeksi.
               </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-              {[
-                { label: 'Pendapatan', c: '#10B981' },
-                { label: 'Pengeluaran', c: '#F43F5E' },
-                { label: 'Tabungan', c: '#F59E0B' },
-                { label: 'Investasi', c: '#8B5CF6' },
-              ].map((l) => (
-                <span key={l.label} className="inline-flex items-center gap-1.5">
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: l.c }} />
-                  {l.label}
-                </span>
-              ))}
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -553,9 +545,9 @@ export default function BudgetingPage() {
                       key={m}
                       className="border-b border-[color:var(--border)] px-1 py-1.5 text-center text-[11px] font-bold whitespace-nowrap relative cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
                       style={{
-                        background: isCurrent ? 'var(--c-primary-soft)' : undefined,
+                        background: isCurrent ? 'color-mix(in srgb, var(--c-primary) 9%, transparent)' : undefined,
                         color: isCurrent ? 'var(--c-primary)' : undefined,
-                        borderBottom: isCurrent ? '2px solid var(--c-primary)' : undefined,
+                        boxShadow: isCurrent ? 'inset 0 -2px 0 var(--c-primary)' : undefined,
                       }}
                       onClick={() => openDrawer(monthNum)}
                       role="button"

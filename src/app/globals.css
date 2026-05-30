@@ -50,12 +50,12 @@
   --text-2:      #52525B;
   --text-mute:   #71717A;
   --text-faint:  #A1A1AA;
-  --border:      #E4E4E7;
-  --border-soft: #F4F4F5;
+  --border:      #E3DDD0;    /* warm grey — harmonize with cream (was cool #E4E4E7) */
+  --border-soft: #EDE7DC;    /* warm hairline (was cool #F4F4F5) */
 
   /* ── Semantic tokens — emerald primary restored ─── */
   --c-primary:      #0A0A0F;     /* INK primary — Quiet Luxury brand (buttons, logo, nav) */
-  --c-primary-soft: #F4F4F5;     /* neutral tint for active states */
+  --c-primary-soft: #EEE9DF;     /* warm tint for active states (was cool #F4F4F5) */
   --c-primary-foreground: #FFFFFF;
   --c-mint:         #10B981;     /* alias to primary — same hex */
   --c-mint-soft:    #ECFDF5;
