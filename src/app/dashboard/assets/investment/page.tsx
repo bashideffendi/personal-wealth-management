@@ -10,6 +10,7 @@ import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, AreaChart, Area } from 'recharts'
 import { CurrencyRates } from '@/components/investment/currency-rates'
+import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
@@ -23,8 +24,6 @@ const CHART_RANGES = [
   { key: 'all', label: 'Sejak', days: Infinity },
 ] as const
 type ChartRangeKey = (typeof CHART_RANGES)[number]['key']
-
-const RDN_DOT_COLORS = ['#0D9488', '#0EA5E9', '#F59E0B', '#8B5CF6', '#F43F5E', '#10B981']
 
 interface RdnAccount {
   id: string
@@ -453,50 +452,63 @@ export default function InvestmentOverviewPage() {
           first, before drilling into the breakdown. */}
       <CurrencyRates />
 
-      {/* Kas di RDN / RDI — sesuai referensi: total prominent + chip per broker */}
-      {rdnAccounts.length > 0 && (
-        <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <div className="flex items-center gap-3 shrink-0">
-            <div
-              className="size-11 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'rgba(20,184,166,0.12)' }}
+      {/* Kas di RDN / RDI — dasar krem, chip pakai logo bank, placeholder "+" kalau kosong */}
+      <div
+        className="rounded-xl border p-5 flex flex-wrap items-center gap-x-6 gap-y-3"
+        style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}
+      >
+        <div className="flex items-center gap-3 shrink-0">
+          <div
+            className="size-11 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(20,184,166,0.12)' }}
+          >
+            <Wallet className="size-5" style={{ color: '#0D9488' }} />
+          </div>
+          <div>
+            <p className="eyebrow">Kas di RDN / RDI</p>
+            <p className="num tabular text-2xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+              {formatCurrency(rdnTotal)}
+            </p>
+          </div>
+        </div>
+        {rdnAccounts.length > 0 ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              {rdnAccounts.map((a) => (
+                <span
+                  key={a.id}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
+                  style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+                  title={a.name}
+                >
+                  <InstitutionLogo accountName={a.name} size={18} shape="circle" />
+                  <span className="font-medium truncate max-w-[140px]" style={{ color: 'var(--ink-muted)' }}>
+                    {a.name}
+                  </span>
+                  <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                    {formatCurrency(a.current_balance)}
+                  </span>
+                </span>
+              ))}
+            </div>
+            <Link
+              href="/dashboard/accounts"
+              className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
+              style={{ color: '#0D9488' }}
             >
-              <Wallet className="size-5" style={{ color: '#0D9488' }} />
-            </div>
-            <div>
-              <p className="eyebrow">Kas di RDN / RDI</p>
-              <p className="num tabular text-2xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
-                {formatCurrency(rdnTotal)}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {rdnAccounts.map((a, i) => (
-              <span
-                key={a.id}
-                className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
-                style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
-                title={a.name}
-              >
-                <span className="size-2 rounded-full shrink-0" style={{ background: RDN_DOT_COLORS[i % RDN_DOT_COLORS.length] }} />
-                <span className="font-medium truncate max-w-[140px]" style={{ color: 'var(--ink-muted)' }}>
-                  {a.name}
-                </span>
-                <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                  {formatCurrency(a.current_balance)}
-                </span>
-              </span>
-            ))}
-          </div>
+              Kelola <ArrowUpRight className="size-3.5" />
+            </Link>
+          </>
+        ) : (
           <Link
             href="/dashboard/accounts"
-            className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
-            style={{ color: '#0D9488' }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-dashed px-3.5 py-1.5 text-xs font-medium ml-auto transition hover:bg-[var(--surface)]"
+            style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           >
-            Kelola <ArrowUpRight className="size-3.5" />
+            <Plus className="size-3.5" /> Tambah rekening RDN
           </Link>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug) */}
       <div>
@@ -505,19 +517,31 @@ export default function InvestmentOverviewPage() {
           <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Klik buat rincian tiap kelas</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {INVESTMENT_SUBCATS.map((sc) => {
-            const cat = sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug
-            const data = byCategory[cat] ?? { invested: 0, market: 0, count: 0 }
-            const pl = data.market - data.invested
-            const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
-            const plUp = pl >= 0
+          {INVESTMENT_SUBCATS.flatMap((sc) => {
+            // Saham dipecah jadi 2 kartu (IDX & US) -> nge-link ke halaman terpisah.
+            const cards = sc.slug === 'stock'
+              ? [
+                  { key: 'stock-idx', label: 'Saham IDX', href: '/dashboard/assets/investment/stock-idx', d: byClass.stock_idx },
+                  { key: 'stock-us', label: 'Saham US', href: '/dashboard/assets/investment/stock-us', d: byClass.stock_us },
+                ]
+              : [{
+                  key: sc.slug,
+                  label: sc.label,
+                  href: `/dashboard/assets/investment/${sc.slug}`,
+                  d: byCategory[sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug],
+                }]
             const visual = getInvestmentVisual(sc.slug)
             const Icon = visual.icon
-            const hasPosition = data.count > 0
-            return (
-              <Link
-                key={sc.slug}
-                href={`/dashboard/assets/investment/${sc.slug}`}
+            return cards.map((c) => {
+              const data = c.d ?? { invested: 0, market: 0, count: 0 }
+              const pl = data.market - data.invested
+              const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
+              const plUp = pl >= 0
+              const hasPosition = data.count > 0
+              return (
+                <Link
+                  key={c.key}
+                  href={c.href}
                 className="group relative rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
                 style={{
                   background: hasPosition ? '#FFFFFF' : visual.bgTint,
@@ -542,7 +566,7 @@ export default function InvestmentOverviewPage() {
                   />
                 </div>
                 <p className="font-semibold text-sm mt-3 tracking-tight" style={{ color: 'var(--ink)' }}>
-                  {sc.label}
+                  {c.label}
                 </p>
                 <p className="num text-lg mt-1 tabular font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(data.market)}
@@ -564,7 +588,8 @@ export default function InvestmentOverviewPage() {
                   )}
                 </div>
               </Link>
-            )
+              )
+            })
           })}
         </div>
       </div>
@@ -641,7 +666,7 @@ export default function InvestmentOverviewPage() {
                   return (
                     <div key={row.name} className="flex items-center justify-between gap-2 text-xs">
                       <span className="flex items-center gap-2 truncate" style={{ color: 'var(--ink-muted)' }}>
-                        <span className="inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ background: row.color }} />
+                        <span className="inline-block h-2.5 w-2.5 rounded-[3px] shrink-0" style={{ background: row.color }} />
                         <span className="truncate">{row.name}</span>
                       </span>
                       <span className="flex items-center gap-3 shrink-0">
@@ -669,22 +694,28 @@ export default function InvestmentOverviewPage() {
               <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada posisi dengan modal tercatat.</p>
             </div>
           ) : (
-            <div className="space-y-3 flex-1 flex flex-col justify-center">
+            <div className="space-y-3.5 flex-1 flex flex-col justify-center">
               {(() => {
                 const max = Math.max(...kinerja.map((k) => Math.abs(k.returnPct)), 1)
                 return kinerja.map((row) => {
                   const positive = row.returnPct >= 0
-                  const width = Math.max((Math.abs(row.returnPct) / max) * 100, 2)
+                  const half = Math.max((Math.abs(row.returnPct) / max) * 50, 1.5)
                   return (
                     <div key={row.key} className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-xs flex items-center gap-1.5 truncate" style={{ color: 'var(--ink-muted)' }}>
-                        <span className="size-2 rounded-full shrink-0" style={{ background: row.color }} />
+                      <span className="w-28 shrink-0 text-xs flex items-center gap-2 truncate" style={{ color: 'var(--ink-muted)' }}>
+                        <span className="size-2.5 rounded-[3px] shrink-0" style={{ background: row.color }} />
                         <span className="truncate">{row.label}</span>
                       </span>
-                      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                      {/* diverging bar: nol di tengah, plus ke kanan, minus ke kiri */}
+                      <div className="relative flex-1 h-3 rounded-full" style={{ background: 'var(--surface-2)' }}>
+                        <div className="absolute top-0 bottom-0" style={{ left: '50%', width: 1, background: 'var(--border)' }} />
                         <div
-                          className="h-full rounded-full"
-                          style={{ width: `${width}%`, background: positive ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                          className="absolute top-0 bottom-0 rounded-full"
+                          style={{
+                            left: positive ? '50%' : `${50 - half}%`,
+                            width: `${half}%`,
+                            background: positive ? 'var(--c-mint)' : 'var(--c-coral)',
+                          }}
                         />
                       </div>
                       <span
