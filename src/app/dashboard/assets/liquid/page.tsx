@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -21,16 +21,34 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react'
+import {
+  Plus, Pencil, Trash2, Loader2, AlertTriangle, RefreshCw, Wallet, Zap,
+  TrendingUp, HandCoins, Sparkles,
+} from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
+import { WealthHeader, StatCard } from '@/components/wealth/wealth-ui'
 
-const TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
-  cash:           { label: 'Kas',       emoji: '💵' },
-  bank:           { label: 'Bank',      emoji: '🏦' },
-  digital_wallet: { label: 'E-Wallet',  emoji: '📱' },
-  investment:     { label: 'Investasi', emoji: '📈' },
-  receivable:     { label: 'Piutang',   emoji: '🤝' },
+// Likuiditas tier (perkiraan dari jenis aset — model belum simpan per-aset).
+type Tier = 'instan' | 't1' | 't30' | 't90'
+const TIER_META: Record<Tier, { label: string; bar: string }> = {
+  instan: { label: 'Instan', bar: '#10B981' },
+  t1:     { label: 'T+1',    bar: '#8B5CF6' },
+  t30:    { label: 'T+30',   bar: '#F59E0B' },
+  t90:    { label: 'T+60–90', bar: '#6366F1' },
 }
+const TIER_ORDER: Tier[] = ['instan', 't1', 't30', 't90']
+
+// Perkiraan jenis · yield tahunan · likuiditas berdasarkan tipe.
+const TYPE_META: Record<string, { jenis: string; yield: number; tier: Tier }> = {
+  bank:           { jenis: 'Tabungan',   yield: 0.01,  tier: 'instan' },
+  investment:     { jenis: 'Reksa Dana', yield: 0.045, tier: 't1' },
+  cash:           { jenis: 'Kas',        yield: 0,     tier: 'instan' },
+  digital_wallet: { jenis: 'E-Wallet',   yield: 0,     tier: 'instan' },
+  receivable:     { jenis: 'Piutang',    yield: 0,     tier: 't30' },
+}
+const metaFor = (type: string) => TYPE_META[type] ?? { jenis: type, yield: 0, tier: 'instan' as Tier }
+
+const MM_YIELD = 0.0485 // RD Pasar Uang ~ acuan saran optimasi
 
 interface FormState {
   id: string | null
@@ -47,6 +65,7 @@ export default function LiquidAssetsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
+  const [filter, setFilter] = useState<string>('Semua')
 
   async function load() {
     setLoading(true)
@@ -61,38 +80,28 @@ export default function LiquidAssetsPage() {
   useEffect(() => { void load() }, [])
 
   async function save() {
-    if (!form.name.trim()) {
-      alert('Nama aset wajib diisi.')
-      return
-    }
+    if (!form.name.trim()) { alert('Nama aset wajib diisi.'); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
     const now = new Date()
     const payload = {
-      user_id: user.id,
-      name: form.name.trim(),
-      type: form.type,
-      balance: form.balance,
-      month: now.getMonth() + 1,
-      year: now.getFullYear(),
+      user_id: user.id, name: form.name.trim(), type: form.type, balance: form.balance,
+      month: now.getMonth() + 1, year: now.getFullYear(),
     }
     const op = form.id
       ? supabase.from('assets_liquid').update(payload).eq('id', form.id)
       : supabase.from('assets_liquid').insert(payload)
     const { error } = await op
     setSaving(false)
-    if (error) {
-      alert(`Gagal simpan: ${error.message}`)
-      return
-    }
+    if (error) { alert(`Gagal simpan: ${error.message}`); return }
     setDialogOpen(false)
     void load()
   }
 
   async function remove(id: string, source: 'account' | 'asset_liquid') {
     if (source === 'account') {
-      alert('Akun tidak bisa dihapus dari sini. Buka menu "Akun" di sidebar untuk menghapus.')
+      alert('Akun tidak bisa dihapus dari sini. Buka menu "Akun" untuk menghapus.')
       return
     }
     if (!confirm('Hapus aset ini?')) return
@@ -101,238 +110,218 @@ export default function LiquidAssetsPage() {
     void load()
   }
 
-  const accountEntries = entries.filter((e) => e.source === 'account')
-  const otherEntries = entries.filter((e) => e.source === 'asset_liquid')
   const total = sumLiquid(entries)
   const duplicates = findDuplicates(entries)
+  const accountCount = entries.length
 
-  const byType = entries.reduce((acc, e) => {
-    acc[e.type] = (acc[e.type] || 0) + e.balance
-    return acc
-  }, {} as Record<string, number>)
+  const stats = useMemo(() => {
+    let instan = 0, berbunga = 0, annualInterest = 0, piutang = 0, savingsIdle = 0
+    for (const e of entries) {
+      const m = metaFor(e.type)
+      if (m.tier === 'instan') instan += e.balance
+      if (m.yield > 0) { berbunga += e.balance; annualInterest += e.balance * m.yield }
+      if (e.type === 'receivable') piutang += e.balance
+      if (e.type === 'bank') savingsIdle += e.balance
+    }
+    const weighted = total > 0 ? (annualInterest / total) * 100 : 0
+    const berbungaPct = total > 0 ? (berbunga / total) * 100 : 0
+    return { instan, berbunga, annualInterest, piutang, savingsIdle, weighted, berbungaPct }
+  }, [entries, total])
+
+  // Saran optimasi: pindahin tabungan nganggur ke RD Pasar Uang (estimasi).
+  const optimasi = useMemo(() => {
+    if (stats.savingsIdle <= 0) return null
+    const extra = stats.savingsIdle * (MM_YIELD - metaFor('bank').yield)
+    return { movable: stats.savingsIdle, extra }
+  }, [stats.savingsIdle])
+
+  // Tangga likuiditas — bucket saldo per tier.
+  const ladder = useMemo(() => {
+    const buckets: Record<Tier, number> = { instan: 0, t1: 0, t30: 0, t90: 0 }
+    for (const e of entries) buckets[metaFor(e.type).tier] += e.balance
+    return TIER_ORDER.map((t) => ({ tier: t, amount: buckets[t] })).filter((b) => b.amount > 0)
+  }, [entries])
+
+  const jenisPresent = useMemo(() => {
+    const set = new Set(entries.map((e) => metaFor(e.type).jenis))
+    return ['Semua', ...Array.from(set)]
+  }, [entries])
+
+  const visible = filter === 'Semua' ? entries : entries.filter((e) => metaFor(e.type).jenis === filter)
 
   return (
     <div className="space-y-6">
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
+      <WealthHeader
+        eyebrow={`${accountCount} aset likuid`}
+        title="Aset Likuid"
+        subtitle="Aset yang bisa dicairkan cepat: kas, setara kas, dan piutang."
       >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-7">
-        <p
-          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.55)' }}
-        >
-          Aset Likuid
-        </p>
-        <p
-          className="num tabular mt-3 leading-none font-bold whitespace-nowrap"
-          style={{
-            color: '#FFFFFF',
-            fontSize: 'clamp(36px, 5vw, 56px)',
-            letterSpacing: '-0.04em',
-          }}
-        >
-          {formatCurrency(total)}
-        </p>
-        <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          {entries.length} aset · dapat dicairkan cepat
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {Object.entries(byType).map(([type, val]) => {
-            const info = TYPE_LABELS[type]
-            return (
-              <span
-                key={type}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium"
-                style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                }}
-              >
-                {info?.label ?? type} <span className="num opacity-70">· {formatCurrency(val)}</span>
-              </span>
-            )
-          })}
-        </div>
-        </div>
-      </section>
+        <Button variant="outline" onClick={() => void load()}>
+          <RefreshCw className="h-4 w-4" /> Sinkronkan
+        </Button>
+        <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+          <Plus className="h-4 w-4" /> Tambah aset
+        </Button>
+      </WealthHeader>
 
       {duplicates.length > 0 && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
-          <AlertTriangle className="size-5 text-amber-700 shrink-0 mt-0.5" />
-          <div className="flex-1 text-sm">
-            <p className="font-medium text-amber-900">Terdeteksi kemungkinan duplikat</p>
-            <p className="mt-1 text-amber-800">
-              Aset berikut punya nama yang sama dengan Akun, jadi nilai-nya di-hitung dua kali:
+        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: '#F59E0B14', border: '1px solid #F59E0B33' }}>
+          <AlertTriangle className="size-5 shrink-0 mt-0.5" style={{ color: '#F59E0B' }} />
+          <div className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>
+            <p className="font-medium">Terdeteksi kemungkinan duplikat</p>
+            <p className="mt-1" style={{ color: 'var(--ink-muted)' }}>
+              Aset ini punya nama sama dengan Akun → kehitung dua kali:
               <span className="font-semibold"> {duplicates.map((d) => d.name).join(', ')}</span>.
-              Hapus dari Aset Likuid untuk menghindari double-count
-              (data Akun otomatis update dari transaksi).
+              Hapus dari Aset Likuid biar gak double-count.
             </p>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
-        </div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : (
         <>
-          {/* Section 1: Dari Akun (read-only, sourced from accounts table) */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-base" style={{ color: 'var(--ink)' }}>
-                  Dari Akun
-                </h3>
-                <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  Saldo otomatis ter-update dari setiap transaksi.
-                </p>
-              </div>
-              <Link
-                href="/dashboard/accounts"
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 h-8 text-xs font-medium hover:bg-accent hover:text-accent-foreground transition"
-              >
-                <LinkIcon className="size-3.5" />
-                Kelola Akun
-              </Link>
-            </div>
-            {accountEntries.length === 0 ? (
-              <div className="s-card p-8 text-center">
-                <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-                  Belum ada akun.{' '}
-                  <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>
-                    Bikin akun pertama →
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {accountEntries.map((a) => {
-                  const info = TYPE_LABELS[a.type] ?? TYPE_LABELS.bank
-                  return (
-                    <div
-                      key={`acc-${a.id}`}
-                      className="rounded-xl p-4 bg-[var(--surface)] border transition-all hover:shadow-md hover:-translate-y-0.5"
-                      style={{ borderColor: 'var(--border-soft)' }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <InstitutionLogo accountName={a.name} size={44} shape="circle" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                                {info?.label ?? a.type}
-                              </p>
-                            </div>
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ background: 'rgba(16,185,129,0.10)', color: '#065F46' }}>
-                              Live
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="num text-xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                        {formatCurrency(a.balance)}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </section>
+          {/* 4 stat cards */}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total Aset Likuid" value={formatCurrency(total)} icon={Wallet} sub={`${accountCount} akun aktif`} />
+            <StatCard label="Cair Instan" value={formatCurrency(stats.instan)} icon={Zap} color="#10B981" chip="#10B9811A"
+              sub={`${total > 0 ? ((stats.instan / total) * 100).toFixed(0) : 0}% dari total likuid`} />
+            <StatCard label="Menghasilkan Bunga" value={formatCurrency(stats.berbunga)} icon={TrendingUp} color="#F59E0B" chip="#F59E0B1A"
+              sub={`Yield rata-rata ${stats.weighted.toFixed(2)}%`} />
+            <StatCard label="Piutang" value={formatCurrency(stats.piutang)} icon={HandCoins} color="#F43F5E" chip="#F43F5E1A"
+              sub={`${entries.filter((e) => e.type === 'receivable').length} piutang aktif`} />
+          </div>
 
-          {/* Section 2: Aset Lain (CRUD on assets_liquid) */}
-          <section className="space-y-3 pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-base" style={{ color: 'var(--ink)' }}>
-                  Aset Lain
-                </h3>
-                <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  Piutang, tabungan terkunci, atau aset cair lain yang bukan rekening transaksi.
-                </p>
+          {/* Tabel rincian */}
+          <div className="s-card overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rincian Aset Likuid</p>
+              <div className="flex flex-wrap gap-1.5">
+                {jenisPresent.map((j) => (
+                  <button
+                    key={j}
+                    onClick={() => setFilter(j)}
+                    className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                    style={{
+                      background: filter === j ? 'var(--ink)' : 'var(--surface-2)',
+                      color: filter === j ? 'var(--surface)' : 'var(--ink-muted)',
+                    }}
+                  >
+                    {j}
+                  </button>
+                ))}
               </div>
-              <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-                <Plus className="h-4 w-4" />
-                Tambah Aset Lain
-              </Button>
             </div>
-            {otherEntries.length === 0 ? (
-              <div className="s-card p-8 text-center">
-                <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-                  Belum ada aset lain. Tambah piutang atau tabungan terkunci di sini.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {otherEntries.map((a) => {
-                  const info = TYPE_LABELS[a.type] ?? TYPE_LABELS.bank
-                  return (
-                    <div
-                      key={`al-${a.id}`}
-                      className="group relative rounded-xl p-4 bg-[var(--surface)] border transition-all hover:shadow-md hover:-translate-y-0.5"
-                      style={{ borderColor: 'var(--border-soft)' }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <InstitutionLogo accountName={a.name} size={44} shape="circle" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                    <th className="text-left font-medium px-4 py-2.5">Aset</th>
+                    <th className="text-left font-medium px-3 py-2.5">Jenis</th>
+                    <th className="text-right font-medium px-3 py-2.5">Yield*</th>
+                    <th className="text-right font-medium px-3 py-2.5">Likuiditas*</th>
+                    <th className="text-right font-medium px-4 py-2.5">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((e) => {
+                    const m = metaFor(e.type)
+                    return (
+                      <tr key={`${e.source}-${e.id}`} className="group border-t" style={{ borderColor: 'var(--border-soft)' }}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <InstitutionLogo accountName={e.name} size={32} shape="circle" />
                             <div className="min-w-0">
-                              <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                                {info?.label ?? a.type}
+                              <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{e.name}</p>
+                              <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                                {e.source === 'account' ? 'Otomatis dari akun' : 'Manual'}
                               </p>
                             </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => {
-                                  setForm({
-                                    id: a.id,
-                                    name: a.name,
-                                    type: a.type as FormState['type'],
-                                    balance: a.balance,
-                                  })
-                                  setDialogOpen(true)
-                                }}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => remove(a.id, a.source)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
-                              </Button>
-                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <p className="num text-xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                        {formatCurrency(a.balance)}
-                      </p>
-                    </div>
-                  )
-                })}
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                            {m.jenis}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right num" style={{ color: m.yield > 0 ? '#10B981' : 'var(--ink-soft)' }}>
+                          {m.yield > 0 ? `${(m.yield * 100).toFixed(2)}%` : '—'}
+                        </td>
+                        <td className="px-3 py-3 text-right text-[12px]" style={{ color: m.tier === 'instan' ? '#10B981' : 'var(--ink-muted)' }}>
+                          {TIER_META[m.tier].label}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {e.source === 'asset_liquid' && (
+                              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                                <Button variant="ghost" size="icon-sm" onClick={() => { setForm({ id: e.id, name: e.name, type: e.type as FormState['type'], balance: e.balance }); setDialogOpen(true) }}>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => remove(e.id, e.source)}>
+                                  <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                                </Button>
+                              </div>
+                            )}
+                            <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="px-4 py-2.5 text-[10px] border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
+              *Yield &amp; likuiditas = perkiraan berdasarkan jenis aset, bukan rate riil akunmu. <Link href="/dashboard/accounts" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>Kelola akun →</Link>
+            </p>
+          </div>
+
+          {/* 2 panel bawah */}
+          <div className="grid gap-3 lg:grid-cols-2">
+            {/* Optimasi yield */}
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Optimasi Yield</p>
+              <p className="mt-2 text-xl leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+                Bunga tahunan (estimasi) <span className="num font-semibold" style={{ color: '#10B981' }}>{formatCurrency(Math.round(stats.annualInterest))}</span>
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
+                Yield tertimbang {stats.weighted.toFixed(2)}% · {stats.berbungaPct.toFixed(0)}% aset likuid sudah berbunga.
+              </p>
+              {optimasi && (
+                <div className="mt-3 rounded-lg px-3 py-2.5" style={{ background: '#F59E0B14' }}>
+                  <p className="text-[11px] font-semibold flex items-center gap-1.5" style={{ color: '#B45309' }}>
+                    <Sparkles className="size-3.5" /> Saran Klunting
+                  </p>
+                  <p className="text-[12px] mt-1" style={{ color: 'var(--ink)' }}>
+                    Pindahkan <span className="num font-semibold">{formatCurrency(stats.savingsIdle)}</span> dari tabungan ke RD Pasar Uang →
+                    potensi <span className="num font-semibold" style={{ color: '#10B981' }}>+{formatCurrency(Math.round(optimasi.extra))}</span>/tahun, likuiditas tetap (T+1).
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Tangga likuiditas */}
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Tangga Likuiditas</p>
+              <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+                {ladder.map((b) => (
+                  <div key={b.tier} style={{ width: `${total > 0 ? (b.amount / total) * 100 : 0}%`, background: TIER_META[b.tier].bar }} />
+                ))}
               </div>
-            )}
-          </section>
+              <div className="mt-3 space-y-2">
+                {ladder.map((b) => (
+                  <div key={b.tier} className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2" style={{ color: 'var(--ink-muted)' }}>
+                      <span className="size-2 rounded-full" style={{ background: TIER_META[b.tier].bar }} />
+                      {TIER_META[b.tier].label}
+                    </span>
+                    <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(b.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </>
       )}
 
@@ -341,11 +330,9 @@ export default function LiquidAssetsPage() {
           <DialogHeader>
             <DialogTitle>{form.id ? 'Edit Aset Lain' : 'Tambah Aset Lain'}</DialogTitle>
             <DialogDescription>
-              Untuk akun yang dipakai transaksi rutin (BCA/Cash/GoPay), buka menu{' '}
-              <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>
-                Akun
-              </Link>
-              {' '}— saldo-nya auto update dari transaksi.
+              Untuk akun transaksi rutin (BCA/Cash/GoPay), buka menu{' '}
+              <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>Akun</Link>
+              {' '}— saldo auto update dari transaksi.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
@@ -359,18 +346,16 @@ export default function LiquidAssetsPage() {
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih tipe">
                     {(v) => ({
-                      receivable: '🤝 Piutang',
-                      cash: '💵 Kas (non-transaksional)',
-                      bank: '🏦 Bank (terkunci/non-transaksional)',
-                      digital_wallet: '📱 E-Wallet (cadangan)',
+                      receivable: 'Piutang', cash: 'Kas (non-transaksional)',
+                      bank: 'Bank (terkunci/non-transaksional)', digital_wallet: 'E-Wallet (cadangan)',
                     } as Record<string, string>)[v] ?? 'Pilih tipe'}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="receivable">🤝 Piutang</SelectItem>
-                  <SelectItem value="cash">💵 Kas (non-transaksional)</SelectItem>
-                  <SelectItem value="bank">🏦 Bank (terkunci/non-transaksional)</SelectItem>
-                  <SelectItem value="digital_wallet">📱 E-Wallet (cadangan)</SelectItem>
+                  <SelectItem value="receivable">Piutang</SelectItem>
+                  <SelectItem value="cash">Kas (non-transaksional)</SelectItem>
+                  <SelectItem value="bank">Bank (terkunci/non-transaksional)</SelectItem>
+                  <SelectItem value="digital_wallet">E-Wallet (cadangan)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
