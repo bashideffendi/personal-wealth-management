@@ -8,6 +8,7 @@
  * Weight: ideal = 2×, berlaku = 1×, kurang cocok = diabaikan.
  */
 
+import dynamic from 'next/dynamic'
 import { AlertTriangle, Check, Info, X } from 'lucide-react'
 
 import {
@@ -25,8 +26,22 @@ import {
   signColorVar,
   verdictStyle,
 } from '@/lib/invest/format'
-import { ValuationBars } from './valuation-bars'
 import { MethodInfoDialog } from './method-info-dialog'
+
+// Defer recharts: fetched only when the Valuasi tab renders the bar chart, not
+// on the research page's initial hydration. Skeleton matches the 300px height.
+const ValuationBars = dynamic(
+  () => import('./valuation-bars').then((m) => m.ValuationBars),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="animate-pulse rounded-lg"
+        style={{ height: 300, background: 'var(--surface-2)' }}
+      />
+    ),
+  },
+)
 
 /** Light-theme palette per suitability untuk badge "Sektor Fit". */
 function suitStyle(s: Suitability): { bg: string; fg: string } {

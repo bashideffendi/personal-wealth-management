@@ -7,7 +7,24 @@
  */
 
 import { useState } from 'react'
-import { MetricLineChart, type ChartFormat } from './metric-line-chart'
+import dynamic from 'next/dynamic'
+import type { ChartFormat } from './metric-line-chart'
+
+// Defer recharts: the chunk is fetched only when a chart in the Tren tab first
+// mounts, not on the research page's initial hydration. Skeleton matches the
+// 140px chart height to avoid layout shift.
+const MetricLineChart = dynamic(
+  () => import('./metric-line-chart').then((m) => m.MetricLineChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="animate-pulse rounded-lg"
+        style={{ height: 140, background: 'var(--surface-2)' }}
+      />
+    ),
+  },
+)
 
 type Category = 'growth' | 'profitability' | 'valuation' | 'health'
 
