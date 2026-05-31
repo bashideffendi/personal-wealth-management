@@ -7,12 +7,14 @@ import {
   getEmittenStat,
   getDividendsForTicker,
   getStock,
+  getStocks,
   getQuarterlyFinancialsFor,
   getPricePerformanceFor,
   getResearchMarkdown,
   latestMetricYear,
   getMetricSeries,
 } from '@/lib/invest/stocks'
+import { valuate, computeAllSectorMedians } from '@/lib/invest/valuation'
 import { getEmiten } from '@/lib/invest/emitten'
 import { formatPrice, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
@@ -123,11 +125,16 @@ export default async function StockResearchPage({ params }: RouteProps) {
       .slice(-n)
   }
 
+  // Valuasi konsensus 13-metode — live compute dari raw financials.
+  // Sector medians dihitung dari seluruh universe (sekali pakai di sini).
+  const valuationV2 = stock ? valuate(stock, computeAllSectorMedians(getStocks())) : null
+
   const tabsProps: ResearchTabsProps = {
     ticker,
     name,
     sector,
     price,
+    valuationV2,
     latestYear,
     metrics5Y,
     stockMetrics: stock?.metrics ?? {},

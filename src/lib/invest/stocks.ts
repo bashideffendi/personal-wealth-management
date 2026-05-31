@@ -90,6 +90,11 @@ export function getStock(ticker: string): Stock | undefined {
   return STOCKS.find((s) => s.ticker === t)
 }
 
+/** Full stock universe — dipakai buat compute sector medians (valuasi konsensus). */
+export function getStocks(): Stock[] {
+  return STOCKS
+}
+
 /** Return the most recent year with non-zero value from a metric series. */
 export function latestMetricYear(
   series: Record<string, number> | undefined,

@@ -31,10 +31,11 @@ import {
   formatPrice,
   formatRatio,
   signColorVar,
-  verdictStyle,
 } from '@/lib/invest/format'
 import { FinancialStatements } from './financial-statements'
 import { KeyStatsGrid } from './keystats-grid'
+import { ValuationConsensus } from './valuation-consensus'
+import type { ValuationSummary } from '@/lib/invest/valuation'
 
 interface MetricSeries {
   year: number
@@ -110,6 +111,8 @@ export interface ResearchTabsProps {
   name: string
   sector: string | null
   price: number
+  /** Valuasi konsensus 13-metode (live compute). Null kalau stock gak ketemu. */
+  valuationV2: ValuationSummary | null
   latestYear: number | null
   // Annual metrics — last 5 years (derived series for charts/overview)
   metrics5Y: {
@@ -152,35 +155,17 @@ export interface ResearchTabsProps {
   } | null
 }
 
-const METHOD_LABELS: Record<string, string> = {
-  DCF: 'DCF',
-  Graham: 'Graham',
-  EPV: 'EPV',
-  RelPER: 'Rel PER',
-  'Rel PER': 'Rel PER',
-  RelPBV: 'Rel PBV',
-  'Rel PBV': 'Rel PBV',
-  DDM: 'DDM',
-  NAV: 'NAV',
-  EVEBIT: 'EV/EBIT',
-  'EV/EBIT': 'EV/EBIT',
-}
-
 export function ResearchTabs(props: ResearchTabsProps) {
   const {
-    ticker, name, sector, price, latestYear, metrics5Y,
+    ticker, name, sector, price, valuationV2, latestYear, metrics5Y,
     stockMetrics, quarterly,
-    valuation, valuationDetail, stats, pricePerf, dividends,
+    stats, pricePerf, dividends,
     quarterlyRevenue, quarterlyNetIncome, quarterlyEPS, research: initialResearch,
   } = props
 
   // Research bisa di-generate ulang di client (lokal state). Initial value
   // dari server (bundled markdown OR cached AI generation).
   const [research, setResearch] = useState(initialResearch)
-
-  const verdict = valuation?.verdict ?? null
-  const verdictColor = verdictStyle(verdict)
-  const avgMoS = valuation?.avgMoS ?? null
 
   // Latest annual values
   const latestRevenue = metrics5Y.revenue.at(-1)?.value ?? null
@@ -329,124 +314,16 @@ export function ResearchTabs(props: ResearchTabsProps) {
         />
       </TabsContent>
 
-      {/* ─── Valuasi (consensus 8 methods) ─── */}
+      {/* ─── Valuasi (konsensus 13 metode, live compute, weighted sector-fit) ─── */}
       <TabsContent value="valuasi" className="mt-4 space-y-4">
-        {/* Recommendation card (from research frontmatter if available) */}
-        {research?.frontmatter.recommendation && (
+        {valuationV2 ? (
+          <ValuationConsensus data={valuationV2} price={price} sector={sector} />
+        ) : (
           <div
-            className="rounded-2xl border p-5"
-            style={{
-              background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
-              borderColor: 'var(--border)',
-            }}
+            className="rounded-2xl border p-8 text-center text-sm"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           >
-            <div className="flex items-start justify-between flex-wrap gap-3">
-              <div>
-                <p className="eyebrow">Rekomendasi (Equity Research)</p>
-                <p className="text-2xl font-bold tracking-tight mt-1" style={{ color: 'var(--ink)' }}>
-                  {String(research.frontmatter.recommendation).toUpperCase()}
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-                  Conviction: <span className="font-semibold">{research.frontmatter.conviction ?? '—'}</span>
-                  {research.frontmatter.generated && (
-                    <span> · Generated {research.frontmatter.generated}</span>
-                  )}
-                </p>
-              </div>
-              {(research.frontmatter.fair_value_low || research.frontmatter.fair_value_high) && (
-                <div className="text-right">
-                  <p className="eyebrow">Fair Value Range</p>
-                  <p className="num text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
-                    Rp {formatPrice(research.frontmatter.fair_value_low ?? null)}
-                    {' – '}
-                    Rp {formatPrice(research.frontmatter.fair_value_high ?? null)}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-                    vs current Rp {formatPrice(research.frontmatter.current_price ?? price)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Consensus summary */}
-        {valuation && (
-          <div
-            className="rounded-2xl border p-5"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <div className="flex items-baseline justify-between flex-wrap gap-2 mb-4">
-              <div>
-                <p className="eyebrow">Valuasi Consensus</p>
-                <h2 className="text-lg font-bold mt-0.5" style={{ color: 'var(--ink)' }}>
-                  8 Metode Independen
-                </h2>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {verdict && (
-                  <span
-                    className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
-                    style={{ background: verdictColor.bg, color: verdictColor.fg }}
-                  >
-                    {verdict}
-                  </span>
-                )}
-                <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                  {valuation.methodsValid}/8 valid · {valuation.undervaluedCount} bilang undervalued
-                </span>
-              </div>
-            </div>
-
-            {/* Method-by-method grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-              {valuationDetail
-                ? Object.entries(valuationDetail.methods).map(([method, m]) => (
-                    <MethodCard
-                      key={method}
-                      label={METHOD_LABELS[method] ?? method}
-                      fairValue={m.fairValue}
-                      mos={m.mos}
-                    />
-                  ))
-                : Object.entries(valuation.methods).map(([method, fv]) => {
-                    if (fv == null) return null
-                    const mos = (fv - price) / price
-                    return (
-                      <MethodCard
-                        key={method}
-                        label={METHOD_LABELS[method] ?? method}
-                        fairValue={fv}
-                        mos={mos}
-                      />
-                    )
-                  })}
-            </div>
-
-            {/* Consensus row */}
-            <div
-              className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-3 gap-3"
-              style={{ borderColor: 'var(--border-soft)' }}
-            >
-              <div>
-                <p className="eyebrow">Median Fair Value</p>
-                <p className="num text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
-                  {formatIDRCompact(valuation.medianFairValue)}
-                </p>
-              </div>
-              <div>
-                <p className="eyebrow">Average Fair Value</p>
-                <p className="num text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
-                  {formatIDRCompact(valuation.avgFairValue)}
-                </p>
-              </div>
-              <div>
-                <p className="eyebrow">Avg Margin of Safety</p>
-                <p className="num text-xl font-bold mt-1" style={{ color: signColorVar(avgMoS) }}>
-                  {formatPercentValue(avgMoS)}
-                </p>
-              </div>
-            </div>
+            Data fundamental emiten ini belum tersedia, jadi valuasi konsensus gak bisa dihitung.
           </div>
         )}
 
@@ -590,44 +467,6 @@ export function ResearchTabs(props: ResearchTabsProps) {
 }
 
 // ─── Subcomponents ────────────────────────────────────────────────
-
-function MethodCard({
-  label, fairValue, mos,
-}: {
-  label: string
-  fairValue: number | null
-  mos: number | null
-}) {
-  if (fairValue == null) {
-    return (
-      <div
-        className="rounded-xl border p-3"
-        style={{ background: 'var(--paper)', borderColor: 'var(--border-soft)', opacity: 0.6 }}
-      >
-        <p className="text-[10px] uppercase font-semibold" style={{ color: 'var(--ink-soft)' }}>
-          {label}
-        </p>
-        <p className="num text-base font-bold mt-1" style={{ color: 'var(--ink-soft)' }}>—</p>
-      </div>
-    )
-  }
-  return (
-    <div
-      className="rounded-xl border p-3.5"
-      style={{ background: 'var(--paper)', borderColor: 'var(--border-soft)' }}
-    >
-      <p className="text-[10px] uppercase font-bold tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-        {label}
-      </p>
-      <p className="num text-base font-bold mt-1 tracking-tight" style={{ color: 'var(--ink)' }}>
-        Rp {formatPrice(fairValue)}
-      </p>
-      <p className="text-xs num font-bold mt-0.5" style={{ color: signColorVar(mos) }}>
-        {mos != null ? `${mos >= 0 ? '+' : ''}${(mos * 100).toFixed(0)}% MoS` : ''}
-      </p>
-    </div>
-  )
-}
 
 function ChartCard({
   title, data, color, format,
