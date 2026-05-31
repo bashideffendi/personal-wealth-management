@@ -163,7 +163,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency }: Sto
   const hasData = data.length >= 2
 
   return (
-    <div className="s-card p-5 sm:p-6">
+    <div className="p-5 sm:p-6">
       {/* Header — last price + change (left), range tabs (right) */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

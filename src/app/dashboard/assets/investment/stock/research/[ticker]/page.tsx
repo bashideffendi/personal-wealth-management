@@ -235,6 +235,11 @@ export default async function StockResearchPage({ params }: RouteProps) {
           </div>
         </div>
 
+        {/* Tengah — grafik harga live (nyatu di kartu yang sama) */}
+        <div className="border-t" style={{ borderColor: 'var(--border-soft)' }}>
+          <StockPriceChart ticker={yahooTicker} fallbackPrice={price} fallbackCurrency="IDR" />
+        </div>
+
         {/* Bawah — strip metrik valuasi */}
         <div className="border-t grid grid-cols-2 lg:grid-cols-4" style={{ borderColor: 'var(--border-soft)' }}>
           <div
@@ -277,9 +282,6 @@ export default async function StockResearchPage({ params }: RouteProps) {
         </div>
         </div>
       </header>
-
-      {/* Grafik harga live — Yahoo Finance, di bawah ringkasan & di atas tab */}
-      <StockPriceChart ticker={yahooTicker} fallbackPrice={price} fallbackCurrency="IDR" />
 
       <ResearchTabs {...tabsProps} />
     </div>
