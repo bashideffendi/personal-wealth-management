@@ -184,13 +184,9 @@ export function grahamRevised(
 /** Gordon growth DDM: D₁ / (r - g) */
 export function ddm(stock: Stock, year: number | null): number | null {
   if (year === null) return null;
-  const dividendTotal = atYear(stock.metrics["Dividend"], year);
-  if (!dividendTotal || dividendTotal <= 0) return null;
-
-  const shares = atYear(stock.metrics["Jumlah Saham"], year);
-  if (!shares || shares <= 0) return null;
-
-  const dps = dividendTotal / shares;
+  // "Dividend" (dan "DPS") sudah PER-SHARE rupiah dari parser — JANGAN dibagi saham lagi.
+  const dps = atYear(stock.metrics["Dividend"], year) ?? atYear(stock.metrics["DPS"], year);
+  if (!dps || dps <= 0) return null;
 
   const growth = cagr(stock.metrics["Dividend"], year, 5) ?? 0;
   const g = Math.min(Math.max(growth, 0), ASSUMPTIONS.costOfEquity - 0.02);
