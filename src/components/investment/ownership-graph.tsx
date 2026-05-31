@@ -12,7 +12,7 @@
  * Ukuran node ∝ degree (clamp 6–20). Edge: tebal ∝ pct, hover munculin pct%.
  *
  * ─── Anti flash-then-blank ───
- * Tab "Keterikatan" pakai base-ui TabsPanel: pas panel ke-reveal ada transition,
+ * Tab "Struktur Kepemilikan" pakai base-ui TabsPanel: pas panel ke-reveal ada transition,
  * dan container sempat ke-ukur 0px / transient size. Kalau Sigma init di situ +
  * ada loop re-fit (ResizeObserver), graf sempat ke-gambar lalu ke-blank lagi pas
  * re-fit nge-normalisasi ke viewport kosong.

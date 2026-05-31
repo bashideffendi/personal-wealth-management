@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Tab "Keterikatan" — jaring kepemilikan emiten (ownership network).
+ * Tab "Struktur Kepemilikan" — jaring kepemilikan emiten (ownership network).
  *
  * Tiga blok: graf relasi lintas-emiten (Sigma, client-only island) + komposisi
  * pemegang saham (bar horizontal) + daftar anak usaha. Buat lihat siapa
@@ -147,10 +147,10 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
             <Network className="size-6" />
           </div>
           <h3 className="mt-4 text-lg font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
-            Data keterikatan {ticker} belum ada
+            Data kepemilikan {ticker} belum ada
           </h3>
           <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
-            Data keterikatan belum tersedia buat emiten ini — baru sebagian emiten
+            Data kepemilikan belum tersedia buat emiten ini — baru sebagian emiten
             yang ke-scrape. Nyusul di batch berikutnya.
           </p>
         </div>

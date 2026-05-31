@@ -188,9 +188,9 @@ export function ResearchTabs(props: ResearchTabsProps) {
             <TrendingUp className="size-3.5 mr-1.5" />
             Charts
           </TabsTrigger>
-          <TabsTrigger value="keterikatan">
+          <TabsTrigger value="kepemilikan">
             <Network className="size-3.5 mr-1.5" />
-            Keterikatan
+            Struktur Kepemilikan
           </TabsTrigger>
         </TabsList>
       </div>
@@ -390,8 +390,8 @@ export function ResearchTabs(props: ResearchTabsProps) {
         <TrendsPanel metrics={stockMetrics} />
       </TabsContent>
 
-      {/* ─── Keterikatan — jaring kepemilikan (graf Sigma + komposisi + anak usaha) ─── */}
-      <TabsContent value="keterikatan" className="mt-4">
+      {/* ─── Struktur Kepemilikan — jaring kepemilikan (graf Sigma + komposisi + anak usaha) ─── */}
+      <TabsContent value="kepemilikan" className="mt-4">
         <OwnershipTab ticker={ticker} ownership={ownership} />
       </TabsContent>
     </Tabs>
