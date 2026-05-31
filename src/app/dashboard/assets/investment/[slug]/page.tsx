@@ -26,7 +26,7 @@ import {
 import {
   Loader2, Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown,
   LineChart, Coins, LayoutGrid, List, Star, FileSearch, GitCompare, Calendar,
-  Lightbulb, Newspaper,
+  Lightbulb, Newspaper, ArrowLeft,
 } from 'lucide-react'
 import { NumberInput } from '@/components/ui/number-input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -368,6 +368,13 @@ export default function InvestmentCategoryPage() {
           }}
         />
         <div className="relative p-6 sm:p-8">
+        <Link
+          href="/dashboard/assets/investment"
+          className="inline-flex items-center gap-1.5 text-xs font-medium mb-4 rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-white/10"
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+        >
+          <ArrowLeft className="size-3.5" /> Semua Investasi
+        </Link>
         <div className="flex items-start justify-between gap-3">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase inline-flex items-center gap-1.5"
