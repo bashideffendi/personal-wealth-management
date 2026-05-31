@@ -220,26 +220,18 @@ export default async function StockResearchPage({ params }: RouteProps) {
             )}
           </div>
 
-          {/* Harga snapshot — kanan */}
-          <div className="shrink-0 lg:text-right">
-            <p className="eyebrow">Harga Snapshot</p>
-            <p className="num tabular leading-none mt-1.5" style={{ fontSize: 44, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.04em' }}>
-              Rp {formatPrice(price)}
-            </p>
-            <div className="flex items-center gap-2 mt-2.5 lg:justify-end" style={{ color: 'var(--ink-soft)' }}>
-              <a
-                href={`https://stockbit.com/symbol/${ticker}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 text-[11px] hover:underline"
-              >
-                Stockbit <ArrowUpRight className="size-2.5" />
-              </a>
-              <span className="text-[11px]">· snapshot, bukan real-time</span>
-            </div>
-            <div className="mt-3 flex lg:justify-end">
-              <ResearchLogButton ticker={ticker} name={name} />
-            </div>
+          {/* Aksi — kanan (harga dipegang grafik live di bawah) */}
+          <div className="shrink-0 flex flex-col gap-2.5 lg:items-end">
+            <ResearchLogButton ticker={ticker} name={name} />
+            <a
+              href={`https://stockbit.com/symbol/${ticker}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              style={{ color: 'var(--ink-muted)' }}
+            >
+              Lihat di Stockbit <ArrowUpRight className="size-3" />
+            </a>
           </div>
         </div>
 
