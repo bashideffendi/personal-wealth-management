@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import {
@@ -50,6 +50,29 @@ interface BudgetMap {
 function budgetKey(type: string, category: string, month: number) {
   return `${type}|${category}|${month}`
 }
+
+// Safe arithmetic eval for spreadsheet-style formula entry (=12+3, =1000-50, =3*250000).
+// Regex guard ensures only digits + - * / ( ) . — no identifiers/calls, so no code injection.
+function evalFormula(expr: string): number {
+  const clean = expr.replace(/\s/g, '')
+  if (!clean || !/^[0-9+\-*/().]+$/.test(clean)) return 0
+  try {
+    const result = Function('"use strict"; return (' + clean + ')')()
+    return Number.isFinite(result) ? Math.round(result) : 0
+  } catch {
+    return 0
+  }
+}
+
+// Parse a budget cell: supports =formula and plain (grouped) numbers.
+function parseCell(input: string): number {
+  const s = input.trim()
+  if (!s) return 0
+  if (s.startsWith('=')) return evalFormula(s.slice(1))
+  return Number(s.replace(/[^0-9-]/g, '')) || 0
+}
+
+type FillSource = { type: BudgetType; category: string; month: number; value: number }
 
 const LS_KEY = 'pwm.budget.enabledCategories'
 const LS_CUSTOM_KEY = 'pwm.budget.customCategories'
@@ -138,6 +161,12 @@ export default function BudgetingPage() {
   const [custom, setCustom] = useState<EnabledCats>(emptyCustom)
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(noCollapsed)
+
+  // Drag-fill (tarik ala Excel) — horizontal across months within one category row
+  const [fillSource, setFillSource] = useState<FillSource | null>(null)
+  const [fillOverMonth, setFillOverMonth] = useState<number | null>(null)
+  const fillSourceRef = useRef<FillSource | null>(null)
+  const fillOverRef = useRef<number | null>(null)
 
   // Drawer state — klik header bulan buka drawer per design handoff
   const [drawerMonth, setDrawerMonth] = useState<number | null>(null)
@@ -277,6 +306,54 @@ export default function BudgetingPage() {
     )
   }
 
+  // ---- Drag-fill (tarik) ----
+  function startFill(type: BudgetType, category: string, month: number) {
+    const src: FillSource = { type, category, month, value: getValue(type, category, month) }
+    fillSourceRef.current = src
+    fillOverRef.current = month
+    setFillSource(src)
+    setFillOverMonth(month)
+    if (typeof document !== 'undefined') document.body.style.userSelect = 'none'
+    const onUp = () => {
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.userSelect = ''
+      const s = fillSourceRef.current
+      const over = fillOverRef.current
+      fillSourceRef.current = null
+      fillOverRef.current = null
+      setFillSource(null)
+      setFillOverMonth(null)
+      if (s && over != null && over !== s.month) {
+        void fillRange(s, Math.min(s.month, over), Math.max(s.month, over))
+      }
+    }
+    document.addEventListener('mouseup', onUp)
+  }
+
+  function onFillEnter(type: BudgetType, category: string, month: number) {
+    const s = fillSourceRef.current
+    if (!s || s.type !== type || s.category !== category) return
+    fillOverRef.current = month
+    setFillOverMonth(month)
+  }
+
+  async function fillRange(s: FillSource, lo: number, hi: number) {
+    setBudgets((prev) => {
+      const next = { ...prev }
+      for (let m = lo; m <= hi; m++) next[budgetKey(s.type, s.category, m)] = s.value
+      return next
+    })
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    const rows = []
+    for (let m = lo; m <= hi; m++) {
+      rows.push({ user_id: user.id, year: Number(year), month: m, type: s.type, category: s.category, amount: s.value })
+    }
+    await supabase.from('budgets').upsert(rows, { onConflict: 'user_id,year,month,type,category' })
+  }
+
   // ---- Calculation helpers ----
 
   function getValue(type: string, category: string, month: number) {
@@ -327,6 +404,13 @@ export default function BudgetingPage() {
     category: string,
     bgClass: string,
   ) {
+    const fs = fillSource
+    let fillLo = -1, fillHi = -1, fillSrcMonth = -1
+    if (fs && fs.type === type && fs.category === category && fillOverMonth != null) {
+      fillSrcMonth = fs.month
+      fillLo = Math.min(fs.month, fillOverMonth)
+      fillHi = Math.max(fs.month, fillOverMonth)
+    }
     return (
       <tr key={`${type}-${category}`} className={bgClass}>
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-normal bg-inherit whitespace-nowrap truncate" title={category}>
@@ -335,9 +419,17 @@ export default function BudgetingPage() {
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
           const val = getValue(type, category, month)
+          const inRange = fillSrcMonth !== -1 && month >= fillLo && month <= fillHi
+          const isSource = month === fillSrcMonth
           return (
-            <td key={month} className="border-b border-[color:var(--border)] px-0.5 py-0">
+            <td
+              key={month}
+              className="group relative border-b border-[color:var(--border)] px-0.5 py-0"
+              style={{ background: inRange && !isSource ? 'color-mix(in srgb, var(--c-primary) 11%, transparent)' : undefined }}
+              onMouseEnter={() => onFillEnter(type, category, month)}
+            >
               <input
+                key={`${type}|${category}|${month}|${val}`}
                 type="text"
                 inputMode="numeric"
                 defaultValue={val ? idFormatter.format(val) : ''}
@@ -347,12 +439,19 @@ export default function BudgetingPage() {
                   e.target.select()
                 }}
                 onBlur={(e) => {
-                  const raw = Number(e.target.value.replace(/[^0-9-]/g, '')) || 0
-                  handleCellBlur(type, category, month, raw)
-                  e.target.value = raw ? idFormatter.format(raw) : ''
+                  const parsed = parseCell(e.target.value)
+                  handleCellBlur(type, category, month, parsed)
+                  e.target.value = parsed ? idFormatter.format(parsed) : ''
                 }}
                 className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-[var(--surface)] px-1 tabular"
                 style={{ color: 'var(--ink)' }}
+              />
+              <span
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startFill(type, category, month) }}
+                className={`absolute bottom-0 right-0 cursor-crosshair ${isSource ? 'block' : 'hidden group-hover:block'}`}
+                style={{ width: 7, height: 7, background: 'var(--c-primary)', borderTopLeftRadius: 2 }}
+                title="Tarik buat isi nilai ini ke bulan lain"
+                aria-hidden="true"
               />
             </td>
           )
@@ -567,7 +666,9 @@ export default function BudgetingPage() {
           <div>
             <p className="eyebrow">Grid Anggaran 12 Bulan</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-              Klik nama bulan buat buka rincian harian, kategori &amp; proyeksi.
+              Klik nama bulan buat rincian · ketik rumus di cell (mis.{' '}
+              <code className="num rounded px-1 py-0.5 text-[10.5px]" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>=500+250</code>
+              ) · tarik pojok cell buat isi cepat ke bulan lain.
             </p>
           </div>
 
