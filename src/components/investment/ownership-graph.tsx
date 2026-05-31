@@ -71,6 +71,10 @@ function buildGraph(network: OwnershipNetwork, activeId: string | null): Graph {
     if (e.to) bump(e.to)
   }
 
+  // Simpan seed lingkaran per node — dipakai buat restore kalau forceAtlas2
+  // ngeluarin NaN (graf disconnected / order kecil bisa bikin koordinat invalid).
+  const seed = new Map<string, { x: number; y: number }>()
+
   const n = network.nodes.length || 1
   network.nodes.forEach((node, i) => {
     if (!node.id || graph.hasNode(node.id)) return
@@ -78,18 +82,20 @@ function buildGraph(network: OwnershipNetwork, activeId: string | null): Graph {
     const isCompany = node.kind === 'company'
     const isActive = node.id === activeId
 
-    // Ukuran: base + skala degree. Emiten aktif paling gede.
-    const size = isActive
-      ? 18
-      : Math.min(15, 6 + deg * 1.6)
+    // Ukuran: base + skala degree (clamp 6–20). Emiten aktif paling gede.
+    const size = isActive ? 18 : Math.max(6, Math.min(20, 8 + deg * 1.6))
 
     // Posisi awal di lingkaran (forceatlas2 butuh koordinat non-zero & non-collinear).
+    // Jitter kecil biar node degree-0 gak ketumpuk persis di titik yang sama.
     const angle = (2 * Math.PI * i) / n
+    const sx = Math.cos(angle) + (Math.random() - 0.5) * 0.05
+    const sy = Math.sin(angle) + (Math.random() - 0.5) * 0.05
+    seed.set(node.id, { x: sx, y: sy })
 
     graph.addNode(node.id, {
       label: nodeLabel(node),
-      x: Math.cos(angle) + (Math.random() - 0.5) * 0.05,
-      y: Math.sin(angle) + (Math.random() - 0.5) * 0.05,
+      x: sx,
+      y: sy,
       size,
       color: isActive ? C.primary : isCompany ? C.mint : C.investor,
       // Atribut custom buat ring highlight & tooltip.
@@ -119,15 +125,27 @@ function buildGraph(network: OwnershipNetwork, activeId: string | null): Graph {
   if (graph.order > 1) {
     const settings = forceAtlas2.inferSettings(graph)
     forceAtlas2.assign(graph, {
-      iterations: 400,
+      iterations: 300,
       settings: {
         ...settings,
-        gravity: 1.2,
-        scalingRatio: 12,
+        gravity: 1,
+        scalingRatio: 4,
         barnesHutOptimize: graph.order > 50,
       },
     })
   }
+
+  // GUARD: kalau layout ngeluarin x/y NaN/undefined/Infinity (bisa kejadian di
+  // graf disconnected), balikin ke seed lingkaran biar Sigma gak gambar blank.
+  graph.forEachNode((id, attr) => {
+    const x = attr.x as number
+    const y = attr.y as number
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      const s = seed.get(id) ?? { x: 0, y: 0 }
+      graph.setNodeAttribute(id, 'x', s.x)
+      graph.setNodeAttribute(id, 'y', s.y)
+    }
+  })
 
   return graph
 }
@@ -138,6 +156,67 @@ function LoadGraph({ graph }: { graph: Graph }) {
   useEffect(() => {
     loadGraph(graph, true)
   }, [loadGraph, graph])
+  return null
+}
+
+/**
+ * Inner: setelah graph ke-load, FIT kamera ke node.
+ *
+ * Ini fix utama buat "blank canvas": tab Keterikatan mount HIDDEN dulu baru
+ * show, jadi container Sigma sempat ke-ukur 0px → node ter-normalisasi ke
+ * viewport kosong & ke-render di luar layar. Solusi: tunggu container ke-layout
+ * (requestAnimationFrame) lalu `resize(true)` (ukur ulang container yang udah
+ * visible) → `refresh()` → `getCamera().animatedReset()` (reset = fit ke extent
+ * graph yang udah dinormalisasi Sigma ke kotak [0,1]).
+ */
+function FitCamera({ graph }: { graph: Graph }) {
+  const sigma = useSigma()
+
+  useEffect(() => {
+    let raf1 = 0
+    let raf2 = 0
+    let cancelled = false
+
+    const fit = () => {
+      if (cancelled || sigma.getGraph().order === 0) return
+      // Ukur ulang container (sekarang udah visible & punya tinggi) lalu render.
+      sigma.resize(true)
+      sigma.refresh()
+      // animatedReset balikin kamera ke {x:.5,y:.5,ratio:1} = center extent graph.
+      sigma.getCamera().animatedReset({ duration: 0 })
+    }
+
+    // Double-rAF: frame-1 nunggu commit DOM, frame-2 nunggu container kebagian
+    // ukuran final (penting pas tab baru di-reveal dari hidden).
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(fit)
+    })
+
+    // Re-fit kalau container berubah ukuran (mis. tab di-reveal belakangan,
+    // atau resize window). ResizeObserver lebih reliable daripada nebak timing.
+    const el = sigma.getContainer()
+    let ro: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined' && el) {
+      let first = true
+      ro = new ResizeObserver(() => {
+        // Skip callback pertama (initial observe) — udah di-handle rAF di atas.
+        if (first) {
+          first = false
+          return
+        }
+        fit()
+      })
+      ro.observe(el)
+    }
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+      ro?.disconnect()
+    }
+  }, [sigma, graph])
+
   return null
 }
 
@@ -235,6 +314,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
         }}
       >
         <LoadGraph graph={graph} />
+        <FitCamera graph={graph} />
         <GraphEvents onHover={handleHover} />
       </SigmaContainer>
 
