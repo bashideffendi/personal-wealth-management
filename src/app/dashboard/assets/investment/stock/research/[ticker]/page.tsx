@@ -19,6 +19,7 @@ import { formatPrice, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
 import { ResearchLogButton } from '@/components/investment/research-log-button'
 import { StockLogo } from '@/components/investment/stock-logo'
+import { StockPriceChart } from '@/components/investment/stock-price-chart'
 
 interface RouteProps {
   params: Promise<{ ticker: string }>
@@ -74,6 +75,12 @@ export default async function StockResearchPage({ params }: RouteProps) {
   const name = stock?.name || valuation?.name || emiten?.name || ticker
   const sector = stock?.sector || valuation?.sector || emiten?.sector || null
   const price = stock?.currentPrice ?? valuation?.price ?? emiten?.previousClose ?? 0
+
+  // Yahoo-form ticker for the live price chart. All bundled data here
+  // (stocks.json / valuations / emitten) is IDX-only — there's no US signal on
+  // these objects — so we always append .JK. (US holdings store their own
+  // currency on the `investments` table, but this research page only serves IDX.)
+  const yahooTicker = ticker.endsWith('.JK') ? ticker : `${ticker}.JK`
   const verdict = valuation?.verdict ?? null
   const verdictColor = verdictStyle(verdict)
   const avgMoS = valuation?.avgMoS ?? null
@@ -278,6 +285,9 @@ export default async function StockResearchPage({ params }: RouteProps) {
         </div>
         </div>
       </header>
+
+      {/* Grafik harga live — Yahoo Finance, di bawah ringkasan & di atas tab */}
+      <StockPriceChart ticker={yahooTicker} fallbackPrice={price} fallbackCurrency="IDR" />
 
       <ResearchTabs {...tabsProps} />
     </div>
