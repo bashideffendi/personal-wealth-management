@@ -50,7 +50,7 @@ const C = {
   white: '#FFFFFF',
 } as const
 
-const GRAPH_HEIGHT = 440
+const GRAPH_HEIGHT = 600
 
 interface GraphData {
   network: OwnershipNetwork
