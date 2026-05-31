@@ -26,7 +26,7 @@ import {
 import {
   Loader2, Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown,
   LineChart, Coins, LayoutGrid, List, Star, FileSearch, GitCompare, Calendar,
-  Lightbulb,
+  Lightbulb, Newspaper,
 } from 'lucide-react'
 import { NumberInput } from '@/components/ui/number-input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -36,6 +36,7 @@ import { StockWatchlistTab } from '@/components/investment/stock-watchlist-tab'
 import { StockResearchTab } from '@/components/investment/stock-research-tab'
 import { StockCompareTab } from '@/components/investment/stock-compare-tab'
 import { StockDividendCalendar } from '@/components/investment/stock-dividend-calendar'
+import { NewsTab } from '@/components/investment/news-tab'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { getCategoryFormConfig } from '@/lib/investment-forms'
@@ -88,6 +89,9 @@ export default function InvestmentCategoryPage() {
   const category: Investment['category'] = (INVESTMENT_SLUG_TO_CATEGORY[slug] ?? 'stock') as Investment['category']
   // Fitur fundamental hanya untuk saham IDX (bukan US).
   const showStockResearch = category === 'stock' && !isUS
+  // Tab Berita: agregator RSS finansial Indonesia. Relevan buat saham IDX
+  // (view "Semua" + "IHSG"), gak relevan buat saham US -> sembunyikan di US.
+  const showNews = category === 'stock' && marketFilter !== 'us'
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -454,6 +458,10 @@ export default function InvestmentCategoryPage() {
               <TabsTrigger value="dividen-pro"><Calendar className="size-3.5 mr-1.5" />Dividen</TabsTrigger>
               <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />Log Manual</TabsTrigger>
               <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />Log Dividen</TabsTrigger>
+              {/* Berita: agregator RSS finansial ID — IDX-only (US gak relevan) */}
+              {showNews && (
+                <TabsTrigger value="berita"><Newspaper className="size-3.5 mr-1.5" />Berita</TabsTrigger>
+              )}
             </TabsList>
           </div>
         )}
@@ -788,6 +796,11 @@ export default function InvestmentCategoryPage() {
             <TabsContent value="dividen" className="mt-6">
               <DividendsPanel />
             </TabsContent>
+            {showNews && (
+              <TabsContent value="berita" className="mt-6">
+                <NewsTab />
+              </TabsContent>
+            )}
           </>
         )}
       </Tabs>
