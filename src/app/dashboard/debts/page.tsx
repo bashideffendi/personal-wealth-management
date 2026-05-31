@@ -1,60 +1,61 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import type { Debt } from '@/types'
-import { DTICard } from '@/components/debt/dti-card'
-import { CompoundDebtWarning } from '@/components/debt/compound-debt-warning'
+import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, ArrowUpRight, PartyPopper } from 'lucide-react'
+import {
+  Plus, Pencil, Trash2, Loader2, PartyPopper, Receipt, Home, CreditCard, Banknote,
+  type LucideIcon,
+} from 'lucide-react'
+import { WealthHeader } from '@/components/wealth/wealth-ui'
 
-const DEBT_CATEGORY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  consumer:  { label: 'Konsumer',       emoji: '💳', color: '#F43F5E' },
-  cash_loan: { label: 'Pinjaman Tunai', emoji: '💵', color: '#F59E0B' },
-  long_term: { label: 'Jangka Panjang', emoji: '🏠', color: '#8B5CF6' },
+const CAT: Record<string, { label: string; color: string; icon: LucideIcon }> = {
+  consumer:  { label: 'Konsumtif',      color: '#F43F5E', icon: CreditCard },
+  cash_loan: { label: 'Pinjaman Tunai', color: '#F59E0B', icon: Banknote },
+  long_term: { label: 'Jangka Panjang', color: '#8B5CF6', icon: Home },
 }
 
 const DEBT_TYPE_OPTIONS: Record<string, { value: string; label: string }[]> = {
   consumer: [
-    { value: 'kartu_kredit', label: 'Kartu Kredit' },
-    { value: 'paylater', label: 'Paylater' },
-    { value: 'kta', label: 'KTA' },
-    { value: 'pembiayaan_konsumer', label: 'Pembiayaan Konsumer' },
+    { value: 'kartu_kredit', label: 'Kartu Kredit' }, { value: 'paylater', label: 'Paylater' },
+    { value: 'kta', label: 'KTA' }, { value: 'pembiayaan_konsumer', label: 'Pembiayaan Konsumer' },
   ],
   cash_loan: [
-    { value: 'pinjaman_pribadi', label: 'Pinjaman Pribadi' },
-    { value: 'pinjaman_dana_tunai', label: 'Pinjaman Dana Tunai' },
+    { value: 'pinjaman_pribadi', label: 'Pinjaman Pribadi' }, { value: 'pinjaman_dana_tunai', label: 'Pinjaman Dana Tunai' },
   ],
   long_term: [
-    { value: 'kpr', label: 'KPR' }, { value: 'kpa', label: 'KPA' },
-    { value: 'kpt', label: 'KPT' }, { value: 'hutang_kendaraan', label: 'Hutang Kendaraan' },
-    { value: 'pinjaman_bisnis', label: 'Pinjaman Bisnis' },
+    { value: 'kpr', label: 'KPR' }, { value: 'kpa', label: 'KPA' }, { value: 'kpt', label: 'KPT' },
+    { value: 'hutang_kendaraan', label: 'Hutang Kendaraan' }, { value: 'pinjaman_bisnis', label: 'Pinjaman Bisnis' },
   ],
 }
-
-function getDebtTypeLabel(type: string): string {
-  for (const types of Object.values(DEBT_TYPE_OPTIONS)) {
-    const f = types.find((t) => t.value === type)
-    if (f) return f.label
-  }
+const getTypeLabel = (type: string) => {
+  for (const arr of Object.values(DEBT_TYPE_OPTIONS)) { const f = arr.find((t) => t.value === type); if (f) return f.label }
   return type
 }
+const isRevolving = (type: string) => type === 'kartu_kredit' || type === 'paylater'
+
+function payoffDate(months: number): string {
+  if (months <= 0 || months >= 600) return '—'
+  const d = new Date(); d.setMonth(d.getMonth() + months)
+  return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+}
+const dayMonth = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
 
 const emptyForm = {
-  id: null as string | null,
-  name: '', category: 'consumer', type: '',
+  id: null as string | null, name: '', category: 'consumer', type: '',
   principal: 0, remaining: 0, interest_rate: 0, monthly_payment: 0,
   due_date: new Date().toISOString().split('T')[0], is_active: true,
 }
@@ -67,6 +68,8 @@ export default function DebtsOverviewPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<typeof emptyForm>(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [filter, setFilter] = useState('Semua')
+  const [tlStrategy, setTlStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -74,20 +77,12 @@ export default function DebtsOverviewPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    // Fetch debts + 90-day income avg in parallel for DTI calculation
-    const ninetyDaysAgo = new Date()
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-    const cutoff = ninetyDaysAgo.toISOString().slice(0, 10)
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
     const [debtsRes, txRes] = await Promise.all([
       supabase.from('debts').select('*').eq('user_id', user.id).order('remaining', { ascending: false }),
-      supabase.from('transactions')
-        .select('amount, type')
-        .eq('user_id', user.id)
-        .eq('type', 'income')
-        .gte('date', cutoff),
+      supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
     ])
     setDebts((debtsRes.data ?? []) as Debt[])
-    // 90-day avg → monthly income proxy
     const incomeRows = (txRes.data ?? []) as { amount: number }[]
     const totalIncome = incomeRows.reduce((s, t) => s + (t.amount || 0), 0)
     setMonthlyIncome(incomeRows.length > 0 ? totalIncome / 3 : 0)
@@ -106,245 +101,248 @@ export default function DebtsOverviewPage() {
     }
     if (form.id) await supabase.from('debts').update(payload).eq('id', form.id)
     else await supabase.from('debts').insert(payload)
-    setSaving(false)
-    setDialogOpen(false)
-    void load()
+    setSaving(false); setDialogOpen(false); void load()
   }
   async function remove(id: string) {
     if (!confirm('Hapus utang ini?')) return
-    await supabase.from('debts').delete().eq('id', id)
-    void load()
+    await supabase.from('debts').delete().eq('id', id); void load()
   }
   function openEdit(d: Debt) {
     setForm({ id: d.id, name: d.name, category: d.category, type: d.type,
-      principal: d.principal, remaining: d.remaining,
-      interest_rate: d.interest_rate, monthly_payment: d.monthly_payment,
-      due_date: d.due_date, is_active: d.is_active })
+      principal: d.principal, remaining: d.remaining, interest_rate: d.interest_rate,
+      monthly_payment: d.monthly_payment, due_date: d.due_date, is_active: d.is_active })
     setDialogOpen(true)
   }
 
-  const active = debts.filter((d) => d.is_active && d.remaining > 0)
+  const active = useMemo(() => debts.filter((d) => d.is_active && d.remaining > 0), [debts])
   const totalRemaining = active.reduce((s, d) => s + d.remaining, 0)
   const totalPrincipal = active.reduce((s, d) => s + d.principal, 0)
   const totalMonthly = active.reduce((s, d) => s + d.monthly_payment, 0)
-  const paidPct = totalPrincipal > 0 ? ((totalPrincipal - totalRemaining) / totalPrincipal) * 100 : 0
-  // Find highest-rate debt for compound warning — that's the one most worth
-  // illustrating. Filter to debts with reasonable balance + non-zero rate.
-  const worstDebt = active
-    .filter((d) => d.remaining >= 100_000 && d.interest_rate >= 5)
-    .sort((a, b) => b.interest_rate - a.interest_rate)[0]
-  const byCategory: Record<string, number> = {}
-  for (const d of active) byCategory[d.category] = (byCategory[d.category] || 0) + d.remaining
+  const totalPaid = Math.max(0, totalPrincipal - totalRemaining)
+  const paidPct = totalPrincipal > 0 ? (totalPaid / totalPrincipal) * 100 : 0
+  const dti = monthlyIncome > 0 ? (totalMonthly / monthlyIncome) * 100 : null
+  const housingMonthly = active.filter((d) => d.category === 'long_term').reduce((s, d) => s + d.monthly_payment, 0)
+  const frontEnd = monthlyIncome > 0 ? (housingMonthly / monthlyIncome) * 100 : null
+
+  const monthlyByCat = useMemo(() => {
+    const out: Record<string, number> = {}
+    for (const d of active) out[d.category] = (out[d.category] || 0) + d.monthly_payment
+    return out
+  }, [active])
+
+  const snowball = useMemo(() => simulatePayoff(active, 'snowball'), [active])
+  const avalanche = useMemo(() => simulatePayoff(active, 'avalanche'), [active])
+
+  const jenisPresent = useMemo(() => ['Semua', ...Array.from(new Set(active.map((d) => CAT[d.category]?.label ?? d.category)))], [active])
+  const visible = filter === 'Semua' ? active : active.filter((d) => (CAT[d.category]?.label ?? d.category) === filter)
+  const upcoming = useMemo(() => [...active].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || '')).slice(0, 4), [active])
 
   return (
     <div className="space-y-6">
-      {/* Dark gradient hero */}
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
+      <WealthHeader
+        eyebrow={`${active.length} utang aktif`}
+        title="Utang & Strategi Pelunasan"
+        subtitle="Konsolidasi semua kewajiban, plus dua strategi pelunasan buat dibandingkan."
       >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -120,
-            right: -80,
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${totalRemaining > 0 ? 'rgba(251, 113, 133, 0.16)' : 'rgba(16, 185, 129, 0.18)'}, transparent 65%)`,
-          }}
-        />
-        <div className="relative p-6 sm:p-9">
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: totalRemaining > 0 ? '#FDA4AF' : '#6EE7B7' }}
-          >
-            Utang Aktif
-          </p>
-          <p
-            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
-            style={{
-              color: totalRemaining > 0 ? '#FDA4AF' : '#FFFFFF',
-              fontSize: 'clamp(40px, 6vw, 64px)',
-              letterSpacing: '-0.04em',
-            }}
-          >
-            {totalRemaining > 0 ? `−${formatCurrency(totalRemaining)}` : formatCurrency(0)}
-          </p>
-          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            {active.length} utang aktif · cicilan{' '}
-            <span className="num tabular font-semibold" style={{ color: '#FFFFFF' }}>
-              {formatCurrency(totalMonthly)}
-            </span>
-            /bln
-          </p>
-          {totalPrincipal > 0 && (
-            <div className="mt-5 max-w-md">
-              <div
-                className="flex items-center justify-between text-[11px] mb-1.5"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
-              >
-                <span>Progress pelunasan</span>
-                <span className="num tabular font-semibold" style={{ color: '#6EE7B7' }}>
-                  {paidPct.toFixed(1)}%
-                </span>
-              </div>
-              <div
-                className="h-1.5 rounded-full overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.10)' }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${paidPct}%`, background: '#34D399' }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* DTI/DSR + Compound warning — diagnostic widgets */}
-      {(monthlyIncome > 0 || worstDebt) && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {monthlyIncome > 0 && (
-            <DTICard monthlyIncome={monthlyIncome} monthlyDebtPayment={totalMonthly} />
-          )}
-          {worstDebt && (
-            <CompoundDebtWarning
-              balance={worstDebt.remaining}
-              annualRate={worstDebt.interest_rate}
-              label={worstDebt.name}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Quick nav */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Link
-          href="/dashboard/debts/strategy"
-          className="group flex items-center justify-between rounded-lg p-4 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
-        >
-          <div>
-            <p className="font-semibold" style={{ color: 'var(--ink)' }}>Strategi Pelunasan</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>Snowball / Avalanche</p>
-          </div>
-          <ArrowUpRight className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
+        <Link href="/dashboard/debts/payments">
+          <Button variant="outline"><Receipt className="h-4 w-4" /> Pembayaran</Button>
         </Link>
-        <Link
-          href="/dashboard/debts/payments"
-          className="group flex items-center justify-between rounded-lg p-4 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
-        >
-          <div>
-            <p className="font-semibold" style={{ color: 'var(--ink)' }}>Pembayaran</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>Log transaksi pelunasan</p>
-          </div>
-          <ArrowUpRight className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
-        </Link>
-        <div className="relative overflow-hidden rounded-2xl p-5 bg-[var(--surface)] border border-[var(--border-soft)]">
-          <p className="eyebrow">Breakdown Kategori</p>
-          <div className="mt-2 space-y-1.5">
-            {Object.entries(byCategory).length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Tidak ada utang.</p>
-            ) : (
-              Object.entries(byCategory).map(([k, v]) => {
-                const info = DEBT_CATEGORY_LABELS[k]
-                const pct = totalRemaining > 0 ? (v / totalRemaining) * 100 : 0
-                return (
-                  <div key={k} className="flex items-center justify-between text-xs">
-                    <span style={{ color: 'var(--ink-muted)' }}>
-                      {info.label}
-                    </span>
-                    <span className="num font-medium" style={{ color: 'var(--ink)' }}>{pct.toFixed(0)}%</span>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Action */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Daftar semua utang kamu.
-        </p>
         <Button onClick={() => { setForm(emptyForm); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Tambah Utang
+          <Plus className="h-4 w-4" /> Utang baru
         </Button>
-      </div>
+      </WealthHeader>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
-      ) : debts.length === 0 ? (
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : active.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <PartyPopper className="size-12 mx-auto" style={{ color: 'var(--c-mint)' }} />
-          <p className="mt-3 font-semibold">Tidak ada utang tercatat</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Selamat!</p>
+          <PartyPopper className="size-12 mx-auto" style={{ color: '#10B981' }} />
+          <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>Bebas utang</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Gak ada utang aktif. Mantap — jaga terus.</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {debts.map((d) => {
-            const info = DEBT_CATEGORY_LABELS[d.category]
-            const paid = d.principal - d.remaining
-            const paidDebtPct = d.principal > 0 ? (paid / d.principal) * 100 : 0
-            return (
-              <div
-                key={d.id}
-                className="group relative rounded-lg p-5 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                      {info.label} · {getDebtTypeLabel(d.type)}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                    <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)}>
-                      <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
-                    </Button>
-                  </div>
-                </div>
-                <p className="num text-2xl mt-4 tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                  {formatCurrency(d.remaining)}
-                </p>
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                    <span>Lunas <span className="num">{paidDebtPct.toFixed(0)}%</span></span>
-                    <Badge
-                      className="rounded-sm px-1.5 py-0 border-0 text-[10px] font-semibold"
-                      style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}
-                    >
-                      <span className="num">{d.interest_rate}%</span> bunga
-                    </Badge>
-                  </div>
-                  <div className="h-1 w-full rounded-full bg-[var(--surface-2)] overflow-hidden mt-1">
-                    <div className="h-full rounded-full" style={{ width: `${paidDebtPct}%`, background: 'var(--ink)' }} />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                  <span>Cicilan <span className="num">{formatCurrency(d.monthly_payment)}</span>/bln</span>
-                  <span>Due {formatDate(d.due_date)}</span>
-                </div>
+        <>
+          {/* Stat header — 3 cell dalam 1 card */}
+          <div className="s-card grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="p-5">
+              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: '#F43F5E' }}>Sisa Total Utang</p>
+              <p className="num tabular text-2xl font-bold mt-2" style={{ color: '#F43F5E' }}>{formatCurrency(totalRemaining)}</p>
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+                Dibayar <span className="num" style={{ color: '#10B981' }}>{formatCurrency(totalPaid)}</span> dari pokok <span className="num">{formatCurrency(totalPrincipal)}</span>
+              </p>
+              <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                <div className="h-full rounded-full" style={{ width: `${paidPct}%`, background: '#10B981' }} />
               </div>
-            )
-          })}
-        </div>
+              <p className="text-[10px] mt-1 num" style={{ color: 'var(--ink-soft)' }}>{paidPct.toFixed(0)}% lunas</p>
+            </div>
+            <div className="p-5">
+              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>Cicilan / Bulan</p>
+              <p className="num tabular text-2xl font-bold mt-2" style={{ color: 'var(--ink)' }}>{formatCurrency(totalMonthly)}</p>
+              <div className="mt-2 space-y-1">
+                {Object.entries(monthlyByCat).map(([k, v]) => (
+                  <div key={k} className="flex items-center justify-between text-[11px]">
+                    <span style={{ color: 'var(--ink-muted)' }}>{CAT[k]?.label ?? k}</span>
+                    <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(v)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-5">
+              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>Debt-to-Income</p>
+              {dti != null ? (
+                <>
+                  <p className="num tabular text-2xl font-bold mt-2" style={{ color: dti <= 36 ? '#10B981' : dti <= 50 ? '#F59E0B' : '#F43F5E' }}>{dti.toFixed(1)}%</p>
+                  <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>dari pendapatan bulanan</p>
+                  <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(dti, 100)}%`, background: dti <= 36 ? '#10B981' : dti <= 50 ? '#F59E0B' : '#F43F5E' }} />
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>Ideal &lt; 36%</p>
+                </>
+              ) : (
+                <p className="text-sm mt-2" style={{ color: 'var(--ink-soft)' }}>Butuh data pemasukan</p>
+              )}
+            </div>
+          </div>
+
+          {/* Tabel utang */}
+          <div className="s-card overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Daftar Utang</p>
+              <div className="flex flex-wrap gap-1.5">
+                {jenisPresent.map((j) => (
+                  <button key={j} onClick={() => setFilter(j)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                    style={{ background: filter === j ? 'var(--ink)' : 'var(--surface-2)', color: filter === j ? 'var(--surface)' : 'var(--ink-muted)' }}>
+                    {j}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                    <th className="text-left font-medium px-4 py-2.5">Utang</th>
+                    <th className="text-left font-medium px-3 py-2.5">Jenis</th>
+                    <th className="text-right font-medium px-3 py-2.5">Sisa / Pokok</th>
+                    <th className="text-right font-medium px-3 py-2.5">Bunga</th>
+                    <th className="text-right font-medium px-3 py-2.5">Cicilan</th>
+                    <th className="text-right font-medium px-4 py-2.5">Tenor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((d) => {
+                    const meta = CAT[d.category] ?? CAT.consumer
+                    const Icon = meta.icon
+                    const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
+                    const tenor = isRevolving(d.type) ? 'Revolving' : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} bln` : '—')
+                    return (
+                      <tr key={d.id} className="group border-t align-top" style={{ borderColor: 'var(--border-soft)' }}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="size-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: `${meta.color}1A` }}>
+                              <Icon className="size-4" style={{ color: meta.color }} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
+                              <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{getTypeLabel(d.type)} · jatuh tempo {d.due_date ? dayMonth(d.due_date) : '—'}</p>
+                              <div className="mt-1.5 h-1 w-28 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                                <div className="h-full rounded-full" style={{ width: `${paid}%`, background: meta.color }} />
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: `${meta.color}1A`, color: meta.color }}>{meta.label}</span></td>
+                        <td className="px-3 py-3 text-right">
+                          <p className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
+                          <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>dari {formatCurrency(d.principal)}</p>
+                        </td>
+                        <td className="px-3 py-3 text-right num" style={{ color: d.interest_rate >= 18 ? '#F43F5E' : 'var(--ink)' }}>{d.interest_rate}%</td>
+                        <td className="px-3 py-3 text-right">
+                          <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(d.monthly_payment)}</span>
+                          <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition mt-1">
+                            <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)}><Pencil className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>{tenor}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 2 strategi */}
+          <div className="grid gap-3 lg:grid-cols-2">
+            <StrategyPanel title="Strategi Snowball" tagline="Lunasi saldo terkecil dulu. Cepat dapat 'menang' kecil, momentum motivasi." cocok="Cocok kalau butuh dorongan emosional & disiplin baru." result={snowball} accent="#10B981" karakter="Cepat" />
+            <StrategyPanel title="Strategi Avalanche" tagline="Lunasi bunga tertinggi dulu. Total bunga paling hemat secara matematika." cocok="Cocok kalau kuat nahan diri & ngejar efisiensi maksimum." result={avalanche} accent="#8B5CF6" karakter="Efisien" />
+          </div>
+
+          {/* Timeline */}
+          <div className="s-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Timeline Pelunasan</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+                  Estimasi lunas total <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate((tlStrategy === 'snowball' ? snowball : avalanche).months)}</span>
+                  {' · '}total bunga <span className="num font-semibold" style={{ color: '#F43F5E' }}>{formatCurrency(Math.round((tlStrategy === 'snowball' ? snowball : avalanche).totalInterest))}</span>
+                </p>
+              </div>
+              <div className="flex gap-1.5">
+                {(['snowball', 'avalanche'] as const).map((s) => (
+                  <button key={s} onClick={() => setTlStrategy(s)} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
+                    style={{ background: tlStrategy === s ? 'var(--ink)' : 'var(--surface-2)', color: tlStrategy === s ? 'var(--surface)' : 'var(--ink-muted)' }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <PayoffTimeline result={tlStrategy === 'snowball' ? snowball : avalanche} />
+          </div>
+
+          {/* Pembayaran mendatang + Rasio */}
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Pembayaran Mendatang</p>
+              <div className="mt-3 space-y-2.5">
+                {upcoming.map((d, i) => (
+                  <div key={d.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="size-9 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+                        <span className="text-[8px] uppercase leading-none" style={{ color: 'var(--ink-soft)' }}>{d.due_date ? new Date(d.due_date).toLocaleDateString('id-ID', { month: 'short' }) : '—'}</span>
+                        <span className="text-sm font-bold leading-none num" style={{ color: 'var(--ink)' }}>{d.due_date ? new Date(d.due_date).getDate() : ''}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
+                        {i === 0 && <p className="text-[10px]" style={{ color: '#F43F5E' }}>Paling dekat</p>}
+                      </div>
+                    </div>
+                    <span className="num font-semibold text-sm" style={{ color: 'var(--ink)' }}>{formatCurrency(d.monthly_payment)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rasio Utang</p>
+              <div className="mt-3 space-y-3">
+                <RatioRow label="Debt-to-Income (DTI)" ideal="Ideal < 36%" value={dti} good={(v) => v < 36} />
+                <RatioRow label="Front-End (cicilan rumah / pendapatan)" ideal="Ideal < 28%" value={frontEnd} good={(v) => v < 28} />
+                <RatioRow label="Back-End (total cicilan / pendapatan)" ideal="Ideal < 36%" value={dti} good={(v) => v < 36} />
+              </div>
+              <p className="mt-3 text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                Solvabilitas (utang/aset) ada di halaman <Link href="/dashboard/net-worth" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>Net Worth</Link>.
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Utang' : 'Tambah Utang'}</DialogTitle>
+            <DialogTitle>{form.id ? 'Edit Utang' : 'Utang baru'}</DialogTitle>
             <DialogDescription>Isi detail utang kamu.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
@@ -356,67 +354,114 @@ export default function DebtsOverviewPage() {
               <div className="grid gap-1.5">
                 <Label>Kategori</Label>
                 <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v, type: '' })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih kategori">
-                      {(v) => {
-                        const c = DEBT_CATEGORY_LABELS[v as keyof typeof DEBT_CATEGORY_LABELS]
-                        return c ? `${c.emoji} ${c.label}` : 'Pilih kategori'
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(DEBT_CATEGORY_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.emoji} {v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Pilih kategori">{(v) => CAT[v as string]?.label ?? 'Pilih kategori'}</SelectValue></SelectTrigger>
+                  <SelectContent>{Object.entries(CAT).map(([k, v]) => (<SelectItem key={k} value={k}>{v.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
                 <Label>Tipe</Label>
                 <Select value={form.type} onValueChange={(v) => v && setForm({ ...form, type: v })}>
                   <SelectTrigger><SelectValue placeholder="Pilih tipe" /></SelectTrigger>
-                  <SelectContent>
-                    {(DEBT_TYPE_OPTIONS[form.category] ?? []).map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectContent>{(DEBT_TYPE_OPTIONS[form.category] ?? []).map((t) => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label>Pokok Awal</Label>
-                <NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Sisa</Label>
-                <NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />
-              </div>
+              <div className="grid gap-1.5"><Label>Pokok Awal</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>Sisa</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" /></div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="grid gap-1.5">
-                <Label>Bunga %</Label>
-                <Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Cicilan/bln</Label>
-                <NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Jatuh Tempo</Label>
-                <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-              </div>
+              <div className="grid gap-1.5"><Label>Bunga %</Label><Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} /></div>
+              <div className="grid gap-1.5"><Label>Cicilan/bln</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>Jatuh Tempo</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
             <Button onClick={save} disabled={saving || !form.name || !form.type}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {form.id ? 'Simpan' : 'Tambah'}
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? 'Simpan' : 'Tambah'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function StrategyPanel({ title, tagline, cocok, result, accent, karakter }: {
+  title: string; tagline: string; cocok: string; result: PayoffResult; accent: string; karakter: string
+}) {
+  return (
+    <div className="s-card p-5">
+      <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: accent }}>{title}</p>
+      <p className="mt-2 text-base leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{tagline}</p>
+      <p className="text-xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
+      <div className="mt-4 space-y-1.5">
+        {result.order.slice(0, 5).map((o, i) => (
+          <div key={o.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: i === 0 ? `${accent}14` : 'var(--surface-2)' }}>
+            <span className="flex items-center gap-2.5 min-w-0">
+              <span className="num size-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: i === 0 ? accent : 'var(--surface)', color: i === 0 ? '#FFF' : 'var(--ink-muted)' }}>{i + 1}</span>
+              <span className="text-sm truncate" style={{ color: 'var(--ink)' }}>{o.name}</span>
+            </span>
+            <span className="num text-[12px] shrink-0" style={{ color: 'var(--ink-muted)' }}>{o.key}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        <div><p className="text-[10px] uppercase" style={{ color: 'var(--ink-soft)' }}>Lunas</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months)}</p></div>
+        <div><p className="text-[10px] uppercase" style={{ color: 'var(--ink-soft)' }}>Total Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
+        <div><p className="text-[10px] uppercase" style={{ color: 'var(--ink-soft)' }}>Karakter</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
+      </div>
+    </div>
+  )
+}
+
+function PayoffTimeline({ result }: { result: PayoffResult }) {
+  const tl = result.timeline
+  if (tl.length < 2) return <p className="mt-4 text-sm" style={{ color: 'var(--ink-soft)' }}>Timeline belum bisa dihitung (cek cicilan vs bunga).</p>
+  const maxM = tl[tl.length - 1].month
+  const maxR = tl[0].remaining || 1
+  const xs = (m: number) => (m / maxM) * 100
+  const ys = (r: number) => 100 - (r / maxR) * 100
+  const pts = tl.map((p) => `${xs(p.month).toFixed(2)},${ys(p.remaining).toFixed(2)}`).join(' ')
+  const axisMarks = [12, 24, 36, 48, 60].filter((m) => m <= maxM)
+  return (
+    <div className="mt-4">
+      <div className="relative" style={{ height: 130 }}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+          <polygon points={`0,100 ${pts} 100,100`} fill="#F43F5E14" />
+          <polyline points={pts} fill="none" stroke="#F43F5E" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {result.events.map((e) => {
+          const rAt = tl.find((p) => p.month === e.month)?.remaining ?? 0
+          return (
+            <div key={`${e.name}-${e.month}`} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${xs(e.month)}%`, top: `${ys(rAt)}%` }}>
+              <div className="size-2 rounded-full ring-2 ring-[var(--surface)]" style={{ background: '#10B981' }} title={`${e.name} lunas`} />
+            </div>
+          )
+        })}
+      </div>
+      <div className="mt-1.5 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+        <span>Sekarang</span>
+        {axisMarks.map((m) => (<span key={m} className="num">{m} bln</span>))}
+      </div>
+    </div>
+  )
+}
+
+function RatioRow({ label, ideal, value, good }: { label: string; ideal: string; value: number | null; good: (v: number) => boolean }) {
+  const ok = value != null && good(value)
+  return (
+    <div className="flex items-center justify-between">
+      <div className="min-w-0">
+        <p className="text-sm" style={{ color: 'var(--ink)' }}>{label}</p>
+        <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{ideal}</p>
+      </div>
+      {value != null ? (
+        <span className="num font-semibold text-sm flex items-center gap-1.5" style={{ color: ok ? '#10B981' : '#F59E0B' }}>
+          {value.toFixed(1)}% <span className="size-1.5 rounded-full" style={{ background: ok ? '#10B981' : '#F59E0B' }} />
+        </span>
+      ) : <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>—</span>}
     </div>
   )
 }
