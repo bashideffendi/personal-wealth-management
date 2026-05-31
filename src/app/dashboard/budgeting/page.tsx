@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, CalendarDays, Calculator, Copy } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
 import { CategoryManager } from '@/components/budgeting/category-manager'
@@ -668,13 +668,31 @@ export default function BudgetingPage() {
 
         {/* Desktop: title + month-header strip + per-section standalone cards */}
         <div className="hidden md:block space-y-3">
-          <div>
-            <p className="eyebrow">Grid Anggaran 12 Bulan</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-              Klik nama bulan buat rincian · ketik rumus di cell (mis.{' '}
-              <code className="num rounded px-1 py-0.5 text-[10.5px]" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>=500+250</code>
-              ) · tarik pojok cell buat isi cepat ke bulan lain.
-            </p>
+          <div className="rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+            <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5">
+              <div>
+                <p className="eyebrow">Grid Anggaran 12 Bulan</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                  Rencana anggaran per bulan — setiap nilai tersimpan otomatis.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { Icon: CalendarDays, label: <>Klik bulan untuk rincian harian</> },
+                  { Icon: Calculator, label: <>Rumus langsung di sel — <code className="num rounded px-1 text-[10px]" style={{ background: 'var(--surface)', color: 'var(--ink)' }}>=500+250</code></> },
+                  { Icon: Copy, label: <>Tarik sudut sel untuk menyalin antar-bulan</> },
+                ].map((t, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium"
+                    style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                  >
+                    <t.Icon className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
+                    {t.label}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="overflow-x-auto pb-2">
