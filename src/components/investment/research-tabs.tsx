@@ -34,6 +34,7 @@ import {
   verdictStyle,
 } from '@/lib/invest/format'
 import { FinancialStatements } from './financial-statements'
+import { KeyStatsGrid } from './keystats-grid'
 
 interface MetricSeries {
   year: number
@@ -185,7 +186,6 @@ export function ResearchTabs(props: ResearchTabsProps) {
   const latestRevenue = metrics5Y.revenue.at(-1)?.value ?? null
   const latestNetProfit = metrics5Y.netProfit.at(-1)?.value ?? null
   const latestRevYoY = metrics5Y.revenueYoY.at(-1)?.value ?? null
-  const latestNPYoY = metrics5Y.netProfitYoY.at(-1)?.value ?? null
   const latestPER = metrics5Y.perRatio.at(-1)?.value ?? null
   const latestPBV = metrics5Y.pbv.at(-1)?.value ?? null
   const latestROE = metrics5Y.roe.at(-1)?.value ?? null
@@ -209,7 +209,6 @@ export function ResearchTabs(props: ResearchTabsProps) {
     }).slice(0, 24),
     [dividends],
   )
-  const nextDividend = upcomingDividends[0] ?? null
 
   return (
     <Tabs defaultValue="research" className="w-full">
@@ -319,138 +318,15 @@ export function ResearchTabs(props: ResearchTabsProps) {
         )}
       </TabsContent>
 
-      {/* ─── Overview ─── */}
-      <TabsContent value="overview" className="mt-4 space-y-4">
-        {/* Headline 4 stats */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-          <StatCard
-            label={latestYear ? `Revenue FY${latestYear}` : 'Revenue'}
-            value={formatIDRCompact(latestRevenue)}
-            sub={`YoY ${formatPercentValue(latestRevYoY)}`}
-            subColor={signColorVar(latestRevYoY)}
-          />
-          <StatCard
-            label={latestYear ? `Net Profit FY${latestYear}` : 'Net Profit'}
-            value={formatIDRCompact(latestNetProfit)}
-            sub={`Margin ${formatPercentValue(latestNPM)}`}
-            subColor={signColorVar(latestNPYoY)}
-          />
-          <StatCard
-            label="PER / PBV"
-            value={
-              <span>
-                {formatRatio(latestPER)}
-                <span style={{ color: 'var(--ink-soft)' }}> / </span>
-                {formatRatio(latestPBV)}
-              </span>
-            }
-            sub={`ROE ${formatPercentValue(latestROE)} · DER ${formatRatio(latestDER)}`}
-          />
-          <StatCard
-            label="Market Cap"
-            value={formatIDRCompact(latestMarketCap ?? stats?.marketCap ?? null)}
-            sub={
-              stats?.freeFloatPct != null
-                ? `Free Float ${(stats.freeFloatPct * 100).toFixed(2)}%`
-                : oneYear
-                  ? `52W ${formatPrice(oneYear.low)} – ${formatPrice(oneYear.high)}`
-                  : ''
-            }
-          />
-        </div>
-
-        {/* 52W range + extras */}
-        {(oneYear || stats || nextDividend) && (
-          <div
-            className="rounded-xl border p-4"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <div className="grid gap-4 md:grid-cols-4">
-              {oneYear && (
-                <div>
-                  <p className="eyebrow">52-Week Range</p>
-                  <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
-                    {formatPrice(oneYear.low)} – {formatPrice(oneYear.high)}
-                  </p>
-                  {price && oneYear.high && oneYear.low && (
-                    <div className="mt-2 relative h-1 rounded-full" style={{ background: 'var(--surface-3)' }}>
-                      <div
-                        className="absolute inset-y-0 w-0.5"
-                        style={{
-                          left: `${((price - oneYear.low) / (oneYear.high - oneYear.low)) * 100}%`,
-                          background: 'var(--c-mint)',
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-              {stats?.freeFloatPct != null && (
-                <div>
-                  <p className="eyebrow">Free Float</p>
-                  <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
-                    {(stats.freeFloatPct * 100).toFixed(2)}%
-                  </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                    {formatIDRCompact((stats.currentShareOutstanding ?? 0) * stats.freeFloatPct)} shares
-                  </p>
-                </div>
-              )}
-              {stats?.currentShareOutstanding != null && (
-                <div>
-                  <p className="eyebrow">Saham Beredar</p>
-                  <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
-                    {formatIDRCompact(stats.currentShareOutstanding).replace('Rp ', '')}
-                  </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                    EV {formatIDRCompact(stats.enterpriseValue)}
-                  </p>
-                </div>
-              )}
-              {nextDividend && (
-                <div>
-                  <p className="eyebrow">Dividen Mendatang</p>
-                  <p className="num font-semibold mt-1" style={{ color: 'var(--c-mint)' }}>
-                    Rp {formatPrice(nextDividend.dividend)}
-                  </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                    Ex-date {nextDividend.exDate}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Price performance grid */}
-        {pricePerf && (
-          <div
-            className="rounded-xl border p-4"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <p className="eyebrow mb-3">Performance Saham</p>
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
-              {(['1M', '3M', '6M', '1Y', '3Y', '5Y'] as const).map((p) => {
-                const period = pricePerf[p]
-                if (!period) return null
-                const pct = period.percentage
-                return (
-                  <div key={p}>
-                    <p className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                      {p}
-                    </p>
-                    <p
-                      className="num font-bold text-base mt-1"
-                      style={{ color: signColorVar(pct) }}
-                    >
-                      {pct != null ? `${pct >= 0 ? '+' : ''}${(pct * 100).toFixed(1)}%` : '—'}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+      {/* ─── Overview / Key Statistics — real compute dari stocks.json + emitten-stats + quarterly ─── */}
+      <TabsContent value="overview" className="mt-4">
+        <KeyStatsGrid
+          stock={{ sector, currentPrice: price, metrics: stockMetrics }}
+          quarterly={quarterly}
+          emittenStats={stats}
+          pricePerformance={pricePerf}
+          dividendEvents={dividends}
+        />
       </TabsContent>
 
       {/* ─── Valuasi (consensus 8 methods) ─── */}
@@ -714,34 +590,6 @@ export function ResearchTabs(props: ResearchTabsProps) {
 }
 
 // ─── Subcomponents ────────────────────────────────────────────────
-
-function StatCard({
-  label, value, sub, subColor,
-}: {
-  label: string
-  value: React.ReactNode
-  sub?: string
-  subColor?: string
-}) {
-  return (
-    <div
-      className="rounded-xl border p-4"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
-    >
-      <p className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-        {label}
-      </p>
-      <p className="num font-bold text-lg mt-1" style={{ color: 'var(--ink)' }}>
-        {value}
-      </p>
-      {sub && (
-        <p className="text-[11px] mt-0.5" style={{ color: subColor ?? 'var(--ink-muted)' }}>
-          {sub}
-        </p>
-      )}
-    </div>
-  )
-}
 
 function MethodCard({
   label, fairValue, mos,
