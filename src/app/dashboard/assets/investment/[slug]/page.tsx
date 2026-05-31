@@ -72,6 +72,10 @@ export default function InvestmentCategoryPage() {
   const slug = params.slug
   // Virtual slugs stock-idx / stock-us = category `stock` filtered by market.
   const marketFilter: 'idx' | 'us' | null = slug === 'stock-us' ? 'us' : slug === 'stock-idx' ? 'idx' : null
+  // US saham mirror IDX KECUALI fitur yang butuh data fundamental/emiten IDX
+  // (Research/Compare/Watchlist + link research per-baris). Endpoint2 itu
+  // IDX-only (`/api/idx-emiten`, `.JK`) -> 404/empty buat US.
+  const isUS = marketFilter === 'us'
   // useMemo penting: fallback object harus stabil identity-nya, kalau nggak
   // `subcat` berubah tiap render -> useEffect(load) loop -> refresh harga terus.
   const subcat = useMemo(
@@ -81,6 +85,8 @@ export default function InvestmentCategoryPage() {
     [slug, marketFilter],
   )
   const category: Investment['category'] = (INVESTMENT_SLUG_TO_CATEGORY[slug] ?? 'stock') as Investment['category']
+  // Fitur fundamental hanya untuk saham IDX (bukan US).
+  const showStockResearch = category === 'stock' && !isUS
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -381,9 +387,14 @@ export default function InvestmentCategoryPage() {
           <div className="overflow-x-auto -mx-1 px-1 pb-1">
             <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
               <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />Posisi</TabsTrigger>
-              <TabsTrigger value="watchlist"><Star className="size-3.5 mr-1.5" />Watchlist</TabsTrigger>
-              <TabsTrigger value="research"><FileSearch className="size-3.5 mr-1.5" />Research</TabsTrigger>
-              <TabsTrigger value="compare"><GitCompare className="size-3.5 mr-1.5" />Compare</TabsTrigger>
+              {/* Watchlist/Research/Compare butuh data emiten + fundamental IDX -> US off */}
+              {showStockResearch && (
+                <>
+                  <TabsTrigger value="watchlist"><Star className="size-3.5 mr-1.5" />Watchlist</TabsTrigger>
+                  <TabsTrigger value="research"><FileSearch className="size-3.5 mr-1.5" />Research</TabsTrigger>
+                  <TabsTrigger value="compare"><GitCompare className="size-3.5 mr-1.5" />Compare</TabsTrigger>
+                </>
+              )}
               <TabsTrigger value="dividen-pro"><Calendar className="size-3.5 mr-1.5" />Dividen</TabsTrigger>
               <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />Log Manual</TabsTrigger>
               <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />Log Dividen</TabsTrigger>
@@ -506,7 +517,7 @@ export default function InvestmentCategoryPage() {
                   return (
                     <tr key={e.i.id} className="border-b hover:bg-[var(--surface-alt)]/50 transition-colors" style={{ borderColor: 'var(--border-soft)' }}>
                       <Td>
-                        {category === 'stock' && e.i.ticker ? (
+                        {showStockResearch && e.i.ticker ? (
                           <Link
                             href={`/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`}
                             className="flex items-center gap-2.5 group/row"
@@ -522,20 +533,22 @@ export default function InvestmentCategoryPage() {
                           </Link>
                         ) : (
                           <div className="flex items-center gap-2.5">
-                            {category === 'crypto' ? (
+                            {category === 'stock' ? (
+                              <StockLogo ticker={e.i.ticker} size={36} />
+                            ) : category === 'crypto' ? (
                               <CryptoLogo symbol={e.i.ticker} size={36} />
                             ) : null}
                             <Badge
                               className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular"
                               style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                             >
-                              {e.i.ticker ?? '—'}
+                              {category === 'stock' && e.i.ticker ? fromYahooTicker(e.i.ticker) : (e.i.ticker ?? '—')}
                             </Badge>
                           </div>
                         )}
                       </Td>
                       <Td className="font-medium" style={{ color: 'var(--ink)' }}>
-                        {category === 'stock' && e.i.ticker ? (
+                        {showStockResearch && e.i.ticker ? (
                           <Link
                             href={`/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`}
                             className="hover:underline"
@@ -648,15 +661,20 @@ export default function InvestmentCategoryPage() {
 
         {category === 'stock' && (
           <>
-            <TabsContent value="watchlist" className="mt-6">
-              <StockWatchlistTab />
-            </TabsContent>
-            <TabsContent value="research" className="mt-6">
-              <StockResearchTab />
-            </TabsContent>
-            <TabsContent value="compare" className="mt-6">
-              <StockCompareTab />
-            </TabsContent>
+            {/* Fundamental/emiten-bound tabs: IDX-only (US gak punya data) */}
+            {showStockResearch && (
+              <>
+                <TabsContent value="watchlist" className="mt-6">
+                  <StockWatchlistTab />
+                </TabsContent>
+                <TabsContent value="research" className="mt-6">
+                  <StockResearchTab />
+                </TabsContent>
+                <TabsContent value="compare" className="mt-6">
+                  <StockCompareTab />
+                </TabsContent>
+              </>
+            )}
             <TabsContent value="dividen-pro" className="mt-6">
               <StockDividendCalendar />
             </TabsContent>
