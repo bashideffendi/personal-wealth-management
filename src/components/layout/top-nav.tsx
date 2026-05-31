@@ -4,15 +4,12 @@
  * TopNav — editorial horizontal navigation per design handoff 2026-05-28.
  *
  * Layout (3-col grid):
- *   Brand left · 6 primary menus + "Lainnya" dropdown center · search +
- *   AI credits + plus btn + bell + avatar right.
+ *   Brand left · primary menus (+ dropdown utk item ber-children spt Kekayaan)
+ *   + "Lainnya" dropdown center · search + AI credits + plus + bell + avatar right.
  *
  * Active state: background surface-2 + underline indigo 16×2px di bawah.
  * Sticky top, blur backdrop saat scroll. Hide nav center di mobile,
- * BottomTabBar yang handle navigasi utama mobile.
- *
- * Mengganti sidebar.tsx + header.tsx lama. Provider-provider lain (theme,
- * privacy, calm-mode, lock) tetap diakses via AvatarMenu.
+ * drawer yang handle navigasi utama mobile.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -31,8 +28,8 @@ interface TopNavProps {
   user: User
 }
 
-// Primary 6 menus per design (Beranda + 5 daily-use). Sisanya masuk
-// "Lainnya" dropdown.
+// Primary menus (top-level). Kekayaan jadi dropdown (punya children); sisanya
+// flat link. Item lain masuk "Lainnya".
 const PRIMARY_HREFS = new Set<string>([
   '/dashboard',
   '/dashboard/transactions',
@@ -57,12 +54,101 @@ function isActiveItem(pathname: string, item: NavItem): boolean {
   return false
 }
 
+/** Dropdown nav reusable — dipakai buat "Kekayaan" (children) + "Lainnya". */
+function NavDropdown({
+  label, items, pathname, align = 'left',
+}: {
+  label: string
+  items: NavItem[]
+  pathname: string
+  align?: 'left' | 'right'
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const active = items.some((it) => isActiveItem(pathname, it))
+
+  useEffect(() => {
+    if (!open) return
+    function onClick(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onEsc)
+    }
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="relative px-3.5 py-2.5 rounded-xl text-[13.5px] inline-flex items-center gap-1 transition-colors"
+        style={{
+          fontWeight: active ? 600 : 500,
+          color: active || open ? 'var(--ink)' : 'var(--text-mute)',
+          background: active || open ? 'var(--surface-2)' : 'transparent',
+        }}
+      >
+        {label}
+        <ChevronDown
+          className="size-3.5 transition-transform"
+          style={{ transform: open ? 'rotate(180deg)' : 'none' }}
+        />
+        {active && (
+          <span
+            className="absolute left-1/2 -translate-x-1/2"
+            style={{ bottom: -13, width: 16, height: 2, borderRadius: 2, background: 'var(--c-primary)' }}
+          />
+        )}
+      </button>
+
+      {open && (
+        <div
+          className="absolute mt-2 w-[240px] rounded-2xl p-2 overflow-hidden z-50"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--line)',
+            boxShadow: 'var(--shadow-lg)',
+            ...(align === 'right' ? { right: 0 } : { left: 0 }),
+          }}
+        >
+          <div className="flex flex-col gap-0.5">
+            {items.map((it) => {
+              const a = isActiveItem(pathname, it)
+              return (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-2 rounded-lg text-[13px] transition-colors"
+                  style={{
+                    fontWeight: a ? 600 : 500,
+                    color: a ? 'var(--c-primary)' : 'var(--ink-muted)',
+                    background: a ? 'var(--c-primary-soft)' : 'transparent',
+                  }}
+                  onMouseEnter={(e) => { if (!a) e.currentTarget.style.background = 'var(--surface-2)' }}
+                  onMouseLeave={(e) => { if (!a) e.currentTarget.style.background = 'transparent' }}
+                >
+                  {it.label}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
-  const [lainnyaOpen, setLainnyaOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const lainnyaRef = useRef<HTMLDivElement>(null)
 
   // Blur backdrop on scroll (≥ 8px)
   useEffect(() => {
@@ -74,40 +160,10 @@ export function TopNav({ user }: TopNavProps) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Click-outside untuk Lainnya dropdown
-  useEffect(() => {
-    if (!lainnyaOpen) return
-    function onClick(e: MouseEvent) {
-      if (!lainnyaRef.current?.contains(e.target as Node)) {
-        setLainnyaOpen(false)
-      }
-    }
-    function onEsc(e: KeyboardEvent) {
-      if (e.key === 'Escape') setLainnyaOpen(false)
-    }
-    document.addEventListener('mousedown', onClick)
-    document.addEventListener('keydown', onEsc)
-    return () => {
-      document.removeEventListener('mousedown', onClick)
-      document.removeEventListener('keydown', onEsc)
-    }
-  }, [lainnyaOpen])
-
   const primary = NAV_ITEMS.filter((it) => PRIMARY_HREFS.has(it.href))
-  // Children of primary items (e.g. Kekayaan's Aset Likuid / Aset Non-Likuid /
-  // Utang / Dana Darurat) weren't rendered anywhere — only used for active-state
-  // matching — so they were unreachable from the nav. Surface them in "Lainnya".
-  // Skip any child whose href is itself a primary destination (avoids
-  // duplicating Net Worth, which is Kekayaan's own link).
-  const primaryChildren = NAV_ITEMS.filter(
-    (it) => PRIMARY_HREFS.has(it.href) && it.children?.length,
-  )
-    .flatMap((it) => it.children!)
-    .filter((c) => !PRIMARY_HREFS.has(c.href))
-  const lainnya = [
-    ...primaryChildren,
-    ...NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href)),
-  ]
+  // "Lainnya" = item non-primary. Anak Kekayaan (Aset Likuid/Non-Likuid/Utang/
+  // Dana Darurat) TIDAK di sini lagi — sekarang nongol di dropdown "Kekayaan".
+  const lainnya = NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href))
 
   // Trigger Cmd+K palette by dispatching keyboard event (CommandPalette
   // sudah listen ke ⌘K)
@@ -182,6 +238,10 @@ export function TopNav({ user }: TopNavProps) {
           {/* ─── Nav center (desktop) ─── */}
           <nav className="hidden lg:flex items-center justify-center gap-0.5">
             {primary.map((it) => {
+              // Item ber-children (Kekayaan) → dropdown. Sisanya → flat link.
+              if (it.children?.length) {
+                return <NavDropdown key={it.href} label={it.label} items={it.children} pathname={pathname} />
+              }
               const active = isActiveItem(pathname, it)
               return (
                 <Link
@@ -212,67 +272,7 @@ export function TopNav({ user }: TopNavProps) {
             })}
 
             {/* "Lainnya" dropdown */}
-            <div className="relative" ref={lainnyaRef}>
-              <button
-                onClick={() => setLainnyaOpen((o) => !o)}
-                className="px-3.5 py-2.5 rounded-xl text-[13.5px] inline-flex items-center gap-1 transition-colors"
-                style={{
-                  fontWeight: 500,
-                  color: lainnyaOpen ? 'var(--ink)' : 'var(--text-mute)',
-                  background: lainnyaOpen ? 'var(--surface-2)' : 'transparent',
-                }}
-              >
-                Lainnya
-                <ChevronDown
-                  className="size-3.5 transition-transform"
-                  style={{ transform: lainnyaOpen ? 'rotate(180deg)' : 'none' }}
-                />
-              </button>
-
-              {lainnyaOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-[280px] rounded-2xl p-2 overflow-hidden z-50"
-                  style={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--line)',
-                    boxShadow: 'var(--shadow-lg)',
-                  }}
-                >
-                  <p
-                    className="px-3 py-2 text-[10px] font-bold uppercase"
-                    style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}
-                  >
-                    Halaman lainnya
-                  </p>
-                  <div className="flex flex-col gap-0.5">
-                    {lainnya.map((it) => {
-                      const active = isActiveItem(pathname, it)
-                      return (
-                        <Link
-                          key={it.href}
-                          href={it.href}
-                          onClick={() => setLainnyaOpen(false)}
-                          className="px-3 py-2 rounded-lg text-[13px] transition-colors"
-                          style={{
-                            fontWeight: active ? 600 : 500,
-                            color: active ? 'var(--c-primary)' : 'var(--ink-muted)',
-                            background: active ? 'var(--c-primary-soft)' : 'transparent',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!active) e.currentTarget.style.background = 'var(--surface-2)'
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!active) e.currentTarget.style.background = 'transparent'
-                          }}
-                        >
-                          {it.label}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            <NavDropdown label="Lainnya" items={lainnya} pathname={pathname} align="right" />
           </nav>
 
           {/* ─── Mobile menu trigger (replaces center nav on small screens) ─── */}
@@ -458,6 +458,42 @@ export function TopNav({ user }: TopNavProps) {
               </p>
               <div className="flex flex-col gap-0.5 mb-3">
                 {primary.map((it) => {
+                  // Kekayaan (ber-children) → sub-grup: label + anak ter-indent.
+                  if (it.children?.length) {
+                    return (
+                      <div key={it.href} className="mt-1">
+                        <p
+                          className="px-3 py-1.5 text-[13px] font-semibold"
+                          style={{ color: 'var(--ink)' }}
+                        >
+                          {it.label}
+                        </p>
+                        <div
+                          className="ml-3 flex flex-col gap-0.5 border-l pl-2"
+                          style={{ borderColor: 'var(--line)' }}
+                        >
+                          {it.children.map((c) => {
+                            const active = isActiveItem(pathname, c)
+                            return (
+                              <Link
+                                key={c.href}
+                                href={c.href}
+                                onClick={() => setMobileOpen(false)}
+                                className="px-3 py-2 rounded-lg text-[13px] transition-colors"
+                                style={{
+                                  fontWeight: active ? 600 : 500,
+                                  color: active ? 'var(--c-primary)' : 'var(--ink-muted)',
+                                  background: active ? 'var(--c-primary-soft)' : 'transparent',
+                                }}
+                              >
+                                {c.label}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }
                   const active = isActiveItem(pathname, it)
                   return (
                     <Link
