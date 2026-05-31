@@ -177,11 +177,11 @@ export default async function StockResearchPage({ params }: RouteProps) {
         <span style={{ color: 'var(--ink)' }}>Research · {ticker}</span>
       </nav>
 
-      {/* Header — kartu putih: identitas (kiri) · panel harga snapshot (kanan) */}
-      <header className="s-card p-6 sm:p-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        {/* Identitas emiten */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-4">
+      {/* Kartu ringkasan: identitas + harga (atas) · metrik valuasi (bawah) */}
+      <header className="s-card overflow-hidden">
+        {/* Atas — identitas emiten + harga snapshot */}
+        <div className="p-6 sm:p-7 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
             <StockLogo ticker={ticker} size={52} />
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
@@ -196,51 +196,42 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 )}
               </div>
               <p className="text-sm font-medium mt-1" style={{ color: 'var(--ink-muted)' }}>{name}</p>
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                {sector && <span>{sector}</span>}
+                {stock?.board && (<><span aria-hidden>·</span><span>Papan {stock.board}</span></>)}
+                {stock?.listingDate && (<><span aria-hidden>·</span><span>Listing {stock.listingDate}</span></>)}
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-x-8 gap-y-3 mt-6">
-            {sector && (
-              <div><p className="eyebrow">Sektor</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{sector}</p></div>
-            )}
-            {stock?.board && (
-              <div><p className="eyebrow">Papan</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stock.board}</p></div>
-            )}
-            {stock?.listingDate && (
-              <div><p className="eyebrow">Listing</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stock.listingDate}</p></div>
-            )}
-          </div>
-        </div>
 
-        {/* Panel harga snapshot */}
-        <div className="lg:w-[300px] shrink-0 flex flex-col gap-3">
-          <div className="rounded-2xl p-5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
-            <div className="flex items-center justify-between gap-2">
-              <p className="eyebrow">Harga Snapshot</p>
+          <div className="shrink-0 sm:text-right">
+            <p className="eyebrow">Harga Snapshot</p>
+            <p className="num tabular leading-none mt-1" style={{ fontSize: 38, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
+              Rp {formatPrice(price)}
+            </p>
+            <div className="flex items-center gap-2 mt-2 sm:justify-end" style={{ color: 'var(--ink-soft)' }}>
               <a
                 href={`https://stockbit.com/symbol/${ticker}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-0.5 text-[11px] hover:underline"
-                style={{ color: 'var(--ink-soft)' }}
               >
                 Stockbit <ArrowUpRight className="size-2.5" />
               </a>
+              <span className="text-[11px]">· snapshot, bukan real-time</span>
             </div>
-            <p className="num tabular leading-none mt-2.5" style={{ fontSize: 40, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
-              Rp {formatPrice(price)}
-            </p>
-            <p className="text-[11px] mt-2.5" style={{ color: 'var(--ink-soft)' }}>Snapshot terakhir · bukan harga real-time</p>
+            <div className="mt-3 flex sm:justify-end">
+              <ResearchLogButton ticker={ticker} name={name} />
+            </div>
           </div>
-          <ResearchLogButton ticker={ticker} name={name} />
         </div>
-      </header>
 
-      {/* Recommendation strip */}
-      <div className="s-card overflow-hidden grid grid-cols-2 lg:grid-cols-4">
-        <div
-          className="p-5 border-b lg:border-b-0 lg:border-r"
-          style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
-        >
+        {/* Bawah — strip metrik valuasi */}
+        <div className="border-t grid grid-cols-2 lg:grid-cols-4" style={{ borderColor: 'var(--border-soft)' }}>
+          <div
+            className="p-5 border-b lg:border-b-0 lg:border-r"
+            style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
+          >
           <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Rekomendasi · Equity Research</p>
           <p className="text-3xl font-bold mt-1 leading-none" style={{ color: 'var(--c-mint)' }}>
             {fm.recommendation ? String(fm.recommendation).toUpperCase() : '—'}
@@ -275,7 +266,8 @@ export default async function StockResearchPage({ params }: RouteProps) {
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuation?.methodsValid ?? '—'}/{totalMethods} valid</p>
         </div>
-      </div>
+        </div>
+      </header>
 
       <ResearchTabs {...tabsProps} />
     </div>
