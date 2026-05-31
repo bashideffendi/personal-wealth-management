@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowUpRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import {
   getValuation,
@@ -186,9 +185,8 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
       {/* Kartu ringkasan: identitas + harga (atas) · metrik valuasi (bawah) */}
       <header className="s-card overflow-hidden">
-        {/* Atas — identitas · info emiten · harga (3 zona, ngisi lebar penuh) */}
-        <div className="p-6 sm:p-8 flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
-          {/* Identitas */}
+        {/* Atas — identitas + info emiten (kiri) · aksi (kanan) */}
+        <div className="p-6 sm:p-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <StockLogo ticker={ticker} size={58} />
             <div className="min-w-0">
@@ -203,35 +201,23 @@ export default async function StockResearchPage({ params }: RouteProps) {
                   </span>
                 )}
               </div>
-              <p className="font-semibold mt-2" style={{ fontSize: 17, color: 'var(--ink)' }}>{name}</p>
+              <p className="font-semibold mt-1.5" style={{ fontSize: 17, color: 'var(--ink)' }}>{name}</p>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2.5 text-[13px]">
+                {sector && (
+                  <span><span style={{ color: 'var(--ink-soft)' }}>Sektor </span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{sector}</span></span>
+                )}
+                {stock?.board && (
+                  <span><span style={{ color: 'var(--ink-soft)' }}>Papan </span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{stock.board}</span></span>
+                )}
+                {stock?.listingDate && (
+                  <span><span style={{ color: 'var(--ink-soft)' }}>Listing </span><span className="num" style={{ color: 'var(--ink)', fontWeight: 600 }}>{stock.listingDate}</span></span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Info emiten — stat tengah */}
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 lg:px-2">
-            {sector && (
-              <div><p className="eyebrow">Sektor</p><p className="font-semibold mt-1" style={{ fontSize: 15, color: 'var(--ink)' }}>{sector}</p></div>
-            )}
-            {stock?.board && (
-              <div><p className="eyebrow">Papan</p><p className="font-semibold mt-1" style={{ fontSize: 15, color: 'var(--ink)' }}>{stock.board}</p></div>
-            )}
-            {stock?.listingDate && (
-              <div><p className="eyebrow">Listing</p><p className="font-semibold mt-1" style={{ fontSize: 15, color: 'var(--ink)' }}>{stock.listingDate}</p></div>
-            )}
-          </div>
-
-          {/* Aksi — kanan (harga dipegang grafik live di bawah) */}
-          <div className="shrink-0 flex flex-col gap-2.5 lg:items-end">
+          <div className="shrink-0">
             <ResearchLogButton ticker={ticker} name={name} />
-            <a
-              href={`https://stockbit.com/symbol/${ticker}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-              style={{ color: 'var(--ink-muted)' }}
-            >
-              Lihat di Stockbit <ArrowUpRight className="size-3" />
-            </a>
           </div>
         </div>
 
@@ -243,7 +229,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
         {/* Bawah — strip metrik valuasi */}
         <div className="border-t grid grid-cols-2 lg:grid-cols-4" style={{ borderColor: 'var(--border-soft)' }}>
           <div
-            className="p-5 border-b lg:border-b-0 lg:border-r"
+            className="p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r"
             style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
           >
           <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Rekomendasi · Equity Research</p>
@@ -257,7 +243,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>Diperbarui {fm.generated}</p>
           )}
         </div>
-        <div className="p-5 border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow">Fair Value</p>
           <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
             Rp {formatPrice(Number(fm.fair_value_low ?? valuation?.avgFairValue) || null)}
@@ -266,14 +252,14 @@ export default async function StockResearchPage({ params }: RouteProps) {
             <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>– Rp {formatPrice(Number(fm.fair_value_high) || null)}</p>
           )}
         </div>
-        <div className="p-5 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-5 flex flex-col justify-center lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow">Konsensus</p>
           <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
             {valuation?.undervaluedCount ?? '—'}/{totalMethods}
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>metode: undervalued</p>
         </div>
-        <div className="p-5">
+        <div className="p-5 flex flex-col justify-center">
           <p className="eyebrow">Avg MoS</p>
           <p className="num tabular text-2xl font-bold mt-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
             {avgMoS != null ? `${isUp ? '+' : ''}${(avgMoS * 100).toFixed(1)}%` : '—'}
