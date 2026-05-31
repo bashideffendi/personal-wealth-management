@@ -112,19 +112,6 @@ export default async function StockResearchPage({ params }: RouteProps) {
         revenueYoY: [], netProfitYoY: [], perRatio: [], pbv: [], der: [], marketCap: [],
       }
 
-  // Last 12 quarters from quarterly-financials (annotated period like "2025-Q2")
-  function takeLastQuarters(
-    series: Record<string, number> | undefined,
-    n = 12,
-  ): Array<{ period: string; value: number }> {
-    if (!series) return []
-    return Object.entries(series)
-      .map(([period, value]) => ({ period, value }))
-      .filter((q) => Number.isFinite(q.value))
-      .sort((a, b) => a.period.localeCompare(b.period))
-      .slice(-n)
-  }
-
   // Valuasi konsensus 13-metode — live compute dari raw financials.
   // Sector medians dihitung dari seluruh universe (sekali pakai di sini).
   const valuationV2 = stock ? valuate(stock, computeAllSectorMedians(getStocks())) : null
@@ -171,9 +158,6 @@ export default async function StockResearchPage({ params }: RouteProps) {
       : null,
     pricePerf: pricePerf ?? null,
     dividends,
-    quarterlyRevenue: takeLastQuarters(quarterly['Revenue']),
-    quarterlyNetIncome: takeLastQuarters(quarterly['Net Income']),
-    quarterlyEPS: takeLastQuarters(quarterly['EPS']),
     research: research
       ? { frontmatter: research.frontmatter, body: research.body }
       : null,

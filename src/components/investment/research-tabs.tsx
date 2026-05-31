@@ -19,9 +19,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
-} from 'recharts'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -35,6 +32,7 @@ import {
 import { FinancialStatements } from './financial-statements'
 import { KeyStatsGrid } from './keystats-grid'
 import { ValuationConsensus } from './valuation-consensus'
+import { TrendsPanel } from './trends-panel'
 import type { ValuationSummary } from '@/lib/invest/valuation'
 
 interface MetricSeries {
@@ -101,11 +99,6 @@ interface ResearchFrontmatter {
   current_price?: number
 }
 
-interface QuarterlyMetric {
-  period: string // "2025-Q2"
-  value: number
-}
-
 export interface ResearchTabsProps {
   ticker: string
   name: string
@@ -146,9 +139,6 @@ export interface ResearchTabsProps {
     '5Y'?: PricePerf
   } | null
   dividends: DividendEvent[]
-  quarterlyRevenue: QuarterlyMetric[]
-  quarterlyNetIncome: QuarterlyMetric[]
-  quarterlyEPS: QuarterlyMetric[]
   research: {
     frontmatter: ResearchFrontmatter
     body: string
@@ -160,7 +150,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
     ticker, name, sector, price, valuationV2, latestYear, metrics5Y,
     stockMetrics, quarterly,
     stats, pricePerf, dividends,
-    quarterlyRevenue, quarterlyNetIncome, quarterlyEPS, research: initialResearch,
+    research: initialResearch,
   } = props
 
   // Research bisa di-generate ulang di client (lokal state). Initial value
@@ -412,164 +402,15 @@ export function ResearchTabs(props: ResearchTabsProps) {
         )}
       </TabsContent>
 
-      {/* ─── Charts (trends) ─── */}
+      {/* ─── Charts — tren metrik per kategori (Growth/Profitability/Valuation/Health) ─── */}
       <TabsContent value="charts" className="mt-4 space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <ChartCard
-            title="Revenue (5Y Annual)"
-            data={metrics5Y.revenue}
-            color="var(--c-mint)"
-            format="idr-compact"
-          />
-          <ChartCard
-            title="Net Profit (5Y Annual)"
-            data={metrics5Y.netProfit}
-            color="var(--sky-500)"
-            format="idr-compact"
-          />
-          <ChartCard
-            title="EPS (5Y Annual)"
-            data={metrics5Y.eps}
-            color="var(--amber-500)"
-            format="price"
-          />
-          <ChartCard
-            title="ROE (5Y Annual)"
-            data={metrics5Y.roe}
-            color="var(--c-mint)"
-            format="percent"
-          />
-          <ChartCard
-            title="PER (5Y Annual)"
-            data={metrics5Y.perRatio}
-            color="var(--c-coral)"
-            format="ratio"
-          />
-          <ChartCard
-            title="PBV (5Y Annual)"
-            data={metrics5Y.pbv}
-            color="#8B5CF6"
-            format="ratio"
-          />
-        </div>
-
-        {/* Quarterly bars */}
-        {(quarterlyRevenue.length > 0 || quarterlyNetIncome.length > 0) && (
-          <div className="grid gap-3 lg:grid-cols-3">
-            <QuarterlyCard title="Revenue Quarterly" data={quarterlyRevenue} format="idr-compact" />
-            <QuarterlyCard title="Net Income Quarterly" data={quarterlyNetIncome} format="idr-compact" />
-            <QuarterlyCard title="EPS Quarterly" data={quarterlyEPS} format="price" />
-          </div>
-        )}
+        <TrendsPanel metrics={stockMetrics} />
       </TabsContent>
     </Tabs>
   )
 }
 
 // ─── Subcomponents ────────────────────────────────────────────────
-
-function ChartCard({
-  title, data, color, format,
-}: {
-  title: string
-  data: MetricSeries[]
-  color: string
-  format: 'idr-compact' | 'percent' | 'price' | 'ratio'
-}) {
-  if (data.length === 0) {
-    return (
-      <div
-        className="rounded-xl border p-4"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-      >
-        <p className="eyebrow">{title}</p>
-        <p className="text-sm py-8 text-center" style={{ color: 'var(--ink-soft)' }}>
-          Data tidak tersedia
-        </p>
-      </div>
-    )
-  }
-  const fmtVal = (v: number): string => {
-    if (format === 'idr-compact') return formatIDRCompact(v)
-    if (format === 'percent') return formatPercentValue(v)
-    if (format === 'ratio') return formatRatio(v)
-    return formatPrice(v)
-  }
-  return (
-    <div
-      className="rounded-xl border p-4"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-    >
-      <p className="eyebrow mb-2">{title}</p>
-      <ResponsiveContainer width="100%" height={150}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" />
-          <XAxis dataKey="year" tick={{ fontSize: 10, fill: 'var(--ink-muted)' }} />
-          <YAxis tick={{ fontSize: 10, fill: 'var(--ink-muted)' }} tickFormatter={(v) => fmtVal(v)} width={70} />
-          <Tooltip
-            contentStyle={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-            formatter={(v) => fmtVal(Number(v))}
-          />
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={{ r: 3 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
-
-function QuarterlyCard({
-  title, data, format,
-}: {
-  title: string
-  data: QuarterlyMetric[]
-  format: 'idr-compact' | 'price'
-}) {
-  if (data.length === 0) {
-    return (
-      <div
-        className="rounded-xl border p-4"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-      >
-        <p className="eyebrow">{title}</p>
-        <p className="text-sm py-8 text-center" style={{ color: 'var(--ink-soft)' }}>
-          Data quarterly tidak tersedia
-        </p>
-      </div>
-    )
-  }
-  const fmtVal = (v: number): string =>
-    format === 'idr-compact' ? formatIDRCompact(v) : formatPrice(v)
-  return (
-    <div
-      className="rounded-xl border p-4"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-    >
-      <p className="eyebrow mb-2">{title}</p>
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" />
-          <XAxis dataKey="period" tick={{ fontSize: 9, fill: 'var(--ink-muted)' }} angle={-30} textAnchor="end" height={50} />
-          <YAxis tick={{ fontSize: 10, fill: 'var(--ink-muted)' }} tickFormatter={(v) => fmtVal(v)} width={70} />
-          <Tooltip
-            contentStyle={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-            formatter={(v) => fmtVal(Number(v))}
-          />
-          <Bar dataKey="value" fill="var(--c-mint)" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
 
 function ResearchView({
   research,
