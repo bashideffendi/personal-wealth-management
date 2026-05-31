@@ -186,7 +186,7 @@ export default function ContractsPage() {
           className="text-[11px] font-semibold tracking-[0.18em] uppercase"
           style={{ color: 'rgba(255,255,255,0.55)' }}
         >
-          Kontrak & Jatuh Tempo
+          Langganan & Kontrak
         </p>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>

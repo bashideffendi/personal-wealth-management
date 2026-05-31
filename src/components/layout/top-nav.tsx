@@ -39,6 +39,14 @@ const PRIMARY_HREFS = new Set<string>([
   '/dashboard/goals',
 ])
 
+// Item yang disembunyiin dari nav (fitur/route masih ada, cuma gak ditampilin).
+// - Aturan Kategori: redundant sama auto-kategori AI.
+// - Subscription: dilebur ke "Langganan & Kontrak" (/contracts redirect).
+const HIDDEN_HREFS = new Set<string>([
+  '/dashboard/rules',
+  '/dashboard/subscriptions',
+])
+
 function matchesPath(pathname: string, href: string) {
   if (href === '/dashboard') return pathname === '/dashboard'
   return pathname === href || pathname.startsWith(href + '/')
@@ -163,7 +171,7 @@ export function TopNav({ user }: TopNavProps) {
   const primary = NAV_ITEMS.filter((it) => PRIMARY_HREFS.has(it.href))
   // "Lainnya" = item non-primary. Anak Kekayaan (Aset Likuid/Non-Likuid/Utang/
   // Dana Darurat) TIDAK di sini lagi — sekarang nongol di dropdown "Kekayaan".
-  const lainnya = NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href))
+  const lainnya = NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href) && !HIDDEN_HREFS.has(it.href))
 
   // Trigger Cmd+K palette by dispatching keyboard event (CommandPalette
   // sudah listen ke ⌘K)
