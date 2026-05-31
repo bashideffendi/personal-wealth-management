@@ -1,549 +1,337 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import type { EmergencyFund, EmergencyFundLocation } from '@/types'
-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Progress } from '@/components/ui/progress'
-import { Pencil, Trash2, Plus, Loader2, Shield } from 'lucide-react'
-import { EduTip } from '@/components/edu/edu-tip'
+import { Plus, Pencil, Trash2, Loader2, SlidersHorizontal, Check } from 'lucide-react'
+import { WealthHeader } from '@/components/wealth/wealth-ui'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
-
 const JOB_STABILITY_LABELS: Record<JobStability, string> = {
-  stabil: 'Stabil',
-  cukup_stabil: 'Cukup Stabil',
-  tidak_stabil: 'Tidak Stabil',
+  stabil: 'Stabil', cukup_stabil: 'Cukup Stabil', tidak_stabil: 'Tidak Stabil',
+}
+function calculateMultiplier(stability: JobStability, dependents: number): number {
+  if (stability === 'stabil') return dependents === 0 ? 3 : dependents <= 2 ? 4 : 5
+  if (stability === 'cukup_stabil') return dependents === 0 ? 6 : dependents <= 2 ? 7 : 8
+  return dependents === 0 ? 9 : dependents <= 2 ? 10 : 12
 }
 
-function calculateMultiplier(stability: JobStability, dependents: number): number {
-  if (stability === 'stabil') {
-    if (dependents === 0) return 3
-    if (dependents <= 2) return 4
-    return 5
-  }
-  if (stability === 'cukup_stabil') {
-    if (dependents === 0) return 6
-    if (dependents <= 2) return 7
-    return 8
-  }
-  // tidak_stabil
-  if (dependents === 0) return 9
-  if (dependents <= 2) return 10
-  return 12
+const AMBER = '#F59E0B'
+const monthYearNow = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+function etaDate(months: number): string {
+  if (!Number.isFinite(months) || months <= 0) return '—'
+  const d = new Date(); d.setMonth(d.getMonth() + Math.ceil(months))
+  return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
 }
 
 export default function EmergencyFundPage() {
   const supabase = createClient()
-
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [fund, setFund] = useState<EmergencyFund | null>(null)
   const [locations, setLocations] = useState<EmergencyFundLocation[]>([])
 
-  // Calculator form state
   const [jobStability, setJobStability] = useState<JobStability>('stabil')
   const [dependents, setDependents] = useState(0)
   const [monthlyExpenses, setMonthlyExpenses] = useState(0)
   const [targetAmount, setTargetAmount] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Location dialog state
   const [locationDialogOpen, setLocationDialogOpen] = useState(false)
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null)
   const [locationForm, setLocationForm] = useState({ account_name: '', amount: 0 })
 
-  // Account allocations earmarked for EF — sum'd into the dashboard headline.
-  // Pulled from /dashboard/accounts → "Atur Alokasi" dialog.
   type AccAlloc = { account_id: string; amount: number; accounts: { name: string } | null }
   const [accountAllocations, setAccountAllocations] = useState<AccAlloc[]>([])
   const allocatedFromAccounts = accountAllocations.reduce((s, a) => s + a.amount, 0)
 
   const multiplier = calculateMultiplier(jobStability, dependents)
   const recommendation = monthlyExpenses * multiplier
-  const accumulatedFund = locations.reduce((sum, loc) => sum + loc.amount, 0)
-  const deficit = targetAmount - accumulatedFund
-  const progressPercent = targetAmount > 0 ? Math.min(100, Math.round((accumulatedFund / targetAmount) * 100)) : 0
+  const accumulatedFund = locations.reduce((sum, loc) => sum + loc.amount, 0) + allocatedFromAccounts
+  const deficit = Math.max(0, targetAmount - accumulatedFund)
+  const progressPercent = targetAmount > 0 ? Math.min(100, (accumulatedFund / targetAmount) * 100) : 0
+  const coverageMonths = monthlyExpenses > 0 ? accumulatedFund / monthlyExpenses : 0
+  const targetMonths = monthlyExpenses > 0 ? targetAmount / monthlyExpenses : multiplier
 
-  useEffect(() => {
-    fetchData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    setTargetAmount(recommendation)
-  }, [recommendation])
+  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!fund) setTargetAmount(recommendation) }, [recommendation, fund])
 
   async function fetchData() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const [fundRes, locRes, allocRes] = await Promise.all([
       supabase.from('emergency_funds').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('emergency_fund_locations').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id),
-      // Account allocations earmarked for emergency_fund. Tolerant of the
-      // table not existing yet (migration 016 unapplied).
-      supabase
-        .from('account_allocations')
-        .select('account_id, amount, accounts!inner(name)')
-        .eq('user_id', user.id)
-        .eq('purpose_kind', 'emergency_fund')
-        .then(
-          (r: { data: unknown; error: unknown }) => r,
-          () => ({ data: [] as unknown[], error: null as unknown }),
-        ),
+      supabase.from('account_allocations').select('account_id, amount, accounts!inner(name)').eq('user_id', user.id).eq('purpose_kind', 'emergency_fund')
+        .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
     ])
-
     if (fundRes.data) {
       const f = fundRes.data as EmergencyFund
-      setFund(f)
-      setJobStability(f.job_stability as JobStability)
-      setDependents(f.dependents)
-      setMonthlyExpenses(f.monthly_expenses)
-      setTargetAmount(f.target_amount)
+      setFund(f); setJobStability(f.job_stability as JobStability); setDependents(f.dependents)
+      setMonthlyExpenses(f.monthly_expenses); setTargetAmount(f.target_amount)
     }
-
-    if (locRes.data) {
-      setLocations(locRes.data as EmergencyFundLocation[])
-    }
-
-    type Alloc = { account_id: string; amount: number; accounts: { name: string } | null }
-    setAccountAllocations((allocRes.data ?? []) as Alloc[])
-
+    if (locRes.data) setLocations(locRes.data as EmergencyFundLocation[])
+    setAccountAllocations((allocRes.data ?? []) as AccAlloc[])
     setLoading(false)
   }
 
   async function handleSaveSettings() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
+    if (!user) { setSaving(false); return }
     const payload = {
-      user_id: user.id,
-      job_stability: jobStability,
-      dependents,
-      monthly_expenses: monthlyExpenses,
-      target_amount: targetAmount,
-      current_amount: accumulatedFund,
+      user_id: user.id, job_stability: jobStability, dependents,
+      monthly_expenses: monthlyExpenses, target_amount: targetAmount, current_amount: accumulatedFund,
     }
-
-    if (fund) {
-      await supabase.from('emergency_funds').update(payload).eq('id', fund.id)
-    } else {
-      await supabase.from('emergency_funds').insert(payload)
-    }
-
-    setSaving(false)
-    fetchData()
+    if (fund) await supabase.from('emergency_funds').update(payload).eq('id', fund.id)
+    else await supabase.from('emergency_funds').insert(payload)
+    setSaving(false); setSettingsOpen(false); void fetchData()
   }
 
-  function openAddLocation() {
-    setEditingLocationId(null)
-    setLocationForm({ account_name: '', amount: 0 })
-    setLocationDialogOpen(true)
-  }
-
-  function openEditLocation(loc: EmergencyFundLocation) {
-    setEditingLocationId(loc.id)
-    setLocationForm({ account_name: loc.account_name, amount: loc.amount })
-    setLocationDialogOpen(true)
-  }
-
+  function openAddLocation() { setEditingLocationId(null); setLocationForm({ account_name: '', amount: 0 }); setLocationDialogOpen(true) }
+  function openEditLocation(loc: EmergencyFundLocation) { setEditingLocationId(loc.id); setLocationForm({ account_name: loc.account_name, amount: loc.amount }); setLocationDialogOpen(true) }
   async function handleSaveLocation() {
     if (!fund) return
     setSaving(true)
-
-    const payload = {
-      fund_id: fund.id,
-      account_name: locationForm.account_name,
-      amount: locationForm.amount,
-    }
-
-    if (editingLocationId) {
-      await supabase.from('emergency_fund_locations').update(payload).eq('id', editingLocationId)
-    } else {
-      await supabase.from('emergency_fund_locations').insert(payload)
-    }
-
-    setSaving(false)
-    setLocationDialogOpen(false)
-    fetchData()
+    const payload = { fund_id: fund.id, account_name: locationForm.account_name, amount: locationForm.amount }
+    if (editingLocationId) await supabase.from('emergency_fund_locations').update(payload).eq('id', editingLocationId)
+    else await supabase.from('emergency_fund_locations').insert(payload)
+    setSaving(false); setLocationDialogOpen(false); void fetchData()
   }
-
   async function handleDeleteLocation(id: string) {
-    await supabase.from('emergency_fund_locations').delete().eq('id', id)
-    fetchData()
+    await supabase.from('emergency_fund_locations').delete().eq('id', id); void fetchData()
   }
 
-  const today = formatDate(new Date())
+  // Rencana akselerasi — reach target in N months → setoran + ETA.
+  const plans = useMemo(() => {
+    if (deficit <= 0) return []
+    return [
+      { label: 'Sesuai Rencana', months: 12 },
+      { label: 'Agresif', months: 6 },
+      { label: 'Akselerasi', months: 3 },
+    ].map((p) => ({ ...p, monthly: Math.ceil(deficit / p.months), eta: etaDate(p.months), recommended: p.months === 6 }))
+  }, [deficit])
+
+  // Skenario penggunaan — "Saat ini" real; esensial/gaya hidup = estimasi band.
+  const scenarios = monthlyExpenses > 0 ? [
+    { label: 'Esensial saja', note: 'kebutuhan pokok (estimasi −22%)', exp: monthlyExpenses * 0.78 },
+    { label: 'Saat ini', note: 'pengeluaran rata-rata kamu', exp: monthlyExpenses },
+    { label: 'Gaya hidup penuh', note: 'plus diskresi (estimasi +35%)', exp: monthlyExpenses * 1.35 },
+  ].map((s) => ({ ...s, months: s.exp > 0 ? accumulatedFund / s.exp : 0 })) : []
+
+  function openSettings() {
+    setSettingsOpen(true)
+  }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
-        <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>Memuat data...</span>
-      </div>
-    )
+    return <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin" /></div>
   }
 
   return (
     <div className="space-y-6">
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
+      <WealthHeader
+        eyebrow={`Bantalan keuangan · ${monthYearNow}`}
+        title="Dana Darurat"
+        subtitle="Tabungan terpisah buat kejadian tak terduga: kehilangan kerja, masalah kesehatan, perbaikan besar."
       >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-7">
-          <div className="flex items-end gap-4 flex-wrap">
-            <div className="flex-1 min-w-0">
-              <p
-                className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
-              >
-                Proteksi Finansial
-              </p>
-              <div className="mt-2 flex items-end gap-3">
-                <Shield className="h-7 w-7" style={{ color: '#34D399' }} />
-                <h1
-                  className="font-bold tracking-tight flex items-center gap-2"
-                  style={{
-                    fontSize: 'clamp(28px, 4vw, 40px)',
-                    color: '#FFFFFF',
-                    letterSpacing: '-0.035em',
-                  }}
-                >
-                  Dana Darurat
-                  <EduTip topic="emergency-fund" side="bottom" iconSize={18} />
-                </h1>
+        <Button variant="outline" onClick={openSettings}>
+          <SlidersHorizontal className="h-4 w-4" /> Atur target
+        </Button>
+        <Button onClick={openAddLocation} disabled={!fund}>
+          <Plus className="h-4 w-4" /> Setor manual
+        </Button>
+      </WealthHeader>
+
+      {!fund ? (
+        <div className="s-card p-12 text-center">
+          <p className="font-semibold" style={{ color: 'var(--ink)' }}>Belum atur dana darurat</p>
+          <p className="text-sm mt-1 mb-4" style={{ color: 'var(--ink-muted)' }}>
+            Tentukan target berdasarkan pengeluaran & stabilitas kerjamu.
+          </p>
+          <Button onClick={openSettings}><SlidersHorizontal className="h-4 w-4" /> Atur target sekarang</Button>
+        </div>
+      ) : (
+        <>
+          {/* Hero — ring + angka */}
+          <div className="rounded-2xl p-6 sm:p-7" style={{ background: `${AMBER}0F`, border: `1px solid ${AMBER}26` }}>
+            <div className="grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+              <div className="relative mx-auto sm:mx-0 size-36">
+                <svg viewBox="0 0 120 120" className="size-36 -rotate-90">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface-2)" strokeWidth="12" />
+                  <circle cx="60" cy="60" r="52" fill="none" stroke={AMBER} strokeWidth="12" strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="num text-3xl font-bold" style={{ color: AMBER }}>{progressPercent.toFixed(0)}%</span>
+                  <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tercapai</span>
+                </div>
               </div>
-              <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>{today}</p>
-            </div>
-            <div
-              className="rounded-xl px-5 py-3"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
-              }}
-            >
-              <p
-                className="text-[10px] font-bold tracking-[0.14em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
-              >
-                Progress
-              </p>
-              <p
-                className="num tabular mt-1 font-bold"
-                style={{ fontSize: 24, color: '#34D399' }}
-              >
-                {progressPercent}%
-              </p>
+              <div>
+                <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Dana Darurat</p>
+                <p className="num tabular text-3xl sm:text-4xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(accumulatedFund)} <span className="text-lg font-normal" style={{ color: 'var(--ink-soft)' }}>/ {formatCurrency(targetAmount)}</span>
+                </p>
+                <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${progressPercent}%`, background: AMBER }} />
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Cakupan saat ini</p><p className="num font-semibold mt-0.5" style={{ color: '#10B981' }}>{coverageMonths.toFixed(1)} bulan</p></div>
+                  <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Target</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{targetMonths.toFixed(0)} bulan</p></div>
+                  <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Kekurangan</p><p className="num font-semibold mt-0.5" style={{ color: deficit > 0 ? '#F43F5E' : '#10B981' }}>{deficit > 0 ? formatCurrency(deficit) : 'Tercapai'}</p></div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Calculator */}
-        <Card>
-          <CardHeader>
-            <CardTitle style={{ color: 'var(--ink)' }}>Kalkulator Dana Darurat</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Job Stability */}
-            <div className="grid gap-1.5">
-              <Label>Stabilitas Pekerjaan</Label>
-              <Select
-                value={jobStability}
-                onValueChange={(v) => { if (v) setJobStability(v as JobStability) }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih stabilitas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(JOB_STABILITY_LABELS) as JobStability[]).map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {JOB_STABILITY_LABELS[key]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Dependents */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="dependents">Jumlah Tanggungan</Label>
-              <Input
-                id="dependents"
-                type="number"
-                min={0}
-                value={dependents}
-                onChange={(e) => setDependents(Number(e.target.value))}
-              />
-            </div>
-
-            {/* Monthly Expenses */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="monthly-expenses">Pengeluaran Bulanan (Rp)</Label>
-              <NumberInput
-                id="monthly-expenses"
-                value={monthlyExpenses}
-                onChange={(n) => setMonthlyExpenses(n)}
-                placeholder="0"
-              />
-            </div>
-
-            {/* Recommendation */}
-            <div className="rounded-lg p-4 space-y-1 border" style={{ backgroundColor: 'var(--c-mint)', borderColor: 'var(--c-mint)' }}>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>Rekomendasi</span>
-                <span className="text-sm font-semibold tabular" style={{ color: 'var(--c-mint)' }}>{formatCurrency(recommendation)}</span>
+          {/* Rencana akselerasi */}
+          {plans.length > 0 && (
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rencana Akselerasi</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Pilih ritme setoran buat nutup kekurangan {formatCurrency(deficit)}.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {plans.map((p) => (
+                  <div key={p.label} className="rounded-xl p-4 relative" style={{ border: `1px solid ${p.recommended ? AMBER : 'var(--border-soft)'}`, background: p.recommended ? `${AMBER}0F` : 'var(--surface)' }}>
+                    {p.recommended && <span className="absolute -top-2 right-3 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase" style={{ background: AMBER, color: '#FFF' }}>Disarankan</span>}
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{p.label}</p>
+                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{p.months} bln · {p.eta}</p>
+                    </div>
+                    <p className="num text-xl font-bold mt-2" style={{ color: p.recommended ? AMBER : 'var(--ink)' }}>{formatCurrency(p.monthly)}<span className="text-xs font-normal" style={{ color: 'var(--ink-soft)' }}>/bln</span></p>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
-                {multiplier}× pengeluaran bulanan
-              </p>
             </div>
+          )}
 
-            {/* Target */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="target">Target kamu (Rp)</Label>
-              <NumberInput
-                id="target"
-                value={targetAmount}
-                onChange={(n) => setTargetAmount(n)}
-                placeholder="0"
-              />
-            </div>
-
-            {/* Accumulated */}
-            <div className="flex items-center justify-between py-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-              <span className="text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>Dana Terkumpul</span>
-              <span className="text-sm font-semibold tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(accumulatedFund)}</span>
-            </div>
-
-            {/* Deficit */}
-            <div className="flex items-center justify-between py-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-              <span className="text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>Kekurangan Dana</span>
-              <span
-                className="text-sm font-semibold tabular"
-                style={{ color: deficit > 0 ? 'var(--danger)' : 'var(--c-mint)' }}
-              >
-                {formatCurrency(Math.abs(deficit))}
-                {deficit <= 0 && ' (Tercapai)'}
-              </span>
-            </div>
-
-            <Button
-              className="w-full"
-              onClick={handleSaveSettings}
-              disabled={saving}
-            >
-              {saving && <Loader2 className="size-4 animate-spin mr-1" />}
-              Simpan Pengaturan
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Right Column - Locations + new Account Allocations summary */}
-        <div className="space-y-4">
-        {accountAllocations.length > 0 && (
-          <Card style={{ background: 'rgba(16,185,129,0.04)', borderColor: 'rgba(16,185,129,0.20)' }}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base" style={{ color: 'var(--c-mint)' }}>
-                Dari Akun ({formatCurrency(allocatedFromAccounts)})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs mb-2" style={{ color: 'var(--ink-muted)' }}>
-                Akun yang sudah kamu tandai berisi Dana Darurat. Kelola di
-                halaman <Link href="/dashboard/accounts" className="underline">Akun</Link>.
-              </p>
-              <ul className="space-y-1.5">
+          {/* Alokasi + Skenario + Catatan */}
+          <div className="grid gap-3 lg:grid-cols-3">
+            {/* Alokasi */}
+            <div className="s-card p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Alokasi Dana</p>
+                <Button variant="ghost" size="icon-sm" onClick={openAddLocation}><Plus className="h-3.5 w-3.5" /></Button>
+              </div>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Di mana dana ditempatkan.</p>
+              <div className="mt-3 space-y-2">
                 {accountAllocations.map((a, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm">
-                    <span style={{ color: 'var(--ink)' }}>{a.accounts?.name ?? 'Akun'}</span>
-                    <span className="num tabular font-medium" style={{ color: 'var(--ink)' }}>
-                      {formatCurrency(a.amount)}
+                  <div key={`acc-${i}`} className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 min-w-0"><span className="size-2 rounded-full shrink-0" style={{ background: '#10B981' }} /><span className="truncate" style={{ color: 'var(--ink)' }}>{a.accounts?.name ?? 'Akun'}</span><span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>· dari akun</span></span>
+                    <span className="num font-medium shrink-0" style={{ color: 'var(--ink)' }}>{formatCurrency(a.amount)}</span>
+                  </div>
+                ))}
+                {locations.map((loc) => (
+                  <div key={loc.id} className="group flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 min-w-0"><span className="size-2 rounded-full shrink-0" style={{ background: AMBER }} /><span className="truncate" style={{ color: 'var(--ink)' }}>{loc.account_name}</span></span>
+                    <span className="flex items-center gap-1 shrink-0">
+                      <span className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                        <Button variant="ghost" size="icon-sm" onClick={() => openEditLocation(loc)}><Pencil className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteLocation(loc.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                      </span>
+                      <span className="num font-medium" style={{ color: 'var(--ink)' }}>{formatCurrency(loc.amount)}</span>
                     </span>
+                  </div>
+                ))}
+                {accountAllocations.length === 0 && locations.length === 0 && (
+                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Belum ada lokasi. Tandai akun di <Link href="/dashboard/accounts" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>Akun</Link> atau setor manual.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Skenario */}
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Skenario Penggunaan</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Tanpa pemasukan baru, dana nutup berapa lama.</p>
+              <div className="mt-3 space-y-2">
+                {scenarios.length === 0 ? (
+                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Isi pengeluaran bulanan dulu.</p>
+                ) : scenarios.map((s) => (
+                  <div key={s.label} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
+                    <div className="min-w-0"><p className="text-sm" style={{ color: 'var(--ink)' }}>{s.label}</p><p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{s.note}</p></div>
+                    <span className="num font-semibold shrink-0" style={{ color: AMBER }}>{s.months.toFixed(1)} bln</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Catatan */}
+            <div className="s-card p-5">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#8B5CF6' }}>Catatan Klunting</p>
+              <ul className="mt-3 space-y-2.5">
+                {[
+                  'Dana darurat ideal 3–6 bulan pengeluaran (lebih kalau penghasilan gak stabil).',
+                  'Taruh minimal 30% di instrumen instan biar bisa diakses dalam hitungan menit.',
+                  'Jangan campur sama tabungan tujuan lain (DP, liburan).',
+                  'Tinjau ulang target tiap 6 bulan / pas biaya hidup berubah.',
+                ].map((t, i) => (
+                  <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: 'var(--ink-muted)' }}>
+                    <Check className="size-3.5 mt-0.5 shrink-0" style={{ color: '#10B981' }} /> {t}
                   </li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
-        )}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle style={{ color: 'var(--ink)' }}>Lokasi Dana Darurat (Manual)</CardTitle>
-            <Button
-              size="sm"
-              className=""
-              onClick={openAddLocation}
-              disabled={!fund}
-            >
-              <Plus className="size-4 mr-1" />
-              Tambah Lokasi
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {!fund ? (
-              <p className="text-sm text-center py-6" style={{ color: 'var(--ink-soft)' }}>
-                Simpan pengaturan terlebih dahulu untuk menambahkan lokasi dana.
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">Akun</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">Jumlah (Rp)</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {locations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-6" style={{ color: 'var(--ink-soft)' }}>
-                        Belum ada lokasi dana darurat.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    locations.map((loc) => (
-                      <TableRow key={loc.id}>
-                        <TableCell>{loc.account_name}</TableCell>
-                        <TableCell className="text-right font-medium whitespace-nowrap">
-                          {formatCurrency(loc.amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => openEditLocation(loc)}
-                            >
-                              <Pencil className="size-4" style={{ color: 'var(--ink-muted)' }} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => handleDeleteLocation(loc.id)}
-                            >
-                              <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">Progress: {progressPercent}% dari target</span>
-              <span className="text-muted-foreground">{formatCurrency(accumulatedFund)} / {formatCurrency(targetAmount)}</span>
             </div>
-            <Progress value={progressPercent} />
           </div>
-        </CardContent>
-      </Card>
+        </>
+      )}
 
-      {/* Location Dialog */}
+      {/* Settings dialog (kalkulator) */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atur Target Dana Darurat</DialogTitle>
+            <DialogDescription>Rekomendasi dihitung dari stabilitas kerja + tanggungan + pengeluaran.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5">
+              <Label>Stabilitas Pekerjaan</Label>
+              <Select value={jobStability} onValueChange={(v) => v && setJobStability(v as JobStability)}>
+                <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+                <SelectContent>{(Object.keys(JOB_STABILITY_LABELS) as JobStability[]).map((k) => (<SelectItem key={k} value={k}>{JOB_STABILITY_LABELS[k]}</SelectItem>))}</SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Tanggungan</Label><Input type="number" min={0} value={dependents} onChange={(e) => setDependents(Number(e.target.value))} /></div>
+              <div className="grid gap-1.5"><Label>Pengeluaran/bln</Label><NumberInput value={monthlyExpenses} onChange={(n) => setMonthlyExpenses(n)} placeholder="0" /></div>
+            </div>
+            <div className="rounded-lg p-3 flex items-center justify-between" style={{ background: `${AMBER}14` }}>
+              <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Rekomendasi ({multiplier}× pengeluaran)</span>
+              <span className="num text-sm font-semibold" style={{ color: AMBER }}>{formatCurrency(recommendation)}</span>
+            </div>
+            <div className="grid gap-1.5"><Label>Target kamu (Rp)</Label><NumberInput value={targetAmount} onChange={(n) => setTargetAmount(n)} placeholder="0" /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>Batal</Button>
+            <Button onClick={handleSaveSettings} disabled={saving}>{saving && <Loader2 className="size-4 animate-spin" />}Simpan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Location dialog */}
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {editingLocationId ? 'Edit Lokasi' : 'Tambah Lokasi'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingLocationId
-                ? 'Ubah detail lokasi dana darurat.'
-                : 'Tambahkan lokasi penyimpanan dana darurat.'}
-            </DialogDescription>
+            <DialogTitle>{editingLocationId ? 'Edit Lokasi' : 'Setor / Tambah Lokasi'}</DialogTitle>
+            <DialogDescription>Catat di mana dana darurat disimpan + nominalnya.</DialogDescription>
           </DialogHeader>
-
           <div className="grid gap-4 py-2">
-            <div className="grid gap-1.5">
-              <Label htmlFor="loc-account">Akun</Label>
-              <Input
-                id="loc-account"
-                value={locationForm.account_name}
-                onChange={(e) =>
-                  setLocationForm({ ...locationForm, account_name: e.target.value })
-                }
-                placeholder="Nama akun / rekening"
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="loc-amount">Jumlah (Rp)</Label>
-              <NumberInput
-                id="loc-amount"
-                value={locationForm.amount}
-                onChange={(n) => setLocationForm({ ...locationForm, amount: n })}
-                placeholder="0"
-              />
-            </div>
+            <div className="grid gap-1.5"><Label>Akun / lokasi</Label><Input value={locationForm.account_name} onChange={(e) => setLocationForm({ ...locationForm, account_name: e.target.value })} placeholder="Tabungan BCA, Deposito, RD Pasar Uang" /></div>
+            <div className="grid gap-1.5"><Label>Jumlah (Rp)</Label><NumberInput value={locationForm.amount} onChange={(n) => setLocationForm({ ...locationForm, amount: n })} placeholder="0" /></div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLocationDialogOpen(false)}>
-              Batal
-            </Button>
-            <Button
-              className=""
-              onClick={handleSaveLocation}
-              disabled={saving}
-            >
-              {saving && <Loader2 className="size-4 animate-spin mr-1" />}
-              {editingLocationId ? 'Simpan' : 'Tambah'}
-            </Button>
+            <Button variant="outline" onClick={() => setLocationDialogOpen(false)}>Batal</Button>
+            <Button onClick={handleSaveLocation} disabled={saving}>{saving && <Loader2 className="size-4 animate-spin" />}{editingLocationId ? 'Simpan' : 'Tambah'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
