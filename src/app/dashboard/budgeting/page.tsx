@@ -53,6 +53,7 @@ function budgetKey(type: string, category: string, month: number) {
 
 const LS_KEY = 'pwm.budget.enabledCategories'
 const LS_CUSTOM_KEY = 'pwm.budget.customCategories'
+const LS_COLLAPSED_KEY = 'pwm.budget.collapsedSections'
 
 type EnabledCats = Record<BudgetType, string[]>
 
@@ -103,6 +104,29 @@ function loadCustom(): EnabledCats {
   }
 }
 
+type CollapsedMap = Record<BudgetType, boolean>
+
+function noCollapsed(): CollapsedMap {
+  return { income: false, expense: false, saving: false, investment: false }
+}
+
+function loadCollapsed(): CollapsedMap {
+  if (typeof window === 'undefined') return noCollapsed()
+  try {
+    const raw = window.localStorage.getItem(LS_COLLAPSED_KEY)
+    if (!raw) return noCollapsed()
+    const parsed = JSON.parse(raw) as Partial<CollapsedMap>
+    return {
+      income: parsed.income ?? false,
+      expense: parsed.expense ?? false,
+      saving: parsed.saving ?? false,
+      investment: parsed.investment ?? false,
+    }
+  } catch {
+    return noCollapsed()
+  }
+}
+
 export default function BudgetingPage() {
   const supabase = createClient()
   const { hidden: privacyHidden } = usePrivacy()
@@ -113,6 +137,7 @@ export default function BudgetingPage() {
   const [enabled, setEnabled] = useState<EnabledCats>(defaultEnabled)
   const [custom, setCustom] = useState<EnabledCats>(emptyCustom)
   const [selectorOpen, setSelectorOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState<CollapsedMap>(noCollapsed)
 
   // Drawer state — klik header bulan buka drawer per design handoff
   const [drawerMonth, setDrawerMonth] = useState<number | null>(null)
@@ -138,7 +163,18 @@ export default function BudgetingPage() {
   useEffect(() => {
     setEnabled(loadEnabled())
     setCustom(loadCustom())
+    setCollapsed(loadCollapsed())
   }, [])
+
+  function toggleCollapsed(kind: BudgetType) {
+    setCollapsed((prev) => {
+      const next = { ...prev, [kind]: !prev[kind] }
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(LS_COLLAPSED_KEY, JSON.stringify(next))
+      }
+      return next
+    })
+  }
 
   function saveEnabled(next: EnabledCats) {
     setEnabled(next)
@@ -411,16 +447,35 @@ export default function BudgetingPage() {
   const currentYear = new Date().getFullYear()
   const isCurrentYearActive = Number(year) === currentYear
 
-  function renderSectionHeader(label: string, kind: BudgetType) {
+  function renderSectionHeader(label: string, kind: BudgetType, annualTotal: number) {
     const color = KIND_COLOR[kind]
+    const isCollapsed = collapsed[kind]
     return (
       <tr style={{ background: color.bgFirm }}>
         <td
           colSpan={13}
-          className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] bg-inherit"
-          style={{ color: color.textOnFirm }}
+          className="sticky left-0 z-10 border-b border-[color:var(--border)] p-0 bg-inherit"
         >
-          {label}
+          <button
+            type="button"
+            onClick={() => toggleCollapsed(kind)}
+            className="group flex w-full items-center gap-2 px-3 py-2 text-left transition-[filter] hover:brightness-[0.97]"
+            style={{ color: color.textOnFirm }}
+            aria-expanded={!isCollapsed}
+            title={isCollapsed ? `Tampilkan ${label}` : `Sembunyikan ${label}`}
+          >
+            <ChevronDown
+              className="size-3.5 shrink-0 transition-transform duration-150"
+              style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', opacity: 0.7 }}
+            />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em]">{label}</span>
+            <span
+              className="num tabular ml-auto text-[11px] font-bold tabular-nums"
+              title={privacyHidden ? '••••••' : formatCurrency(annualTotal)}
+            >
+              {isCollapsed ? formatCompactCurrency(annualTotal) : ''}
+            </span>
+          </button>
         </td>
       </tr>
     )
@@ -579,12 +634,16 @@ export default function BudgetingPage() {
                       {SHORT_MONTHS.map((m) => <col key={m} />)}
                     </colgroup>
                     <tbody>
-                      {renderSectionHeader(sec.label, sec.kind)}
-                      {sec.visible.map((c, i) =>
-                        renderCategoryRow(sec.kind, c, i % 2 === 0 ? 'bg-[var(--surface)]' : sec.oddBg),
+                      {renderSectionHeader(sec.label, sec.kind, sectionTotal(sec.visible, sec.kind))}
+                      {!collapsed[sec.kind] && (
+                        <>
+                          {sec.visible.map((c, i) =>
+                            renderCategoryRow(sec.kind, c, i % 2 === 0 ? 'bg-[var(--surface)]' : sec.oddBg),
+                          )}
+                          {renderTotalRow(sec.totalLabel, sec.visible, sec.kind, sec.totalBg)}
+                          {sec.percent && renderPercentRow()}
+                        </>
                       )}
-                      {renderTotalRow(sec.totalLabel, sec.visible, sec.kind, sec.totalBg)}
-                      {sec.percent && renderPercentRow()}
                     </tbody>
                   </table>
                 </div>
