@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  // Bundle hanya export yang dipake dari paket barrel berat (recharts/date-fns)
+  // -> First Load JS lebih kecil, load lebih cepat. (lucide-react udah auto.)
+  experimental: {
+    optimizePackageImports: ['recharts', 'date-fns', 'lucide-react'],
+  },
   images: {
     // External logo sources used by CryptoLogo + future avatar fetchers.
     // CORS is open on these; we use unoptimized=true on <Image> so Next
