@@ -179,13 +179,14 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
       {/* Kartu ringkasan: identitas + harga (atas) · metrik valuasi (bawah) */}
       <header className="s-card overflow-hidden">
-        {/* Atas — identitas emiten + harga snapshot */}
-        <div className="p-6 sm:p-7 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        {/* Atas — identitas · info emiten · harga (3 zona, ngisi lebar penuh) */}
+        <div className="p-6 sm:p-8 flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+          {/* Identitas */}
           <div className="flex items-center gap-4 min-w-0">
-            <StockLogo ticker={ticker} size={52} />
+            <StockLogo ticker={ticker} size={58} />
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="font-mono font-bold tracking-tight" style={{ fontSize: 26, color: 'var(--ink)' }}>{ticker}</span>
+                <span className="font-mono font-bold tracking-tight" style={{ fontSize: 32, lineHeight: 1, color: 'var(--ink)' }}>{ticker}</span>
                 {verdict && (
                   <span
                     className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
@@ -195,21 +196,30 @@ export default async function StockResearchPage({ params }: RouteProps) {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium mt-1" style={{ color: 'var(--ink-muted)' }}>{name}</p>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                {sector && <span>{sector}</span>}
-                {stock?.board && (<><span aria-hidden>·</span><span>Papan {stock.board}</span></>)}
-                {stock?.listingDate && (<><span aria-hidden>·</span><span>Listing {stock.listingDate}</span></>)}
-              </div>
+              <p className="font-semibold mt-2" style={{ fontSize: 17, color: 'var(--ink)' }}>{name}</p>
             </div>
           </div>
 
-          <div className="shrink-0 sm:text-right">
+          {/* Info emiten — stat tengah */}
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 lg:px-2">
+            {sector && (
+              <div><p className="eyebrow">Sektor</p><p className="font-semibold mt-1" style={{ fontSize: 15, color: 'var(--ink)' }}>{sector}</p></div>
+            )}
+            {stock?.board && (
+              <div><p className="eyebrow">Papan</p><p className="font-semibold mt-1" style={{ fontSize: 15, color: 'var(--ink)' }}>{stock.board}</p></div>
+            )}
+            {stock?.listingDate && (
+              <div><p className="eyebrow">Listing</p><p className="font-semibold mt-1" style={{ fontSize: 15, color: 'var(--ink)' }}>{stock.listingDate}</p></div>
+            )}
+          </div>
+
+          {/* Harga snapshot — kanan */}
+          <div className="shrink-0 lg:text-right">
             <p className="eyebrow">Harga Snapshot</p>
-            <p className="num tabular leading-none mt-1" style={{ fontSize: 38, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
+            <p className="num tabular leading-none mt-1.5" style={{ fontSize: 44, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.04em' }}>
               Rp {formatPrice(price)}
             </p>
-            <div className="flex items-center gap-2 mt-2 sm:justify-end" style={{ color: 'var(--ink-soft)' }}>
+            <div className="flex items-center gap-2 mt-2.5 lg:justify-end" style={{ color: 'var(--ink-soft)' }}>
               <a
                 href={`https://stockbit.com/symbol/${ticker}`}
                 target="_blank"
@@ -220,7 +230,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
               </a>
               <span className="text-[11px]">· snapshot, bukan real-time</span>
             </div>
-            <div className="mt-3 flex sm:justify-end">
+            <div className="mt-3 flex lg:justify-end">
               <ResearchLogButton ticker={ticker} name={name} />
             </div>
           </div>
