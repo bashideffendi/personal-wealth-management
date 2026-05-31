@@ -78,6 +78,26 @@ export function verdictStyle(v: string | null | undefined): { bg: string; fg: st
   return { bg: 'var(--surface-2)', fg: 'var(--ink-muted)' }
 }
 
+const BULAN_ID = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+]
+
+/**
+ * Format tanggal ISO 'YYYY-MM-DD' → '31 Mei 2000' (nama bulan lengkap Indonesia).
+ * Guard: input kosong/invalid → balikin raw string apa adanya, atau '—' kalau kosong.
+ */
+export function formatTanggalID(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso.trim())
+  if (!m) return iso
+  const [, yStr, moStr, dStr] = m
+  const monthIdx = parseInt(moStr, 10) - 1
+  const day = parseInt(dStr, 10)
+  if (monthIdx < 0 || monthIdx > 11 || day < 1 || day > 31) return iso
+  return `${day} ${BULAN_ID[monthIdx]} ${yStr}`
+}
+
 /** Indonesia date format: 15 Mei 2026. */
 export function formatIDXDate(value: string | null | undefined): string {
   if (!value) return '—'

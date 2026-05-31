@@ -206,7 +206,6 @@ export function StockWatchlistTab() {
         <Button
           onClick={() => setAddOpen(true)}
           disabled={pending}
-          style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
           <Plus className="size-4" /> Tambah saham
         </Button>
@@ -385,7 +384,6 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <Button
         onClick={onAdd}
         className="mt-4"
-        style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
       >
         <Plus className="size-4" /> Tambah saham pertama
       </Button>
@@ -571,7 +569,7 @@ function EditNoteDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
-          <Button onClick={save} disabled={saving} style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}>
+          <Button onClick={save} disabled={saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
             Simpan
           </Button>

@@ -15,7 +15,7 @@ import {
 } from '@/lib/invest/stocks'
 import { valuate, computeAllSectorMedians } from '@/lib/invest/valuation'
 import { getEmiten } from '@/lib/invest/emitten'
-import { formatPrice, verdictStyle } from '@/lib/invest/format'
+import { formatPrice, formatTanggalID, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
 import { ResearchLogButton } from '@/components/investment/research-log-button'
 import { StockLogo } from '@/components/investment/stock-logo'
@@ -226,7 +226,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
                   <span><span style={{ color: 'var(--ink-soft)' }}>Papan </span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{stock.board}</span></span>
                 )}
                 {stock?.listingDate && (
-                  <span><span style={{ color: 'var(--ink-soft)' }}>Listing </span><span className="num" style={{ color: 'var(--ink)', fontWeight: 600 }}>{stock.listingDate}</span></span>
+                  <span><span style={{ color: 'var(--ink-soft)' }}>Listing </span><span className="num" style={{ color: 'var(--ink)', fontWeight: 600 }}>{formatTanggalID(stock.listingDate)}</span></span>
                 )}
               </div>
             </div>
