@@ -7,17 +7,28 @@
  * (lihat ownership-tab.tsx yang import lewat next/dynamic ssr:false — mirror dari
  * pola Soto map di src/components/map/).
  *
- * Node: perusahaan = emerald (var(--c-mint)) label=symbol · investor = abu
- * (var(--ink-muted)) label=name · emiten yang lagi dibuka di-highlight (gede +
- * var(--c-primary)). Ukuran node ∝ degree. Edge: tebal ∝ pct, hover munculin pct%.
+ * Node: perusahaan = emerald (#10B981) label=symbol · investor = abu (#71717A)
+ * label=name · emiten yang lagi dibuka di-highlight (gede + ink #0A0A0F).
+ * Ukuran node ∝ degree (clamp 6–20). Edge: tebal ∝ pct, hover munculin pct%.
+ *
+ * ─── Anti flash-then-blank ───
+ * Tab "Keterikatan" pakai base-ui TabsPanel: pas panel ke-reveal ada transition,
+ * dan container sempat ke-ukur 0px / transient size. Kalau Sigma init di situ +
+ * ada loop re-fit (ResizeObserver), graf sempat ke-gambar lalu ke-blank lagi pas
+ * re-fit nge-normalisasi ke viewport kosong.
+ *
+ * Fix: (1) Sigma cuma di-MOUNT pas host element beneran `visible && sized`
+ * (IntersectionObserver) → container udah punya ukuran final, auto-fit default
+ * Sigma langsung bener. (2) Build graph + forceAtlas2 SEKALI (useMemo deps stabil).
+ * (3) Fit kamera SEKALI (single rAF) — gak ada loop re-fit. Re-fit cuma pas window
+ * resize beneran, debounced, dan cuma kalau width/height > 0.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Graph from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import {
   SigmaContainer,
-  useLoadGraph,
   useRegisterEvents,
   useSigma,
 } from '@react-sigma/core'
@@ -39,6 +50,8 @@ const C = {
   white: '#FFFFFF',
 } as const
 
+const GRAPH_HEIGHT = 440
+
 interface GraphData {
   network: OwnershipNetwork
   activeId: string | null
@@ -58,7 +71,8 @@ function nodeLabel(n: OwnershipNetworkNode): string {
 
 /**
  * Bangun graphology Graph dari network, set warna/ukuran/posisi awal, lalu
- * jalanin forceatlas2. Dipisah biar gampang di-memo.
+ * jalanin forceatlas2. Dipanggil SEKALI lewat useMemo (deps stabil) — JANGAN
+ * tiap render, biar gak ada reload-flicker.
  */
 function buildGraph(network: OwnershipNetwork, activeId: string | null): Graph {
   const graph = new Graph({ multi: false, type: 'directed' })
@@ -150,72 +164,56 @@ function buildGraph(network: OwnershipNetwork, activeId: string | null): Graph {
   return graph
 }
 
-/** Inner: load graph ke Sigma sekali graph siap. */
-function LoadGraph({ graph }: { graph: Graph }) {
-  const loadGraph = useLoadGraph()
-  useEffect(() => {
-    loadGraph(graph, true)
-  }, [loadGraph, graph])
-  return null
-}
-
 /**
- * Inner: setelah graph ke-load, FIT kamera ke node.
+ * Inner: fit kamera SEKALI setelah Sigma mount (di container yang udah sized),
+ * lalu re-fit HANYA pas window resize beneran (debounced, guard width/height>0).
  *
- * Ini fix utama buat "blank canvas": tab Keterikatan mount HIDDEN dulu baru
- * show, jadi container Sigma sempat ke-ukur 0px → node ter-normalisasi ke
- * viewport kosong & ke-render di luar layar. Solusi: tunggu container ke-layout
- * (requestAnimationFrame) lalu `resize(true)` (ukur ulang container yang udah
- * visible) → `refresh()` → `getCamera().animatedReset()` (reset = fit ke extent
- * graph yang udah dinormalisasi Sigma ke kotak [0,1]).
+ * Karena SigmaContainer baru di-mount pas host `visible && sized` (lihat
+ * OwnershipGraph), container-nya udah punya ukuran final di sini — auto-fit
+ * default Sigma harusnya udah bener; rAF + animatedReset cuma mastiin centered.
+ * SENGAJA gak pakai ResizeObserver re-fit loop (itu yang bikin flash-then-blank:
+ * observer re-fire ke transient/zero size → animatedReset ke viewport kosong).
  */
-function FitCamera({ graph }: { graph: Graph }) {
+function FitCamera() {
   const sigma = useSigma()
 
   useEffect(() => {
-    let raf1 = 0
-    let raf2 = 0
+    let raf = 0
     let cancelled = false
 
-    const fit = () => {
+    const fitOnce = () => {
       if (cancelled || sigma.getGraph().order === 0) return
-      // Ukur ulang container (sekarang udah visible & punya tinggi) lalu render.
-      sigma.resize(true)
       sigma.refresh()
       // animatedReset balikin kamera ke {x:.5,y:.5,ratio:1} = center extent graph.
       sigma.getCamera().animatedReset({ duration: 0 })
     }
 
-    // Double-rAF: frame-1 nunggu commit DOM, frame-2 nunggu container kebagian
-    // ukuran final (penting pas tab baru di-reveal dari hidden).
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(fit)
-    })
+    // Single rAF: nunggu commit DOM/layout sekali, terus fit. TANPA loop.
+    raf = requestAnimationFrame(fitOnce)
 
-    // Re-fit kalau container berubah ukuran (mis. tab di-reveal belakangan,
-    // atau resize window). ResizeObserver lebih reliable daripada nebak timing.
-    const el = sigma.getContainer()
-    let ro: ResizeObserver | null = null
-    if (typeof ResizeObserver !== 'undefined' && el) {
-      let first = true
-      ro = new ResizeObserver(() => {
-        // Skip callback pertama (initial observe) — udah di-handle rAF di atas.
-        if (first) {
-          first = false
-          return
-        }
-        fit()
-      })
-      ro.observe(el)
+    // Re-fit cuma pas WINDOW resize beneran (bukan reveal awal, bukan size 0),
+    // debounced ~200ms biar gak spam pas drag-resize.
+    let debounce: ReturnType<typeof setTimeout> | null = null
+    const onResize = () => {
+      if (debounce) clearTimeout(debounce)
+      debounce = setTimeout(() => {
+        if (cancelled) return
+        const el = sigma.getContainer()
+        if (!el || el.clientWidth <= 0 || el.clientHeight <= 0) return
+        sigma.resize()
+        sigma.refresh()
+        sigma.getCamera().animatedReset({ duration: 0 })
+      }, 200)
     }
+    window.addEventListener('resize', onResize)
 
     return () => {
       cancelled = true
-      cancelAnimationFrame(raf1)
-      cancelAnimationFrame(raf2)
-      ro?.disconnect()
+      cancelAnimationFrame(raf)
+      if (debounce) clearTimeout(debounce)
+      window.removeEventListener('resize', onResize)
     }
-  }, [sigma, graph])
+  }, [sigma])
 
   return null
 }
@@ -268,6 +266,41 @@ function GraphEvents({
 export default function OwnershipGraph({ network, activeId }: GraphData) {
   const [tooltip, setTooltip] = useState<{ info: EdgeInfo; x: number; y: number } | null>(null)
 
+  // Host visibility gate: Sigma cuma di-mount pas panel beneran kelihatan & udah
+  // punya ukuran (>0px). Ini bikin Sigma init di container yang sized → auto-fit
+  // default-nya langsung bener, gak ada init-di-0px lalu re-fit yang nge-blank.
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = hostRef.current
+    if (!el) return
+    if (typeof IntersectionObserver === 'undefined') {
+      // Fallback: kalau IO gak ada, langsung tampil (best-effort).
+      setVisible(true)
+      return
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const r = entry.boundingClientRect
+          if (entry.isIntersecting && r.width > 0 && r.height > 0) {
+            setVisible(true)
+            io.disconnect() // sekali kelihatan, cukup — gak perlu observe lagi.
+            break
+          }
+        }
+      },
+      { threshold: 0.01 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  // Build graph + forceAtlas2 SEKALI. Deps = referensi network + activeId yang
+  // STABIL dari props (server-fetched, gak di-recreate tiap render parent), jadi
+  // ini gak re-run pas parent re-render (mis. regenerate research).
   const graph = useMemo(() => buildGraph(network, activeId), [network, activeId])
 
   const handleHover = (info: EdgeInfo | null, x: number, y: number) => {
@@ -280,7 +313,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
       <div
         className="flex items-center justify-center rounded-xl border text-sm"
         style={{
-          height: 440,
+          height: GRAPH_HEIGHT,
           background: 'var(--surface)',
           borderColor: 'var(--border-soft)',
           color: 'var(--ink-soft)',
@@ -292,31 +325,45 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
   }
 
   return (
-    <div className="relative">
-      <SigmaContainer
-        graph={graph}
-        style={{
-          height: 440,
-          width: '100%',
-          borderRadius: 12,
-          background: '#FFFFFF',
-        }}
-        settings={{
-          labelColor: { color: C.label },
-          labelSize: 12,
-          labelWeight: '600',
-          labelFont: 'var(--font-sans, system-ui), sans-serif',
-          defaultEdgeType: 'arrow',
-          renderEdgeLabels: false,
-          zIndex: true,
-          minCameraRatio: 0.2,
-          maxCameraRatio: 4,
-        }}
-      >
-        <LoadGraph graph={graph} />
-        <FitCamera graph={graph} />
-        <GraphEvents onHover={handleHover} />
-      </SigmaContainer>
+    <div ref={hostRef} className="relative" style={{ height: GRAPH_HEIGHT, width: '100%' }}>
+      {visible ? (
+        <SigmaContainer
+          graph={graph}
+          style={{
+            height: GRAPH_HEIGHT,
+            width: '100%',
+            borderRadius: 12,
+            background: '#FFFFFF',
+          }}
+          settings={{
+            labelColor: { color: C.label },
+            labelSize: 12,
+            labelWeight: '600',
+            labelFont: 'var(--font-sans, system-ui), sans-serif',
+            defaultEdgeType: 'arrow',
+            renderEdgeLabels: false,
+            zIndex: true,
+            minCameraRatio: 0.2,
+            maxCameraRatio: 4,
+          }}
+        >
+          <FitCamera />
+          <GraphEvents onHover={handleHover} />
+        </SigmaContainer>
+      ) : (
+        // Placeholder dengan dimensi yang sama biar IO langsung lihat tinggi >0.
+        <div
+          className="flex items-center justify-center rounded-xl text-xs"
+          style={{
+            height: GRAPH_HEIGHT,
+            width: '100%',
+            background: '#FFFFFF',
+            color: 'var(--ink-soft)',
+          }}
+        >
+          Menyiapkan graf…
+        </div>
+      )}
 
       {/* Legend */}
       <div
