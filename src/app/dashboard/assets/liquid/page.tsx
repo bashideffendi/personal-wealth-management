@@ -21,12 +21,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import {
-  Plus, Pencil, Trash2, Loader2, AlertTriangle, RefreshCw, Wallet, Zap,
-  TrendingUp, HandCoins, Sparkles,
-} from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
-import { WealthHeader, StatCard } from '@/components/wealth/wealth-ui'
+import { WealthHero } from '@/components/wealth/wealth-ui'
 
 // Likuiditas tier (perkiraan dari jenis aset — model belum simpan per-aset).
 type Tier = 'instan' | 't1' | 't30' | 't90'
@@ -151,18 +148,25 @@ export default function LiquidAssetsPage() {
 
   return (
     <div className="space-y-6">
-      <WealthHeader
+      <WealthHero
         eyebrow={`${accountCount} aset likuid`}
         title="Aset Likuid"
-        subtitle="Aset yang bisa dicairkan cepat: kas, setara kas, dan piutang."
-      >
-        <Button variant="outline" onClick={() => void load()}>
-          <RefreshCw className="h-4 w-4" /> Sinkronkan
-        </Button>
-        <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Tambah aset
-        </Button>
-      </WealthHeader>
+        accent="#10B981"
+        headline={{
+          label: 'Total Aset Likuid',
+          value: formatCurrency(total),
+          sub: `${accountCount} akun aktif · bisa dicairkan cepat`,
+        }}
+        secondary={[
+          { label: 'Cair Instan', value: formatCurrency(stats.instan), color: '#10B981' },
+          { label: 'Menghasilkan Bunga', value: formatCurrency(stats.berbunga), color: '#F59E0B' },
+          { label: 'Piutang', value: formatCurrency(stats.piutang), color: '#F43F5E' },
+        ]}
+        actions={<>
+          <Button variant="outline" onClick={() => void load()}><RefreshCw className="h-4 w-4" /> Sinkronkan</Button>
+          <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Tambah aset</Button>
+        </>}
+      />
 
       {duplicates.length > 0 && (
         <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: '#F59E0B14', border: '1px solid #F59E0B33' }}>
@@ -182,17 +186,6 @@ export default function LiquidAssetsPage() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : (
         <>
-          {/* 4 stat cards */}
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Total Aset Likuid" value={formatCurrency(total)} icon={Wallet} sub={`${accountCount} akun aktif`} />
-            <StatCard label="Cair Instan" value={formatCurrency(stats.instan)} icon={Zap} color="#10B981" chip="#10B9811A"
-              sub={`${total > 0 ? ((stats.instan / total) * 100).toFixed(0) : 0}% dari total likuid`} />
-            <StatCard label="Menghasilkan Bunga" value={formatCurrency(stats.berbunga)} icon={TrendingUp} color="#F59E0B" chip="#F59E0B1A"
-              sub={`Yield rata-rata ${stats.weighted.toFixed(2)}%`} />
-            <StatCard label="Piutang" value={formatCurrency(stats.piutang)} icon={HandCoins} color="#F43F5E" chip="#F43F5E1A"
-              sub={`${entries.filter((e) => e.type === 'receivable').length} piutang aktif`} />
-          </div>
-
           {/* Tabel rincian */}
           <div className="s-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>

@@ -20,7 +20,7 @@ import {
   Plus, Pencil, Trash2, Loader2, PartyPopper, Receipt, Home, CreditCard, Banknote,
   type LucideIcon,
 } from 'lucide-react'
-import { WealthHeader } from '@/components/wealth/wealth-ui'
+import { WealthHero } from '@/components/wealth/wealth-ui'
 
 const CAT: Record<string, { label: string; color: string; icon: LucideIcon }> = {
   consumer:  { label: 'Konsumtif',      color: '#F43F5E', icon: CreditCard },
@@ -124,12 +124,6 @@ export default function DebtsOverviewPage() {
   const housingMonthly = active.filter((d) => d.category === 'long_term').reduce((s, d) => s + d.monthly_payment, 0)
   const frontEnd = monthlyIncome > 0 ? (housingMonthly / monthlyIncome) * 100 : null
 
-  const monthlyByCat = useMemo(() => {
-    const out: Record<string, number> = {}
-    for (const d of active) out[d.category] = (out[d.category] || 0) + d.monthly_payment
-    return out
-  }, [active])
-
   const snowball = useMemo(() => simulatePayoff(active, 'snowball'), [active])
   const avalanche = useMemo(() => simulatePayoff(active, 'avalanche'), [active])
 
@@ -139,18 +133,27 @@ export default function DebtsOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <WealthHeader
+      <WealthHero
         eyebrow={`${active.length} utang aktif`}
         title="Utang & Strategi Pelunasan"
-        subtitle="Konsolidasi semua kewajiban, plus dua strategi pelunasan buat dibandingkan."
-      >
-        <Link href="/dashboard/debts/payments">
-          <Button variant="outline"><Receipt className="h-4 w-4" /> Pembayaran</Button>
-        </Link>
-        <Button onClick={() => { setForm(emptyForm); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Utang baru
-        </Button>
-      </WealthHeader>
+        accent="#F43F5E"
+        headline={{
+          label: 'Sisa Total Utang',
+          value: totalRemaining > 0 ? `−${formatCurrency(totalRemaining)}` : formatCurrency(0),
+          color: totalRemaining > 0 ? '#F43F5E' : '#10B981',
+          sub: totalPrincipal > 0
+            ? (<>Dibayar <span className="num" style={{ color: '#10B981' }}>{formatCurrency(totalPaid)}</span> dari pokok <span className="num">{formatCurrency(totalPrincipal)}</span> · {paidPct.toFixed(0)}% lunas</>)
+            : 'Konsolidasi semua kewajiban + dua strategi pelunasan buat dibandingkan.',
+        }}
+        secondary={active.length > 0 ? [
+          { label: 'Cicilan / Bulan', value: formatCurrency(totalMonthly) },
+          { label: 'Debt-to-Income', value: dti != null ? `${dti.toFixed(1)}%` : '—', color: dti == null ? undefined : dti <= 36 ? '#10B981' : dti <= 50 ? '#F59E0B' : '#F43F5E' },
+        ] : []}
+        actions={<>
+          <Link href="/dashboard/debts/payments"><Button variant="outline"><Receipt className="h-4 w-4" /> Pembayaran</Button></Link>
+          <Button onClick={() => { setForm(emptyForm); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Utang baru</Button>
+        </>}
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -162,48 +165,6 @@ export default function DebtsOverviewPage() {
         </div>
       ) : (
         <>
-          {/* Stat header — 3 cell dalam 1 card */}
-          <div className="s-card grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: 'var(--border-soft)' }}>
-            <div className="p-5">
-              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: '#F43F5E' }}>Sisa Total Utang</p>
-              <p className="num tabular text-2xl font-bold mt-2" style={{ color: '#F43F5E' }}>{formatCurrency(totalRemaining)}</p>
-              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-                Dibayar <span className="num" style={{ color: '#10B981' }}>{formatCurrency(totalPaid)}</span> dari pokok <span className="num">{formatCurrency(totalPrincipal)}</span>
-              </p>
-              <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                <div className="h-full rounded-full" style={{ width: `${paidPct}%`, background: '#10B981' }} />
-              </div>
-              <p className="text-[10px] mt-1 num" style={{ color: 'var(--ink-soft)' }}>{paidPct.toFixed(0)}% lunas</p>
-            </div>
-            <div className="p-5">
-              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>Cicilan / Bulan</p>
-              <p className="num tabular text-2xl font-bold mt-2" style={{ color: 'var(--ink)' }}>{formatCurrency(totalMonthly)}</p>
-              <div className="mt-2 space-y-1">
-                {Object.entries(monthlyByCat).map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between text-[11px]">
-                    <span style={{ color: 'var(--ink-muted)' }}>{CAT[k]?.label ?? k}</span>
-                    <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(v)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-5">
-              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>Debt-to-Income</p>
-              {dti != null ? (
-                <>
-                  <p className="num tabular text-2xl font-bold mt-2" style={{ color: dti <= 36 ? '#10B981' : dti <= 50 ? '#F59E0B' : '#F43F5E' }}>{dti.toFixed(1)}%</p>
-                  <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>dari pendapatan bulanan</p>
-                  <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(dti, 100)}%`, background: dti <= 36 ? '#10B981' : dti <= 50 ? '#F59E0B' : '#F43F5E' }} />
-                  </div>
-                  <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>Ideal &lt; 36%</p>
-                </>
-              ) : (
-                <p className="text-sm mt-2" style={{ color: 'var(--ink-soft)' }}>Butuh data pemasukan</p>
-              )}
-            </div>
-          </div>
-
           {/* Tabel utang */}
           <div className="s-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>

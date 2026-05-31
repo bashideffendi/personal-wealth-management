@@ -11,7 +11,6 @@ import {
 } from 'recharts'
 import { Loader2, TrendingUp, TrendingDown, Camera, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { WealthHeader } from '@/components/wealth/wealth-ui'
 
 interface NetWorthData {
   cashAndEquivalent: number
@@ -136,27 +135,29 @@ export default function NetWorthPage() {
 
   return (
     <div className="space-y-6">
-      <WealthHeader
-        eyebrow={`Neraca pribadi · ${todayLong}`}
-        title="Kekayaan Bersih"
-        subtitle="Aset dikurangi liabilitas. Snapshot otomatis tiap kamu buka halaman ini."
-      >
-        <Button variant="outline" onClick={() => document.getElementById('nw-history')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
-          <History className="h-4 w-4" /> Riwayat
-        </Button>
-        <Button onClick={takeManualSnapshot} disabled={snapshotting}>
-          {snapshotting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} Snapshot manual
-        </Button>
-      </WealthHeader>
+      {/* Slim header — judul gak diulang (ada di hero card di bawah) */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
+          Neraca Pribadi · {todayLong}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => document.getElementById('nw-history')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
+            <History className="h-4 w-4" /> Riwayat
+          </Button>
+          <Button onClick={takeManualSnapshot} disabled={snapshotting}>
+            {snapshotting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} Snapshot manual
+          </Button>
+        </div>
+      </div>
 
       {/* Dark hero — 3 cell */}
-      <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-3"
+      <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-[1.6fr_1fr_1fr]"
         style={{ background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)', boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)' }}>
         <div className="absolute pointer-events-none" style={{ top: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.20), transparent 65%)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.16), transparent 65%)' }} />
         <div className="relative p-6 sm:p-7 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>Kekayaan Bersih</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(32px,4vw,44px)', letterSpacing: '-0.03em', color: isPositive ? '#FFFFFF' : '#FDA4AF' }}>{formatCurrency(netWorth)}</p>
+          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(40px,6vw,64px)', letterSpacing: '-0.04em', color: isPositive ? '#FFFFFF' : '#FDA4AF' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? '#6EE7B7' : '#FDA4AF' }}>
@@ -173,12 +174,12 @@ export default function NetWorthPage() {
         </div>
         <div className="relative p-6 sm:p-7 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>Total Aset</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(26px,3vw,34px)', color: '#6EE7B7' }}>{formatCurrency(totalAssets)}</p>
+          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: '#6EE7B7' }}>{formatCurrency(totalAssets)}</p>
           <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{assetClasses.length} kelas aset</p>
         </div>
         <div className="relative p-6 sm:p-7 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>Total Utang</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(26px,3vw,34px)', color: totalDebt > 0 ? '#FDA4AF' : '#6EE7B7' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</p>
+          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? '#FDA4AF' : '#6EE7B7' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</p>
           <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{debtCount} utang aktif</p>
         </div>
       </section>
@@ -286,18 +287,20 @@ function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, i
   return (
     <div className="s-card p-5">
       <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rasio Kesehatan Neraca</p>
-      <div className="mt-3 space-y-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm" style={{ color: 'var(--ink)' }}>{r.label}</p>
-              <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{r.ideal}</p>
+      <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5">
+        {rows.map((r) => {
+          const c = r.value === '—' ? 'var(--ink-soft)' : r.ok ? '#10B981' : '#F59E0B'
+          return (
+            <div key={r.label}>
+              <div className="flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full shrink-0" style={{ background: c }} />
+                <p className="text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>{r.label}</p>
+              </div>
+              <p className="num tabular font-bold mt-1.5 leading-none" style={{ fontSize: 26, color: c }}>{r.value}</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>{r.ideal}</p>
             </div>
-            <span className="num font-semibold text-sm flex items-center gap-1.5 shrink-0" style={{ color: r.value === '—' ? 'var(--ink-soft)' : r.ok ? '#10B981' : '#F59E0B' }}>
-              {r.value}{r.value !== '—' && <span className="size-1.5 rounded-full" style={{ background: r.ok ? '#10B981' : '#F59E0B' }} />}
-            </span>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
