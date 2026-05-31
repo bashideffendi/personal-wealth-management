@@ -3,8 +3,6 @@ import { notFound, redirect } from 'next/navigation'
 import YahooFinance from 'yahoo-finance2'
 import { createClient } from '@/lib/supabase/server'
 import {
-  getValuation,
-  getValuationDetail,
   getEmittenStat,
   getDividendsForTicker,
   getStock,
@@ -65,8 +63,6 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
   const stock = getStock(ticker)
   const emiten = getEmiten(ticker)
-  const valuation = getValuation(ticker)
-  const valuationDetail = getValuationDetail(ticker)
   const stats = getEmittenStat(ticker)
   const pricePerf = getPricePerformanceFor(ticker)
   const dividends = getDividendsForTicker(ticker)
@@ -97,13 +93,13 @@ export default async function StockResearchPage({ params }: RouteProps) {
   }
   const research = bundledResearch ?? cachedResearch
 
-  if (!stock && !valuation && !emiten) {
+  if (!stock && !emiten) {
     notFound()
   }
 
-  const name = stock?.name || valuation?.name || emiten?.name || ticker
-  const sector = stock?.sector || valuation?.sector || emiten?.sector || null
-  const price = stock?.currentPrice ?? valuation?.price ?? emiten?.previousClose ?? 0
+  const name = stock?.name || emiten?.name || ticker
+  const sector = stock?.sector || emiten?.sector || null
+  const price = stock?.currentPrice ?? emiten?.previousClose ?? 0
 
   // Yahoo-form ticker for the live price chart. All bundled data here
   // (stocks.json / valuations / emitten) is IDX-only — there's no US signal on
@@ -116,11 +112,6 @@ export default async function StockResearchPage({ params }: RouteProps) {
   // bundled snapshot. Fair values stay intrinsic (computed from annual FY data).
   const livePrice = await fetchLivePrice(yahooTicker, price)
 
-  const verdict = valuation?.verdict ?? null
-  const verdictColor = verdictStyle(verdict)
-  const avgMoS = valuation?.avgMoS ?? null
-  const isUp = (avgMoS ?? 0) > 0
-  const totalMethods = 8
   const fm = research?.frontmatter ?? {}
 
   // Build last-5-years metric series from stocks.json
@@ -157,6 +148,20 @@ export default async function StockResearchPage({ params }: RouteProps) {
       )
     : null
 
+  // Hero strip + verdict badge — satu sumber kebenaran dengan tab Valuasi
+  // (valuationV2, 13 metode live). Verdict & MoS dari weighted consensus.
+  const verdict = valuationV2?.verdict ?? null
+  const verdictColor = verdictStyle(verdict)
+  const heroMoS = valuationV2?.weightedMoS ?? null
+  const isUp = (heroMoS ?? 0) > 0
+  const totalMethods = 13
+  // Fair value: samakan dengan kartu ringkasan tab (weighted, fallback median/avg).
+  const heroFairValue =
+    valuationV2?.weightedFairValue ??
+    valuationV2?.medianFairValue ??
+    valuationV2?.avgFairValue ??
+    null
+
   const tabsProps: ResearchTabsProps = {
     ticker,
     name,
@@ -167,27 +172,6 @@ export default async function StockResearchPage({ params }: RouteProps) {
     metrics5Y,
     stockMetrics: stock?.metrics ?? {},
     quarterly,
-    valuation: valuation
-      ? {
-          ticker: valuation.ticker,
-          name: valuation.name,
-          sector: valuation.sector,
-          price: valuation.price,
-          methods: valuation.methods,
-          avgFairValue: valuation.avgFairValue,
-          medianFairValue: valuation.medianFairValue,
-          methodsValid: valuation.methodsValid,
-          undervaluedCount: valuation.undervaluedCount,
-          avgMoS: valuation.avgMoS,
-          verdict: valuation.verdict,
-        }
-      : null,
-    valuationDetail: valuationDetail
-      ? {
-          ticker: valuationDetail.ticker,
-          methods: valuationDetail.methods,
-        }
-      : null,
     stats: stats
       ? {
           freeFloatPct: stats.freeFloatPct,
@@ -278,25 +262,25 @@ export default async function StockResearchPage({ params }: RouteProps) {
         <div className="p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow">Fair Value</p>
           <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
-            Rp {formatPrice(Number(fm.fair_value_low ?? valuation?.avgFairValue) || null)}
+            Rp {formatPrice(heroFairValue)}
           </p>
-          {fm.fair_value_high && (
-            <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>– Rp {formatPrice(Number(fm.fair_value_high) || null)}</p>
+          {fm.fair_value_low && fm.fair_value_high && (
+            <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>Research Rp {formatPrice(Number(fm.fair_value_low) || null)} – Rp {formatPrice(Number(fm.fair_value_high) || null)}</p>
           )}
         </div>
         <div className="p-5 flex flex-col justify-center lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow">Konsensus</p>
           <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
-            {valuation?.undervaluedCount ?? '—'}/{totalMethods}
+            {valuationV2?.undervaluedCount ?? '—'}/{totalMethods}
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>metode: undervalued</p>
         </div>
         <div className="p-5 flex flex-col justify-center">
           <p className="eyebrow">Avg MoS</p>
           <p className="num tabular text-2xl font-bold mt-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
-            {avgMoS != null ? `${isUp ? '+' : ''}${(avgMoS * 100).toFixed(1)}%` : '—'}
+            {heroMoS != null ? `${isUp ? '+' : ''}${(heroMoS * 100).toFixed(1)}%` : '—'}
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuation?.methodsValid ?? '—'}/{totalMethods} valid</p>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuationV2?.methodsValid ?? '—'}/{totalMethods} valid</p>
         </div>
         </div>
       </header>

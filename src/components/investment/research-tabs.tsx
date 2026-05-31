@@ -40,30 +40,6 @@ interface MetricSeries {
   value: number
 }
 
-interface ValuationData {
-  ticker: string
-  name: string
-  sector: string | null
-  price: number
-  methods: Record<string, number | null>
-  avgFairValue: number | null
-  medianFairValue: number | null
-  methodsValid: number
-  undervaluedCount: number
-  avgMoS: number
-  verdict: string | null
-}
-
-interface ValuationDetailMethod {
-  fairValue: number | null
-  mos: number | null
-}
-
-interface ValuationDetailData {
-  ticker: string
-  methods: Record<string, ValuationDetailMethod>
-}
-
 interface DividendEvent {
   ticker: string
   period: string
@@ -127,8 +103,6 @@ export interface ResearchTabsProps {
   stockMetrics: Record<string, Record<string, number>>
   // Raw quarterly financials (period → metric → value) — buat FinancialStatements
   quarterly: Record<string, Record<string, number>>
-  valuation: ValuationData | null
-  valuationDetail: ValuationDetailData | null
   stats: EmittenStat | null
   pricePerf: {
     '1M'?: PricePerf
