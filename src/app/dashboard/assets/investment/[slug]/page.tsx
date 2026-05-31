@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { StockLogo } from '@/components/investment/stock-logo'
+import { StockPriceChart } from '@/components/investment/stock-price-chart'
 import { StockTickerSearch } from '@/components/investment/stock-ticker-search'
 import { IDX_BROKERS } from '@/lib/idx-brokers'
 import { CryptoLogo } from '@/components/investment/crypto-logo'
@@ -115,6 +116,8 @@ export default function InvestmentCategoryPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
+  // Crypto chart: ticker coin yang lagi dipilih (default = holding terbesar).
+  const [cryptoChartTicker, setCryptoChartTicker] = useState<string | null>(null)
 
   // Declared as useCallback before the useEffect that triggers it so the
   // hook deps lint rule is happy without disabling it. Both `load` and
@@ -284,6 +287,59 @@ export default function InvestmentCategoryPage() {
     const plPct = invested > 0 ? (pl / invested) * 100 : 0
     return { invested, market, pl, plPct }
   }, [enriched])
+
+  // Kelas aset yang punya harga live (stock & crypto pakai quote endpoint).
+  // Sisanya (emas/deposito/obligasi/sbn/forex/p2p/pensiun/usaha/reksadana)
+  // gak ada feed harian -> "Hari Ini" tampil "—".
+  const hasLivePrices = category === 'stock' || category === 'crypto'
+
+  // P/L hari ini = selisih nilai pasar vs nilai penutupan kemarin, dihitung
+  // dari changePct tiap quote: prior = market / (1 + pct/100). Hanya holding
+  // yang punya quote dengan changePct yang dihitung; null kalau belum ada data.
+  const todayPL = useMemo(() => {
+    if (!hasLivePrices) return null
+    let sum = 0
+    let counted = 0
+    for (const e of enriched) {
+      const pct = e.q?.changePct
+      if (pct == null || !Number.isFinite(pct)) continue
+      const prior = e.market / (1 + pct / 100)
+      sum += e.market - prior
+      counted += 1
+    }
+    if (counted === 0) return null
+    const priorTotal = totals.market - sum
+    const pct = priorTotal > 0 ? (sum / priorTotal) * 100 : 0
+    return { value: sum, pct }
+  }, [hasLivePrices, enriched, totals.market])
+
+  // Crypto-only: daftar holding (ber-ticker) buat grafik harga live, urut
+  // dari nilai pasar terbesar. Dipakai buat coin selector + default pilihan.
+  const cryptoHoldings = useMemo(() => {
+    if (category !== 'crypto') return []
+    return enriched
+      .filter((e) => e.i.ticker)
+      .map((e) => ({
+        // Yahoo crypto pakai format BASE-USD; ticker tersimpan bisa "BTC-USD"
+        // atau "BTC" -> normalisasi: buang suffix -USD/-USDT lalu tambah -USD.
+        ticker: `${(e.i.ticker as string).replace(/-USDT?$/i, '').toUpperCase()}-USD`,
+        name: e.i.name,
+        market: e.market,
+      }))
+      .sort((a, b) => b.market - a.market)
+  }, [category, enriched])
+
+  // Default coin = holding terbesar; reset kalau pilihan gak ada lagi di list.
+  useEffect(() => {
+    if (category !== 'crypto') return
+    if (cryptoHoldings.length === 0) {
+      if (cryptoChartTicker !== null) setCryptoChartTicker(null)
+      return
+    }
+    if (!cryptoChartTicker || !cryptoHoldings.some((c) => c.ticker === cryptoChartTicker)) {
+      setCryptoChartTicker(cryptoHoldings[0].ticker)
+    }
+  }, [category, cryptoHoldings, cryptoChartTicker])
 
   if (!subcat) return null
 
@@ -470,29 +526,75 @@ export default function InvestmentCategoryPage() {
           <p className="mt-3 font-semibold">Belum ada posisi {subcat.label}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Klik Tambah untuk memulai.</p>
         </div>
-      ) : view === 'list' ? (
+      ) : (
+      <>
+        {/* Ringkasan posisi — tampil untuk SEMUA kelas aset (Nilai/Modal/
+            Untung-Rugi/Hari Ini). "Hari Ini" cuma real buat kelas ber-harga
+            live (saham & kripto); sisanya "—". */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MiniStat label="Nilai" value={formatCurrency(totals.market)} glow="glow-violet" />
+          <MiniStat label="Modal" value={formatCurrency(totals.invested)} glow="glow-indigo" />
+          <MiniStat
+            label="Untung / Rugi"
+            value={`${formatCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
+            glow={up ? 'glow-emerald' : 'glow-rose'}
+            accent={up ? '#10B981' : '#F43F5E'}
+          />
+          <MiniStat
+            label="Hari Ini"
+            value={
+              todayPL
+                ? `${todayPL.value >= 0 ? '+' : ''}${formatCurrency(todayPL.value)}  ·  ${todayPL.pct >= 0 ? '+' : ''}${todayPL.pct.toFixed(2)}%`
+                : '—'
+            }
+            glow={todayPL ? (todayPL.value >= 0 ? 'glow-emerald' : 'glow-rose') : undefined}
+            accent={todayPL ? (todayPL.value >= 0 ? '#10B981' : '#F43F5E') : undefined}
+          />
+        </div>
+
+        {/* Crypto-only: grafik harga live (reuse StockPriceChart). Coin selector
+            tampil cuma kalau holding > 1; default = holding terbesar. */}
+        {category === 'crypto' && cryptoChartTicker && (
+          <div className="s-card overflow-hidden">
+            {cryptoHoldings.length > 1 && (
+              <div
+                className="flex items-center justify-between gap-3 px-5 pt-4 sm:px-6"
+              >
+                <p className="eyebrow">Grafik Harga</p>
+                <Select
+                  value={cryptoChartTicker}
+                  onValueChange={(v) => v && setCryptoChartTicker(v)}
+                >
+                  <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs">
+                    <SelectValue>
+                      {(v) => {
+                        const c = cryptoHoldings.find((x) => x.ticker === v)
+                        return c ? `${c.ticker.replace(/-USD$/, '')} · ${c.name}` : v
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="min-w-[200px]">
+                    {cryptoHoldings.map((c) => (
+                      <SelectItem key={c.ticker} value={c.ticker}>
+                        <span className="flex items-center gap-2 min-w-0">
+                          <CryptoLogo symbol={c.ticker} size={20} />
+                          <span className="font-mono text-xs font-semibold">{c.ticker.replace(/-USD$/, '')}</span>
+                          <span className="text-xs truncate" style={{ color: 'var(--ink-muted)' }}>{c.name}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <StockPriceChart ticker={cryptoChartTicker} fallbackCurrency="USD" />
+          </div>
+        )}
+
+        {view === 'list' ? (
         // ─── LIST VIEW ─── shared by all categories. Logo column adapts:
         // stock → StockLogo, crypto → CryptoLogo, others → no logo cell.
         <div className="space-y-4">
-          {category === 'stock' && (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <MiniStat label="Modal" value={formatCurrency(totals.invested)} glow="glow-indigo" />
-              <MiniStat label="Nilai Pasar" value={formatCurrency(totals.market)} glow="glow-violet" />
-              <MiniStat
-                label="P/L"
-                value={formatCurrency(totals.pl)}
-                glow={up ? 'glow-emerald' : 'glow-rose'}
-                accent={up ? '#10B981' : '#F43F5E'}
-              />
-              <MiniStat
-                label="Return"
-                value={`${up ? '+' : ''}${totals.plPct.toFixed(2)}%`}
-                glow={up ? 'glow-emerald' : 'glow-rose'}
-                accent={up ? '#10B981' : '#F43F5E'}
-              />
-            </div>
-          )}
-
           <div className="s-card overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
@@ -656,6 +758,8 @@ export default function InvestmentCategoryPage() {
             )
           })}
         </div>
+        )}
+      </>
       )}
         </TabsContent>
 

@@ -18,6 +18,7 @@ import { getEmiten } from '@/lib/invest/emitten'
 import { formatPrice, formatTanggalID, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
 import { ResearchLogButton } from '@/components/investment/research-log-button'
+import { ResearchStockSearch } from '@/components/investment/research-stock-search'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { StockPriceChart } from '@/components/investment/stock-price-chart'
 
@@ -232,7 +233,11 @@ export default async function StockResearchPage({ params }: RouteProps) {
             </div>
           </div>
 
-          <div className="shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Lompat ke research saham lain dengan cepat */}
+            <div className="w-44 sm:w-52">
+              <ResearchStockSearch />
+            </div>
             <ResearchLogButton ticker={ticker} name={name} />
           </div>
         </div>
