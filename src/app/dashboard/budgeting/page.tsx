@@ -669,29 +669,24 @@ export default function BudgetingPage() {
         {/* Desktop: title + month-header strip + per-section standalone cards */}
         <div className="hidden md:block space-y-3">
           <div className="rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-            <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5">
-              <div>
-                <p className="eyebrow">Grid Anggaran 12 Bulan</p>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                  Rencana anggaran per bulan — setiap nilai tersimpan otomatis.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { Icon: CalendarDays, label: <>Klik bulan untuk rincian harian</> },
-                  { Icon: Calculator, label: <>Rumus langsung di sel — <code className="num rounded px-1 text-[10px]" style={{ background: 'var(--surface)', color: 'var(--ink)' }}>=500+250</code></> },
-                  { Icon: Copy, label: <>Tarik sudut sel untuk menyalin antar-bulan</> },
-                ].map((t, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium"
-                    style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-                  >
-                    <t.Icon className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-                    {t.label}
-                  </span>
-                ))}
-              </div>
+            <p className="eyebrow">Grid Anggaran 12 Bulan</p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+              Rencana anggaran per bulan — setiap nilai tersimpan otomatis.
+            </p>
+            <div
+              className="mt-2.5 pt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t text-[11px]"
+              style={{ color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
+            >
+              {[
+                { Icon: CalendarDays, label: <>Klik bulan untuk rincian harian</> },
+                { Icon: Calculator, label: <>Rumus di sel, mis. <code className="num" style={{ color: 'var(--ink)' }}>=500+250</code></> },
+                { Icon: Copy, label: <>Tarik sudut sel untuk menyalin antar-bulan</> },
+              ].map((t, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5">
+                  <t.Icon className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
+                  {t.label}
+                </span>
+              ))}
             </div>
           </div>
 
