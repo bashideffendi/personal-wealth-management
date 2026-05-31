@@ -1,14 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
-import {
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  SAVING_CATEGORIES,
-  INVESTMENT_CATEGORIES,
-} from '@/lib/constants'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { EduTip } from '@/components/edu/edu-tip'
 import type { Budget } from '@/types'
@@ -22,17 +16,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Loader2, SlidersHorizontal, Check, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
+import { CategoryManager } from '@/components/budgeting/category-manager'
+import {
+  type CategoryTree,
+  type CatNode,
+  type BudgetType,
+  loadTree,
+  loadLocalTree,
+  saveTree,
+  saveLocalTree,
+  cascadeRenameKeys,
+  leafKeys,
+  subKey,
+  emptyTree,
+} from '@/lib/budget-categories'
 
 const SHORT_MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
@@ -40,8 +40,6 @@ const SHORT_MONTHS = [
 ]
 
 const YEAR_OPTIONS = ['2024', '2025', '2026']
-
-type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
 interface BudgetMap {
   [key: string]: number // key = `${type}|${category}|${month}`
@@ -74,58 +72,7 @@ function parseCell(input: string): number {
 
 type FillSource = { type: BudgetType; category: string; month: number; value: number }
 
-const LS_KEY = 'pwm.budget.enabledCategories'
-const LS_CUSTOM_KEY = 'pwm.budget.customCategories'
 const LS_COLLAPSED_KEY = 'pwm.budget.collapsedSections'
-
-type EnabledCats = Record<BudgetType, string[]>
-
-function defaultEnabled(): EnabledCats {
-  return {
-    income: [...INCOME_CATEGORIES],
-    expense: [...EXPENSE_CATEGORIES],
-    saving: [...SAVING_CATEGORIES],
-    investment: [...INVESTMENT_CATEGORIES],
-  }
-}
-
-function emptyCustom(): EnabledCats {
-  return { income: [], expense: [], saving: [], investment: [] }
-}
-
-function loadEnabled(): EnabledCats {
-  if (typeof window === 'undefined') return defaultEnabled()
-  try {
-    const raw = window.localStorage.getItem(LS_KEY)
-    if (!raw) return defaultEnabled()
-    const parsed = JSON.parse(raw) as Partial<EnabledCats>
-    return {
-      income: parsed.income ?? [...INCOME_CATEGORIES],
-      expense: parsed.expense ?? [...EXPENSE_CATEGORIES],
-      saving: parsed.saving ?? [...SAVING_CATEGORIES],
-      investment: parsed.investment ?? [...INVESTMENT_CATEGORIES],
-    }
-  } catch {
-    return defaultEnabled()
-  }
-}
-
-function loadCustom(): EnabledCats {
-  if (typeof window === 'undefined') return emptyCustom()
-  try {
-    const raw = window.localStorage.getItem(LS_CUSTOM_KEY)
-    if (!raw) return emptyCustom()
-    const parsed = JSON.parse(raw) as Partial<EnabledCats>
-    return {
-      income: parsed.income ?? [],
-      expense: parsed.expense ?? [],
-      saving: parsed.saving ?? [],
-      investment: parsed.investment ?? [],
-    }
-  } catch {
-    return emptyCustom()
-  }
-}
 
 type CollapsedMap = Record<BudgetType, boolean>
 
@@ -157,10 +104,14 @@ export default function BudgetingPage() {
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
   const [loading, setLoading] = useState(true)
-  const [enabled, setEnabled] = useState<EnabledCats>(defaultEnabled)
-  const [custom, setCustom] = useState<EnabledCats>(emptyCustom)
-  const [selectorOpen, setSelectorOpen] = useState(false)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(noCollapsed)
+
+  // Category tree (kategori → subkategori) — DB-synced w/ localStorage fallback
+  const [tree, setTree] = useState<CategoryTree>(emptyTree)
+  const [treeLoaded, setTreeLoaded] = useState(false)
+  const [dbSynced, setDbSynced] = useState(false)
+  const [managerOpen, setManagerOpen] = useState(false)
+  const userIdRef = useRef<string | null>(null)
 
   // Drag-fill (tarik ala Excel) — horizontal across months within one category row
   const [fillSource, setFillSource] = useState<FillSource | null>(null)
@@ -190,10 +141,33 @@ export default function BudgetingPage() {
   }
 
   useEffect(() => {
-    setEnabled(loadEnabled())
-    setCustom(loadCustom())
     setCollapsed(loadCollapsed())
   }, [])
+
+  // Load category tree (DB-first, localStorage fallback)
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!active) return
+      if (!user) {
+        setTree(loadLocalTree())
+        setTreeLoaded(true)
+        return
+      }
+      userIdRef.current = user.id
+      const { tree: t, dbAvailable } = await loadTree(supabase, user.id)
+      if (!active) return
+      setTree(t)
+      setDbSynced(dbAvailable)
+      setTreeLoaded(true)
+    })()
+    return () => {
+      active = false
+    }
+  }, [supabase])
 
   function toggleCollapsed(kind: BudgetType) {
     setCollapsed((prev) => {
@@ -205,46 +179,21 @@ export default function BudgetingPage() {
     })
   }
 
-  function saveEnabled(next: EnabledCats) {
-    setEnabled(next)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(LS_KEY, JSON.stringify(next))
+  async function handleTreeCommit(
+    next: CategoryTree,
+    renames?: { type: BudgetType; pairs: [string, string][] },
+  ) {
+    setTree(next)
+    const uid = userIdRef.current
+    if (!uid) {
+      saveLocalTree(next)
+      return
     }
-  }
-
-  function saveCustom(next: EnabledCats) {
-    setCustom(next)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(LS_CUSTOM_KEY, JSON.stringify(next))
+    await saveTree(supabase, uid, dbSynced, next)
+    if (renames && renames.pairs.length) {
+      await cascadeRenameKeys(supabase, uid, renames.type, renames.pairs)
+      fetchBudgets(year) // resync the budget map after key remap
     }
-  }
-
-  function toggleCategory(type: BudgetType, category: string) {
-    const current = enabled[type]
-    const next = current.includes(category)
-      ? current.filter((c) => c !== category)
-      : [...current, category]
-    saveEnabled({ ...enabled, [type]: next })
-  }
-
-  function addCustomCategory(type: BudgetType, name: string) {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    const allKnown = [
-      ...custom[type],
-      ...(type === 'income' ? INCOME_CATEGORIES
-        : type === 'expense' ? EXPENSE_CATEGORIES
-        : type === 'saving' ? SAVING_CATEGORIES
-        : INVESTMENT_CATEGORIES),
-    ]
-    if (allKnown.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return
-    saveCustom({ ...custom, [type]: [...custom[type], trimmed] })
-    saveEnabled({ ...enabled, [type]: [...enabled[type], trimmed] })
-  }
-
-  function removeCustomCategory(type: BudgetType, name: string) {
-    saveCustom({ ...custom, [type]: custom[type].filter((c) => c !== name) })
-    saveEnabled({ ...enabled, [type]: enabled[type].filter((c) => c !== name) })
   }
 
   const fetchBudgets = useCallback(
@@ -377,23 +326,18 @@ export default function BudgetingPage() {
     return sum
   }
 
-  // Visible categories (opt-in subset, already includes any custom entries)
-  const visibleIncome = enabled.income.length ? enabled.income : [...INCOME_CATEGORIES]
-  const visibleExpense = enabled.expense.length ? enabled.expense : [...EXPENSE_CATEGORIES]
-  const visibleSaving = enabled.saving.length ? enabled.saving : [...SAVING_CATEGORIES]
-  const visibleInvestment = enabled.investment.length ? enabled.investment : [...INVESTMENT_CATEGORIES]
-
-  // Predefined + custom — shown in selector dialog
-  const allIncome = [...INCOME_CATEGORIES, ...custom.income]
-  const allExpense = [...EXPENSE_CATEGORIES, ...custom.expense]
-  const allSaving = [...SAVING_CATEGORIES, ...custom.saving]
-  const allInvestment = [...INVESTMENT_CATEGORIES, ...custom.investment]
+  // Leaf budget keys per type, derived from the tree (a category with subs
+  // contributes its subcategory composite keys; otherwise the category itself).
+  const leafIncome = leafKeys(tree.income)
+  const leafExpense = leafKeys(tree.expense)
+  const leafSaving = leafKeys(tree.saving)
+  const leafInvestment = leafKeys(tree.investment)
 
   // Grand totals
-  const totalIncomeYear = sectionTotal(visibleIncome, 'income')
-  const totalExpenseYear = sectionTotal(visibleExpense, 'expense')
-  const totalSavingYear = sectionTotal(visibleSaving, 'saving')
-  const totalInvestmentYear = sectionTotal(visibleInvestment, 'investment')
+  const totalIncomeYear = sectionTotal(leafIncome, 'income')
+  const totalExpenseYear = sectionTotal(leafExpense, 'expense')
+  const totalSavingYear = sectionTotal(leafSaving, 'saving')
+  const totalInvestmentYear = sectionTotal(leafInvestment, 'investment')
 
   // ---- Render helpers ----
 
@@ -401,24 +345,31 @@ export default function BudgetingPage() {
 
   function renderCategoryRow(
     type: BudgetType,
-    category: string,
+    categoryKey: string,
+    label: string,
     bgClass: string,
+    indent: boolean,
   ) {
     const fs = fillSource
     let fillLo = -1, fillHi = -1, fillSrcMonth = -1
-    if (fs && fs.type === type && fs.category === category && fillOverMonth != null) {
+    if (fs && fs.type === type && fs.category === categoryKey && fillOverMonth != null) {
       fillSrcMonth = fs.month
       fillLo = Math.min(fs.month, fillOverMonth)
       fillHi = Math.max(fs.month, fillOverMonth)
     }
     return (
-      <tr key={`${type}-${category}`} className={bgClass}>
-        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-normal bg-inherit whitespace-nowrap truncate" title={category}>
-          {category}
+      <tr key={`${type}-${categoryKey}`} className={bgClass}>
+        <td
+          className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs bg-inherit whitespace-nowrap truncate ${indent ? 'pl-6 pr-2 font-normal' : 'px-2 font-normal'}`}
+          style={indent ? { color: 'var(--ink-muted)' } : undefined}
+          title={label}
+        >
+          {indent && <span className="mr-1 opacity-40">└</span>}
+          {label}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
-          const val = getValue(type, category, month)
+          const val = getValue(type, categoryKey, month)
           const inRange = fillSrcMonth !== -1 && month >= fillLo && month <= fillHi
           const isSource = month === fillSrcMonth
           return (
@@ -426,10 +377,10 @@ export default function BudgetingPage() {
               key={month}
               className="group relative border-b border-[color:var(--border)] px-0.5 py-0"
               style={{ background: inRange && !isSource ? 'color-mix(in srgb, var(--c-primary) 11%, transparent)' : undefined }}
-              onMouseEnter={() => onFillEnter(type, category, month)}
+              onMouseEnter={() => onFillEnter(type, categoryKey, month)}
             >
               <input
-                key={`${type}|${category}|${month}|${val}`}
+                key={`${type}|${categoryKey}|${month}|${val}`}
                 type="text"
                 inputMode="numeric"
                 defaultValue={val ? idFormatter.format(val) : ''}
@@ -440,14 +391,14 @@ export default function BudgetingPage() {
                 }}
                 onBlur={(e) => {
                   const parsed = parseCell(e.target.value)
-                  handleCellBlur(type, category, month, parsed)
+                  handleCellBlur(type, categoryKey, month, parsed)
                   e.target.value = parsed ? idFormatter.format(parsed) : ''
                 }}
                 className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-[var(--surface)] px-1 tabular"
                 style={{ color: 'var(--ink)' }}
               />
               <span
-                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startFill(type, category, month) }}
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startFill(type, categoryKey, month) }}
                 className={`absolute bottom-0 right-0 cursor-crosshair ${isSource ? 'block' : 'hidden group-hover:block'}`}
                 style={{ width: 7, height: 7, background: 'var(--c-primary)', borderTopLeftRadius: 2 }}
                 title="Tarik buat isi nilai ini ke bulan lain"
@@ -458,6 +409,55 @@ export default function BudgetingPage() {
         })}
       </tr>
     )
+  }
+
+  // Category-with-subs becomes a read-only rollup row (sum of its subcategories).
+  function renderRollupRow(type: BudgetType, node: CatNode) {
+    const keys = node.subs.map((s) => subKey(node.name, s.name))
+    return (
+      <tr key={`${type}-rollup-${node.id}`} className="bg-[color:var(--surface-2)]">
+        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={node.name} style={{ color: 'var(--ink)' }}>
+          {node.name}
+        </td>
+        {Array.from({ length: 12 }, (_, i) => {
+          const v = sectionMonthTotal(keys, type, i + 1)
+          return (
+            <td
+              key={i}
+              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
+              style={{ color: 'var(--ink-muted)' }}
+              title={privacyHidden ? '••••••' : formatCurrency(v)}
+            >
+              {v ? formatCompactCurrency(v) : '—'}
+            </td>
+          )
+        })}
+      </tr>
+    )
+  }
+
+  // Render a section body from the tree: rollup+subs for branched categories,
+  // a plain editable row for leaf categories. Zebra striping over visible rows.
+  function renderSectionBody(kind: BudgetType, oddBg: string) {
+    const rows: ReactNode[] = []
+    let zebra = 0
+    for (const node of tree[kind]) {
+      if (node.subs.length) {
+        rows.push(renderRollupRow(kind, node))
+        for (const sub of node.subs) {
+          rows.push(
+            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, zebra % 2 === 0 ? 'bg-[var(--surface)]' : oddBg, true),
+          )
+          zebra++
+        }
+      } else {
+        rows.push(
+          renderCategoryRow(kind, node.name, node.name, zebra % 2 === 0 ? 'bg-[var(--surface)]' : oddBg, false),
+        )
+        zebra++
+      }
+    }
+    return rows
   }
 
   function renderTotalRow(
@@ -495,8 +495,8 @@ export default function BudgetingPage() {
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
-          const inc = sectionMonthTotal(INCOME_CATEGORIES, 'income', month)
-          const exp = sectionMonthTotal(EXPENSE_CATEGORIES, 'expense', month)
+          const inc = sectionMonthTotal(leafIncome, 'income', month)
+          const exp = sectionMonthTotal(leafExpense, 'expense', month)
           const pct = inc > 0 ? ((exp / inc) * 100).toFixed(1) : '0.0'
           return (
             <td
@@ -512,8 +512,7 @@ export default function BudgetingPage() {
   }
 
   // Color tokens per kind — editorial semantic per design handoff
-  // Pendapatan=mint, Pengeluaran=coral, Tabungan=amber, Investasi=primary
-  // investment = violet, sisanya mint/coral/amber
+  // Pendapatan=mint, Pengeluaran=coral, Tabungan=amber, Investasi=violet
   const KIND_COLOR: Record<BudgetType, { hex: string; bgSoft: string; bgFirm: string; textOnFirm: string }> = {
     income: {
       hex: '#10B981', // mint
@@ -580,6 +579,13 @@ export default function BudgetingPage() {
     )
   }
 
+  const sections = [
+    { label: 'Pendapatan', kind: 'income' as BudgetType, leaf: leafIncome, totalLabel: 'Total Pendapatan', oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
+    { label: 'Pengeluaran', kind: 'expense' as BudgetType, leaf: leafExpense, totalLabel: 'Total Pengeluaran', oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
+    { label: 'Tabungan', kind: 'saving' as BudgetType, leaf: leafSaving, totalLabel: 'Total Tabungan', oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: false },
+    { label: 'Investasi', kind: 'investment' as BudgetType, leaf: leafInvestment, totalLabel: 'Total Investasi', oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: false },
+  ]
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -593,9 +599,9 @@ export default function BudgetingPage() {
         }
         actions={
           <>
-            <Button onClick={() => setSelectorOpen(true)}>
-              <SlidersHorizontal className="h-4 w-4" />
-              Pilih Kategori
+            <Button onClick={() => setManagerOpen(true)}>
+              <FolderTree className="h-4 w-4" />
+              Kelola Kategori
             </Button>
             <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
               <SelectTrigger className="w-[120px]" style={{ background: 'var(--surface)' }}>
@@ -638,10 +644,8 @@ export default function BudgetingPage() {
         </div>
       </div>
 
-      {/* Annual allocation summary removed — budgeting is monthly (review 30 Mei); allocation detail lives in the per-month drawer */}
-
       {/* Budget Grid */}
-      {loading ? (
+      {loading || !treeLoaded ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
           <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>Memuat anggaran...</span>
@@ -652,10 +656,10 @@ export default function BudgetingPage() {
         <div className="md:hidden">
           <MobileBudgetingView
             year={Number(year)}
-            visibleIncome={visibleIncome}
-            visibleExpense={visibleExpense}
-            visibleSaving={visibleSaving}
-            visibleInvestment={visibleInvestment}
+            visibleIncome={leafIncome}
+            visibleExpense={leafExpense}
+            visibleSaving={leafSaving}
+            visibleInvestment={leafInvestment}
             getValue={getValue}
             onCellChange={handleCellBlur}
           />
@@ -722,12 +726,7 @@ export default function BudgetingPage() {
               </div>
 
               {/* Each section = its own standalone rounded card, dipisah krem */}
-              {[
-                { label: 'Pendapatan', kind: 'income' as BudgetType, visible: visibleIncome, totalLabel: 'Total Pendapatan', oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
-                { label: 'Pengeluaran', kind: 'expense' as BudgetType, visible: visibleExpense, totalLabel: 'Total Pengeluaran', oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
-                { label: 'Tabungan', kind: 'saving' as BudgetType, visible: visibleSaving, totalLabel: 'Total Tabungan', oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: false },
-                { label: 'Investasi', kind: 'investment' as BudgetType, visible: visibleInvestment, totalLabel: 'Total Investasi', oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: false },
-              ].map((sec) => (
+              {sections.map((sec) => (
                 <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
                   <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
@@ -735,13 +734,11 @@ export default function BudgetingPage() {
                       {SHORT_MONTHS.map((m) => <col key={m} />)}
                     </colgroup>
                     <tbody>
-                      {renderSectionHeader(sec.label, sec.kind, sectionTotal(sec.visible, sec.kind))}
+                      {renderSectionHeader(sec.label, sec.kind, sectionTotal(sec.leaf, sec.kind))}
                       {!collapsed[sec.kind] && (
                         <>
-                          {sec.visible.map((c, i) =>
-                            renderCategoryRow(sec.kind, c, i % 2 === 0 ? 'bg-[var(--surface)]' : sec.oddBg),
-                          )}
-                          {renderTotalRow(sec.totalLabel, sec.visible, sec.kind, sec.totalBg)}
+                          {renderSectionBody(sec.kind, sec.oddBg)}
+                          {renderTotalRow(sec.totalLabel, sec.leaf, sec.kind, sec.totalBg)}
                           {sec.percent && renderPercentRow()}
                         </>
                       )}
@@ -755,69 +752,14 @@ export default function BudgetingPage() {
       </>
       )}
 
-      {/* Category Selector Dialog */}
-      <Dialog open={selectorOpen} onOpenChange={setSelectorOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Pilih Kategori yang Dipakai</DialogTitle>
-            <DialogDescription>
-              Centang hanya kategori yang ingin kamu pakai. Kategori yang tidak dicentang akan disembunyikan dari tabel anggaran.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1">
-            <CategoryGroup
-              title="Pendapatan"
-              accent="var(--c-mint)"
-              all={allIncome}
-              customList={custom.income}
-              selected={enabled.income}
-              onToggle={(c) => toggleCategory('income', c)}
-              onAdd={(name) => addCustomCategory('income', name)}
-              onRemove={(c) => removeCustomCategory('income', c)}
-            />
-            <CategoryGroup
-              title="Pengeluaran"
-              accent="var(--c-coral)"
-              all={allExpense}
-              customList={custom.expense}
-              selected={enabled.expense}
-              onToggle={(c) => toggleCategory('expense', c)}
-              onAdd={(name) => addCustomCategory('expense', name)}
-              onRemove={(c) => removeCustomCategory('expense', c)}
-            />
-            <CategoryGroup
-              title="Tabungan"
-              accent="var(--c-amber)"
-              all={allSaving}
-              customList={custom.saving}
-              selected={enabled.saving}
-              onToggle={(c) => toggleCategory('saving', c)}
-              onAdd={(name) => addCustomCategory('saving', name)}
-              onRemove={(c) => removeCustomCategory('saving', c)}
-            />
-            <CategoryGroup
-              title="Investasi"
-              accent="var(--c-violet)"
-              all={allInvestment}
-              customList={custom.investment}
-              selected={enabled.investment}
-              onToggle={(c) => toggleCategory('investment', c)}
-              onAdd={(name) => addCustomCategory('investment', name)}
-              onRemove={(c) => removeCustomCategory('investment', c)}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => saveEnabled(defaultEnabled())}>
-              Pakai Semua
-            </Button>
-            <Button onClick={() => setSelectorOpen(false)}>
-              <Check className="h-4 w-4" /> Selesai
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Category Manager — kategori → subkategori, edit/hapus/drag */}
+      <CategoryManager
+        open={managerOpen}
+        onOpenChange={setManagerOpen}
+        tree={tree}
+        dbSynced={dbSynced}
+        onCommit={handleTreeCommit}
+      />
 
       {/* ─── Anggaran Month Drawer — klik header bulan trigger ─── */}
       {drawerMonth !== null && (
@@ -829,138 +771,14 @@ export default function BudgetingPage() {
           month={drawerMonth}
           year={Number(year)}
           getValue={getValue}
-          visibleIncome={visibleIncome}
-          visibleExpense={visibleExpense}
-          visibleSaving={visibleSaving}
-          visibleInvestment={visibleInvestment}
+          visibleIncome={leafIncome}
+          visibleExpense={leafExpense}
+          visibleSaving={leafSaving}
+          visibleInvestment={leafInvestment}
           onPrevMonth={prevDrawerMonth}
           onNextMonth={nextDrawerMonth}
         />
       )}
-    </div>
-  )
-}
-
-function CategoryGroup({
-  title,
-  accent,
-  all,
-  customList,
-  selected,
-  onToggle,
-  onAdd,
-  onRemove,
-}: {
-  title: string
-  accent: string
-  all: string[]
-  customList: string[]
-  selected: string[]
-  onToggle: (category: string) => void
-  onAdd: (name: string) => void
-  onRemove: (name: string) => void
-}) {
-  const [draft, setDraft] = useState('')
-  const customSet = new Set(customList)
-  return (
-    <div>
-      <p
-        className="eyebrow mb-2 flex items-center gap-2"
-        style={{ color: accent }}
-      >
-        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: accent }} />
-        {title}
-        <span className="num tabular ml-auto text-[10.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
-          {selected.length}/{all.length}
-        </span>
-      </p>
-      <div className="flex flex-col gap-1">
-        {all.map((c) => {
-          const on = selected.includes(c)
-          const isCustom = customSet.has(c)
-          return (
-            <div
-              key={c}
-              className="group flex items-center rounded-lg transition-colors"
-              style={{ background: on ? `color-mix(in srgb, ${accent} 13%, transparent)` : 'transparent' }}
-            >
-              <button
-                type="button"
-                onClick={() => onToggle(c)}
-                className="flex flex-1 min-w-0 items-center gap-2.5 px-2.5 py-2 text-left"
-              >
-                <span
-                  className="grid shrink-0 place-items-center rounded-md transition-colors"
-                  style={{
-                    width: 18,
-                    height: 18,
-                    background: on ? accent : 'var(--surface)',
-                    border: on ? 'none' : '1.5px solid var(--border)',
-                  }}
-                >
-                  {on && <Check className="size-3" strokeWidth={3} style={{ color: '#FFF' }} />}
-                </span>
-                <span
-                  className="truncate text-sm"
-                  style={{ fontWeight: on ? 600 : 500, color: on ? 'var(--ink)' : 'var(--ink-muted)' }}
-                >
-                  {c}
-                </span>
-                {isCustom && (
-                  <span
-                    className="shrink-0 rounded px-1.5 text-[10px] font-medium"
-                    style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
-                  >
-                    custom
-                  </span>
-                )}
-              </button>
-              {isCustom && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(c)}
-                  className="shrink-0 pr-2.5 text-[11px] opacity-0 transition hover:underline group-hover:opacity-100"
-                  style={{ color: 'var(--danger)' }}
-                  aria-label={`Hapus ${c}`}
-                >
-                  Hapus
-                </button>
-              )}
-            </div>
-          )
-        })}
-
-        {/* Add custom */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            onAdd(draft)
-            setDraft('')
-          }}
-          className="mt-2 flex items-center gap-1.5"
-        >
-          <input
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="+ Tambah kategori..."
-            className="flex-1 h-8 px-2 text-sm rounded border bg-[var(--surface)] outline-none focus:border-[var(--ink)]"
-            style={{ borderColor: 'var(--border-soft)', color: 'var(--ink)' }}
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim()}
-            className="h-8 px-3 text-xs font-medium rounded border disabled:opacity-40 disabled:cursor-not-allowed transition"
-            style={{
-              background: draft.trim() ? accent : 'var(--surface-2)',
-              color: draft.trim() ? '#FFF' : 'var(--ink-muted)',
-              borderColor: 'transparent',
-            }}
-          >
-            Tambah
-          </button>
-        </form>
-      </div>
     </div>
   )
 }
