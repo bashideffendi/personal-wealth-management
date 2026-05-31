@@ -1,0 +1,1331 @@
+{
+  "BRPT": {
+    "asOf": "2026-04-30",
+    "totalShares": 93747218044,
+    "composition": [
+      {
+        "label": "Individual",
+        "pct": 73.94281815324393,
+        "shares": 69319334962
+      },
+      {
+        "label": "Bank",
+        "pct": 7.12778496089748,
+        "shares": 6682100109
+      },
+      {
+        "label": "Private Bank",
+        "pct": 5.83979841773063,
+        "shares": 5474648556
+      },
+      {
+        "label": "Corporate",
+        "pct": 3.71046415517887,
+        "shares": 3478456922
+      },
+      {
+        "label": "Mutual Funds",
+        "pct": 1.87557861949007,
+        "shares": 1758302778
+      },
+      {
+        "label": "Securities Company",
+        "pct": 1.68366826123756,
+        "shares": 1578392156
+      },
+      {
+        "label": "Exchange Traded Funds",
+        "pct": 1.1193471293276,
+        "shares": 1049356794
+      },
+      {
+        "label": "Private Equity",
+        "pct": 0.9109568580469,
+        "shares": 853996712
+      },
+      {
+        "label": "Investment Manager",
+        "pct": 0.90493883946703,
+        "shares": 848354987
+      },
+      {
+        "label": "Pension Funds",
+        "pct": 0.82856311494538,
+        "shares": 776754870
+      },
+      {
+        "label": "Trustee Bank",
+        "pct": 0.60541465319389,
+        "shares": 567559395
+      },
+      {
+        "label": "Central Bank",
+        "pct": 0.38692519582795,
+        "shares": 362731607
+      },
+      {
+        "label": "Insurance",
+        "pct": 0.25515478004663,
+        "shares": 239200508
+      },
+      {
+        "label": "Government",
+        "pct": 0.11909730585029,
+        "shares": 111650411
+      },
+      {
+        "label": "Sovereign Wealth Fund",
+        "pct": 0.09850772207092,
+        "shares": 92348249
+      },
+      {
+        "label": "Investment Advisors",
+        "pct": 0.0981598312142,
+        "shares": 92022111
+      },
+      {
+        "label": "Financial Institutional",
+        "pct": 0.01826050346578,
+        "shares": 17118714
+      },
+      {
+        "label": "State Owned Company",
+        "pct": 0.01555400821938,
+        "shares": 14581450
+      },
+      {
+        "label": "Capital Market Inst.",
+        "pct": 0.0116547661125,
+        "shares": 10926019
+      },
+      {
+        "label": "Hedge Fund",
+        "pct": 0.01163771280645,
+        "shares": 10910032
+      },
+      {
+        "label": "Foundation",
+        "pct": 0.01059621736758,
+        "shares": 9933659
+      },
+      {
+        "label": "State Owned Enterprises",
+        "pct": 0.00934562452391,
+        "shares": 8761263
+      },
+      {
+        "label": "Firm",
+        "pct": 0.00400782879577,
+        "shares": 3757228
+      },
+      {
+        "label": "Partnership",
+        "pct": 0.00207672722521,
+        "shares": 1946874
+      },
+      {
+        "label": "Educational Institution",
+        "pct": 0.00157604676792,
+        "shares": 1477500
+      },
+      {
+        "label": "CV / Limited Partnership",
+        "pct": 0.0011533600917,
+        "shares": 1081243
+      },
+      {
+        "label": "Conference",
+        "pct": 0.00053334916004,
+        "shares": 500000
+      },
+      {
+        "label": "International Organization",
+        "pct": 0.00052642415455,
+        "shares": 493508
+      },
+      {
+        "label": "Assoc/Social Org",
+        "pct": 0.00026923465599,
+        "shares": 252400
+      },
+      {
+        "label": "Cooperatives",
+        "pct": 0.00020099583106,
+        "shares": 188428
+      },
+      {
+        "label": "Brokerage Firms",
+        "pct": 0.00017481692089,
+        "shares": 163886
+      },
+      {
+        "label": "Sole Proprietorship",
+        "pct": 0.00012085051948,
+        "shares": 113294
+      },
+      {
+        "label": "Congregation",
+        "pct": 7.466888241e-05,
+        "shares": 70000
+      },
+      {
+        "label": "Investment Fund Agent",
+        "pct": 4.266793e-08,
+        "shares": 40
+      }
+    ],
+    "subsidiaries": [
+      {
+        "name": "Marigold Resources Pte. Ltd",
+        "pct": 100,
+        "location": "Singapore",
+        "businessType": null
+      },
+      {
+        "name": "PT Griya Idola",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Properti"
+      },
+      {
+        "name": "PT Tunggal Agathis Indah WWod Industries",
+        "pct": 99.99,
+        "location": "Ternate",
+        "businessType": "Industri Pengolahan Kayu"
+      },
+      {
+        "name": "PT Binajaya Rodakarya",
+        "pct": 99.97,
+        "location": "Banjarmasin",
+        "businessType": "Lem (Perekat)"
+      },
+      {
+        "name": "PT Rimba Equator Permai",
+        "pct": 99.97,
+        "location": "Pontianak",
+        "businessType": "Hutan Tanaman Industri"
+      },
+      {
+        "name": "PT Barito Wahana Lestari",
+        "pct": 99,
+        "location": "Jakarta",
+        "businessType": null
+      },
+      {
+        "name": "PT Barito Wanabinar Indonesia",
+        "pct": 99,
+        "location": "Jakarta",
+        "businessType": null
+      },
+      {
+        "name": "PT Royalindo Mandiri",
+        "pct": 99,
+        "location": "Jakarta",
+        "businessType": "Perkebunan"
+      },
+      {
+        "name": "PT Wiradaya Lintas Sukses",
+        "pct": 98,
+        "location": "Jakarta",
+        "businessType": null
+      },
+      {
+        "name": "PT Barito Mitra Investama",
+        "pct": 96,
+        "location": "Jakarta",
+        "businessType": null
+      },
+      {
+        "name": "PT Barito Renewables Energy Tbk",
+        "pct": 64.67,
+        "location": "Jakarta",
+        "businessType": null
+      },
+      {
+        "name": "PT Chandra Asri Pacific Tbk",
+        "pct": 34.63,
+        "location": "Jakarta",
+        "businessType": null
+      }
+    ],
+    "network": {
+      "nodes": [
+        {
+          "id": "company:1000003236",
+          "kind": "company",
+          "symbol": "BEBS",
+          "name": "Berkah Beton Sadaya Tbk",
+          "icon": "https://assets.stockbit.com/logos/companies/BEBS.png"
+        },
+        {
+          "id": "company:1000003994",
+          "kind": "company",
+          "symbol": "CUAN",
+          "name": "Petrindo Jaya Kreasi Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/CUAN.png"
+        },
+        {
+          "id": "company:1000004013",
+          "kind": "company",
+          "symbol": "NCKL",
+          "name": "Trimegah Bangun Persada Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/NCKL.png"
+        },
+        {
+          "id": "company:1000005860",
+          "kind": "company",
+          "symbol": "EMAS",
+          "name": "Merdeka Gold Resources Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/EMAS.png?version=1757313721556982559"
+        },
+        {
+          "id": "company:150",
+          "kind": "company",
+          "symbol": "EMTK",
+          "name": "Elang Mahkota Teknologi Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/EMTK.png"
+        },
+        {
+          "id": "company:295",
+          "kind": "company",
+          "symbol": "MLIA",
+          "name": "Mulia Industrindo Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/MLIA.png"
+        },
+        {
+          "id": "company:411",
+          "kind": "company",
+          "symbol": "TBIG",
+          "name": "Tower Bersama Infrastructure Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/TBIG.png"
+        },
+        {
+          "id": "company:432",
+          "kind": "company",
+          "symbol": "TPIA",
+          "name": "Chandra Asri Pacific Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/TPIA.png?version=1750055121325821609"
+        },
+        {
+          "id": "company:86",
+          "kind": "company",
+          "symbol": "BNLI",
+          "name": "Bank Permata Tbk",
+          "icon": "https://assets.stockbit.com/logos/companies/BNLI.png?version=1728272226868536402"
+        },
+        {
+          "id": "company:93",
+          "kind": "company",
+          "symbol": "BRPT",
+          "name": "Barito Pacific Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/BRPT.png"
+        },
+        {
+          "id": "investor:1000000624",
+          "kind": "investor",
+          "name": "ANBO HOLDINGS"
+        },
+        {
+          "id": "investor:1000004700",
+          "kind": "investor",
+          "name": "STANDARD CHARTERED BANK"
+        },
+        {
+          "id": "investor:11218",
+          "kind": "investor",
+          "name": "BANGKOK BANK PUBLIC COMPANY"
+        },
+        {
+          "id": "investor:8991",
+          "kind": "investor",
+          "name": "PRAJOGO PANGESTU"
+        }
+      ],
+      "edges": [
+        {
+          "from": "investor:1000000624",
+          "to": "company:93",
+          "pct": 1.31,
+          "shares": 1230844819
+        },
+        {
+          "from": "investor:1000004700",
+          "to": "company:1000003236",
+          "pct": 3.99,
+          "shares": 1796272500
+        },
+        {
+          "from": "investor:1000004700",
+          "to": "company:1000005860",
+          "pct": 1.16,
+          "shares": 170402000
+        },
+        {
+          "from": "investor:1000004700",
+          "to": "company:150",
+          "pct": 1.61,
+          "shares": 988925000
+        },
+        {
+          "from": "investor:1000004700",
+          "to": "company:295",
+          "pct": 1.51,
+          "shares": 100000000
+        },
+        {
+          "from": "investor:1000004700",
+          "to": "company:93",
+          "pct": 1.11,
+          "shares": 1041514900
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:1000004013",
+          "pct": 2.37,
+          "shares": 1498389500
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:411",
+          "pct": 2.13,
+          "shares": 482249618
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:432",
+          "pct": 1.7,
+          "shares": 1472648400
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:86",
+          "pct": 89.12,
+          "shares": 32244827604
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:93",
+          "pct": 4.99,
+          "shares": 4680136246
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:1000003994",
+          "pct": 81.9,
+          "shares": 92068019700
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:432",
+          "pct": 5.03,
+          "shares": 4354382164
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:93",
+          "pct": 71.37,
+          "shares": 66910030165
+        }
+      ]
+    }
+  },
+  "CUAN": {
+    "asOf": "2026-04-30",
+    "totalShares": 112418900000,
+    "composition": [
+      {
+        "label": "PRAJOGO PANGESTU",
+        "pct": 78.40241208729137,
+        "shares": 88139129242
+      },
+      {
+        "label": "Individual",
+        "pct": 6.14921175887684,
+        "shares": 6912876218
+      },
+      {
+        "label": "Private Bank",
+        "pct": 3.92456851116672,
+        "shares": 4411956750
+      },
+      {
+        "label": "Corporate",
+        "pct": 2.41216440473977,
+        "shares": 2711728690
+      },
+      {
+        "label": "Bank",
+        "pct": 2.01689725304197,
+        "shares": 2267373706
+      },
+      {
+        "label": "Private Equity",
+        "pct": 1.21722176875952,
+        "shares": 1368387323
+      },
+      {
+        "label": "Securities Company",
+        "pct": 1.17173650071296,
+        "shares": 1317253285
+      },
+      {
+        "label": "Mutual Funds",
+        "pct": 1.06731157750165,
+        "shares": 1199859935
+      },
+      {
+        "label": "Investment Advisors",
+        "pct": 0.75565815000858,
+        "shares": 849502580
+      },
+      {
+        "label": "Brokerage Firms",
+        "pct": 0.75027817208672,
+        "shares": 843454468
+      },
+      {
+        "label": "Exchange Traded Funds",
+        "pct": 0.68698302064866,
+        "shares": 772298755
+      },
+      {
+        "label": "Pension Funds",
+        "pct": 0.51824618102472,
+        "shares": 582606656
+      },
+      {
+        "label": "Central Bank",
+        "pct": 0.43998829378334,
+        "shares": 494630000
+      },
+      {
+        "label": "Trustee Bank",
+        "pct": 0.25791496981379,
+        "shares": 289945172
+      },
+      {
+        "label": "Government",
+        "pct": 0.07808369767005,
+        "shares": 87780834
+      },
+      {
+        "label": "Sovereign Wealth Fund",
+        "pct": 0.069323628856,
+        "shares": 77932861
+      },
+      {
+        "label": "Insurance",
+        "pct": 0.03922163444047,
+        "shares": 44092530
+      },
+      {
+        "label": "Financial Institutional",
+        "pct": 0.01602762346901,
+        "shares": 18018078
+      },
+      {
+        "label": "Investment Manager",
+        "pct": 0.00942123077169,
+        "shares": 10591244
+      },
+      {
+        "label": "Hedge Fund",
+        "pct": 0.00571200483193,
+        "shares": 6421373
+      },
+      {
+        "label": "State Owned Company",
+        "pct": 0.00355749789404,
+        "shares": 3999300
+      },
+      {
+        "label": "State Owned Enterprises",
+        "pct": 0.00285005457267,
+        "shares": 3204000
+      },
+      {
+        "label": "Capital Market Inst.",
+        "pct": 0.00156201492809,
+        "shares": 1756000
+      },
+      {
+        "label": "Partnership",
+        "pct": 0.00085528323084,
+        "shares": 961500
+      },
+      {
+        "label": "Foundation",
+        "pct": 0.00062649607851,
+        "shares": 704300
+      },
+      {
+        "label": "CV / Limited Partnership",
+        "pct": 0.00058717884626,
+        "shares": 660100
+      },
+      {
+        "label": "Conference",
+        "pct": 0.00044476507064,
+        "shares": 500000
+      },
+      {
+        "label": "Firm",
+        "pct": 0.00037547067264,
+        "shares": 422100
+      },
+      {
+        "label": "International Organization",
+        "pct": 0.00035954808311,
+        "shares": 404200
+      },
+      {
+        "label": "Educational Institution",
+        "pct": 0.0002650799821,
+        "shares": 298000
+      },
+      {
+        "label": "Assoc/Social Org",
+        "pct": 7.649959215e-05,
+        "shares": 86000
+      },
+      {
+        "label": "Cooperatives",
+        "pct": 3.993990334e-05,
+        "shares": 44900
+      },
+      {
+        "label": "Sole Proprietorship",
+        "pct": 1.770164981e-05,
+        "shares": 19900
+      }
+    ],
+    "subsidiaries": [
+      {
+        "name": "PT Multi Tambangjaya Utama",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Pertambanganbatu bara"
+      },
+      {
+        "name": "PT Kreasi Jasa Persada",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Aktivitas penunjang pertambangan dan penggalian lainnya"
+      },
+      {
+        "name": "PT Borneo Bangun Banua Bestari",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Pertambanganbatu bara"
+      },
+      {
+        "name": "PT Armada Maritim Persada",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Aktivitas angkutan laut perairan pelabuhan dalam negeri untuk barang"
+      },
+      {
+        "name": "PT Borneo Berkat Kutai",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Aktivitas konsultasi manajemen lainnya"
+      },
+      {
+        "name": "PT Prima Mineral Investindo",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Aktivitas perusahaan holding dan aktivitas konsultasi manajemen lainnya"
+      },
+      {
+        "name": "Tigranix Ventures Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Perdagangan grosir berdasarkan imbalan atau komisi (tidak termasuk marketplace online)"
+      },
+      {
+        "name": "PT Volta Energi Nusantara",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Aktivitas perusahaan holding dan aktivitas konsultasi manajemen lainnya"
+      },
+      {
+        "name": "PT Green Natural Investama",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Aktivitas perusahaan holding dan aktivitas konsultasi manajemen lainnya"
+      },
+      {
+        "name": "PT Tamtama Perkasa",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Pertambanganbatu bara"
+      },
+      {
+        "name": "PT Mareta Persada",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Perdagangan besar bahan bakar padat, cair dan gas dan produk YBDI; Industri produk dari batu bara"
+      },
+      {
+        "name": "PT Equator Sumber Energi",
+        "pct": 65,
+        "location": "Jakarta",
+        "businessType": "Aktivitas perusahaan holding"
+      }
+    ],
+    "network": {
+      "nodes": [
+        {
+          "id": "company:1000003994",
+          "kind": "company",
+          "symbol": "CUAN",
+          "name": "Petrindo Jaya Kreasi Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/CUAN.png"
+        },
+        {
+          "id": "company:432",
+          "kind": "company",
+          "symbol": "TPIA",
+          "name": "Chandra Asri Pacific Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/TPIA.png?version=1750055121325821609"
+        },
+        {
+          "id": "company:93",
+          "kind": "company",
+          "symbol": "BRPT",
+          "name": "Barito Pacific Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/BRPT.png"
+        },
+        {
+          "id": "investor:1000002124",
+          "kind": "investor",
+          "name": "GRANGE PROSPERITY"
+        },
+        {
+          "id": "investor:8991",
+          "kind": "investor",
+          "name": "PRAJOGO PANGESTU"
+        }
+      ],
+      "edges": [
+        {
+          "from": "investor:1000002124",
+          "to": "company:1000003994",
+          "pct": 2.12,
+          "shares": 2382539600
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:1000003994",
+          "pct": 81.9,
+          "shares": 92068019700
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:432",
+          "pct": 5.03,
+          "shares": 4354382164
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:93",
+          "pct": 71.37,
+          "shares": 66910030165
+        }
+      ]
+    }
+  },
+  "TPIA": {
+    "asOf": "2026-04-30",
+    "totalShares": 86511545092,
+    "composition": [
+      {
+        "label": "SCG CHEMICALS PUBLIC COMPANY",
+        "pct": 30.57004576195646,
+        "shares": 26446618924
+      },
+      {
+        "label": "BARITO PACIFIC",
+        "pct": 20.95930303951622,
+        "shares": 18132216900
+      },
+      {
+        "label": "Corporate",
+        "pct": 18.81978959766098,
+        "shares": 16281290764
+      },
+      {
+        "label": "TOP INVESTMENT INDONESIA",
+        "pct": 14.99999999560752,
+        "shares": 12976731760
+      },
+      {
+        "label": "Individual",
+        "pct": 5.60265321333188,
+        "shares": 4846941861
+      },
+      {
+        "label": "Bank",
+        "pct": 4.00280812036985,
+        "shares": 3462891152
+      },
+      {
+        "label": "Private Bank",
+        "pct": 2.79878712653336,
+        "shares": 2421273987
+      },
+      {
+        "label": "Private Equity",
+        "pct": 0.66809582858028,
+        "shares": 577980024
+      },
+      {
+        "label": "Exchange Traded Funds",
+        "pct": 0.36532376073494,
+        "shares": 316047230
+      },
+      {
+        "label": "Mutual Funds",
+        "pct": 0.30514901302394,
+        "shares": 263989126
+      },
+      {
+        "label": "Pension Funds",
+        "pct": 0.23792121592686,
+        "shares": 205829320
+      },
+      {
+        "label": "Investment Manager",
+        "pct": 0.20165000846359,
+        "shares": 174450538
+      },
+      {
+        "label": "Central Bank",
+        "pct": 0.14953874059517,
+        "shares": 129368275
+      },
+      {
+        "label": "Trustee Bank",
+        "pct": 0.13201879457654,
+        "shares": 114211499
+      },
+      {
+        "label": "Government",
+        "pct": 0.04657440571331,
+        "shares": 40292238
+      },
+      {
+        "label": "Insurance",
+        "pct": 0.04259279840721,
+        "shares": 36847688
+      },
+      {
+        "label": "Sovereign Wealth Fund",
+        "pct": 0.03632842872772,
+        "shares": 31428285
+      },
+      {
+        "label": "Securities Company",
+        "pct": 0.01819204937707,
+        "shares": 15738223
+      },
+      {
+        "label": "Financial Institutional",
+        "pct": 0.00737471974777,
+        "shares": 6379984
+      },
+      {
+        "label": "Investment Advisors",
+        "pct": 0.00673194542278,
+        "shares": 5823910
+      },
+      {
+        "label": "Educational Institution",
+        "pct": 0.00568432802208,
+        "shares": 4917600
+      },
+      {
+        "label": "State Owned Company",
+        "pct": 0.00530923357699,
+        "shares": 4593100
+      },
+      {
+        "label": "Foundation",
+        "pct": 0.00418764570226,
+        "shares": 3622797
+      },
+      {
+        "label": "Hedge Fund",
+        "pct": 0.00340890917722,
+        "shares": 2949100
+      },
+      {
+        "label": "State Owned Enterprises",
+        "pct": 0.00314166623323,
+        "shares": 2717904
+      },
+      {
+        "label": "Capital Market Inst.",
+        "pct": 0.00151879959906,
+        "shares": 1313937
+      },
+      {
+        "label": "Firm",
+        "pct": 0.00110713546843,
+        "shares": 957800
+      },
+      {
+        "label": "CV / Limited Partnership",
+        "pct": 0.00092808422176,
+        "shares": 802900
+      },
+      {
+        "label": "Partnership",
+        "pct": 0.00060616187058,
+        "shares": 524400
+      },
+      {
+        "label": "Brokerage Firms",
+        "pct": 0.00045770307255,
+        "shares": 395966
+      },
+      {
+        "label": "International Organization",
+        "pct": 0.00022182010481,
+        "shares": 191900
+      },
+      {
+        "label": "Congregation",
+        "pct": 4.62366034e-05,
+        "shares": 40000
+      },
+      {
+        "label": "Assoc/Social Org",
+        "pct": 3.53710016e-05,
+        "shares": 30600
+      },
+      {
+        "label": "Cooperatives",
+        "pct": 2.889787713e-05,
+        "shares": 25000
+      }
+    ],
+    "subsidiaries": [
+      {
+        "name": "Aster Chemicals and Energy Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Kilang dan Petrokimia"
+      },
+      {
+        "name": "Chandra Asri Trading Company Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Perdagangan Besar"
+      },
+      {
+        "name": "Chandra Asri Capital Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Perusahaan Investasi"
+      },
+      {
+        "name": "Aster Mobility Solutions 1 Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Penjualan Bahan Bakar Minyak"
+      },
+      {
+        "name": "PT Chandra Asri Perkasa",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Petrokimia"
+      },
+      {
+        "name": "Chandra Asri Mobility Solutions Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Holding Investasi"
+      },
+      {
+        "name": "Aster Mobility Solutions Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Holding Investasi"
+      },
+      {
+        "name": "PT Chandra Shipping International",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Angkutan Laut"
+      },
+      {
+        "name": "PT Marina Indah Maritim",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Angkutan Laut"
+      },
+      {
+        "name": "Aster Polymer Solutions Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Petrokimia"
+      },
+      {
+        "name": "Chandra Maritime International Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Angkutan Laut"
+      },
+      {
+        "name": "Aster Power Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Industri Listrik"
+      },
+      {
+        "name": "Aster Asia Alpha Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Holding Investasi"
+      },
+      {
+        "name": "PT Chandra Cilegon Port",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Pergudangan, Penyimpanan dan Layanan Kepelabuhan"
+      },
+      {
+        "name": "PT Chandra Environmental Solutions",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Holding dan Konsultasi"
+      },
+      {
+        "name": "Aster ANZ Pty. Ltd.",
+        "pct": 100,
+        "location": "Australia",
+        "businessType": "Perdagangan Besar"
+      },
+      {
+        "name": "Chandra Industrial Infra Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Perusahaan Investasi"
+      },
+      {
+        "name": "Chandra Asri Bio Investment Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Perusahaan Investasi"
+      },
+      {
+        "name": "PT Wastewater Solutions Indonesia",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Pengolahan Air"
+      },
+      {
+        "name": "Aster Chemicals and Energy Shanghai Limited",
+        "pct": 100,
+        "location": "Shanghai",
+        "businessType": "Perdagangan Besar"
+      },
+      {
+        "name": "Aster Mobility Solutions Bravo Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Penjualan Bahan Bakar Minyak"
+      },
+      {
+        "name": "Aster Port & Terminals Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Jasa Penyimpanan"
+      },
+      {
+        "name": "Aster Engineerings Services Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Jasa Konsultasi Port Shipping"
+      },
+      {
+        "name": "PT Chandra Global Maritim",
+        "pct": 100,
+        "location": "Jakarta",
+        "businessType": "Angkutan Laut"
+      },
+      {
+        "name": "Maritime Global Shipping Pte. Ltd.",
+        "pct": 100,
+        "location": "Singapura",
+        "businessType": "Pengangkutan dan Pelayaran"
+      },
+      {
+        "name": "PT Chandra Asri Alkali",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Khlor dan Alkali"
+      },
+      {
+        "name": "PT Chandra Pelabuhan Nusantara",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Pergudangan, Penyimpanan dan Layanan Kepelabuhanan"
+      },
+      {
+        "name": "PT Chandra Samudra Port",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Konsultasi Manajemen"
+      },
+      {
+        "name": "PT Chandra Trading Nusantara",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Perdagangan Besar"
+      },
+      {
+        "name": "PT Chandra Investa Prima",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Perusahaan Investasi"
+      },
+      {
+        "name": "PT Chandra Warehouse Cilegon",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Pergudangan dan Penyimpanan"
+      },
+      {
+        "name": "PT Chandra Daya Warehouse",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Pergudangan dan Penyimpanan"
+      },
+      {
+        "name": "PT Chandra Asri Sentral Solusi",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Konsultasi Manajemen"
+      },
+      {
+        "name": "PT Chandra Bitumen International",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Perdagangan Besar"
+      },
+      {
+        "name": "PT Chandra Capital Indonesia",
+        "pct": 99.99,
+        "location": "Jakarta",
+        "businessType": "Jasa Keuangan bukan asuransi dan dana pensiun, konsultasi manajemen dan industri karet dan plastik"
+      },
+      {
+        "name": "CAPGC Pte. Ltd.",
+        "pct": 80,
+        "location": "Singapura",
+        "businessType": "Perusahaan Investasi"
+      },
+      {
+        "name": "PT Chandra Cold Chain",
+        "pct": 80,
+        "location": "Jakarta",
+        "businessType": "Pengangkutan dan Pergudangan"
+      },
+      {
+        "name": "PT Krakatau Chandra Energi",
+        "pct": 70,
+        "location": "Cilegon",
+        "businessType": "Industri Listrik"
+      },
+      {
+        "name": "PT Krakatau Sarana Energi",
+        "pct": 68.07,
+        "location": "Cilegon",
+        "businessType": "Penjualan Bahan Bakar Minyak"
+      },
+      {
+        "name": "PT Chandra Tirta Karian",
+        "pct": 65,
+        "location": "Jakarta",
+        "businessType": "Holding Investasi, Konsultasi Manajemen dan Jasa Pengelolaan Air"
+      },
+      {
+        "name": "PT Chandra Daya Investasi",
+        "pct": 60,
+        "location": "Jakarta",
+        "businessType": "Holding dan Konsultasi Manajemen"
+      },
+      {
+        "name": "PT Redeco Petrolin Utama",
+        "pct": 50.75,
+        "location": "Jakarta",
+        "businessType": "Sewa Tangki"
+      }
+    ],
+    "network": {
+      "nodes": [
+        {
+          "id": "company:1000003994",
+          "kind": "company",
+          "symbol": "CUAN",
+          "name": "Petrindo Jaya Kreasi Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/CUAN.png"
+        },
+        {
+          "id": "company:1000004013",
+          "kind": "company",
+          "symbol": "NCKL",
+          "name": "Trimegah Bangun Persada Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/NCKL.png"
+        },
+        {
+          "id": "company:1000004310",
+          "kind": "company",
+          "symbol": "BREN",
+          "name": "Barito Renewables Energy Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/BREN.png"
+        },
+        {
+          "id": "company:411",
+          "kind": "company",
+          "symbol": "TBIG",
+          "name": "Tower Bersama Infrastructure Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/TBIG.png"
+        },
+        {
+          "id": "company:432",
+          "kind": "company",
+          "symbol": "TPIA",
+          "name": "Chandra Asri Pacific Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/TPIA.png?version=1750055121325821609"
+        },
+        {
+          "id": "company:86",
+          "kind": "company",
+          "symbol": "BNLI",
+          "name": "Bank Permata Tbk",
+          "icon": "https://assets.stockbit.com/logos/companies/BNLI.png?version=1728272226868536402"
+        },
+        {
+          "id": "company:93",
+          "kind": "company",
+          "symbol": "BRPT",
+          "name": "Barito Pacific Tbk.",
+          "icon": "https://assets.stockbit.com/logos/companies/BRPT.png"
+        },
+        {
+          "id": "investor:1000000349",
+          "kind": "investor",
+          "name": "SCG CHEMICALS PUBLIC COMPANY"
+        },
+        {
+          "id": "investor:1000003267",
+          "kind": "investor",
+          "name": "MARIGOLD RESOURCES"
+        },
+        {
+          "id": "investor:1000005151",
+          "kind": "investor",
+          "name": "TOP INVESTMENT INDONESIA"
+        },
+        {
+          "id": "investor:11218",
+          "kind": "investor",
+          "name": "BANGKOK BANK PUBLIC COMPANY"
+        },
+        {
+          "id": "investor:12121",
+          "kind": "investor",
+          "name": "BARITO PACIFIC"
+        },
+        {
+          "id": "investor:8991",
+          "kind": "investor",
+          "name": "PRAJOGO PANGESTU"
+        }
+      ],
+      "edges": [
+        {
+          "from": "investor:1000000349",
+          "to": "company:432",
+          "pct": 30.57,
+          "shares": 26446618924
+        },
+        {
+          "from": "investor:1000003267",
+          "to": "company:432",
+          "pct": 3.92,
+          "shares": 3387243720
+        },
+        {
+          "from": "investor:1000005151",
+          "to": "company:432",
+          "pct": 15,
+          "shares": 12976731760
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:1000004013",
+          "pct": 2.37,
+          "shares": 1498389500
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:411",
+          "pct": 2.13,
+          "shares": 482249618
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:432",
+          "pct": 1.7,
+          "shares": 1472648400
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:86",
+          "pct": 89.12,
+          "shares": 32244827604
+        },
+        {
+          "from": "investor:11218",
+          "to": "company:93",
+          "pct": 4.99,
+          "shares": 4680136246
+        },
+        {
+          "from": "investor:12121",
+          "to": "company:1000004310",
+          "pct": 64.64,
+          "shares": 86475739666
+        },
+        {
+          "from": "investor:12121",
+          "to": "company:432",
+          "pct": 34.63,
+          "shares": 29957670400
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:1000003994",
+          "pct": 81.9,
+          "shares": 92068019700
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:432",
+          "pct": 5.03,
+          "shares": 4354382164
+        },
+        {
+          "from": "investor:8991",
+          "to": "company:93",
+          "pct": 71.37,
+          "shares": 66910030165
+        }
+      ]
+    }
+  }
+}
