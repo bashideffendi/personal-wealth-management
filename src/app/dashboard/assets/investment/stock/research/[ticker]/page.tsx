@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import YahooFinance from 'yahoo-finance2'
 import { createClient } from '@/lib/supabase/server'
 import {
   getValuation,
@@ -22,8 +23,35 @@ import { ResearchLogButton } from '@/components/investment/research-log-button'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { StockPriceChart } from '@/components/investment/stock-price-chart'
 
+// yahoo-finance2 needs the Node runtime (not Edge) for the live-price fetch.
+export const runtime = 'nodejs'
+
+// yahoo-finance2 v3 requires class instantiation (removed default instance).
+const yahooFinance = new YahooFinance()
+
 interface RouteProps {
   params: Promise<{ ticker: string }>
+}
+
+/**
+ * Fetch the live market price (Yahoo Finance) for the Yahoo-form ticker.
+ * Single guarded call — falls back to `fallback` on any error/null/zero so the
+ * page never breaks when Yahoo is down. This is the SAME source the price chart
+ * uses, keeping MoS aligned with what the user sees on the chart.
+ */
+async function fetchLivePrice(
+  yahooTicker: string,
+  fallback: number,
+): Promise<number> {
+  try {
+    const q = (await yahooFinance.quote(yahooTicker)) as {
+      regularMarketPrice?: number
+    }
+    const live = q?.regularMarketPrice
+    return typeof live === 'number' && live > 0 ? live : fallback
+  } catch {
+    return fallback
+  }
 }
 
 export default async function StockResearchPage({ params }: RouteProps) {
@@ -82,6 +110,12 @@ export default async function StockResearchPage({ params }: RouteProps) {
   // these objects — so we always append .JK. (US holdings store their own
   // currency on the `investments` table, but this research page only serves IDX.)
   const yahooTicker = ticker.endsWith('.JK') ? ticker : `${ticker}.JK`
+
+  // Live market price (Yahoo) — same source as the price chart. Used as the
+  // market price for Margin of Safety so MoS reflects today, not the stale
+  // bundled snapshot. Fair values stay intrinsic (computed from annual FY data).
+  const livePrice = await fetchLivePrice(yahooTicker, price)
+
   const verdict = valuation?.verdict ?? null
   const verdictColor = verdictStyle(verdict)
   const avgMoS = valuation?.avgMoS ?? null
@@ -114,13 +148,20 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
   // Valuasi konsensus 13-metode — live compute dari raw financials.
   // Sector medians dihitung dari seluruh universe (sekali pakai di sini).
-  const valuationV2 = stock ? valuate(stock, computeAllSectorMedians(getStocks())) : null
+  // Fair value tetap intrinsik (dari data FY); cuma harga pasar buat MoS yang
+  // di-override ke harga live Yahoo (bukan snapshot basi di stocks.json).
+  const valuationV2 = stock
+    ? valuate(
+        { ...stock, currentPrice: livePrice },
+        computeAllSectorMedians(getStocks()),
+      )
+    : null
 
   const tabsProps: ResearchTabsProps = {
     ticker,
     name,
     sector,
-    price,
+    price: livePrice,
     valuationV2,
     latestYear,
     metrics5Y,
@@ -214,7 +255,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
         {/* Tengah — grafik harga live (nyatu di kartu yang sama) */}
         <div className="border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <StockPriceChart ticker={yahooTicker} fallbackPrice={price} fallbackCurrency="IDR" />
+          <StockPriceChart ticker={yahooTicker} fallbackPrice={livePrice} fallbackCurrency="IDR" />
         </div>
 
         {/* Bawah — strip metrik valuasi */}
