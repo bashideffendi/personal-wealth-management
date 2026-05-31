@@ -56,6 +56,8 @@ export interface ProbabilityInput {
   assumptions: MarketAssumptions
   /** Number of simulation paths (default 5000 — fast, accurate enough) */
   simulations?: number
+  /** Optional seeded RNG for deterministic results (default Math.random) */
+  rng?: () => number
 }
 
 export interface ProbabilityResult {
@@ -75,10 +77,34 @@ export interface ProbabilityResult {
  * Box-Muller transform: 2 uniform [0,1) → standard normal samples.
  * We only need one per call; the second is discarded.
  */
-function randomNormal(): number {
-  const u1 = Math.random()
-  const u2 = Math.random()
+function randomNormal(rng: () => number = Math.random): number {
+  const u1 = rng()
+  const u2 = rng()
   return Math.sqrt(-2 * Math.log(u1 || 1e-10)) * Math.cos(2 * Math.PI * u2)
+}
+
+/**
+ * Seedable PRNG (mulberry32) + string→seed hash. Dipakai biar probabilitas
+ * deterministik per state goal — gak goyang antar-reload (84% tetep 84%),
+ * tapi berubah pas current/target/deadline berubah.
+ */
+export function mulberry32(seed: number): () => number {
+  let s = seed >>> 0
+  return function () {
+    s = (s + 0x6d2b79f5) | 0
+    let t = Math.imul(s ^ (s >>> 15), 1 | s)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+export function seedFromString(str: string): number {
+  let h = 2166136261
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
 }
 
 /**
@@ -91,10 +117,11 @@ function simulatePath(
   monthsLeft: number,
   monthlyReturn: number,
   monthlyStdev: number,
+  rng: () => number = Math.random,
 ): number {
   let balance = startBalance
   for (let m = 0; m < monthsLeft; m++) {
-    const r = monthlyReturn + monthlyStdev * randomNormal()
+    const r = monthlyReturn + monthlyStdev * randomNormal(rng)
     balance = balance * (1 + r) + monthlyContribution
   }
   return balance
@@ -109,7 +136,7 @@ function simulatePath(
 export function computeGoalProbability(input: ProbabilityInput): ProbabilityResult {
   const {
     current, target, monthsLeft, monthlyContribution, assumptions,
-    simulations = 5000,
+    simulations = 5000, rng = Math.random,
   } = input
 
   // Edge: deadline passed
@@ -142,7 +169,7 @@ export function computeGoalProbability(input: ProbabilityInput): ProbabilityResu
   let successCount = 0
 
   for (let i = 0; i < simulations; i++) {
-    const finalBalance = simulatePath(current, monthlyContribution, monthsLeft, monthlyReturn, monthlyStdev)
+    const finalBalance = simulatePath(current, monthlyContribution, monthsLeft, monthlyReturn, monthlyStdev, rng)
     finals.push(finalBalance)
     if (finalBalance >= target) successCount++
   }
@@ -159,7 +186,7 @@ export function computeGoalProbability(input: ProbabilityInput): ProbabilityResu
   const upperBound = Math.max(monthlyContribution * 5, target / monthsLeft)
   const requiredMonthlyFor90 = findRequiredContribution(
     current, target, monthsLeft, monthlyReturn, monthlyStdev,
-    monthlyContribution, upperBound,
+    monthlyContribution, upperBound, rng,
   )
 
   return {
@@ -179,6 +206,7 @@ function findRequiredContribution(
   current: number, target: number, monthsLeft: number,
   monthlyReturn: number, monthlyStdev: number,
   currentContribution: number, upperBound: number,
+  rng: () => number = Math.random,
 ): number {
   // Quick check: if current contribution already gives 90%+, return it
   let lo = 0
@@ -188,7 +216,7 @@ function findRequiredContribution(
     let successes = 0
     const sims = 800
     for (let i = 0; i < sims; i++) {
-      const final = simulatePath(current, mid, monthsLeft, monthlyReturn, monthlyStdev)
+      const final = simulatePath(current, mid, monthsLeft, monthlyReturn, monthlyStdev, rng)
       if (final >= target) successes++
     }
     const prob = successes / sims

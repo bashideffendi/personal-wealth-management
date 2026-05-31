@@ -23,7 +23,7 @@ import { EduTip } from '@/components/edu/edu-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import {
   computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
-  categoryToPyramidLayer, PYRAMID_LAYERS,
+  categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString,
 } from '@/lib/goal-probability'
 
 const GOAL_CATEGORIES: Record<string, string> = {
@@ -71,6 +71,10 @@ export default function GoalsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
+  const [monthlyIncome, setMonthlyIncome] = useState(0)
+  const [depositGoal, setDepositGoal] = useState<Goal | null>(null)
+  const [depositAmt, setDepositAmt] = useState(0)
+  const [depositing, setDepositing] = useState(false)
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -80,7 +84,33 @@ export default function GoalsPage() {
     if (!user) return
     const { data } = await supabase.from('goals').select('*').eq('user_id', user.id).order('deadline', { ascending: true })
     setGoals((data ?? []) as Goal[])
+
+    // Pemasukan rata-rata/bln dari 3 bln terakhir — buat ngukur "iuran wajib"
+    // vs cashflow REAL (bukan ngarang). Mirror cara dashboard hitung income.
+    const since = new Date()
+    since.setMonth(since.getMonth() - 3)
+    const { data: inc } = await supabase
+      .from('transactions')
+      .select('amount')
+      .eq('user_id', user.id)
+      .eq('type', 'income')
+      .gte('date', since.toISOString().slice(0, 10))
+    const incRows = (inc ?? []) as { amount: number }[]
+    const totalInc = incRows.reduce((s, t) => s + (t.amount ?? 0), 0)
+    setMonthlyIncome(totalInc / 3)
+
     setLoading(false)
+  }
+
+  async function doDeposit() {
+    if (!depositGoal || depositAmt <= 0) return
+    setDepositing(true)
+    const newCurrent = depositGoal.current_amount + depositAmt
+    await supabase.from('goals').update({ current_amount: newCurrent }).eq('id', depositGoal.id)
+    setDepositing(false)
+    setDepositGoal(null)
+    setDepositAmt(0)
+    void load()
   }
 
   async function save() {
@@ -144,21 +174,25 @@ export default function GoalsPage() {
 
       let prob: number | null = null
       let requiredFor90: number | null = null
+      let assumption: { label: string; ret: number } | null = null
       if (done) {
         prob = 100
       } else if (g.deadline && months && months > 0) {
         const profile = suggestedRiskProfile(g.category, months)
         const a = RISK_PROFILES[profile]
+        assumption = { label: a.label, ret: a.annualReturn }
         const r = computeGoalProbability({
           current: g.current_amount, target: g.target_amount, monthsLeft: months,
           monthlyContribution: perMonth ?? 0,
           assumptions: { annualReturn: a.annualReturn, annualStdev: a.annualStdev },
           simulations: 2000,
+          // Seed deterministik per state goal → angka gak goyang antar-reload.
+          rng: mulberry32(seedFromString(`${g.id}:${g.current_amount}:${g.target_amount}:${g.deadline}`)),
         })
         prob = r.probability
         requiredFor90 = r.requiredMonthlyFor90
       }
-      return { g, pct, remaining, months, perMonth, done, layer, layerColor, prob, requiredFor90 }
+      return { g, pct, remaining, months, perMonth, done, layer, layerColor, prob, requiredFor90, assumption }
     })
   }, [activeGoals])
 
@@ -171,14 +205,24 @@ export default function GoalsPage() {
     const probs = derived.filter((d) => d.prob != null).map((d) => d.prob as number)
     const avgProb = probs.length > 0 ? probs.reduce((s, p) => s + p, 0) / probs.length : null
     const tercapai = derived.filter((d) => d.done).length
-    return { totalTarget, totalCurrent, pct, iuranBulan, deadlineCount, avgProb, tercapai }
-  }, [derived])
+    // % iuran wajib terhadap pemasukan real — null kalau gak ada data income.
+    const iuranVsIncome = monthlyIncome > 0 ? (iuranBulan / monthlyIncome) * 100 : null
+    return { totalTarget, totalCurrent, pct, iuranBulan, deadlineCount, avgProb, tercapai, iuranVsIncome }
+  }, [derived, monthlyIncome])
+
+  const iuranSub = stats.iuranVsIncome != null
+    ? `${stats.iuranVsIncome.toFixed(0)}% dari pemasukan`
+    : `${stats.deadlineCount} tujuan ber-deadline`
+  const iuranSubColor = stats.iuranVsIncome == null ? 'var(--ink-soft)'
+    : stats.iuranVsIncome > 50 ? '#F43F5E'
+    : stats.iuranVsIncome > 30 ? '#F59E0B'
+    : 'var(--ink-soft)'
 
   const statCards = [
-    { label: 'Total Target', value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} tujuan`, icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
-    { label: 'Sudah Terkumpul', value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% dari target`, icon: TrendingUp, color: '#10B981', chip: '#10B9811A' },
-    { label: 'Iuran Wajib / Bulan', value: formatCurrency(stats.iuranBulan), sub: `${stats.deadlineCount} tujuan ber-deadline`, icon: Repeat, color: '#8B5CF6', chip: '#8B5CF61A' },
-    { label: 'Probabilitas Rata-rata', value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: 'rata-rata simulasi Monte Carlo', icon: Sparkles, color: '#F59E0B', chip: '#F59E0B1A' },
+    { label: 'Total Target', value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} tujuan`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
+    { label: 'Sudah Terkumpul', value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% dari target`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: '#10B981', chip: '#10B9811A' },
+    { label: 'Iuran Wajib / Bulan', value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: '#8B5CF6', chip: '#8B5CF61A' },
+    { label: 'Probabilitas Rata-rata', value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: 'rata-rata · asumsi diinvestasikan', subColor: 'var(--ink-soft)', icon: Sparkles, color: '#F59E0B', chip: '#F59E0B1A' },
   ]
 
   function scrollToPyramid() {
@@ -245,7 +289,7 @@ export default function GoalsPage() {
                 <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>
                   {c.value}
                 </p>
-                <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
+                <p className="text-[11px] mt-1.5" style={{ color: c.subColor }}>{c.sub}</p>
               </div>
             ))}
           </div>
@@ -268,12 +312,21 @@ export default function GoalsPage() {
                           <Icon className="size-4" style={{ color: layerColor }} />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                            {i === 0 && g.deadline && !done && (
+                              <span
+                                className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
+                                style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                              >
+                                Terdekat
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
                             {g.deadline
                               ? `Target ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
                               : (GOAL_CATEGORIES[g.category] ?? g.category)}
-                            {' · '}Prioritas #{i + 1}
                           </p>
                         </div>
                       </div>
@@ -319,14 +372,17 @@ export default function GoalsPage() {
                           {prob != null ? `${prob.toFixed(0)}%` : '—'}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => openEdit(g)}>
+                      <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0) }}>
                         Setor sekarang <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </div>
 
-                    {prob != null && prob < 70 && requiredFor90 != null && perMonth != null && requiredFor90 > perMonth && (
+                    {d.assumption && !done && (
                       <p className="mt-2.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                        Naikin ke <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}/bln</span> buat ~90% peluang.
+                        Asumsi {d.assumption.label.toLowerCase()} ~{Math.round(d.assumption.ret * 100)}%/th
+                        {prob != null && prob < 70 && requiredFor90 != null && perMonth != null && requiredFor90 > perMonth && (
+                          <> · naikin ke <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}/bln</span> buat ~90%</>
+                        )}
                       </p>
                     )}
                   </div>
@@ -391,6 +447,37 @@ export default function GoalsPage() {
             <Button onClick={save} disabled={saving || !form.name}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {form.id ? 'Simpan' : 'Tambah'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Setor — nambah nominal ke Terkumpul (aksi beneran, bukan buka form edit) */}
+      <Dialog open={!!depositGoal} onOpenChange={(o) => { if (!o) { setDepositGoal(null); setDepositAmt(0) } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Setor ke {depositGoal?.name}</DialogTitle>
+            <DialogDescription>Tambah nominal yang baru kamu sisihkan — langsung nambah ke &ldquo;Terkumpul&rdquo;.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5">
+              <Label>Nominal setoran (Rp)</Label>
+              <NumberInput value={depositAmt} onChange={setDepositAmt} placeholder="0" />
+            </div>
+            {depositGoal && (
+              <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>
+                Terkumpul: <span className="num">{formatCurrency(depositGoal.current_amount)}</span>
+                {depositAmt > 0 && (
+                  <> {' → '}<span className="num font-semibold" style={{ color: '#10B981' }}>{formatCurrency(depositGoal.current_amount + depositAmt)}</span></>
+                )}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDepositGoal(null); setDepositAmt(0) }}>Batal</Button>
+            <Button onClick={doDeposit} disabled={depositing || depositAmt <= 0}>
+              {depositing && <Loader2 className="h-4 w-4 animate-spin" />}
+              Setor
             </Button>
           </DialogFooter>
         </DialogContent>
