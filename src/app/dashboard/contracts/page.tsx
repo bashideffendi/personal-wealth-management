@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { Contract, ContractCategory, ContractFrequency } from '@/types'
+import type { Contract, ContractCategory, ContractFrequency, RecurringTransaction } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
@@ -35,6 +36,12 @@ const FREQ: Record<ContractFrequency, string> = {
   quarterly: 'Triwulan',
   yearly:    'Tahunan',
   one_time:  'Sekali Bayar',
+}
+
+// Frekuensi recurring_transactions (enum-nya beda dari ContractFrequency).
+const REC_FREQ: Record<string, string> = {
+  daily: 'Harian', weekly: 'Mingguan', monthly: 'Bulanan',
+  quarterly: 'Triwulan', yearly: 'Tahunan',
 }
 
 interface FormState {
@@ -80,6 +87,7 @@ export default function ContractsPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Contract[]>([])
+  const [recurringSubs, setRecurringSubs] = useState<RecurringTransaction[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -91,12 +99,18 @@ export default function ContractsPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data } = await supabase
-      .from('contracts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('end_date', { ascending: true })
-    setItems((data ?? []) as Contract[])
+    const [contractsRes, recurringRes] = await Promise.all([
+      supabase.from('contracts').select('*').eq('user_id', user.id).order('end_date', { ascending: true }),
+      supabase.from('recurring_transactions').select('*').eq('user_id', user.id).eq('type', 'expense'),
+    ])
+    setItems((contractsRes.data ?? []) as Contract[])
+    const recs = (recurringRes.data ?? []) as RecurringTransaction[]
+    setRecurringSubs(
+      recs.filter((r) =>
+        r.category === 'Langganan' ||
+        /netflix|spotify|youtube|disney|hbo|apple|google|prime|indihome|biznet|premium|subscription|langganan/i.test(r.name),
+      ),
+    )
     setLoading(false)
   }
 
@@ -286,6 +300,41 @@ export default function ContractsPage() {
             onRemove={remove}
             onToggleArchive={toggleArchive}
           />
+        </div>
+      )}
+
+      {/* Langganan dari transaksi rutin (recurring_transactions) — read-only,
+          dikelola di /recurring. Melengkapi merge Subscription -> Kontrak. */}
+      {recurringSubs.length > 0 && (
+        <div className="s-card p-5 sm:p-6">
+          <div className="mb-3">
+            <p className="eyebrow">Langganan dari Transaksi Rutin</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+              Langganan yang udah kamu catat sebagai transaksi rutin —{' '}
+              <Link href="/dashboard/recurring" className="underline" style={{ color: 'var(--c-primary)' }}>
+                kelola di Recurring
+              </Link>.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {recurringSubs.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5"
+                style={{ borderColor: 'var(--border-soft)', opacity: r.is_active ? 1 : 0.55 }}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{r.name}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                    {REC_FREQ[r.frequency] ?? r.frequency}{r.is_active ? '' : ' · jeda'}
+                  </p>
+                </div>
+                <p className="num tabular text-sm font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(r.amount)}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
