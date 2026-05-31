@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { StockLogo } from '@/components/investment/stock-logo'
-import { StockPriceChart } from '@/components/investment/stock-price-chart'
 import { StockTickerSearch } from '@/components/investment/stock-ticker-search'
 import { IDX_BROKERS } from '@/lib/idx-brokers'
 import { CryptoLogo } from '@/components/investment/crypto-logo'
@@ -48,6 +47,10 @@ function toYahooTicker(t: string): string {
 }
 function fromYahooTicker(t: string): string {
   return t.trim().toUpperCase().replace(/\.JK$/, '')
+}
+// Crypto: normalisasi ticker tersimpan (BTC-USD / BTC / BTCUSDT) -> base (BTC) buat URL per-coin.
+function cryptoBase(t?: string | null): string {
+  return (t ?? '').toUpperCase().replace(/[-_]?(USDT|USD)$/i, '').replace(/[-_]+$/, '')
 }
 
 interface FormState {
@@ -120,8 +123,6 @@ export default function InvestmentCategoryPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
-  // Crypto chart: ticker coin yang lagi dipilih (default = holding terbesar).
-  const [cryptoChartTicker, setCryptoChartTicker] = useState<string | null>(null)
 
   // Declared as useCallback before the useEffect that triggers it so the
   // hook deps lint rule is happy without disabling it. Both `load` and
@@ -316,34 +317,6 @@ export default function InvestmentCategoryPage() {
     const pct = priorTotal > 0 ? (sum / priorTotal) * 100 : 0
     return { value: sum, pct }
   }, [hasLivePrices, enriched, totals.market])
-
-  // Crypto-only: daftar holding (ber-ticker) buat grafik harga live, urut
-  // dari nilai pasar terbesar. Dipakai buat coin selector + default pilihan.
-  const cryptoHoldings = useMemo(() => {
-    if (category !== 'crypto') return []
-    return enriched
-      .filter((e) => e.i.ticker)
-      .map((e) => ({
-        // Yahoo crypto pakai format BASE-USD; ticker tersimpan bisa "BTC-USD"
-        // atau "BTC" -> normalisasi: buang suffix -USD/-USDT lalu tambah -USD.
-        ticker: `${(e.i.ticker as string).replace(/-USDT?$/i, '').toUpperCase()}-USD`,
-        name: e.i.name,
-        market: e.market,
-      }))
-      .sort((a, b) => b.market - a.market)
-  }, [category, enriched])
-
-  // Default coin = holding terbesar; reset kalau pilihan gak ada lagi di list.
-  useEffect(() => {
-    if (category !== 'crypto') return
-    if (cryptoHoldings.length === 0) {
-      if (cryptoChartTicker !== null) setCryptoChartTicker(null)
-      return
-    }
-    if (!cryptoChartTicker || !cryptoHoldings.some((c) => c.ticker === cryptoChartTicker)) {
-      setCryptoChartTicker(cryptoHoldings[0].ticker)
-    }
-  }, [category, cryptoHoldings, cryptoChartTicker])
 
   if (!subcat) return null
 
@@ -567,45 +540,6 @@ export default function InvestmentCategoryPage() {
           />
         </div>
 
-        {/* Crypto-only: grafik harga live (reuse StockPriceChart). Coin selector
-            tampil cuma kalau holding > 1; default = holding terbesar. */}
-        {category === 'crypto' && cryptoChartTicker && (
-          <div className="s-card overflow-hidden">
-            {cryptoHoldings.length > 1 && (
-              <div
-                className="flex items-center justify-between gap-3 px-5 pt-4 sm:px-6"
-              >
-                <p className="eyebrow">Grafik Harga</p>
-                <Select
-                  value={cryptoChartTicker}
-                  onValueChange={(v) => v && setCryptoChartTicker(v)}
-                >
-                  <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs">
-                    <SelectValue>
-                      {(v) => {
-                        const c = cryptoHoldings.find((x) => x.ticker === v)
-                        return c ? `${c.ticker.replace(/-USD$/, '')} · ${c.name}` : v
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="min-w-[200px]">
-                    {cryptoHoldings.map((c) => (
-                      <SelectItem key={c.ticker} value={c.ticker}>
-                        <span className="flex items-center gap-2 min-w-0">
-                          <CryptoLogo symbol={c.ticker} size={20} />
-                          <span className="font-mono text-xs font-semibold">{c.ticker.replace(/-USD$/, '')}</span>
-                          <span className="text-xs truncate" style={{ color: 'var(--ink-muted)' }}>{c.name}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <StockPriceChart ticker={cryptoChartTicker} fallbackCurrency="USD" />
-          </div>
-        )}
-
         {view === 'list' ? (
         // ─── LIST VIEW ─── shared by all categories. Logo column adapts:
         // stock → StockLogo, crypto → CryptoLogo, others → no logo cell.
@@ -648,6 +582,20 @@ export default function InvestmentCategoryPage() {
                               {fromYahooTicker(e.i.ticker)}
                             </Badge>
                           </Link>
+                        ) : category === 'crypto' && e.i.ticker ? (
+                          <Link
+                            href={`/dashboard/assets/investment/crypto/${cryptoBase(e.i.ticker)}`}
+                            className="flex items-center gap-2.5 group/row"
+                            title={`Lihat ${cryptoBase(e.i.ticker)}`}
+                          >
+                            <CryptoLogo symbol={e.i.ticker} size={36} />
+                            <Badge
+                              className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular group-hover/row:underline"
+                              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                            >
+                              {cryptoBase(e.i.ticker)}
+                            </Badge>
+                          </Link>
                         ) : (
                           <div className="flex items-center gap-2.5">
                             {category === 'stock' ? (
@@ -668,6 +616,13 @@ export default function InvestmentCategoryPage() {
                         {showStockResearch && e.i.ticker ? (
                           <Link
                             href={`/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`}
+                            className="hover:underline"
+                          >
+                            {e.i.name}
+                          </Link>
+                        ) : category === 'crypto' && e.i.ticker ? (
+                          <Link
+                            href={`/dashboard/assets/investment/crypto/${cryptoBase(e.i.ticker)}`}
                             className="hover:underline"
                           >
                             {e.i.name}
@@ -742,7 +697,11 @@ export default function InvestmentCategoryPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
+                        {category === 'crypto' && e.i.ticker ? (
+                          <Link href={`/dashboard/assets/investment/crypto/${cryptoBase(e.i.ticker)}`} className="font-semibold text-sm truncate hover:underline block" style={{ color: 'var(--ink)' }}>{e.i.name}</Link>
+                        ) : (
+                          <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
+                        )}
                         <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                           {e.i.platform || '—'} {e.i.ticker ? `· ${e.i.ticker}` : ''}
                         </p>

@@ -29,10 +29,14 @@ interface ChartPayload {
 }
 
 interface StockPriceChartProps {
-  /** Yahoo-form ticker, e.g. BBCA.JK or AAPL. */
+  /** Yahoo-form ticker (e.g. BBCA.JK / AAPL) for stocks, or coin symbol (BTC / BTC-USD) for crypto. */
   ticker: string
   fallbackPrice?: number | null
   fallbackCurrency?: string
+  /** Data source: 'stock' = Yahoo via /api/stock-chart, 'crypto' = Binance via /api/crypto-chart. */
+  chartApi?: 'stock' | 'crypto'
+  /** Override the footer attribution text. */
+  sourceLabel?: string
 }
 
 const ID_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
@@ -47,7 +51,7 @@ function fmtPrice(value: number, currency: 'IDR' | 'USD'): string {
   })
 }
 
-export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency }: StockPriceChartProps) {
+export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chartApi = 'stock', sourceLabel }: StockPriceChartProps) {
   const [range, setRange] = useState<RangeKey>('1D')
   const [points, setPoints] = useState<ChartPoint[]>([])
   const [meta, setMeta] = useState<ChartMeta | null>(null)
@@ -76,9 +80,12 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency }: Sto
     const ctrl = new AbortController()
     setLoading(true)
     setError(false)
-    fetch(`/api/stock-chart?ticker=${encodeURIComponent(ticker)}&range=${range}`, {
-      signal: ctrl.signal,
-    })
+    fetch(
+      chartApi === 'crypto'
+        ? `/api/crypto-chart?symbol=${encodeURIComponent(ticker)}&range=${range}`
+        : `/api/stock-chart?ticker=${encodeURIComponent(ticker)}&range=${range}`,
+      { signal: ctrl.signal },
+    )
       .then((r) => (r.ok ? r.json() : { points: [], meta: null }))
       .then((d: ChartPayload) => {
         const payload: ChartPayload = { points: d.points ?? [], meta: d.meta ?? null }
@@ -94,7 +101,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency }: Sto
         setLoading(false)
       })
     return () => ctrl.abort()
-  }, [ticker, range])
+  }, [ticker, range, chartApi])
 
   const currency: 'IDR' | 'USD' = useMemo(() => {
     const c = (meta?.currency ?? fallbackCurrency ?? '').toUpperCase()
@@ -294,7 +301,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency }: Sto
       </div>
 
       <p className="text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
-        Data: Yahoo Finance · delayed
+        {sourceLabel ?? (chartApi === 'crypto' ? 'Data: Binance · realtime' : 'Data: Yahoo Finance · delayed')}
       </p>
     </div>
   )
