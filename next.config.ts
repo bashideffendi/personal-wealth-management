@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['recharts', 'date-fns', 'lucide-react'],
   },
+  // getStock() fs-reads per-ticker JSON from src/data/invest/stocks/{TICKER}.json
+  // (split out of the 30 MB stocks.json so cold-start doesn't parse the whole
+  // universe). Next's tracer can't see those dynamic-path reads, so include the
+  // folder explicitly for the only two routes that call getStock — otherwise the
+  // files wouldn't ship and the read would ENOENT (degrading to emiten-only).
+  outputFileTracingIncludes: {
+    '/dashboard/assets/investment/stock/research/[ticker]': ['./src/data/invest/stocks/**'],
+    '/api/idx-research/[ticker]/generate': ['./src/data/invest/stocks/**'],
+  },
   images: {
     // External logo sources used by CryptoLogo + future avatar fetchers.
     // CORS is open on these; we use unoptimized=true on <Image> so Next

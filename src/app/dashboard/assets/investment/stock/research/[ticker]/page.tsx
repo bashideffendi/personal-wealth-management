@@ -6,14 +6,14 @@ import {
   getEmittenStat,
   getDividendsForTicker,
   getStock,
-  getStocks,
+  getSectorMedians,
   getQuarterlyFinancialsFor,
   getPricePerformanceFor,
   getResearchMarkdown,
   latestMetricYear,
   getMetricSeries,
 } from '@/lib/invest/stocks'
-import { valuate, computeAllSectorMedians } from '@/lib/invest/valuation'
+import { valuate } from '@/lib/invest/valuation'
 import { getEmiten } from '@/lib/invest/emitten'
 import { getOwnership } from '@/lib/invest/ownership'
 import { formatPrice, formatTanggalID, verdictStyle } from '@/lib/invest/format'
@@ -141,14 +141,12 @@ export default async function StockResearchPage({ params }: RouteProps) {
       }
 
   // Valuasi konsensus 13-metode — live compute dari raw financials.
-  // Sector medians dihitung dari seluruh universe (sekali pakai di sini).
+  // Sector medians dibaca dari precompute (sector-medians.json) — gak perlu
+  // muat + iterasi seluruh universe (~30 MB) cuma buat anchor 1 valuasi.
   // Fair value tetap intrinsik (dari data FY); cuma harga pasar buat MoS yang
-  // di-override ke harga live Yahoo (bukan snapshot basi di stocks.json).
+  // di-override ke harga live Yahoo (bukan snapshot basi).
   const valuationV2 = stock
-    ? valuate(
-        { ...stock, currentPrice: livePrice },
-        computeAllSectorMedians(getStocks()),
-      )
+    ? valuate({ ...stock, currentPrice: livePrice }, getSectorMedians())
     : null
 
   // Hero strip + verdict badge — satu sumber kebenaran dengan tab Valuasi
