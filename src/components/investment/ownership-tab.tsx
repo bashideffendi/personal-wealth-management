@@ -13,7 +13,7 @@
 
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
-import { Network, Building2, Users } from 'lucide-react'
+import { Network, Building2, Users, UserRound } from 'lucide-react'
 import { formatTanggalID, formatIDRCompact } from '@/lib/invest/format'
 import type { Ownership } from '@/lib/invest/ownership'
 
@@ -45,6 +45,19 @@ function barColor(rank: number, total: number): string {
   return 'var(--surface-2)'
 }
 
+// Format jumlah lembar saham compact ala Indonesia: 1,23 M (juta) / 26,45 B (miliar) / 1,02 T (triliun).
+function formatShares(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return '—'
+  const abs = Math.abs(value)
+  const sign = value < 0 ? '−' : ''
+  const fmt = (n: number) => n.toFixed(2).replace('.', ',')
+  if (abs >= 1e12) return `${sign}${fmt(abs / 1e12)} T`
+  if (abs >= 1e9) return `${sign}${fmt(abs / 1e9)} B`
+  if (abs >= 1e6) return `${sign}${fmt(abs / 1e6)} M`
+  if (abs >= 1e3) return `${sign}${fmt(abs / 1e3)} rb`
+  return `${sign}${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(abs)}`
+}
+
 interface OwnershipTabProps {
   ticker: string
   ownership: Ownership | null
@@ -74,6 +87,50 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
         .sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0)),
     [ownership],
   )
+
+  // Daftar pemegang saham BERNAMA — diturunkan dari jaringan kepemilikan.
+  // Node emiten ini = node company yg symbol-nya match ticker; fallback ke
+  // node company yg paling banyak jadi tujuan edge (akar grafik). Pemegang =
+  // edge.from dari semua edge yg `to`-nya node ini.
+  const namedHolders = useMemo(() => {
+    const nodes = ownership?.network?.nodes ?? []
+    const edges = ownership?.network?.edges ?? []
+    if (!nodes.length || !edges.length) return []
+
+    const tickerU = ticker.toUpperCase()
+    let self = nodes.find((n) => n.kind === 'company' && n.symbol?.toUpperCase() === tickerU)
+    if (!self) {
+      // Fallback: node company yg paling sering jadi `to` (akar kepemilikan).
+      const inboundByCompany = new Map<string, number>()
+      const companyById = new Map(nodes.filter((n) => n.kind === 'company').map((n) => [n.id, n]))
+      for (const e of edges) {
+        if (e.to && companyById.has(e.to)) {
+          inboundByCompany.set(e.to, (inboundByCompany.get(e.to) ?? 0) + 1)
+        }
+      }
+      let bestId: string | null = null
+      let bestN = -1
+      for (const [id, n] of inboundByCompany) {
+        if (n > bestN) {
+          bestN = n
+          bestId = id
+        }
+      }
+      self = bestId ? companyById.get(bestId) : undefined
+    }
+    if (!self) return []
+
+    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+    return edges
+      .filter((e) => e.to === self!.id && e.from)
+      .map((e) => ({
+        node: nodeById.get(e.from as string),
+        pct: e.pct ?? 0,
+        shares: e.shares,
+      }))
+      .filter((h): h is { node: NonNullable<typeof h.node>; pct: number; shares: number | null } => !!h.node)
+      .sort((a, b) => b.pct - a.pct)
+  }, [ownership, ticker])
 
   // ── Empty state: emiten belum ke-scrape ──
   if (!ownership || !hasNetwork) {
@@ -133,6 +190,96 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
         Buat lihat pengendali &amp; kepemilikan silang antar emiten (pihak terkait).
         Arah panah = pemegang → emiten yang dipegang; tebal garis ∝ persentase.
       </p>
+
+      {/* Pemegang Saham (bernama) — diturunkan dari jaringan kepemilikan */}
+      <div className="s-card p-5">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-4">
+          <UserRound className="size-4 self-center" style={{ color: 'var(--c-mint)' }} />
+          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Pemegang Saham</p>
+          {namedHolders.length > 0 && (
+            <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              dari jaringan kepemilikan · per {formatTanggalID(ownership.asOf)}
+            </span>
+          )}
+          {namedHolders.length > 0 && (
+            <span className="ml-auto text-xs num tabular" style={{ color: 'var(--ink-soft)' }}>
+              {namedHolders.length} pemegang
+            </span>
+          )}
+        </div>
+
+        {namedHolders.length > 0 ? (
+          <div>
+            {/* Header baris */}
+            <div
+              className="hidden sm:flex items-center gap-3 pb-2 mb-1 text-[11px] font-medium uppercase tracking-wide"
+              style={{ color: 'var(--ink-soft)', borderBottom: '1px solid var(--border-soft)' }}
+            >
+              <span className="flex-1">Nama</span>
+              <span className="w-20 text-right">%</span>
+              <span className="w-28 text-right">Lembar</span>
+            </div>
+            <div className="space-y-0.5">
+              {namedHolders.map((h, i) => {
+                const isCompany = h.node.kind === 'company'
+                return (
+                  <div
+                    key={`${h.node.id}-${i}`}
+                    className="flex items-center gap-3 py-2"
+                    style={{ borderBottom: i < namedHolders.length - 1 ? '1px solid var(--border-soft)' : undefined }}
+                  >
+                    {/* Indikator jenis + nama */}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {isCompany && h.node.icon ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={h.node.icon}
+                          alt=""
+                          className="size-5 rounded-full shrink-0 object-contain"
+                          style={{ background: 'var(--surface-2)' }}
+                        />
+                      ) : (
+                        <span
+                          className="size-2.5 rounded-full shrink-0"
+                          style={{ background: isCompany ? 'var(--c-mint)' : 'var(--ink-soft)' }}
+                          title={isCompany ? 'Perusahaan' : 'Investor'}
+                          aria-label={isCompany ? 'Perusahaan' : 'Investor'}
+                        />
+                      )}
+                      <span
+                        className="text-[13px] truncate"
+                        style={{ color: 'var(--ink)' }}
+                        title={h.node.name ?? ''}
+                      >
+                        {h.node.name ?? '—'}
+                      </span>
+                    </div>
+                    {/* Persen */}
+                    <span
+                      className="num tabular text-[13px] font-bold shrink-0 w-20 text-right"
+                      style={{ color: h.pct >= 50 ? 'var(--c-mint)' : 'var(--ink)' }}
+                    >
+                      {h.pct.toFixed(2)}%
+                    </span>
+                    {/* Lembar */}
+                    <span
+                      className="num tabular text-[12px] shrink-0 w-28 text-right"
+                      style={{ color: 'var(--ink-muted)' }}
+                      title={h.shares != null ? new Intl.NumberFormat('id-ID').format(h.shares) + ' lembar' : ''}
+                    >
+                      {formatShares(h.shares)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
+            Daftar pemegang saham bernama belum tersedia.
+          </p>
+        )}
+      </div>
 
       {/* Dua panel: komposisi + anak usaha */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
