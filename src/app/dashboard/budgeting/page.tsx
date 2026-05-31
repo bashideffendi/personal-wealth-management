@@ -357,6 +357,7 @@ export default function BudgetingPage() {
       fillLo = Math.min(fs.month, fillOverMonth)
       fillHi = Math.max(fs.month, fillOverMonth)
     }
+    const accent = KIND_COLOR[type].hex
     return (
       <tr key={`${type}-${categoryKey}`} className={bgClass}>
         <td
@@ -376,7 +377,7 @@ export default function BudgetingPage() {
             <td
               key={month}
               className="group relative border-b border-[color:var(--border)] px-0.5 py-0"
-              style={{ background: inRange && !isSource ? 'color-mix(in srgb, var(--c-primary) 11%, transparent)' : undefined }}
+              style={{ background: inRange && !isSource ? `color-mix(in srgb, ${accent} 13%, transparent)` : undefined }}
               onMouseEnter={() => onFillEnter(type, categoryKey, month)}
             >
               <input
@@ -399,8 +400,8 @@ export default function BudgetingPage() {
               />
               <span
                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startFill(type, categoryKey, month) }}
-                className={`absolute bottom-0 right-0 cursor-crosshair ${isSource ? 'block' : 'hidden group-hover:block'}`}
-                style={{ width: 7, height: 7, background: 'var(--c-primary)', borderTopLeftRadius: 2 }}
+                className={`absolute bottom-0.5 right-0.5 cursor-crosshair rounded-[2px] transition-opacity duration-150 ${isSource ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}
+                style={{ width: 6, height: 6, background: accent, boxShadow: '0 0 0 1.5px var(--surface)' }}
                 title="Tarik buat isi nilai ini ke bulan lain"
                 aria-hidden="true"
               />
