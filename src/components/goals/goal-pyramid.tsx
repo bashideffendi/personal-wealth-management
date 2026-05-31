@@ -1,20 +1,17 @@
 'use client'
 
 /**
- * Multi-Goal Pyramid view — restructures user's goals into Behavioral
- * Portfolio Theory layers (Shefrin & Statman 2000):
- *   - Pelindung (bottom):  protection, emergency, short-term needs
- *   - Pertumbuhan (mid):   stable growth, long-term essentials
- *   - Mimpi (top):         high-growth ambitions, "lottery jar"
+ * Goal Pyramid — Behavioral Portfolio Theory (Shefrin & Statman 2000).
+ * Goals dikelompokkan ke 3 tier risiko/horizon: Aman (fondasi) → Bertumbuh →
+ * Ambisi (puncak). Bukan pajangan: ngitung tier mana yang harus diamankan dulu
+ * (tier terbawah yang belum 100%) dan kasih 1 rekomendasi konkret.
  *
- * Each layer aggregates goals by category — user just sees their goals
- * grouped into the layer that best matches the risk/horizon profile.
- *
- * Visual: 3 stacked horizontal bars (largest at bottom = pelindung) with
- * goals listed inside each layer.
+ * Penempatan tier dari categoryToPyramidLayer() (logika app), BUKAN manual —
+ * jadi konsisten + bener (dana darurat/pendidikan = Aman, liburan = Ambisi).
  */
 
 import { useMemo } from 'react'
+import { ArrowRight, ShieldCheck } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import {
   PYRAMID_LAYERS,
@@ -36,126 +33,152 @@ interface Props {
   goals: Goal[]
 }
 
+// Bottom → top (fondasi dulu). Render dibalik (puncak di atas).
+const BOTTOM_UP: PyramidLayer[] = ['pelindung', 'pertumbuhan', 'mimpi']
+
 export function GoalPyramid({ goals }: Props) {
-  const grouped = useMemo(() => {
-    const out: Record<PyramidLayer, Goal[]> = { pelindung: [], pertumbuhan: [], mimpi: [] }
-    for (const g of goals) {
-      const layer = categoryToPyramidLayer(g.category)
-      out[layer].push(g)
+  const { grouped, agg, focus } = useMemo(() => {
+    const grouped: Record<PyramidLayer, Goal[]> = { pelindung: [], pertumbuhan: [], mimpi: [] }
+    for (const g of goals) grouped[categoryToPyramidLayer(g.category)].push(g)
+
+    const agg = {} as Record<PyramidLayer, { current: number; target: number; pct: number }>
+    for (const key of BOTTOM_UP) {
+      const current = grouped[key].reduce((s, g) => s + g.current_amount, 0)
+      const target = grouped[key].reduce((s, g) => s + g.target_amount, 0)
+      agg[key] = { current, target, pct: target > 0 ? (current / target) * 100 : 0 }
     }
-    return out
+
+    // Tier fokus = tier terbawah yang punya goal tapi belum 100%.
+    const focus = BOTTOM_UP.find((k) => grouped[k].length > 0 && agg[k].pct < 100) ?? null
+    return { grouped, agg, focus }
   }, [goals])
 
   if (goals.length === 0) return null
 
+  const hasAman = grouped.pelindung.length > 0
+
+  // Insight actionable — 1 kalimat yang ngarahin keputusan.
+  let insight: { text: string; tone: 'focus' | 'warn' | 'done'; color: string }
+  if (!hasAman) {
+    insight = {
+      text: 'Belum ada tujuan tier Aman (dana darurat / proteksi). Bangun fondasi ini dulu sebelum kejar tier atas.',
+      tone: 'warn',
+      color: '#F59E0B',
+    }
+  } else if (focus) {
+    const meta = PYRAMID_LAYERS[focus]
+    insight = {
+      text: `Amankan tier ${meta.label} dulu — baru ${agg[focus].pct.toFixed(0)}% terkumpul (${formatCurrency(agg[focus].current)} dari ${formatCurrency(agg[focus].target)}). Prioritaskan setoran ke sini.`,
+      tone: 'focus',
+      color: meta.color,
+    }
+  } else {
+    insight = {
+      text: 'Semua tier yang aktif udah penuh — fondasi aman. Mantap, tinggal jaga konsistensi.',
+      tone: 'done',
+      color: '#10B981',
+    }
+  }
+
+  // Lebar pyramid: puncak sempit → dasar lebar.
+  const widthFor: Record<PyramidLayer, string> = {
+    mimpi: '70%',
+    pertumbuhan: '85%',
+    pelindung: '100%',
+  }
+
   return (
     <div
-      className="rounded-2xl border p-5 sm:p-6"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+      className="rounded-xl border p-5"
+      style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
     >
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="eyebrow flex items-center gap-1.5">
-            Behavioral Portfolio
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
+            Goal Pyramid
             <EduTip topic="goal-based-investing" side="bottom" />
           </p>
-          <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-            Piramida Tujuan
-          </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Goals dikelompokkan berdasarkan profil risiko & horizon — strategi tabungannya bisa beda.
+            Fondasi (bawah) dulu, ambisi (atas) belakangan. Selesaikan tier bawah sebelum naik.
           </p>
         </div>
       </div>
 
-      {/* Pyramid — top (mimpi, narrow) → bottom (pelindung, wide) */}
-      <div className="space-y-1.5">
-        {(['mimpi', 'pertumbuhan', 'pelindung'] as PyramidLayer[]).map((layerKey, idx) => {
-          const layer = PYRAMID_LAYERS[layerKey]
-          const items = grouped[layerKey]
-          // Width grows from top (60%) to bottom (100%)
-          const widths = ['60%', '80%', '100%']
-          const width = widths[idx]
+      {/* Insight actionable */}
+      <div
+        className="mt-3 flex items-start gap-2.5 rounded-lg px-3 py-2.5"
+        style={{ background: `${insight.color}14` }}
+      >
+        <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: insight.color }} />
+        <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
+          {insight.text}
+        </p>
+      </div>
+
+      {/* Tiers — puncak (mimpi) di atas, dasar (pelindung) di bawah */}
+      <div className="mt-4 space-y-1.5">
+        {(['mimpi', 'pertumbuhan', 'pelindung'] as PyramidLayer[]).map((key) => {
+          const meta = PYRAMID_LAYERS[key]
+          const items = grouped[key]
+          const a = agg[key]
+          const isFocus = focus === key
           return (
-            <div key={layerKey} className="flex justify-center">
+            <div key={key} className="flex justify-center">
               <div
-                className="rounded-lg border p-3 sm:p-4 transition-all hover:shadow-md"
+                className="rounded-lg border px-3 py-2.5 transition-all"
                 style={{
-                  width,
-                  background: `${layer.color}0F`,
-                  borderColor: `${layer.color}40`,
+                  width: widthFor[key],
+                  background: `${meta.color}0F`,
+                  borderColor: isFocus ? meta.color : `${meta.color}33`,
+                  boxShadow: isFocus ? `0 0 0 1px ${meta.color}` : 'none',
                 }}
               >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{layer.emoji}</span>
-                    <p
-                      className="text-xs font-bold uppercase tracking-wide"
-                      style={{ color: layer.color }}
-                    >
-                      {layer.label}
-                    </p>
-                  </div>
-                  <span
-                    className="text-[10px] num font-semibold"
-                    style={{ color: layer.color }}
-                  >
-                    {items.length}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: meta.color }}>
+                    {meta.label}
+                    {isFocus && <span className="ml-1.5 font-medium normal-case opacity-80">· fokus di sini</span>}
+                  </span>
+                  <span className="num text-[11px] font-semibold shrink-0" style={{ color: meta.color }}>
+                    {items.length > 0 ? `${a.pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 {items.length === 0 ? (
-                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                    Belum ada goal di layer ini.
+                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
+                    Belum ada tujuan.
                   </p>
                 ) : (
-                  <div className="space-y-1">
-                    {items.slice(0, 3).map((g) => {
-                      const pct = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0
-                      return (
-                        <div key={g.id} className="flex items-center justify-between gap-2 text-[11px]">
-                          <span className="truncate font-medium" style={{ color: 'var(--ink)' }}>
-                            {g.name}
-                          </span>
-                          <span className="num shrink-0" style={{ color: 'var(--ink-muted)' }}>
-                            {pct.toFixed(0)}%
-                          </span>
-                        </div>
-                      )
-                    })}
-                    {items.length > 3 && (
-                      <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>
-                        +{items.length - 3} goal lain
-                      </p>
+                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {items.slice(0, 4).map((g) => (
+                      <span key={g.id} className="text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>
+                        {g.name}
+                      </span>
+                    ))}
+                    {items.length > 4 && (
+                      <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                        +{items.length - 4} lain
+                      </span>
                     )}
                   </div>
                 )}
-                <p className="text-[10px] mt-2 opacity-70" style={{ color: layer.color }}>
-                  {layer.description}
-                </p>
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* Layer total summary */}
+      {/* Footer total per tier */}
       <div
-        className="mt-4 pt-3 border-t grid grid-cols-3 gap-2 text-[11px]"
+        className="mt-3 pt-3 border-t grid grid-cols-3 gap-2"
         style={{ borderColor: 'var(--border-soft)' }}
       >
-        {(['pelindung', 'pertumbuhan', 'mimpi'] as PyramidLayer[]).map((key) => {
-          const layer = PYRAMID_LAYERS[key]
-          const items = grouped[key]
-          const total = items.reduce((s, g) => s + g.current_amount, 0)
+        {BOTTOM_UP.map((key) => {
+          const meta = PYRAMID_LAYERS[key]
           return (
-            <div key={key}>
-              <p style={{ color: 'var(--ink-soft)' }}>{layer.label}</p>
-              <p
-                className="num font-semibold mt-0.5"
-                style={{ color: layer.color }}
-              >
-                {formatCurrency(total)}
-              </p>
+            <div key={key} className="flex items-center gap-1.5 text-[11px]">
+              <ArrowRight className="size-3 shrink-0" style={{ color: meta.color }} />
+              <span className="num font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                {formatCurrency(agg[key].current)}
+              </span>
             </div>
           )
         })}
@@ -164,20 +187,17 @@ export function GoalPyramid({ goals }: Props) {
   )
 }
 
-/** Mini pyramid badge showing where a single goal sits */
+/** Mini badge — di mana satu goal duduk di piramida. */
 export function GoalLayerBadge({ category }: { category: string }) {
   const layer = categoryToPyramidLayer(category)
   const meta = PYRAMID_LAYERS[layer]
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-      style={{
-        background: `${meta.color}15`,
-        color: meta.color,
-      }}
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+      style={{ background: `${meta.color}1A`, color: meta.color }}
       title={meta.description}
     >
-      {meta.emoji} {meta.label}
+      {meta.label}
     </span>
   )
 }

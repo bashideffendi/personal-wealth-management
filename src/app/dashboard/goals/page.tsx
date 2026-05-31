@@ -14,22 +14,40 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, TrendingUp } from 'lucide-react'
+import {
+  Plus, Pencil, Trash2, Loader2, ArrowRight, Target, TrendingUp, Repeat, Sparkles,
+  Home, Car, Plane, GraduationCap, Smartphone, Heart, ShieldCheck, PiggyBank, Briefcase,
+  type LucideIcon,
+} from 'lucide-react'
 import { EduTip } from '@/components/edu/edu-tip'
-import { GoalPyramid, GoalLayerBadge } from '@/components/goals/goal-pyramid'
-import { GoalProbabilityMeter } from '@/components/goals/goal-probability-meter'
+import { GoalPyramid } from '@/components/goals/goal-pyramid'
+import {
+  computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
+  categoryToPyramidLayer, PYRAMID_LAYERS,
+} from '@/lib/goal-probability'
 
 const GOAL_CATEGORIES: Record<string, string> = {
-  property: 'Properti',
-  vehicle: 'Kendaraan',
-  travel: 'Liburan',
-  education: 'Pendidikan',
-  gadget: 'Gadget',
-  wedding: 'Pernikahan',
-  emergency: 'Darurat',
-  retirement: 'Pensiun',
-  business: 'Bisnis',
-  other: 'Lainnya',
+  property: 'Properti', vehicle: 'Kendaraan', travel: 'Liburan', education: 'Pendidikan',
+  gadget: 'Gadget', wedding: 'Pernikahan', emergency: 'Darurat', retirement: 'Pensiun',
+  business: 'Bisnis', other: 'Lainnya',
+}
+
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  property: Home, vehicle: Car, travel: Plane, education: GraduationCap,
+  gadget: Smartphone, wedding: Heart, emergency: ShieldCheck, retirement: PiggyBank,
+  business: Briefcase, other: Target,
+}
+
+/** Warna probabilitas — sama persis sama meter lama (mint≥70 / amber≥40 / coral). */
+function probColor(p: number): string {
+  return p >= 70 ? '#10B981' : p >= 40 ? '#F59E0B' : '#F43F5E'
+}
+
+function monthsUntil(deadline: string | null): number | null {
+  if (!deadline) return null
+  const d = new Date(deadline)
+  const now = new Date()
+  return (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth())
 }
 
 interface FormState {
@@ -101,92 +119,109 @@ export default function GoalsPage() {
     setDialogOpen(true)
   }
 
-  const totals = useMemo(() => {
-    const target = goals.reduce((s, g) => s + g.target_amount, 0)
-    const current = goals.reduce((s, g) => s + g.current_amount, 0)
-    return { target, current, pct: target > 0 ? (current / target) * 100 : 0 }
+  // Aktif + urut by deadline (paling urgent dulu = Prioritas #1, tanpa deadline di akhir)
+  const activeGoals = useMemo(() => {
+    return goals
+      .filter((g) => g.is_active)
+      .sort((a, b) => {
+        if (!a.deadline && !b.deadline) return 0
+        if (!a.deadline) return 1
+        if (!b.deadline) return -1
+        return a.deadline.localeCompare(b.deadline)
+      })
   }, [goals])
 
-  function monthsUntil(deadline: string | null): number | null {
-    if (!deadline) return null
-    const d = new Date(deadline)
-    const now = new Date()
-    return (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth())
+  // Hitung sekali: per-goal derived + Monte Carlo (dipakai card + stat rata-rata)
+  const derived = useMemo(() => {
+    return activeGoals.map((g) => {
+      const pct = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0
+      const remaining = Math.max(0, g.target_amount - g.current_amount)
+      const months = monthsUntil(g.deadline)
+      const perMonth = months && months > 0 ? Math.ceil(remaining / months) : null
+      const done = pct >= 100
+      const layer = categoryToPyramidLayer(g.category)
+      const layerColor = PYRAMID_LAYERS[layer].color
+
+      let prob: number | null = null
+      let requiredFor90: number | null = null
+      if (done) {
+        prob = 100
+      } else if (g.deadline && months && months > 0) {
+        const profile = suggestedRiskProfile(g.category, months)
+        const a = RISK_PROFILES[profile]
+        const r = computeGoalProbability({
+          current: g.current_amount, target: g.target_amount, monthsLeft: months,
+          monthlyContribution: perMonth ?? 0,
+          assumptions: { annualReturn: a.annualReturn, annualStdev: a.annualStdev },
+          simulations: 2000,
+        })
+        prob = r.probability
+        requiredFor90 = r.requiredMonthlyFor90
+      }
+      return { g, pct, remaining, months, perMonth, done, layer, layerColor, prob, requiredFor90 }
+    })
+  }, [activeGoals])
+
+  const stats = useMemo(() => {
+    const totalTarget = derived.reduce((s, d) => s + d.g.target_amount, 0)
+    const totalCurrent = derived.reduce((s, d) => s + d.g.current_amount, 0)
+    const pct = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0
+    const iuranBulan = derived.reduce((s, d) => s + (d.perMonth ?? 0), 0)
+    const deadlineCount = derived.filter((d) => d.perMonth != null).length
+    const probs = derived.filter((d) => d.prob != null).map((d) => d.prob as number)
+    const avgProb = probs.length > 0 ? probs.reduce((s, p) => s + p, 0) / probs.length : null
+    const tercapai = derived.filter((d) => d.done).length
+    return { totalTarget, totalCurrent, pct, iuranBulan, deadlineCount, avgProb, tercapai }
+  }, [derived])
+
+  const statCards = [
+    { label: 'Total Target', value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} tujuan`, icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
+    { label: 'Sudah Terkumpul', value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% dari target`, icon: TrendingUp, color: '#10B981', chip: '#10B9811A' },
+    { label: 'Iuran Wajib / Bulan', value: formatCurrency(stats.iuranBulan), sub: `${stats.deadlineCount} tujuan ber-deadline`, icon: Repeat, color: '#8B5CF6', chip: '#8B5CF61A' },
+    { label: 'Probabilitas Rata-rata', value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: 'rata-rata simulasi Monte Carlo', icon: Sparkles, color: '#F59E0B', chip: '#F59E0B1A' },
+  ]
+
+  function scrollToPyramid() {
+    document.getElementById('goal-pyramid')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   return (
     <div className="space-y-6">
-      {/* Dark gradient hero */}
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -120,
-            right: -80,
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-9">
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.55)' }}
-          >
-            Tujuan Keuangan
+      {/* Header — light, serif title (personality moment) */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
+            {activeGoals.length} Tujuan Aktif{stats.tercapai > 0 && ` · ${stats.tercapai} Tercapai`}
           </p>
-          <p
-            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
-            style={{
-              color: '#FFFFFF',
-              fontSize: 'clamp(40px, 6vw, 64px)',
-              letterSpacing: '-0.04em',
-            }}
+          <h1
+            className="mt-1 text-3xl sm:text-4xl leading-tight"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}
           >
-            {formatCurrency(totals.current)}
-          </p>
-          <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            dari target{' '}
-            <span className="num tabular font-semibold" style={{ color: '#FFFFFF' }}>
-              {formatCurrency(totals.target)}
-            </span>
-            {' · '}
-            <span className="num tabular font-bold" style={{ color: '#6EE7B7' }}>
-              {totals.pct.toFixed(1)}%
-            </span>
-            {' tercapai · '}{goals.length} goal
+            Tujuan Finansial
+          </h1>
+          <p className="text-sm mt-1.5 flex items-center gap-1.5 max-w-xl" style={{ color: 'var(--ink-muted)' }}>
+            Pantau progres tiap milestone. Probabilitas dari simulasi Monte Carlo, bukan tebakan.
+            <EduTip topic="mental-accounting" side="bottom" />
           </p>
         </div>
-      </section>
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}>
-          Set target, pantau progres, dan lihat berapa per bulan yang perlu ditabung.
-          <EduTip topic="mental-accounting" side="bottom" />
-        </p>
-        <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Tambah Goal
-        </Button>
+        <div className="flex items-center gap-2">
+          {activeGoals.length > 0 && (
+            <Button variant="outline" onClick={scrollToPyramid}>
+              <Target className="h-4 w-4" /> Goal Pyramid
+            </Button>
+          )}
+          <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+            <Plus className="h-4 w-4" /> Tujuan baru
+          </Button>
+        </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
-      ) : goals.length === 0 ? (
-        // Empty state — clean centered card with icon + headline + sub
+      ) : activeGoals.length === 0 ? (
         <div className="s-card flex flex-col items-center text-center py-16 px-8">
-          <div
-            className="size-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'var(--c-primary-soft)' }}
-          >
-            <TrendingUp className="size-7" style={{ color: 'var(--c-primary)' }} />
+          <div className="size-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-primary-soft)' }}>
+            <Target className="size-7" style={{ color: 'var(--c-primary)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
             Belum ada tujuan
@@ -197,108 +232,124 @@ export default function GoalsPage() {
         </div>
       ) : (
         <>
-          {/* BPT pyramid view — group goals by risk/horizon layer */}
-          <GoalPyramid goals={goals.filter((g) => g.is_active)} />
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          {goals.map((g) => {
-            const pct = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0
-            const remaining = Math.max(0, g.target_amount - g.current_amount)
-            const months = monthsUntil(g.deadline)
-            const perMonth = months && months > 0 ? Math.ceil(remaining / months) : null
-            const done = pct >= 100
-            return (
-              <div
-                key={g.id}
-                className="group rounded-xl p-5 bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
-              >
+          {/* 4 stat cards */}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            {statCards.map((c) => (
+              <div key={c.label} className="s-card p-5">
                 <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                      <GoalLayerBadge category={g.category} />
+                  <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{c.label}</p>
+                  <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.chip }}>
+                    <c.icon className="size-4" style={{ color: c.color }} />
+                  </div>
+                </div>
+                <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>
+                  {c.value}
+                </p>
+                <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Goal cards + pyramid sebagai cell terakhir */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {derived.map((d, i) => {
+              const { g, pct, remaining, perMonth, done, layerColor, prob, requiredFor90 } = d
+              const Icon = CATEGORY_ICON[g.category] ?? Target
+              return (
+                <div
+                  key={g.id}
+                  className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+                >
+                  <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: layerColor }} />
+                  <div className="p-5 pl-6">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${layerColor}1A` }}>
+                          <Icon className="size-4" style={{ color: layerColor }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                            {g.deadline
+                              ? `Target ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
+                              : (GOAL_CATEGORIES[g.category] ?? g.category)}
+                            {' · '}Prioritas #{i + 1}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
+                        <Button variant="ghost" size="icon-sm" onClick={() => openEdit(g)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" onClick={() => remove(g.id)}>
+                          <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                      {GOAL_CATEGORIES[g.category] ?? g.category}
-                      {g.deadline && ` · deadline ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                    <Button variant="ghost" size="icon-sm" onClick={() => openEdit(g)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => remove(g.id)}>
-                      <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
-                    </Button>
-                  </div>
-                </div>
 
-                <div className="mt-4 flex items-end justify-between">
-                  <p className="num text-2xl tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                    {formatCurrency(g.current_amount)}
-                  </p>
-                  <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-                    / <span className="num">{formatCurrency(g.target_amount)}</span>
-                  </p>
-                </div>
+                    <div className="mt-4 flex items-end gap-3">
+                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: layerColor }}>
+                        {pct.toFixed(0)}%
+                      </p>
+                      <div className="pb-1 min-w-0">
+                        <p className="num text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                          {formatCurrency(g.current_amount)}
+                          <span className="font-normal" style={{ color: 'var(--ink-muted)' }}> / {formatCurrency(g.target_amount)}</span>
+                        </p>
+                        <p className="num text-[11px] mt-0.5" style={{ color: done ? '#10B981' : layerColor }}>
+                          {done ? 'Target tercapai' : `Sisa ${formatCurrency(remaining)}`}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="mt-2">
-                  <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.min(pct, 100)}%`,
-                        background: done ? 'var(--c-mint)' : 'var(--ink)',
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] mt-1.5">
-                    <span className="num" style={{ color: done ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
-                      {pct.toFixed(1)}% {done ? '(Tercapai)' : 'tercapai'}
-                    </span>
-                    {perMonth !== null && !done && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium"
-                        style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}
-                      >
-                        <TrendingUp className="h-2.5 w-2.5" />
-                        Tabung <span className="num">{formatCurrency(perMonth)}</span>/bln
-                      </span>
+                    <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? '#10B981' : layerColor }} />
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Iuran / Bulan</p>
+                        <p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+                          {perMonth != null ? formatCurrency(perMonth) : '—'}
+                        </p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Probabilitas</p>
+                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob != null ? probColor(prob) : 'var(--ink-soft)' }}>
+                          {prob != null ? `${prob.toFixed(0)}%` : '—'}
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => openEdit(g)}>
+                        Setor sekarang <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    {prob != null && prob < 70 && requiredFor90 != null && perMonth != null && requiredFor90 > perMonth && (
+                      <p className="mt-2.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                        Naikin ke <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}/bln</span> buat ~90% peluang.
+                      </p>
                     )}
                   </div>
                 </div>
+              )
+            })}
 
-                {/* Goal probability meter — Monte Carlo of hitting target by deadline */}
-                {g.deadline && g.target_amount > 0 && !done && (
-                  <GoalProbabilityMeter
-                    current={g.current_amount}
-                    target={g.target_amount}
-                    deadline={g.deadline}
-                    category={g.category}
-                  />
-                )}
-
-                {g.notes && (
-                  <p className="mt-3 pt-3 border-t text-[11px]" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
-                    {g.notes}
-                  </p>
-                )}
-              </div>
-            )
-          })}
-        </div>
+            <div id="goal-pyramid" className="scroll-mt-24">
+              <GoalPyramid goals={activeGoals} />
+            </div>
+          </div>
         </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Goal' : 'Tambah Goal'}</DialogTitle>
+            <DialogTitle>{form.id ? 'Edit Tujuan' : 'Tujuan baru'}</DialogTitle>
             <DialogDescription>Set target keuangan dengan deadline opsional.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Nama Goal</Label>
+              <Label>Nama Tujuan</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="DP Rumah, Liburan Bali..." />
             </div>
             <div className="grid gap-1.5">

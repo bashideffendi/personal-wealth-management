@@ -226,21 +226,21 @@ export type PyramidLayer = 'pelindung' | 'pertumbuhan' | 'mimpi'
 
 export const PYRAMID_LAYERS: Record<PyramidLayer, { label: string; description: string; color: string; emoji: string }> = {
   pelindung: {
-    label: 'Pelindung',
-    description: 'Dasar piramida. Dana darurat, kebutuhan dekat, proteksi.',
-    color: '#0EA5E9',
+    label: 'Aman',
+    description: 'Dasar piramida — dana darurat, kebutuhan dekat, proteksi. Amankan ini dulu.',
+    color: '#10B981', // mint — fondasi/positif
     emoji: '🛡️',
   },
   pertumbuhan: {
-    label: 'Pertumbuhan Stabil',
-    description: 'Tengah piramida. DP rumah, dana pendidikan, pensiun.',
-    color: '#10B981',
+    label: 'Bertumbuh',
+    description: 'Tengah — DP rumah, dana pendidikan, pensiun, nikah.',
+    color: '#8B5CF6', // violet
     emoji: '📈',
   },
   mimpi: {
-    label: 'Mimpi & Aspirasi',
-    description: 'Puncak piramida. Bisnis, liburan impian, lottery jar.',
-    color: '#F59E0B',
+    label: 'Ambisi',
+    description: 'Puncak — bisnis, liburan impian, gadget. Kejar setelah fondasi aman.',
+    color: '#F59E0B', // amber
     emoji: '🚀',
   },
 }
