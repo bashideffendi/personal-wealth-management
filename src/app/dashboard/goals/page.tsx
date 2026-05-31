@@ -24,6 +24,7 @@ import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import {
   computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
   categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString,
+  type RiskProfile,
 } from '@/lib/goal-probability'
 
 const GOAL_CATEGORIES: Record<string, string> = {
@@ -36,6 +37,28 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   property: Home, vehicle: Car, travel: Plane, education: GraduationCap,
   gadget: Smartphone, wedding: Heart, emergency: ShieldCheck, retirement: PiggyBank,
   business: Briefcase, other: Target,
+}
+
+// Strategi dana = asumsi return buat probabilitas. 'auto' = ikut rekomendasi.
+const STRATEGY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'auto', label: 'Otomatis (rekomendasi)' },
+  { value: 'tabungan', label: 'Tabungan biasa (~2,5%)' },
+  { value: 'conservative', label: 'Konservatif (~5%)' },
+  { value: 'moderate', label: 'Moderat (~8%)' },
+  { value: 'aggressive', label: 'Agresif (~11%)' },
+]
+const STRAT_LS_PREFIX = 'pwm.goal.strat.'
+
+/** Baca strategi tersimpan: kolom DB → localStorage → 'auto'. Defensif kalau
+ *  kolom savings_strategy belum ada (migration 032 belum di-apply). */
+function readStoredStrategy(g: Goal): string {
+  const col = (g as { savings_strategy?: string | null }).savings_strategy
+  if (col) return col
+  if (typeof window !== 'undefined') {
+    const ls = localStorage.getItem(STRAT_LS_PREFIX + g.id)
+    if (ls) return ls
+  }
+  return 'auto'
 }
 
 /** Warna probabilitas — sama persis sama meter lama (mint≥70 / amber≥40 / coral). */
@@ -58,10 +81,11 @@ interface FormState {
   current_amount: number
   deadline: string
   notes: string
+  savings_strategy: string
 }
 const EMPTY: FormState = {
   id: null, name: '', category: 'other',
-  target_amount: 0, current_amount: 0, deadline: '', notes: '',
+  target_amount: 0, current_amount: 0, deadline: '', notes: '', savings_strategy: 'auto',
 }
 
 export default function GoalsPage() {
@@ -127,11 +151,24 @@ export default function GoalsPage() {
       notes: form.notes,
       is_active: true,
     }
-    if (form.id) await supabase.from('goals').update(payload).eq('id', form.id)
-    else await supabase.from('goals').insert(payload)
+    let goalId = form.id
+    if (form.id) {
+      await supabase.from('goals').update(payload).eq('id', form.id)
+    } else {
+      const { data: inserted } = await supabase.from('goals').insert(payload).select('id').single()
+      goalId = (inserted as { id: string } | null)?.id ?? null
+    }
+    if (goalId) await persistStrategy(goalId, form.savings_strategy)
     setSaving(false)
     setDialogOpen(false)
     void load()
+  }
+
+  /** Simpan strategi dana: localStorage (selalu jalan) + DB best-effort —
+   *  kalau kolom savings_strategy belum ada (migration 032), error diabaikan. */
+  async function persistStrategy(goalId: string, strat: string) {
+    try { localStorage.setItem(STRAT_LS_PREFIX + goalId, strat) } catch { /* ignore */ }
+    await supabase.from('goals').update({ savings_strategy: strat }).eq('id', goalId)
   }
 
   async function remove(id: string) {
@@ -145,6 +182,7 @@ export default function GoalsPage() {
       id: g.id, name: g.name, category: g.category,
       target_amount: g.target_amount, current_amount: g.current_amount,
       deadline: g.deadline ?? '', notes: g.notes,
+      savings_strategy: readStoredStrategy(g),
     })
     setDialogOpen(true)
   }
@@ -178,7 +216,8 @@ export default function GoalsPage() {
       if (done) {
         prob = 100
       } else if (g.deadline && months && months > 0) {
-        const profile = suggestedRiskProfile(g.category, months)
+        const stored = readStoredStrategy(g)
+        const profile: RiskProfile = stored !== 'auto' ? (stored as RiskProfile) : suggestedRiskProfile(g.category, months)
         const a = RISK_PROFILES[profile]
         assumption = { label: a.label, ret: a.annualReturn }
         const r = computeGoalProbability({
@@ -391,7 +430,13 @@ export default function GoalsPage() {
             })}
 
             <div id="goal-pyramid" className="scroll-mt-24">
-              <GoalPyramid goals={activeGoals} />
+              <GoalPyramid
+                goals={activeGoals}
+                onSetor={(id) => {
+                  const g = activeGoals.find((x) => x.id === id)
+                  if (g) { setDepositGoal(g); setDepositAmt(0) }
+                }}
+              />
             </div>
           </div>
         </>
@@ -436,6 +481,24 @@ export default function GoalsPage() {
             <div className="grid gap-1.5">
               <Label>Deadline (opsional)</Label>
               <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Strategi dana</Label>
+              <Select value={form.savings_strategy} onValueChange={(v) => v && setForm({ ...form, savings_strategy: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih strategi">
+                    {(v) => STRATEGY_OPTIONS.find((o) => o.value === v)?.label ?? v}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {STRATEGY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                Nentuin asumsi return buat ngitung probabilitas. Pilih &ldquo;Tabungan&rdquo; kalau dana cuma disisihin, bukan diinvestasiin.
+              </p>
             </div>
             <div className="grid gap-1.5">
               <Label>Catatan</Label>

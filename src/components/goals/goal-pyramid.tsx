@@ -31,13 +31,17 @@ interface Goal {
 
 interface Props {
   goals: Goal[]
+  /** Buka dialog setor buat 1 goal (dipakai tombol "Setor ke tier ini"). */
+  onSetor?: (goalId: string) => void
 }
 
 // Bottom → top (fondasi dulu). Render dibalik (puncak di atas).
 const BOTTOM_UP: PyramidLayer[] = ['pelindung', 'pertumbuhan', 'mimpi']
 
-export function GoalPyramid({ goals }: Props) {
-  const { grouped, agg, focus } = useMemo(() => {
+const goalPct = (g: Goal) => (g.target_amount > 0 ? g.current_amount / g.target_amount : 1)
+
+export function GoalPyramid({ goals, onSetor }: Props) {
+  const { grouped, agg, focus, focusGoalId } = useMemo(() => {
     const grouped: Record<PyramidLayer, Goal[]> = { pelindung: [], pertumbuhan: [], mimpi: [] }
     for (const g of goals) grouped[categoryToPyramidLayer(g.category)].push(g)
 
@@ -50,7 +54,11 @@ export function GoalPyramid({ goals }: Props) {
 
     // Tier fokus = tier terbawah yang punya goal tapi belum 100%.
     const focus = BOTTOM_UP.find((k) => grouped[k].length > 0 && agg[k].pct < 100) ?? null
-    return { grouped, agg, focus }
+    // Goal yang paling ketinggalan di tier fokus → target setoran.
+    const focusGoalId = focus
+      ? (grouped[focus].filter((g) => goalPct(g) < 1).sort((a, b) => goalPct(a) - goalPct(b))[0]?.id ?? null)
+      : null
+    return { grouped, agg, focus, focusGoalId }
   }, [goals])
 
   if (goals.length === 0) return null
@@ -105,14 +113,23 @@ export function GoalPyramid({ goals }: Props) {
       </div>
 
       {/* Insight actionable */}
-      <div
-        className="mt-3 flex items-start gap-2.5 rounded-lg px-3 py-2.5"
-        style={{ background: `${insight.color}14` }}
-      >
-        <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: insight.color }} />
-        <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
-          {insight.text}
-        </p>
+      <div className="mt-3 rounded-lg px-3 py-2.5" style={{ background: `${insight.color}14` }}>
+        <div className="flex items-start gap-2.5">
+          <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: insight.color }} />
+          <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
+            {insight.text}
+          </p>
+        </div>
+        {insight.tone === 'focus' && focusGoalId && onSetor && (
+          <button
+            type="button"
+            onClick={() => onSetor(focusGoalId)}
+            className="mt-2.5 ml-[26px] inline-flex items-center gap-1 text-[12px] font-semibold hover:underline"
+            style={{ color: insight.color }}
+          >
+            Setor ke tier ini <ArrowRight className="size-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Tiers — puncak (mimpi) di atas, dasar (pelindung) di bawah */}

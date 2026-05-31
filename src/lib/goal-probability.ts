@@ -13,7 +13,7 @@
  * Stdev = annualized standard deviation of returns (volatility).
  */
 
-export type RiskProfile = 'conservative' | 'moderate' | 'aggressive'
+export type RiskProfile = 'tabungan' | 'conservative' | 'moderate' | 'aggressive'
 
 export interface MarketAssumptions {
   /** Annualized expected return (e.g., 0.08 for 8%) */
@@ -23,6 +23,12 @@ export interface MarketAssumptions {
 }
 
 export const RISK_PROFILES: Record<RiskProfile, MarketAssumptions & { label: string; description: string }> = {
+  tabungan: {
+    annualReturn: 0.025,
+    annualStdev: 0.003,
+    label: 'Tabungan',
+    description: 'Tabungan/deposito biasa. Nyaris tanpa imbal hasil, tanpa risiko. Asumsi paling jujur kalau dana gak diinvestasiin.',
+  },
   conservative: {
     annualReturn: 0.05,
     annualStdev: 0.01,
