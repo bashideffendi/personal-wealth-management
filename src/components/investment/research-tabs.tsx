@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table'
 import {
   BookOpen, BarChart3, Calculator, FileText, TrendingUp,
-  Calendar, Sparkles, AlertCircle, Loader2, Zap,
+  Calendar, Sparkles, AlertCircle, Loader2, Zap, Network,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -33,7 +33,9 @@ import { FinancialStatements } from './financial-statements'
 import { KeyStatsGrid } from './keystats-grid'
 import { ValuationConsensus } from './valuation-consensus'
 import { TrendsPanel } from './trends-panel'
+import { OwnershipTab } from './ownership-tab'
 import type { ValuationSummary } from '@/lib/invest/valuation'
+import type { Ownership } from '@/lib/invest/ownership'
 
 interface MetricSeries {
   year: number
@@ -117,6 +119,8 @@ export interface ResearchTabsProps {
     frontmatter: ResearchFrontmatter
     body: string
   } | null
+  /** Jaring kepemilikan (ownership network). Null kalau emiten belum di-scrape. */
+  ownership: Ownership | null
 }
 
 export function ResearchTabs(props: ResearchTabsProps) {
@@ -125,6 +129,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
     stockMetrics, quarterly,
     stats, pricePerf, dividends,
     research: initialResearch,
+    ownership,
   } = props
 
   // Research bisa di-generate ulang di client (lokal state). Initial value
@@ -182,6 +187,10 @@ export function ResearchTabs(props: ResearchTabsProps) {
           <TabsTrigger value="charts">
             <TrendingUp className="size-3.5 mr-1.5" />
             Charts
+          </TabsTrigger>
+          <TabsTrigger value="keterikatan">
+            <Network className="size-3.5 mr-1.5" />
+            Keterikatan
           </TabsTrigger>
         </TabsList>
       </div>
@@ -379,6 +388,11 @@ export function ResearchTabs(props: ResearchTabsProps) {
       {/* ─── Charts — tren metrik per kategori (Growth/Profitability/Valuation/Health) ─── */}
       <TabsContent value="charts" className="mt-4 space-y-4">
         <TrendsPanel metrics={stockMetrics} />
+      </TabsContent>
+
+      {/* ─── Keterikatan — jaring kepemilikan (graf Sigma + komposisi + anak usaha) ─── */}
+      <TabsContent value="keterikatan" className="mt-4">
+        <OwnershipTab ticker={ticker} ownership={ownership} />
       </TabsContent>
     </Tabs>
   )

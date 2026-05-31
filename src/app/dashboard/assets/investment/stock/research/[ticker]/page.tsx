@@ -15,6 +15,7 @@ import {
 } from '@/lib/invest/stocks'
 import { valuate, computeAllSectorMedians } from '@/lib/invest/valuation'
 import { getEmiten } from '@/lib/invest/emitten'
+import { getOwnership } from '@/lib/invest/ownership'
 import { formatPrice, formatTanggalID, verdictStyle } from '@/lib/invest/format'
 import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/research-tabs'
 import { ResearchLogButton } from '@/components/investment/research-log-button'
@@ -69,6 +70,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
   const dividends = getDividendsForTicker(ticker)
   const bundledResearch = getResearchMarkdown(ticker)
   const quarterly = getQuarterlyFinancialsFor(ticker)
+  const ownership = getOwnership(ticker)
 
   // Fallback: cek cache Supabase kalau gak ada bundled markdown.
   // Cache di-populate oleh /api/idx-research/[ticker]/generate (AI-generated).
@@ -187,6 +189,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
     research: research
       ? { frontmatter: research.frontmatter, body: research.body }
       : null,
+    ownership,
   }
 
   return (
