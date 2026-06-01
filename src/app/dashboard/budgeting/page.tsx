@@ -700,10 +700,12 @@ export default function BudgetingPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto pb-2">
+          {/* Panel scroll sendiri (nempel di bawah nav) → strip bulan + kolom kategori
+              tetap keliatan walau scroll baris ke bawah. Header bulan sticky di puncak panel. */}
+          <div className="overflow-auto pb-2 sticky top-[60px] max-h-[calc(100vh-76px)]">
             <div className="space-y-3 min-w-[1040px]">
-              {/* Month-label header strip */}
-              <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+              {/* Month-label header strip — sticky di puncak panel */}
+              <div className="sticky top-0 z-30 overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 2px 8px -2px rgba(16,24,40,0.12)' }}>
                 <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '160px' }} />
