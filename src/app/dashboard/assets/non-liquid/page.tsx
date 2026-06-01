@@ -19,7 +19,7 @@ import {
   RefreshCw, type LucideIcon,
 } from 'lucide-react'
 import { LeafletMap } from '@/components/map/map-client'
-import { WealthHero } from '@/components/wealth/wealth-ui'
+import { WealthHeader } from '@/components/wealth/wealth-ui'
 
 type Category = 'property' | 'vehicle' | 'personal_item'
 
@@ -140,42 +140,66 @@ export default function NonLiquidAssetsPage() {
     return { cur, count: list.length, pct: buy > 0 ? ((cur - buy) / buy) * 100 : 0 }
   }
 
-  // Stat pendukung — cuma kategori yg PUNYA aset (gak nampilin Rp0 kosong).
-  const secondary = (Object.keys(CAT) as Category[])
-    .map((cat) => ({ cat, s: catStat(cat) }))
-    .filter((x) => x.s.count > 0)
-    .map((x) => ({
-      label: CAT[x.cat].label,
-      color: CAT[x.cat].color,
-      value: (
-        <>{formatCurrency(x.s.cur)}{' '}
-          <span className="text-[11px] font-normal" style={{ color: x.s.pct >= 0 ? '#10B981' : '#F43F5E' }}>
-            {x.s.pct >= 0 ? '+' : ''}{x.s.pct.toFixed(1)}%
-          </span>
-        </>
-      ),
-    }))
+  function renderCard(a: AssetNonLiquid) {
+    const cat = (a.category in CAT ? a.category : 'personal_item') as Category
+    const meta = CAT[cat]
+    const Icon = meta.icon
+    const delta = a.current_value - a.purchase_value
+    const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
+    const up = delta >= 0
+    const hasMap = cat === 'property' && a.latitude != null && a.longitude != null
+    return (
+      <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors">
+        {hasMap && (
+          <div className="h-28 w-full border-b" style={{ borderColor: 'var(--border-soft)' }}>
+            <LeafletMap lat={a.latitude!} lng={a.longitude!} readOnly height={112} />
+          </div>
+        )}
+        <div className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}>
+              <Icon className="size-4" style={{ color: meta.color }} />
+            </div>
+            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+              <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
+              <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
+            </div>
+          </div>
+          <p className="font-semibold mt-3 truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
+          <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{a.type || meta.note}</p>
+          {cat === 'property' && a.address && (
+            <p className="text-[11px] mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
+              <MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="truncate">{a.address}</span>
+            </p>
+          )}
+          <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
+          <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+            <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: `${up ? '#10B981' : '#F43F5E'}1A`, color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
+            <span style={{ color: 'var(--ink-muted)' }}>dari <span className="num">{formatCurrency(a.purchase_value)}</span></span>
+          </div>
+          <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
+            <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}</span>
+            {hasMap && (
+              <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
+                Buka Maps <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <WealthHero
+      <WealthHeader
         eyebrow={`${items.length} aset tercatat`}
         title="Aset Non-Likuid"
-        accent="#8B5CF6"
-        headline={{
-          label: 'Nilai Pasar Saat Ini',
-          value: formatCurrency(total),
-          sub: items.length > 0
-            ? (<>Modal awal <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
-                <span className="num font-semibold" style={{ color: totalDelta >= 0 ? '#10B981' : '#F43F5E' }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span></>)
-            : 'Properti, kendaraan, dan barang pribadi bernilai. Update penilaian berkala biar net worth akurat.',
-        }}
-        secondary={secondary}
-        actions={<>
-          {items.length > 0 && <Button variant="outline" onClick={openReval}><RefreshCw className="h-4 w-4" /> Revaluasi semua</Button>}
-          <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Tambah aset</Button>
-        </>}
-      />
+        subtitle="Properti, kendaraan, dan barang pribadi bernilai. Update penilaian berkala biar net worth akurat."
+      >
+        {items.length > 0 && <Button variant="outline" onClick={openReval}><RefreshCw className="h-4 w-4" /> Revaluasi semua</Button>}
+        <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Tambah aset</Button>
+      </WealthHeader>
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -185,63 +209,60 @@ export default function NonLiquidAssetsPage() {
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambahkan properti, kendaraan, atau barang berharga kamu.</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((a) => {
-            const cat = (a.category in CAT ? a.category : 'personal_item') as Category
-            const meta = CAT[cat]
-            const Icon = meta.icon
-            const delta = a.current_value - a.purchase_value
-            const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
-            const up = delta >= 0
-            const hasMap = cat === 'property' && a.latitude != null && a.longitude != null
-            return (
-              <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors">
-                {hasMap && (
-                  <div className="h-28 w-full border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                    <LeafletMap lat={a.latitude!} lng={a.longitude!} readOnly height={112} />
-                  </div>
-                )}
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}>
-                      <Icon className="size-4" style={{ color: meta.color }} />
-                    </div>
-                    <div className="relative">
-                      <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium group-hover:opacity-0 transition" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
-                      <div className="absolute right-0 top-0 flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
-                        <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="font-semibold mt-3 truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                  <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{a.type || meta.note}</p>
-                  {cat === 'property' && a.address && (
-                    <p className="text-[11px] mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
-                      <MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="truncate">{a.address}</span>
-                    </p>
-                  )}
-                  <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
-                  <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-                    <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: `${up ? '#10B981' : '#F43F5E'}1A`, color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
-                    <span style={{ color: 'var(--ink-muted)' }}>dari <span className="num">{formatCurrency(a.purchase_value)}</span></span>
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
-                    <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}</span>
-                    {hasMap && (
-                      <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
-                        Buka Maps <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                  </div>
+        <>
+          {/* Strip stat 4-sel (ikut mock) */}
+          <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="p-5">
+              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>Nilai Pasar Saat Ini</p>
+              <p className="num tabular text-2xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+                Modal awal <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
+                <span className="num font-semibold" style={{ color: totalDelta >= 0 ? '#10B981' : '#F43F5E' }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
+              </p>
+            </div>
+            {(Object.keys(CAT) as Category[]).map((cat) => {
+              const s = catStat(cat)
+              return (
+                <div key={cat} className="p-5">
+                  <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].color }}>{CAT[cat].label}</p>
+                  <p className="num tabular text-2xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</p>
+                  <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+                    {s.count} item{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? '#10B981' : '#F43F5E' }}>{s.pct >= 0 ? 'apresiasi +' : 'depresiasi '}{s.pct.toFixed(1)}%</span></>}
+                  </p>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+
+          {/* Grid dipisah per kategori */}
+          <div className="space-y-8">
+            {(Object.keys(CAT) as Category[]).map((cat) => {
+              const list = grouped[cat]
+              if (list.length === 0) return null
+              const meta = CAT[cat]
+              const Icon = meta.icon
+              const s = catStat(cat)
+              return (
+                <section key={cat}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-8 rounded-lg flex items-center justify-center" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                      <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
+                      <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
+                    </div>
+                    <span className="num text-sm font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {list.map(renderCard)}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        </>
       )}
 
-      {/* Add / Edit dialog */}
+      {/* Add / Edit dialog — 2 kolom pas properti */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className={`max-h-[90vh] overflow-y-auto ${form.category === 'property' ? 'sm:max-w-3xl' : 'sm:max-w-lg'}`}>
           <DialogHeader>
@@ -249,7 +270,6 @@ export default function NonLiquidAssetsPage() {
             <DialogDescription>Properti, kendaraan, atau barang berharga.</DialogDescription>
           </DialogHeader>
           <div className={form.category === 'property' ? 'grid sm:grid-cols-2 gap-5 py-2 items-start' : 'grid gap-3 py-2'}>
-            {/* Kolom kiri — field */}
             <div className="grid gap-3 content-start">
               <div className="grid gap-1.5">
                 <Label>Nama</Label>
@@ -275,7 +295,6 @@ export default function NonLiquidAssetsPage() {
               <div className="grid gap-1.5"><Label>Tanggal Beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
               <div className="grid gap-1.5"><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
-            {/* Kolom kanan — peta (properti aja), lebih gede */}
             {form.category === 'property' && (
               <div className="grid gap-2 content-start">
                 <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Lokasi di Peta</Label>
