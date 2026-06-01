@@ -11,10 +11,7 @@ import { Label } from '@/components/ui/label'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, Check, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { Plus, Minus, Pencil, Trash2, Loader2, Check, Wallet, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
 const JOB_STABILITY_LABELS: Record<JobStability, string> = {
@@ -221,30 +218,42 @@ export default function EmergencyFundPage() {
           </div>
           <Button onClick={openTxn}><Plus className="h-4 w-4" /> Catat setoran</Button>
         </div>
-        <div className="relative grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
-          <div className="relative mx-auto sm:mx-0 size-32">
-            <svg viewBox="0 0 120 120" className="size-32 -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface-2)" strokeWidth="12" />
-              <circle cx="60" cy="60" r="52" fill="none" stroke={AMBER} strokeWidth="12" strokeLinecap="round" strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="num text-3xl font-bold" style={{ color: AMBER }}>{progressPercent.toFixed(0)}%</span>
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tercapai</span>
+        {targetAmount <= 0 && accumulatedFund <= 0 ? (
+          <div className="relative flex items-center gap-5">
+            <div className="relative size-24 shrink-0 grid place-items-center rounded-full" style={{ border: `10px solid ${AMBER}33` }}>
+              <Wallet className="size-8" style={{ color: AMBER }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>Mulai bangun bantalanmu</p>
+              <p className="text-sm mt-1 max-w-md" style={{ color: 'var(--ink-muted)' }}>Hitung target di <span className="font-semibold" style={{ color: '#B45309' }}>Kalkulator</span> bawah, atau langsung <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: '#B45309' }}>catat setoran pertama</button>. Progres &amp; perjalananmu muncul di sini.</p>
             </div>
           </div>
-          <div className="min-w-0">
-            <p className="num tabular font-bold leading-none" style={{ fontSize: 'clamp(28px,4vw,42px)', letterSpacing: '-0.03em', color: 'var(--ink)' }}>{formatCurrency(accumulatedFund)}</p>
-            <p className="num text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>dari target {formatCurrency(targetAmount)}</p>
-            <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-              <div className="h-full rounded-full" style={{ width: `${progressPercent}%`, background: AMBER }} />
+        ) : (
+          <div className="relative grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+            <div className="relative mx-auto sm:mx-0 size-32">
+              <svg viewBox="0 0 120 120" className="size-32 -rotate-90">
+                <circle cx="60" cy="60" r="52" fill="none" stroke={`${AMBER}33`} strokeWidth="12" />
+                <circle cx="60" cy="60" r="52" fill="none" stroke={AMBER} strokeWidth="12" strokeLinecap="round" strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="num text-3xl font-bold" style={{ color: AMBER }}>{progressPercent.toFixed(0)}%</span>
+                <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tercapai</span>
+              </div>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Cakupan</p><p className="num font-semibold mt-0.5 text-sm" style={{ color: MINT }}>{coverageMonths.toFixed(1)} bln</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Target</p><p className="num font-semibold mt-0.5 text-sm" style={{ color: 'var(--ink)' }}>{targetMonths.toFixed(0)} bln</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Kekurangan</p><p className="num font-semibold mt-0.5 text-sm" style={{ color: deficit > 0 ? '#F43F5E' : MINT }}>{deficit > 0 ? formatCurrency(deficit) : 'Tercapai'}</p></div>
+            <div className="min-w-0">
+              <p className="num tabular font-bold leading-none" style={{ fontSize: 'clamp(28px,4vw,42px)', letterSpacing: '-0.03em', color: 'var(--ink)' }}>{formatCurrency(accumulatedFund)}</p>
+              <p className="num text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>dari target {formatCurrency(targetAmount)}</p>
+              <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                <div className="h-full rounded-full" style={{ width: `${progressPercent}%`, background: AMBER }} />
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Cakupan</p><p className="num font-semibold mt-0.5 text-sm" style={{ color: MINT }}>{coverageMonths.toFixed(1)} bln</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Target</p><p className="num font-semibold mt-0.5 text-sm" style={{ color: 'var(--ink)' }}>{targetMonths.toFixed(0)} bln</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Kekurangan</p><p className="num font-semibold mt-0.5 text-sm" style={{ color: deficit > 0 ? '#F43F5E' : MINT }}>{deficit > 0 ? formatCurrency(deficit) : 'Tercapai'}</p></div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Kalkulator + Rencana akselerasi */}
@@ -252,26 +261,41 @@ export default function EmergencyFundPage() {
         <div className="s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Kalkulator Target</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Target = stabilitas kerja + tanggungan + pengeluaran bulanan.</p>
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid gap-4">
+            <div className="grid gap-1.5">
+              <Label>Stabilitas Pekerjaan</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(JOB_STABILITY_LABELS) as JobStability[]).map((k) => {
+                  const on = jobStability === k
+                  return (
+                    <button key={k} type="button" onClick={() => setJobStability(k)}
+                      className="rounded-lg border px-2 py-2.5 text-[12px] font-medium leading-tight transition"
+                      style={{ borderColor: on ? AMBER : 'var(--border-soft)', background: on ? `${AMBER}14` : 'var(--surface)', color: on ? '#B45309' : 'var(--ink-muted)' }}>
+                      {JOB_STABILITY_LABELS[k]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Stabilitas Pekerjaan</Label>
-                <Select value={jobStability} onValueChange={(v) => v && setJobStability(v as JobStability)}>
-                  <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
-                  <SelectContent>{(Object.keys(JOB_STABILITY_LABELS) as JobStability[]).map((k) => (<SelectItem key={k} value={k}>{JOB_STABILITY_LABELS[k]}</SelectItem>))}</SelectContent>
-                </Select>
+                <Label>Tanggungan</Label>
+                <div className="flex items-center rounded-lg border overflow-hidden h-10" style={{ borderColor: 'var(--border-soft)' }}>
+                  <button type="button" onClick={() => setDependents(Math.max(0, dependents - 1))} className="size-10 grid place-items-center shrink-0 transition hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}><Minus className="size-4" /></button>
+                  <span className="flex-1 text-center num font-semibold" style={{ color: 'var(--ink)' }}>{dependents}</span>
+                  <button type="button" onClick={() => setDependents(dependents + 1)} className="size-10 grid place-items-center shrink-0 transition hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}><Plus className="size-4" /></button>
+                </div>
               </div>
-              <div className="grid gap-1.5"><Label>Tanggungan</Label><Input type="number" min={0} value={dependents} onChange={(e) => setDependents(Number(e.target.value))} /></div>
+              <div className="grid gap-1.5"><Label>Pengeluaran / bulan</Label><RpField value={monthlyExpenses} onChange={setMonthlyExpenses} /></div>
             </div>
-            <div className="grid gap-1.5"><Label>Pengeluaran / bulan (Rp)</Label><NumberInput value={monthlyExpenses} onChange={(n) => setMonthlyExpenses(n)} placeholder="0" /></div>
-            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${AMBER}14` }}>
+            <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: `${AMBER}14` }}>
               <div>
                 <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: '#B45309' }}>Rekomendasi</p>
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{multiplier}× pengeluaran ({targetMonths.toFixed(0)} bln)</p>
               </div>
-              <span className="num text-xl font-bold" style={{ color: AMBER }}>{formatCurrency(recommendation)}</span>
+              <span className="num text-xl font-bold whitespace-nowrap" style={{ color: AMBER }}>{formatCurrency(recommendation)}</span>
             </div>
-            <div className="grid gap-1.5"><Label>Target kamu (Rp) — bisa ubah sendiri</Label><NumberInput value={targetAmount} onChange={(n) => setTargetAmount(n)} placeholder="0" /></div>
+            <div className="grid gap-1.5"><Label>Target kamu (Rp) — bisa ubah sendiri</Label><RpField value={targetAmount} onChange={setTargetAmount} /></div>
             <Button onClick={handleSaveSettings} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Simpan target</Button>
           </div>
         </div>
@@ -509,6 +533,15 @@ export default function EmergencyFundPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function RpField({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex items-center rounded-lg border overflow-hidden h-10" style={{ borderColor: 'var(--border-soft)' }}>
+      <span className="self-stretch grid place-items-center px-2.5 text-xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>Rp</span>
+      <NumberInput value={value} onChange={onChange} placeholder="0" className="flex-1 border-0" />
     </div>
   )
 }
