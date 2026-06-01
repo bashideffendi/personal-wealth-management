@@ -215,14 +215,11 @@ export default function EmergencyFundPage() {
     void fetchData()
   }
 
-  const plans = useMemo(() => {
-    if (deficit <= 0) return []
-    return [
-      { label: 'Sesuai Rencana', months: 12 },
-      { label: 'Agresif', months: 6 },
-      { label: 'Akselerasi', months: 3 },
-    ].map((p) => ({ ...p, monthly: Math.ceil(deficit / p.months), eta: etaDate(p.months), recommended: p.months === 6 }))
-  }, [deficit])
+  // Rencana setoran — KAMU yang nentuin berapa sanggup nyisihin/bln (bukan "ritme
+  // disarankan" yang dikarang). Prefill ke pace 12 bln biar langsung ada hasil.
+  const [monthlySaving, setMonthlySaving] = useState(0)
+  useEffect(() => { setMonthlySaving((v) => (v > 0 || deficit <= 0 ? v : Math.ceil(deficit / 12))) }, [deficit])
+  const monthsToGoal = monthlySaving > 0 ? Math.ceil(deficit / monthlySaving) : 0
 
   const scenarios = monthlyExpenses > 0 ? [
     { label: 'Esensial saja', note: 'kebutuhan pokok · est. −22%', exp: monthlyExpenses * 0.78 },
@@ -367,21 +364,26 @@ export default function EmergencyFundPage() {
           </div>
         </div>
 
-        {plans.length > 0 ? (
+        {deficit > 0 ? (
           <div className="s-card p-5">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rencana Akselerasi</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Ritme setoran buat nutup kekurangan {formatCurrency(deficit)}.</p>
-            <div className="mt-3 space-y-2.5">
-              {plans.map((p) => (
-                <div key={p.label} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ border: `1px solid ${p.recommended ? AMBER : 'var(--border-soft)'}`, background: p.recommended ? `${AMBER}0F` : 'var(--surface)' }}>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--ink)' }}>{p.label}{p.recommended && <span className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase" style={{ background: AMBER, color: '#FFF' }}>Disarankan</span>}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{p.months} bln · tercapai {p.eta}</p>
-                  </div>
-                  <p className="num text-lg font-bold whitespace-nowrap" style={{ color: p.recommended ? AMBER : 'var(--ink)' }}>{formatCurrency(p.monthly)}<span className="text-xs font-normal" style={{ color: 'var(--ink-soft)' }}>/bln</span></p>
-                </div>
+            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rencana Setoran</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Kurang {formatCurrency(deficit)}. Berapa yang sanggup kamu sisihkan tiap bulan?</p>
+            <div className="mt-3"><RpField value={monthlySaving} onChange={setMonthlySaving} /></div>
+            {monthsToGoal > 0 ? (
+              <div className="mt-3 rounded-xl p-4" style={{ background: `${AMBER}14` }}>
+                <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>Dengan <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlySaving)}</span>/bulan, target tercapai</p>
+                <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER }}>{etaDate(monthsToGoal)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} bulan lagi</span></p>
+              </div>
+            ) : (
+              <p className="mt-3 text-[12px]" style={{ color: 'var(--ink-soft)' }}>Isi nominal di atas buat lihat kapan target tercapai.</p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Atau biar selesai dalam:</span>
+              {[6, 12, 24].map((m) => (
+                <button key={m} type="button" onClick={() => setMonthlySaving(Math.ceil(deficit / m))} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{m} bln</button>
               ))}
             </div>
+            <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>Tips: sisihkan di <strong>awal bulan</strong> (pay yourself first), jangan nunggu sisa. Idealnya ≤20–30% pemasukan biar arus kas gak kecekik.</p>
           </div>
         ) : (
           <div className="s-card p-5 grid place-items-center text-center">
