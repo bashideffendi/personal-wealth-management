@@ -286,7 +286,7 @@ export default function EmergencyFundPage() {
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Dana Terkumpul</p>
           <p className="num tabular font-bold leading-none mt-1.5 flex items-baseline gap-2 flex-wrap" style={{ color: 'var(--ink)' }}>
             <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
-            <span className="text-base font-normal" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : 'atur target'}</span>
+            <button type="button" onClick={() => document.getElementById('ef-kalkulator')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="text-base font-normal inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : 'atur target'} <Pencil className="size-3" /></button>
           </p>
           <div className="mt-4 h-2.5 w-full rounded-full overflow-hidden" style={{ background: `${AMBER}26` }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%`, background: AMBER }} />
@@ -325,7 +325,7 @@ export default function EmergencyFundPage() {
 
       {/* Kalkulator + Rencana akselerasi */}
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="s-card p-5">
+        <div id="ef-kalkulator" className="scroll-mt-20 s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Kalkulator Target</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Target = stabilitas kerja + tanggungan + pengeluaran bulanan.</p>
           <div className="mt-4 grid gap-4">
