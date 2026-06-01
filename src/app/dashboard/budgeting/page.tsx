@@ -53,8 +53,10 @@ function budgetKey(type: string, category: string, month: number) {
 // Safe arithmetic eval for spreadsheet-style formula entry (=12+3, =1000-50, =3*250000).
 // Regex guard ensures only digits + - * / ( ) . — no identifiers/calls, so no code injection.
 function evalFormula(expr: string): number {
-  const clean = expr.replace(/\s/g, '')
-  if (!clean || !/^[0-9+\-*/().]+$/.test(clean)) return 0
+  // Buang spasi & titik pemisah ribuan ("12 * 250.000" → "12*250000").
+  // Anggaran selalu bilangan bulat Rupiah, jadi titik = ribuan, bukan desimal.
+  const clean = expr.replace(/[\s.]/g, '')
+  if (!clean || !/^[0-9+\-*/()]+$/.test(clean)) return 0
   try {
     const result = Function('"use strict"; return (' + clean + ')')()
     return Number.isFinite(result) ? Math.round(result) : 0
@@ -67,8 +69,12 @@ function evalFormula(expr: string): number {
 function parseCell(input: string): number {
   const s = input.trim()
   if (!s) return 0
-  if (s.startsWith('=')) return evalFormula(s.slice(1))
-  return Number(s.replace(/[^0-9-]/g, '')) || 0
+  const body = s.startsWith('=') ? s.slice(1) : s
+  // Mini-kalkulator: kalau ada operator (× ÷ + atau − antar angka) atau diawali
+  // "=", hitung sebagai rumus. Selain itu, angka biasa (toleran titik ribuan).
+  const hasOp = /[+*/]/.test(body) || /\d\s*-\s*\d/.test(body)
+  if (s.startsWith('=') || hasOp) return evalFormula(body)
+  return Number(body.replace(/[^0-9-]/g, '')) || 0
 }
 
 type FillSource = { type: BudgetType; category: string; month: number; value: number }
@@ -681,7 +687,7 @@ export default function BudgetingPage() {
             >
               {[
                 { Icon: CalendarDays, label: <>Klik bulan untuk rincian harian</> },
-                { Icon: Calculator, label: <>Rumus di sel, mis. <code className="num" style={{ color: 'var(--ink)' }}>=500+250</code></> },
+                { Icon: Calculator, label: <>Hitung langsung di sel, mis. <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (×&nbsp;÷&nbsp;+&nbsp;−)</> },
                 { Icon: Copy, label: <>Tarik sudut sel untuk menyalin antar-bulan</> },
               ].map((t, i) => (
                 <span key={i} className="inline-flex items-center gap-1.5">
