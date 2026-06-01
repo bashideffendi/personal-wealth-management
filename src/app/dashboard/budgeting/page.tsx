@@ -700,12 +700,12 @@ export default function BudgetingPage() {
             </div>
           </div>
 
-          {/* Panel scroll sendiri (nempel di bawah nav) → strip bulan + kolom kategori
-              tetap keliatan walau scroll baris ke bawah. Header bulan sticky di puncak panel. */}
-          <div className="overflow-auto pb-2 sticky top-[60px] max-h-[calc(100vh-76px)]">
-            <div className="space-y-3 min-w-[1040px]">
-              {/* Month-label header strip — sticky di puncak panel */}
-              <div className="sticky top-0 z-30 overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 2px 8px -2px rgba(16,24,40,0.12)' }}>
+          {/* Grid beku (Sheets-style): SATU modul ber-border, scroll internal, header
+              bulan & kolom kategori frozen. Pinned di bawah nav biar grid selalu utuh. */}
+          <div className="rounded-xl border overflow-auto sticky top-[60px] max-h-[calc(100vh-76px)]" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+            <div className="min-w-[1040px]">
+              {/* Header bulan — baris beku flush di puncak grid */}
+              <div className="sticky top-0 z-30" style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border-soft)', boxShadow: '0 4px 6px -4px rgba(16,24,40,0.16)' }}>
                 <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '160px' }} />
@@ -751,9 +751,9 @@ export default function BudgetingPage() {
                 </table>
               </div>
 
-              {/* Each section = its own standalone rounded card, dipisah krem */}
+              {/* Sections nyambung jadi satu grid kontinu (tanpa card terpisah) */}
               {sections.map((sec) => (
-                <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+                <div key={sec.kind} style={{ background: 'var(--surface)' }}>
                   <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
                       <col style={{ width: '160px' }} />
