@@ -36,6 +36,13 @@ const TYPE_PILLS: Record<Category, string[]> = {
   personal_item: ['Elektronik', 'Perhiasan', 'Koleksi', 'Seni', 'Lainnya'],
 }
 
+// Placeholder contoh per-kategori (jangan pakai contoh rumah buat kendaraan/pribadi).
+const PLACEHOLDERS: Record<Category, { name: string; note: string }> = {
+  property:      { name: 'mis. Rumah Bintaro Permai', note: 'mis. SHM, hadap timur, bebas banjir' },
+  vehicle:       { name: 'mis. Toyota Avanza 2021',   note: 'mis. pajak Mei, KIR, servis rutin' },
+  personal_item: { name: 'mis. Rolex Submariner',     note: 'mis. box & surat lengkap, kondisi mint' },
+}
+
 const monthYear = (d: string | null) =>
   d ? new Date(d).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : '—'
 
@@ -207,7 +214,13 @@ export default function NonLiquidAssetsPage() {
   async function saveReval() {
     setRevalSaving(true)
     for (const a of items.filter((x) => revalValues[x.id] !== x.current_value)) {
-      await supabase.from('assets_non_liquid').update({ current_value: revalValues[a.id] }).eq('id', a.id)
+      // Aset menyusut → tandai deprOverride biar nilai revaluasi manual gak
+      // ketimpa hitung-ulang nilai buku pas load().
+      const d = (a as WithDetails).details
+      const patch = d?.metode && d.metode !== 'none'
+        ? { current_value: revalValues[a.id], details: { ...d, deprOverride: true } }
+        : { current_value: revalValues[a.id] }
+      await supabase.from('assets_non_liquid').update(patch).eq('id', a.id)
     }
     setRevalSaving(false); setRevalOpen(false); void load()
   }
@@ -299,6 +312,9 @@ export default function NonLiquidAssetsPage() {
     )
   }
 
+  // Allocation bar cuma berguna kalau ada >=2 kelas aset (1 kelas = 100%, gak informatif).
+  const activeCatCount = (Object.keys(CAT) as Category[]).filter((c) => catStat(c).cur > 0).length
+
   // Penyusutan live buat form (kendaraan & pribadi).
   const isDeprForm = form.category !== 'property' && form.metode !== 'none' && (form.masaManfaat ?? 0) > 0
   const deprPreview = useMemo(
@@ -354,8 +370,8 @@ export default function NonLiquidAssetsPage() {
             })}
           </div>
 
-          {/* Allocation bar — komposisi kelas aset (porto glance) */}
-          {total > 0 && (
+          {/* Allocation bar — komposisi kelas aset (porto glance). Cuma muncul kalau >=2 kelas. */}
+          {total > 0 && activeCatCount >= 2 && (
             <div className="s-card p-4">
               <div className="flex h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
                 {(Object.keys(CAT) as Category[]).map((cat) => {
@@ -382,17 +398,13 @@ export default function NonLiquidAssetsPage() {
           {/* Toolbar — judul + toggle Kartu/Tabel */}
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rincian Aset</p>
-            <div className="flex rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
-              {([['card', 'Kartu', LayoutGrid], ['table', 'Tabel', List]] as const).map(([v, label, Ic]) => (
-                <button
-                  key={v}
-                  onClick={() => changeView(v)}
-                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition"
-                  style={{ background: view === v ? 'var(--surface)' : 'transparent', color: view === v ? 'var(--ink)' : 'var(--ink-muted)', boxShadow: view === v ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}
-                >
-                  <Ic className="size-3.5" /> {label}
-                </button>
-              ))}
+            <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+              <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title="Tampilan kartu" aria-label="Tampilan kartu">
+                <LayoutGrid className="size-4" />
+              </button>
+              <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title="Tampilan tabel" aria-label="Tampilan tabel">
+                <List className="size-4" />
+              </button>
             </div>
           </div>
 
@@ -464,13 +476,12 @@ export default function NonLiquidAssetsPage() {
                 const s = catStat(cat)
                 return (
                   <section key={cat}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="size-8 rounded-lg flex items-center justify-center" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
-                        <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
-                        <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
-                      </div>
-                      <span className="num text-sm font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</span>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                      <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
+                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
+                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
+                      <span className="num text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(s.cur)}</span>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {list.map(renderCard)}
@@ -522,7 +533,7 @@ export default function NonLiquidAssetsPage() {
 
               <div>
                 <StepLabel n={2} text="Nama aset" />
-                <Input className="mt-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="mis. Rumah Bintaro Permai" />
+                <Input className="mt-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={PLACEHOLDERS[form.category].name} />
               </div>
 
               <div>
@@ -633,7 +644,7 @@ export default function NonLiquidAssetsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Tanggal beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
-                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Catatan (opsional)</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="LT 144 m² · 3 KT" /></div>
+                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Catatan (opsional)</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={PLACEHOLDERS[form.category].note} /></div>
               </div>
             </div>
 
