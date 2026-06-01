@@ -27,6 +27,8 @@ import {
   Cloud,
   CloudOff,
   CornerDownRight,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import {
   Dialog,
@@ -41,6 +43,7 @@ import {
   type BudgetType,
   newId,
   subKey,
+  isEnabled,
   BUDGET_TYPES,
 } from '@/lib/budget-categories'
 
@@ -112,6 +115,12 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
 
   function deleteSub(cat: CatNode, subId: string) {
     updateType(nodes.map((c) => (c.id === cat.id ? { ...c, subs: c.subs.filter((s) => s.id !== subId) } : c)))
+  }
+
+  function toggleEnabled(cat: CatNode) {
+    const willEnable = !isEnabled(cat)
+    // willEnable → buang flag (default aktif); nonaktif → simpan enabled:false.
+    updateType(nodes.map((c) => (c.id === cat.id ? { ...c, enabled: willEnable ? undefined : false } : c)))
   }
 
   function commitRenameCategory(cat: CatNode, raw: string) {
@@ -217,6 +226,8 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
                     key={cat.id}
                     cat={cat}
                     accent={meta.accent}
+                    enabled={isEnabled(cat)}
+                    onToggleEnabled={() => toggleEnabled(cat)}
                     expanded={!!expanded[cat.id]}
                     editing={editing}
                     newSubValue={newSub[cat.id] ?? ''}
@@ -277,6 +288,8 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
 interface SortableCategoryProps {
   cat: CatNode
   accent: string
+  enabled: boolean
+  onToggleEnabled: () => void
   expanded: boolean
   editing: { id: string; value: string } | null
   newSubValue: string
@@ -295,7 +308,7 @@ interface SortableCategoryProps {
 }
 
 function SortableCategory(props: SortableCategoryProps) {
-  const { cat, accent, expanded, editing } = props
+  const { cat, accent, enabled, expanded, editing } = props
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -337,7 +350,7 @@ function SortableCategory(props: SortableCategoryProps) {
           />
         </button>
 
-        <span className="inline-block size-2 shrink-0 rounded-full" style={{ background: accent }} />
+        <span className="inline-block size-2 shrink-0 rounded-full" style={{ background: enabled ? accent : 'var(--ink-soft)', opacity: enabled ? 1 : 0.5 }} />
 
         {isEditingCat ? (
           <NameInput
@@ -351,7 +364,7 @@ function SortableCategory(props: SortableCategoryProps) {
             type="button"
             onClick={() => props.onStartEdit(cat.id, cat.name)}
             className="flex-1 truncate rounded px-1 py-0.5 text-left text-sm font-semibold hover:bg-[var(--surface-2)]"
-            style={{ color: 'var(--ink)' }}
+            style={{ color: enabled ? 'var(--ink)' : 'var(--ink-soft)' }}
             title="Klik buat ubah nama"
           >
             {cat.name}
@@ -360,8 +373,26 @@ function SortableCategory(props: SortableCategoryProps) {
                 {cat.subs.length} sub
               </span>
             )}
+            {!enabled && (
+              <span
+                className="ml-1.5 rounded px-1 py-0.5 align-middle text-[9px] font-semibold uppercase tracking-wide"
+                style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
+              >
+                nonaktif
+              </span>
+            )}
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={props.onToggleEnabled}
+          className="rounded p-1 text-[var(--ink-soft)] transition hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
+          aria-label={enabled ? `Nonaktifkan ${cat.name}` : `Aktifkan ${cat.name}`}
+          title={enabled ? 'Nonaktifkan — sembunyikan dari tabel anggaran (data tetap disimpan)' : 'Aktifkan — tampilkan lagi di tabel'}
+        >
+          {enabled ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+        </button>
 
         <button
           type="button"

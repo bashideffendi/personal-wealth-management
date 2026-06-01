@@ -31,6 +31,7 @@ import {
   cascadeRenameKeys,
   leafKeys,
   subKey,
+  isEnabled,
   emptyTree,
 } from '@/lib/budget-categories'
 
@@ -443,6 +444,7 @@ export default function BudgetingPage() {
     const rows: ReactNode[] = []
     let zebra = 0
     for (const node of tree[kind]) {
+      if (!isEnabled(node)) continue // kategori nonaktif: gak ditampilkan di tabel
       if (node.subs.length) {
         rows.push(renderRollupRow(kind, node))
         for (const sub of node.subs) {

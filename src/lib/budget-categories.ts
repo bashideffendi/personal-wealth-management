@@ -26,6 +26,12 @@ export interface CatNode {
   id: string
   name: string
   subs: SubNode[]
+  /**
+   * Omitted/true = aktif (tampil di tabel anggaran & ikut total).
+   * false = nonaktif: disembunyikan dari tabel tapi nama + nilai budget tetap
+   * disimpan (tinggal diaktifkan lagi). Mirip arsip, bukan hapus.
+   */
+  enabled?: boolean
 }
 export type CategoryTree = Record<BudgetType, CatNode[]>
 
@@ -82,9 +88,16 @@ function normalizeNodes(raw: unknown): CatNode[] {
       id: typeof (n as CatNode).id === 'string' ? (n as CatNode).id : newId(),
       name,
       subs,
+      // Only persist the flag when explicitly disabled — keeps default rows clean.
+      ...((n as CatNode).enabled === false ? { enabled: false } : {}),
     })
   }
   return out
+}
+
+/** Kategori dianggap aktif kecuali ditandai nonaktif eksplisit (enabled === false). */
+export function isEnabled(n: { enabled?: boolean }): boolean {
+  return n.enabled !== false
 }
 
 /** Read the user's current "enabled" categories (legacy localStorage) for a type. */
@@ -240,6 +253,7 @@ export async function cascadeRenameKeys(
 export function leafKeys(nodes: CatNode[]): string[] {
   const keys: string[] = []
   for (const c of nodes) {
+    if (!isEnabled(c)) continue // kategori nonaktif: keluar dari tabel & total
     if (c.subs.length) for (const s of c.subs) keys.push(subKey(c.name, s.name))
     else keys.push(c.name)
   }
