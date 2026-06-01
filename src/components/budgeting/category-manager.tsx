@@ -30,6 +30,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -92,7 +93,10 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
   function addCategory() {
     const name = newCat.trim()
     if (!name) return
-    if (nodes.some((c) => c.name.toLowerCase() === name.toLowerCase())) return
+    if (nodes.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      toast.error(`Kategori "${name}" sudah ada`)
+      return
+    }
     updateType([...nodes, { id: newId(), name, subs: [] }])
     setNewCat('')
   }
@@ -100,7 +104,10 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
   function addSub(cat: CatNode) {
     const name = (newSub[cat.id] ?? '').trim()
     if (!name) return
-    if (cat.subs.some((s) => s.name.toLowerCase() === name.toLowerCase())) return
+    if (cat.subs.some((s) => s.name.toLowerCase() === name.toLowerCase())) {
+      toast.error(`"${name}" sudah ada di ${cat.name}`)
+      return
+    }
     const next = nodes.map((c) =>
       c.id === cat.id ? { ...c, subs: [...c.subs, { id: newId(), name }] } : c,
     )
@@ -127,7 +134,10 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
     const next = raw.trim()
     setEditing(null)
     if (!next || next === cat.name) return
-    if (nodes.some((c) => c.id !== cat.id && c.name.toLowerCase() === next.toLowerCase())) return
+    if (nodes.some((c) => c.id !== cat.id && c.name.toLowerCase() === next.toLowerCase())) {
+      toast.error(`Kategori "${next}" sudah ada`)
+      return
+    }
     const pairs: [string, string][] = [[cat.name, next]]
     for (const s of cat.subs) pairs.push([subKey(cat.name, s.name), subKey(next, s.name)])
     updateType(nodes.map((c) => (c.id === cat.id ? { ...c, name: next } : c)), pairs)
@@ -138,7 +148,10 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
     setEditing(null)
     const sub = cat.subs.find((s) => s.id === subId)
     if (!sub || !next || next === sub.name) return
-    if (cat.subs.some((s) => s.id !== subId && s.name.toLowerCase() === next.toLowerCase())) return
+    if (cat.subs.some((s) => s.id !== subId && s.name.toLowerCase() === next.toLowerCase())) {
+      toast.error(`"${next}" sudah ada di ${cat.name}`)
+      return
+    }
     const pairs: [string, string][] = [[subKey(cat.name, sub.name), subKey(cat.name, next)]]
     updateType(
       nodes.map((c) =>
