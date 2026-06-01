@@ -46,6 +46,15 @@ const pinIcon = L.divIcon({
   iconAnchor: [14, 36],
 })
 
+interface GeoResult { label: string; lat: number; lon: number }
+interface PhotonFeature {
+  geometry?: { coordinates?: [number, number] }
+  properties?: {
+    name?: string; street?: string; locality?: string; district?: string
+    city?: string; county?: string; state?: string; country?: string
+  }
+}
+
 interface LeafletMapProps {
   lat: number | null
   lng: number | null
@@ -82,6 +91,7 @@ export default function LeafletMap({
   const [mapStyle, setMapStyle] = useState<MapStyle>('streets')
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
+  const [results, setResults] = useState<GeoResult[]>([])
   const abortRef = useRef<AbortController | null>(null)
 
   const layer = TILE_LAYERS[mapStyle]
@@ -92,17 +102,49 @@ export default function LeafletMap({
     const ctrl = new AbortController()
     abortRef.current = ctrl
     setSearching(true)
+    setResults([])
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(query)}`
-      const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } })
-      if (!res.ok) return
-      const data = (await res.json()) as Array<{ lat: string; lon: string }>
-      if (data[0]) onPick(parseFloat(data[0].lat), parseFloat(data[0].lon))
+      // Photon (OSM-based, lebih jago alamat ID + bias ke pin/Jakarta).
+      const bias = lat != null && lng != null ? `&lat=${lat}&lon=${lng}` : '&lat=-6.2&lon=106.84'
+      let out: GeoResult[] = []
+      try {
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6${bias}`, { signal: ctrl.signal })
+        if (res.ok) {
+          const data = (await res.json()) as { features?: PhotonFeature[] }
+          out = (data.features ?? [])
+            .map((f): GeoResult | null => {
+              const p = f.properties ?? {}
+              const c = f.geometry?.coordinates
+              if (!c) return null
+              const main = p.name || p.street || p.locality || ''
+              const ctx = [p.district || p.city || p.county, p.state, p.country].filter(Boolean).join(', ')
+              const label = [main, ctx].filter(Boolean).join(main && ctx ? ' — ' : '')
+              return label ? { label, lat: c[1], lon: c[0] } : null
+            })
+            .filter((r): r is GeoResult => r != null)
+        }
+      } catch { /* lanjut fallback */ }
+
+      // Fallback Nominatim kalau Photon kosong/gagal.
+      if (out.length === 0) {
+        const nres = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=id&q=${encodeURIComponent(query)}`, { signal: ctrl.signal, headers: { Accept: 'application/json' } })
+        if (nres.ok) {
+          const ndata = (await nres.json()) as Array<{ lat: string; lon: string; display_name: string }>
+          out = ndata.map((d) => ({ label: d.display_name, lat: parseFloat(d.lat), lon: parseFloat(d.lon) }))
+        }
+      }
+      setResults(out)
     } catch {
       // ignore
     } finally {
       setSearching(false)
     }
+  }
+
+  function selectResult(r: GeoResult) {
+    onPick?.(r.lat, r.lon)
+    setQuery(r.label.split(' — ')[0])
+    setResults([])
   }
 
   return (
@@ -127,6 +169,22 @@ export default function LeafletMap({
           >
             {searching ? 'Mencari…' : 'Cari'}
           </button>
+        </div>
+      )}
+
+      {!readOnly && results.length > 0 && (
+        <div className="rounded-lg border overflow-hidden max-h-52 overflow-y-auto" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
+          {results.map((r, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => selectResult(r)}
+              className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--surface-2)] transition-colors border-b last:border-b-0"
+              style={{ borderColor: 'var(--border-soft)', color: 'var(--ink)' }}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
       )}
 

@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
       // Supabase REST + realtime websocket, plus Nominatim geocoding (map search).
       // Sentry error-monitoring ingest (EU region). Without this entry the
       // enforced CSP would silently block all client-side error reporting.
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org https://*.ingest.de.sentry.io",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org https://photon.komoot.io https://*.ingest.de.sentry.io",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
     ].join('; ')
