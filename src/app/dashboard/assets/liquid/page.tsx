@@ -43,11 +43,13 @@ const TIER_ORDER: Tier[] = ['instan', 't1', 't30', 't90']
 const TYPE_META: Record<string, { jenis: string; yield: number; tier: Tier; icon: LucideIcon; color: string }> = {
   bank:           { jenis: 'Tabungan',   yield: 0.01,  tier: 'instan', icon: Landmark,   color: '#10B981' },
   investment:     { jenis: 'Reksa Dana', yield: 0.045, tier: 't1',     icon: TrendingUp, color: '#8B5CF6' },
+  rdn:            { jenis: 'RDN',        yield: 0,     tier: 't1',     icon: TrendingUp, color: '#0EA5E9' },
   cash:           { jenis: 'Kas',        yield: 0,     tier: 'instan', icon: Banknote,   color: '#F59E0B' },
   digital_wallet: { jenis: 'E-Wallet',   yield: 0,     tier: 'instan', icon: Smartphone, color: '#6366F1' },
   receivable:     { jenis: 'Piutang',    yield: 0,     tier: 't30',    icon: HandCoins,  color: '#F43F5E' },
 }
-const metaFor = (type: string) => TYPE_META[type] ?? { jenis: type, yield: 0, tier: 'instan' as Tier, icon: Wallet, color: '#64748B' }
+// Fallback tipe gak dikenal: jangan tampil mentah — UPPERCASE biar gak keliatan kayak bug.
+const metaFor = (type: string) => TYPE_META[type] ?? { jenis: type.toUpperCase(), yield: 0, tier: 'instan' as Tier, icon: Wallet, color: '#64748B' }
 
 const MM_YIELD = 0.0485 // RD Pasar Uang ~ acuan saran optimasi
 
