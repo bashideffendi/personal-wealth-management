@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { LeafletMap } from '@/components/map/map-client'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
+import { depreciate, METODE_LABEL, type MetodePenyusutan } from '@/lib/depreciation'
 
 type Category = 'property' | 'vehicle' | 'personal_item'
 
@@ -38,8 +39,15 @@ const TYPE_PILLS: Record<Category, string[]> = {
 const monthYear = (d: string | null) =>
   d ? new Date(d).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : '—'
 
-interface VehicleDetails { plate?: string; engine?: string; color?: string; year?: string }
-type WithDetails = { details?: VehicleDetails | null }
+interface AssetDetails {
+  // kendaraan
+  plate?: string; engine?: string; color?: string; year?: string
+  // penyusutan (kendaraan & pribadi)
+  metode?: MetodePenyusutan; masaManfaat?: number; residu?: number; deprOverride?: boolean
+  // properti
+  luasTanah?: string; luasBangunan?: string; spesifikasi?: string
+}
+type WithDetails = { details?: AssetDetails | null }
 
 interface FormState {
   id: string | null
@@ -58,6 +66,15 @@ interface FormState {
   engine: string
   color: string
   year: string
+  // penyusutan
+  metode: MetodePenyusutan
+  masaManfaat: number
+  residu: number
+  deprOverride: boolean
+  // properti
+  luasTanah: string
+  luasBangunan: string
+  spesifikasi: string
 }
 const EMPTY: FormState = {
   id: null, name: '', category: 'property', type: '',
@@ -65,6 +82,8 @@ const EMPTY: FormState = {
   purchase_date: new Date().toISOString().split('T')[0], notes: '',
   latitude: null, longitude: null, address: '',
   plate: '', engine: '', color: '', year: '',
+  metode: 'garis_lurus', masaManfaat: 8, residu: 0, deprOverride: false,
+  luasTanah: '', luasBangunan: '', spesifikasi: '',
 }
 
 export default function NonLiquidAssetsPage() {
@@ -96,19 +115,40 @@ export default function NonLiquidAssetsPage() {
   async function load() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
     const { data } = await supabase.from('assets_non_liquid').select('*').eq('user_id', user.id).order('current_value', { ascending: false })
-    setItems((data ?? []) as AssetNonLiquid[])
+    const rows = (data ?? []) as AssetNonLiquid[]
+    // Penyusutan jalan terus seiring waktu → hitung ulang nilai buku aset yang
+    // menyusut (non-override) tiap load + tulis balik ke DB (best-effort) biar
+    // Net Worth di halaman lain ikut fresh.
+    const now = new Date()
+    const writeback: { id: string; current_value: number }[] = []
+    const fresh = rows.map((a) => {
+      const d = (a as WithDetails).details
+      if (d?.metode && d.metode !== 'none' && (d.masaManfaat ?? 0) > 0 && !d.deprOverride) {
+        const bv = Math.round(depreciate({ cost: a.purchase_value, residu: d.residu ?? 0, masaManfaat: d.masaManfaat ?? 0, metode: d.metode, start: a.purchase_date, asOf: now }).bookValue)
+        if (Math.abs(bv - a.current_value) > 1) { writeback.push({ id: a.id, current_value: bv }); return { ...a, current_value: bv } }
+      }
+      return a
+    })
+    setItems(fresh)
     setLoading(false)
+    for (const w of writeback) void supabase.from('assets_non_liquid').update({ current_value: w.current_value }).eq('id', w.id)
   }
 
   async function save() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
+    // Aset yang menyusut (non-override) → nilai sekarang = nilai buku otomatis.
+    const isDepr = form.category !== 'property' && form.metode !== 'none' && form.masaManfaat > 0
+    const computed = isDepr
+      ? depreciate({ cost: form.purchase_value, residu: form.residu, masaManfaat: form.masaManfaat, metode: form.metode, start: form.purchase_date })
+      : null
+    const effectiveCurrent = isDepr && !form.deprOverride && computed ? Math.round(computed.bookValue) : form.current_value
     const payload = {
       user_id: user.id, name: form.name, category: form.category, type: form.type,
-      purchase_value: form.purchase_value, current_value: form.current_value,
+      purchase_value: form.purchase_value, current_value: effectiveCurrent,
       purchase_date: form.purchase_date, notes: form.notes,
       latitude: form.category === 'property' ? form.latitude : null,
       longitude: form.category === 'property' ? form.longitude : null,
@@ -121,12 +161,15 @@ export default function NonLiquidAssetsPage() {
       const { data: ins } = await supabase.from('assets_non_liquid').insert(payload).select('id').single()
       id = (ins as { id: string } | null)?.id ?? null
     }
-    // Detail kendaraan → JSONB `details`. Best-effort: kalau kolom belum ada
+    // Detail per-kategori → JSONB `details`. Best-effort: kalau kolom belum ada
     // (migration 033 belum di-apply), error diabaikan biar save utama gak gagal.
     if (id) {
-      const details: VehicleDetails | null = form.category === 'vehicle'
-        ? { plate: form.plate, engine: form.engine, color: form.color, year: form.year }
-        : null
+      const details: AssetDetails | null =
+        form.category === 'vehicle'
+          ? { plate: form.plate, engine: form.engine, color: form.color, year: form.year, metode: form.metode, masaManfaat: form.masaManfaat, residu: form.residu, deprOverride: form.deprOverride }
+          : form.category === 'personal_item'
+            ? { metode: form.metode, masaManfaat: form.masaManfaat, residu: form.residu, deprOverride: form.deprOverride }
+            : { luasTanah: form.luasTanah, luasBangunan: form.luasBangunan, spesifikasi: form.spesifikasi }
       await supabase.from('assets_non_liquid').update({ details }).eq('id', id)
     }
     setSaving(false)
@@ -148,6 +191,9 @@ export default function NonLiquidAssetsPage() {
       purchase_date: a.purchase_date, notes: a.notes,
       latitude: a.latitude ?? null, longitude: a.longitude ?? null, address: a.address ?? '',
       plate: d.plate ?? '', engine: d.engine ?? '', color: d.color ?? '', year: d.year ?? '',
+      metode: d.metode ?? (a.category === 'property' ? 'none' : 'garis_lurus'),
+      masaManfaat: d.masaManfaat ?? 8, residu: d.residu ?? 0, deprOverride: d.deprOverride ?? false,
+      luasTanah: d.luasTanah ?? '', luasBangunan: d.luasBangunan ?? '', spesifikasi: d.spesifikasi ?? '',
     })
     setDialogOpen(true)
   }
@@ -201,6 +247,8 @@ export default function NonLiquidAssetsPage() {
     const cat = (a.category in CAT ? a.category : 'personal_item') as Category
     const meta = CAT[cat]
     const Icon = meta.icon
+    const dd = (a as WithDetails).details
+    const deprLabel = dd?.metode && dd.metode !== 'none' ? METODE_LABEL[dd.metode] : null
     const delta = a.current_value - a.purchase_value
     const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
     const up = delta >= 0
@@ -239,7 +287,7 @@ export default function NonLiquidAssetsPage() {
             <span style={{ color: 'var(--ink-muted)' }}>dari <span className="num">{formatCurrency(a.purchase_value)}</span></span>
           </div>
           <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
-            <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}</span>
+            <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
             {hasMap && (
               <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
                 Buka Maps <ExternalLink className="h-3 w-3" />
@@ -250,6 +298,17 @@ export default function NonLiquidAssetsPage() {
       </div>
     )
   }
+
+  // Penyusutan live buat form (kendaraan & pribadi).
+  const isDeprForm = form.category !== 'property' && form.metode !== 'none' && (form.masaManfaat ?? 0) > 0
+  const deprPreview = useMemo(
+    () =>
+      form.category !== 'property' && form.metode !== 'none' && (form.masaManfaat ?? 0) > 0
+        ? depreciate({ cost: form.purchase_value, residu: form.residu, masaManfaat: form.masaManfaat, metode: form.metode, start: form.purchase_date })
+        : null,
+    [form.category, form.metode, form.masaManfaat, form.residu, form.purchase_value, form.purchase_date],
+  )
+  const shownCurrent = isDeprForm && !form.deprOverride && deprPreview ? Math.round(deprPreview.bookValue) : form.current_value
 
   return (
     <div className="space-y-6">
@@ -490,6 +549,41 @@ export default function NonLiquidAssetsPage() {
                 </div>
               )}
 
+              {form.category === 'property' && (
+                <div>
+                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Detail Properti</Label>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Luas Tanah (m²)</Label><Input type="number" value={form.luasTanah} onChange={(e) => setForm({ ...form, luasTanah: e.target.value })} placeholder="144" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Luas Bangunan (m²)</Label><Input type="number" value={form.luasBangunan} onChange={(e) => setForm({ ...form, luasBangunan: e.target.value })} placeholder="90" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5 col-span-2"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Spesifikasi</Label><Input value={form.spesifikasi} onChange={(e) => setForm({ ...form, spesifikasi: e.target.value })} placeholder="3 KT · 2 KM · SHM" /></div>
+                  </div>
+                </div>
+              )}
+
+              {form.category !== 'property' && (
+                <div>
+                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Penyusutan</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(['garis_lurus', 'saldo_menurun_ganda', 'none'] as MetodePenyusutan[]).map((m) => {
+                      const on = form.metode === m
+                      return (
+                        <button key={m} type="button" onClick={() => setForm({ ...form, metode: m, deprOverride: false })}
+                          className="rounded-full px-3 py-1.5 text-[12px] font-medium transition"
+                          style={{ background: on ? 'var(--ink)' : 'var(--surface-2)', color: on ? 'var(--surface)' : 'var(--ink-muted)' }}>
+                          {METODE_LABEL[m]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {form.metode !== 'none' && (
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Masa manfaat (tahun)</Label><Input type="number" min={1} value={form.masaManfaat || ''} onChange={(e) => setForm({ ...form, masaManfaat: Number(e.target.value), deprOverride: false })} placeholder="8" inputMode="numeric" /></div>
+                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Nilai residu (opsional)</Label><RpField value={form.residu} onChange={(n) => setForm({ ...form, residu: n, deprOverride: false })} /></div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <StepLabel n={3} text="Nilai aset" />
                 <div className="grid grid-cols-2 gap-3 mt-2">
@@ -498,11 +592,29 @@ export default function NonLiquidAssetsPage() {
                     <RpField value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Nilai sekarang</Label>
-                    <RpField value={form.current_value} onChange={(n) => setForm({ ...form, current_value: n })} />
+                    <Label className="text-[11px] flex items-center justify-between gap-2" style={{ color: 'var(--ink-muted)' }}>
+                      <span>{isDeprForm ? 'Nilai sekarang · nilai buku' : 'Nilai sekarang'}</span>
+                      {isDeprForm && (form.deprOverride
+                        ? <button type="button" onClick={() => setForm({ ...form, deprOverride: false })} className="text-[10px] underline" style={{ color: 'var(--ink-soft)' }}>pakai auto</button>
+                        : <span className="text-[10px] font-semibold" style={{ color: '#10B981' }}>auto</span>)}
+                    </Label>
+                    <RpField value={shownCurrent} onChange={(n) => setForm({ ...form, current_value: n, deprOverride: true })} />
                   </div>
                 </div>
-                {form.purchase_value > 0 && form.current_value > 0 && (() => {
+                {isDeprForm && deprPreview ? (
+                  <div className="mt-2.5 rounded-lg p-3" style={{ background: 'var(--surface-2)' }}>
+                    <div className="grid grid-cols-3 gap-2 text-[12px]">
+                      <div><p style={{ color: 'var(--ink-soft)' }}>Penyusutan/thn</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.perYearFirst))}</p></div>
+                      <div><p style={{ color: 'var(--ink-soft)' }}>Akumulasi</p><p className="num font-semibold mt-0.5" style={{ color: '#E11D48' }}>−{formatCurrency(Math.round(deprPreview.accumulated))}</p></div>
+                      <div><p style={{ color: 'var(--ink-soft)' }}>Nilai buku</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.bookValue))}</p></div>
+                    </div>
+                    <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
+                      Umur {deprPreview.yearsElapsed.toFixed(1)} thn · {METODE_LABEL[form.metode]}
+                      {deprPreview.fullyDepreciated ? ' · sudah habis disusutkan' : ''}
+                      {form.deprOverride ? ' · nilai ditimpa manual' : ''}
+                    </p>
+                  </div>
+                ) : (form.purchase_value > 0 && form.current_value > 0 && (() => {
                   const d = form.current_value - form.purchase_value
                   const p = (d / form.purchase_value) * 100
                   const up = d >= 0
@@ -512,7 +624,7 @@ export default function NonLiquidAssetsPage() {
                       {up ? 'Apresiasi' : 'Depresiasi'} <span className="num font-semibold">{up ? '+' : ''}{formatCurrency(d)} ({up ? '+' : ''}{p.toFixed(1)}%)</span> sejak dibeli
                     </div>
                   )
-                })()}
+                })())}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
