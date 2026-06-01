@@ -266,48 +266,68 @@ export default function NonLiquidAssetsPage() {
     const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
     const up = delta >= 0
     const hasMap = cat === 'property' && a.latitude != null && a.longitude != null
+    const subtitle = cat === 'vehicle' && dd
+      ? [a.type, dd.plate, dd.year].filter(Boolean).join(' · ') || meta.note
+      : a.type || meta.note
+    const body = (
+      <>
+        <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
+        <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+          <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: `${up ? '#10B981' : '#F43F5E'}1A`, color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
+          <span style={{ color: 'var(--ink-muted)' }}>dari <span className="num">{formatCurrency(a.purchase_value)}</span></span>
+        </div>
+        <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
+          <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
+          {hasMap && (
+            <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
+              Buka Maps <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      </>
+    )
     return (
-      <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors">
-        {hasMap && (
-          <div className="h-28 w-full border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <LeafletMap lat={a.latitude!} lng={a.longitude!} readOnly height={112} />
+      <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] transition-all hover:border-[var(--ink)] hover:shadow-lg">
+        {/* Edit/hapus — toolbar ngambang kanan-atas (kebaca di atas peta maupun konten) */}
+        <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-sm transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
+          <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
+        </div>
+
+        {hasMap ? (
+          <>
+            <div className="relative h-28 w-full">
+              <LeafletMap lat={a.latitude!} lng={a.longitude!} readOnly height={112} />
+              {/* badge kategori ngambang di pojok peta */}
+              <div className="absolute -bottom-5 left-5 z-[2] size-10 rounded-xl grid place-items-center shadow-md ring-2 ring-[var(--surface)]" style={{ background: meta.color }}>
+                <Icon className="size-5" style={{ color: '#fff' }} />
+              </div>
+            </div>
+            <div className="px-5 pb-5 pt-8">
+              <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
+              <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
+              {a.address && (
+                <p className="text-[11px] mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
+                  <MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="truncate">{a.address}</span>
+                </p>
+              )}
+              {body}
+            </div>
+          </>
+        ) : (
+          <div className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}>
+                <Icon className="size-5" style={{ color: meta.color }} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
+                <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
+              </div>
+            </div>
+            {body}
           </div>
         )}
-        <div className="p-5">
-          <div className="flex items-start justify-between">
-            <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}>
-              <Icon className="size-4" style={{ color: meta.color }} />
-            </div>
-            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
-              <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
-              <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
-            </div>
-          </div>
-          <p className="font-semibold mt-3 truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-          <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
-            {cat === 'vehicle' && (a as WithDetails).details
-              ? [a.type, (a as WithDetails).details!.plate, (a as WithDetails).details!.year].filter(Boolean).join(' · ') || meta.note
-              : (a.type || meta.note)}
-          </p>
-          {cat === 'property' && a.address && (
-            <p className="text-[11px] mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
-              <MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="truncate">{a.address}</span>
-            </p>
-          )}
-          <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
-          <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-            <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: `${up ? '#10B981' : '#F43F5E'}1A`, color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
-            <span style={{ color: 'var(--ink-muted)' }}>dari <span className="num">{formatCurrency(a.purchase_value)}</span></span>
-          </div>
-          <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
-            <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
-            {hasMap && (
-              <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
-                Buka Maps <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </div>
-        </div>
       </div>
     )
   }
@@ -358,9 +378,11 @@ export default function NonLiquidAssetsPage() {
             </div>
             {(Object.keys(CAT) as Category[]).map((cat) => {
               const s = catStat(cat)
+              const CatIcon = CAT[cat].icon
+              const empty = s.cur <= 0
               return (
-                <div key={cat} className="p-5">
-                  <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].color }}>{CAT[cat].label}</p>
+                <div key={cat} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].color }}><CatIcon className="size-3" />{CAT[cat].label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                     {s.count} item{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? '#10B981' : '#F43F5E' }}>{s.pct >= 0 ? 'apresiasi +' : 'depresiasi '}{s.pct.toFixed(1)}%</span></>}
@@ -482,6 +504,7 @@ export default function NonLiquidAssetsPage() {
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
                       <span className="num text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(s.cur)}</span>
+                      <div className="flex-1 h-px ml-1.5" style={{ background: 'var(--border-soft)' }} />
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {list.map(renderCard)}

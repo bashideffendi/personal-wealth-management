@@ -213,7 +213,8 @@ export default function LeafletMap({
           <Recenter lat={lat} lng={lng} />
         </MapContainer>
 
-        {/* Layer switcher — top-right, on top of map */}
+        {/* Layer switcher — disembunyiin di mode readOnly (thumbnail kartu jadi bersih) */}
+        {!readOnly && (
         <div
           className="absolute top-2 right-2 z-[500] flex rounded-lg shadow-lg overflow-hidden"
           style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
@@ -238,6 +239,7 @@ export default function LeafletMap({
             </button>
           ))}
         </div>
+        )}
       </div>
 
       {!readOnly && (
