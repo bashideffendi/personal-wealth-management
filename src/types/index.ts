@@ -211,6 +211,17 @@ export interface EmergencyFundLocation {
   amount: number
 }
 
+export interface EmergencyFundTransaction {
+  id: string
+  fund_id: string
+  date: string
+  kind: 'setor' | 'tarik'
+  amount: number
+  location: string
+  note: string
+  created_at: string
+}
+
 export interface Transfer {
   id: string
   user_id: string
