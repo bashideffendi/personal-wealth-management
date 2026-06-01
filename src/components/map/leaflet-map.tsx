@@ -131,7 +131,7 @@ export default function LeafletMap({
       )}
 
       <div
-        className="relative w-full rounded-lg overflow-hidden border"
+        className="relative isolate w-full rounded-lg overflow-hidden border"
         style={{ height, borderColor: 'var(--border-soft)' }}
       >
         <MapContainer
