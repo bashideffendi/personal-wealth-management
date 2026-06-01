@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Leaflet maps (kartu aset properti) jangan nembus ke atas modal/overlay.
+   Kontrol Leaflet pakai z-index 1000 yang lompat ke atas overlay dialog (z-50).
+   `isolation: isolate` ngurung stacking context-nya di dalam container peta,
+   jadi z-index internalnya gak bisa kabur ke global. */
+.leaflet-container { isolation: isolate; }
+
 /* ============================================
    Klunting — Design System v4 (Modern fintech pivot, 2026-05-28 revert)
    Restore emerald primary brand + clean near-white bg + JetBrains Mono.
