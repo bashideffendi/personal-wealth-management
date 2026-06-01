@@ -320,8 +320,8 @@ export default function EmergencyFundPage() {
         <p className="text-[12px] mt-3 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>Makin banyak tanggungan atau biaya hidup tinggi → siapkan lebih besar. Tinjau ulang tiap 6 bulan atau pas biaya hidupmu berubah, biar tetap pas.</p>
       </div>
 
-      {/* Kalkulator + Rencana akselerasi */}
-      <div className="grid gap-3 lg:grid-cols-2">
+      {/* Kalkulator (kiri) + Rencana setoran & Skenario ditumpuk (kanan) biar ruang kepakai */}
+      <div className="grid gap-3 lg:grid-cols-2 items-start">
         <div id="ef-kalkulator" className="scroll-mt-20 s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Kalkulator Target</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Target = stabilitas kerja + tanggungan + pengeluaran bulanan.</p>
@@ -364,6 +364,7 @@ export default function EmergencyFundPage() {
           </div>
         </div>
 
+        <div className="grid gap-3">
         {deficit > 0 ? (
           <div className="s-card p-5">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rencana Setoran</p>
@@ -394,6 +395,22 @@ export default function EmergencyFundPage() {
             </div>
           </div>
         )}
+        {/* Skenario penggunaan — ditaruh di kolom kanan biar ruangnya kepakai */}
+        <div className="s-card p-5">
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Skenario Penggunaan</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Tanpa pemasukan baru, dana nutup berapa lama.</p>
+          <div className="mt-3 space-y-2">
+            {scenarios.length === 0 ? (
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Isi pengeluaran bulanan dulu.</p>
+            ) : scenarios.map((s) => (
+              <div key={s.label} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
+                <div className="min-w-0"><p className="text-sm" style={{ color: 'var(--ink)' }}>{s.label}</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{s.note}</p></div>
+                <span className="num font-semibold shrink-0 whitespace-nowrap" style={{ color: AMBER }}>{s.months.toFixed(1)} bln</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        </div>
       </div>
 
       {/* Perjalanan membangun dana — chart kumulatif dari log */}
@@ -529,31 +546,14 @@ export default function EmergencyFundPage() {
         </div>
       </div>
 
-      {/* Skenario + Catatan */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Skenario Penggunaan</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Tanpa pemasukan baru, dana nutup berapa lama.</p>
-          <div className="mt-3 space-y-2">
-            {scenarios.length === 0 ? (
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Isi pengeluaran bulanan dulu.</p>
-            ) : scenarios.map((s) => (
-              <div key={s.label} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
-                <div className="min-w-0"><p className="text-sm" style={{ color: 'var(--ink)' }}>{s.label}</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{s.note}</p></div>
-                <span className="num font-semibold shrink-0 whitespace-nowrap" style={{ color: AMBER }}>{s.months.toFixed(1)} bln</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: '#8B5CF6' }}><Check className="size-3.5" /> Tips Klunting</p>
-          <ul className="mt-3 space-y-2.5">
-            {['Taruh minimal 30% di instrumen instan (tabungan/e-wallet) biar bisa diakses dalam hitungan menit.', 'Jangan campur sama tabungan tujuan lain (DP rumah, liburan) — pisahin rekeningnya.', 'Bangun dana darurat DULU sebelum mulai investasi — ini bantalan paling dasar.', 'Tinjau ulang target tiap 6 bulan atau pas biaya hidupmu berubah.'].map((t, i) => (
-              <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: 'var(--ink-muted)' }}><Check className="size-3.5 mt-0.5 shrink-0" style={{ color: MINT }} /> {t}</li>
-            ))}
-          </ul>
-        </div>
+      {/* Tips Klunting — full-width, bullet 2 kolom biar lebarnya kepakai */}
+      <div className="s-card p-5">
+        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: '#8B5CF6' }}><Check className="size-3.5" /> Tips Klunting</p>
+        <ul className="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-2.5">
+          {['Taruh minimal 30% di instrumen instan (tabungan/e-wallet) biar bisa diakses dalam hitungan menit.', 'Jangan campur sama tabungan tujuan lain (DP rumah, liburan) — pisahin rekeningnya.', 'Bangun dana darurat DULU sebelum mulai investasi — ini bantalan paling dasar.', 'Tinjau ulang target tiap 6 bulan atau pas biaya hidupmu berubah.'].map((t, i) => (
+            <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: 'var(--ink-muted)' }}><Check className="size-3.5 mt-0.5 shrink-0" style={{ color: MINT }} /> {t}</li>
+          ))}
+        </ul>
       </div>
 
       {/* Catat transaksi (pembentukan) */}
