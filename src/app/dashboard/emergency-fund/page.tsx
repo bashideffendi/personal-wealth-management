@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
-import { Plus, Minus, Pencil, Trash2, Loader2, Check, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { Plus, Minus, Pencil, Trash2, Loader2, Check, Info, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
 const JOB_STABILITY_LABELS: Record<JobStability, string> = {
@@ -305,6 +305,23 @@ export default function EmergencyFundPage() {
         </div>
       </div>
 
+      {/* Edukasi — apa itu dana darurat (adaptasi referensi user) */}
+      <div className="s-card p-5 sm:p-6">
+        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: '#8B5CF6' }}><Info className="size-3.5" /> Apa itu Dana Darurat?</p>
+        <p className="text-sm mt-2 leading-relaxed max-w-3xl" style={{ color: 'var(--ink-muted)' }}>Cadangan uang khusus buat kejadian tak terduga — kehilangan pekerjaan, sakit, perbaikan besar — biar kamu tetap aman <span className="font-semibold" style={{ color: 'var(--ink)' }}>tanpa harus ngutang</span>. Ini fondasi paling dasar, dibangun duluan sebelum mulai investasi.</p>
+        <div className="mt-4 grid sm:grid-cols-2 gap-3">
+          <div className="rounded-xl p-4" style={{ background: `${MINT}14` }}>
+            <p className="num text-2xl font-bold" style={{ color: '#059669' }}>3–6 bulan</p>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>pengeluaran — kalau penghasilanmu <span className="font-semibold">stabil</span> (karyawan tetap, gaji rutin).</p>
+          </div>
+          <div className="rounded-xl p-4" style={{ background: `${AMBER}14` }}>
+            <p className="num text-2xl font-bold" style={{ color: '#B45309' }}>6–12 bulan</p>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>pengeluaran — kalau <span className="font-semibold">gak menentu</span> (freelance, komisi, usaha sendiri).</p>
+          </div>
+        </div>
+        <p className="text-[12px] mt-3 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>Makin banyak tanggungan atau biaya hidup tinggi → siapkan lebih besar. Tinjau ulang tiap 6 bulan atau pas biaya hidupmu berubah, biar tetap pas.</p>
+      </div>
+
       {/* Kalkulator + Rencana akselerasi */}
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="s-card p-5">
@@ -366,13 +383,12 @@ export default function EmergencyFundPage() {
             </div>
           </div>
         ) : (
-          <div className="s-card p-5">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#8B5CF6' }}>Catatan Klunting</p>
-            <ul className="mt-3 space-y-2.5">
-              {['Dana darurat ideal 3–6 bulan pengeluaran (lebih kalau penghasilan gak stabil).', 'Taruh minimal 30% di instrumen instan biar bisa diakses dalam hitungan menit.', 'Jangan campur sama tabungan tujuan lain (DP, liburan).', 'Tinjau ulang target tiap 6 bulan / pas biaya hidup berubah.'].map((t, i) => (
-                <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: 'var(--ink-muted)' }}><Check className="size-3.5 mt-0.5 shrink-0" style={{ color: MINT }} /> {t}</li>
-              ))}
-            </ul>
+          <div className="s-card p-5 grid place-items-center text-center">
+            <div>
+              <div className="size-11 rounded-full grid place-items-center mx-auto" style={{ background: `${MINT}1A` }}><Check className="size-5" style={{ color: MINT }} /></div>
+              <p className="font-semibold mt-2" style={{ color: 'var(--ink)' }}>{targetAmount > 0 ? 'Dana daruratmu aman' : 'Hitung targetmu dulu'}</p>
+              <p className="text-[12px] mt-1 max-w-xs" style={{ color: 'var(--ink-muted)' }}>{targetAmount > 0 ? 'Targetmu udah tercapai. Pertahankan — tinjau ulang tiap 6 bulan / pas biaya hidup berubah.' : 'Isi kalkulator di sebelah biar tau target idealmu, terus atur dana daruratmu.'}</p>
+            </div>
           </div>
         )}
       </div>
@@ -528,9 +544,9 @@ export default function EmergencyFundPage() {
         </div>
 
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#8B5CF6' }}>Catatan Klunting</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: '#8B5CF6' }}><Check className="size-3.5" /> Tips Klunting</p>
           <ul className="mt-3 space-y-2.5">
-            {['Dana darurat ideal 6 bulan pengeluaran (3 bulan kalau penghasilan stabil).', 'Taruh minimal 30% di instrumen instan biar bisa diakses dalam hitungan menit.', 'Jangan campur sama tabungan tujuan lain (DP, liburan).', 'Tinjau ulang target tiap 6 bulan / pas biaya hidup berubah.'].map((t, i) => (
+            {['Taruh minimal 30% di instrumen instan (tabungan/e-wallet) biar bisa diakses dalam hitungan menit.', 'Jangan campur sama tabungan tujuan lain (DP rumah, liburan) — pisahin rekeningnya.', 'Bangun dana darurat DULU sebelum mulai investasi — ini bantalan paling dasar.', 'Tinjau ulang target tiap 6 bulan atau pas biaya hidupmu berubah.'].map((t, i) => (
               <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: 'var(--ink-muted)' }}><Check className="size-3.5 mt-0.5 shrink-0" style={{ color: MINT }} /> {t}</li>
             ))}
           </ul>
