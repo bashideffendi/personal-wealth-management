@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
-import { Plus, Minus, Pencil, Trash2, Loader2, Check, Info, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { Plus, Minus, Pencil, Trash2, Loader2, Check, Info, ChevronDown, ShieldCheck, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { InstitutionLogo } from '@/components/accounts/institution-logo'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
 const JOB_STABILITY_LABELS: Record<JobStability, string> = {
@@ -557,32 +558,77 @@ export default function EmergencyFundPage() {
       <Dialog open={txnDialogOpen} onOpenChange={setTxnDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Atur Dana Darurat</DialogTitle>
-            <DialogDescription>Isi <strong>berapa</strong> dana daruratmu di tiap rekening. Klunting cuma <strong>mencatat</strong> — gak mindahin uang &amp; gak ngubah saldo rekening aslimu.</DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: `${MINT}1A` }}><ShieldCheck className="size-5" style={{ color: MINT }} /></div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>Atur Dana Darurat</DialogTitle>
+                <DialogDescription>Tandai berapa dari saldo rekening ini yang kamu sisihkan sebagai bantalan keuangan.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <div className="grid gap-4 py-2">
+            <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: `${MINT}14`, border: `1px solid ${MINT}33` }}>
+              <Check className="size-4 mt-0.5 shrink-0" style={{ color: '#059669' }} />
+              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>Klunting cuma <strong>mencatat</strong> — uangmu tidak dipindah &amp; saldo rekening asli tidak berubah.</p>
+            </div>
+
             <div className="grid gap-1.5">
               <Label>Di rekening / tempat mana?</Label>
-              <select value={txnOther ? '__other__' : txnForm.location}
-                onChange={(e) => {
-                  if (e.target.value === '__other__') { setTxnOther(true); setTxnForm((f) => ({ ...f, location: '', total: 0 })) }
-                  else { setTxnOther(false); const acc = accounts.find((a) => a.name === e.target.value); const cur = currentAmountFor(e.target.value); setTxnForm((f) => ({ ...f, location: e.target.value, total: cur > 0 ? cur : (acc?.current_balance ?? 0) })) }
-                }}
-                className="h-10 rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}>
-                <option value="">Pilih…</option>
-                {accounts.map((a) => <option key={a.id} value={a.name}>{a.name} · saldo {formatCurrency(a.current_balance)}</option>)}
-                <option value="__other__">Tempat lain (emas, deposito fisik…)</option>
-              </select>
+              {(() => {
+                const acc = accounts.find((a) => a.name === txnForm.location)
+                return (
+                  <div className="relative">
+                    <div className="flex items-center gap-3 h-12 rounded-lg border px-3" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
+                      {txnOther ? (
+                        <><div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Plus className="size-4" style={{ color: 'var(--ink-muted)' }} /></div><span className="text-sm" style={{ color: 'var(--ink)' }}>Tempat lain (non-rekening)</span></>
+                      ) : acc ? (
+                        <><InstitutionLogo accountName={acc.name} size={32} shape="circle" /><span className="min-w-0"><span className="block text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{acc.name}</span><span className="block num text-[11px]" style={{ color: 'var(--ink-soft)' }}>saldo tercatat {formatCurrency(acc.current_balance)}</span></span></>
+                      ) : (
+                        <span className="text-sm" style={{ color: 'var(--ink-soft)' }}>Pilih rekening…</span>
+                      )}
+                      <ChevronDown className="size-4 ml-auto shrink-0" style={{ color: 'var(--ink-soft)' }} />
+                    </div>
+                    <select aria-label="Pilih rekening" value={txnOther ? '__other__' : txnForm.location}
+                      onChange={(e) => {
+                        if (e.target.value === '__other__') { setTxnOther(true); setTxnForm((f) => ({ ...f, location: '', total: 0 })) }
+                        else { setTxnOther(false); const a2 = accounts.find((a) => a.name === e.target.value); const cur = currentAmountFor(e.target.value); setTxnForm((f) => ({ ...f, location: e.target.value, total: cur > 0 ? cur : (a2?.current_balance ?? 0) })) }
+                      }}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer">
+                      <option value="">Pilih…</option>
+                      {accounts.map((a) => <option key={a.id} value={a.name}>{a.name} — saldo {formatCurrency(a.current_balance)}</option>)}
+                      <option value="__other__">Tempat lain (emas, deposito fisik…)</option>
+                    </select>
+                  </div>
+                )
+              })()}
               {txnOther && <Input value={txnForm.location} onChange={(e) => setTxnForm({ ...txnForm, location: e.target.value })} placeholder="Nama tempat (mis. Emas 50gr)" />}
             </div>
+
             <div className="grid gap-1.5">
               <Label>Berapa di sini yang buat dana darurat?</Label>
-              <NumberInput value={txnForm.total} onChange={(n) => setTxnForm({ ...txnForm, total: n })} placeholder="0" />
-              {!txnOther && (() => {
+              <div className="flex items-center rounded-lg border overflow-hidden h-14" style={{ borderColor: 'var(--border-soft)' }}>
+                <span className="self-stretch grid place-items-center px-3.5 text-sm font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>Rp</span>
+                <NumberInput value={txnForm.total} onChange={(n) => setTxnForm({ ...txnForm, total: n })} placeholder="0" className="flex-1 border-0 h-full text-2xl font-bold" />
+              </div>
+              {(() => {
                 const acc = accounts.find((a) => a.name === txnForm.location)
-                return acc ? <button type="button" onClick={() => setTxnForm((f) => ({ ...f, total: acc.current_balance }))} className="self-start text-[11px] font-medium hover:underline" style={{ color: '#B45309' }}>Pakai seluruh saldo rekening ({formatCurrency(acc.current_balance)})</button> : null
+                if (!acc || acc.current_balance <= 0) return null
+                const pct = (txnForm.total / acc.current_balance) * 100
+                const over = pct > 100
+                return (
+                  <div className="mt-1">
+                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: over ? '#F43F5E' : MINT }} />
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                      <span>Ditandai <span className="font-semibold" style={{ color: over ? '#E11D48' : 'var(--ink)' }}>{pct.toFixed(0)}%</span> dari saldo{over ? ' · lebih dari saldo!' : ''}</span>
+                      <button type="button" onClick={() => setTxnForm((f) => ({ ...f, total: acc.current_balance }))} className="num hover:underline" style={{ color: 'var(--ink-soft)' }}>{formatCurrency(txnForm.total)} / {formatCurrency(acc.current_balance)}</button>
+                    </div>
+                  </div>
+                )
               })()}
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5"><Label>Tanggal update</Label><Input type="date" value={txnForm.date} onChange={(e) => setTxnForm({ ...txnForm, date: e.target.value })} /></div>
               <div className="grid gap-1.5"><Label>Catatan (opsional)</Label><Input value={txnForm.note} onChange={(e) => setTxnForm({ ...txnForm, note: e.target.value })} placeholder="mis. nabung dari bonus" /></div>
@@ -590,7 +636,7 @@ export default function EmergencyFundPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTxnDialogOpen(false)}>Batal</Button>
-            <Button onClick={handleSaveTxn} disabled={saving || !txnForm.location.trim()}>{saving && <Loader2 className="size-4 animate-spin" />}Simpan</Button>
+            <Button onClick={handleSaveTxn} disabled={saving || !txnForm.location.trim()}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
