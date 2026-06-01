@@ -50,8 +50,8 @@
 
   /* ── Text (Light) ─────────────────────────────── */
   --ink:         #0A0A0F;    /* near-black, professional */
-  --ink-muted:   #52525B;
-  --ink-soft:    #A1A1AA;
+  --ink-muted:   #3F3F46;    /* Zinc-700 — teks sekunder, pekat & kebaca */
+  --ink-soft:    #71717A;    /* Zinc-500 — label tersier, masih kebaca (AA) */
   --text:        #0A0A0F;
   --text-2:      #52525B;
   --text-mute:   #71717A;
