@@ -37,8 +37,10 @@ function etaDate(months: number): string {
   return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
 }
 
-interface TxnForm { date: string; kind: 'setor' | 'tarik'; amount: number; location: string; note: string }
-const EMPTY_TXN: TxnForm = { date: todayISO(), kind: 'setor', amount: 0, location: '', note: '' }
+// Form "Atur dana darurat" — user isi TOTAL dana darurat di sebuah tempat
+// (bukan setor/tarik). Selisih vs nilai lama otomatis jadi log perjalanan.
+interface TxnForm { date: string; location: string; total: number; note: string }
+const EMPTY_TXN: TxnForm = { date: todayISO(), location: '', total: 0, note: '' }
 
 export default function EmergencyFundPage() {
   const supabase = createClient()
@@ -167,31 +169,40 @@ export default function EmergencyFundPage() {
 
   // ── Pembentukan (catat setoran / penarikan) ──
   function openTxn() { setTxnForm({ ...EMPTY_TXN, date: todayISO() }); setTxnOther(false); setTxnDialogOpen(true) }
+  // Nilai earmark/lokasi terkini buat sebuah tempat (akun atau non-akun).
+  function currentAmountFor(place: string): number {
+    const acct = accounts.find((a) => a.name.toLowerCase() === place.toLowerCase())
+    if (acct) return accountAllocations.find((a) => a.account_id === acct.id)?.amount ?? 0
+    return locations.find((l) => l.account_name.toLowerCase() === place.toLowerCase())?.amount ?? 0
+  }
   async function handleSaveTxn() {
     const fundId = await ensureFund()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!fundId || !user || txnForm.amount <= 0) return
-    setSaving(true)
-    const signed = txnForm.kind === 'setor' ? txnForm.amount : -txnForm.amount
     const dest = txnForm.location.trim()
-    // 1) Catat transaksi (log pembentukan → chart perjalanan).
-    await supabase.from('emergency_fund_transactions').insert({
-      fund_id: fundId, date: txnForm.date, kind: txnForm.kind, amount: txnForm.amount, location: dest, note: txnForm.note.trim(),
-    })
-    // 2) Naikin/turunin earmark di tujuan: AKUN riil (account_allocations, sinkron)
-    //    atau lokasi non-akun (emergency_fund_locations).
+    if (!fundId || !user || !dest) return
+    setSaving(true)
+    const total = Math.max(0, txnForm.total)
+    const current = currentAmountFor(dest)
+    const delta = total - current
+    // 1) SET nilai (total), BUKAN mindahin uang — saldo rekening asli gak disentuh.
     const acct = accounts.find((a) => a.name.toLowerCase() === dest.toLowerCase())
     if (acct) {
       const alloc = accountAllocations.find((a) => a.account_id === acct.id)
-      if (alloc) await supabase.from('account_allocations').update({ amount: Math.max(0, alloc.amount + signed) }).eq('id', alloc.id)
-      else await supabase.from('account_allocations').insert({ user_id: user.id, account_id: acct.id, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: Math.max(0, signed) })
-    } else if (dest) {
+      if (alloc) await supabase.from('account_allocations').update({ amount: total }).eq('id', alloc.id)
+      else await supabase.from('account_allocations').insert({ user_id: user.id, account_id: acct.id, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: total })
+    } else {
       const loc = locations.find((l) => l.account_name.toLowerCase() === dest.toLowerCase())
-      if (loc) await supabase.from('emergency_fund_locations').update({ amount: Math.max(0, loc.amount + signed) }).eq('id', loc.id)
-      else await supabase.from('emergency_fund_locations').insert({ fund_id: fundId, account_name: dest, amount: Math.max(0, signed) })
+      if (loc) await supabase.from('emergency_fund_locations').update({ amount: total }).eq('id', loc.id)
+      else await supabase.from('emergency_fund_locations').insert({ fund_id: fundId, account_name: dest, amount: total })
     }
-    // 3) Sinkron current_amount fund (biar Net Worth ikut fresh).
-    await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund + signed) }).eq('id', fundId)
+    // 2) Log SELISIH (buat chart perjalanan) kalau berubah.
+    if (delta !== 0) {
+      await supabase.from('emergency_fund_transactions').insert({
+        fund_id: fundId, date: txnForm.date, kind: delta > 0 ? 'setor' : 'tarik', amount: Math.abs(delta), location: dest, note: txnForm.note.trim(),
+      })
+    }
+    // 3) Sinkron current_amount fund.
+    await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund + delta) }).eq('id', fundId)
     setSaving(false); setTxnDialogOpen(false); void fetchData()
   }
   async function handleDeleteTxn(t: EmergencyFundTransaction) {
@@ -253,7 +264,7 @@ export default function EmergencyFundPage() {
           <h1 className="mt-0.5 text-2xl sm:text-3xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>Dana Darurat</h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Tabungan terpisah buat kejadian tak terduga: kehilangan pekerjaan, masalah kesehatan, perbaikan besar.</p>
         </div>
-        <Button onClick={openTxn}><Plus className="h-4 w-4" /> Tambah uang</Button>
+        <Button onClick={openTxn}><Plus className="h-4 w-4" /> Atur dana darurat</Button>
       </div>
 
       {/* Card — cuma ring (kiri, amber-tint) + metrik (kanan, surface). Tanpa judul di dalam. */}
@@ -289,7 +300,7 @@ export default function EmergencyFundPage() {
               {coverageMonths > 0 && <p className="mt-4 text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>Kalau penghasilanmu berhenti hari ini, dana ini cukup nutup hidup <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} bulan</span> — kira-kira sampai {etaDate(coverageMonths)}.</p>}
             </>
           ) : (
-            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>Atur target di <span className="font-semibold" style={{ color: '#B45309' }}>Kalkulator</span> bawah, terus <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: '#B45309' }}>setor manual</button> — cakupan &amp; kekuranganmu langsung muncul di sini.</p>
+            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>Atur target di <span className="font-semibold" style={{ color: '#B45309' }}>Kalkulator</span> bawah, terus <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: '#B45309' }}>atur dana darurat</button> — cakupan &amp; kekuranganmu langsung muncul di sini.</p>
           )}
         </div>
       </div>
@@ -401,7 +412,7 @@ export default function EmergencyFundPage() {
         })() : (
           <div className="mt-4 rounded-xl border border-dashed py-10 text-center" style={{ borderColor: 'var(--border-soft)' }}>
             <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada riwayat setoran.</p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={openTxn}><Plus className="h-4 w-4" /> Catat setoran pertama</Button>
+            <Button variant="outline" size="sm" className="mt-3" onClick={openTxn}><Plus className="h-4 w-4" /> Atur dana darurat</Button>
           </div>
         )}
       </div>
@@ -412,7 +423,7 @@ export default function EmergencyFundPage() {
         <div className="s-card p-5">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Uangnya Di Mana?</p>
-            <Button variant="outline" size="sm" onClick={openTxn}><Plus className="h-3.5 w-3.5" /> Tambah</Button>
+            <Button variant="outline" size="sm" onClick={openTxn}><Plus className="h-3.5 w-3.5" /> Atur</Button>
           </div>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Rekening tempat dana daruratmu — saldo kebaca otomatis dari Aset Likuid.</p>
           {allLocations.length > 0 && (
@@ -457,7 +468,7 @@ export default function EmergencyFundPage() {
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Pembentukan Dana</p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Riwayat setoran &amp; penarikan.</p>
             </div>
-            <Button variant="outline" size="sm" onClick={openTxn}><Plus className="h-4 w-4" /> Catat</Button>
+            <Button variant="outline" size="sm" onClick={openTxn}><Plus className="h-4 w-4" /> Atur</Button>
           </div>
           {transactions.length === 0 ? (
             <p className="px-5 pb-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>Belum ada transaksi tercatat.</p>
@@ -530,49 +541,40 @@ export default function EmergencyFundPage() {
       <Dialog open={txnDialogOpen} onOpenChange={setTxnDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Tambah Uang ke Dana Darurat</DialogTitle>
-            <DialogDescription>Catat uang yang kamu sisihkan (atau ambil). Saldo rekening kebaca otomatis + masuk ke grafik perjalanan.</DialogDescription>
+            <DialogTitle>Atur Dana Darurat</DialogTitle>
+            <DialogDescription>Isi <strong>berapa</strong> dana daruratmu di tiap rekening. Klunting cuma <strong>mencatat</strong> — gak mindahin uang &amp; gak ngubah saldo rekening aslimu.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div className="grid grid-cols-2 gap-2">
-              {(['setor', 'tarik'] as const).map((k) => {
-                const on = txnForm.kind === k
-                return (
-                  <button key={k} type="button" onClick={() => setTxnForm({ ...txnForm, kind: k })}
-                    className="rounded-lg border px-3 py-2.5 text-sm font-medium flex items-center justify-center gap-2 transition"
-                    style={{ borderColor: on ? (k === 'setor' ? MINT : '#F43F5E') : 'var(--border-soft)', background: on ? `${k === 'setor' ? MINT : '#F43F5E'}14` : 'var(--surface)', color: on ? (k === 'setor' ? '#059669' : '#E11D48') : 'var(--ink-muted)' }}>
-                    {k === 'setor' ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}{k === 'setor' ? 'Nambah' : 'Ambil'}
-                  </button>
-                )
-              })}
-            </div>
             <div className="grid gap-1.5">
-              <Label>Di rekening mana?</Label>
+              <Label>Di rekening / tempat mana?</Label>
               <select value={txnOther ? '__other__' : txnForm.location}
-                onChange={(e) => { if (e.target.value === '__other__') { setTxnOther(true); setTxnForm((f) => ({ ...f, location: '' })) } else { setTxnOther(false); setTxnForm((f) => ({ ...f, location: e.target.value })) } }}
+                onChange={(e) => {
+                  if (e.target.value === '__other__') { setTxnOther(true); setTxnForm((f) => ({ ...f, location: '', total: 0 })) }
+                  else { setTxnOther(false); const acc = accounts.find((a) => a.name === e.target.value); const cur = currentAmountFor(e.target.value); setTxnForm((f) => ({ ...f, location: e.target.value, total: cur > 0 ? cur : (acc?.current_balance ?? 0) })) }
+                }}
                 className="h-10 rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}>
-                <option value="">Pilih rekening…</option>
+                <option value="">Pilih…</option>
                 {accounts.map((a) => <option key={a.id} value={a.name}>{a.name} · saldo {formatCurrency(a.current_balance)}</option>)}
                 <option value="__other__">Tempat lain (emas, deposito fisik…)</option>
               </select>
               {txnOther && <Input value={txnForm.location} onChange={(e) => setTxnForm({ ...txnForm, location: e.target.value })} placeholder="Nama tempat (mis. Emas 50gr)" />}
-              {!txnOther && txnForm.kind === 'setor' && (() => {
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Berapa di sini yang buat dana darurat?</Label>
+              <NumberInput value={txnForm.total} onChange={(n) => setTxnForm({ ...txnForm, total: n })} placeholder="0" />
+              {!txnOther && (() => {
                 const acc = accounts.find((a) => a.name === txnForm.location)
-                if (!acc) return null
-                const already = accountAllocations.find((al) => al.account_id === acc.id)?.amount ?? 0
-                const room = Math.max(0, acc.current_balance - already)
-                return room > 0 ? <button type="button" onClick={() => setTxnForm((f) => ({ ...f, amount: room }))} className="self-start text-[11px] font-medium hover:underline" style={{ color: '#B45309' }}>Pakai seluruh saldo rekening ({formatCurrency(room)})</button> : null
+                return acc ? <button type="button" onClick={() => setTxnForm((f) => ({ ...f, total: acc.current_balance }))} className="self-start text-[11px] font-medium hover:underline" style={{ color: '#B45309' }}>Pakai seluruh saldo rekening ({formatCurrency(acc.current_balance)})</button> : null
               })()}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>{txnForm.kind === 'setor' ? 'Nambah berapa?' : 'Ambil berapa?'}</Label><NumberInput value={txnForm.amount} onChange={(n) => setTxnForm({ ...txnForm, amount: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Tanggal</Label><Input type="date" value={txnForm.date} onChange={(e) => setTxnForm({ ...txnForm, date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>Tanggal update</Label><Input type="date" value={txnForm.date} onChange={(e) => setTxnForm({ ...txnForm, date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>Catatan (opsional)</Label><Input value={txnForm.note} onChange={(e) => setTxnForm({ ...txnForm, note: e.target.value })} placeholder="mis. nabung dari bonus" /></div>
             </div>
-            <div className="grid gap-1.5"><Label>Catatan (opsional)</Label><Input value={txnForm.note} onChange={(e) => setTxnForm({ ...txnForm, note: e.target.value })} placeholder="mis. bonus, sisa gaji" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTxnDialogOpen(false)}>Batal</Button>
-            <Button onClick={handleSaveTxn} disabled={saving || txnForm.amount <= 0}>{saving && <Loader2 className="size-4 animate-spin" />}Catat</Button>
+            <Button onClick={handleSaveTxn} disabled={saving || !txnForm.location.trim()}>{saving && <Loader2 className="size-4 animate-spin" />}Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
