@@ -60,9 +60,13 @@ export default function EmergencyFundPage() {
   const [txnDialogOpen, setTxnDialogOpen] = useState(false)
   const [txnForm, setTxnForm] = useState<TxnForm>(EMPTY_TXN)
 
-  type AccAlloc = { account_id: string; amount: number; accounts: { name: string } | null }
+  type Account = { id: string; name: string; type: string; current_balance: number }
+  type AccAlloc = { id: string; account_id: string; amount: number; accounts: { name: string; current_balance: number } | null }
+  const [accounts, setAccounts] = useState<Account[]>([])
   const [accountAllocations, setAccountAllocations] = useState<AccAlloc[]>([])
   const allocatedFromAccounts = accountAllocations.reduce((s, a) => s + a.amount, 0)
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+  const [linkForm, setLinkForm] = useState({ id: '', accountId: '', amount: 0 })
 
   const multiplier = calculateMultiplier(jobStability, dependents)
   const recommendation = monthlyExpenses * multiplier
@@ -79,14 +83,15 @@ export default function EmergencyFundPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
-    const [fundRes, locRes, allocRes, txnRes] = await Promise.all([
+    const [fundRes, locRes, allocRes, txnRes, accRes] = await Promise.all([
       supabase.from('emergency_funds').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('emergency_fund_locations').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id),
-      supabase.from('account_allocations').select('account_id, amount, accounts!inner(name)').eq('user_id', user.id).eq('purpose_kind', 'emergency_fund')
+      supabase.from('account_allocations').select('id, account_id, amount, accounts!inner(name, current_balance)').eq('user_id', user.id).eq('purpose_kind', 'emergency_fund')
         .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
       // Best-effort: tabel transaksi mungkin belum ada (migration 034 belum di-apply).
       supabase.from('emergency_fund_transactions').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id).order('date', { ascending: true })
         .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
+      supabase.from('accounts').select('id, name, type, current_balance').eq('user_id', user.id),
     ])
     if (fundRes.data) {
       const f = fundRes.data as EmergencyFund
@@ -96,6 +101,7 @@ export default function EmergencyFundPage() {
     if (locRes.data) setLocations(locRes.data as EmergencyFundLocation[])
     setAccountAllocations((allocRes.data ?? []) as AccAlloc[])
     setTransactions((txnRes.data ?? []) as EmergencyFundTransaction[])
+    setAccounts((accRes.data ?? []) as Account[])
     setLoading(false)
   }
 
@@ -138,23 +144,50 @@ export default function EmergencyFundPage() {
     await supabase.from('emergency_fund_locations').delete().eq('id', id); void fetchData()
   }
 
+  // ── Hubungkan akun (account_allocations — saldo sinkron dari Aset Likuid) ──
+  function openLink(alloc?: { id: string; account_id: string; amount: number }) {
+    setLinkForm(alloc ? { id: alloc.id, accountId: alloc.account_id, amount: alloc.amount } : { id: '', accountId: '', amount: 0 })
+    setLinkDialogOpen(true)
+  }
+  async function handleSaveLink() {
+    const fundId = await ensureFund()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!fundId || !user || !linkForm.accountId) return
+    setSaving(true)
+    const existingId = linkForm.id || accountAllocations.find((a) => a.account_id === linkForm.accountId)?.id
+    if (existingId) await supabase.from('account_allocations').update({ amount: linkForm.amount }).eq('id', existingId)
+    else await supabase.from('account_allocations').insert({ user_id: user.id, account_id: linkForm.accountId, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: linkForm.amount })
+    setSaving(false); setLinkDialogOpen(false); void fetchData()
+  }
+  async function handleUnlink(id: string) {
+    if (!confirm('Lepas akun ini dari dana darurat? Saldo akunnya gak kehapus, cuma gak di-earmark lagi.')) return
+    await supabase.from('account_allocations').delete().eq('id', id); void fetchData()
+  }
+
   // ── Pembentukan (catat setoran / penarikan) ──
   function openTxn() { setTxnForm({ ...EMPTY_TXN, date: todayISO() }); setTxnDialogOpen(true) }
   async function handleSaveTxn() {
     const fundId = await ensureFund()
-    if (!fundId || txnForm.amount <= 0) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!fundId || !user || txnForm.amount <= 0) return
     setSaving(true)
     const signed = txnForm.kind === 'setor' ? txnForm.amount : -txnForm.amount
-    const locName = txnForm.location.trim()
-    // 1) Catat transaksi (log pembentukan).
+    const dest = txnForm.location.trim()
+    // 1) Catat transaksi (log pembentukan → chart perjalanan).
     await supabase.from('emergency_fund_transactions').insert({
-      fund_id: fundId, date: txnForm.date, kind: txnForm.kind, amount: txnForm.amount, location: locName, note: txnForm.note.trim(),
+      fund_id: fundId, date: txnForm.date, kind: txnForm.kind, amount: txnForm.amount, location: dest, note: txnForm.note.trim(),
     })
-    // 2) Sinkron saldo lokasi (saldo lokasi = akumulasi transaksi-nya).
-    if (locName) {
-      const loc = locations.find((l) => l.account_name.toLowerCase() === locName.toLowerCase())
+    // 2) Naikin/turunin earmark di tujuan: AKUN riil (account_allocations, sinkron)
+    //    atau lokasi non-akun (emergency_fund_locations).
+    const acct = accounts.find((a) => a.name.toLowerCase() === dest.toLowerCase())
+    if (acct) {
+      const alloc = accountAllocations.find((a) => a.account_id === acct.id)
+      if (alloc) await supabase.from('account_allocations').update({ amount: Math.max(0, alloc.amount + signed) }).eq('id', alloc.id)
+      else await supabase.from('account_allocations').insert({ user_id: user.id, account_id: acct.id, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: Math.max(0, signed) })
+    } else if (dest) {
+      const loc = locations.find((l) => l.account_name.toLowerCase() === dest.toLowerCase())
       if (loc) await supabase.from('emergency_fund_locations').update({ amount: Math.max(0, loc.amount + signed) }).eq('id', loc.id)
-      else await supabase.from('emergency_fund_locations').insert({ fund_id: fundId, account_name: locName, amount: Math.max(0, signed) })
+      else await supabase.from('emergency_fund_locations').insert({ fund_id: fundId, account_name: dest, amount: Math.max(0, signed) })
     }
     // 3) Sinkron current_amount fund (biar Net Worth ikut fresh).
     await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund + signed) }).eq('id', fundId)
@@ -184,11 +217,12 @@ export default function EmergencyFundPage() {
     { label: 'Gaya hidup penuh', note: 'plus diskresi · est. +35%', exp: monthlyExpenses * 1.35 },
   ].map((s) => ({ ...s, months: s.exp > 0 ? accumulatedFund / s.exp : 0 })) : []
 
-  // Komposisi lokasi (bar) — gabung akun-otomatis + lokasi manual.
+  // Komposisi lokasi (bar) — akun riil (sinkron Aset Likuid) + lokasi non-akun.
   const allLocations = useMemo(() => [
-    ...accountAllocations.map((a, i) => ({ key: `acc-${i}`, name: a.accounts?.name ?? 'Akun', amount: a.amount, auto: true, id: null as string | null })),
-    ...locations.map((l) => ({ key: l.id, name: l.account_name, amount: l.amount, auto: false, id: l.id })),
+    ...accountAllocations.map((a) => ({ key: `acc-${a.id}`, kind: 'account' as const, name: a.accounts?.name ?? 'Akun', amount: a.amount, balance: a.accounts?.current_balance ?? 0, allocId: a.id, accountId: a.account_id })),
+    ...locations.map((l) => ({ key: `loc-${l.id}`, kind: 'manual' as const, name: l.account_name, amount: l.amount, balance: null as number | null, allocId: l.id, accountId: null as string | null })),
   ].filter((l) => l.amount > 0).sort((a, b) => b.amount - a.amount), [accountAllocations, locations])
+  const linkedAccountIds = new Set(accountAllocations.map((a) => a.account_id))
   const locPalette = [AMBER, '#8B5CF6', MINT, '#6366F1', '#0EA5E9', '#F43F5E', '#64748B']
 
   // Perjalanan membangun dana — kumulatif dari log. Baseline = saldo sebelum transaksi tercatat.
@@ -208,7 +242,9 @@ export default function EmergencyFundPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero premium — ring + angka */}
+      <datalist id="ef-dest">
+        {[...new Set([...accounts.map((a) => a.name), ...locations.map((l) => l.account_name), ...LOCATION_PRESETS])].map((p) => <option key={p} value={p} />)}
+      </datalist>
       {/* Header — DI LUAR card (di background halaman), ikut mock */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="max-w-xl">
@@ -368,34 +404,47 @@ export default function EmergencyFundPage() {
 
       {/* Lokasi dana + Pembentukan (log) */}
       <div className="grid gap-3 lg:grid-cols-[1fr_1.4fr]">
-        {/* Lokasi — di akun/instrumen mana */}
+        {/* Disimpan Di Mana — akun riil (sinkron) + non-akun */}
         <div className="s-card p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Disimpan Di Mana</p>
-            <Button variant="ghost" size="icon-sm" onClick={() => { setEditingLocationId(null); setLocationForm({ account_name: '', amount: 0 }); setLocationDialogOpen(true) }}><Plus className="h-3.5 w-3.5" /></Button>
+            <Button variant="outline" size="sm" onClick={() => openLink()}><Plus className="h-3.5 w-3.5" /> Hubungkan akun</Button>
           </div>
+          <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>Earmark dari akun Aset Likuid (saldo sinkron) + aset non-akun.</p>
           {allLocations.length > 0 && (
             <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
               {allLocations.map((l, i) => <div key={l.key} title={l.name} style={{ width: `${(l.amount / Math.max(1, accumulatedFund)) * 100}%`, background: locPalette[i % locPalette.length] }} />)}
             </div>
           )}
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-2.5">
             {allLocations.map((l, i) => (
-              <div key={l.key} className="group flex items-center justify-between gap-2 text-sm">
-                <span className="flex items-center gap-2 min-w-0"><span className="size-2 rounded-full shrink-0" style={{ background: locPalette[i % locPalette.length] }} /><span className="truncate" style={{ color: 'var(--ink)' }}>{l.name}</span>{l.auto && <span className="text-[9px] uppercase tracking-wide shrink-0" style={{ color: 'var(--ink-soft)' }}>auto</span>}</span>
+              <div key={l.key} className="group flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="size-2 rounded-full shrink-0" style={{ background: locPalette[i % locPalette.length] }} />
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-sm truncate" style={{ color: 'var(--ink)' }}>{l.name}{l.kind === 'account' && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded shrink-0" style={{ background: `${MINT}1A`, color: '#059669' }}>akun</span>}</span>
+                    {l.kind === 'account' && <span className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>saldo akun {formatCurrency(l.balance ?? 0)}</span>}
+                  </span>
+                </span>
                 <span className="flex items-center gap-1 shrink-0">
-                  {!l.auto && l.id && (
-                    <span className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
-                      <Button variant="ghost" size="icon-sm" onClick={() => openEditLocation({ id: l.id!, fund_id: fund?.id ?? '', account_name: l.name, amount: l.amount })}><Pencil className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteLocation(l.id!)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
-                    </span>
-                  )}
-                  <span className="num font-medium" style={{ color: 'var(--ink)' }}>{formatCurrency(l.amount)}</span>
+                  <span className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                    {l.kind === 'account'
+                      ? <>
+                          <Button variant="ghost" size="icon-sm" onClick={() => openLink({ id: l.allocId, account_id: l.accountId!, amount: l.amount })}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon-sm" onClick={() => handleUnlink(l.allocId)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                        </>
+                      : <>
+                          <Button variant="ghost" size="icon-sm" onClick={() => openEditLocation({ id: l.allocId, fund_id: fund?.id ?? '', account_name: l.name, amount: l.amount })}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteLocation(l.allocId)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                        </>}
+                  </span>
+                  <span className="num font-medium text-sm" style={{ color: 'var(--ink)' }}>{formatCurrency(l.amount)}</span>
                 </span>
               </div>
             ))}
-            {allLocations.length === 0 && <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Belum ada. Klik + atau &ldquo;Catat setoran&rdquo;.</p>}
+            {allLocations.length === 0 && <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Belum ada. Hubungkan akun di atas, atau catat setoran.</p>}
           </div>
+          <button type="button" onClick={() => { setEditingLocationId(null); setLocationForm({ account_name: '', amount: 0 }); setLocationDialogOpen(true) }} className="mt-3 text-[11px] font-medium hover:underline" style={{ color: 'var(--ink-soft)' }}>+ Aset non-akun (emas, deposito fisik, dll)</button>
         </div>
 
         {/* Pembentukan — log transaksi */}
@@ -499,11 +548,9 @@ export default function EmergencyFundPage() {
               <div className="grid gap-1.5"><Label>Jumlah (Rp)</Label><NumberInput value={txnForm.amount} onChange={(n) => setTxnForm({ ...txnForm, amount: n })} placeholder="0" /></div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Lokasi / instrumen</Label>
-              <Input value={txnForm.location} onChange={(e) => setTxnForm({ ...txnForm, location: e.target.value })} placeholder="Tabungan BCA, Deposito, RD Pasar Uang" list="ef-loc-presets" />
-              <datalist id="ef-loc-presets">
-                {[...new Set([...locations.map((l) => l.account_name), ...LOCATION_PRESETS])].map((p) => <option key={p} value={p} />)}
-              </datalist>
+              <Label>Ke akun / lokasi mana</Label>
+              <Input value={txnForm.location} onChange={(e) => setTxnForm({ ...txnForm, location: e.target.value })} placeholder="Pilih akun (sinkron) / ketik lokasi non-akun" list="ef-dest" />
+              <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>Pilih nama akun → earmark akunnya nambah otomatis (sinkron Aset Likuid). Selain itu = aset non-akun.</p>
             </div>
             <div className="grid gap-1.5"><Label>Catatan (opsional)</Label><Input value={txnForm.note} onChange={(e) => setTxnForm({ ...txnForm, note: e.target.value })} placeholder="mis. bonus, sisa gaji" /></div>
           </div>
@@ -518,16 +565,47 @@ export default function EmergencyFundPage() {
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingLocationId ? 'Edit Lokasi' : 'Tambah Lokasi'}</DialogTitle>
-            <DialogDescription>Saldo dana darurat per akun/instrumen.</DialogDescription>
+            <DialogTitle>{editingLocationId ? 'Edit Aset Non-Akun' : 'Tambah Aset Non-Akun'}</DialogTitle>
+            <DialogDescription>Buat dana darurat yang GAK di akun (emas fisik, deposito non-akun). Yang di akun → pakai &ldquo;Hubungkan akun&rdquo; biar saldonya sinkron.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div className="grid gap-1.5"><Label>Akun / instrumen</Label><Input value={locationForm.account_name} onChange={(e) => setLocationForm({ ...locationForm, account_name: e.target.value })} placeholder="Tabungan BCA, Deposito, RD Pasar Uang" list="ef-loc-presets" /></div>
+            <div className="grid gap-1.5"><Label>Nama aset</Label><Input value={locationForm.account_name} onChange={(e) => setLocationForm({ ...locationForm, account_name: e.target.value })} placeholder="Emas 50gr, Deposito fisik, dll" /></div>
             <div className="grid gap-1.5"><Label>Saldo (Rp)</Label><NumberInput value={locationForm.amount} onChange={(n) => setLocationForm({ ...locationForm, amount: n })} placeholder="0" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLocationDialogOpen(false)}>Batal</Button>
             <Button onClick={handleSaveLocation} disabled={saving || !locationForm.account_name}>{saving && <Loader2 className="size-4 animate-spin" />}{editingLocationId ? 'Simpan' : 'Tambah'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hubungkan akun (account_allocations — sinkron Aset Likuid) */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hubungkan Akun</DialogTitle>
+            <DialogDescription>Earmark sebagian/seluruh saldo akun buat dana darurat. Saldo akun sinkron otomatis dari Aset Likuid — gak bakal basi.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Akun</Label>
+              <select value={linkForm.accountId}
+                onChange={(e) => { const acc = accounts.find((a) => a.id === e.target.value); setLinkForm((f) => ({ ...f, accountId: e.target.value, amount: f.amount || acc?.current_balance || 0 })) }}
+                className="h-10 rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}>
+                <option value="">Pilih akun…</option>
+                {accounts.map((a) => <option key={a.id} value={a.id} disabled={a.id !== linkForm.accountId && linkedAccountIds.has(a.id)}>{a.name} · {formatCurrency(a.current_balance)}{a.id !== linkForm.accountId && linkedAccountIds.has(a.id) ? ' (sudah dihubungkan)' : ''}</option>)}
+              </select>
+              {accounts.length === 0 && <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Belum ada akun. Tambah dulu di menu Akun.</p>}
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Jumlah di-earmark buat dana darurat</Label>
+              <RpField value={linkForm.amount} onChange={(n) => setLinkForm((f) => ({ ...f, amount: n }))} />
+              {(() => { const acc = accounts.find((a) => a.id === linkForm.accountId); return acc && linkForm.amount > acc.current_balance ? <p className="text-[11px]" style={{ color: '#B45309' }}>⚠ Lebih dari saldo akun ({formatCurrency(acc.current_balance)}).</p> : null })()}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Batal</Button>
+            <Button onClick={handleSaveLink} disabled={saving || !linkForm.accountId}>{saving && <Loader2 className="size-4 animate-spin" />}Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
