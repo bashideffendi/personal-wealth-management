@@ -590,6 +590,58 @@ export default function BudgetingPage() {
     )
   }
 
+  // Ringkasan alokasi (zero-based budgeting): per bulan, berapa pemasukan yang
+  // udah "dikasih tugas" (Pengeluaran+Tabungan+Investasi) & berapa yang nganggur.
+  function renderAllocationSummary() {
+    const allocatedOf = (m: number) =>
+      sectionMonthTotal(leafExpense, 'expense', m) +
+      sectionMonthTotal(leafSaving, 'saving', m) +
+      sectionMonthTotal(leafInvestment, 'investment', m)
+    const incomeOf = (m: number) => sectionMonthTotal(leafIncome, 'income', m)
+    return (
+      <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+        <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '160px' }} />
+            {SHORT_MONTHS.map((m) => <col key={m} />)}
+          </colgroup>
+          <tbody>
+            <tr style={{ background: 'var(--surface-2)' }}>
+              <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 bg-inherit">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>Ringkasan Alokasi</span>
+                <span className="ml-2 text-[10px] normal-case tracking-normal" style={{ color: 'var(--ink-soft)' }}>Sisa = pemasukan − (pengeluaran + tabungan + investasi)</span>
+              </td>
+            </tr>
+            <tr className="bg-[var(--surface)]">
+              <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title="Pengeluaran + Tabungan + Investasi bulan ini">Dialokasikan</td>
+              {Array.from({ length: 12 }, (_, i) => {
+                const v = allocatedOf(i + 1)
+                return (
+                  <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular" style={{ color: 'var(--ink-muted)' }} title={privacyHidden ? '••••••' : formatCurrency(v)}>
+                    {v ? formatCompactCurrency(v) : '—'}
+                  </td>
+                )
+              })}
+            </tr>
+            <tr className="bg-[color:var(--surface-2)]">
+              <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-bold bg-inherit whitespace-nowrap truncate" title="Pemasukan − Dialokasikan (0 = pas, + = masih ada sisa, − = over)">Sisa Dialokasikan</td>
+              {Array.from({ length: 12 }, (_, i) => {
+                const m = i + 1
+                const left = incomeOf(m) - allocatedOf(m)
+                const color = Math.abs(left) < 1 ? '#059669' : left > 0 ? '#B45309' : '#E11D48'
+                return (
+                  <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular" style={{ color }} title={privacyHidden ? '••••••' : formatCurrency(left)}>
+                    {formatCompactCurrency(left)}
+                  </td>
+                )
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   const sections = [
     { label: 'Pendapatan', kind: 'income' as BudgetType, leaf: leafIncome, totalLabel: 'Total Pendapatan', oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
     { label: 'Pengeluaran', kind: 'expense' as BudgetType, leaf: leafExpense, totalLabel: 'Total Pengeluaran', oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
@@ -748,6 +800,9 @@ export default function BudgetingPage() {
                   </thead>
                 </table>
               </div>
+
+              {/* Ringkasan alokasi (zero-based) — headline di pucuk, gaya "Ready to Assign" */}
+              {renderAllocationSummary()}
 
               {/* Each section = its own standalone rounded card, dipisah krem */}
               {sections.map((sec) => (
