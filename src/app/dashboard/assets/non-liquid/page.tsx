@@ -399,15 +399,19 @@ export default function NonLiquidAssetsPage() {
           {/* Data — Tabel (datar, sortable) atau Kartu (grouped per kategori) */}
           {view === 'table' ? (
             <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--border-soft)' }}>
-              <table className="w-full text-sm">
+              <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="border-b text-[10px] uppercase tracking-wide" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
-                    <th className="px-4 py-2.5 text-left font-medium">Aset</th>
-                    <th className="px-3 py-2.5 text-left font-medium">Kategori</th>
-                    <th className="px-3 py-2.5 text-right font-medium"><button onClick={() => toggleSort('date')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Dibeli {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
-                    <th className="px-3 py-2.5 text-right font-medium">Modal Awal</th>
-                    <th className="px-3 py-2.5 text-right font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Nilai Sekarang {sortKey === 'value' && <ArrowUpDown className="size-3" />}</button></th>
-                    <th className="px-4 py-2.5 text-right font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ {sortKey === 'gain' && <ArrowUpDown className="size-3" />}</button></th>
+                  <tr className="border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+                    <th className="px-4 py-2.5 text-left text-[11px] font-medium">Aset</th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">Tipe</th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Dibeli {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">Umur</th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">Modal Awal</th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Nilai Sekarang {sortKey === 'value' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">Selisih</th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ% {sortKey === 'gain' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">Metode</th>
+                    <th className="px-3 py-2.5" />
                   </tr>
                 </thead>
                 <tbody>
@@ -415,33 +419,33 @@ export default function NonLiquidAssetsPage() {
                     const cat = (a.category in CAT ? a.category : 'personal_item') as Category
                     const meta = CAT[cat]
                     const Icon = meta.icon
+                    const dd = (a as WithDetails).details
                     const delta = a.current_value - a.purchase_value
                     const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
                     const up = delta >= 0
-                    const vd = cat === 'vehicle' ? (a as WithDetails).details : null
-                    const sub = vd ? [a.type, vd.plate, vd.year].filter(Boolean).join(' · ') : (a.type || (cat === 'property' ? a.address : '') || meta.note)
+                    const tipe = a.type || '—'
+                    const ageYears = a.purchase_date ? (Date.now() - new Date(a.purchase_date).getTime()) / (365.25 * 86400000) : 0
+                    const statusLabel = cat === 'property' ? 'Apresiasi' : dd?.metode ? METODE_LABEL[dd.metode] : up ? 'Tidak menyusut' : 'Depresiasi'
                     return (
                       <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
-                            <div className="min-w-0">
-                              <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                              {sub && <p className="text-[10px] truncate" style={{ color: 'var(--ink-soft)' }}>{sub}</p>}
-                            </div>
+                            <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
                           </div>
                         </td>
-                        <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}><span className="size-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}</span></td>
-                        <td className="px-3 py-3 text-right num text-sm whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
+                        <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{tipe}</td>
+                        <td className="px-3 py-3 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
+                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{ageYears > 0 ? `${ageYears.toFixed(1)} thn` : '—'}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
                         <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-3">
-                            <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">
-                              <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
-                            </div>
-                            <span className="num text-sm font-semibold whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
+                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{delta >= 0 ? '+' : '−'}{formatCurrency(Math.abs(delta))}</td>
+                        <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</td>
+                        <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{statusLabel}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">
+                            <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
                           </div>
                         </td>
                       </tr>
