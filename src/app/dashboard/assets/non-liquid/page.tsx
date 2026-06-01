@@ -373,7 +373,7 @@ export default function NonLiquidAssetsPage() {
                           </div>
                         </td>
                         <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}><span className="size-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}</span></td>
-                        <td className="px-3 py-3 text-right num text-[12px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
+                        <td className="px-3 py-3 text-right num text-sm whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
                         <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>
                         <td className="px-4 py-3">
@@ -382,7 +382,7 @@ export default function NonLiquidAssetsPage() {
                               <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
                             </div>
-                            <span className="num text-[12px] font-semibold whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
+                            <span className="num text-sm font-semibold whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
                           </div>
                         </td>
                       </tr>
