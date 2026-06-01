@@ -209,18 +209,20 @@ export default function EmergencyFundPage() {
   return (
     <div className="space-y-6">
       {/* Hero premium — ring + angka */}
-      <section className="relative overflow-hidden rounded-2xl p-6 sm:p-7" style={{ background: `${AMBER}0F`, border: `1px solid ${AMBER}26` }}>
-        <div className="absolute pointer-events-none" style={{ top: -110, right: -70, width: 340, height: 340, borderRadius: '50%', background: `radial-gradient(circle, ${AMBER}26, transparent 65%)` }} />
-        <div className="relative flex items-start justify-between gap-4 flex-wrap mb-6">
-          <div className="max-w-xl">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Bantalan keuangan · {monthYearNow}</p>
-            <h1 className="mt-0.5 text-2xl sm:text-3xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>Dana Darurat</h1>
-            <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Tabungan terpisah buat kejadian tak terduga: kehilangan pekerjaan, masalah kesehatan, perbaikan besar.</p>
-          </div>
-          <Button onClick={openTxn}><Plus className="h-4 w-4" /> Setor manual</Button>
+      {/* Header — DI LUAR card (di background halaman), ikut mock */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="max-w-xl">
+          <p className="text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Bantalan keuangan · {monthYearNow}</p>
+          <h1 className="mt-0.5 text-2xl sm:text-3xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>Dana Darurat</h1>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Tabungan terpisah buat kejadian tak terduga: kehilangan pekerjaan, masalah kesehatan, perbaikan besar.</p>
         </div>
-        <div className="relative grid gap-7 sm:grid-cols-[auto_1fr] sm:items-center">
-          <div className="relative mx-auto sm:mx-0 size-36">
+        <Button onClick={openTxn}><Plus className="h-4 w-4" /> Setor manual</Button>
+      </div>
+
+      {/* Card — cuma ring (kiri, amber-tint) + metrik (kanan, surface). Tanpa judul di dalam. */}
+      <div className="grid sm:grid-cols-[auto_1fr] rounded-2xl border overflow-hidden" style={{ borderColor: `${AMBER}33` }}>
+        <div className="grid place-items-center p-6 sm:p-8" style={{ background: `${AMBER}0F` }}>
+          <div className="relative size-36">
             <svg viewBox="0 0 120 120" className="size-36 -rotate-90">
               <circle cx="60" cy="60" r="52" fill="none" stroke={`${AMBER}33`} strokeWidth="11" />
               <circle cx="60" cy="60" r="52" fill="none" stroke={AMBER} strokeWidth="11" strokeLinecap="round" strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
@@ -230,27 +232,27 @@ export default function EmergencyFundPage() {
               <span className="text-[10px] uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>Tercapai</span>
             </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Dana Terkumpul</p>
-            <p className="num tabular font-bold leading-none mt-1 flex items-baseline gap-2 flex-wrap" style={{ color: 'var(--ink)' }}>
-              <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
-              <span className="text-base font-normal" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : 'atur target'}</span>
-            </p>
-            <div className="mt-3 h-2.5 w-full rounded-full overflow-hidden" style={{ background: `${AMBER}26` }}>
-              <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%`, background: AMBER }} />
-            </div>
-            {targetAmount > 0 ? (
-              <div className="mt-5 grid grid-cols-3 gap-4">
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Cakupan saat ini</p><p className="num font-bold mt-1" style={{ color: MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} bulan</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Target</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} bulan</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Kekurangan</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? '#F43F5E' : MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : 'Tercapai'}</p></div>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>Atur target di <span className="font-semibold" style={{ color: '#B45309' }}>Kalkulator</span> bawah, terus <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: '#B45309' }}>setor manual</button> — cakupan &amp; kekuranganmu langsung muncul di sini.</p>
-            )}
-          </div>
         </div>
-      </section>
+        <div className="p-6 sm:p-8 min-w-0" style={{ background: 'var(--surface)' }}>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Dana Terkumpul</p>
+          <p className="num tabular font-bold leading-none mt-1.5 flex items-baseline gap-2 flex-wrap" style={{ color: 'var(--ink)' }}>
+            <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
+            <span className="text-base font-normal" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : 'atur target'}</span>
+          </p>
+          <div className="mt-4 h-2.5 w-full rounded-full overflow-hidden" style={{ background: `${AMBER}26` }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%`, background: AMBER }} />
+          </div>
+          {targetAmount > 0 ? (
+            <div className="mt-5 grid grid-cols-3 gap-4">
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Cakupan saat ini</p><p className="num font-bold mt-1" style={{ color: MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} bulan</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Target</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} bulan</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Kekurangan</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? '#F43F5E' : MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : 'Tercapai'}</p></div>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>Atur target di <span className="font-semibold" style={{ color: '#B45309' }}>Kalkulator</span> bawah, terus <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: '#B45309' }}>setor manual</button> — cakupan &amp; kekuranganmu langsung muncul di sini.</p>
+          )}
+        </div>
+      </div>
 
       {/* Kalkulator + Rencana akselerasi */}
       <div className="grid gap-3 lg:grid-cols-2">
