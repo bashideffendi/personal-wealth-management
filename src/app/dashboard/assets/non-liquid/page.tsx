@@ -37,6 +37,9 @@ const TYPE_PILLS: Record<Category, string[]> = {
 const monthYear = (d: string | null) =>
   d ? new Date(d).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : '—'
 
+interface VehicleDetails { plate?: string; engine?: string; color?: string; year?: string }
+type WithDetails = { details?: VehicleDetails | null }
+
 interface FormState {
   id: string | null
   name: string
@@ -49,12 +52,18 @@ interface FormState {
   latitude: number | null
   longitude: number | null
   address: string
+  // kendaraan
+  plate: string
+  engine: string
+  color: string
+  year: string
 }
 const EMPTY: FormState = {
   id: null, name: '', category: 'property', type: '',
   purchase_value: 0, current_value: 0,
   purchase_date: new Date().toISOString().split('T')[0], notes: '',
   latitude: null, longitude: null, address: '',
+  plate: '', engine: '', color: '', year: '',
 }
 
 export default function NonLiquidAssetsPage() {
@@ -91,8 +100,21 @@ export default function NonLiquidAssetsPage() {
       longitude: form.category === 'property' ? form.longitude : null,
       address: form.category === 'property' ? form.address : '',
     }
-    if (form.id) await supabase.from('assets_non_liquid').update(payload).eq('id', form.id)
-    else await supabase.from('assets_non_liquid').insert(payload)
+    let id = form.id
+    if (form.id) {
+      await supabase.from('assets_non_liquid').update(payload).eq('id', form.id)
+    } else {
+      const { data: ins } = await supabase.from('assets_non_liquid').insert(payload).select('id').single()
+      id = (ins as { id: string } | null)?.id ?? null
+    }
+    // Detail kendaraan → JSONB `details`. Best-effort: kalau kolom belum ada
+    // (migration 033 belum di-apply), error diabaikan biar save utama gak gagal.
+    if (id) {
+      const details: VehicleDetails | null = form.category === 'vehicle'
+        ? { plate: form.plate, engine: form.engine, color: form.color, year: form.year }
+        : null
+      await supabase.from('assets_non_liquid').update({ details }).eq('id', id)
+    }
     setSaving(false)
     setDialogOpen(false)
     void load()
@@ -105,11 +127,13 @@ export default function NonLiquidAssetsPage() {
   }
 
   function openEdit(a: AssetNonLiquid) {
+    const d = (a as WithDetails).details ?? {}
     setForm({
       id: a.id, name: a.name, category: a.category as Category, type: a.type,
       purchase_value: a.purchase_value, current_value: a.current_value,
       purchase_date: a.purchase_date, notes: a.notes,
       latitude: a.latitude ?? null, longitude: a.longitude ?? null, address: a.address ?? '',
+      plate: d.plate ?? '', engine: d.engine ?? '', color: d.color ?? '', year: d.year ?? '',
     })
     setDialogOpen(true)
   }
@@ -171,7 +195,11 @@ export default function NonLiquidAssetsPage() {
             </div>
           </div>
           <p className="font-semibold mt-3 truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-          <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{a.type || meta.note}</p>
+          <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
+            {cat === 'vehicle' && (a as WithDetails).details
+              ? [a.type, (a as WithDetails).details!.plate, (a as WithDetails).details!.year].filter(Boolean).join(' · ') || meta.note
+              : (a.type || meta.note)}
+          </p>
           {cat === 'property' && a.address && (
             <p className="text-[11px] mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
               <MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="truncate">{a.address}</span>
@@ -324,6 +352,18 @@ export default function NonLiquidAssetsPage() {
                   })}
                 </div>
               </div>
+
+              {form.category === 'vehicle' && (
+                <div>
+                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Detail Kendaraan</Label>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>No. Plat</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} placeholder="B 1234 XYZ" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Tahun</Label><Input value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2022" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Warna</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="Putih" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>No. Mesin / Rangka</Label><Input value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} placeholder="opsional" /></div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <StepLabel n={3} text="Nilai aset" />
