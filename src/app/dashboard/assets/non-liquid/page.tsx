@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/dialog'
 import {
   Plus, Pencil, Trash2, Loader2, MapPin, ExternalLink, Home, Car, Gem,
-  RefreshCw, TrendingUp, TrendingDown, ShieldCheck, type LucideIcon,
+  RefreshCw, TrendingUp, TrendingDown, ShieldCheck, LayoutGrid, List, ArrowUpDown,
+  type LucideIcon,
 } from 'lucide-react'
 import { LeafletMap } from '@/components/map/map-client'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
@@ -76,8 +77,21 @@ export default function NonLiquidAssetsPage() {
   const [revalOpen, setRevalOpen] = useState(false)
   const [revalValues, setRevalValues] = useState<Record<string, number>>({})
   const [revalSaving, setRevalSaving] = useState(false)
+  const [view, setView] = useState<'card' | 'table'>('card')
+  const [sortKey, setSortKey] = useState<'value' | 'gain' | 'date'>('value')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const v = typeof window !== 'undefined' ? localStorage.getItem('pwm.nonliquid.view') : null
+    if (v === 'table' || v === 'card') setView(v)
+  }, [])
+
+  function changeView(v: 'card' | 'table') { setView(v); try { localStorage.setItem('pwm.nonliquid.view', v) } catch { /* ignore */ } }
+  function toggleSort(k: 'value' | 'gain' | 'date') {
+    if (sortKey === k) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else { setSortKey(k); setSortDir('desc') }
+  }
 
   async function load() {
     setLoading(true)
@@ -168,6 +182,20 @@ export default function NonLiquidAssetsPage() {
     const buy = list.reduce((s, a) => s + a.purchase_value, 0)
     return { cur, count: list.length, pct: buy > 0 ? ((cur - buy) / buy) * 100 : 0 }
   }
+
+  // Daftar datar terurut buat tampilan Tabel (kartu tetap grouped per kategori).
+  const sorted = useMemo(() => {
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...items].sort((a, b) => {
+      if (sortKey === 'value') return (a.current_value - b.current_value) * dir
+      if (sortKey === 'gain') {
+        const ga = a.purchase_value > 0 ? (a.current_value - a.purchase_value) / a.purchase_value : 0
+        const gb = b.purchase_value > 0 ? (b.current_value - b.purchase_value) / b.purchase_value : 0
+        return (ga - gb) * dir
+      }
+      return (a.purchase_date || '').localeCompare(b.purchase_date || '') * dir
+    })
+  }, [items, sortKey, sortDir])
 
   function renderCard(a: AssetNonLiquid) {
     const cat = (a.category in CAT ? a.category : 'personal_item') as Category
@@ -267,31 +295,128 @@ export default function NonLiquidAssetsPage() {
             })}
           </div>
 
-          {/* Grid dipisah per kategori */}
-          <div className="space-y-8">
-            {(Object.keys(CAT) as Category[]).map((cat) => {
-              const list = grouped[cat]
-              if (list.length === 0) return null
-              const meta = CAT[cat]
-              const Icon = meta.icon
-              const s = catStat(cat)
-              return (
-                <section key={cat}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="size-8 rounded-lg flex items-center justify-center" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
-                      <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
-                      <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
-                    </div>
-                    <span className="num text-sm font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</span>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {list.map(renderCard)}
-                  </div>
-                </section>
-              )
-            })}
+          {/* Allocation bar — komposisi kelas aset (porto glance) */}
+          {total > 0 && (
+            <div className="s-card p-4">
+              <div className="flex h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+                {(Object.keys(CAT) as Category[]).map((cat) => {
+                  const s = catStat(cat)
+                  return s.cur > 0 ? <div key={cat} title={CAT[cat].label} style={{ width: `${(s.cur / total) * 100}%`, background: CAT[cat].color }} /> : null
+                })}
+              </div>
+              <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5">
+                {(Object.keys(CAT) as Category[]).map((cat) => {
+                  const s = catStat(cat)
+                  if (s.cur <= 0) return null
+                  return (
+                    <span key={cat} className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                      <span className="size-2 rounded-full" style={{ background: CAT[cat].color }} />
+                      {CAT[cat].label}
+                      <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{((s.cur / total) * 100).toFixed(0)}%</span>
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Toolbar — judul + toggle Kartu/Tabel */}
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rincian Aset</p>
+            <div className="flex rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
+              {([['card', 'Kartu', LayoutGrid], ['table', 'Tabel', List]] as const).map(([v, label, Ic]) => (
+                <button
+                  key={v}
+                  onClick={() => changeView(v)}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition"
+                  style={{ background: view === v ? 'var(--surface)' : 'transparent', color: view === v ? 'var(--ink)' : 'var(--ink-muted)', boxShadow: view === v ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}
+                >
+                  <Ic className="size-3.5" /> {label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Data — Tabel (datar, sortable) atau Kartu (grouped per kategori) */}
+          {view === 'table' ? (
+            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--border-soft)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-[10px] uppercase tracking-wide" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+                    <th className="px-4 py-2.5 text-left font-medium">Aset</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Kategori</th>
+                    <th className="px-3 py-2.5 text-right font-medium"><button onClick={() => toggleSort('date')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Dibeli {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right font-medium">Modal Awal</th>
+                    <th className="px-3 py-2.5 text-right font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Nilai Sekarang {sortKey === 'value' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-4 py-2.5 text-right font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ {sortKey === 'gain' && <ArrowUpDown className="size-3" />}</button></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((a) => {
+                    const cat = (a.category in CAT ? a.category : 'personal_item') as Category
+                    const meta = CAT[cat]
+                    const Icon = meta.icon
+                    const delta = a.current_value - a.purchase_value
+                    const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
+                    const up = delta >= 0
+                    const vd = cat === 'vehicle' ? (a as WithDetails).details : null
+                    const sub = vd ? [a.type, vd.plate, vd.year].filter(Boolean).join(' · ') : (a.type || (cat === 'property' ? a.address : '') || meta.note)
+                    return (
+                      <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
+                              {sub && <p className="text-[10px] truncate" style={{ color: 'var(--ink-soft)' }}>{sub}</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 text-[11px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}><span className="size-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}</span></td>
+                        <td className="px-3 py-3 text-right num text-[12px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
+                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
+                        <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-3">
+                            <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">
+                              <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
+                            </div>
+                            <span className="num text-[12px] font-semibold whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {(Object.keys(CAT) as Category[]).map((cat) => {
+                const list = grouped[cat]
+                if (list.length === 0) return null
+                const meta = CAT[cat]
+                const Icon = meta.icon
+                const s = catStat(cat)
+                return (
+                  <section key={cat}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="size-8 rounded-lg flex items-center justify-center" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                        <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
+                        <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
+                      </div>
+                      <span className="num text-sm font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</span>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {list.map(renderCard)}
+                    </div>
+                  </section>
+                )
+              })}
+            </div>
+          )}
         </>
       )}
 
