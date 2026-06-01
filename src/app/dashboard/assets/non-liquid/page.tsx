@@ -12,11 +12,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import {
   Plus, Pencil, Trash2, Loader2, MapPin, ExternalLink, Home, Car, Gem,
-  RefreshCw, type LucideIcon,
+  RefreshCw, TrendingUp, TrendingDown, ShieldCheck, type LucideIcon,
 } from 'lucide-react'
 import { LeafletMap } from '@/components/map/map-client'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
@@ -27,6 +24,14 @@ const CAT: Record<Category, { label: string; note: string; icon: LucideIcon; col
   property:      { label: 'Properti',          note: 'Rumah, apartemen, tanah',     icon: Home, color: '#8B5CF6' },
   vehicle:       { label: 'Kendaraan',         note: 'Mobil, motor, dll',           icon: Car,  color: '#F59E0B' },
   personal_item: { label: 'Pribadi & Lainnya', note: 'Elektronik, perhiasan, seni', icon: Gem,  color: '#10B981' },
+}
+
+// Tipe preset per kategori (Elektronik/Koleksi masuk "Pribadi & Lainnya" —
+// model cuma punya 3 kategori; biar gak butuh migration + gak rusak Net Worth).
+const TYPE_PILLS: Record<Category, string[]> = {
+  property: ['Rumah', 'Apartemen', 'Ruko', 'Tanah', 'Villa'],
+  vehicle: ['Mobil', 'Motor', 'Sepeda', 'Lainnya'],
+  personal_item: ['Elektronik', 'Perhiasan', 'Koleksi', 'Seni', 'Lainnya'],
 }
 
 const monthYear = (d: string | null) =>
@@ -262,50 +267,116 @@ export default function NonLiquidAssetsPage() {
         </>
       )}
 
-      {/* Add / Edit dialog — 2 kolom pas properti */}
+      {/* Add / Edit dialog — desain mock: kategori-kartu + tipe-pill + Rp prefix + apresiasi + map */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className={`max-h-[90vh] overflow-y-auto ${form.category === 'property' ? 'sm:max-w-3xl' : 'sm:max-w-lg'}`}>
+        <DialogContent className={`max-h-[92vh] overflow-y-auto ${form.category === 'property' ? 'sm:max-w-4xl' : 'sm:max-w-xl'}`}>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Aset Non-Likuid' : 'Tambah Aset Non-Likuid'}</DialogTitle>
-            <DialogDescription>Properti, kendaraan, atau barang berharga.</DialogDescription>
-          </DialogHeader>
-          <div className={form.category === 'property' ? 'grid sm:grid-cols-2 gap-5 py-2 items-start' : 'grid gap-3 py-2'}>
-            <div className="grid gap-3 content-start">
-              <div className="grid gap-1.5">
-                <Label>Nama</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: '#8B5CF61A' }}>
+                {(() => { const I = CAT[form.category].icon; return <I className="size-5" style={{ color: '#8B5CF6' }} /> })()}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <Label>Kategori</Label>
-                  <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v as Category })}>
-                    <SelectTrigger><SelectValue placeholder="Pilih kategori">{(v) => CAT[v as Category]?.label ?? 'Pilih kategori'}</SelectValue></SelectTrigger>
-                    <SelectContent>{(Object.keys(CAT) as Category[]).map((k) => (<SelectItem key={k} value={k}>{CAT[k].label}</SelectItem>))}</SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Tipe</Label>
-                  <Input value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="Rumah, Apartemen, Mobil..." />
-                </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Aset Non-Likuid' : 'Tambah Aset Non-Likuid'}</DialogTitle>
+                <DialogDescription>Properti, kendaraan, atau barang berharga — lengkapi datanya biar net worth akurat.</DialogDescription>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5"><Label>Harga Beli</Label><NumberInput value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} placeholder="0" /></div>
-                <div className="grid gap-1.5"><Label>Nilai Sekarang</Label><NumberInput value={form.current_value} onChange={(n) => setForm({ ...form, current_value: n })} placeholder="0" /></div>
-              </div>
-              <div className="grid gap-1.5"><Label>Tanggal Beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
-              <div className="grid gap-1.5"><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
+          </DialogHeader>
+
+          <div className={form.category === 'property' ? 'grid sm:grid-cols-2 gap-6 py-2 items-start' : 'grid gap-5 py-2'}>
+            {/* LEFT — form */}
+            <div className="space-y-5">
+              <div>
+                <StepLabel n={1} text="Kategori" />
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {(Object.keys(CAT) as Category[]).map((c) => {
+                    const m = CAT[c]; const Icon = m.icon; const on = form.category === c
+                    return (
+                      <button key={c} type="button" onClick={() => setForm({ ...form, category: c, type: '' })}
+                        className="rounded-xl border p-3 flex flex-col items-center gap-1.5 transition"
+                        style={{ borderColor: on ? '#8B5CF6' : 'var(--border-soft)', background: on ? '#8B5CF60F' : 'var(--surface)' }}>
+                        <div className="size-9 rounded-lg grid place-items-center" style={{ background: on ? '#8B5CF61A' : 'var(--surface-2)' }}>
+                          <Icon className="size-4" style={{ color: on ? '#8B5CF6' : 'var(--ink-muted)' }} />
+                        </div>
+                        <span className="text-[12px] font-medium text-center leading-tight" style={{ color: on ? 'var(--ink)' : 'var(--ink-muted)' }}>{m.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <StepLabel n={2} text="Nama aset" />
+                <Input className="mt-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="mis. Rumah Bintaro Permai" />
+              </div>
+
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tipe</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {TYPE_PILLS[form.category].map((t) => {
+                    const on = form.type === t
+                    return (
+                      <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
+                        className="rounded-full px-3 py-1.5 text-[12px] font-medium transition"
+                        style={{ background: on ? 'var(--ink)' : 'var(--surface-2)', color: on ? 'var(--surface)' : 'var(--ink-muted)' }}>
+                        {t}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <StepLabel n={3} text="Nilai aset" />
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div className="grid gap-1.5">
+                    <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Harga beli</Label>
+                    <RpField value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Nilai sekarang</Label>
+                    <RpField value={form.current_value} onChange={(n) => setForm({ ...form, current_value: n })} />
+                  </div>
+                </div>
+                {form.purchase_value > 0 && form.current_value > 0 && (() => {
+                  const d = form.current_value - form.purchase_value
+                  const p = (d / form.purchase_value) * 100
+                  const up = d >= 0
+                  return (
+                    <div className="mt-2.5 rounded-lg px-3 py-2 text-[12px] flex items-center gap-2" style={{ background: `${up ? '#10B981' : '#F43F5E'}14`, color: up ? '#059669' : '#E11D48' }}>
+                      {up ? <TrendingUp className="size-3.5 shrink-0" /> : <TrendingDown className="size-3.5 shrink-0" />}
+                      {up ? 'Apresiasi' : 'Depresiasi'} <span className="num font-semibold">{up ? '+' : ''}{formatCurrency(d)} ({up ? '+' : ''}{p.toFixed(1)}%)</span> sejak dibeli
+                    </div>
+                  )
+                })()}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Tanggal beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
+                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Catatan (opsional)</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="LT 144 m² · 3 KT" /></div>
+              </div>
+            </div>
+
+            {/* RIGHT — map (properti aja) */}
             {form.category === 'property' && (
-              <div className="grid gap-2 content-start">
-                <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Lokasi di Peta</Label>
-                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Alamat lengkap (opsional)" />
-                <LeafletMap lat={form.latitude} lng={form.longitude} onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} height={360} />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} /> Lokasi di Peta</Label>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>Opsional</span>
+                </div>
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Alamat lengkap aset" />
+                <LeafletMap lat={form.latitude} lng={form.longitude} onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} height={380} />
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-            <Button onClick={save} disabled={saving || !form.name}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? 'Simpan' : 'Tambah'}</Button>
+
+          <DialogFooter className="sm:justify-between sm:items-center">
+            <p className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <ShieldCheck className="size-3.5" style={{ color: '#10B981' }} /> Data terenkripsi · cuma kamu yang bisa lihat
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+              <Button onClick={save} disabled={saving || !form.name}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}<Plus className="h-4 w-4" />{form.id ? 'Simpan' : 'Tambah aset'}</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -334,6 +405,24 @@ export default function NonLiquidAssetsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function StepLabel({ n, text }: { n: number; text: string }) {
+  return (
+    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+      <span className="size-4 rounded grid place-items-center text-[9px] num" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{n}</span>
+      {text}
+    </p>
+  )
+}
+
+function RpField({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex items-stretch rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+      <span className="px-3 flex items-center text-sm font-medium border-r shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>Rp</span>
+      <NumberInput value={value} onChange={onChange} placeholder="0" className="flex-1 border-0 rounded-none shadow-none focus-visible:ring-0" />
     </div>
   )
 }
