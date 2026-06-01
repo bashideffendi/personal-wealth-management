@@ -243,40 +243,44 @@ export default function NonLiquidAssetsPage() {
 
       {/* Add / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className={`max-h-[90vh] overflow-y-auto ${form.category === 'property' ? 'sm:max-w-3xl' : 'sm:max-w-lg'}`}>
           <DialogHeader>
             <DialogTitle>{form.id ? 'Edit Aset Non-Likuid' : 'Tambah Aset Non-Likuid'}</DialogTitle>
             <DialogDescription>Properti, kendaraan, atau barang berharga.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div className="grid gap-1.5">
-              <Label>Nama</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          <div className={form.category === 'property' ? 'grid sm:grid-cols-2 gap-5 py-2 items-start' : 'grid gap-3 py-2'}>
+            {/* Kolom kiri — field */}
+            <div className="grid gap-3 content-start">
               <div className="grid gap-1.5">
-                <Label>Kategori</Label>
-                <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v as Category })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih kategori">{(v) => CAT[v as Category]?.label ?? 'Pilih kategori'}</SelectValue></SelectTrigger>
-                  <SelectContent>{(Object.keys(CAT) as Category[]).map((k) => (<SelectItem key={k} value={k}>{CAT[k].label}</SelectItem>))}</SelectContent>
-                </Select>
+                <Label>Nama</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
-              <div className="grid gap-1.5">
-                <Label>Tipe</Label>
-                <Input value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="Rumah, Apartemen, Mobil..." />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label>Kategori</Label>
+                  <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v as Category })}>
+                    <SelectTrigger><SelectValue placeholder="Pilih kategori">{(v) => CAT[v as Category]?.label ?? 'Pilih kategori'}</SelectValue></SelectTrigger>
+                    <SelectContent>{(Object.keys(CAT) as Category[]).map((k) => (<SelectItem key={k} value={k}>{CAT[k].label}</SelectItem>))}</SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Tipe</Label>
+                  <Input value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="Rumah, Apartemen, Mobil..." />
+                </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5"><Label>Harga Beli</Label><NumberInput value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} placeholder="0" /></div>
+                <div className="grid gap-1.5"><Label>Nilai Sekarang</Label><NumberInput value={form.current_value} onChange={(n) => setForm({ ...form, current_value: n })} placeholder="0" /></div>
+              </div>
+              <div className="grid gap-1.5"><Label>Tanggal Beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Harga Beli</Label><NumberInput value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Nilai Sekarang</Label><NumberInput value={form.current_value} onChange={(n) => setForm({ ...form, current_value: n })} placeholder="0" /></div>
-            </div>
-            <div className="grid gap-1.5"><Label>Tanggal Beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
-            <div className="grid gap-1.5"><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            {/* Kolom kanan — peta (properti aja), lebih gede */}
             {form.category === 'property' && (
-              <div className="grid gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+              <div className="grid gap-2 content-start">
                 <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Lokasi di Peta</Label>
                 <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Alamat lengkap (opsional)" />
-                <LeafletMap lat={form.latitude} lng={form.longitude} onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} height={180} />
+                <LeafletMap lat={form.latitude} lng={form.longitude} onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} height={360} />
               </div>
             )}
           </div>
