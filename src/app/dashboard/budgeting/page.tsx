@@ -355,8 +355,9 @@ export default function BudgetingPage() {
     categoryKey: string,
     label: string,
     bgClass: string,
-    indent: boolean,
+    level: 'category' | 'sub',
   ) {
+    const isSub = level === 'sub'
     const fs = fillSource
     let fillLo = -1, fillHi = -1, fillSrcMonth = -1
     if (fs && fs.type === type && fs.category === categoryKey && fillOverMonth != null) {
@@ -368,11 +369,11 @@ export default function BudgetingPage() {
     return (
       <tr key={`${type}-${categoryKey}`} className={bgClass}>
         <td
-          className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs bg-inherit whitespace-nowrap truncate ${indent ? 'pl-6 pr-2 font-normal' : 'px-2 font-normal'}`}
-          style={indent ? { color: 'var(--ink-muted)' } : undefined}
+          className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
+          style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
           title={label}
         >
-          {indent && <span className="mr-1 opacity-40">└</span>}
+          {isSub && <span className="mr-1 opacity-40">└</span>}
           {label}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
@@ -444,8 +445,8 @@ export default function BudgetingPage() {
     )
   }
 
-  // Render a section body from the tree: rollup+subs for branched categories,
-  // a plain editable row for leaf categories. Zebra striping over visible rows.
+  // Render a section body from the tree. SEMUA kategori induk (punya sub atau
+  // nggak) pakai band abu + label bold biar seragam; subkategori indent + zebra.
   function renderSectionBody(kind: BudgetType, oddBg: string) {
     const rows: ReactNode[] = []
     let zebra = 0
@@ -455,15 +456,16 @@ export default function BudgetingPage() {
         rows.push(renderRollupRow(kind, node))
         for (const sub of node.subs) {
           rows.push(
-            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, zebra % 2 === 0 ? 'bg-[var(--surface)]' : oddBg, true),
+            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, zebra % 2 === 0 ? 'bg-[var(--surface)]' : oddBg, 'sub'),
           )
           zebra++
         }
       } else {
+        // Kategori induk tanpa sub: band abu + bold, sama kayak rollup — biar
+        // semua kategori induk seragam, bukan keliatan kayak subkategori.
         rows.push(
-          renderCategoryRow(kind, node.name, node.name, zebra % 2 === 0 ? 'bg-[var(--surface)]' : oddBg, false),
+          renderCategoryRow(kind, node.name, node.name, 'bg-[color:var(--surface-2)]', 'category'),
         )
-        zebra++
       }
     }
     return rows
