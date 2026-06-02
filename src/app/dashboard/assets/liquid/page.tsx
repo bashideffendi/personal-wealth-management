@@ -427,12 +427,17 @@ export default function LiquidAssetsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Aset Lain' : 'Tambah Aset Lain'}</DialogTitle>
-            <DialogDescription>
-              Untuk akun transaksi rutin (BCA/Cash/GoPay), buka menu{' '}
-              <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>Akun</Link>
-              {' '}— saldo auto update dari transaksi.
-            </DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Wallet className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Aset Lain' : 'Tambah Aset Lain'}</DialogTitle>
+                <DialogDescription>
+                  Untuk akun transaksi rutin (BCA/Cash/GoPay), buka menu{' '}
+                  <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>Akun</Link>
+                  {' '}— saldo auto update dari transaksi.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">

@@ -1182,14 +1182,13 @@ export default function TransactionsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {editingId ? 'Edit Transaksi' : 'Tambah Transaksi'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingId
-                ? 'Ubah detail transaksi di bawah ini.'
-                : 'Isi detail transaksi baru di bawah ini.'}
-            </DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Wallet className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? 'Edit Transaksi' : 'Tambah Transaksi'}</DialogTitle>
+                <DialogDescription>{editingId ? 'Ubah detail transaksi di bawah ini.' : 'Isi detail transaksi baru di bawah ini.'}</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
