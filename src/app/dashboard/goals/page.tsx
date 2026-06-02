@@ -445,8 +445,13 @@ export default function GoalsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Tujuan' : 'Tujuan baru'}</DialogTitle>
-            <DialogDescription>Set target keuangan dengan deadline opsional.</DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Target className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Tujuan' : 'Tujuan Baru'}</DialogTitle>
+                <DialogDescription>Set target keuangan dengan deadline opsional.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">

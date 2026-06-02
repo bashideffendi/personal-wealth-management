@@ -464,12 +464,17 @@ export default function AccountsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Edit Akun' : 'Tambah Akun'}</DialogTitle>
-            <DialogDescription>
-              {editingId
-                ? 'Ubah detail akun. Saldo Saat Ini akan disesuaikan jika kamu ubah Saldo Awal.'
-                : 'Buat akun baru untuk mencatat transaksi.'}
-            </DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Wallet className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? 'Edit Akun' : 'Tambah Akun'}</DialogTitle>
+                <DialogDescription>
+                  {editingId
+                    ? 'Ubah detail akun. Saldo Saat Ini akan disesuaikan jika kamu ubah Saldo Awal.'
+                    : 'Buat akun baru untuk mencatat transaksi.'}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
