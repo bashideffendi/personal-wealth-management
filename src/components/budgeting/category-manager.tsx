@@ -55,21 +55,32 @@ const TYPE_META: Record<BudgetType, { label: string; accent: string }> = {
   investment: { label: 'Investasi', accent: 'var(--c-violet)' },
 }
 
+interface PendingDelete {
+  label: string
+  count: number
+  oldKeys: string[]
+  targets: { key: string; label: string }[]
+  nextNodes: CatNode[]
+}
+
 export interface CategoryManagerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tree: CategoryTree
   dbSynced: boolean
+  /** Jumlah transaksi per kategori, key `${type}::${category}`. Buat badge + reassign. */
+  usage?: Record<string, number>
   onCommit: (next: CategoryTree, renames?: { type: BudgetType; pairs: [string, string][] }) => void
 }
 
-export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }: CategoryManagerProps) {
+export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}, onCommit }: CategoryManagerProps) {
   const [type, setType] = useState<BudgetType>('expense')
   const [draft, setDraft] = useState<CategoryTree>(tree)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null)
   const [newCat, setNewCat] = useState('')
   const [newSub, setNewSub] = useState<Record<string, string>>({})
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
 
   // Sync working copy from prop on open (avoids clobbering in-progress edits mid-session).
   useEffect(() => {
@@ -83,6 +94,11 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
 
   const meta = TYPE_META[type]
   const nodes = draft[type]
+
+  // Berapa transaksi pakai kategori/subkategori ini (buat badge + warning hapus).
+  const subUsage = (cat: CatNode, subName: string) => usage[`${type}::${subKey(cat.name, subName)}`] ?? 0
+  const catUsage = (cat: CatNode) =>
+    (usage[`${type}::${cat.name}`] ?? 0) + cat.subs.reduce((n, s) => n + subUsage(cat, s.name), 0)
 
   function updateType(nextNodes: CatNode[], renames?: [string, string][]) {
     const next = { ...draft, [type]: nextNodes }
@@ -117,11 +133,51 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
   }
 
   function deleteCategory(cat: CatNode) {
-    updateType(nodes.filter((c) => c.id !== cat.id))
+    const nextNodes = nodes.filter((c) => c.id !== cat.id)
+    const count = catUsage(cat)
+    if (count === 0) {
+      updateType(nextNodes) // gak ada transaksi → hapus langsung
+      return
+    }
+    // Masih kepake → tawarin pindahin transaksinya dulu (anti data-yatim).
+    const oldKeys = [cat.name, ...cat.subs.map((s) => subKey(cat.name, s.name))]
+    const targets = nodes.filter((c) => c.id !== cat.id).map((c) => ({ key: c.name, label: c.name }))
+    setPendingDelete({ label: cat.name, count, oldKeys, targets, nextNodes })
   }
 
   function deleteSub(cat: CatNode, subId: string) {
-    updateType(nodes.map((c) => (c.id === cat.id ? { ...c, subs: c.subs.filter((s) => s.id !== subId) } : c)))
+    const sub = cat.subs.find((s) => s.id === subId)
+    if (!sub) return
+    const nextNodes = nodes.map((c) =>
+      c.id === cat.id ? { ...c, subs: c.subs.filter((s) => s.id !== subId) } : c,
+    )
+    const count = subUsage(cat, sub.name)
+    if (count === 0) {
+      updateType(nextNodes)
+      return
+    }
+    const oldKeys = [subKey(cat.name, sub.name)]
+    const targets = [
+      { key: cat.name, label: `${cat.name} · induk` },
+      ...cat.subs
+        .filter((s) => s.id !== subId)
+        .map((s) => ({ key: subKey(cat.name, s.name), label: `${cat.name} › ${s.name}` })),
+      ...nodes.filter((c) => c.id !== cat.id).map((c) => ({ key: c.name, label: c.name })),
+    ]
+    setPendingDelete({ label: `${cat.name} › ${sub.name}`, count, oldKeys, targets, nextNodes })
+  }
+
+  function confirmDelete(targetKey: string | null) {
+    if (!pendingDelete) return
+    const pairs: [string, string][] | undefined = targetKey
+      ? pendingDelete.oldKeys.map((k) => [k, targetKey] as [string, string])
+      : undefined
+    updateType(pendingDelete.nextNodes, pairs)
+    if (targetKey) {
+      const tgt = pendingDelete.targets.find((t) => t.key === targetKey)
+      toast.success(`${pendingDelete.count} transaksi dipindah ke ${tgt?.label ?? targetKey}`)
+    }
+    setPendingDelete(null)
   }
 
   function toggleEnabled(cat: CatNode) {
@@ -183,6 +239,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -239,6 +296,8 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
                     key={cat.id}
                     cat={cat}
                     accent={meta.accent}
+                    count={catUsage(cat)}
+                    subCounts={Object.fromEntries(cat.subs.map((s) => [s.id, subUsage(cat, s.name)]))}
                     enabled={isEnabled(cat)}
                     onToggleEnabled={() => toggleEnabled(cat)}
                     expanded={!!expanded[cat.id]}
@@ -295,12 +354,133 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
         </form>
       </DialogContent>
     </Dialog>
+
+    <ReassignDialog
+      pending={pendingDelete}
+      accent={meta.accent}
+      onCancel={() => setPendingDelete(null)}
+      onConfirm={confirmDelete}
+    />
+    </>
+  )
+}
+
+function ReassignDialog({
+  pending,
+  accent,
+  onCancel,
+  onConfirm,
+}: {
+  pending: PendingDelete | null
+  accent: string
+  onCancel: () => void
+  onConfirm: (targetKey: string | null) => void
+}) {
+  const [target, setTarget] = useState<string>('')
+  useEffect(() => {
+    setTarget(pending?.targets[0]?.key ?? '')
+  }, [pending])
+  if (!pending) return null
+  return (
+    <Dialog open onOpenChange={(o) => !o && onCancel()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-start gap-3">
+            <div
+              className="grid size-10 shrink-0 place-items-center rounded-xl"
+              style={{ background: 'color-mix(in srgb, var(--c-coral) 12%, transparent)' }}
+            >
+              <Trash2 className="size-5" style={{ color: 'var(--c-coral)' }} />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+                Hapus “{pending.label}”?
+              </DialogTitle>
+              <DialogDescription>
+                Kategori ini dipakai <strong className="num" style={{ color: 'var(--ink)' }}>{pending.count}</strong>{' '}
+                transaksi. Pindahkan dulu biar datanya gak ikut hilang.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {pending.targets.length > 0 ? (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
+              Pindahkan transaksi ke
+            </label>
+            <div
+              className="max-h-[38vh] overflow-y-auto rounded-xl border"
+              style={{ borderColor: 'var(--border-soft)' }}
+            >
+              {pending.targets.map((t) => {
+                const sel = target === t.key
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTarget(t.key)}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors"
+                    style={{ background: sel ? 'var(--surface-2)' : 'transparent', color: 'var(--ink)' }}
+                  >
+                    <span
+                      className="grid size-4 shrink-0 place-items-center rounded-full border"
+                      style={{ borderColor: sel ? accent : 'var(--border-soft)' }}
+                    >
+                      {sel && <span className="size-2 rounded-full" style={{ background: accent }} />}
+                    </span>
+                    <span className="truncate">{t.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
+            Belum ada kategori lain buat nampung. Kamu bisa hapus aja — transaksinya tetap nyimpen label
+            “{pending.label}”, tinggal dikategoriin ulang nanti.
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onConfirm(null)}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+            style={{ color: 'var(--ink-soft)' }}
+          >
+            Hapus tanpa pindahkan
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="h-9 rounded-lg px-3 text-sm font-medium"
+              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={!target}
+              onClick={() => onConfirm(target)}
+              className="h-9 rounded-lg px-4 text-sm font-semibold text-white transition disabled:opacity-40"
+              style={{ background: accent }}
+            >
+              Pindahkan &amp; hapus
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
 interface SortableCategoryProps {
   cat: CatNode
   accent: string
+  count: number
+  subCounts: Record<string, number>
   enabled: boolean
   onToggleEnabled: () => void
   expanded: boolean
@@ -386,6 +566,15 @@ function SortableCategory(props: SortableCategoryProps) {
                 {cat.subs.length} sub
               </span>
             )}
+            {props.count > 0 && (
+              <span
+                className="ml-1.5 num text-[11px] font-medium"
+                style={{ color: 'var(--ink-soft)' }}
+                title={`${props.count} transaksi pakai kategori ini`}
+              >
+                · {props.count} tx
+              </span>
+            )}
             {!enabled && (
               <span
                 className="ml-1.5 rounded px-1 py-0.5 align-middle text-[9px] font-semibold uppercase tracking-wide"
@@ -427,6 +616,7 @@ function SortableCategory(props: SortableCategoryProps) {
                     key={sub.id}
                     id={sub.id}
                     name={sub.name}
+                    count={props.subCounts[sub.id] ?? 0}
                     isEditing={editing?.id === sub.id}
                     editingValue={editing?.value ?? ''}
                     onStartEdit={() => props.onStartEdit(sub.id, sub.name)}
@@ -473,6 +663,7 @@ function SortableCategory(props: SortableCategoryProps) {
 interface SortableSubProps {
   id: string
   name: string
+  count: number
   isEditing: boolean
   editingValue: string
   onStartEdit: () => void
@@ -522,6 +713,11 @@ function SortableSub(props: SortableSubProps) {
           title="Klik buat ubah nama"
         >
           {props.name}
+          {props.count > 0 && (
+            <span className="ml-1.5 num text-[10.5px]" style={{ color: 'var(--ink-soft)' }}>
+              · {props.count} tx
+            </span>
+          )}
         </button>
       )}
       <button

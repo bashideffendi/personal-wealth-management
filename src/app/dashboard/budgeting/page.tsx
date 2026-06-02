@@ -29,6 +29,7 @@ import {
   saveTree,
   saveLocalTree,
   cascadeRenameKeys,
+  loadCategoryUsage,
   leafKeys,
   subKey,
   isEnabled,
@@ -117,6 +118,7 @@ export default function BudgetingPage() {
   const [tree, setTree] = useState<CategoryTree>(emptyTree)
   const [treeLoaded, setTreeLoaded] = useState(false)
   const [dbSynced, setDbSynced] = useState(false)
+  const [catUsage, setCatUsage] = useState<Record<string, number>>({})
   const [managerOpen, setManagerOpen] = useState(false)
   const userIdRef = useRef<string | null>(null)
 
@@ -170,6 +172,7 @@ export default function BudgetingPage() {
       setTree(t)
       setDbSynced(dbAvailable)
       setTreeLoaded(true)
+      loadCategoryUsage(supabase, user.id).then((u) => active && setCatUsage(u))
     })()
     return () => {
       active = false
@@ -200,6 +203,7 @@ export default function BudgetingPage() {
     if (renames && renames.pairs.length) {
       await cascadeRenameKeys(supabase, uid, renames.type, renames.pairs)
       fetchBudgets(year) // resync the budget map after key remap
+      loadCategoryUsage(supabase, uid).then(setCatUsage) // transaksi ikut pindah → refresh hitungan
     }
   }
 
@@ -837,6 +841,7 @@ export default function BudgetingPage() {
         onOpenChange={setManagerOpen}
         tree={tree}
         dbSynced={dbSynced}
+        usage={catUsage}
         onCommit={handleTreeCommit}
       />
 

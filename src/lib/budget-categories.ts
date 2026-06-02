@@ -237,8 +237,13 @@ export async function saveTree(
 }
 
 /**
- * Cascade budgets.category renames. `pairs` = [oldKey, newKey][].
- * Runs one scoped update per pair (handful of keys at most).
+ * Cascade kategori renames/reassign ke SEMUA tabel yang nyimpen `category`
+ * sebagai string: budgets, transactions, recurring_transactions. `pairs` =
+ * [oldKey, newKey][]. Dipakai buat dua hal:
+ *   - rename: ['Makanan' → 'Konsumsi'] (+ composite sub keys-nya)
+ *   - reassign saat hapus: beberapa key lama → satu kategori tujuan (merge)
+ * Tanpa ini, rename kategori cuma kena budget → transaksi lama jadi "yatim"
+ * (ke-split jadi 2 kategori). Tiap update di-scope per (user, type, oldKey).
  */
 export async function cascadeRenameKeys(
   supabase: SupabaseClient,
@@ -248,13 +253,40 @@ export async function cascadeRenameKeys(
 ): Promise<void> {
   for (const [oldKey, newKey] of pairs) {
     if (oldKey === newKey) continue
-    await supabase
-      .from('budgets')
-      .update({ category: newKey })
-      .eq('user_id', userId)
-      .eq('type', type)
-      .eq('category', oldKey)
+    const scope = (table: string) =>
+      supabase
+        .from(table)
+        .update({ category: newKey })
+        .eq('user_id', userId)
+        .eq('type', type)
+        .eq('category', oldKey)
+    // Jalan paralel; tabel/kolom yang gak ada balikin error object (gak throw),
+    // jadi aman walau recurring_transactions belum ada di sebagian env.
+    await Promise.all([scope('budgets'), scope('transactions'), scope('recurring_transactions')])
   }
+}
+
+/**
+ * Hitung jumlah transaksi per kategori, dikelompokin `${type}::${category}`.
+ * Dipakai Kelola Kategori buat nampilin "N transaksi" tiap baris + ngingetin
+ * (sekaligus nawarin pindahin) sebelum kategori yang masih kepake dihapus.
+ */
+export async function loadCategoryUsage(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('type, category')
+    .eq('user_id', userId)
+  if (error || !data) return {}
+  const out: Record<string, number> = {}
+  for (const row of data as { type: string; category: string | null }[]) {
+    if (!row.category) continue
+    const k = `${row.type}::${row.category}`
+    out[k] = (out[k] ?? 0) + 1
+  }
+  return out
 }
 
 /**
