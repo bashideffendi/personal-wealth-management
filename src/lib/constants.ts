@@ -180,7 +180,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Akun',            titleKey: 'nav.accounts',       href: '/dashboard/accounts',       icon: 'CircleDollarSign', section: 'secondary' },
   { label: 'Recurring',       titleKey: 'nav.recurring',      href: '/dashboard/recurring',      icon: 'Repeat',           section: 'secondary' },
   { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report', href: '/dashboard/monthly-report', icon: 'FileText',         section: 'secondary' },
-  { label: 'Langganan & Kontrak', titleKey: 'nav.contracts',  href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
+  { label: 'Kontrak & Polis',     titleKey: 'nav.contracts',  href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
   { label: 'Subscription',    titleKey: 'nav.subscriptions',  href: '/dashboard/subscriptions',  icon: 'Clock',            section: 'secondary' },
   { label: 'Kalkulator',      titleKey: 'nav.calculators',    href: '/dashboard/calculators',    icon: 'Calculator',       section: 'secondary' },
   { label: 'Aturan Kategori', titleKey: 'nav.rules',          href: '/dashboard/rules',          icon: 'Sparkles',         section: 'secondary' },

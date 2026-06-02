@@ -294,6 +294,8 @@ export type ContractCategory =
   | 'loan'
   | 'warranty'
   | 'lease'
+  | 'work'
+  | 'property'
   | 'other'
 
 export type ContractFrequency = 'monthly' | 'quarterly' | 'yearly' | 'one_time'
@@ -308,10 +310,27 @@ export interface Contract {
   start_date: string | null
   end_date: string
   cost: number | null
+  coverage: number
   frequency: ContractFrequency | null
   auto_renew: boolean
   reminder_days_before: number
   is_archived: boolean
   notes: string
+  created_at: string
+}
+
+export interface Subscription {
+  id: string
+  user_id: string
+  name: string
+  provider: string
+  price: number
+  cycle: 'weekly' | 'monthly' | 'yearly'
+  billing_day: number
+  /** Review status: active = pertahankan, consider = pertimbangkan, cancel = cabut */
+  status: 'active' | 'consider' | 'cancel'
+  usage_note: string
+  account_id: string | null
+  is_active: boolean
   created_at: string
 }
