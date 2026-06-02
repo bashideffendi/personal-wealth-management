@@ -16,8 +16,11 @@ import {
 } from '@/components/ui/select'
 import {
   Plus, Pencil, Trash2, Loader2, Wallet, CreditCard, ArrowUpRight,
-  CheckCircle2, ReceiptText, ShieldCheck, type LucideIcon,
+  CheckCircle2, ReceiptText, ShieldCheck, Check, type LucideIcon,
 } from 'lucide-react'
+import { InstitutionSearch } from '@/components/accounts/institution-search'
+import { InstitutionLogo } from '@/components/accounts/institution-logo'
+import { identifyInstitution } from '@/lib/indonesian-institutions'
 
 interface CardFormState {
   id: string | null
@@ -83,6 +86,9 @@ export default function CreditCardsPage() {
   const [cardDialogOpen, setCardDialogOpen] = useState(false)
   const [cardForm, setCardForm] = useState<CardFormState>(EMPTY_CARD)
   const [cardSaving, setCardSaving] = useState(false)
+  const [issuerQuery, setIssuerQuery] = useState('')
+
+  function openAddCard() { setCardForm(EMPTY_CARD); setIssuerQuery(''); setCardDialogOpen(true) }
 
   const [payDialogOpen, setPayDialogOpen] = useState(false)
   const [payForm, setPayForm] = useState<PayFormState>(EMPTY_PAY)
@@ -132,6 +138,7 @@ export default function CreditCardsPage() {
       billing_day: c.billing_day, due_day: c.due_day,
       interest_rate: c.interest_rate, is_active: c.is_active,
     })
+    setIssuerQuery('')
     setCardDialogOpen(true)
   }
 
@@ -205,7 +212,7 @@ export default function CreditCardsPage() {
           <Button variant="outline" onClick={() => openPayCard()} disabled={active.length === 0}>
             <Wallet className="h-4 w-4" /> Bayar Tagihan
           </Button>
-          <Button onClick={() => { setCardForm(EMPTY_CARD); setCardDialogOpen(true) }}>
+          <Button onClick={openAddCard}>
             <Plus className="h-4 w-4" /> Tambah Kartu
           </Button>
         </div>
@@ -220,7 +227,7 @@ export default function CreditCardsPage() {
           </div>
           <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Belum ada kartu kredit</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambah kartu pertama buat lacak tagihan, limit &amp; jatuh tempo.</p>
-          <Button className="mt-4" onClick={() => { setCardForm(EMPTY_CARD); setCardDialogOpen(true) }}><Plus className="h-4 w-4" /> Tambah Kartu</Button>
+          <Button className="mt-4" onClick={openAddCard}><Plus className="h-4 w-4" /> Tambah Kartu</Button>
         </div>
       ) : (
         <>
@@ -256,13 +263,16 @@ export default function CreditCardsPage() {
                 <div key={c.id} className="s-card overflow-hidden p-0 group">
                   {/* Visual gradient top */}
                   <div className="relative p-5 overflow-hidden" style={{ background: issuerGradient(c.issuer), color: '#FFFFFF', aspectRatio: '1.9 / 1' }}>
-                    <div className="absolute top-4 right-5" style={{ width: 38, height: 28, borderRadius: 5, background: 'linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,255,255,0.45))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4)' }} />
-                    <div className="absolute top-3 left-3 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                      <button onClick={() => openEditCard(c)} aria-label="Edit" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.18)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Pencil className="h-3 w-3" /></button>
-                      <button onClick={() => removeCard(c.id)} aria-label="Hapus" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.18)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
+                    {/* Bank logo chip (white frame → kebaca di gradient apapun) */}
+                    <div className="absolute top-4 left-4 grid place-items-center rounded-lg bg-white" style={{ width: 34, height: 34, boxShadow: '0 1px 4px rgba(0,0,0,0.25)' }}>
+                      <InstitutionLogo accountName={c.issuer} size={26} shape="rounded" />
                     </div>
-                    <p className="absolute top-5 left-5" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>{c.issuer}</p>
-                    <p className="absolute left-5" style={{ top: 38, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 19, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{c.name}</p>
+                    {/* Hover actions */}
+                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                      <button onClick={() => openEditCard(c)} aria-label="Edit" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Pencil className="h-3 w-3" /></button>
+                      <button onClick={() => removeCard(c.id)} aria-label="Hapus" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
+                    </div>
+                    <p className="absolute left-5" style={{ top: 56, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 19, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{c.name}</p>
                     <div className="absolute bottom-5 left-5 right-5" style={{ fontFamily: 'var(--font-mono)', fontSize: 15, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.92)' }}>
                       •••• •••• •••• {c.last_four || '••••'}
                     </div>
@@ -367,55 +377,68 @@ export default function CreditCardsPage() {
 
       {/* Card Dialog */}
       <Dialog open={cardDialogOpen} onOpenChange={setCardDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{cardForm.id ? 'Edit Kartu Kredit' : 'Tambah Kartu Kredit'}</DialogTitle>
-            <DialogDescription>Detail kartu, limit, tanggal billing &amp; jatuh tempo.</DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(244,63,94,0.12)' }}>
+                <CreditCard className="size-5" style={{ color: CORAL }} />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{cardForm.id ? 'Edit Kartu Kredit' : 'Tambah Kartu Kredit'}</DialogTitle>
+                <DialogDescription>Pilih bank penerbit, isi limit &amp; tanggal tagihan.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="grid gap-3 py-2">
+          <div className="grid gap-4 py-2">
+            {/* Bank penerbit — pemilih berlogo (kayak di Akun) */}
+            <div className="grid gap-1.5">
+              <Label>Bank Penerbit</Label>
+              {cardForm.issuer ? (
+                <div className="flex items-center gap-3 rounded-xl border p-2.5" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
+                  <InstitutionLogo accountName={cardForm.issuer} size={38} shape="rounded" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{cardForm.issuer}</p>
+                    <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{identifyInstitution(cardForm.issuer)?.legal ?? 'Bank penerbit kartu'}</p>
+                  </div>
+                  <button type="button" onClick={() => { setCardForm({ ...cardForm, issuer: '' }); setIssuerQuery('') }} className="text-[12px] font-medium px-2 py-1 rounded-md transition hover:bg-[var(--surface)]" style={{ color: 'var(--ink-muted)' }}>Ganti</button>
+                </div>
+              ) : (
+                <InstitutionSearch
+                  value={issuerQuery}
+                  onTextChange={setIssuerQuery}
+                  onPick={(inst) => { setCardForm((f) => ({ ...f, issuer: inst.brand, name: f.name || inst.brand })); setIssuerQuery('') }}
+                  restrictTypes={['bank']}
+                  placeholder="Cari bank (BCA, Mandiri, BNI, ...)"
+                />
+              )}
+            </div>
+            {/* Nama kartu + 4 digit */}
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label>Nama Kartu</Label>
                 <Input value={cardForm.name} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} placeholder="BCA Platinum" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Issuer / Bank</Label>
-                <Input value={cardForm.issuer} onChange={(e) => setCardForm({ ...cardForm, issuer: e.target.value })} placeholder="BCA" />
+                <Label>4 Digit Terakhir</Label>
+                <Input value={cardForm.last_four} maxLength={4} inputMode="numeric" onChange={(e) => setCardForm({ ...cardForm, last_four: e.target.value.replace(/\D/g, '') })} placeholder="1234" />
               </div>
             </div>
-            <div className="grid gap-1.5">
-              <Label>4 Digit Terakhir</Label>
-              <Input value={cardForm.last_four} maxLength={4} onChange={(e) => setCardForm({ ...cardForm, last_four: e.target.value.replace(/\D/g, '') })} placeholder="1234" />
-            </div>
+            {/* Limit + tagihan */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label>Limit (Rp)</Label>
-                <NumberInput value={cardForm.credit_limit} onChange={(n) => setCardForm({ ...cardForm, credit_limit: n })} placeholder="0" />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Outstanding (Rp)</Label>
-                <NumberInput value={cardForm.current_balance} onChange={(n) => setCardForm({ ...cardForm, current_balance: n })} placeholder="0" />
-              </div>
+              <div className="grid gap-1.5"><Label>Limit (Rp)</Label><NumberInput value={cardForm.credit_limit} onChange={(n) => setCardForm({ ...cardForm, credit_limit: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>Tagihan saat ini (Rp)</Label><NumberInput value={cardForm.current_balance} onChange={(n) => setCardForm({ ...cardForm, current_balance: n })} placeholder="0" /></div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="grid gap-1.5">
-                <Label>Tgl Billing</Label>
-                <Input type="number" min={1} max={31} value={cardForm.billing_day} onChange={(e) => setCardForm({ ...cardForm, billing_day: Number(e.target.value) || 1 })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Tgl Jatuh Tempo</Label>
-                <Input type="number" min={1} max={31} value={cardForm.due_day} onChange={(e) => setCardForm({ ...cardForm, due_day: Number(e.target.value) || 1 })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Bunga %</Label>
-                <Input type="number" step="any" min={0} value={cardForm.interest_rate || ''} onChange={(e) => setCardForm({ ...cardForm, interest_rate: Number(e.target.value) || 0 })} />
-              </div>
+            {/* Tanggal cetak / jatuh tempo / bunga */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="grid gap-1.5"><Label>Tgl Cetak</Label><Input type="number" min={1} max={31} value={cardForm.billing_day} onChange={(e) => setCardForm({ ...cardForm, billing_day: Number(e.target.value) || 1 })} /></div>
+              <div className="grid gap-1.5"><Label>Jatuh Tempo</Label><Input type="number" min={1} max={31} value={cardForm.due_day} onChange={(e) => setCardForm({ ...cardForm, due_day: Number(e.target.value) || 1 })} /></div>
+              <div className="grid gap-1.5"><Label>Bunga %/bln</Label><Input type="number" step="any" min={0} value={cardForm.interest_rate || ''} onChange={(e) => setCardForm({ ...cardForm, interest_rate: Number(e.target.value) || 0 })} /></div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCardDialogOpen(false)}>Batal</Button>
             <Button onClick={saveCard} disabled={cardSaving || !cardForm.name || !cardForm.issuer}>
-              {cardSaving && <Loader2 className="h-4 w-4 animate-spin" />}{cardForm.id ? 'Simpan' : 'Tambah'}
+              {cardSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Simpan
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -15,6 +15,7 @@ import { Search, Plus } from 'lucide-react'
 import {
   INDONESIAN_INSTITUTIONS,
   type FinancialInstitution,
+  type InstitutionType,
 } from '@/lib/indonesian-institutions'
 import { InstitutionLogo } from './institution-logo'
 
@@ -26,9 +27,11 @@ interface Props {
   /** Picked from the catalog */
   onPick: (inst: FinancialInstitution) => void
   placeholder?: string
+  /** Limit catalog to these types (e.g. ['bank'] for credit-card issuers). */
+  restrictTypes?: InstitutionType[]
 }
 
-export function InstitutionSearch({ value, onTextChange, onPick, placeholder }: Props) {
+export function InstitutionSearch({ value, onTextChange, onPick, placeholder, restrictTypes }: Props) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -44,26 +47,28 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder }: 
 
   const results = useMemo(() => {
     const q = value.trim().toLowerCase()
+    const inScope = (i: FinancialInstitution) => !restrictTypes || restrictTypes.includes(i.type)
     if (!q) {
       // Initial state: show curated popular ones first
       const popular = ['BCA', 'Mandiri', 'BNI', 'BRI', 'Jenius', 'Jago', 'Seabank', 'GoPay', 'OVO', 'DANA', 'ShopeePay']
       const popularSet = new Set(popular)
       const popularList = popular
         .map((p) => INDONESIAN_INSTITUTIONS.find((i) => i.brand === p))
-        .filter((i): i is FinancialInstitution => !!i)
+        .filter((i): i is FinancialInstitution => !!i && inScope(i))
       const rest = INDONESIAN_INSTITUTIONS
-        .filter((i) => !popularSet.has(i.brand))
+        .filter((i) => !popularSet.has(i.brand) && inScope(i))
         .slice(0, 12)
       return [...popularList, ...rest].slice(0, 20)
     }
     return INDONESIAN_INSTITUTIONS
       .filter(
         (i) =>
-          i.brand.toLowerCase().includes(q) ||
-          i.legal.toLowerCase().includes(q),
+          inScope(i) &&
+          (i.brand.toLowerCase().includes(q) ||
+            i.legal.toLowerCase().includes(q)),
       )
       .slice(0, 20)
-  }, [value])
+  }, [value, restrictTypes])
 
   function pick(inst: FinancialInstitution) {
     onPick(inst)
