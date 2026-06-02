@@ -88,6 +88,26 @@ const EMPTY: FormState = {
   target_amount: 0, current_amount: 0, deadline: '', notes: '', savings_strategy: 'auto',
 }
 
+// Status pace ala Monarch: bandingin progres aktual vs progres "seharusnya" by
+// elapsed waktu (created_at → deadline). Tanpa deadline = gak ada status.
+function goalStatus(
+  g: Goal,
+  pct: number,
+  done: boolean,
+): { label: string; tone: 'ok' | 'risk' | 'done' } | null {
+  if (done) return { label: 'Tercapai', tone: 'done' }
+  if (!g.deadline) return null
+  const start = new Date(g.created_at).getTime()
+  const end = new Date(g.deadline).getTime()
+  const now = Date.now()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null
+  if (now >= end) return { label: 'Lewat tenggat', tone: 'risk' }
+  const expectedPct = ((now - start) / (end - start)) * 100
+  return pct + 0.5 >= expectedPct
+    ? { label: 'On track', tone: 'ok' }
+    : { label: 'Perlu dikebut', tone: 'risk' }
+}
+
 export default function GoalsPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
@@ -338,6 +358,7 @@ export default function GoalsPage() {
             {derived.map((d, i) => {
               const { g, pct, remaining, perMonth, done, layerColor, prob, requiredFor90 } = d
               const Icon = CATEGORY_ICON[g.category] ?? Target
+              const status = goalStatus(g, pct, done)
               return (
                 <div
                   key={g.id}
@@ -359,6 +380,17 @@ export default function GoalsPage() {
                                 style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                               >
                                 Terdekat
+                              </span>
+                            )}
+                            {status && (
+                              <span
+                                className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
+                                style={{
+                                  background: status.tone === 'risk' ? 'var(--c-amber-soft)' : 'var(--c-mint-soft)',
+                                  color: status.tone === 'risk' ? 'var(--c-amber)' : 'var(--c-mint)',
+                                }}
+                              >
+                                {status.label}
                               </span>
                             )}
                           </div>
