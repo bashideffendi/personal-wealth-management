@@ -21,7 +21,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { WealthHero } from '@/components/wealth/wealth-ui'
-import { CreditCardsSection } from '@/components/wealth/credit-cards-section'
 
 const CAT: Record<string, { label: string; color: string; icon: LucideIcon }> = {
   consumer:  { label: 'Konsumtif',      color: '#F43F5E', icon: CreditCard },
@@ -299,9 +298,6 @@ export default function DebtsOverviewPage() {
           </div>
         </>
       )}
-
-      {/* Kartu kredit = utang revolving → dikelola sebagai section di halaman Utang */}
-      {!loading && <CreditCardsSection />}
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

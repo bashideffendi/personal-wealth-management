@@ -169,6 +169,7 @@ export const NAV_ITEMS: NavItem[] = [
       { label: 'Aset Likuid',     titleKey: 'nav.assets_liquid',     href: '/dashboard/assets/liquid',    icon: '' },
       { label: 'Aset Non-Likuid', titleKey: 'nav.assets_non_liquid', href: '/dashboard/assets/non-liquid', icon: '' },
       { label: 'Utang',           titleKey: 'nav.debts',             href: '/dashboard/debts',            icon: '' },
+      { label: 'Kartu Kredit',    titleKey: 'nav.credit_cards',      href: '/dashboard/credit-cards',     icon: '' },
       { label: 'Dana Darurat',    titleKey: 'nav.emergency_fund',    href: '/dashboard/emergency-fund',   icon: '' },
     ],
   },
@@ -177,7 +178,6 @@ export const NAV_ITEMS: NavItem[] = [
 
   // ─── SECONDARY (utility tools, smaller styling) ───
   { label: 'Akun',            titleKey: 'nav.accounts',       href: '/dashboard/accounts',       icon: 'CircleDollarSign', section: 'secondary' },
-  { label: 'Kartu Kredit',    titleKey: 'nav.credit_cards',   href: '/dashboard/debts#kartu-kredit', icon: 'CreditCard',   section: 'secondary' },
   { label: 'Recurring',       titleKey: 'nav.recurring',      href: '/dashboard/recurring',      icon: 'Repeat',           section: 'secondary' },
   { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report', href: '/dashboard/monthly-report', icon: 'FileText',         section: 'secondary' },
   { label: 'Langganan & Kontrak', titleKey: 'nav.contracts',  href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
