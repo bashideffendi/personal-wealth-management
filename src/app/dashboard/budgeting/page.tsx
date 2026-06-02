@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, CalendarDays, Calculator, Copy } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, CalendarDays, Calculator, Copy, Plus } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
@@ -37,8 +37,10 @@ import {
   rootCategory,
   isEnabled,
   emptyTree,
+  newId,
 } from '@/lib/budget-categories'
 import { CategoryIcon } from '@/components/transactions/category-icon'
+import { toast } from 'sonner'
 
 const SHORT_MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
@@ -126,6 +128,8 @@ export default function BudgetingPage() {
   const [viewMode, setViewMode] = useState<'year' | 'month'>('year')
   const [focusMonth, setFocusMonth] = useState(() => new Date().getMonth() + 1)
   const [actuals, setActuals] = useState<Record<string, number>>({})
+  const [addingTo, setAddingTo] = useState<BudgetType | null>(null)
+  const [newCatInline, setNewCatInline] = useState('')
   const [managerOpen, setManagerOpen] = useState(false)
   const userIdRef = useRef<string | null>(null)
 
@@ -473,6 +477,20 @@ export default function BudgetingPage() {
     )
   }
 
+  // Tambah kategori induk langsung dari tabel (opsi tambahan; modal Kelola
+  // Kategori tetap ada). Update tree → handleTreeCommit (persist DB + cascade).
+  function addCategoryInline(kind: BudgetType) {
+    const name = newCatInline.trim()
+    setAddingTo(null)
+    setNewCatInline('')
+    if (!name) return
+    if (tree[kind].some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      toast.error(`Kategori "${name}" sudah ada`)
+      return
+    }
+    handleTreeCommit({ ...tree, [kind]: [...tree[kind], { id: newId(), name, subs: [] }] })
+  }
+
   // Render a section body from the tree. SEMUA kategori induk (punya sub atau
   // nggak) pakai band abu + label bold biar seragam; subkategori indent + zebra.
   function renderSectionBody(kind: BudgetType, oddBg: string) {
@@ -496,6 +514,45 @@ export default function BudgetingPage() {
         )
       }
     }
+    // Baris "+ Tambah kategori" di akhir section (inline add, opsi tambahan)
+    rows.push(
+      <tr key={`${kind}-add`} className="bg-[var(--surface)]">
+        <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1.5 bg-inherit">
+          {addingTo === kind ? (
+            <input
+              autoFocus
+              value={newCatInline}
+              onChange={(e) => setNewCatInline(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addCategoryInline(kind)
+                } else if (e.key === 'Escape') {
+                  setAddingTo(null)
+                  setNewCatInline('')
+                }
+              }}
+              onBlur={() => addCategoryInline(kind)}
+              placeholder="Nama kategori, lalu Enter…"
+              className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
+              style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setNewCatInline('')
+                setAddingTo(kind)
+              }}
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+              style={{ color: 'var(--ink-soft)' }}
+            >
+              <Plus className="size-3" /> Tambah kategori
+            </button>
+          )}
+        </td>
+      </tr>,
+    )
     return rows
   }
 
