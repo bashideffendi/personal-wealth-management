@@ -10,10 +10,11 @@
  * - Verdict bahasa manusia di atas: sesuai rencana / over anggaran.
  */
 
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
 import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
+import { toast } from 'sonner'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -76,6 +77,34 @@ export function MonthBudgetView({
   const prev = () => onMonthChange(month === 1 ? 12 : month - 1)
   const next = () => onMonthChange(month === 12 ? 1 : month + 1)
 
+  // Auto-budget: isi rencana yang KOSONG dari rata-rata realisasi 3 bulan
+  // sebelumnya (di tahun ini). Non-destruktif — gak nimpa rencana yang sudah diisi.
+  function autoFillFromAverage() {
+    const months: number[] = []
+    for (let m = Math.max(1, month - 3); m < month; m++) months.push(m)
+    if (!months.length) {
+      toast.error('Belum ada bulan sebelumnya di tahun ini buat dirata-rata')
+      return
+    }
+    let filled = 0
+    for (const sec of SECTIONS) {
+      for (const cat of visibleByType[sec.key]) {
+        if (getValue(sec.key, cat, month) > 0) continue
+        const sum = months.reduce((s, m) => s + (actuals[`${sec.key}::${cat}::${m}`] ?? 0), 0)
+        const avg = Math.round(sum / months.length)
+        if (avg > 0) {
+          void onCellChange(sec.key, cat, month, avg)
+          filled++
+        }
+      }
+    }
+    toast.success(
+      filled > 0
+        ? `Mengisi ${filled} kategori dari rata-rata ${months.length} bulan terakhir`
+        : 'Belum ada realisasi yang bisa dirata-rata',
+    )
+  }
+
   const stats = [
     { label: 'Pemasukan (real.)', value: incomeActual, sub: `rencana ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
     { label: 'Rencana keluar', value: planOut, sub: 'keluar + nabung + investasi', color: 'var(--ink)' },
@@ -113,17 +142,29 @@ export function MonthBudgetView({
             <ChevronRight className="size-4" />
           </button>
         </div>
-        {verdict && (
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
-            style={{
-              background: verdict.tone === 'over' ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)',
-              color: verdict.tone === 'over' ? 'var(--c-coral)' : 'var(--c-mint)',
-            }}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={autoFillFromAverage}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+            style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+            title="Isi rencana yang masih kosong dari rata-rata realisasi 3 bulan terakhir"
           >
-            {verdict.text}
-          </span>
-        )}
+            <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+            Isi dari rata-rata
+          </button>
+          {verdict && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
+              style={{
+                background: verdict.tone === 'over' ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)',
+                color: verdict.tone === 'over' ? 'var(--c-coral)' : 'var(--c-mint)',
+              }}
+            >
+              {verdict.text}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Summary strip */}
