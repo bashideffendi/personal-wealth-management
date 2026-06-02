@@ -446,13 +446,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting + Hero — Net Worth + period-filtered growth chart */}
+      {/* Greeting — simpel & minimalis ala Monarch ("Hi, Nama"), tanpa jam/tanggal */}
+      {userFirstName && (
+        <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
+          Hi, {userFirstName}
+        </h1>
+      )}
+
+      {/* Hero — Net Worth + period-filtered growth chart */}
       <NetWorthHero
         liquidTotal={liquidTotal}
         nonLiquidTotal={nonLiquidTotal}
         investmentsTotal={investments.reduce((s, i) => s + (i.total_value || 0), 0)}
         debtTotal={debtTotal}
-        userName={userFirstName}
         monthlyTrend={monthlyData}
       />
 

@@ -28,7 +28,6 @@ interface NetWorthHeroProps {
   nonLiquidTotal: number
   investmentsTotal: number
   debtTotal: number
-  userName?: string
   monthlyTrend?: MonthlyData[]
 }
 
@@ -43,20 +42,12 @@ export function NetWorthHero({
   nonLiquidTotal,
   investmentsTotal,
   debtTotal,
-  userName,
   monthlyTrend = [],
 }: NetWorthHeroProps) {
   const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
   const netWorth = totalAssets - debtTotal
 
-  // Time-aware greeting (casual ID Klunting tone)
   const now = new Date()
-  const hour = now.getHours()
-  const greetingMain = hour >= 4 && hour < 11 ? 'Pagi'
-    : hour >= 11 && hour < 15 ? 'Siang'
-    : hour >= 15 && hour < 18 ? 'Sore'
-    : hour >= 18 && hour < 23 ? 'Malam'
-    : 'Wah masih bangun?'
 
   const [chartPeriod, setChartPeriod] = useState<Period>('1T')
   const filteredTrend = useMemo(() => {
@@ -142,18 +133,9 @@ export function NetWorthHero({
       <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-6 lg:gap-8 p-5 sm:p-6 lg:p-7">
         {/* ───── LEFT: numeric block ───── */}
         <div className="min-w-0">
-          {/* Greeting eyebrow */}
+          {/* Label net worth (greeting "Hi, Nama" pindah ke atas hero) */}
           <p
-            className="text-[11px] font-semibold tracking-[0.14em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.66)' }}
-          >
-            {greetingMain}{userName ? `, ${userName}` : ''} ·{' '}
-            {now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
-          </p>
-
-          {/* Section label */}
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase mt-4"
+            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'rgba(255,255,255,0.72)' }}
           >
             Kekayaan Bersih
