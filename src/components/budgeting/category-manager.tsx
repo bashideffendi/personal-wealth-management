@@ -184,7 +184,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Kelola Kategori
@@ -206,8 +206,8 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
           </DialogDescription>
         </DialogHeader>
 
-        {/* Type pills */}
-        <div className="flex flex-wrap gap-1.5">
+        {/* Type tabs — segmented control */}
+        <div className="flex gap-1 rounded-xl p-1" style={{ background: 'var(--surface-2)' }}>
           {BUDGET_TYPES.map((t) => {
             const m = TYPE_META[t]
             const active = t === type
@@ -216,24 +216,24 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
                 key={t}
                 type="button"
                 onClick={() => setType(t)}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+                className="flex-1 rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors whitespace-nowrap"
                 style={{
-                  background: active ? m.accent : 'var(--surface-2)',
+                  background: active ? m.accent : 'transparent',
                   color: active ? '#FFF' : 'var(--ink-muted)',
                 }}
               >
                 {m.label}
-                <span className="ml-1.5 opacity-70 num">{draft[t].length}</span>
+                <span className="ml-1.5 opacity-70 num text-[11px]">{draft[t].length}</span>
               </button>
             )
           })}
         </div>
 
         {/* Category list */}
-        <div className="max-h-[52vh] overflow-y-auto pr-1 -mr-1">
+        <div className="max-h-[62vh] min-h-[280px] overflow-y-auto pr-1 -mr-1">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={nodes.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 {nodes.map((cat) => (
                   <SortableCategory
                     key={cat.id}
@@ -281,13 +281,13 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, onCommit }
             value={newCat}
             onChange={(e) => setNewCat(e.target.value)}
             placeholder={`Tambah kategori ${meta.label.toLowerCase()}…`}
-            className="h-9 flex-1 rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]"
+            className="h-10 flex-1 rounded-lg border px-3.5 text-sm outline-none transition-colors focus:border-[var(--ink)] focus:ring-2 focus:ring-[var(--ink)]/10"
             style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
           />
           <button
             type="submit"
             disabled={!newCat.trim()}
-            className="inline-flex h-9 items-center gap-1 rounded-lg px-3.5 text-sm font-semibold text-white transition disabled:opacity-40"
+            className="inline-flex h-10 items-center gap-1 rounded-lg px-4 text-sm font-semibold text-white transition disabled:opacity-40"
             style={{ background: meta.accent }}
           >
             <Plus className="size-4" /> Tambah
@@ -338,7 +338,7 @@ function SortableCategory(props: SortableCategoryProps) {
       className="rounded-xl border"
     >
       <div
-        className="flex items-center gap-1.5 px-2 py-1.5"
+        className="flex items-center gap-2 px-3 py-2.5"
         style={{ background: 'var(--surface)', borderRadius: 12 }}
       >
         <button
