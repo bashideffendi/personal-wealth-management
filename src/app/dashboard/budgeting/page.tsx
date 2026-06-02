@@ -32,9 +32,11 @@ import {
   loadCategoryUsage,
   leafKeys,
   subKey,
+  rootCategory,
   isEnabled,
   emptyTree,
 } from '@/lib/budget-categories'
+import { CategoryIcon } from '@/components/transactions/category-icon'
 
 const SHORT_MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
@@ -370,6 +372,8 @@ export default function BudgetingPage() {
       fillHi = Math.max(fs.month, fillOverMonth)
     }
     const accent = KIND_COLOR[type].hex
+    const ownerNode = tree[type].find((c) => c.name === (isSub ? rootCategory(categoryKey) : categoryKey))
+    const dotColor = ownerNode?.color ?? accent
     return (
       <tr key={`${type}-${categoryKey}`} className={bgClass}>
         <td
@@ -377,7 +381,20 @@ export default function BudgetingPage() {
           style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
           title={label}
         >
-          {isSub && <span className="mr-1 opacity-40">└</span>}
+          {isSub ? (
+            <span className="mr-1" style={{ color: dotColor, opacity: 0.5 }}>└</span>
+          ) : (
+            <span
+              className="mr-1.5 inline-grid size-4 place-items-center align-middle"
+              style={{ color: dotColor }}
+            >
+              {ownerNode?.icon ? (
+                <CategoryIcon category={categoryKey} iconKey={ownerNode.icon} className="size-3.5" />
+              ) : (
+                <span className="inline-block size-2 rounded-full" style={{ background: dotColor }} />
+              )}
+            </span>
+          )}
           {label}
         </td>
         {Array.from({ length: 12 }, (_, i) => {

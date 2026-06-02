@@ -47,6 +47,7 @@ import {
   isEnabled,
   BUDGET_TYPES,
 } from '@/lib/budget-categories'
+import { CategoryIcon, CATEGORY_COLORS, CATEGORY_ICON_CHOICES } from '@/components/transactions/category-icon'
 
 const TYPE_META: Record<BudgetType, { label: string; accent: string }> = {
   income: { label: 'Pendapatan', accent: 'var(--c-mint)' },
@@ -81,6 +82,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
   const [newCat, setNewCat] = useState('')
   const [newSub, setNewSub] = useState<Record<string, string>>({})
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
+  const [appearanceId, setAppearanceId] = useState<string | null>(null)
 
   // Sync working copy from prop on open (avoids clobbering in-progress edits mid-session).
   useEffect(() => {
@@ -184,6 +186,23 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
     const willEnable = !isEnabled(cat)
     // willEnable → buang flag (default aktif); nonaktif → simpan enabled:false.
     updateType(nodes.map((c) => (c.id === cat.id ? { ...c, enabled: willEnable ? undefined : false } : c)))
+  }
+
+  function setAppearance(
+    catId: string,
+    patch: { color?: string; icon?: string; clearColor?: boolean; clearIcon?: boolean },
+  ) {
+    updateType(
+      nodes.map((c) => {
+        if (c.id !== catId) return c
+        const next: CatNode = { ...c }
+        if (patch.clearColor) delete next.color
+        else if (patch.color) next.color = patch.color
+        if (patch.clearIcon) delete next.icon
+        else if (patch.icon) next.icon = patch.icon
+        return next
+      }),
+    )
   }
 
   function commitRenameCategory(cat: CatNode, raw: string) {
@@ -300,6 +319,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
                     subCounts={Object.fromEntries(cat.subs.map((s) => [s.id, subUsage(cat, s.name)]))}
                     enabled={isEnabled(cat)}
                     onToggleEnabled={() => toggleEnabled(cat)}
+                    onOpenAppearance={() => setAppearanceId(cat.id)}
                     expanded={!!expanded[cat.id]}
                     editing={editing}
                     newSubValue={newSub[cat.id] ?? ''}
@@ -361,7 +381,128 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
       onCancel={() => setPendingDelete(null)}
       onConfirm={confirmDelete}
     />
+
+    <AppearanceDialog
+      cat={nodes.find((c) => c.id === appearanceId) ?? null}
+      accent={meta.accent}
+      onPick={(patch) => appearanceId && setAppearance(appearanceId, patch)}
+      onClose={() => setAppearanceId(null)}
+    />
     </>
+  )
+}
+
+function AppearanceDialog({
+  cat,
+  accent,
+  onPick,
+  onClose,
+}: {
+  cat: CatNode | null
+  accent: string
+  onPick: (patch: { color?: string; icon?: string; clearColor?: boolean; clearIcon?: boolean }) => void
+  onClose: () => void
+}) {
+  if (!cat) return null
+  const activeColor = cat.color ?? accent
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-start gap-3">
+            <div
+              className="grid size-10 shrink-0 place-items-center rounded-xl"
+              style={{ background: `color-mix(in srgb, ${activeColor} 14%, transparent)`, color: activeColor }}
+            >
+              <CategoryIcon category={cat.name} iconKey={cat.icon} className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+                Tampilan “{cat.name}”
+              </DialogTitle>
+              <DialogDescription>Pilih warna &amp; ikon biar gampang dikenali sekilas.</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
+            Warna
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {CATEGORY_COLORS.map((hex) => {
+              const sel = cat.color === hex
+              return (
+                <button
+                  key={hex}
+                  type="button"
+                  onClick={() => onPick({ color: hex })}
+                  className="grid size-7 place-items-center rounded-full transition hover:scale-105"
+                  style={{ background: hex, outline: sel ? `2px solid ${hex}` : 'none', outlineOffset: 2 }}
+                  aria-label={`Warna ${hex}`}
+                >
+                  {sel && <Check className="size-3.5 text-white" />}
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => onPick({ clearColor: true })}
+              className="rounded-lg px-2.5 py-1 text-xs font-medium"
+              style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
+            >
+              Default
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
+            Ikon
+          </p>
+          <div className="grid grid-cols-8 gap-1.5">
+            {CATEGORY_ICON_CHOICES.map(({ key, Icon }) => {
+              const sel = cat.icon === key
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onPick({ icon: key })}
+                  className="grid aspect-square place-items-center rounded-lg border transition"
+                  style={{
+                    borderColor: sel ? activeColor : 'var(--border-soft)',
+                    background: sel ? `color-mix(in srgb, ${activeColor} 12%, transparent)` : 'var(--surface)',
+                    color: sel ? activeColor : 'var(--ink-muted)',
+                  }}
+                  aria-label={key}
+                >
+                  <Icon className="size-4" />
+                </button>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => onPick({ clearIcon: true })}
+            className="text-xs font-medium underline-offset-2 hover:underline"
+            style={{ color: 'var(--ink-soft)' }}
+          >
+            Pakai ikon otomatis
+          </button>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-9 rounded-lg px-4 text-sm font-semibold text-white"
+            style={{ background: activeColor }}
+          >
+            Selesai
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -483,6 +624,7 @@ interface SortableCategoryProps {
   subCounts: Record<string, number>
   enabled: boolean
   onToggleEnabled: () => void
+  onOpenAppearance: () => void
   expanded: boolean
   editing: { id: string; value: string } | null
   newSubValue: string
@@ -543,7 +685,28 @@ function SortableCategory(props: SortableCategoryProps) {
           />
         </button>
 
-        <span className="inline-block size-2 shrink-0 rounded-full" style={{ background: enabled ? accent : 'var(--ink-soft)', opacity: enabled ? 1 : 0.5 }} />
+        {(() => {
+          const dotColor = enabled ? cat.color ?? accent : 'var(--ink-soft)'
+          return (
+            <button
+              type="button"
+              onClick={props.onOpenAppearance}
+              className="grid size-6 shrink-0 place-items-center rounded-lg transition hover:opacity-80"
+              style={{
+                background: `color-mix(in srgb, ${dotColor} 14%, transparent)`,
+                color: dotColor,
+                opacity: enabled ? 1 : 0.55,
+              }}
+              title="Atur warna & ikon"
+            >
+              {cat.icon ? (
+                <CategoryIcon category={cat.name} iconKey={cat.icon} className="size-3.5" />
+              ) : (
+                <span className="size-2 rounded-full" style={{ background: dotColor }} />
+              )}
+            </button>
+          )
+        })()}
 
         {isEditingCat ? (
           <NameInput

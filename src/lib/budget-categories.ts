@@ -32,6 +32,10 @@ export interface CatNode {
    * disimpan (tinggal diaktifkan lagi). Mirip arsip, bukan hapus.
    */
   enabled?: boolean
+  /** Warna kustom (hex dari palet). Default = warna tipe (accent). */
+  color?: string
+  /** Key ikon kustom dari registry (lihat category-icon.tsx). Default = ikon by-nama. */
+  icon?: string
 }
 export type CategoryTree = Record<BudgetType, CatNode[]>
 
@@ -126,12 +130,16 @@ function normalizeNodes(raw: unknown): CatNode[] {
           }))
           .filter((s) => s.name)
       : []
+    const color = typeof (n as CatNode).color === 'string' ? (n as CatNode).color : undefined
+    const icon = typeof (n as CatNode).icon === 'string' ? (n as CatNode).icon : undefined
     out.push({
       id: typeof (n as CatNode).id === 'string' ? (n as CatNode).id : newId(),
       name,
       subs,
-      // Only persist the flag when explicitly disabled — keeps default rows clean.
+      // Only persist optional fields when set — keeps default rows clean.
       ...((n as CatNode).enabled === false ? { enabled: false } : {}),
+      ...(color ? { color } : {}),
+      ...(icon ? { icon } : {}),
     })
   }
   return out
