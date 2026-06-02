@@ -50,6 +50,18 @@ const DEFAULTS: Record<BudgetType, readonly string[]> = {
   investment: INVESTMENT_CATEGORIES,
 }
 
+/**
+ * Contoh subkategori bawaan — biar user baru langsung paham "oh, subkategori tuh
+ * kayak gini". Cuma dipakai saat SEEDING (tree masih kosong); gak pernah nimpa
+ * tree user yang udah ada. Tambah entri lain di sini kalau mau contoh lebih.
+ */
+const DEFAULT_SUBS: Record<string, readonly string[]> = {
+  Langganan: ['Netflix', 'Spotify', 'YouTube Premium'],
+}
+function subNodesFor(name: string): SubNode[] {
+  return (DEFAULT_SUBS[name] ?? []).map((s) => ({ id: newId(), name: s }))
+}
+
 export function newId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -119,7 +131,7 @@ export function seedDefaultTree(): CategoryTree {
   const tree = emptyTree()
   for (const type of BUDGET_TYPES) {
     const names = localEnabled(type) ?? [...DEFAULTS[type]]
-    tree[type] = names.map((name) => ({ id: newId(), name, subs: [] }))
+    tree[type] = names.map((name) => ({ id: newId(), name, subs: subNodesFor(name) }))
   }
   return tree
 }
@@ -190,7 +202,7 @@ export async function loadTree(
     // Fill any type missing a row from defaults (in-memory; persisted on next save).
     for (const type of BUDGET_TYPES) {
       if (!tree[type].length) {
-        tree[type] = [...DEFAULTS[type]].map((name) => ({ id: newId(), name, subs: [] }))
+        tree[type] = [...DEFAULTS[type]].map((name) => ({ id: newId(), name, subs: subNodesFor(name) }))
       }
     }
     return { tree, dbAvailable: true }
