@@ -145,7 +145,10 @@ export default function TermsPage() {
               sebelumnya. Pertanyaan atau keluhan kirim ke{' '}
               <a href="mailto:support@klunting.com" className="underline font-medium" style={{ color: 'var(--ink)' }}>
                 support@klunting.com
-              </a>.
+              </a>{' '}atau WhatsApp/telepon{' '}
+              <a href="https://wa.me/628558829500" className="underline font-medium" style={{ color: 'var(--ink)' }}>
+                0855-8829-500
+              </a>. Lihat juga <Link href="/refund" className="underline font-medium" style={{ color: 'var(--ink)' }}>Kebijakan Pengembalian Dana</Link>.
             </p>
           </section>
         </div>

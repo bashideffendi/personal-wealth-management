@@ -299,7 +299,7 @@ export default function ContractsPage() {
               <div className="grid gap-1.5"><Label>Kategori</Label>
                 <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v as ContractCategory })}>
                   <SelectTrigger><SelectValue>{(v) => CAT[v as ContractCategory]?.label ?? 'Pilih'}</SelectValue></SelectTrigger>
-                  <SelectContent>{(Object.keys(CAT) as ContractCategory[]).filter((k) => k !== 'subscription').map((k) => <SelectItem key={k} value={k}>{CAT[k].label}</SelectItem>)}</SelectContent>
+                  <SelectContent>{(Object.keys(CAT) as ContractCategory[]).map((k) => <SelectItem key={k} value={k}>{CAT[k].label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5"><Label>Provider</Label><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder="Allianz, BCA, PT…" /></div>

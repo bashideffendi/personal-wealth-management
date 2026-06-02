@@ -67,6 +67,7 @@ export default async function LandingPage() {
           <a href="#fitur" className="hover:text-[var(--ink)] transition-colors">Fitur</a>
           <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
           <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
+          <Link href="/contact" className="hover:text-[var(--ink)] transition-colors">Kontak</Link>
         </nav>
         <div className="flex gap-2 items-center">
           <Link
@@ -701,39 +702,60 @@ export default async function LandingPage() {
 
       {/* ─── FOOTER ────────────────────────────────────────────── */}
       <footer
-        className="border-t px-6 sm:px-12 py-10"
+        className="border-t px-6 sm:px-12 py-12"
         style={{ borderColor: 'var(--border-soft)' }}
       >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="grid place-items-center"
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'var(--c-primary)',
-                color: 'var(--c-primary-foreground)',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 800,
-                fontSize: 14,
-                letterSpacing: '-0.04em',
-              }}
-            >
-              K
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Brand + about */}
+            <div className="col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5">
+                <div className="grid place-items-center" style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 14, letterSpacing: '-0.04em' }}>K</div>
+                <span className="font-bold" style={{ color: 'var(--ink)', fontSize: 16 }}>Klunting</span>
+              </div>
+              <p className="text-[13px] mt-3 leading-relaxed max-w-xs" style={{ color: 'var(--ink-muted)' }}>
+                Aplikasi manajemen keuangan pribadi — catat transaksi, pantau net worth, anggaran, investasi &amp; utang dalam satu tempat. Beroperasi di Indonesia 🇮🇩
+              </p>
             </div>
-            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-              <span className="font-semibold" style={{ color: 'var(--ink)' }}>Klunting</span>
-              {' '}— Wealth Management App · © {new Date().getFullYear()}
-            </p>
+
+            {/* Produk */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Produk</p>
+              <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
+                <a href="#fitur" className="hover:text-[var(--ink)] transition-colors">Fitur</a>
+                <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
+                <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
+                <Link href="/register" className="hover:text-[var(--ink)] transition-colors">Daftar gratis</Link>
+              </div>
+            </div>
+
+            {/* Bantuan / Kontak */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Bantuan</p>
+              <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
+                <Link href="/contact" className="hover:text-[var(--ink)] transition-colors">Hubungi Kami</Link>
+                <a href="mailto:support@klunting.com" className="hover:text-[var(--ink)] transition-colors">support@klunting.com</a>
+                <a href="https://wa.me/628558829500" className="hover:text-[var(--ink)] transition-colors">WA/Telp: 0855-8829-500</a>
+                <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>Sen–Jum, 09.00–18.00 WIB</span>
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Legal</p>
+              <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
+                <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Syarat &amp; Ketentuan</Link>
+                <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Kebijakan Privasi</Link>
+                <Link href="/refund" className="hover:text-[var(--ink)] transition-colors">Pengembalian Dana</Link>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-            <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
-            <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
-            <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privasi</Link>
-            <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Syarat</Link>
-            <a href="mailto:support@klunting.com" className="hover:text-[var(--ink)] transition-colors">Support</a>
-            <span>Built in Indonesia 🇮🇩</span>
+
+          <div className="mt-10 pt-6 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style={{ borderColor: 'var(--border-soft)' }}>
+            <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>© {new Date().getFullYear()} Klunting · Wealth Management App</p>
+            <p className="text-[11px] max-w-md sm:text-right" style={{ color: 'var(--ink-soft)' }}>
+              Klunting adalah alat bantu pencatatan keuangan, <strong>bukan</strong> lembaga jasa keuangan atau penasihat investasi berlisensi.
+            </p>
           </div>
         </div>
       </footer>

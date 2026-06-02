@@ -159,6 +159,9 @@ export default function PrivacyPage() {
               Pertanyaan privasi kirim ke{' '}
               <a href="mailto:support@klunting.com" className="underline font-medium" style={{ color: 'var(--ink)' }}>
                 support@klunting.com
+              </a>{' '}atau WhatsApp/telepon{' '}
+              <a href="https://wa.me/628558829500" className="underline font-medium" style={{ color: 'var(--ink)' }}>
+                0855-8829-500
               </a>.
             </p>
           </section>
