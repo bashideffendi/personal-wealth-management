@@ -200,6 +200,17 @@ export default function CreditCardsPage() {
         .update({ current_balance: Math.max(0, card.current_balance - payForm.amount) })
         .eq('id', card.id)
     }
+    // Bayar kartu = uang KELUAR dari rekening sumber → kurangi saldonya biar masuk
+    // cash flow & net worth gak naik gratis. CC payment = transfer (bukan expense
+    // baru), jadi sengaja TIDAK bikin transaksi (belanja kartu udah jadi expense).
+    if (payForm.from_account_id) {
+      const acc = accounts.find((a) => a.id === payForm.from_account_id)
+      if (acc) {
+        await supabase.from('accounts')
+          .update({ current_balance: acc.current_balance - payForm.amount })
+          .eq('id', acc.id)
+      }
+    }
     setPaySaving(false); setPayDialogOpen(false); void load()
   }
 
@@ -236,6 +247,8 @@ export default function CreditCardsPage() {
   const blendedAnnualRate = totals.outstanding > 0
     ? (active.reduce((s, c) => s + c.current_balance * (c.interest_rate || 0), 0) / totals.outstanding) * 12
     : 0
+  const payCard = cards.find((c) => c.id === payForm.card_id)
+  const dueSoon = dueList.filter((d) => d.days <= 7)
 
   const stats: { label: string; value: string; sub: string; icon: LucideIcon; color: string; tint: string }[] = [
     { label: 'Total Limit', value: formatCurrency(totals.limit), sub: `Dari ${totals.count} kartu`, icon: CreditCard, color: '#64748B', tint: 'rgba(100,116,139,0.12)' },
@@ -299,6 +312,22 @@ export default function CreditCardsPage() {
               </div>
             ))}
           </div>
+
+          {/* Nudge jatuh tempo terdekat */}
+          {dueSoon.length > 0 && (
+            <button
+              type="button"
+              onClick={() => openPayCard(dueSoon[0].c)}
+              className="w-full flex items-center gap-3 rounded-xl border p-3 text-left transition hover:brightness-[0.99]"
+              style={{ borderColor: `${dueSoon[0].days <= 3 ? CORAL : AMBER}55`, background: `${dueSoon[0].days <= 3 ? CORAL : AMBER}0F` }}
+            >
+              <CalendarClock className="size-4 shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }} />
+              <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+                <strong>{dueSoon.length} kartu</strong> jatuh tempo ≤7 hari — <strong>{dueSoon[0].c.name}</strong> {dueSoon[0].days} hari lagi ({formatCurrency(dueSoon[0].c.current_balance)}).
+              </p>
+              <span className="text-[12px] font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }}>Bayar →</span>
+            </button>
+          )}
 
           {/* Gradient cards */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -525,7 +554,7 @@ export default function CreditCardsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Bayar Tagihan Kartu</DialogTitle>
-            <DialogDescription>Kurangi outstanding kartu — transfer dari rekening bank.</DialogDescription>
+            <DialogDescription>Outstanding kartu turun &amp; saldo rekening sumber otomatis berkurang.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
@@ -549,6 +578,12 @@ export default function CreditCardsPage() {
                 <Input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })} />
               </div>
             </div>
+            {payCard && payCard.current_balance > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setPayForm({ ...payForm, amount: minPayment(payCard.current_balance) })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>Minimum {formatCurrency(minPayment(payCard.current_balance))}</button>
+                <button type="button" onClick={() => setPayForm({ ...payForm, amount: payCard.current_balance })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>Penuh {formatCurrency(payCard.current_balance)}</button>
+              </div>
+            )}
             <div className="grid gap-1.5">
               <Label>Dari Rekening</Label>
               <Select value={payForm.from_account_id} onValueChange={(v) => setPayForm({ ...payForm, from_account_id: v ?? '' })}>
