@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, CalendarDays, Calculator, Copy } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
+import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
 import { CategoryManager } from '@/components/budgeting/category-manager'
 import {
@@ -30,6 +31,7 @@ import {
   saveLocalTree,
   cascadeRenameKeys,
   loadCategoryUsage,
+  loadMonthlyActuals,
   leafKeys,
   subKey,
   rootCategory,
@@ -121,6 +123,9 @@ export default function BudgetingPage() {
   const [treeLoaded, setTreeLoaded] = useState(false)
   const [dbSynced, setDbSynced] = useState(false)
   const [catUsage, setCatUsage] = useState<Record<string, number>>({})
+  const [viewMode, setViewMode] = useState<'year' | 'month'>('year')
+  const [focusMonth, setFocusMonth] = useState(() => new Date().getMonth() + 1)
+  const [actuals, setActuals] = useState<Record<string, number>>({})
   const [managerOpen, setManagerOpen] = useState(false)
   const userIdRef = useRef<string | null>(null)
 
@@ -206,6 +211,7 @@ export default function BudgetingPage() {
       await cascadeRenameKeys(supabase, uid, renames.type, renames.pairs)
       fetchBudgets(year) // resync the budget map after key remap
       loadCategoryUsage(supabase, uid).then(setCatUsage) // transaksi ikut pindah → refresh hitungan
+      loadMonthlyActuals(supabase, uid, year).then(setActuals) // realisasi ikut berubah
     }
   }
 
@@ -230,6 +236,7 @@ export default function BudgetingPage() {
         }
       }
       setBudgets(map)
+      loadMonthlyActuals(supabase, user.id, selectedYear).then(setActuals)
       setLoading(false)
     },
     [supabase],
@@ -751,14 +758,41 @@ export default function BudgetingPage() {
 
         {/* Desktop: title + month-header strip + per-section standalone cards */}
         <div className="hidden md:block space-y-3">
-          <div className="rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-            <p className="eyebrow">Grid Anggaran 12 Bulan</p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-              Rencana anggaran per bulan — setiap nilai tersimpan otomatis.
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+            <div className="min-w-0">
+              <p className="eyebrow">{viewMode === 'year' ? 'Grid Anggaran 12 Bulan' : 'Anggaran Bulanan'}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                {viewMode === 'year'
+                  ? 'Rencana anggaran per bulan — tersimpan otomatis.'
+                  : 'Rencana vs realisasi bulan ini — rencana tersimpan otomatis.'}
+              </p>
+            </div>
+            {/* Toggle Bulan / Tahun */}
+            <div className="flex gap-0.5 rounded-lg p-0.5 shrink-0" style={{ background: 'var(--surface-2)' }}>
+              {([['month', 'Bulan'], ['year', 'Tahun']] as const).map(([mode, label]) => {
+                const active = viewMode === mode
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
+                    style={{
+                      background: active ? 'var(--surface)' : 'transparent',
+                      color: active ? 'var(--ink)' : 'var(--ink-soft)',
+                      boxShadow: active ? '0 1px 2px rgba(16,24,40,0.10)' : undefined,
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          {viewMode === 'year' && (
             <div
-              className="mt-2.5 pt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t text-[11px]"
-              style={{ color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
+              className="rounded-xl border px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', color: 'var(--ink-muted)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
             >
               {[
                 { Icon: CalendarDays, label: <>Klik bulan untuk rincian harian</> },
@@ -771,8 +805,22 @@ export default function BudgetingPage() {
                 </span>
               ))}
             </div>
-          </div>
+          )}
 
+          {viewMode === 'month' ? (
+            <MonthBudgetView
+              year={Number(year)}
+              month={focusMonth}
+              onMonthChange={setFocusMonth}
+              visibleIncome={leafIncome}
+              visibleExpense={leafExpense}
+              visibleSaving={leafSaving}
+              visibleInvestment={leafInvestment}
+              getValue={getValue}
+              actuals={actuals}
+              onCellChange={handleCellBlur}
+            />
+          ) : (
           <div className="overflow-x-auto pb-2">
             <div className="space-y-3 min-w-[1040px]">
               {/* Month-label header strip */}
@@ -848,6 +896,7 @@ export default function BudgetingPage() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </>
       )}

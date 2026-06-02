@@ -1,0 +1,225 @@
+'use client'
+
+/**
+ * Month Budget View (desktop) — fokus 1 bulan: RENCANA vs REALISASI vs SISA per
+ * kategori. Dipakai saat toggle "Bulan" di halaman Anggaran (Tahun = grid 12 bulan).
+ *
+ * - Rencana: editable (NumberInput) — simpan via onCellChange (sama kayak grid tahun).
+ * - Realisasi: dari transaksi (read-only), via prop `actuals` (key `type::cat::month`).
+ * - Sisa: Rencana − Realisasi, + bar progress (realisasi/rencana).
+ * - Verdict bahasa manusia di atas: sesuai rencana / over anggaran.
+ */
+
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { MONTHS } from '@/lib/constants'
+import { formatCurrency } from '@/lib/utils'
+import { NumberInput } from '@/components/ui/number-input'
+
+type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
+
+interface MonthBudgetViewProps {
+  year: number
+  month: number
+  onMonthChange: (m: number) => void
+  visibleIncome: string[]
+  visibleExpense: string[]
+  visibleSaving: string[]
+  visibleInvestment: string[]
+  getValue: (type: string, category: string, month: number) => number
+  /** Realisasi per `${type}::${category}::${month}` dari loadMonthlyActuals. */
+  actuals: Record<string, number>
+  onCellChange: (type: BudgetType, category: string, month: number, value: number) => void | Promise<void>
+}
+
+const SECTIONS: { key: BudgetType; label: string; tint: string }[] = [
+  { key: 'income',     label: 'Pendapatan',  tint: '#10B981' },
+  { key: 'expense',    label: 'Pengeluaran', tint: '#F43F5E' },
+  { key: 'saving',     label: 'Tabungan',    tint: '#F59E0B' },
+  { key: 'investment', label: 'Investasi',   tint: '#0EA5E9' },
+]
+
+export function MonthBudgetView({
+  year,
+  month,
+  onMonthChange,
+  visibleIncome,
+  visibleExpense,
+  visibleSaving,
+  visibleInvestment,
+  getValue,
+  actuals,
+  onCellChange,
+}: MonthBudgetViewProps) {
+  const visibleByType: Record<BudgetType, string[]> = {
+    income: visibleIncome,
+    expense: visibleExpense,
+    saving: visibleSaving,
+    investment: visibleInvestment,
+  }
+  const actual = (type: BudgetType, cat: string) => actuals[`${type}::${cat}::${month}`] ?? 0
+  const planTotal = (t: BudgetType) => visibleByType[t].reduce((s, c) => s + getValue(t, c, month), 0)
+  const actualTotal = (t: BudgetType) => visibleByType[t].reduce((s, c) => s + actual(t, c), 0)
+
+  const planOut = planTotal('expense') + planTotal('saving') + planTotal('investment')
+  const actualOut = actualTotal('expense') + actualTotal('saving') + actualTotal('investment')
+  const incomePlan = planTotal('income')
+  const incomeActual = actualTotal('income')
+  const over = planOut > 0 && actualOut > planOut
+
+  const verdict =
+    planOut === 0
+      ? null
+      : over
+        ? { text: `Over anggaran ${formatCurrency(actualOut - planOut)}`, tone: 'over' as const }
+        : { text: `Sesuai rencana — sisa ${formatCurrency(planOut - actualOut)}`, tone: 'ok' as const }
+
+  const prev = () => onMonthChange(month === 1 ? 12 : month - 1)
+  const next = () => onMonthChange(month === 12 ? 1 : month + 1)
+
+  const stats = [
+    { label: 'Pemasukan (real.)', value: incomeActual, sub: `rencana ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
+    { label: 'Rencana keluar', value: planOut, sub: 'keluar + nabung + investasi', color: 'var(--ink)' },
+    { label: 'Realisasi keluar', value: actualOut, sub: planOut > 0 ? `${Math.round((actualOut / planOut) * 100)}% dari rencana` : '—', color: over ? 'var(--c-coral)' : 'var(--ink)' },
+    { label: 'Sisa anggaran', value: planOut - actualOut, sub: over ? 'kelebihan' : 'tersisa', color: planOut - actualOut >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' },
+  ]
+
+  return (
+    <div className="space-y-3">
+      {/* Header: month switcher + verdict */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5"
+        style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
+      >
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={prev}
+            className="grid size-8 place-items-center rounded-lg transition active:scale-95"
+            style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+            aria-label="Bulan sebelumnya"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <p className="t-title min-w-[130px] text-center" style={{ color: 'var(--ink)' }}>
+            {MONTHS[month - 1]} {year}
+          </p>
+          <button
+            type="button"
+            onClick={next}
+            className="grid size-8 place-items-center rounded-lg transition active:scale-95"
+            style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+            aria-label="Bulan berikutnya"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+        {verdict && (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
+            style={{
+              background: verdict.tone === 'over' ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)',
+              color: verdict.tone === 'over' ? 'var(--c-coral)' : 'var(--c-mint)',
+            }}
+          >
+            {verdict.text}
+          </span>
+        )}
+      </div>
+
+      {/* Summary strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {stats.map((c) => (
+          <div key={c.label} className="rounded-xl border p-3.5" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+            <p className="eyebrow">{c.label}</p>
+            <p className="num tabular t-h2 mt-1" style={{ color: c.color }}>
+              {formatCurrency(c.value)}
+            </p>
+            <p className="t-cap mt-0.5">{c.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Section tables */}
+      {SECTIONS.map((sec) => {
+        const cats = visibleByType[sec.key]
+        if (!cats.length) return null
+        return (
+          <div
+            key={sec.key}
+            className="overflow-hidden rounded-xl border"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
+          >
+            {/* Section header */}
+            <div
+              className="flex items-center justify-between px-3.5 py-2 border-b"
+              style={{ background: `color-mix(in srgb, ${sec.tint} 8%, var(--surface))`, borderColor: 'var(--border-soft)' }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="size-2 rounded-full" style={{ background: sec.tint }} />
+                <p className="t-title">{sec.label}</p>
+              </div>
+              <div className="flex items-center gap-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+                <span>Rencana <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(planTotal(sec.key))}</strong></span>
+                <span>Realisasi <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(actualTotal(sec.key))}</strong></span>
+              </div>
+            </div>
+
+            {/* Column header */}
+            <div
+              className="grid grid-cols-[1fr_148px_148px_148px] gap-3 px-3.5 py-1.5 border-b eyebrow"
+              style={{ borderColor: 'var(--border-soft)' }}
+            >
+              <span>Kategori</span>
+              <span className="text-right">Rencana</span>
+              <span className="text-right">Realisasi</span>
+              <span className="text-right">Sisa</span>
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+              {cats.map((cat) => {
+                const plan = getValue(sec.key, cat, month)
+                const act = actual(sec.key, cat)
+                const sisa = plan - act
+                const pct = plan > 0 ? Math.min(100, Math.round((act / plan) * 100)) : 0
+                const overRow = sec.key !== 'income' && plan > 0 && act > plan
+                const isSub = cat.includes(' › ')
+                const label = isSub ? cat.split(' › ')[1] : cat
+                return (
+                  <div key={cat} className="grid grid-cols-[1fr_148px_148px_148px] items-center gap-3 px-3.5 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm truncate" style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }} title={cat}>
+                        {isSub && <span className="mr-1 opacity-40">└</span>}
+                        {label}
+                      </p>
+                      {plan > 0 && (
+                        <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: overRow ? 'var(--c-coral)' : sec.tint }} />
+                        </div>
+                      )}
+                    </div>
+                    <NumberInput
+                      value={plan}
+                      onChange={(n) => onCellChange(sec.key, cat, month, n)}
+                      placeholder="0"
+                      className="h-8 text-right text-[13px]"
+                    />
+                    <p className="num tabular text-[13px] text-right" style={{ color: 'var(--ink-muted)' }}>
+                      {act ? formatCurrency(act) : '—'}
+                    </p>
+                    <p
+                      className="num tabular text-[13px] text-right"
+                      style={{ color: overRow ? 'var(--c-coral)' : 'var(--ink-soft)' }}
+                    >
+                      {formatCurrency(sisa)}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}

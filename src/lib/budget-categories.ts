@@ -328,6 +328,42 @@ export async function loadCategoryUsage(
 }
 
 /**
+ * Realisasi (aktual) per kategori per BULAN untuk satu tahun — jumlahkan amount
+ * transaksi, dikelompokin `${type}::${category}::${month}` (month = 1–12).
+ * Key kategori sama persis dgn budget (single source of truth), jadi tiap baris
+ * anggaran tinggal lookup. Dipakai view Anggaran bulanan (Rencana vs Realisasi).
+ */
+export async function loadMonthlyActuals(
+  supabase: SupabaseClient,
+  userId: string,
+  year: string,
+): Promise<Record<string, number>> {
+  const start = `${year}-01-01`
+  const end = `${Number(year) + 1}-01-01`
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('type, category, amount, date')
+    .eq('user_id', userId)
+    .gte('date', start)
+    .lt('date', end)
+  if (error || !data) return {}
+  const out: Record<string, number> = {}
+  for (const row of data as {
+    type: string
+    category: string | null
+    amount: number | null
+    date: string | null
+  }[]) {
+    if (!row.category || !row.date) continue
+    const month = Number(row.date.slice(5, 7)) // 'YYYY-MM-DD' → MM
+    if (!month) continue
+    const k = `${row.type}::${row.category}::${month}`
+    out[k] = (out[k] ?? 0) + (row.amount ?? 0)
+  }
+  return out
+}
+
+/**
  * Flat list of budget-row keys for a type, in display order:
  * a category with NO subs is itself a leaf key; a category WITH subs contributes
  * its subcategory composite keys (the category becomes a rollup, not a leaf).
