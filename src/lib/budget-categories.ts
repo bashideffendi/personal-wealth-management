@@ -18,9 +18,23 @@ import {
 
 export type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
+/**
+ * Target anggaran per kategori-leaf (ala Actual goal-templates, versi terstruktur):
+ * - fixed         : Rp X tetap / bulan
+ * - byDate        : nabung total Rp X sampai bulan `by` (YYYY-MM) → dibagi rata sisa bulan
+ * - percentIncome : X% dari pemasukan bulan itu
+ * - average       : rata-rata realisasi N bulan terakhir (auto-budget)
+ */
+export type CatTarget =
+  | { mode: 'fixed'; amount: number }
+  | { mode: 'byDate'; amount: number; by: string }
+  | { mode: 'percentIncome'; percent: number }
+  | { mode: 'average'; months: number }
+
 export interface SubNode {
   id: string
   name: string
+  target?: CatTarget
 }
 export interface CatNode {
   id: string
@@ -36,10 +50,39 @@ export interface CatNode {
   color?: string
   /** Key ikon kustom dari registry (lihat category-icon.tsx). Default = ikon by-nama. */
   icon?: string
+  /** Target anggaran — relevan kalau kategori ini leaf (tanpa subs). */
+  target?: CatTarget
 }
 export type CategoryTree = Record<BudgetType, CatNode[]>
 
 export const BUDGET_TYPES: BudgetType[] = ['income', 'expense', 'saving', 'investment']
+
+/**
+ * Jumlah rencana bulanan yang disarankan dari sebuah target.
+ * ctx.incomeThisMonth = total rencana pemasukan bulan itu (buat percentIncome);
+ * ctx.avgActual = rata-rata realisasi N bulan (buat mode average) — dihitung pemanggil.
+ */
+export function computeTargetAmount(
+  t: CatTarget,
+  ctx: { year: number; month: number; incomeThisMonth: number; avgActual: number },
+): number {
+  switch (t.mode) {
+    case 'fixed':
+      return Math.max(0, Math.round(t.amount))
+    case 'percentIncome':
+      return Math.max(0, Math.round((ctx.incomeThisMonth * t.percent) / 100))
+    case 'average':
+      return Math.max(0, Math.round(ctx.avgActual))
+    case 'byDate': {
+      const [ty, tm] = t.by.split('-').map(Number)
+      if (!ty || !tm) return Math.max(0, Math.round(t.amount))
+      const monthsLeft = (ty - ctx.year) * 12 + (tm - ctx.month) + 1
+      return monthsLeft > 0
+        ? Math.max(0, Math.round(t.amount / monthsLeft))
+        : Math.max(0, Math.round(t.amount))
+    }
+  }
+}
 
 /** Separator for composite budget key of a subcategory: "Makanan › Restoran". */
 export const SUB_SEP = ' › '
@@ -116,6 +159,18 @@ export function categoryOptions(nodes: CatNode[]): CategoryOption[] {
   return out
 }
 
+function coerceTarget(raw: unknown): CatTarget | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = raw as Record<string, unknown>
+  if (r.mode === 'fixed' && typeof r.amount === 'number') return { mode: 'fixed', amount: r.amount }
+  if (r.mode === 'byDate' && typeof r.amount === 'number' && typeof r.by === 'string')
+    return { mode: 'byDate', amount: r.amount, by: r.by }
+  if (r.mode === 'percentIncome' && typeof r.percent === 'number')
+    return { mode: 'percentIncome', percent: r.percent }
+  if (r.mode === 'average' && typeof r.months === 'number') return { mode: 'average', months: r.months }
+  return undefined
+}
+
 /** Coerce arbitrary JSON into a clean CatNode[] (ids guaranteed, names trimmed). */
 function normalizeNodes(raw: unknown): CatNode[] {
   if (!Array.isArray(raw)) return []
@@ -127,14 +182,19 @@ function normalizeNodes(raw: unknown): CatNode[] {
     const rawSubs = (n as CatNode).subs
     const subs: SubNode[] = Array.isArray(rawSubs)
       ? rawSubs
-          .map((s) => ({
-            id: typeof s?.id === 'string' ? s.id : newId(),
-            name: typeof s?.name === 'string' ? s.name.trim() : '',
-          }))
+          .map((s) => {
+            const st = coerceTarget((s as SubNode)?.target)
+            return {
+              id: typeof s?.id === 'string' ? s.id : newId(),
+              name: typeof s?.name === 'string' ? s.name.trim() : '',
+              ...(st ? { target: st } : {}),
+            }
+          })
           .filter((s) => s.name)
       : []
     const color = typeof (n as CatNode).color === 'string' ? (n as CatNode).color : undefined
     const icon = typeof (n as CatNode).icon === 'string' ? (n as CatNode).icon : undefined
+    const target = coerceTarget((n as CatNode).target)
     out.push({
       id: typeof (n as CatNode).id === 'string' ? (n as CatNode).id : newId(),
       name,
@@ -143,6 +203,7 @@ function normalizeNodes(raw: unknown): CatNode[] {
       ...((n as CatNode).enabled === false ? { enabled: false } : {}),
       ...(color ? { color } : {}),
       ...(icon ? { icon } : {}),
+      ...(target ? { target } : {}),
     })
   }
   return out
