@@ -17,7 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus, Pencil, Trash2, Loader2, PartyPopper, Receipt, Home, CreditCard, Banknote,
+  Plus, Pencil, Trash2, Loader2, PartyPopper, Receipt, Home, CreditCard, Banknote, Wallet,
   type LucideIcon,
 } from 'lucide-react'
 import { WealthHero } from '@/components/wealth/wealth-ui'
@@ -146,6 +146,10 @@ export default function DebtsOverviewPage() {
   const totalRemaining = allActive.reduce((s, d) => s + d.remaining, 0)
   const totalPrincipal = allActive.reduce((s, d) => s + d.principal, 0)
   const totalMonthly = allActive.reduce((s, d) => s + d.monthly_payment, 0)
+  // Paylater (type 'paylater') — buat ringkasan + nudge literasi (khas ID)
+  const paylater = useMemo(() => allActive.filter((d) => d.type === 'paylater'), [allActive])
+  const paylaterRemaining = paylater.reduce((s, d) => s + d.remaining, 0)
+  const paylaterMonthly = paylater.reduce((s, d) => s + d.monthly_payment, 0)
   const totalPaid = Math.max(0, totalPrincipal - totalRemaining)
   const paidPct = totalPrincipal > 0 ? (totalPaid / totalPrincipal) * 100 : 0
   const dti = monthlyIncome > 0 ? (totalMonthly / monthlyIncome) * 100 : null
@@ -193,6 +197,27 @@ export default function DebtsOverviewPage() {
         </div>
       ) : (
         <>
+          {/* Literasi Paylater (khas ID) — muncul kalau ada utang paylater */}
+          {paylater.length > 0 && (
+            <div className="s-card flex items-start gap-3 p-4" style={{ borderColor: 'color-mix(in srgb, var(--c-violet) 26%, var(--border-soft))' }}>
+              <div className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
+                <Wallet className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                  <p className="font-semibold" style={{ color: 'var(--ink)' }}>Paylater kamu</p>
+                  <p className="num tabular text-sm" style={{ color: 'var(--ink-muted)' }}>
+                    <strong style={{ color: 'var(--c-coral)' }}>{formatCurrency(paylaterRemaining)}</strong>
+                    {' · '}{paylater.length} layanan{' · '}{formatCurrency(paylaterMonthly)}/bln
+                  </p>
+                </div>
+                <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                  Paylater terasa ringan tapi gampang numpuk. Bayar penuh &amp; tepat waktu biar lolos bunga/denda — dan usahakan total cicilan tetap di bawah ~30% pemasukan bulanan.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Tabel utang */}
           <div className="s-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
