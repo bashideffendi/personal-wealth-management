@@ -10,7 +10,7 @@
  * - Verdict bahasa manusia di atas: sesuai rencana / over anggaran.
  */
 
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, Copy } from 'lucide-react'
 import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
@@ -105,6 +105,31 @@ export function MonthBudgetView({
     )
   }
 
+  // Salin rencana bulan sebelumnya (tahun yang sama) ke sel yang masih kosong.
+  function copyFromPrevMonth() {
+    if (month <= 1) {
+      toast.error('Bulan lalu ada di tahun sebelumnya — belum didukung')
+      return
+    }
+    const prevM = month - 1
+    let filled = 0
+    for (const sec of SECTIONS) {
+      for (const cat of visibleByType[sec.key]) {
+        if (getValue(sec.key, cat, month) > 0) continue
+        const prevVal = getValue(sec.key, cat, prevM)
+        if (prevVal > 0) {
+          void onCellChange(sec.key, cat, month, prevVal)
+          filled++
+        }
+      }
+    }
+    toast.success(
+      filled > 0
+        ? `Menyalin ${filled} kategori dari ${MONTHS[prevM - 1]}`
+        : `Belum ada rencana di ${MONTHS[prevM - 1]} buat disalin`,
+    )
+  }
+
   const stats = [
     { label: 'Pemasukan (real.)', value: incomeActual, sub: `rencana ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
     { label: 'Rencana keluar', value: planOut, sub: 'keluar + nabung + investasi', color: 'var(--ink)' },
@@ -152,6 +177,16 @@ export function MonthBudgetView({
           >
             <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
             Isi dari rata-rata
+          </button>
+          <button
+            type="button"
+            onClick={copyFromPrevMonth}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+            style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+            title="Salin rencana bulan sebelumnya ke sel yang masih kosong"
+          >
+            <Copy className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
+            Salin bulan lalu
           </button>
           {verdict && (
             <span
