@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
-import type { Debt } from '@/types'
+import type { Debt, CreditCard as CreditCardRow } from '@/types'
 import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,6 +47,18 @@ const getTypeLabel = (type: string) => {
 }
 const isRevolving = (type: string) => type === 'kartu_kredit' || type === 'paylater'
 
+/** Estimasi minimum payment kartu kredit: ~10% saldo, lantai Rp 50rb. */
+function ccMinPayment(balance: number): number {
+  if (balance <= 0) return 0
+  return Math.min(balance, Math.max(50_000, Math.round(balance * 0.1)))
+}
+function ccNextDueISO(dueDay: number): string {
+  const t = new Date(); const y = t.getFullYear(); const m = t.getMonth()
+  const thisMonth = new Date(y, m, dueDay)
+  const due = thisMonth >= new Date(y, m, t.getDate()) ? thisMonth : new Date(y, m + 1, dueDay)
+  return due.toISOString().split('T')[0]
+}
+
 function payoffDate(months: number): string {
   if (months <= 0 || months >= 600) return '—'
   const d = new Date(); d.setMonth(d.getMonth() + months)
@@ -64,6 +76,7 @@ export default function DebtsOverviewPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [debts, setDebts] = useState<Debt[]>([])
+  const [cards, setCards] = useState<CreditCardRow[]>([])
   const [monthlyIncome, setMonthlyIncome] = useState(0)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<typeof emptyForm>(emptyForm)
@@ -78,11 +91,13 @@ export default function DebtsOverviewPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
-    const [debtsRes, txRes] = await Promise.all([
+    const [debtsRes, ccRes, txRes] = await Promise.all([
       supabase.from('debts').select('*').eq('user_id', user.id).order('remaining', { ascending: false }),
+      supabase.from('credit_cards').select('*').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
       supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
     ])
     setDebts((debtsRes.data ?? []) as Debt[])
+    setCards((ccRes.data ?? []) as CreditCardRow[])
     const incomeRows = (txRes.data ?? []) as { amount: number }[]
     const totalIncome = incomeRows.reduce((s, t) => s + (t.amount || 0), 0)
     setMonthlyIncome(incomeRows.length > 0 ? totalIncome / 3 : 0)
@@ -115,26 +130,39 @@ export default function DebtsOverviewPage() {
   }
 
   const active = useMemo(() => debts.filter((d) => d.is_active && d.remaining > 0), [debts])
-  const totalRemaining = active.reduce((s, d) => s + d.remaining, 0)
-  const totalPrincipal = active.reduce((s, d) => s + d.principal, 0)
-  const totalMonthly = active.reduce((s, d) => s + d.monthly_payment, 0)
+  // Kartu kredit = utang revolving → dipetakan ke bentuk Debt biar ikut total,
+  // DTI, strategi pelunasan & timeline. Sumber tetap tabel credit_cards.
+  const ccDebts = useMemo<Debt[]>(() => cards
+    .filter((c) => c.current_balance > 0)
+    .map((c) => ({
+      id: `cc:${c.id}`, user_id: '', name: c.name, category: 'consumer', type: 'kartu_kredit',
+      principal: c.current_balance, remaining: c.current_balance,
+      interest_rate: (c.interest_rate || 0) * 12, // %/bln → %/thn (biar konsisten sama utang lain)
+      monthly_payment: ccMinPayment(c.current_balance),
+      due_date: ccNextDueISO(c.due_day), is_active: true, created_at: '',
+    })), [cards])
+  const allActive = useMemo(() => [...active, ...ccDebts], [active, ccDebts])
+
+  const totalRemaining = allActive.reduce((s, d) => s + d.remaining, 0)
+  const totalPrincipal = allActive.reduce((s, d) => s + d.principal, 0)
+  const totalMonthly = allActive.reduce((s, d) => s + d.monthly_payment, 0)
   const totalPaid = Math.max(0, totalPrincipal - totalRemaining)
   const paidPct = totalPrincipal > 0 ? (totalPaid / totalPrincipal) * 100 : 0
   const dti = monthlyIncome > 0 ? (totalMonthly / monthlyIncome) * 100 : null
-  const housingMonthly = active.filter((d) => d.category === 'long_term').reduce((s, d) => s + d.monthly_payment, 0)
+  const housingMonthly = allActive.filter((d) => d.category === 'long_term').reduce((s, d) => s + d.monthly_payment, 0)
   const frontEnd = monthlyIncome > 0 ? (housingMonthly / monthlyIncome) * 100 : null
 
-  const snowball = useMemo(() => simulatePayoff(active, 'snowball'), [active])
-  const avalanche = useMemo(() => simulatePayoff(active, 'avalanche'), [active])
+  const snowball = useMemo(() => simulatePayoff(allActive, 'snowball'), [allActive])
+  const avalanche = useMemo(() => simulatePayoff(allActive, 'avalanche'), [allActive])
 
-  const jenisPresent = useMemo(() => ['Semua', ...Array.from(new Set(active.map((d) => CAT[d.category]?.label ?? d.category)))], [active])
-  const visible = filter === 'Semua' ? active : active.filter((d) => (CAT[d.category]?.label ?? d.category) === filter)
-  const upcoming = useMemo(() => [...active].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || '')).slice(0, 4), [active])
+  const jenisPresent = useMemo(() => ['Semua', ...Array.from(new Set(allActive.map((d) => CAT[d.category]?.label ?? d.category)))], [allActive])
+  const visible = filter === 'Semua' ? allActive : allActive.filter((d) => (CAT[d.category]?.label ?? d.category) === filter)
+  const upcoming = useMemo(() => [...allActive].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || '')).slice(0, 4), [allActive])
 
   return (
     <div className="space-y-6">
       <WealthHero
-        eyebrow={`${active.length} utang aktif`}
+        eyebrow={`${allActive.length} utang aktif`}
         title="Utang & Strategi Pelunasan"
         accent="#F43F5E"
         headline={{
@@ -145,7 +173,7 @@ export default function DebtsOverviewPage() {
             ? (<>Dibayar <span className="num" style={{ color: '#10B981' }}>{formatCurrency(totalPaid)}</span> dari pokok <span className="num">{formatCurrency(totalPrincipal)}</span> · {paidPct.toFixed(0)}% lunas</>)
             : 'Konsolidasi semua kewajiban + dua strategi pelunasan buat dibandingkan.',
         }}
-        secondary={active.length > 0 ? [
+        secondary={allActive.length > 0 ? [
           { label: 'Cicilan / Bulan', value: formatCurrency(totalMonthly) },
           { label: 'Debt-to-Income', value: dti != null ? `${dti.toFixed(1)}%` : '—', color: dti == null ? undefined : dti <= 36 ? '#10B981' : dti <= 50 ? '#F59E0B' : '#F43F5E' },
         ] : []}
@@ -157,7 +185,7 @@ export default function DebtsOverviewPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
-      ) : active.length === 0 ? (
+      ) : allActive.length === 0 ? (
         <div className="s-card p-12 text-center">
           <PartyPopper className="size-12 mx-auto" style={{ color: '#10B981' }} />
           <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>Bebas utang</p>
@@ -194,6 +222,7 @@ export default function DebtsOverviewPage() {
                   {visible.map((d) => {
                     const meta = CAT[d.category] ?? CAT.consumer
                     const Icon = meta.icon
+                    const isCC = d.id.startsWith('cc:')
                     const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
                     const tenor = isRevolving(d.type) ? 'Revolving' : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} bln` : '—')
                     return (
@@ -221,8 +250,14 @@ export default function DebtsOverviewPage() {
                         <td className="px-3 py-3 text-right">
                           <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(d.monthly_payment)}</span>
                           <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition mt-1">
-                            <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)}><Pencil className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                            {isCC ? (
+                              <Link href="/dashboard/credit-cards"><Button variant="ghost" size="icon-sm" title="Kelola di Kartu Kredit"><CreditCard className="h-3 w-3" /></Button></Link>
+                            ) : (
+                              <>
+                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)}><Pencil className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                              </>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>{tenor}</td>

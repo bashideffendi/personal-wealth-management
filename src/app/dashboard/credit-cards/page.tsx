@@ -16,11 +16,12 @@ import {
 } from '@/components/ui/select'
 import {
   Plus, Pencil, Trash2, Loader2, Wallet, CreditCard, ArrowUpRight,
-  CheckCircle2, ReceiptText, ShieldCheck, Check, type LucideIcon,
+  CheckCircle2, CalendarClock, ShieldCheck, Check, type LucideIcon,
 } from 'lucide-react'
 import { InstitutionSearch } from '@/components/accounts/institution-search'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { identifyInstitution } from '@/lib/indonesian-institutions'
+import { CompoundDebtWarning } from '@/components/debt/compound-debt-warning'
 
 interface CardFormState {
   id: string | null
@@ -225,11 +226,22 @@ export default function CreditCardsPage() {
     return Math.round(ms / 86_400_000)
   }
 
+  // Tagihan terdekat (buat tile #4 + nudge) — kartu ber-saldo, diurut hari terdekat
+  const dueList = active
+    .filter((c) => c.current_balance > 0)
+    .map((c) => { const due = nextDueDate(c.due_day); return { c, due, days: daysUntil(due) } })
+    .sort((a, b) => a.days - b.days)
+  const nearest = dueList[0]
+  // Rate gabungan tertimbang saldo buat warning bunga. interest_rate = %/BULAN → ×12 jadi tahunan.
+  const blendedAnnualRate = totals.outstanding > 0
+    ? (active.reduce((s, c) => s + c.current_balance * (c.interest_rate || 0), 0) / totals.outstanding) * 12
+    : 0
+
   const stats: { label: string; value: string; sub: string; icon: LucideIcon; color: string; tint: string }[] = [
-    { label: 'Total Limit', value: formatCurrency(totals.limit), sub: `Dari ${totals.count} kartu`, icon: CreditCard, color: '#6366F1', tint: 'rgba(99,102,241,0.12)' },
+    { label: 'Total Limit', value: formatCurrency(totals.limit), sub: `Dari ${totals.count} kartu`, icon: CreditCard, color: '#64748B', tint: 'rgba(100,116,139,0.12)' },
     { label: 'Total Terpakai', value: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% dari limit`, icon: ArrowUpRight, color: CORAL, tint: 'rgba(244,63,94,0.12)' },
     { label: 'Limit Tersedia', value: formatCurrency(totals.available), sub: 'Siap dipakai', icon: CheckCircle2, color: MINT, tint: 'rgba(16,185,129,0.12)' },
-    { label: 'Total Tagihan', value: formatCurrency(totals.outstanding), sub: 'Bulan ini', icon: ReceiptText, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
+    { label: 'Jatuh Tempo Terdekat', value: nearest ? formatDate(nearest.due.toISOString()) : '—', sub: nearest ? `${nearest.days} hari lagi` : 'Gak ada tagihan', icon: CalendarClock, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
   ]
 
   return (
@@ -386,6 +398,9 @@ export default function CreditCardsPage() {
               </div>
             </div>
           </div>
+
+          {/* Bunga berbunga — wake-up call kalau cuma bayar minimum (pakai bunga kartu) */}
+          <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label="Total kartu kredit" />
 
           {/* Riwayat pembayaran */}
           <div className="s-card overflow-hidden">

@@ -20,6 +20,7 @@ interface NetWorthData {
   personalItem: number
   longTermInvestment: number
   consumerDebt: number
+  creditCard: number
   cashLoan: number
   longTermDebt: number
 }
@@ -35,7 +36,7 @@ export default function NetWorthPage() {
   const [monthlyIncome, setMonthlyIncome] = useState(0)
   const [data, setData] = useState<NetWorthData>({
     cashAndEquivalent: 0, receivable: 0, property: 0, vehicle: 0, personalItem: 0,
-    longTermInvestment: 0, consumerDebt: 0, cashLoan: 0, longTermDebt: 0,
+    longTermInvestment: 0, consumerDebt: 0, creditCard: 0, cashLoan: 0, longTermDebt: 0,
   })
   const [debtCount, setDebtCount] = useState(0)
 
@@ -46,11 +47,12 @@ export default function NetWorthPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
-    const [liquidEntries, nonLiquidRes, investmentRes, debtRes, snapshotRes, txRes] = await Promise.all([
+    const [liquidEntries, nonLiquidRes, investmentRes, debtRes, ccRes, snapshotRes, txRes] = await Promise.all([
       fetchLiquidEntries(supabase, user.id),
       supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
       supabase.from('investments').select('total_value').eq('user_id', user.id),
       supabase.from('debts').select('category, remaining').eq('user_id', user.id).eq('is_active', true),
+      supabase.from('credit_cards').select('current_balance').eq('user_id', user.id).eq('is_active', true),
       supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('snapshot_date'),
       supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
     ])
@@ -60,7 +62,10 @@ export default function NetWorthPage() {
     const nonLiquidAssets = (nonLiquidRes.data ?? []) as NonLiquidRow[]
     const investments = (investmentRes.data ?? []) as { total_value: number }[]
     const debts = (debtRes.data ?? []) as DebtRow[]
-    setDebtCount(debts.filter((d) => d.remaining > 0).length)
+    // Kartu kredit = utang revolving → ikut liabilitas
+    const cards = (ccRes.data ?? []) as { current_balance: number }[]
+    const creditCardDebt = cards.reduce((s, c) => s + (c.current_balance || 0), 0)
+    setDebtCount(debts.filter((d) => d.remaining > 0).length + cards.filter((c) => (c.current_balance || 0) > 0).length)
 
     const incomeRows = (txRes.data ?? []) as { amount: number }[]
     setMonthlyIncome(incomeRows.length > 0 ? incomeRows.reduce((s, t) => s + (t.amount || 0), 0) / 3 : 0)
@@ -76,13 +81,14 @@ export default function NetWorthPage() {
       personalItem: sumCat(nonLiquidAssets, 'personal_item'),
       longTermInvestment: investments.reduce((s, inv) => s + (inv.total_value || 0), 0),
       consumerDebt: sumDebt('consumer'),
+      creditCard: creditCardDebt,
       cashLoan: sumDebt('cash_loan'),
       longTermDebt: sumDebt('long_term'),
     }
     setData(next)
 
     const totalAssetsNow = next.cashAndEquivalent + next.receivable + next.property + next.vehicle + next.personalItem + next.longTermInvestment
-    const totalDebtsNow = next.consumerDebt + next.cashLoan + next.longTermDebt
+    const totalDebtsNow = next.consumerDebt + next.creditCard + next.cashLoan + next.longTermDebt
     const todayISO = new Date().toISOString().split('T')[0]
     await supabase.from('net_worth_snapshots').upsert(
       { user_id: user.id, snapshot_date: todayISO, total_assets: totalAssetsNow, total_debts: totalDebtsNow, net_worth: totalAssetsNow - totalDebtsNow },
@@ -98,7 +104,7 @@ export default function NetWorthPage() {
   const totalCurrentAssets = data.cashAndEquivalent + data.receivable
   const totalNonCurrentAssets = data.property + data.vehicle + data.personalItem + data.longTermInvestment
   const totalAssets = totalCurrentAssets + totalNonCurrentAssets
-  const totalCurrentDebt = data.consumerDebt + data.cashLoan
+  const totalCurrentDebt = data.consumerDebt + data.creditCard + data.cashLoan
   const totalDebt = totalCurrentDebt + data.longTermDebt
   const netWorth = totalAssets - totalDebt
   const isPositive = netWorth >= 0
@@ -220,6 +226,7 @@ export default function NetWorthPage() {
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>Utang Lancar</p>
               <Row label="Utang Konsumer" value={data.consumerDebt} neg />
+              <Row label="Kartu Kredit" value={data.creditCard} neg />
               <Row label="Pinjaman Tunai" value={data.cashLoan} neg />
               <SubtotalRow label="Subtotal Utang Lancar" value={totalCurrentDebt} color="#F43F5E" neg />
             </div>
