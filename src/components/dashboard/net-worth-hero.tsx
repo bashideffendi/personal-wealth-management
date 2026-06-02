@@ -139,13 +139,13 @@ export function NetWorthHero({
         }}
       />
 
-      <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-8 lg:gap-12 p-6 sm:p-8 lg:p-10">
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-6 lg:gap-8 p-5 sm:p-6 lg:p-7">
         {/* ───── LEFT: numeric block ───── */}
         <div className="min-w-0">
           {/* Greeting eyebrow */}
           <p
             className="text-[11px] font-semibold tracking-[0.14em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.50)' }}
+            style={{ color: 'rgba(255,255,255,0.66)' }}
           >
             {greetingMain}{userName ? `, ${userName}` : ''} ·{' '}
             {now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
@@ -154,17 +154,17 @@ export function NetWorthHero({
           {/* Section label */}
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase mt-4"
-            style={{ color: 'rgba(255,255,255,0.55)' }}
+            style={{ color: 'rgba(255,255,255,0.72)' }}
           >
             Kekayaan Bersih
           </p>
 
           {/* Hero net worth — MONO bold large */}
           <p
-            className="num tabular font-bold leading-none mt-3 whitespace-nowrap"
+            className="num tabular font-bold leading-none mt-2 whitespace-nowrap"
             style={{
-              fontSize: 'clamp(40px, 6.5vw, 64px)',
-              letterSpacing: '-0.04em',
+              fontSize: 'clamp(30px, 4.2vw, 42px)',
+              letterSpacing: '-0.035em',
               color: '#FFFFFF',
             }}
           >
@@ -190,7 +190,7 @@ export function NetWorthHero({
             {ytdPct !== 0 && (
               <span
                 className="text-xs font-medium"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
+                style={{ color: 'rgba(255,255,255,0.72)' }}
               >
                 YTD{' '}
                 <strong
@@ -208,7 +208,7 @@ export function NetWorthHero({
           {forecastMonths && (
             <p
               className="text-[13px] mt-5 leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.55)' }}
+              style={{ color: 'rgba(255,255,255,0.72)' }}
             >
               Kalau ritme ini lanjut, kamu capai{' '}
               <span className="font-semibold" style={{ color: '#6EE7B7' }}>
@@ -220,34 +220,34 @@ export function NetWorthHero({
 
           {/* Asset/Debt split */}
           <div
-            className="mt-6 pt-5 grid grid-cols-2 gap-6"
+            className="mt-5 pt-4 grid grid-cols-2 gap-6"
             style={{ borderTop: '1px solid rgba(255,255,255,0.10)' }}
           >
             <div>
               <p
-                className="text-[10px] font-bold tracking-[0.14em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.40)' }}
+                className="text-[11px] font-bold tracking-[0.12em] uppercase"
+                style={{ color: 'rgba(255,255,255,0.62)' }}
               >
                 Total Aset
               </p>
               <p
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
-                style={{ fontSize: 18, color: '#FFFFFF' }}
+                style={{ fontSize: 16, color: '#FFFFFF' }}
               >
                 {formatCompactCurrency(totalAssets)}
               </p>
             </div>
             <div>
               <p
-                className="text-[10px] font-bold tracking-[0.14em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.40)' }}
+                className="text-[11px] font-bold tracking-[0.12em] uppercase"
+                style={{ color: 'rgba(255,255,255,0.62)' }}
               >
                 Total Utang
               </p>
               <p
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
                 style={{
-                  fontSize: 18,
+                  fontSize: 16,
                   color: debtTotal > 0 ? '#FDA4AF' : '#FFFFFF',
                 }}
               >
@@ -257,7 +257,7 @@ export function NetWorthHero({
           </div>
 
           {/* CTA */}
-          <div className="flex gap-2 mt-6 flex-wrap">
+          <div className="flex gap-2 mt-5 flex-wrap">
             <Link
               href="/dashboard/net-worth"
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
@@ -289,7 +289,7 @@ export function NetWorthHero({
             <div>
               <p
                 className="text-[11px] font-semibold tracking-[0.14em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.50)' }}
+                style={{ color: 'rgba(255,255,255,0.66)' }}
               >
                 Pertumbuhan
               </p>
@@ -303,7 +303,7 @@ export function NetWorthHero({
                 >
                   {sparkline.change >= 0 ? '+' : '−'}
                   {formatCompactCurrency(Math.abs(sparkline.change))}{' '}
-                  <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 500 }}>
                     ({sparkline.changePct >= 0 ? '+' : ''}
                     {sparkline.changePct.toFixed(1)}%)
                   </span>
@@ -325,7 +325,7 @@ export function NetWorthHero({
                     className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
                     style={{
                       background: active ? 'rgba(255,255,255,0.14)' : 'transparent',
-                      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.55)',
+                      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.72)',
                       cursor: 'pointer',
                       border: 0,
                     }}
@@ -338,13 +338,13 @@ export function NetWorthHero({
           </div>
 
           {/* Sparkline */}
-          <div className="flex-1 min-h-[160px]">
+          <div className="flex-1 min-h-[120px]">
             {sparkline ? (
               <svg
                 viewBox={`0 0 ${sparkline.W} ${sparkline.H}`}
                 preserveAspectRatio="none"
                 className="w-full h-full"
-                style={{ minHeight: 160 }}
+                style={{ minHeight: 120 }}
               >
                 <defs>
                   <linearGradient id="nwspark" x1="0" x2="0" y1="0" y2="1">
@@ -382,7 +382,7 @@ export function NetWorthHero({
             ) : (
               <div
                 className="h-full flex items-center justify-center text-sm"
-                style={{ color: 'rgba(255,255,255,0.45)' }}
+                style={{ color: 'rgba(255,255,255,0.60)' }}
               >
                 Catat transaksi untuk lihat trend
               </div>

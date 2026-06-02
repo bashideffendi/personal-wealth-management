@@ -158,7 +158,7 @@ export function CashFlowForecast({
           </div>
           <div>
             <p className="eyebrow">Forecast Saldo</p>
-            <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            <h3 className="text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
               30 Hari ke Depan
             </h3>
           </div>
