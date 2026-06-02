@@ -158,6 +158,8 @@ export interface CreditCard {
   user_id: string
   name: string
   issuer: string
+  /** Card network: 'visa' | 'mastercard' | 'gpn' | 'jcb' | 'amex' (logo on the card). */
+  network?: string | null
   last_four: string
   credit_limit: number
   current_balance: number

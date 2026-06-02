@@ -26,6 +26,7 @@ interface CardFormState {
   id: string | null
   name: string
   issuer: string
+  network: string
   last_four: string
   credit_limit: number
   current_balance: number
@@ -35,9 +36,37 @@ interface CardFormState {
   is_active: boolean
 }
 const EMPTY_CARD: CardFormState = {
-  id: null, name: '', issuer: '', last_four: '',
+  id: null, name: '', issuer: '', network: '', last_four: '',
   credit_limit: 0, current_balance: 0,
   billing_day: 1, due_day: 15, interest_rate: 2.25, is_active: true,
+}
+
+const NETWORKS: { value: string; label: string }[] = [
+  { value: 'visa', label: 'Visa' },
+  { value: 'mastercard', label: 'Mastercard' },
+  { value: 'gpn', label: 'GPN' },
+  { value: 'jcb', label: 'JCB' },
+  { value: 'amex', label: 'Amex' },
+]
+
+/** Logo jaringan kartu, ditaruh di pojok kanan-bawah visual kartu (putih, di atas gradient). */
+function NetworkMark({ network, size = 22 }: { network?: string | null; size?: number }) {
+  const n = (network || '').toLowerCase()
+  if (!n) return null
+  if (n === 'mastercard') {
+    const d = size
+    return (
+      <span className="inline-flex items-center" aria-label="Mastercard">
+        <span className="rounded-full" style={{ width: d, height: d, background: '#EB001B' }} />
+        <span className="rounded-full" style={{ width: d, height: d, background: '#F79E1B', marginLeft: -d * 0.42, opacity: 0.9 }} />
+      </span>
+    )
+  }
+  if (n === 'visa') {
+    return <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800, fontSize: size, color: '#FFFFFF', letterSpacing: '0.01em', lineHeight: 1 }}>VISA</span>
+  }
+  const label = n === 'gpn' ? 'GPN' : n === 'jcb' ? 'JCB' : n === 'amex' ? 'AMEX' : (network || '').toUpperCase()
+  return <span style={{ fontWeight: 800, fontSize: size * 0.72, color: '#FFFFFF', letterSpacing: '0.1em', lineHeight: 1 }}>{label}</span>
 }
 
 interface PayFormState {
@@ -115,14 +144,22 @@ export default function CreditCardsPage() {
     setCardSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setCardSaving(false); return }
-    const payload = {
-      user_id: user.id, name: cardForm.name, issuer: cardForm.issuer, last_four: cardForm.last_four,
+    const base = {
+      user_id: user.id, name: cardForm.name, issuer: cardForm.issuer,
+      last_four: cardForm.last_four,
       credit_limit: cardForm.credit_limit, current_balance: cardForm.current_balance,
       billing_day: cardForm.billing_day, due_day: cardForm.due_day,
       interest_rate: cardForm.interest_rate, is_active: cardForm.is_active,
     }
-    if (cardForm.id) await supabase.from('credit_cards').update(payload).eq('id', cardForm.id)
-    else await supabase.from('credit_cards').insert(payload)
+    const withNet = { ...base, network: cardForm.network || null }
+    const write = (p: Record<string, unknown>) =>
+      cardForm.id
+        ? supabase.from('credit_cards').update(p).eq('id', cardForm.id as string)
+        : supabase.from('credit_cards').insert(p)
+    // Coba simpan dengan network; kalau kolomnya belum di-migrate (035), simpan
+    // tanpa network biar gak gagal total (logo jaringan baru muncul stlh migrate).
+    let { error } = await write(withNet)
+    if (error && /network/i.test(error.message || '')) ({ error } = await write(base))
     setCardSaving(false); setCardDialogOpen(false); void load()
   }
 
@@ -133,7 +170,7 @@ export default function CreditCardsPage() {
 
   function openEditCard(c: CreditCardType) {
     setCardForm({
-      id: c.id, name: c.name, issuer: c.issuer, last_four: c.last_four,
+      id: c.id, name: c.name, issuer: c.issuer, network: c.network ?? '', last_four: c.last_four,
       credit_limit: c.credit_limit, current_balance: c.current_balance,
       billing_day: c.billing_day, due_day: c.due_day,
       interest_rate: c.interest_rate, is_active: c.is_active,
@@ -273,8 +310,12 @@ export default function CreditCardsPage() {
                       <button onClick={() => removeCard(c.id)} aria-label="Hapus" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
                     </div>
                     <p className="absolute left-5" style={{ top: 56, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 19, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{c.name}</p>
-                    <div className="absolute bottom-5 left-5 right-5" style={{ fontFamily: 'var(--font-mono)', fontSize: 15, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.92)' }}>
+                    <div className="absolute bottom-5 left-5" style={{ fontFamily: 'var(--font-mono)', fontSize: 15, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.92)' }}>
                       •••• •••• •••• {c.last_four || '••••'}
+                    </div>
+                    {/* Logo jaringan (Visa/Mastercard/GPN/...) pojok kanan-bawah */}
+                    <div className="absolute bottom-4 right-5">
+                      <NetworkMark network={c.network} size={22} />
                     </div>
                   </div>
                   {/* Stats bottom */}
@@ -421,6 +462,26 @@ export default function CreditCardsPage() {
               <div className="grid gap-1.5">
                 <Label>4 Digit Terakhir</Label>
                 <Input value={cardForm.last_four} maxLength={4} inputMode="numeric" onChange={(e) => setCardForm({ ...cardForm, last_four: e.target.value.replace(/\D/g, '') })} placeholder="1234" />
+              </div>
+            </div>
+            {/* Jaringan kartu — logonya muncul di kartu */}
+            <div className="grid gap-1.5">
+              <Label>Jaringan</Label>
+              <div className="flex flex-wrap gap-2">
+                {NETWORKS.map((net) => {
+                  const on = cardForm.network === net.value
+                  return (
+                    <button
+                      key={net.value}
+                      type="button"
+                      onClick={() => setCardForm({ ...cardForm, network: on ? '' : net.value })}
+                      className="rounded-lg border px-3 py-2 text-[12px] font-medium transition"
+                      style={{ borderColor: on ? CORAL : 'var(--border-soft)', background: on ? 'rgba(244,63,94,0.08)' : 'var(--surface)', color: on ? '#9F1239' : 'var(--ink-muted)' }}
+                    >
+                      {net.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
             {/* Limit + tagihan */}
