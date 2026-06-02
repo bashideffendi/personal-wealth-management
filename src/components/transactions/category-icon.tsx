@@ -25,6 +25,7 @@ import {
   Tag,
   type LucideIcon,
 } from 'lucide-react'
+import { rootCategory } from '@/lib/budget-categories'
 
 // Map kategori (ID) -> icon. Yang nggak ke-map jatuh ke Tag (default).
 const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
@@ -71,6 +72,7 @@ const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
 }
 
 export function CategoryIcon({ category, className }: { category: string; className?: string }) {
-  const Icon = CATEGORY_ICON_MAP[category] ?? Tag
+  // Coba exact dulu, lalu induknya ("Langganan › Netflix" → "Langganan"), baru default.
+  const Icon = CATEGORY_ICON_MAP[category] ?? CATEGORY_ICON_MAP[rootCategory(category)] ?? Tag
   return <Icon className={className} />
 }

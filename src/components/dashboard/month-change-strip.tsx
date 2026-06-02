@@ -13,6 +13,7 @@
 
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { rootCategory } from '@/lib/budget-categories'
 
 interface Tx {
   type: 'income' | 'expense' | 'saving' | 'investment'
@@ -38,7 +39,8 @@ function aggregateExpenseByCategory(txs: Tx[]): Map<string, number> {
     if (t.type !== 'expense') continue
     // Skip "Transfer" pseudo-category — internal moves, not real spending
     if (t.category === 'Transfer') continue
-    m.set(t.category, (m.get(t.category) ?? 0) + t.amount)
+    const c = rootCategory(t.category) // gabung subkategori ke induknya
+    m.set(c, (m.get(c) ?? 0) + t.amount)
   }
   return m
 }

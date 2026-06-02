@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import {
-  INCOME_CATEGORIES, EXPENSE_CATEGORIES, SAVING_CATEGORIES, INVESTMENT_CATEGORIES,
-} from '@/lib/constants'
+import { useCategoryOptions } from '@/lib/use-category-options'
 import type { CategorizationRule } from '@/types'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/page-header'
@@ -20,15 +18,6 @@ import { Plus, Trash2, Loader2, Sparkles } from 'lucide-react'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 
-function categoriesFor(type: TxType): readonly string[] {
-  switch (type) {
-    case 'income': return INCOME_CATEGORIES
-    case 'expense': return EXPENSE_CATEGORIES
-    case 'saving': return SAVING_CATEGORIES
-    case 'investment': return INVESTMENT_CATEGORIES
-  }
-}
-
 interface FormState {
   id: string | null
   match_text: string
@@ -42,6 +31,7 @@ const EMPTY: FormState = {
 
 export default function RulesPage() {
   const supabase = createClient()
+  const { optionsForType, firstOf } = useCategoryOptions()
   const [loading, setLoading] = useState(true)
   const [rules, setRules] = useState<CategorizationRule[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -175,7 +165,7 @@ export default function RulesPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label>Tipe</Label>
-                <Select value={form.type} onValueChange={(v) => v && setForm({ ...form, type: v as TxType, category: categoriesFor(v as TxType)[0] })}>
+                <Select value={form.type} onValueChange={(v) => v && setForm({ ...form, type: v as TxType, category: firstOf(v as TxType) })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih tipe">
                       {(v) => ({
@@ -203,7 +193,15 @@ export default function RulesPage() {
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {categoriesFor(form.type).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {optionsForType(form.type).map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.depth > 0 ? (
+                          <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                        ) : (
+                          o.label
+                        )}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

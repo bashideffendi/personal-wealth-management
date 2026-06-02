@@ -9,12 +9,7 @@ import {
   shouldTriggerReflection,
 } from '@/components/reflective/reflective-spending-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import {
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  SAVING_CATEGORIES,
-  INVESTMENT_CATEGORIES,
-} from '@/lib/constants'
+import { useCategoryOptions } from '@/lib/use-category-options'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
@@ -70,19 +65,6 @@ const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string }> 
   investment: { bg: 'var(--c-violet-soft)', color: 'var(--c-violet)' },
 }
 
-function getCategoriesForType(type: TransactionType): readonly string[] {
-  switch (type) {
-    case 'income':
-      return INCOME_CATEGORIES
-    case 'expense':
-      return EXPENSE_CATEGORIES
-    case 'saving':
-      return SAVING_CATEGORIES
-    case 'investment':
-      return INVESTMENT_CATEGORIES
-  }
-}
-
 const emptyForm = {
   date: new Date().toISOString().split('T')[0],
   account_id: '',
@@ -94,6 +76,7 @@ const emptyForm = {
 
 export default function TransactionsPage() {
   const supabase = createClient()
+  const { optionsForType } = useCategoryOptions()
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -672,15 +655,16 @@ export default function TransactionsPage() {
     return true
   })
 
-  // Dynamic category list for filter
-  const filterCategoryOptions: readonly string[] =
+  // Daftar kategori filter — diturunkan dari tree user (induk + subkategori).
+  const filterCategoryOptions: string[] =
     filterType !== 'all'
-      ? getCategoriesForType(filterType as TransactionType)
+      ? optionsForType(filterType as TransactionType).map((o) => o.value)
       : [
-          ...INCOME_CATEGORIES,
-          ...EXPENSE_CATEGORIES,
-          ...SAVING_CATEGORIES,
-          ...INVESTMENT_CATEGORIES,
+          ...new Set(
+            (['income', 'expense', 'saving', 'investment'] as TransactionType[]).flatMap((t) =>
+              optionsForType(t).map((o) => o.value),
+            ),
+          ),
         ]
 
   return (
@@ -930,8 +914,14 @@ export default function TransactionsPage() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {getCategoriesForType(quickForm.type).map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                {optionsForType(quickForm.type).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.depth > 0 ? (
+                      <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                    ) : (
+                      o.label
+                    )}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1396,9 +1386,15 @@ export default function TransactionsPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {getCategoriesForType(form.type).map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                  {optionsForType(form.type).map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.depth > 0 ? (
+                        <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>
+                          ↳ {o.label}
+                        </span>
+                      ) : (
+                        o.label
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>

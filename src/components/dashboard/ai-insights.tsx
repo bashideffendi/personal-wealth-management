@@ -13,6 +13,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Sparkles, RefreshCw, Loader2, AlertCircle, PenLine, Camera, Command as CommandIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { rootCategory } from '@/lib/budget-categories'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import type { Transaction } from '@/types'
 
@@ -112,13 +113,15 @@ export function AIInsightsCard({
     const catMap: Record<string, { this_month: number; last_month: number }> = {}
     for (const tx of monthTransactions) {
       if (tx.type !== 'expense') continue
-      if (!catMap[tx.category]) catMap[tx.category] = { this_month: 0, last_month: 0 }
-      catMap[tx.category].this_month += tx.amount
+      const c = rootCategory(tx.category) // gabung subkategori ke induknya
+      if (!catMap[c]) catMap[c] = { this_month: 0, last_month: 0 }
+      catMap[c].this_month += tx.amount
     }
     for (const tx of lmTxs) {
       if (tx.type !== 'expense') continue
-      if (!catMap[tx.category]) catMap[tx.category] = { this_month: 0, last_month: 0 }
-      catMap[tx.category].last_month += tx.amount
+      const c = rootCategory(tx.category)
+      if (!catMap[c]) catMap[c] = { this_month: 0, last_month: 0 }
+      catMap[c].last_month += tx.amount
     }
     const expense_by_category = Object.entries(catMap)
       .map(([category, v]) => ({ category, ...v }))

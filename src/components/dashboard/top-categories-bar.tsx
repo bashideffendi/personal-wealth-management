@@ -1,12 +1,16 @@
 'use client'
 
 import { formatCurrency } from '@/lib/utils'
+import { rootCategory } from '@/lib/budget-categories'
 import type { Transaction } from '@/types'
 
 export function TopCategoriesBar({ monthTransactions }: { monthTransactions: Transaction[] }) {
+  // Roll up subkategori ke induknya ("Langganan › Netflix" → "Langganan") biar
+  // top-kategori gak kepecah jadi banyak baris kecil.
   const byCat: Record<string, number> = {}
   for (const t of monthTransactions.filter((t) => t.type === 'expense')) {
-    byCat[t.category] = (byCat[t.category] || 0) + t.amount
+    const key = rootCategory(t.category)
+    byCat[key] = (byCat[key] || 0) + t.amount
   }
   const sorted = Object.entries(byCat).sort(([, a], [, b]) => b - a).slice(0, 5)
   const max = sorted[0]?.[1] ?? 1

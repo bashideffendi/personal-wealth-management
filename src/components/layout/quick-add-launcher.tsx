@@ -16,12 +16,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import {
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  SAVING_CATEGORIES,
-  INVESTMENT_CATEGORIES,
-} from '@/lib/constants'
+import { useCategoryOptions } from '@/lib/use-category-options'
 import type { Account, CreditCard } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,19 +72,6 @@ interface ReceiptData {
   confidence: 'high' | 'medium' | 'low'
 }
 
-function categoriesFor(type: TxType): readonly string[] {
-  switch (type) {
-    case 'income':
-      return INCOME_CATEGORIES
-    case 'expense':
-      return EXPENSE_CATEGORIES
-    case 'saving':
-      return SAVING_CATEGORIES
-    case 'investment':
-      return INVESTMENT_CATEGORIES
-  }
-}
-
 const TYPE_LABEL: Record<TxType, string> = {
   income: 'Pemasukan',
   expense: 'Pengeluaran',
@@ -115,6 +97,7 @@ interface QuickAddLauncherProps {
 export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { firstOf } = useCategoryOptions()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [open, setOpen] = useState(false)
@@ -132,7 +115,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     date: new Date().toISOString().split('T')[0],
     account_id: '',
     type: 'expense',
-    category: EXPENSE_CATEGORIES[0],
+    category: firstOf('expense'),
     description: '',
     amount: 0,
   })
@@ -213,7 +196,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
         date: new Date().toISOString().split('T')[0],
         account_id: '',
         type: 'expense',
-        category: EXPENSE_CATEGORIES[0],
+        category: firstOf('expense'),
         description: '',
         amount: 0,
       })
@@ -327,7 +310,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     setForm((prev) => ({
       ...prev,
       type: t,
-      category: categoriesFor(t)[0],
+      category: firstOf(t),
     }))
   }
 
@@ -791,6 +774,7 @@ function ManualForm({
   onBack: () => void
   onSave: () => void
 }) {
+  const { optionsForType } = useCategoryOptions()
   const suggested = suggestCategory(form.description, recentTx, form.type, form.category)
   return (
     <>
@@ -839,9 +823,13 @@ function ManualForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {categoriesFor(form.type).map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+                {optionsForType(form.type).map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.depth > 0 ? (
+                      <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                    ) : (
+                      o.label
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>

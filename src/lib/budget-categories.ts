@@ -79,6 +79,36 @@ export function subKey(categoryName: string, subName: string): string {
   return `${categoryName}${SUB_SEP}${subName}`
 }
 
+/** Induk dari sebuah key. "Langganan › Netflix" → "Langganan"; "Makanan" → "Makanan". */
+export function rootCategory(key: string): string {
+  const i = key.indexOf(SUB_SEP)
+  return i === -1 ? key : key.slice(0, i)
+}
+
+export interface CategoryOption {
+  /** Key yang disimpan di transaksi: nama induk, atau "Induk › Sub". */
+  value: string
+  /** Teks tampil di dropdown — sub cukup nama sub-nya (di-indent via depth). */
+  label: string
+  /** 0 = induk, 1 = subkategori. */
+  depth: number
+}
+
+/**
+ * Opsi kategori buat dropdown transaksi/rules, urut tampilan. Induk tetap bisa
+ * dipilih (catch-all + jaga transaksi lama tetap valid); subkategori muncul di
+ * bawahnya. Kategori nonaktif di-skip. Satu sumber kebenaran = tree user.
+ */
+export function categoryOptions(nodes: CatNode[]): CategoryOption[] {
+  const out: CategoryOption[] = []
+  for (const c of nodes) {
+    if (!isEnabled(c)) continue
+    out.push({ value: c.name, label: c.name, depth: 0 })
+    for (const s of c.subs) out.push({ value: subKey(c.name, s.name), label: s.name, depth: 1 })
+  }
+  return out
+}
+
 /** Coerce arbitrary JSON into a clean CatNode[] (ids guaranteed, names trimmed). */
 function normalizeNodes(raw: unknown): CatNode[] {
   if (!Array.isArray(raw)) return []
