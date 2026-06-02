@@ -61,6 +61,9 @@ const DEFAULTS: Record<BudgetType, readonly string[]> = {
  */
 const DEFAULT_SUBS: Record<string, readonly string[]> = {
   Langganan: ['Netflix', 'Spotify', 'YouTube Premium'],
+  Makanan: ['Belanja Dapur', 'Makan di Luar', 'Kopi & Jajan'],
+  Transportasi: ['Bensin', 'Ojek/Taksi Online', 'Parkir & Tol', 'Servis Kendaraan'],
+  Tagihan: ['Listrik', 'Air (PDAM)', 'Internet', 'Pulsa & Paket Data', 'BPJS'],
 }
 function subNodesFor(name: string): SubNode[] {
   return (DEFAULT_SUBS[name] ?? []).map((s) => ({ id: newId(), name: s }))

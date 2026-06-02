@@ -7,6 +7,8 @@ export const INCOME_CATEGORIES = [
   'Pendapatan Sewa',
   'Komisi',
   'Bonus',
+  'THR',
+  'Gaji ke-13',
   'Pensiun',
   'Beasiswa / Hibah',
   'Warisan',
@@ -28,6 +30,8 @@ export const EXPENSE_CATEGORIES = [
   'Hiburan',
   'Hadiah',
   'Perjalanan',
+  'Zakat, Infaq & Sedekah',
+  'Arisan',
   'Langganan',
   'Tagihan',
 ] as const
