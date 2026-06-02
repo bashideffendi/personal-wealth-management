@@ -338,8 +338,13 @@ export default function DebtsOverviewPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Utang' : 'Utang baru'}</DialogTitle>
-            <DialogDescription>Isi detail utang kamu.</DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(244,63,94,0.12)' }}><Banknote className="size-5" style={{ color: '#F43F5E' }} /></div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Utang' : 'Utang Baru'}</DialogTitle>
+                <DialogDescription>Catat utang biar masuk hitungan net worth, DTI &amp; strategi pelunasan.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
