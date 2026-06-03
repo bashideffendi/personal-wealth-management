@@ -621,7 +621,7 @@ export default function DashboardPage() {
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="eyebrow">Aktivitas Bulan Ini</p>
-              <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
                 {MONTHS[selectedMonth - 1]} {selectedYear}
               </h3>
             </div>
@@ -754,7 +754,7 @@ export default function DashboardPage() {
         <div className="s-card p-6 lg:col-span-2">
           <div className="mb-4">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
-            <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+            <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
               {t('dashboard.expense_categories')}
             </h3>
           </div>
@@ -821,7 +821,7 @@ export default function DashboardPage() {
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
-              <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
                 {t('dashboard.income_vs_expense')}
               </h3>
             </div>
@@ -885,7 +885,7 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="eyebrow">Portofolio</p>
-              <h3 className="text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
                 Alokasi Investasi
               </h3>
             </div>

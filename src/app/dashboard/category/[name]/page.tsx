@@ -158,7 +158,7 @@ export default function CategoryDrilldownPage() {
         <>
           <div className="s-card p-5">
             <p className="eyebrow">Trend 12 Bulan</p>
-            <h3 className="text-lg font-semibold mt-0.5">Per Bulan</h3>
+            <h3 className="t-h2 mt-0.5">Per Bulan</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -176,7 +176,7 @@ export default function CategoryDrilldownPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="s-card p-5">
               <p className="eyebrow">Breakdown</p>
-              <h3 className="text-lg font-semibold mt-0.5">Top Merchant / Deskripsi</h3>
+              <h3 className="t-h2 mt-0.5">Top Merchant / Deskripsi</h3>
               <ul className="mt-4 space-y-2">
                 {merchants.map(([name, amt]) => {
                   const pct = stats.total > 0 ? (amt / stats.total) * 100 : 0
@@ -197,7 +197,7 @@ export default function CategoryDrilldownPage() {
 
             <div className="s-card p-5">
               <p className="eyebrow">Transaksi Terbaru</p>
-              <h3 className="text-lg font-semibold mt-0.5">Recent</h3>
+              <h3 className="t-h2 mt-0.5">Recent</h3>
               <ul className="mt-4 divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {txs.slice(0, 8).map((t) => (
                   <li key={t.id} className="py-2 flex items-center justify-between">
