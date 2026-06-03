@@ -205,6 +205,19 @@ export function MonthlyReportBody({
   const topDown = r.shifts.find((s) => s.delta < 0)
   const topCat = r.expense_by_category[0] ?? null
   const topCatBudget = topCat ? (r.budgetVsActual.find((b) => b.category === topCat.name) ?? null) : null
+  // Print = angka presisi penuh (dokumen rekonsiliasi); layar = ringkas.
+  const money = variant === 'print' ? formatCurrency : formatCompactCurrency
+  const lastDay = new Date(year, month, 0).getDate()
+  // Langkah berikutnya — rule-based (ambang + angka riil), bukan generatif.
+  const steps: string[] = []
+  if (r.income > 0 && r.savingRate < 20) {
+    const kurang = Math.round(r.income * 0.2 - (r.saving + r.investment))
+    if (kurang > 0) steps.push(`Naikkan tabungan + investasi ke ≥20% pendapatan — kurang sekitar ${money(kurang)}/bulan.`)
+  }
+  const overB = r.budgetVsActual.filter((b) => b.ratio > 100)
+  if (overB.length) steps.push(`${overB.length} kategori lewat anggaran (mis. ${overB[0].category} ${overB[0].ratio.toFixed(0)}%) — tinjau & sesuaikan ${nextMonthLabel}.`)
+  if (r.upcomingTotal > 0 && r.upcomingTotal > r.surplus) steps.push(`Kewajiban ${nextMonthLabel} (${money(r.upcomingTotal)}) lebih besar dari surplus bulan ini — siapkan dananya dari awal.`)
+  if (r.surplus > 0 && r.savingRate >= 20) steps.push(`Surplus ${money(r.surplus)} dengan saving rate sehat — pertimbangkan dorong kelebihannya ke tujuan atau investasi.`)
 
   if (r.tx_count === 0) {
     return (
@@ -217,20 +230,29 @@ export function MonthlyReportBody({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 report-flow">
       {/* Document header / letterhead */}
       <header className="print-avoid-break">
         {variant === 'print' && (
-          <div className="flex items-center justify-between pb-3 mb-5" style={{ borderBottom: '2px solid var(--ink)' }}>
-            <span className="t-title font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>Klunting</span>
-            <span className="eyebrow" style={{ color: 'var(--text-mute)' }}>Laporan Keuangan</span>
+          <div className="flex items-center justify-between pb-2.5 mb-4" style={{ borderBottom: '1px solid var(--line-strong)' }}>
+            <span className="t-title font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>Klunting</span>
+            <span className="eyebrow" style={{ color: 'var(--text-mute)' }}>Laporan Keuangan Bulanan</span>
           </div>
         )}
         <p className="eyebrow">Ringkasan Bulanan · {MONTHS[month - 1]} {year}</p>
         <h1 className="t-display mt-1" style={{ color: 'var(--ink)' }}>Laporan {MONTHS[month - 1]}</h1>
-        <p className="t-body mt-1.5" style={{ color: 'var(--ink-soft)' }}>
-          Disiapkan untuk <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{userName}</span> · dibuat {generatedAt}
-        </p>
+        {variant === 'print' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
+            <Meta label="Disiapkan untuk" value={userName} />
+            <Meta label="Periode" value={`1–${lastDay} ${MONTHS[month - 1]} ${year}`} />
+            <Meta label="Transaksi" value={`${r.tx_count}`} />
+            <Meta label="Tanggal terbit" value={generatedAt} />
+          </div>
+        ) : (
+          <p className="t-body mt-1.5" style={{ color: 'var(--ink-soft)' }}>
+            Disiapkan untuk <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{userName}</span> · dibuat {generatedAt}
+          </p>
+        )}
       </header>
 
       {/* KPI */}
@@ -241,22 +263,26 @@ export function MonthlyReportBody({
         <Kpi label="Diinvestasikan" value={r.investment} note={`${r.income > 0 ? ((r.investment / r.income) * 100).toFixed(0) : 0}% dari pendapatan`} icon={<LineChartIcon className="size-4" />} kind="violet" />
       </div>
 
-      {/* Ringkasan eksekutif — narasi prosa + strip arus kas */}
-      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-primary)' }}>
-        <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Ringkasan Eksekutif</p>
-        <p className="t-body mt-2.5" style={{ color: 'var(--ink)', lineHeight: 1.75 }}>
-          Sepanjang {MONTHS[month - 1]} {year}, total pemasukan {formatCurrency(r.income)} dan pengeluaran {formatCurrency(r.expense)}, menghasilkan {surplusWord}{' '}
-          <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{formatCurrency(Math.abs(r.surplus))}</span>.
-          Dari pendapatan, <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{r.savingRate.toFixed(0)}%</span> dialokasikan ke tabungan &amp; investasi — {r.savingRate >= 20 ? 'di atas' : 'di bawah'} ambang ideal 20%{r.surplusStreak >= 2 ? `, dan ini surplus ${r.surplusStreak} bulan beruntun` : ''}.
-          {topCat ? ` Pengeluaran terbesar ada di ${topCat.name} sebesar ${formatCurrency(topCat.amount)}${topCatBudget ? (topCatBudget.ratio > 100 ? `, melampaui anggaran (${topCatBudget.ratio.toFixed(0)}%)` : `, masih ${topCatBudget.ratio.toFixed(0)}% dari anggaran`) : ''}.` : ''}
-          {` Posisi kekayaan bersih saat ini ${formatCurrency(r.netWorth)}.`}
-          {r.upcomingTotal > 0 ? ` Untuk ${nextMonthLabel}, siapkan sekitar ${formatCurrency(r.upcomingTotal)} untuk kewajiban rutin.` : ''}
-        </p>
+      {/* Ringkasan eksekutif — narasi prosa 3 sub-paragraf + strip arus kas */}
+      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
+        <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Ringkasan Eksekutif</p>
+        <div className="mt-2.5 space-y-2.5" style={{ maxWidth: variant === 'print' ? '64ch' : undefined }}>
+          <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
+            <strong>Arus kas.</strong> Sepanjang {MONTHS[month - 1]} {year}, pemasukan {money(r.income)} dan pengeluaran {money(r.expense)} menghasilkan {surplusWord}{' '}
+            <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{money(Math.abs(r.surplus))}</span>{r.surplusStreak >= 2 ? ` — surplus ${r.surplusStreak} bulan beruntun` : ''}.
+          </p>
+          <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
+            <strong>Alokasi.</strong> <span className="num font-semibold">{r.savingRate.toFixed(0)}%</span> dari pendapatan disisihkan ke tabungan &amp; investasi — {r.savingRate >= 20 ? 'di atas' : 'di bawah'} ambang ideal 20%.{topCat ? ` Pengeluaran terbesar di ${topCat.name} (${money(topCat.amount)})${topCatBudget ? (topCatBudget.ratio > 100 ? `, melampaui anggaran ${topCatBudget.ratio.toFixed(0)}%` : `, ${topCatBudget.ratio.toFixed(0)}% dari anggaran`) : ''}.` : ''}
+          </p>
+          <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
+            <strong>Posisi &amp; rencana.</strong> Kekayaan bersih saat ini {money(r.netWorth)}.{r.upcomingTotal > 0 ? ` Untuk ${nextMonthLabel}, siapkan sekitar ${money(r.upcomingTotal)} untuk kewajiban rutin.` : ''}
+          </p>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
           <Mini label="Uang Masuk" value={r.income} color="var(--c-mint)" />
-          <Mini label="Uang Keluar" value={r.expense + r.saving + r.investment} color="var(--c-coral)" />
+          <Mini label="Belanja" value={r.expense} color="var(--c-coral)" />
+          <Mini label="Nabung + Investasi" value={r.saving + r.investment} color="var(--c-violet)" />
           <Mini label="Selisih" value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'} signed />
-          <Mini label="Saving Rate" text={`${r.savingRate.toFixed(0)}%`} color="var(--c-violet)" />
         </div>
       </div>
 
@@ -321,7 +347,7 @@ export function MonthlyReportBody({
                 <div key={b.category}>
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="t-sm truncate" style={{ color: 'var(--ink)' }}>{b.category}</span>
-                    <span className="num t-cap shrink-0" style={{ color }}>{b.ratio.toFixed(0)}% · {formatCompactCurrency(b.actual)}/{formatCompactCurrency(b.budget)}</span>
+                    <span className="num t-cap shrink-0" style={{ color }}>{b.ratio.toFixed(0)}% · {money(b.actual)}/{money(b.budget)}</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                     <div className="h-full rounded-full" style={{ width: `${Math.min(100, b.ratio)}%`, background: color }} />
@@ -346,7 +372,7 @@ export function MonthlyReportBody({
                   <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                     <div className="h-full rounded-full" style={{ width: `${(row.amount / r.maxExp) * 100}%`, background: 'var(--c-violet)' }} />
                   </div>
-                  <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(row.amount)}</span>
+                  <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{money(row.amount)}</span>
                   {r.hasPrev && <span className="num t-cap w-16 text-right shrink-0" style={{ color: row.delta > 0 ? 'var(--c-coral)' : row.delta < 0 ? 'var(--c-mint)' : 'var(--text-mute)' }}>{row.delta === 0 ? '—' : `${row.delta > 0 ? '+' : '−'}${formatCompactCurrency(Math.abs(row.delta))}`}</span>}
                 </div>
               ))}
@@ -364,7 +390,7 @@ export function MonthlyReportBody({
                   <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                     <div className="h-full rounded-full" style={{ width: `${row.share}%`, background: 'var(--c-mint)' }} />
                   </div>
-                  <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(row.amount)}</span>
+                  <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{money(row.amount)}</span>
                   <span className="num t-cap w-10 text-right shrink-0" style={{ color: 'var(--text-mute)' }}>{row.share.toFixed(0)}%</span>
                 </div>
               ))}
@@ -402,7 +428,7 @@ export function MonthlyReportBody({
                       <span className="num t-sm shrink-0" style={{ color: 'var(--c-mint)' }}>{p.toFixed(0)}%</span>
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}><div className="h-full rounded-full" style={{ width: `${p}%`, background: 'var(--c-mint)' }} /></div>
-                    <p className="num t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{formatCompactCurrency(g.current_amount)} / {formatCompactCurrency(g.target_amount)}</p>
+                    <p className="num t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{money(g.current_amount)} / {money(g.target_amount)}</p>
                   </div>
                 )
               })}
@@ -423,7 +449,7 @@ export function MonthlyReportBody({
             {r.upcoming.map((u, i) => (
               <div key={i} className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
                 <span className="t-sm truncate" style={{ color: 'var(--ink)' }}>{u.name} <span className="t-cap" style={{ color: 'var(--text-mute)' }}>· {u.kind}</span></span>
-                <span className="num t-sm font-medium shrink-0" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(u.amount)}</span>
+                <span className="num t-sm font-medium shrink-0" style={{ color: 'var(--ink)' }}>{money(u.amount)}</span>
               </div>
             ))}
           </div>
@@ -431,8 +457,8 @@ export function MonthlyReportBody({
       )}
 
       {/* Sorotan */}
-      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-violet)' }}>
-        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-violet)' }} /><p className="eyebrow" style={{ color: 'var(--c-violet)' }}>Sorotan Bulan Ini</p></div>
+      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
+        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Sorotan Bulan Ini</p></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `Saving rate ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? 'Naik' : 'Turun'} ${Math.abs(r.savingRateDelta).toFixed(0)}pp dari ${r.prevMonthLabel}` : 'Bulan ini' },
@@ -444,6 +470,22 @@ export function MonthlyReportBody({
           })}
         </div>
       </div>
+
+      {/* Langkah Berikutnya — rule-based, bukan generatif */}
+      {steps.length > 0 && (
+        <div className="s-card p-5 sm:p-6 print-avoid-break">
+          <p className="eyebrow">Langkah Berikutnya</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Rekomendasi {nextMonthLabel}</h3>
+          <ul className="mt-3 space-y-2">
+            {steps.map((s, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="shrink-0 num t-sm font-semibold" style={{ color: 'var(--c-mint)' }}>{i + 1}.</span>
+                <span className="t-sm" style={{ color: 'var(--ink)' }}>{s}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Top 10 */}
       {r.top_expenses.length > 0 && (
@@ -471,6 +513,15 @@ export function MonthlyReportBody({
       {variant === 'print' && (
         <p className="t-cap text-center pt-2" style={{ color: 'var(--text-mute)' }}>Klunting · klunting.com · dibuat {generatedAt}</p>
       )}
+    </div>
+  )
+}
+
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="eyebrow" style={{ color: 'var(--text-mute)' }}>{label}</p>
+      <p className="t-sm font-medium mt-0.5" style={{ color: 'var(--ink)' }}>{value}</p>
     </div>
   )
 }

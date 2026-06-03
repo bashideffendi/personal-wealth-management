@@ -47,12 +47,25 @@ export function PrintMonthlyReport({ year, month }: Props) {
            angka & chart gak jadi bubur di PDF. */
         .report-doc,
         .report-doc * { filter: none !important; }
-        .report-doc .s-card,
+        /* Dokumen mengalir: section borderless dipisah hairline + whitespace
+           (bukan tumpukan kartu). KPI tetap sel ber-border = banner angka. */
+        .report-doc .s-card {
+          background: transparent !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
         .report-doc .stat-tile {
           background: #FFFFFF;
           box-shadow: none !important;
           border: 1px solid #E5E7EB;
           border-radius: 10px;
+        }
+        .report-doc .report-flow > * + * {
+          margin-top: 26px !important;
+          border-top: 1px solid var(--line);
+          padding-top: 26px;
         }
         @media print {
           @page { size: A4 portrait; margin: 16mm 18mm; }
