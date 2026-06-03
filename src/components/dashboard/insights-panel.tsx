@@ -1,6 +1,7 @@
 'use client'
 
 import { formatCurrency } from '@/lib/utils'
+import { rootCategory } from '@/lib/budget-categories'
 import type { Transaction, CreditCard, Contract } from '@/types'
 
 interface Budget {
@@ -62,23 +63,36 @@ export function InsightsPanel({
     }
   }
 
-  // Budget overrun
-  for (const b of monthBudgets) {
-    if (b.type !== 'expense' || b.amount <= 0) continue
-    const actual = monthTransactions
-      .filter((t) => t.type === 'expense' && t.category === b.category)
-      .reduce((s, t) => s + t.amount, 0)
-    const pct = (actual / b.amount) * 100
-    if (pct >= 100) {
-      alerts.push({
-        level: 'critical',
-        text: `Budget ${b.category} over-limit · terpakai ${pct.toFixed(0)}% (${formatCurrency(actual - b.amount)} lewat)`,
-      })
-    } else if (pct >= 85) {
-      alerts.push({
-        level: 'warn',
-        text: `Budget ${b.category} hampir habis · ${pct.toFixed(0)}% terpakai`,
-      })
+  // Budget overrun — roll-up ke kategori INDUK (sama kayak dashboard
+  // budgetProgress): budget sub 'Induk › Sub' + transaksi induk/sub disamain di
+  // root biar persen-nya match halaman Anggaran & gak salah hitung. Skip Transfer.
+  {
+    const actualByRoot = new Map<string, number>()
+    for (const t of monthTransactions) {
+      if (t.type !== 'expense' || t.category === 'Transfer') continue
+      const root = rootCategory(t.category)
+      actualByRoot.set(root, (actualByRoot.get(root) ?? 0) + t.amount)
+    }
+    const budgetByRoot = new Map<string, number>()
+    for (const b of monthBudgets) {
+      if (b.type !== 'expense' || b.amount <= 0) continue
+      const root = rootCategory(b.category)
+      budgetByRoot.set(root, (budgetByRoot.get(root) ?? 0) + b.amount)
+    }
+    for (const [category, budget] of budgetByRoot) {
+      const actual = actualByRoot.get(category) ?? 0
+      const pct = (actual / budget) * 100
+      if (pct >= 100) {
+        alerts.push({
+          level: 'critical',
+          text: `Budget ${category} over-limit · terpakai ${pct.toFixed(0)}% (${formatCurrency(actual - budget)} lewat)`,
+        })
+      } else if (pct >= 85) {
+        alerts.push({
+          level: 'warn',
+          text: `Budget ${category} hampir habis · ${pct.toFixed(0)}% terpakai`,
+        })
+      }
     }
   }
 
@@ -102,10 +116,10 @@ export function InsightsPanel({
     const prevStart = new Date(y, m - 1, 1).toISOString().split('T')[0]
     const prevEnd   = new Date(y, m, 1).toISOString().split('T')[0]
     return yearTransactions
-      .filter((t) => t.type === 'expense' && t.date >= prevStart && t.date < prevEnd)
+      .filter((t) => t.type === 'expense' && t.category !== 'Transfer' && t.date >= prevStart && t.date < prevEnd)
       .reduce((s, t) => s + t.amount, 0)
   })()
-  const currMonthExp = monthTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const currMonthExp = monthTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
   if (prevMonthExp > 0 && currMonthExp > 0) {
     const delta = ((currMonthExp - prevMonthExp) / prevMonthExp) * 100
     if (Math.abs(delta) > 15) {

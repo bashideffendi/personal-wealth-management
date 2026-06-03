@@ -108,10 +108,12 @@ export function MonthlyReportBody({
     const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
     return { start, end }
   }
-  const sumType = (txs: Transaction[], t: Transaction['type']) => txs.filter((x) => x.type === t).reduce((s, x) => s + x.amount, 0)
+  // Exclude kategori 'Transfer' (pindah antar-akun = 2 leg income+expense) dari
+  // semua agregasi — konsisten sama dashboard, biar gross income/expense gak double.
+  const sumType = (txs: Transaction[], t: Transaction['type']) => txs.filter((x) => x.type === t && x.category !== 'Transfer').reduce((s, x) => s + x.amount, 0)
   function byCat(txs: Transaction[], t: Transaction['type']) {
     const m: Record<string, number> = {}
-    for (const x of txs.filter((y) => y.type === t)) m[x.category] = (m[x.category] || 0) + x.amount
+    for (const x of txs.filter((y) => y.type === t && y.category !== 'Transfer')) m[x.category] = (m[x.category] || 0) + x.amount
     return m
   }
 
@@ -183,7 +185,7 @@ export function MonthlyReportBody({
     const sankeyIncome = bucketFlow('income')
     const sankeyOutflow = [...bucketFlow('expense'), ...bucketFlow('saving'), ...bucketFlow('investment')]
 
-    const top_expenses = cur.filter((t) => t.type === 'expense').sort((a, b) => b.amount - a.amount).slice(0, 10)
+    const top_expenses = cur.filter((t) => t.type === 'expense' && t.category !== 'Transfer').sort((a, b) => b.amount - a.amount).slice(0, 10)
     const netWorth = liquidTotal + nonLiquidTotal + investTotal - debtTotal - ccTotal
 
     // Forward-looking next month: recurring (active) + debt monthly payments + monthly contracts
@@ -522,7 +524,7 @@ export function MonthlyReportBody({
                     <td className="py-2 t-cap num" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</td>
                     <td className="py-2" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</td>
                     <td className="py-2 t-cap" style={{ color: 'var(--text-mute)' }}>{tx.category}</td>
-                    <td className="py-2 text-right num font-semibold" style={{ color: 'var(--c-coral)' }}>{formatCurrency(tx.amount)}</td>
+                    <td className="py-2 text-right num font-semibold" style={{ color: 'var(--c-coral)' }}>{money(tx.amount)}</td>
                   </tr>
                 ))}
               </tbody>

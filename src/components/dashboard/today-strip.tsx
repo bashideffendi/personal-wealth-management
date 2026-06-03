@@ -13,6 +13,7 @@
 import Link from 'next/link'
 import { ArrowRight, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { rootCategory } from '@/lib/budget-categories'
 
 interface Tx {
   type: 'income' | 'expense' | 'saving' | 'investment'
@@ -68,18 +69,28 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
   let warning: { category: string; pct: number; used: number; budget: number } | null = null
   if (monthBudgets.length > 0) {
     const expenseBudgets = monthBudgets.filter((b) => b.type === 'expense' && b.amount > 0)
-    const monthByCategory = new Map<string, number>()
+    // Roll-up budget & aktual ke kategori INDUK (sama kayak dashboard
+    // budgetProgress): budget sub disimpan 'Induk › Sub', transaksi bisa ditag
+    // induk/sub → bandingin di level root biar warning-nya match halaman Anggaran.
+    const usedByRoot = new Map<string, number>()
     for (const t of monthTransactions) {
       if (t.type !== 'expense' || t.category === 'Transfer') continue
-      monthByCategory.set(t.category, (monthByCategory.get(t.category) ?? 0) + t.amount)
+      const root = rootCategory(t.category)
+      usedByRoot.set(root, (usedByRoot.get(root) ?? 0) + t.amount)
+    }
+    const budgetByRoot = new Map<string, number>()
+    for (const b of expenseBudgets) {
+      const root = rootCategory(b.category)
+      budgetByRoot.set(root, (budgetByRoot.get(root) ?? 0) + b.amount)
     }
     let topPct = 0
-    for (const b of expenseBudgets) {
-      const used = monthByCategory.get(b.category) ?? 0
-      const pct = (used / b.amount) * 100
+    for (const [root, budget] of budgetByRoot) {
+      if (budget <= 0) continue
+      const used = usedByRoot.get(root) ?? 0
+      const pct = (used / budget) * 100
       if (pct > topPct && pct >= 70) {
         topPct = pct
-        warning = { category: b.category, pct, used, budget: b.amount }
+        warning = { category: root, pct, used, budget }
       }
     }
   }

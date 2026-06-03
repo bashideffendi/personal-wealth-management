@@ -13,7 +13,7 @@
  * peningkatan nanti. Reorder section = v2 (butuh flex order).
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
@@ -49,14 +49,18 @@ function readHidden(): string[] {
 
 export function DashboardCustomizer() {
   const [open, setOpen] = useState(false)
-  const [hidden, setHidden] = useState<string[]>([])
+  const [hidden, setHidden] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    return readHidden()
+  })
   const [ready, setReady] = useState(false)
+  const touchedRef = useRef(false)
 
   useEffect(() => {
-    setHidden(readHidden())
     setReady(true)
     // Hydrate dari DB (lintas-perangkat) — best-effort, override localStorage.
     void (async () => {
+      if (touchedRef.current) return // user udah toggle → jangan ketimpa DB
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -69,6 +73,7 @@ export function DashboardCustomizer() {
   }, [])
 
   function persist(next: string[]) {
+    touchedRef.current = true // tandai user udah interaksi → blok hydrate DB
     setHidden(next)
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(next))

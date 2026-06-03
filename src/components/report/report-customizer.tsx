@@ -11,7 +11,7 @@
  * Prefs di localStorage (per-perangkat).
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
@@ -73,10 +73,14 @@ export function ReportHiddenStyle() {
 /** Tombol + panel — mount di control bar layar (bukan di PDF). */
 export function ReportCustomizer() {
   const [open, setOpen] = useState(false)
-  const [hidden, setHidden] = useState<string[]>([])
+  const [hidden, setHidden] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    return readReportHidden()
+  })
+  const touchedRef = useRef(false)
   useEffect(() => {
-    setHidden(readReportHidden())
     void (async () => {
+      if (touchedRef.current) return // user udah toggle → jangan ketimpa DB
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -89,6 +93,7 @@ export function ReportCustomizer() {
     })()
   }, [])
   function persist(next: string[]) {
+    touchedRef.current = true // tandai user udah interaksi → blok hydrate DB
     setHidden(next)
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(next))

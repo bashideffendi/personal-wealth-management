@@ -219,8 +219,10 @@ export default function DashboardPage() {
 
   // ---- KPI aggregations ----
   const totals = useMemo(() => {
-    const income = monthTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-    const expense = monthTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    // Kategori 'Transfer' (pindah antar-akun) tercatat sbg 2 leg expense+income
+    // → kalau ikut dihitung, gross income & expense double-count, saving-rate ngaco.
+    const income = monthTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
+    const expense = monthTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
     const saving = monthTransactions.filter((t) => t.type === 'saving').reduce((s, t) => s + t.amount, 0)
     const investment = monthTransactions.filter((t) => t.type === 'investment').reduce((s, t) => s + t.amount, 0)
     return {
@@ -240,8 +242,8 @@ export default function DashboardPage() {
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
     const cutoff = ninetyDaysAgo.toISOString().slice(0, 10)
     const recent = yearTransactions.filter((t) => t.date >= cutoff)
-    const recentIncome = recent.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-    const recentExpense = recent.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    const recentIncome = recent.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
+    const recentExpense = recent.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
     const recentSaved = recent
       .filter((t) => t.type === 'saving' || t.type === 'investment')
       .reduce((s, t) => s + t.amount, 0)
@@ -303,6 +305,7 @@ export default function DashboardPage() {
       const byCat: Record<string, number> = {}
       for (const t of monthTransactions) {
         if (t.type !== kind) continue
+        if (t.category === 'Transfer') continue // pindah antar-akun, bukan flow nyata
         const cat = (t.category || 'Lainnya').trim() || 'Lainnya'
         byCat[cat] = (byCat[cat] || 0) + t.amount
       }
@@ -334,8 +337,8 @@ export default function DashboardPage() {
       const mEndYear = m === 12 ? selectedYear + 1 : selectedYear
       const mEnd = `${mEndYear}-${String(mEndMonth).padStart(2, '0')}-01`
       const mTx = yearTransactions.filter((tx) => tx.date >= mStart && tx.date < mEnd)
-      const income = mTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-      const expense = mTx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+      const income = mTx.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
+      const expense = mTx.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
       return { month: name.substring(0, 3), income, expense, net: income - expense }
     })
   }, [yearTransactions, selectedYear])
@@ -399,8 +402,10 @@ export default function DashboardPage() {
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`
       const dayTx = monthTransactions.filter((t) => t.date === dateStr)
-      const income = dayTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-      const expense = dayTx.filter((t) => t.type === 'expense' || t.type === 'saving' || t.type === 'investment').reduce((s, t) => s + t.amount, 0)
+      // income/expense kalender: exclude Transfer (pindah antar-akun) + saving/
+      // investment (flow terpisah, sesuai KPI 'Tabungan + Investasi' yg sendiri).
+      const income = dayTx.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
+      const expense = dayTx.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
       result.push({ day: d, date: dateStr, income, expense, net: income - expense, count: dayTx.length })
     }
     return result

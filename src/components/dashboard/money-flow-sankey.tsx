@@ -59,10 +59,10 @@ interface MoneyFlowSankeyProps {
 // income=emerald, expense=coral, saving=amber, investment=violet (AI/long-
 // term accent), middle=ink hub. Link ribbons fillOpacity ~0.42.
 const COLORS: Record<FlowKind, { node: string; link: string }> = {
-  income:     { node: '#10B981', link: 'rgba(16, 185, 129, 0.42)' },  // emerald
-  expense:    { node: '#F43F5E', link: 'rgba(244, 63, 94, 0.40)' },   // coral
-  saving:     { node: '#F59E0B', link: 'rgba(245, 158, 11, 0.42)' },  // amber
-  investment: { node: '#8B5CF6', link: 'rgba(139, 92, 246, 0.38)' },  // violet
+  income:     { node: 'var(--c-mint)', link: 'color-mix(in srgb, var(--c-mint) 42%, transparent)' },  // emerald
+  expense:    { node: 'var(--c-coral)', link: 'color-mix(in srgb, var(--c-coral) 40%, transparent)' },   // coral
+  saving:     { node: 'var(--c-amber)', link: 'color-mix(in srgb, var(--c-amber) 42%, transparent)' },  // amber
+  investment: { node: 'var(--c-violet)', link: 'color-mix(in srgb, var(--c-violet) 38%, transparent)' },  // violet
   middle:     { node: 'var(--ink)', link: 'color-mix(in srgb, var(--ink) 20%, transparent)' }, // ink hub (theme-aware)
 }
 

@@ -182,7 +182,7 @@ export function CashFlowForecast({
   // Color the chart based on health
   const hasNegative = negativeDays.length > 0
   const hasRisk = riskDays.length > 0
-  const accentColor = hasNegative ? '#F43F5E' : hasRisk ? '#F59E0B' : '#10B981'
+  const accentColor = hasNegative ? 'var(--c-coral)' : hasRisk ? 'var(--c-amber)' : 'var(--c-mint)'
 
   // SVG chart dimensions
   const chartH = 80
@@ -282,14 +282,14 @@ export function CashFlowForecast({
             {bufferY > 0 && bufferY < chartH && (
               <line
                 x1="0" y1={bufferY} x2={chartW} y2={bufferY}
-                stroke="#F59E0B" strokeWidth="0.5" strokeDasharray="3,3"
+                stroke="var(--c-amber)" strokeWidth="0.5" strokeDasharray="3,3"
                 opacity="0.5"
               />
             )}
             {minBal < 0 && (
               <line
                 x1="0" y1={zeroY} x2={chartW} y2={zeroY}
-                stroke="#F43F5E" strokeWidth="0.8" opacity="0.7"
+                stroke="var(--c-coral)" strokeWidth="0.8" opacity="0.7"
               />
             )}
             <polygon

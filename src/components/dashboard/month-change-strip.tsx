@@ -59,9 +59,20 @@ export function MonthChangeStrip({
   const current = aggregateExpenseByCategory(currentMonthTx)
   const priorTotal = aggregateExpenseByCategory(priorMonthsTx)
 
+  // Hitung jumlah bulan DISTINCT yang beneran ada di priorMonthsTx — bukan
+  // hardcode priorMonthCount. Kalau prior cuma 1-2 bulan (user baru), bagi 3
+  // bikin baseline kekecilan → delta % meledak. Guard /0 via Math.max(1, …).
+  const distinctMonths = new Set<string>()
+  for (const t of priorMonthsTx) {
+    const d = new Date(t.date)
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    distinctMonths.add(monthKey)
+  }
+  const actualPriorMonthCount = Math.max(1, distinctMonths.size)
+
   // Monthly average from prior period
   const priorAvg = new Map<string, number>()
-  for (const [cat, total] of priorTotal) priorAvg.set(cat, total / priorMonthCount)
+  for (const [cat, total] of priorTotal) priorAvg.set(cat, total / actualPriorMonthCount)
 
   // Compute diff per category. Include cats only in prior (might be "dropped") and only in current (new spend).
   const diffs: Array<{ category: string; cur: number; avg: number; abs: number; pct: number }> = []
@@ -100,7 +111,7 @@ export function MonthChangeStrip({
           className="text-[10px]"
           style={{ color: 'var(--ink-soft)' }}
         >
-          · vs rata-rata {priorMonthCount} bulan
+          · vs rata-rata {actualPriorMonthCount} bulan
         </span>
       </div>
 
