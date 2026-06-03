@@ -397,6 +397,7 @@ export default function TransactionsPage() {
   const [filterAccount, setFilterAccount] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [filterTag, setFilterTag] = useState<string>('all')
   const [search, setSearch] = useState<string>('')
 
   useEffect(() => {
@@ -657,6 +658,7 @@ export default function TransactionsPage() {
     if (filterAccount !== 'all' && tx.account_id !== filterAccount) return false
     if (filterType !== 'all' && tx.type !== filterType) return false
     if (filterCategory !== 'all' && tx.category !== filterCategory) return false
+    if (filterTag !== 'all' && !(tx.tags ?? []).includes(filterTag)) return false
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       const hay = `${tx.description ?? ''} ${tx.category} ${tx.amount} ${formatCurrency(tx.amount)}`.toLowerCase()
@@ -666,6 +668,10 @@ export default function TransactionsPage() {
   })
 
   // Daftar kategori filter — diturunkan dari tree user (induk + subkategori).
+  const allTags = Array.from(new Set(transactions.flatMap((t) => t.tags ?? []))).sort((a, b) =>
+    a.localeCompare(b, 'id'),
+  )
+
   const filterCategoryOptions: string[] =
     filterType !== 'all'
       ? optionsForType(filterType as TransactionType).map((o) => o.value)
@@ -841,6 +847,26 @@ export default function TransactionsPage() {
             </SelectContent>
           </Select>
         </div>
+        {allTags.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Tag</label>
+            <Select value={filterTag} onValueChange={(v) => setFilterTag(v ?? 'all')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Semua Tag">
+                  {(v) => (v === 'all' ? 'Semua Tag' : v)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Tag</SelectItem>
+                {allTags.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         </div>
       </div>
 
