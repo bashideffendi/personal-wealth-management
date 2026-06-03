@@ -55,10 +55,12 @@ export default async function DashboardLayout({
     >
       <TopNav user={user} />
       <main
-        className="flex-1 px-4 md:px-8 pt-6 md:pt-7 pb-24 md:pb-16"
+        className="flex-1 pt-6 md:pt-7 pb-24 md:pb-16"
         style={{ background: 'var(--bg)' }}
       >
-        <div className="mx-auto" style={{ maxWidth: 1400 }}>
+        {/* px di div mx-auto ini (bukan di <main>) biar persis kayak container
+            TopNav — garis kiri logo, "Hi, Bashid", & kartu hero rata semua. */}
+        <div className="mx-auto px-4 md:px-8" style={{ maxWidth: 1400 }}>
           {children}
         </div>
       </main>
