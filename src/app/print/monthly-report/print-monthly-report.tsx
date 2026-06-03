@@ -22,12 +22,29 @@ export function PrintMonthlyReport({ year, month }: Props) {
   return (
     <>
       <style jsx global>{`
-        /* Gaya dokumen: ratakan kartu web jadi flat biar kebaca sebagai laporan,
-           bukan screenshot. Preview di layar = hasil PDF. */
-        .report-paper .s-card,
-        .report-paper .stat-tile {
+        /* Dokumen putih bersih: netralin palet hangat app (krem) jadi putih/abu
+           netral & paksa light, biar PDF konsisten walau app lagi dark mode.
+           Kartu diratakan flat biar kebaca sebagai laporan, bukan screenshot. */
+        .report-doc {
+          --bg: #FFFFFF;
+          --surface: #FFFFFF;
+          --surface-2: #F3F4F6;
+          --surface-3: #E9EAEC;
+          --line: rgba(0,0,0,0.08);
+          --line-strong: rgba(0,0,0,0.14);
+          --border-soft: rgba(0,0,0,0.06);
+          --ink: #0A0A0F;
+          --ink-muted: #3F3F46;
+          --ink-soft: #5C5C66;
+          --text-mute: #5C5C66;
+          background: #FFFFFF;
+          color: #0A0A0F;
+        }
+        .report-doc .s-card,
+        .report-doc .stat-tile {
+          background: #FFFFFF;
           box-shadow: none !important;
-          border: 1px solid var(--line-strong);
+          border: 1px solid #E5E7EB;
           border-radius: 10px;
         }
         @media print {
@@ -35,14 +52,13 @@ export function PrintMonthlyReport({ year, month }: Props) {
           html, body { background: #fff !important; }
           .no-print { display: none !important; }
           .report-paper { max-width: 100% !important; padding: 0 !important; }
-          /* Jangan motong kartu di tengah halaman */
-          .report-paper .s-card,
-          .report-paper .stat-tile { break-inside: avoid; }
+          .report-doc .s-card,
+          .report-doc .stat-tile { break-inside: avoid; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
 
-      <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+      <div className="min-h-screen report-doc" style={{ background: '#FFFFFF' }}>
         {/* Toolbar — screen only */}
         <div
           className="no-print sticky top-0 z-10 flex items-center justify-between px-4 py-3"
