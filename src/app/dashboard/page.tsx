@@ -8,6 +8,7 @@ import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
+import { DashboardCustomizer } from '@/components/dashboard/dashboard-customizer'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
@@ -446,12 +447,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting — simpel & minimalis ala Monarch ("Hi, Nama"), tanpa jam/tanggal */}
-      {userFirstName && (
-        <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
-          Hi, {userFirstName}
-        </h1>
-      )}
+      {/* Greeting + tombol Atur Dashboard (custom show/hide section) */}
+      <div className="flex items-center justify-between gap-3">
+        {userFirstName ? (
+          <h1 className="t-h1" style={{ color: 'var(--ink)' }}>Hi, {userFirstName}</h1>
+        ) : (
+          <span />
+        )}
+        <DashboardCustomizer />
+      </div>
 
       {/* Hero — Net Worth + period-filtered growth chart */}
       <NetWorthHero
@@ -529,7 +533,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards — color-tinted by kind for visual variety */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div data-block="kpi" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  direction="up"   kind="income" />
         <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} direction="down" kind="expense" />
         <KpiCard
@@ -552,7 +556,7 @@ export default function DashboardPage() {
       />
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <div className="s-card p-4 sm:p-6">
+      <div data-block="aliran" className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="eyebrow">Aliran Uang</p>
@@ -603,7 +607,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions + Upcoming Bills + Goals row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div data-block="aktivitas" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RecentTransactions transactions={monthTransactions} />
         <UpcomingBills
           contracts={contracts}
@@ -615,7 +619,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Calendar + Budget Progress */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <div data-block="kalender" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
@@ -796,7 +800,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row: Top Categories + Day of Week + Saving Ring */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div data-block="grafik" className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <TopCategoriesBar monthTransactions={monthTransactions} />
         <DayOfWeekChart monthTransactions={monthTransactions} />
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
@@ -816,7 +820,7 @@ export default function DashboardPage() {
       {/* Row: Monthly Bar Chart (income vs expense) + Investment Donut.
           Per dashboard-refine.jsx — twin bars per month (emerald + coral)
           show clearer comparison than overlapping area chart. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+      <div data-block="investasi" className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
