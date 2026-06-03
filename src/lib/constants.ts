@@ -186,6 +186,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report', href: '/dashboard/monthly-report', icon: 'FileText',         section: 'secondary' },
   { label: 'Kontrak & Polis',     titleKey: 'nav.contracts',  href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
   { label: 'Kalkulator',      titleKey: 'nav.calculators',    href: '/dashboard/calculators',    icon: 'Calculator',       section: 'secondary' },
+  { label: 'Playbook',        titleKey: 'nav.playbook',       href: '/dashboard/playbook',       icon: 'Compass',          section: 'secondary' },
   { label: 'Aturan Kategori', titleKey: 'nav.rules',          href: '/dashboard/rules',          icon: 'Sparkles',         section: 'secondary' },
 
   // (Profile, Paket, Keluar are accessed via avatar dropdown in header)

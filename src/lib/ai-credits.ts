@@ -30,6 +30,9 @@ export const AI_COSTS = {
   // 30 credits = around 6× receipt_scan, accounts for sonnet pricing kalau
   // suatu hari kita switch dari haiku ke sonnet untuk quality.
   stock_research: 30,
+  // Playbook plan = long-form personalized financial plan (target, setoran,
+  // milestones, tips). Output lebih besar dari insights, satu kali per generate.
+  playbook: 8,
 } as const
 
 export type AICostKey = keyof typeof AI_COSTS
@@ -89,6 +92,7 @@ export async function consumeAICredits(
         : costKey === 'insights' ? 'AI insight'
         : costKey === 'mutasi_import' ? 'import mutasi'
         : costKey === 'stock_research' ? 'generate research saham'
+        : costKey === 'playbook' ? 'buat rencana playbook'
         : 'AI parse'
       }. Upgrade ke paket lebih tinggi atau tunggu reset bulanan.`,
     }

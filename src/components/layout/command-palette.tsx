@@ -87,6 +87,7 @@ const QUICK_ACTIONS: PaletteItem[] = [
   { id: 'a:scan-receipt', label: 'Scan Struk dengan AI', href: '/dashboard/transactions',  kind: 'action', icon: <Sparkles className="size-4" /> },
   { id: 'a:report',       label: 'Lihat Laporan Bulanan', href: '/dashboard/monthly-report', kind: 'action', icon: <Receipt className="size-4" /> },
   { id: 'a:calc',         label: 'Buka Kalkulator',      href: '/dashboard/calculators',   kind: 'action', icon: <Calculator className="size-4" /> },
+  { id: 'a:playbook',     label: 'Buka Playbook (panduan finansial)', href: '/dashboard/playbook', kind: 'action', icon: <Sparkles className="size-4" /> },
 ]
 
 // ─── Component ───────────────────────────────────────────────────
