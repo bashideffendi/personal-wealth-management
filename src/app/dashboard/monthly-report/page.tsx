@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/select'
 import { Printer, ChevronLeft, ChevronRight } from 'lucide-react'
 import { MonthlyReportBody } from '@/components/report/monthly-report-body'
+import { ReportCustomizer } from '@/components/report/report-customizer'
 
 export default function MonthlyReportPage() {
   const now = new Date()
@@ -41,6 +42,7 @@ export default function MonthlyReportPage() {
           <SelectTrigger className="w-[92px]"><SelectValue placeholder="Tahun">{(v) => v}</SelectValue></SelectTrigger>
           <SelectContent>{yearOpts.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
         </Select>
+        <ReportCustomizer />
         <Button
           onClick={() => window.open(`/print/monthly-report?year=${year}&month=${month}`, '_blank')}
           style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}

@@ -25,6 +25,7 @@ import {
   ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
+import { ReportHiddenStyle } from '@/components/report/report-customizer'
 
 interface GoalRow { id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }
 interface BudgetRow { category: string; type: string; amount: number }
@@ -231,6 +232,7 @@ export function MonthlyReportBody({
 
   return (
     <div className="space-y-6 report-flow">
+      <ReportHiddenStyle />
       {/* Document header / letterhead */}
       <header className="print-avoid-break">
         {variant === 'print' && (
@@ -287,14 +289,14 @@ export function MonthlyReportBody({
       </div>
 
       {/* Sankey */}
-      <div className="s-card p-4 sm:p-6">
+      <div data-report-block="aliran" className="s-card p-4 sm:p-6">
         <p className="eyebrow">Aliran Uang</p>
         <h3 className="t-h2 mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>Dari mana &amp; ke mana — {MONTHS[month - 1]}</h3>
         <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage="Belum ada aliran bulan ini." />
       </div>
 
       {/* 6 month + shifts */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div data-report-block="perbandingan" className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <p className="eyebrow">Perbandingan 6 Bulan</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Tren pemasukan vs pengeluaran</h3>
@@ -335,7 +337,7 @@ export function MonthlyReportBody({
 
       {/* Budget vs actual */}
       {r.budgetVsActual.length > 0 && (
-        <div className="s-card p-5 sm:p-6">
+        <div data-report-block="anggaran" className="s-card p-5 sm:p-6">
           <p className="eyebrow">Anggaran vs Realisasi</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Disiplin anggaran {MONTHS[month - 1]}</h3>
           <div className="mt-4 space-y-3">
@@ -360,7 +362,7 @@ export function MonthlyReportBody({
       )}
 
       {/* Expense by category + Income by source */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div data-report-block="kategori" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {r.expense_by_category.length > 0 && (
           <div className="s-card p-5 sm:p-6">
             <p className="eyebrow">Pengeluaran per Kategori</p>
@@ -400,7 +402,7 @@ export function MonthlyReportBody({
       </div>
 
       {/* Net worth + Goals */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div data-report-block="networth" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="s-card p-5 sm:p-6">
           <p className="eyebrow">Net Worth</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Posisi terkini</h3>
@@ -439,7 +441,7 @@ export function MonthlyReportBody({
 
       {/* Forward-looking */}
       {r.upcoming.length > 0 && (
-        <div className="s-card p-5 sm:p-6">
+        <div data-report-block="kewajiban" className="s-card p-5 sm:p-6">
           <div className="flex items-center gap-2">
             <CalendarClock className="size-4" style={{ color: 'var(--c-violet)' }} />
             <p className="eyebrow">Kewajiban Bulan Depan · {nextMonthLabel}</p>
@@ -457,7 +459,7 @@ export function MonthlyReportBody({
       )}
 
       {/* Sorotan */}
-      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
+      <div data-report-block="sorotan" className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
         <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Sorotan Bulan Ini</p></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
@@ -473,7 +475,7 @@ export function MonthlyReportBody({
 
       {/* Langkah Berikutnya — rule-based, bukan generatif */}
       {steps.length > 0 && (
-        <div className="s-card p-5 sm:p-6 print-avoid-break">
+        <div data-report-block="langkah" className="s-card p-5 sm:p-6 print-avoid-break">
           <p className="eyebrow">Langkah Berikutnya</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Rekomendasi {nextMonthLabel}</h3>
           <ul className="mt-3 space-y-2">
@@ -489,7 +491,7 @@ export function MonthlyReportBody({
 
       {/* Top 10 */}
       {r.top_expenses.length > 0 && (
-        <div className="s-card p-5 sm:p-6">
+        <div data-report-block="top10" className="s-card p-5 sm:p-6">
           <p className="eyebrow">Transaksi Terbesar</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Top 10 pengeluaran</h3>
           <div className="mt-4 overflow-x-auto">

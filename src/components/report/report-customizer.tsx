@@ -1,60 +1,80 @@
 'use client'
 
 /**
- * DashboardCustomizer — "Atur Dashboard" ala Monarch, tapi aman.
+ * Custom Report — pilih section mana yang muncul di laporan (layar + PDF).
+ * Pola sama kayak DashboardCustomizer: tiap section dikasih data-report-block,
+ * yang disembunyiin di-display:none via <style>. Default SEMUA tampil.
  *
- * Prinsip (belajar dari kejadian tab): DEFAULT SEMUA TAMPIL. User yang
- * milih sembunyiin — gak ada yang ke-hide sepihak. Implementasi sengaja
- * gak ngerombak struktur JSX dashboard: tiap section cuma dikasih atribut
- * `data-block="id"`, lalu yang disembunyiin di-`display:none` via <style>
- * yang di-inject di sini. Zero perubahan nesting = zero risiko regresi.
- *
- * Preferensi disimpan di localStorage (per-perangkat). Sync ke DB =
- * peningkatan nanti. Reorder section = v2 (butuh flex order).
+ * - <ReportHiddenStyle/> di-mount DI DALAM MonthlyReportBody → kepake di layar
+ *   maupun PDF (print route baca localStorage yang sama saat dibuka).
+ * - <ReportCustomizer/> (tombol + panel) di-mount di control bar layar aja.
+ * Prefs di localStorage (per-perangkat).
  */
 
 import { useEffect, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
 
-export interface DashBlock {
+export interface ReportBlock {
   id: string
   label: string
 }
 
-const LS_KEY = 'pwm.dashboard.hidden'
+const LS_KEY = 'pwm.report.hidden'
+const EVT = 'klunting:report-prefs'
 
-/** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
-export const DASHBOARD_BLOCKS: DashBlock[] = [
-  { id: 'kpi', label: 'Ringkasan KPI (Pemasukan / Pengeluaran / dll)' },
-  { id: 'ai-insights', label: 'Insight AI' },
+export const REPORT_BLOCKS: ReportBlock[] = [
   { id: 'aliran', label: 'Aliran Uang (Sankey)' },
-  { id: 'aktivitas', label: 'Transaksi · Tagihan · Tujuan' },
-  { id: 'kalender', label: 'Kalender Aktivitas & Progress Anggaran' },
-  { id: 'grafik', label: 'Grafik (Kategori / Hari / Saving Rate)' },
-  { id: 'insights', label: 'Insight & Peringatan' },
-  { id: 'investasi', label: 'Grafik Bulanan & Alokasi Investasi' },
+  { id: 'perbandingan', label: 'Perbandingan 6 Bulan + Pergeseran' },
+  { id: 'anggaran', label: 'Anggaran vs Realisasi' },
+  { id: 'kategori', label: 'Pengeluaran per Kategori + Pemasukan per Sumber' },
+  { id: 'networth', label: 'Net Worth + Tujuan' },
+  { id: 'kewajiban', label: 'Kewajiban Bulan Depan' },
+  { id: 'sorotan', label: 'Sorotan Bulan Ini' },
+  { id: 'langkah', label: 'Langkah Berikutnya' },
+  { id: 'top10', label: 'Transaksi Terbesar (Top 10)' },
 ]
 
-function readHidden(): string[] {
+export function readReportHidden(): string[] {
   try {
-    const raw = localStorage.getItem(LS_KEY)
-    const arr = raw ? JSON.parse(raw) : []
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : []
+    const a = JSON.parse(localStorage.getItem(LS_KEY) || '[]')
+    return Array.isArray(a) ? a.filter((x) => typeof x === 'string') : []
   } catch {
     return []
   }
 }
 
-export function DashboardCustomizer() {
-  const [open, setOpen] = useState(false)
+/** Inject hide-CSS dari prefs. Mount di dalam body (layar + PDF). */
+export function ReportHiddenStyle() {
   const [hidden, setHidden] = useState<string[]>([])
   const [ready, setReady] = useState(false)
-
   useEffect(() => {
-    setHidden(readHidden())
+    const sync = () => setHidden(readReportHidden())
+    sync()
     setReady(true)
+    window.addEventListener(EVT, sync)
+    return () => window.removeEventListener(EVT, sync)
   }, [])
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: '[data-report-block]:empty{display:none!important}' }} />
+      {ready && hidden.length > 0 && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: hidden.map((id) => `[data-report-block="${id}"]{display:none!important}`).join(''),
+          }}
+        />
+      )}
+    </>
+  )
+}
 
+/** Tombol + panel — mount di control bar layar (bukan di PDF). */
+export function ReportCustomizer() {
+  const [open, setOpen] = useState(false)
+  const [hidden, setHidden] = useState<string[]>([])
+  useEffect(() => {
+    setHidden(readReportHidden())
+  }, [])
   function persist(next: string[]) {
     setHidden(next)
     try {
@@ -62,28 +82,15 @@ export function DashboardCustomizer() {
     } catch {
       /* ignore */
     }
+    window.dispatchEvent(new Event(EVT))
   }
   function toggle(id: string) {
     persist(hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id])
   }
-
   const hiddenCount = hidden.length
 
   return (
     <>
-      {/* Wrapper kosong (komponen yang self-hide / null) → collapse, biar gak
-          nyisain gap. Selalu aktif. */}
-      <style dangerouslySetInnerHTML={{ __html: '[data-block]:empty{display:none!important}' }} />
-      {/* Sembunyiin block terpilih. Cuma setelah mount (default: semua tampil,
-          gak ada flash). */}
-      {ready && hiddenCount > 0 && (
-        <style
-          dangerouslySetInnerHTML={{
-            __html: hidden.map((id) => `[data-block="${id}"]{display:none!important}`).join(''),
-          }}
-        />
-      )}
-
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -91,10 +98,8 @@ export function DashboardCustomizer() {
         style={{ padding: '7px 12px', fontSize: 13 }}
       >
         <Settings2 className="size-4" />
-        Atur
-        {hiddenCount > 0 && (
-          <span className="num" style={{ color: 'var(--text-mute)' }}>· {hiddenCount} disembunyiin</span>
-        )}
+        Atur isi
+        {hiddenCount > 0 && <span className="num" style={{ color: 'var(--text-mute)' }}>· −{hiddenCount}</span>}
       </button>
 
       {open && (
@@ -110,19 +115,19 @@ export function DashboardCustomizer() {
           >
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
-                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Atur Dashboard</p>
-                <h2 className="t-h2" style={{ color: 'var(--ink)' }}>Tampilkan / sembunyikan</h2>
+                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Atur Laporan</p>
+                <h2 className="t-h2" style={{ color: 'var(--ink)' }}>Section yang ditampilkan</h2>
               </div>
               <button type="button" onClick={() => setOpen(false)} aria-label="Tutup">
                 <X className="size-5" style={{ color: 'var(--text-mute)' }} />
               </button>
             </div>
             <p className="t-sm mb-4" style={{ color: 'var(--ink-soft)' }}>
-              Semua tampil secara default. Matiin yang gak kamu butuh — kamu yang kontrol, gak ada
-              yang hilang diam-diam. Tersimpan di perangkat ini.
+              Pilih section yang muncul di laporan — berlaku di layar &amp; PDF. KPI &amp; Ringkasan
+              Eksekutif selalu tampil. Tersimpan di perangkat ini.
             </p>
             <div className="space-y-1.5">
-              {DASHBOARD_BLOCKS.map((b) => {
+              {REPORT_BLOCKS.map((b) => {
                 const on = !hidden.includes(b.id)
                 return (
                   <button
@@ -135,9 +140,7 @@ export function DashboardCustomizer() {
                       border: '1px solid var(--line)',
                     }}
                   >
-                    <span className="t-sm" style={{ color: on ? 'var(--ink)' : 'var(--text-mute)' }}>
-                      {b.label}
-                    </span>
+                    <span className="t-sm" style={{ color: on ? 'var(--ink)' : 'var(--text-mute)' }}>{b.label}</span>
                     {on ? (
                       <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary)' }} />
                     ) : (

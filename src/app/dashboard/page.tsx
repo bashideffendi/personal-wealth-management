@@ -547,13 +547,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <AIInsightsCard
-        monthTransactions={monthTransactions}
-        yearTransactions={yearTransactions}
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-        goals={activeGoals}
-      />
+      <div data-block="ai-insights">
+        <AIInsightsCard
+          monthTransactions={monthTransactions}
+          yearTransactions={yearTransactions}
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          goals={activeGoals}
+        />
+      </div>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
       <div data-block="aliran" className="s-card p-4 sm:p-6">
@@ -807,15 +809,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Insights & Alerts */}
-      <InsightsPanel
-        monthTransactions={monthTransactions}
-        yearTransactions={yearTransactions}
-        monthBudgets={monthBudgets}
-        creditCards={creditCards}
-        contracts={contracts}
-        savingRate={totals.savingRate}
-        netCashflow={totals.net}
-      />
+      <div data-block="insights">
+        <InsightsPanel
+          monthTransactions={monthTransactions}
+          yearTransactions={yearTransactions}
+          monthBudgets={monthBudgets}
+          creditCards={creditCards}
+          contracts={contracts}
+          savingRate={totals.savingRate}
+          netCashflow={totals.net}
+        />
+      </div>
 
       {/* Row: Monthly Bar Chart (income vs expense) + Investment Donut.
           Per dashboard-refine.jsx — twin bars per month (emerald + coral)
