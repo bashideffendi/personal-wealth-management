@@ -278,15 +278,22 @@ export function AIInsightsCard({
       </div>
 
       <div className="relative">
-      {error && (
-        <div
-          className="rounded-lg border p-3 flex items-start gap-2 text-xs"
-          style={{ background: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.25)', color: 'var(--c-coral)' }}
-        >
-          <AlertCircle className="size-3.5 mt-0.5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && (() => {
+        // "Kredit AI habis" bukan error beneran — cuma kehabisan kredit. Pakai
+        // gaya amber/info yg lembut + Sparkles, bukan merah-alarm yg bikin panik.
+        const isInfo = /kredit/i.test(error)
+        return (
+          <div
+            className="rounded-lg border p-3 flex items-start gap-2 text-xs"
+            style={isInfo
+              ? { background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 28%, transparent)', color: 'var(--amber-700)' }
+              : { background: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.25)', color: 'var(--c-coral)' }}
+          >
+            {isInfo ? <Sparkles className="size-3.5 mt-0.5 shrink-0" /> : <AlertCircle className="size-3.5 mt-0.5 shrink-0" />}
+            <span>{error}</span>
+          </div>
+        )
+      })()}
 
       {!error && loading && !insights && (
         <div className="space-y-2">

@@ -514,7 +514,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
+      {/* flex-col + gap = ritme sama kayak space-y-6, tapi `order` bisa dipakai
+          DashboardCustomizer buat reorder section (data-block) tanpa ngerombak DOM.
+          Section fixed (hero/health/forecast/period) gak punya order → tetap di atas. */}
       {/* Greeting + tombol Atur Dashboard (custom show/hide section) */}
       <div className="flex items-center justify-between gap-3">
         {userFirstName ? (

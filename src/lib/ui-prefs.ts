@@ -13,6 +13,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export interface UiPrefs {
   dashboardHidden: string[]
   reportHidden: string[]
+  dashboardOrder: string[]
 }
 
 export async function loadUiPrefs(
