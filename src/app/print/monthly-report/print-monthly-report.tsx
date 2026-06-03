@@ -22,11 +22,22 @@ export function PrintMonthlyReport({ year, month }: Props) {
   return (
     <>
       <style jsx global>{`
+        /* Gaya dokumen: ratakan kartu web jadi flat biar kebaca sebagai laporan,
+           bukan screenshot. Preview di layar = hasil PDF. */
+        .report-paper .s-card,
+        .report-paper .stat-tile {
+          box-shadow: none !important;
+          border: 1px solid var(--line-strong);
+          border-radius: 10px;
+        }
         @media print {
-          @page { size: A4 portrait; margin: 12mm; }
+          @page { size: A4 portrait; margin: 14mm; }
           html, body { background: #fff !important; }
           .no-print { display: none !important; }
           .report-paper { max-width: 100% !important; padding: 0 !important; }
+          /* Jangan motong kartu di tengah halaman */
+          .report-paper .s-card,
+          .report-paper .stat-tile { break-inside: avoid; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>

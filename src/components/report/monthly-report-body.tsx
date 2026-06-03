@@ -203,6 +203,8 @@ export function MonthlyReportBody({
   const nextMonthLabel = MONTHS[month % 12]
   const topUp = r.shifts.find((s) => s.delta > 0)
   const topDown = r.shifts.find((s) => s.delta < 0)
+  const topCat = r.expense_by_category[0] ?? null
+  const topCatBudget = topCat ? (r.budgetVsActual.find((b) => b.category === topCat.name) ?? null) : null
 
   if (r.tx_count === 0) {
     return (
@@ -216,8 +218,14 @@ export function MonthlyReportBody({
 
   return (
     <div className="space-y-6">
-      {/* Document header / identity */}
-      <header>
+      {/* Document header / letterhead */}
+      <header className="print-avoid-break">
+        {variant === 'print' && (
+          <div className="flex items-center justify-between pb-3 mb-5" style={{ borderBottom: '2px solid var(--ink)' }}>
+            <span className="t-title font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>Klunting</span>
+            <span className="eyebrow" style={{ color: 'var(--text-mute)' }}>Laporan Keuangan</span>
+          </div>
+        )}
         <p className="eyebrow">Ringkasan Bulanan · {MONTHS[month - 1]} {year}</p>
         <h1 className="t-display mt-1" style={{ color: 'var(--ink)' }}>Laporan {MONTHS[month - 1]}</h1>
         <p className="t-body mt-1.5" style={{ color: 'var(--ink-soft)' }}>
@@ -233,21 +241,23 @@ export function MonthlyReportBody({
         <Kpi label="Diinvestasikan" value={r.investment} note={`${r.income > 0 ? ((r.investment / r.income) * 100).toFixed(0) : 0}% dari pendapatan`} icon={<LineChartIcon className="size-4" />} kind="violet" />
       </div>
 
-      {/* Cashflow summary + narrative */}
-      <div className="s-card p-5 sm:p-6" style={{ background: 'var(--surface-2)' }}>
-        <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Ringkasan Arus Kas</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+      {/* Ringkasan eksekutif — narasi prosa + strip arus kas */}
+      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-primary)' }}>
+        <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Ringkasan Eksekutif</p>
+        <p className="t-body mt-2.5" style={{ color: 'var(--ink)', lineHeight: 1.75 }}>
+          Sepanjang {MONTHS[month - 1]} {year}, total pemasukan {formatCurrency(r.income)} dan pengeluaran {formatCurrency(r.expense)}, menghasilkan {surplusWord}{' '}
+          <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{formatCurrency(Math.abs(r.surplus))}</span>.
+          Dari pendapatan, <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{r.savingRate.toFixed(0)}%</span> dialokasikan ke tabungan &amp; investasi — {r.savingRate >= 20 ? 'di atas' : 'di bawah'} ambang ideal 20%{r.surplusStreak >= 2 ? `, dan ini surplus ${r.surplusStreak} bulan beruntun` : ''}.
+          {topCat ? ` Pengeluaran terbesar ada di ${topCat.name} sebesar ${formatCurrency(topCat.amount)}${topCatBudget ? (topCatBudget.ratio > 100 ? `, melampaui anggaran (${topCatBudget.ratio.toFixed(0)}%)` : `, masih ${topCatBudget.ratio.toFixed(0)}% dari anggaran`) : ''}.` : ''}
+          {` Posisi kekayaan bersih saat ini ${formatCurrency(r.netWorth)}.`}
+          {r.upcomingTotal > 0 ? ` Untuk ${nextMonthLabel}, siapkan sekitar ${formatCurrency(r.upcomingTotal)} untuk kewajiban rutin.` : ''}
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
           <Mini label="Uang Masuk" value={r.income} color="var(--c-mint)" />
           <Mini label="Uang Keluar" value={r.expense + r.saving + r.investment} color="var(--c-coral)" />
-          <Mini label="Selisih (Surplus)" value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'} signed />
+          <Mini label="Selisih" value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'} signed />
           <Mini label="Saving Rate" text={`${r.savingRate.toFixed(0)}%`} color="var(--c-violet)" />
         </div>
-        <p className="t-body mt-4" style={{ color: 'var(--ink)', lineHeight: 1.5 }}>
-          Bulan {MONTHS[month - 1]} {year} berakhir dengan {surplusWord}{' '}
-          <span className="num font-bold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{formatCurrency(Math.abs(r.surplus))}</span>.
-          Kamu menabung &amp; investasi <span className="num font-bold" style={{ color: 'var(--c-mint)' }}>{r.savingRate.toFixed(0)}%</span> dari pendapatan — {r.savingRate >= 20 ? 'di atas' : 'di bawah'} standar ideal 20%.
-          {r.surplusStreak >= 2 && ` Ini surplus ${r.surplusStreak} bulan beruntun.`}
-        </p>
       </div>
 
       {/* Sankey */}
@@ -421,7 +431,7 @@ export function MonthlyReportBody({
       )}
 
       {/* Sorotan */}
-      <div className="s-card p-5 sm:p-6" style={{ background: 'var(--surface-2)' }}>
+      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-violet)' }}>
         <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-violet)' }} /><p className="eyebrow" style={{ color: 'var(--c-violet)' }}>Sorotan Bulan Ini</p></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
