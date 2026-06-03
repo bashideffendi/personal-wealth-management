@@ -26,6 +26,7 @@ import {
 } from 'recharts'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { ReportHiddenStyle } from '@/components/report/report-customizer'
+import { rootCategory } from '@/lib/budget-categories'
 
 interface GoalRow { id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }
 interface BudgetRow { category: string; type: string; amount: number }
@@ -155,13 +156,23 @@ export function MonthlyReportBody({
       .filter((s) => Math.abs(s.delta) > 0).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 5)
 
     // Budget vs actual (expense)
-    const budgetExp = budgets.filter((b) => b.type === 'expense' && b.amount > 0)
-    const budgetVsActual = budgetExp.map((b) => {
-      const actual = curExp[b.category] || 0
-      const ratio = b.amount > 0 ? (actual / b.amount) * 100 : 0
-      return { category: b.category, budget: b.amount, actual, ratio }
+    // Roll-up budget vs aktual ke kategori INDUK (konsisten sama dashboard).
+    const actualByRoot: Record<string, number> = {}
+    for (const [name, amt] of Object.entries(curExp)) {
+      const root = rootCategory(name)
+      actualByRoot[root] = (actualByRoot[root] || 0) + amt
+    }
+    const budgetByRoot: Record<string, number> = {}
+    for (const b of budgets) {
+      if (b.type !== 'expense' || b.amount <= 0) continue
+      const root = rootCategory(b.category)
+      budgetByRoot[root] = (budgetByRoot[root] || 0) + b.amount
+    }
+    const budgetVsActual = Object.entries(budgetByRoot).map(([category, budget]) => {
+      const actual = actualByRoot[category] || 0
+      return { category, budget, actual, ratio: budget > 0 ? (actual / budget) * 100 : 0 }
     }).sort((a, b) => b.ratio - a.ratio)
-    const totalBudget = budgetExp.reduce((s, b) => s + b.amount, 0)
+    const totalBudget = Object.values(budgetByRoot).reduce((s, b) => s + b, 0)
 
     function bucketFlow(type: 'income' | 'expense' | 'saving' | 'investment') {
       const arr = Object.entries(byCat(cur, type)).map(([name, amount]) => ({ name, amount, kind: type as FlowKind })).sort((a, b) => b.amount - a.amount)

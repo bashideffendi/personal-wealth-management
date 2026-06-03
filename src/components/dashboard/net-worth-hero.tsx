@@ -216,7 +216,7 @@ export function NetWorthHero({
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
                 style={{ fontSize: 16, color: '#FFFFFF' }}
               >
-                {formatCompactCurrency(totalAssets)}
+                {formatCurrency(totalAssets)}
               </p>
             </div>
             <div>
@@ -233,7 +233,7 @@ export function NetWorthHero({
                   color: debtTotal > 0 ? '#FDA4AF' : '#FFFFFF',
                 }}
               >
-                {debtTotal > 0 ? `−${formatCompactCurrency(debtTotal)}` : formatCompactCurrency(0)}
+                {debtTotal > 0 ? `−${formatCurrency(debtTotal)}` : formatCurrency(0)}
               </p>
             </div>
           </div>

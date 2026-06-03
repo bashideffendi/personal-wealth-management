@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
+import { rootCategory } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
 import { DashboardCustomizer } from '@/components/dashboard/dashboard-customizer'
@@ -196,7 +197,12 @@ export default function DashboardPage() {
     setActiveGoals((goalsRes.data ?? []) as any[])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const debtRows = (debtRes.data ?? []) as any[]
-    setDebtTotal(debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0))
+    // Total utang HARUS termasuk saldo kartu kredit — konsisten sama
+    // /dashboard/net-worth + report. Sebelumnya cuma debts.remaining →
+    // net worth hero kelebihan sebesar saldo CC.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ccSumForDebt = ((ccRes.data ?? []) as any[]).reduce((s, c) => s + (c.current_balance ?? 0), 0)
+    setDebtTotal(debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0) + ccSumForDebt)
     setActiveDebts(debtRows)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setRecurringItems((recurRes.data ?? []) as any[])
@@ -402,14 +408,25 @@ export default function DashboardPage() {
 
   // ---- Budget progress per category ----
   const budgetProgress = useMemo(() => {
-    return monthBudgets
-      .filter((b) => b.type === 'expense' && b.amount > 0)
-      .map((b) => {
-        const actual = monthTransactions
-          .filter((t) => t.type === 'expense' && t.category === b.category)
-          .reduce((s, t) => s + t.amount, 0)
-        const pct = b.amount > 0 ? (actual / b.amount) * 100 : 0
-        return { category: b.category, budget: b.amount, actual, pct }
+    // Roll-up ke kategori INDUK: budget sub disimpan composite 'Induk › Sub',
+    // tapi transaksi bisa ditag induk ATAU sub → samakan di level induk biar
+    // konsisten sama halaman Anggaran + Top Kategori (yang udah pakai rollup).
+    const actualByRoot: Record<string, number> = {}
+    for (const t of monthTransactions) {
+      if (t.type !== 'expense') continue
+      const root = rootCategory(t.category)
+      actualByRoot[root] = (actualByRoot[root] || 0) + t.amount
+    }
+    const budgetByRoot: Record<string, number> = {}
+    for (const b of monthBudgets) {
+      if (b.type !== 'expense' || b.amount <= 0) continue
+      const root = rootCategory(b.category)
+      budgetByRoot[root] = (budgetByRoot[root] || 0) + b.amount
+    }
+    return Object.entries(budgetByRoot)
+      .map(([category, budget]) => {
+        const actual = actualByRoot[category] || 0
+        return { category, budget, actual, pct: budget > 0 ? (actual / budget) * 100 : 0 }
       })
       .sort((a, b) => b.pct - a.pct)
       .slice(0, 6)
@@ -781,7 +798,7 @@ export default function DashboardPage() {
               {budgetProgress.map((row) => {
                 const overBudget = row.pct > 100
                 const pctCapped = Math.min(row.pct, 120)
-                const barColor = overBudget ? 'var(--danger)' : row.pct > 80 ? 'var(--ink)' : 'var(--c-mint)'
+                const barColor = overBudget ? 'var(--danger)' : row.pct > 80 ? 'var(--c-amber)' : 'var(--c-mint)'
                 return (
                   <div key={row.category}>
                     <div className="flex items-center justify-between text-xs mb-1">
