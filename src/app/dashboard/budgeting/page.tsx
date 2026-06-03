@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
@@ -24,6 +24,7 @@ import { CategoryManager } from '@/components/budgeting/category-manager'
 import {
   type CategoryTree,
   type CatNode,
+  type CatTarget,
   type BudgetType,
   loadTree,
   loadLocalTree,
@@ -38,6 +39,7 @@ import {
   isEnabled,
   emptyTree,
   newId,
+  BUDGET_TYPES,
 } from '@/lib/budget-categories'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { toast } from 'sonner'
@@ -356,6 +358,23 @@ export default function BudgetingPage() {
   const leafExpense = leafKeys(tree.expense)
   const leafSaving = leafKeys(tree.saving)
   const leafInvestment = leafKeys(tree.investment)
+
+  // Peta target per leaf (`${type}::${leafKey}` → CatTarget) buat view Bulan.
+  const leafTargets = useMemo(() => {
+    const m: Record<string, CatTarget> = {}
+    for (const type of BUDGET_TYPES) {
+      for (const node of tree[type]) {
+        if (node.subs.length) {
+          for (const sub of node.subs) {
+            if (sub.target) m[`${type}::${subKey(node.name, sub.name)}`] = sub.target
+          }
+        } else if (node.target) {
+          m[`${type}::${node.name}`] = node.target
+        }
+      }
+    }
+    return m
+  }, [tree])
 
   // Grand totals
   const totalIncomeYear = sectionTotal(leafIncome, 'income')
@@ -875,6 +894,7 @@ export default function BudgetingPage() {
               visibleInvestment={leafInvestment}
               getValue={getValue}
               actuals={actuals}
+              targets={leafTargets}
               onCellChange={handleCellBlur}
             />
           ) : (

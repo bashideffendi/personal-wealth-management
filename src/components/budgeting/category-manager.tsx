@@ -41,6 +41,7 @@ import {
 import {
   type CategoryTree,
   type CatNode,
+  type CatTarget,
   type BudgetType,
   newId,
   subKey,
@@ -190,7 +191,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
 
   function setAppearance(
     catId: string,
-    patch: { color?: string; icon?: string; clearColor?: boolean; clearIcon?: boolean },
+    patch: { color?: string; icon?: string; target?: CatTarget; clearColor?: boolean; clearIcon?: boolean; clearTarget?: boolean },
   ) {
     updateType(
       nodes.map((c) => {
@@ -200,6 +201,8 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
         else if (patch.color) next.color = patch.color
         if (patch.clearIcon) delete next.icon
         else if (patch.icon) next.icon = patch.icon
+        if (patch.clearTarget) delete next.target
+        else if (patch.target) next.target = patch.target
         return next
       }),
     )
@@ -400,13 +403,36 @@ function AppearanceDialog({
 }: {
   cat: CatNode | null
   accent: string
-  onPick: (patch: { color?: string; icon?: string; clearColor?: boolean; clearIcon?: boolean }) => void
+  onPick: (patch: { color?: string; icon?: string; target?: CatTarget; clearColor?: boolean; clearIcon?: boolean; clearTarget?: boolean }) => void
   onClose: () => void
 }) {
+  const [tMode, setTMode] = useState<CatTarget['mode'] | 'none'>('none')
+  const [tAmount, setTAmount] = useState('')
+  const [tBy, setTBy] = useState('')
+  const [tPercent, setTPercent] = useState('')
+  useEffect(() => {
+    const tg = cat?.target
+    setTMode(tg?.mode ?? 'none')
+    setTAmount(tg && (tg.mode === 'fixed' || tg.mode === 'byDate') ? String(tg.amount) : '')
+    setTBy(tg && tg.mode === 'byDate' ? tg.by : '')
+    setTPercent(tg && tg.mode === 'percentIncome' ? String(tg.percent) : '')
+  }, [cat])
   if (!cat) return null
   const activeColor = cat.color ?? accent
+  const isLeaf = cat.subs.length === 0
+  function saveTarget() {
+    if (tMode === 'none') return onPick({ clearTarget: true })
+    const amount = Math.round(Number(tAmount.replace(/[^0-9]/g, '')) || 0)
+    if (tMode === 'fixed') return onPick(amount > 0 ? { target: { mode: 'fixed', amount } } : { clearTarget: true })
+    if (tMode === 'average') return onPick({ target: { mode: 'average', months: 3 } })
+    if (tMode === 'percentIncome') {
+      const percent = Number(tPercent) || 0
+      return onPick(percent > 0 ? { target: { mode: 'percentIncome', percent } } : { clearTarget: true })
+    }
+    if (tMode === 'byDate') return onPick(amount > 0 && tBy ? { target: { mode: 'byDate', amount, by: tBy } } : { clearTarget: true })
+  }
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={(o) => { if (!o) { saveTarget(); onClose() } }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-start gap-3">
@@ -491,10 +517,77 @@ function AppearanceDialog({
           </button>
         </div>
 
+        {/* Target anggaran — leaf only (kategori tanpa subkategori) */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>Target anggaran</p>
+          {isLeaf ? (
+            <>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  ['none', 'Tanpa'],
+                  ['fixed', 'Tetap'],
+                  ['byDate', 'Sampai tgl'],
+                  ['percentIncome', '% pemasukan'],
+                  ['average', 'Rata-rata 3 bln'],
+                ] as const).map(([m, label]) => {
+                  const sel = tMode === m
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setTMode(m)}
+                      className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors"
+                      style={{ background: sel ? activeColor : 'var(--surface-2)', color: sel ? '#fff' : 'var(--ink-muted)' }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              {(tMode === 'fixed' || tMode === 'byDate') && (
+                <input
+                  inputMode="numeric"
+                  value={tAmount}
+                  onChange={(e) => setTAmount(e.target.value)}
+                  placeholder={tMode === 'byDate' ? 'Total yang mau dikumpulin (Rp)' : 'Rp per bulan'}
+                  className="h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]"
+                  style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+                />
+              )}
+              {tMode === 'byDate' && (
+                <input
+                  type="month"
+                  value={tBy}
+                  onChange={(e) => setTBy(e.target.value)}
+                  className="h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]"
+                  style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+                />
+              )}
+              {tMode === 'percentIncome' && (
+                <input
+                  inputMode="numeric"
+                  value={tPercent}
+                  onChange={(e) => setTPercent(e.target.value)}
+                  placeholder="% dari pemasukan (mis. 10)"
+                  className="h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]"
+                  style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+                />
+              )}
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                Tersimpan pas klik Selesai. Pakai tombol &quot;Terapkan target&quot; di view Bulan buat ngisi rencana otomatis.
+              </p>
+            </>
+          ) : (
+            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              Kategori ini punya subkategori — target diatur per subkategori (segera).
+            </p>
+          )}
+        </div>
+
         <div className="flex justify-end pt-1">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { saveTarget(); onClose() }}
             className="h-9 rounded-lg px-4 text-sm font-semibold text-white"
             style={{ background: activeColor }}
           >

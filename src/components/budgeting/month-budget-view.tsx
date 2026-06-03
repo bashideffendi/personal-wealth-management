@@ -10,10 +10,11 @@
  * - Verdict bahasa manusia di atas: sesuai rencana / over anggaran.
  */
 
-import { ChevronLeft, ChevronRight, Sparkles, Copy } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, Copy, Target } from 'lucide-react'
 import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
+import { computeTargetAmount, type CatTarget } from '@/lib/budget-categories'
 import { toast } from 'sonner'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
@@ -29,6 +30,8 @@ interface MonthBudgetViewProps {
   getValue: (type: string, category: string, month: number) => number
   /** Realisasi per `${type}::${category}::${month}` dari loadMonthlyActuals. */
   actuals: Record<string, number>
+  /** Target per `${type}::${leafKey}` (opsional, dari tree). */
+  targets: Record<string, CatTarget>
   onCellChange: (type: BudgetType, category: string, month: number, value: number) => void | Promise<void>
 }
 
@@ -49,6 +52,7 @@ export function MonthBudgetView({
   visibleInvestment,
   getValue,
   actuals,
+  targets,
   onCellChange,
 }: MonthBudgetViewProps) {
   const visibleByType: Record<BudgetType, string[]> = {
@@ -130,6 +134,32 @@ export function MonthBudgetView({
     )
   }
 
+  // Terapkan target persisten tiap kategori → isi rencana yang masih kosong.
+  function applyTargets() {
+    const incomeThisMonth = planTotal('income')
+    const avgMonths: number[] = []
+    for (let m = Math.max(1, month - 3); m < month; m++) avgMonths.push(m)
+    let filled = 0
+    for (const sec of SECTIONS) {
+      for (const cat of visibleByType[sec.key]) {
+        const t = targets[`${sec.key}::${cat}`]
+        if (!t || getValue(sec.key, cat, month) > 0) continue
+        const sum = avgMonths.reduce((s, mm) => s + (actuals[`${sec.key}::${cat}::${mm}`] ?? 0), 0)
+        const avgActual = avgMonths.length ? sum / avgMonths.length : 0
+        const amt = computeTargetAmount(t, { year, month, incomeThisMonth, avgActual })
+        if (amt > 0) {
+          void onCellChange(sec.key, cat, month, amt)
+          filled++
+        }
+      }
+    }
+    toast.success(
+      filled > 0
+        ? `Menerapkan target ke ${filled} kategori`
+        : 'Belum ada kategori dengan target (set di Kelola Kategori)',
+    )
+  }
+
   const stats = [
     { label: 'Pemasukan (real.)', value: incomeActual, sub: `rencana ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
     { label: 'Rencana keluar', value: planOut, sub: 'keluar + nabung + investasi', color: 'var(--ink)' },
@@ -188,6 +218,18 @@ export function MonthBudgetView({
             <Copy className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
             Salin bulan lalu
           </button>
+          {Object.keys(targets).length > 0 && (
+            <button
+              type="button"
+              onClick={applyTargets}
+              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+              style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+              title="Isi rencana kosong dari target tiap kategori"
+            >
+              <Target className="size-3.5" style={{ color: 'var(--c-violet)' }} />
+              Terapkan target
+            </button>
+          )}
           {verdict && (
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
