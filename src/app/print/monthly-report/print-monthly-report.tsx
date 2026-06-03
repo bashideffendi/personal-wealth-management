@@ -25,6 +25,9 @@ export function PrintMonthlyReport({ year, month }: Props) {
   return (
     <>
       <style jsx global>{`
+        /* Halaman cetak: paksa putih total (layar & PDF) — buang krem app
+           dari body/html biar preview = hasil PDF (kertas putih). */
+        html, body { background: #FFFFFF !important; }
         /* Dokumen putih bersih: netralin palet hangat app (krem) jadi putih/abu
            netral & paksa light, biar PDF konsisten walau app lagi dark mode. */
         .report-doc {
