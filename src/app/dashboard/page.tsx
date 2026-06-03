@@ -232,6 +232,32 @@ export default function DashboardPage() {
     }
   }, [monthTransactions])
 
+  // ---- Prior-month totals (buat delta KPI vs bulan lalu) ----
+  // Dari yearTransactions (tahun yg sama). Januari → bulan lalu = Des tahun
+  // sebelumnya yg gak ke-load → null (chip disembunyiin). Exclude Transfer.
+  const prevTotals = useMemo(() => {
+    if (selectedMonth <= 1) return null
+    const pm = selectedMonth - 1
+    const start = `${selectedYear}-${String(pm).padStart(2, '0')}-01`
+    const end = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+    const ptx = yearTransactions.filter((t) => t.date >= start && t.date < end && t.category !== 'Transfer')
+    const income = ptx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const expense = ptx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    const saving = ptx.filter((t) => t.type === 'saving').reduce((s, t) => s + t.amount, 0)
+    const investment = ptx.filter((t) => t.type === 'investment').reduce((s, t) => s + t.amount, 0)
+    return { income, expense, saving, investment, net: income - expense - saving - investment }
+  }, [yearTransactions, selectedYear, selectedMonth])
+
+  // Delta % KPI vs bulan lalu. null = jangan tampilin chip:
+  //  - bulan berjalan (parsial → banding ke bulan penuh menyesatkan)
+  //  - gak ada baseline (Januari, atau nilai bulan lalu 0)
+  const isCurrentPeriod =
+    selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth() + 1
+  const kpiDelta = (cur: number, prev: number): number | null => {
+    if (prevTotals == null || isCurrentPeriod || prev <= 0) return null
+    return ((cur - prev) / prev) * 100
+  }
+
   // ---- Financial Health Score ----
   // Uses 90-day rolling avg from yearTransactions (more stable than current
   // month — the latter can be partial / atypical). Falls back to current
@@ -559,16 +585,16 @@ export default function DashboardPage() {
 
       {/* KPI Cards — color-tinted by kind for visual variety */}
       <div data-block="kpi" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  direction="up"   kind="income" />
-        <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} direction="down" kind="expense" />
+        <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  deltaPct={kpiDelta(totals.income, prevTotals?.income ?? 0)}   kind="income" />
+        <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} deltaPct={kpiDelta(totals.expense, prevTotals?.expense ?? 0)} kind="expense" />
         <KpiCard
           label={t('dashboard.kpi_saving_investment')}
           value={totals.saving + totals.investment}
           note={`${t('dashboard.saving_rate')} ${totals.savingRate.toFixed(1)}%`}
-          direction="up"
+          deltaPct={kpiDelta(totals.saving + totals.investment, (prevTotals?.saving ?? 0) + (prevTotals?.investment ?? 0))}
           kind="saving"
         />
-        <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} direction={totals.net >= 0 ? 'up' : 'down'} kind="net" />
+        <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} deltaPct={kpiDelta(totals.net, prevTotals?.net ?? 0)} kind="net" />
       </div>
 
       {/* Phase 2.3 — AI-generated personalized insights */}

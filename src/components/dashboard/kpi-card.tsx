@@ -25,7 +25,8 @@ interface KpiCardProps {
   label: string
   value: number
   note?: string
-  direction?: 'up' | 'down'
+  /** Perubahan % vs bulan sebelumnya. null/undefined = chip disembunyiin (gak ada baseline / bulan berjalan). */
+  deltaPct?: number | null
   /** Color identity: tints accent + icon box */
   kind?: 'income' | 'expense' | 'saving' | 'net'
 }
@@ -47,9 +48,17 @@ const TONE_MAP: Record<NonNullable<KpiCardProps['kind']>, {
   net: { icon: 'var(--c-mint)', iconBg: 'var(--c-mint-soft)' },
 }
 
-export function KpiCard({ label, value, note, direction, kind }: KpiCardProps) {
+export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
   const t = useT()
   const k = kind ?? 'net'
+
+  // Delta chip = perubahan REAL vs bulan lalu (bukan dekorasi statis). Panah =
+  // arah nilai (naik/turun); warna = bagus/jelek per jenis KPI (expense naik =
+  // jelek/coral; income/saving/net naik = bagus/mint). Disembunyiin kalau 0/null.
+  const dp = deltaPct != null && Number.isFinite(deltaPct) ? Math.round(deltaPct) : null
+  const showDelta = dp != null && dp !== 0
+  const deltaUp = (dp ?? 0) > 0
+  const deltaGood = k === 'expense' ? !deltaUp : deltaUp
 
   // Net flip to coral when value < 0
   const tone = k === 'net' && value < 0
@@ -97,15 +106,14 @@ export function KpiCard({ label, value, note, direction, kind }: KpiCardProps) {
           </p>
         </div>
 
-        {/* Delta chip top-right */}
-        {direction && (
+        {/* Delta chip top-right — perubahan vs bulan lalu (real, bukan statis) */}
+        {showDelta && (
           <span
-            className={`delta-chip ${
-              direction === 'up' ? 'delta-chip-positive' : 'delta-chip-negative'
-            }`}
+            className={`delta-chip ${deltaGood ? 'delta-chip-positive' : 'delta-chip-negative'}`}
+            title="Perubahan vs bulan lalu"
           >
-            {direction === 'up' ? <TrendingUp className="size-2.5" /> : <TrendingDown className="size-2.5" />}
-            {direction === 'up' ? 'naik' : 'turun'}
+            {deltaUp ? <TrendingUp className="size-2.5" /> : <TrendingDown className="size-2.5" />}
+            {deltaUp ? '+' : '−'}{Math.abs(dp as number)}%
           </span>
         )}
       </div>
