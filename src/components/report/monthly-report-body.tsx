@@ -26,7 +26,7 @@ import {
 } from 'recharts'
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { ReportHiddenStyle } from '@/components/report/report-customizer'
-import { rootCategory } from '@/lib/budget-categories'
+import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 
 interface GoalRow { id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }
 interface BudgetRow { category: string; type: string; amount: number }
@@ -73,7 +73,7 @@ export function MonthlyReportBody({
       const startBound = `${sixStart.getFullYear()}-${String(sixStart.getMonth() + 1).padStart(2, '0')}-01`
       const endBound = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`
 
-      const [txRes, budRes, liquidEntries, nlqRes, invRes, debtRes, ccRes, goalsRes, recRes, ctrRes] = await Promise.all([
+      const [txRes, budRes, liquidEntries, nlqRes, invRes, debtRes, ccRes, goalsRes, recRes, ctrRes, treeRes] = await Promise.all([
         supabase.from('transactions').select('*').eq('user_id', user.id).gte('date', startBound).lt('date', endBound).order('amount', { ascending: false }),
         supabase.from('budgets').select('category, type, amount').eq('user_id', user.id).eq('year', year).eq('month', month),
         fetchLiquidEntries(supabase, user.id),
@@ -84,11 +84,25 @@ export function MonthlyReportBody({
         supabase.from('goals').select('id, name, target_amount, current_amount, deadline').eq('user_id', user.id).eq('is_active', true).order('deadline', { ascending: true, nullsFirst: false }),
         supabase.from('recurring_transactions').select('name, type, amount, frequency, is_active').eq('user_id', user.id).eq('is_active', true),
         supabase.from('contracts').select('name, cost, frequency, is_archived').eq('user_id', user.id).eq('is_archived', false),
+        loadTree(supabase, user.id),
       ])
       if (!alive) return
       setUserName(fullName)
       setAllTx((txRes.data ?? []) as Transaction[])
-      setBudgets((budRes.data ?? []) as BudgetRow[])
+      // Filter ke leaf key tree saat ini (sama kayak dashboard & halaman Anggaran):
+      // buang baris parent basi (double-count) + kategori stale yg udah dihapus/rename.
+      const allBud = (budRes.data ?? []) as BudgetRow[]
+      if (treeRes.dbAvailable) {
+        const leafByType: Record<string, Set<string>> = {
+          income: new Set(leafKeys(treeRes.tree.income)),
+          expense: new Set(leafKeys(treeRes.tree.expense)),
+          saving: new Set(leafKeys(treeRes.tree.saving)),
+          investment: new Set(leafKeys(treeRes.tree.investment)),
+        }
+        setBudgets(allBud.filter((b) => leafByType[b.type]?.has(b.category)))
+      } else {
+        setBudgets(allBud)
+      }
       setLiquidTotal(sumLiquid(liquidEntries))
       setNonLiquidTotal(((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
       setInvestTotal(((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0))

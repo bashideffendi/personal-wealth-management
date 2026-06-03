@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
-import { rootCategory } from '@/lib/budget-categories'
+import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
 import { DashboardCustomizer } from '@/components/dashboard/dashboard-customizer'
@@ -138,7 +138,7 @@ export default function DashboardPage() {
     const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
     const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
 
-    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes] = await Promise.all([
+    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('*')
@@ -189,6 +189,7 @@ export default function DashboardPage() {
         .select('id, name, type, amount, frequency, day_of_period')
         .eq('user_id', user.id)
         .eq('is_active', true),
+      loadTree(supabase, user.id),
     ])
     setLiquidTotal(sumLiquid(liquidEntries))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -211,7 +212,23 @@ export default function DashboardPage() {
     setYearTransactions(yearTxs)
     setMonthTransactions(yearTxs.filter((tx) => tx.date >= startDate && tx.date < endDate))
     setInvestments((invRes.data ?? []) as Investment[])
-    setMonthBudgets((budgetRes.data ?? []) as Budget[])
+    // Filter budget ke LEAF KEY tree saat ini — samain PERSIS sama halaman
+    // Anggaran (parent = jumlah sub, kategori nonaktif dibuang). Tanpa ini,
+    // roll-up dashboard ngejumlahin baris parent BASI (double-count, mis. Family
+    // 4,5jt jadi 6jt) + kategori stale yg udah dihapus/rename (Tagihan dll).
+    // Fallback (tree DB gak ada) → jangan filter biar kategori custom gak kebuang.
+    const allBudgetRows = (budgetRes.data ?? []) as Budget[]
+    if (treeRes.dbAvailable) {
+      const leafByType: Record<string, Set<string>> = {
+        income: new Set(leafKeys(treeRes.tree.income)),
+        expense: new Set(leafKeys(treeRes.tree.expense)),
+        saving: new Set(leafKeys(treeRes.tree.saving)),
+        investment: new Set(leafKeys(treeRes.tree.investment)),
+      }
+      setMonthBudgets(allBudgetRows.filter((b) => leafByType[b.type]?.has(b.category)))
+    } else {
+      setMonthBudgets(allBudgetRows)
+    }
     setCreditCards((ccRes.data ?? []) as CreditCard[])
     setContracts((ctrRes.data ?? []) as Contract[])
     setLoading(false)
@@ -459,7 +476,7 @@ export default function DashboardPage() {
         const actual = actualByRoot[category] || 0
         return { category, budget, actual, pct: budget > 0 ? (actual / budget) * 100 : 0 }
       })
-      .sort((a, b) => b.pct - a.pct)
+      .sort((a, b) => b.pct - a.pct || b.budget - a.budget)
       .slice(0, 6)
   }, [monthBudgets, monthTransactions])
 
