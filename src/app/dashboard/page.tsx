@@ -115,6 +115,9 @@ export default function DashboardPage() {
     id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number
   }>>([])
   const [userFirstName, setUserFirstName] = useState<string>('')
+  // Dashboard tabs — default tenang (Monarch-style). Hero + KPI selalu di atas;
+  // section analitik dikelompokin ke tab biar gak numpuk, tapi semua tetap 1 klik.
+  const [dashTab, setDashTab] = useState<'ringkasan' | 'aruskas' | 'analisis'>('ringkasan')
 
   useEffect(() => {
     fetchData()
@@ -542,7 +545,32 @@ export default function DashboardPage() {
         <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} direction={totals.net >= 0 ? 'up' : 'down'} kind="net" />
       </div>
 
+      {/* Dashboard tabs — default tenang, semua fitur tetap satu klik */}
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--surface-2)' }}>
+        {([['ringkasan', 'Ringkasan'], ['aruskas', 'Arus Kas'], ['analisis', 'Analisis']] as const).map(
+          ([key, label]) => {
+            const active = dashTab === key
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setDashTab(key)}
+                className="px-3.5 py-1.5 rounded-lg t-sm font-medium transition-colors"
+                style={{
+                  background: active ? 'var(--surface)' : 'transparent',
+                  color: active ? 'var(--ink)' : 'var(--text-mute)',
+                  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                }}
+              >
+                {label}
+              </button>
+            )
+          },
+        )}
+      </div>
+
       {/* Phase 2.3 — AI-generated personalized insights */}
+      {dashTab === 'ringkasan' && (
       <AIInsightsCard
         monthTransactions={monthTransactions}
         yearTransactions={yearTransactions}
@@ -550,8 +578,10 @@ export default function DashboardPage() {
         selectedMonth={selectedMonth}
         goals={activeGoals}
       />
+      )}
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
+      {dashTab === 'aruskas' && (
       <div className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -601,8 +631,11 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+      )}
 
       {/* Phase 2.1 + 3.1 — Recent Transactions + Upcoming Bills + Goals row */}
+      {dashTab === 'ringkasan' && (
+      <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RecentTransactions transactions={monthTransactions} />
         <UpcomingBills
@@ -795,7 +828,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      </>
+      )}
+
       {/* Charts Row: Top Categories + Day of Week + Saving Ring */}
+      {dashTab === 'analisis' && (
+      <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <TopCategoriesBar monthTransactions={monthTransactions} />
         <DayOfWeekChart monthTransactions={monthTransactions} />
@@ -812,10 +850,13 @@ export default function DashboardPage() {
         savingRate={totals.savingRate}
         netCashflow={totals.net}
       />
+      </>
+      )}
 
       {/* Row: Monthly Bar Chart (income vs expense) + Investment Donut.
           Per dashboard-refine.jsx — twin bars per month (emerald + coral)
           show clearer comparison than overlapping area chart. */}
+      {dashTab === 'aruskas' && (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
@@ -1083,6 +1124,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      )}
 
     </div>
   )
