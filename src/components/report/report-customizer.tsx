@@ -13,6 +13,8 @@
 
 import { useEffect, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
 
 export interface ReportBlock {
   id: string
@@ -74,6 +76,17 @@ export function ReportCustomizer() {
   const [hidden, setHidden] = useState<string[]>([])
   useEffect(() => {
     setHidden(readReportHidden())
+    void (async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const prefs = await loadUiPrefs(supabase, user.id)
+      if (prefs && Array.isArray(prefs.reportHidden)) {
+        setHidden(prefs.reportHidden)
+        try { localStorage.setItem(LS_KEY, JSON.stringify(prefs.reportHidden)) } catch { /* ignore */ }
+        window.dispatchEvent(new Event(EVT))
+      }
+    })()
   }, [])
   function persist(next: string[]) {
     setHidden(next)
@@ -83,6 +96,11 @@ export function ReportCustomizer() {
       /* ignore */
     }
     window.dispatchEvent(new Event(EVT))
+    void (async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await saveUiPref(supabase, user.id, { reportHidden: next })
+    })()
   }
   function toggle(id: string) {
     persist(hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id])

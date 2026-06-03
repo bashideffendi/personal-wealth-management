@@ -15,6 +15,8 @@
 
 import { useEffect, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
 
 export interface DashBlock {
   id: string
@@ -53,6 +55,17 @@ export function DashboardCustomizer() {
   useEffect(() => {
     setHidden(readHidden())
     setReady(true)
+    // Hydrate dari DB (lintas-perangkat) — best-effort, override localStorage.
+    void (async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const prefs = await loadUiPrefs(supabase, user.id)
+      if (prefs && Array.isArray(prefs.dashboardHidden)) {
+        setHidden(prefs.dashboardHidden)
+        try { localStorage.setItem(LS_KEY, JSON.stringify(prefs.dashboardHidden)) } catch { /* ignore */ }
+      }
+    })()
   }, [])
 
   function persist(next: string[]) {
@@ -62,6 +75,11 @@ export function DashboardCustomizer() {
     } catch {
       /* ignore */
     }
+    void (async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await saveUiPref(supabase, user.id, { dashboardHidden: next })
+    })()
   }
   function toggle(id: string) {
     persist(hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id])
