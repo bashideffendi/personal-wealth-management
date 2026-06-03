@@ -52,6 +52,7 @@ export interface Transaction {
   amount: number
   created_at: string
   goal_id?: string | null
+  tags?: string[]
 }
 
 export interface CategorizationRule {

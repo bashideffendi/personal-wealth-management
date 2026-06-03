@@ -72,6 +72,7 @@ const emptyForm = {
   category: '',
   description: '',
   amount: 0,
+  tags: [] as string[],
 }
 
 export default function TransactionsPage() {
@@ -91,6 +92,7 @@ export default function TransactionsPage() {
     account_id: string; apply: boolean;
   }>>([])
   const [importing, setImporting] = useState(false)
+  const [tagDraft, setTagDraft] = useState('') // input tag di form add/edit
 
   function applyRules(desc: string): { type: 'income' | 'expense' | 'saving' | 'investment'; category: string } | null {
     const text = desc.toUpperCase()
@@ -468,6 +470,7 @@ export default function TransactionsPage() {
       category: tx.category,
       description: tx.description,
       amount: tx.amount,
+      tags: tx.tags ?? [],
     })
     setAccountSource(null)
     resetReceipt()
@@ -545,10 +548,17 @@ export default function TransactionsPage() {
     }
     if (receiptPath) payload.receipt_url = receiptPath
     if (householdId && !editingId) payload.household_id = householdId
+    if (form.tags.length) payload.tags = form.tags
 
-    const { error: saveErr } = editingId
-      ? await supabase.from('transactions').update(payload).eq('id', editingId)
-      : await supabase.from('transactions').insert(payload)
+    const saveTx = () =>
+      editingId
+        ? supabase.from('transactions').update(payload).eq('id', editingId)
+        : supabase.from('transactions').insert(payload)
+    let { error: saveErr } = await saveTx()
+    if (saveErr && payload.tags) {
+      delete payload.tags // kolom tags mungkin belum di-migrate → simpan tanpa tags
+      ;({ error: saveErr } = await saveTx())
+    }
 
     if (saveErr) {
       setSaving(false)
@@ -1059,6 +1069,15 @@ export default function TransactionsPage() {
                           </TableCell>
                           <TableCell className="text-[13px]" style={{ color: 'var(--ink)' }}>
                             {tx.description}
+                            {tx.tags && tx.tags.length > 0 && (
+                              <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
+                                {tx.tags.map((t) => (
+                                  <span key={t} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
+                                    {t}
+                                  </span>
+                                ))}
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell
                             className={`text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
@@ -1411,6 +1430,42 @@ export default function TransactionsPage() {
                   setForm({ ...form, description: e.target.value })
                 }
                 placeholder="Tambah catatan (opsional)"
+              />
+            </div>
+
+            {/* Tags (opsional) — label lintas-kategori (Lebaran, Liburan, Renovasi…) */}
+            <div className="grid gap-1.5">
+              <Label htmlFor="tx-tags">Tag <span className="font-normal" style={{ color: 'var(--ink-soft)' }}>(opsional)</span></Label>
+              {form.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {form.tags.map((t) => (
+                    <span key={t} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, tags: form.tags.filter((x) => x !== t) })}
+                        className="opacity-70 hover:opacity-100"
+                        aria-label={`Hapus tag ${t}`}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Input
+                id="tx-tags"
+                value={tagDraft}
+                onChange={(e) => setTagDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault()
+                    const t = tagDraft.trim().replace(/,+$/, '').trim()
+                    if (t && !form.tags.includes(t)) setForm({ ...form, tags: [...form.tags, t] })
+                    setTagDraft('')
+                  }
+                }}
+                placeholder="mis. Lebaran, Liburan Bali — Enter buat tambah"
               />
             </div>
 
