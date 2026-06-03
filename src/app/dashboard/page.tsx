@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
@@ -9,7 +9,19 @@ import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
-import { DashboardCustomizer } from '@/components/dashboard/dashboard-customizer'
+import { DashboardCustomizer, DASHBOARD_BLOCKS } from '@/components/dashboard/dashboard-customizer'
+import { SortableSection } from '@/components/dashboard/sortable-section'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
+import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
@@ -89,6 +101,24 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
+const DASH_ORDER_LS = 'pwm.dashboard.order'
+const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
+function reconcileBlockOrder(saved: string[]): string[] {
+  const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
+  const missing = DEFAULT_BLOCK_ORDER.filter((id) => !valid.includes(id))
+  return [...valid, ...missing]
+}
+function readBlockOrder(): string[] {
+  if (typeof window === 'undefined') return DEFAULT_BLOCK_ORDER
+  try {
+    const raw = localStorage.getItem(DASH_ORDER_LS)
+    const arr = raw ? JSON.parse(raw) : []
+    return reconcileBlockOrder(Array.isArray(arr) ? arr.filter((x: unknown) => typeof x === 'string') : [])
+  } catch {
+    return DEFAULT_BLOCK_ORDER
+  }
+}
+
 export default function DashboardPage() {
   const supabase = createClient()
   const t = useT()
@@ -118,10 +148,50 @@ export default function DashboardPage() {
   }>>([])
   const [userFirstName, setUserFirstName] = useState<string>('')
 
+  // ---- Custom dashboard: urutan section (drag-drop in-place, Monarch-style) ----
+  const [blockOrder, setBlockOrder] = useState<string[]>(readBlockOrder)
+  const orderTouched = useRef(false)
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
   useEffect(() => {
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, selectedMonth])
+
+  // Hydrate urutan dari DB sekali (lintas-perangkat); jangan timpa kalau user udah nge-drag sesi ini.
+  useEffect(() => {
+    void (async () => {
+      if (orderTouched.current) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const prefs = await loadUiPrefs(supabase, user.id)
+      if (prefs && Array.isArray(prefs.dashboardOrder) && !orderTouched.current) {
+        const next = reconcileBlockOrder(prefs.dashboardOrder)
+        setBlockOrder(next)
+        try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function handleBlockDragEnd(e: DragEndEvent) {
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const oldI = blockOrder.indexOf(active.id as string)
+    const newI = blockOrder.indexOf(over.id as string)
+    if (oldI < 0 || newI < 0) return
+    const next = arrayMove(blockOrder, oldI, newI)
+    orderTouched.current = true
+    setBlockOrder(next)
+    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next })
+    })()
+  }
 
   async function fetchData() {
     setLoading(true)
@@ -603,8 +673,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
+      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
+
       {/* KPI Cards — color-tinted by kind for visual variety */}
-      <div data-block="kpi" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <SortableSection id="kpi" order={blockOrder} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  deltaPct={kpiDelta(totals.income, prevTotals?.income ?? 0)}   kind="income" />
         <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} deltaPct={kpiDelta(totals.expense, prevTotals?.expense ?? 0)} kind="expense" />
         <KpiCard
@@ -615,10 +688,10 @@ export default function DashboardPage() {
           kind="saving"
         />
         <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} deltaPct={kpiDelta(totals.net, prevTotals?.net ?? 0)} kind="net" />
-      </div>
+      </SortableSection>
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <div data-block="ai-insights">
+      <SortableSection id="ai-insights" order={blockOrder}>
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -626,10 +699,10 @@ export default function DashboardPage() {
           selectedMonth={selectedMonth}
           goals={activeGoals}
         />
-      </div>
+      </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <div data-block="aliran" className="s-card p-4 sm:p-6">
+      <SortableSection id="aliran" order={blockOrder} className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="eyebrow">Aliran Uang</p>
@@ -677,10 +750,10 @@ export default function DashboardPage() {
             emptyMessage="Belum ada transaksi bulan ini — input dulu transaksi pertamamu."
           />
         </div>
-      </div>
+      </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions + Upcoming Bills + Goals row */}
-      <div data-block="aktivitas" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <SortableSection id="aktivitas" order={blockOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RecentTransactions transactions={monthTransactions} />
         <UpcomingBills
           contracts={contracts}
@@ -689,10 +762,10 @@ export default function DashboardPage() {
           recurring={recurringItems}
         />
         <GoalsWidget goals={activeGoals} />
-      </div>
+      </SortableSection>
 
       {/* Calendar + Budget Progress */}
-      <div data-block="kalender" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <SortableSection id="kalender" order={blockOrder} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
@@ -870,17 +943,17 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-      </div>
+      </SortableSection>
 
       {/* Charts Row: Top Categories + Day of Week + Saving Ring */}
-      <div data-block="grafik" className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <SortableSection id="grafik" order={blockOrder} className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <TopCategoriesBar monthTransactions={monthTransactions} />
         <DayOfWeekChart monthTransactions={monthTransactions} />
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
-      </div>
+      </SortableSection>
 
       {/* Insights & Alerts */}
-      <div data-block="insights">
+      <SortableSection id="insights" order={blockOrder}>
         <InsightsPanel
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -890,12 +963,12 @@ export default function DashboardPage() {
           savingRate={totals.savingRate}
           netCashflow={totals.net}
         />
-      </div>
+      </SortableSection>
 
       {/* Row: Monthly Bar Chart (income vs expense) + Investment Donut.
           Per dashboard-refine.jsx — twin bars per month (emerald + coral)
           show clearer comparison than overlapping area chart. */}
-      <div data-block="investasi" className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+      <SortableSection id="investasi" order={blockOrder} className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
@@ -1161,7 +1234,10 @@ export default function DashboardPage() {
             </>
           )}
         </div>
-      </div>
+      </SortableSection>
+
+      </SortableContext>
+      </DndContext>
 
     </div>
   )
