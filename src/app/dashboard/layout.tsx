@@ -25,6 +25,29 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/login')
 
+  // Onboarding gate — user benar-benar baru (belum punya akun + belum pernah
+  // lewat wizard) diarahin ke /onboarding. Resilient: kalau kolom
+  // onboarding_focus belum ada (sebelum migrasi 039) query-nya error → kita
+  // gak nge-gate, dashboard tetap normal. Cek akun dulu (HEAD count, murah);
+  // user yang udah punya akun gak pernah kena query profil.
+  {
+    const accRes = await supabase
+      .from('accounts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+    if ((accRes.count ?? 0) === 0) {
+      const profRes = await supabase
+        .from('profiles')
+        .select('onboarding_focus')
+        .eq('id', user.id)
+        .maybeSingle()
+      const focus = (profRes.data as { onboarding_focus: string[] | null } | null)?.onboarding_focus
+      if (!profRes.error && profRes.data && focus == null) {
+        redirect('/onboarding')
+      }
+    }
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col"
