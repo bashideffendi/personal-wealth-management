@@ -71,6 +71,19 @@ export function MonthBudgetView({
   const incomeActual = actualTotal('income')
   const over = planOut > 0 && actualOut > planOut
 
+  // Jumlah target tersarankan buat sebuah leaf (null kalau gak ada target).
+  function targetAmountFor(type: BudgetType, cat: string): number | null {
+    const t = targets[`${type}::${cat}`]
+    if (!t) return null
+    let avgActual = 0
+    if (t.mode === 'average') {
+      const ms: number[] = []
+      for (let m = Math.max(1, month - 3); m < month; m++) ms.push(m)
+      if (ms.length) avgActual = ms.reduce((s, m) => s + (actuals[`${type}::${cat}::${m}`] ?? 0), 0) / ms.length
+    }
+    return computeTargetAmount(t, { year, month, incomeThisMonth: incomePlan, avgActual })
+  }
+
   const verdict =
     planOut === 0
       ? null
@@ -315,6 +328,16 @@ export function MonthBudgetView({
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: overRow ? 'var(--c-coral)' : sec.tint }} />
                         </div>
                       )}
+                      {(() => {
+                        const tgt = targetAmountFor(sec.key, cat)
+                        if (tgt == null) return null
+                        const met = plan >= tgt
+                        return (
+                          <p className="num text-[10px] mt-0.5" style={{ color: met ? 'var(--c-mint)' : 'var(--c-violet)' }}>
+                            Target {formatCurrency(tgt)}{met ? ' ✓' : ''}
+                          </p>
+                        )
+                      })()}
                     </div>
                     <NumberInput
                       value={plan}
