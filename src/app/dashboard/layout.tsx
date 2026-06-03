@@ -25,17 +25,18 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/login')
 
-  // Onboarding gate — user benar-benar baru (belum punya akun + belum pernah
-  // lewat wizard) diarahin ke /onboarding. Resilient: kalau kolom
-  // onboarding_focus belum ada (sebelum migrasi 039) query-nya error → kita
-  // gak nge-gate, dashboard tetap normal. Cek akun dulu (HEAD count, murah);
-  // user yang udah punya akun gak pernah kena query profil.
+  // Onboarding gate — user benar-benar baru diarahin ke /onboarding.
+  // Pakai jumlah TRANSAKSI (bukan akun): trigger DB auto-seed akun "Cash" tiap
+  // signup, jadi count akun selalu >=1 → gate pakai akun gak pernah jalan.
+  // Transaksi == 0 = benar-benar baru. User yang udah punya data gak ke-gate.
+  // Resilient: kalau kolom onboarding_focus belum ada (sebelum migrasi 039)
+  // query profil error → gak nge-gate. Skip-flag nulis [] (non-null) → no loop.
   {
-    const accRes = await supabase
-      .from('accounts')
+    const txRes = await supabase
+      .from('transactions')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
-    if ((accRes.count ?? 0) === 0) {
+    if ((txRes.count ?? 0) === 0) {
       const profRes = await supabase
         .from('profiles')
         .select('onboarding_focus')

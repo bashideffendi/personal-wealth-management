@@ -457,6 +457,7 @@ export default function TransactionsPage() {
     setEditingId(null)
     const picked = pickAccount()
     setForm({ ...emptyForm, account_id: picked?.id ?? '' })
+    setTagDraft('')
     setAccountSource(picked?.source ?? null)
     resetReceipt()
     setDialogOpen(true)
@@ -473,6 +474,7 @@ export default function TransactionsPage() {
       amount: tx.amount,
       tags: tx.tags ?? [],
     })
+    setTagDraft('')
     setAccountSource(null)
     resetReceipt()
     setDialogOpen(true)
@@ -538,6 +540,11 @@ export default function TransactionsPage() {
       }
     }
 
+    // Flush tag yang udah diketik di input tapi belum di-commit (belum Enter/koma)
+    // — biar gak ke-drop diam-diam pas user langsung klik Simpan.
+    const pendingTag = tagDraft.trim().replace(/,+$/, '').trim()
+    const tags = pendingTag && !form.tags.includes(pendingTag) ? [...form.tags, pendingTag] : form.tags
+
     const payload: Record<string, unknown> = {
       user_id: user.id,
       date: form.date,
@@ -549,15 +556,19 @@ export default function TransactionsPage() {
     }
     if (receiptPath) payload.receipt_url = receiptPath
     if (householdId && !editingId) payload.household_id = householdId
-    if (form.tags.length) payload.tags = form.tags
+    if (tags.length) payload.tags = tags
 
     const saveTx = () =>
       editingId
         ? supabase.from('transactions').update(payload).eq('id', editingId)
         : supabase.from('transactions').insert(payload)
     let { error: saveErr } = await saveTx()
-    if (saveErr && payload.tags) {
-      delete payload.tags // kolom tags mungkin belum di-migrate → simpan tanpa tags
+    // Retry tanpa tags HANYA kalau errornya kolom-belum-ada (pre-migrasi 038),
+    // bukan SEMUA error — biar tag user gak ke-buang diam-diam pas error lain (RLS/network).
+    const isMissingTagsCol = !!saveErr && !!payload.tags &&
+      (saveErr.code === '42703' || /column .*tags.* does not exist/i.test(saveErr.message ?? ''))
+    if (isMissingTagsCol) {
+      delete payload.tags
       ;({ error: saveErr } = await saveTx())
     }
 

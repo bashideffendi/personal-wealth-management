@@ -177,7 +177,15 @@ export function MonthlyReportBody({
 
     // Forward-looking next month: recurring (active) + debt monthly payments + monthly contracts
     const upcoming: { name: string; amount: number; kind: string }[] = []
-    for (const x of recurring.filter((y) => y.type === 'expense' || y.type === 'saving' || y.type === 'investment')) upcoming.push({ name: x.name, amount: x.amount, kind: 'Rutin' })
+    for (const x of recurring.filter((y) => y.type === 'expense' || y.type === 'saving' || y.type === 'investment')) {
+      // Normalisasi ke ekuivalen bulanan — weekly/yearly/daily jangan dipakai mentah.
+      const m = x.frequency === 'monthly' ? x.amount
+        : x.frequency === 'weekly' ? (x.amount * 52) / 12
+        : x.frequency === 'yearly' ? x.amount / 12
+        : x.frequency === 'daily' ? (x.amount * 365) / 12
+        : x.amount
+      if (m > 0) upcoming.push({ name: x.name, amount: Math.round(m), kind: 'Rutin' })
+    }
     for (const d of debts) if ((d.monthly_payment ?? 0) > 0) upcoming.push({ name: d.name, amount: d.monthly_payment, kind: 'Cicilan' })
     for (const c of contracts) if ((c.frequency === 'monthly') && (c.cost ?? 0) > 0) upcoming.push({ name: c.name, amount: c.cost ?? 0, kind: 'Langganan' })
     upcoming.sort((a, b) => b.amount - a.amount)
@@ -316,7 +324,7 @@ export function MonthlyReportBody({
         <div className="s-card p-5 sm:p-6 lg:col-span-2">
           <p className="eyebrow">Pergeseran Terbesar</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>vs {r.prevMonthLabel}</h3>
-          {r.shifts.length === 0 ? <p className="t-sm mt-4" style={{ color: 'var(--text-mute)' }}>Belum cukup data bulan lalu.</p> : (
+          {(!r.hasPrev || r.shifts.length === 0) ? <p className="t-sm mt-4" style={{ color: 'var(--text-mute)' }}>Belum cukup data bulan lalu.</p> : (
             <div className="mt-4 space-y-3">
               {r.shifts.map((s) => {
                 const up = s.delta > 0
@@ -464,8 +472,8 @@ export function MonthlyReportBody({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `Saving rate ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? 'Naik' : 'Turun'} ${Math.abs(r.savingRateDelta).toFixed(0)}pp dari ${r.prevMonthLabel}` : 'Bulan ini' },
-            topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} turun`, sub: `Hemat ${formatCompactCurrency(Math.abs(topDown.delta))} vs ${r.prevMonthLabel}` },
-            topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} naik`, sub: `+${formatCompactCurrency(topUp.delta)} vs ${r.prevMonthLabel}` },
+            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} turun`, sub: `Hemat ${formatCompactCurrency(Math.abs(topDown.delta))} vs ${r.prevMonthLabel}` },
+            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} naik`, sub: `+${formatCompactCurrency(topUp.delta)} vs ${r.prevMonthLabel}` },
           ].filter(Boolean).slice(0, 3).map((h, i) => {
             const item = h as { icon: React.ReactNode; title: string; sub: string }
             return <div key={i} className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}><div className="mb-1.5">{item.icon}</div><p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</p><p className="t-cap mt-0.5" style={{ color: 'var(--text-mute)' }}>{item.sub}</p></div>

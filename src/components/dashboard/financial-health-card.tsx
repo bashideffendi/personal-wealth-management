@@ -36,15 +36,20 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
   // arcAngle no longer needed — SVG ring uses strokeDasharray instead.
 
   // Burn rate
-  const burnMonths = monthlyExpense > 0 ? liquidBalance / monthlyExpense : 0
-  const burnColor = burnMonths >= 6 ? 'var(--c-mint)'
+  // Guard: expense<=0 (mis. bulan berjalan belum ada transaksi) BUKAN "cash habis
+  // 0 bulan" — jangan tampil alarm merah. State netral aja.
+  const hasExpenseData = monthlyExpense > 0
+  const burnMonths = hasExpenseData ? liquidBalance / monthlyExpense : 0
+  const burnColor = !hasExpenseData ? 'var(--ink-soft)'
+    : burnMonths >= 6 ? 'var(--c-mint)'
     : burnMonths >= 3 ? 'var(--c-amber)'
-    : burnMonths >= 1 ? 'var(--c-coral)'
     : 'var(--c-coral)'
-  const burnTint = burnMonths >= 6 ? 'var(--c-mint-soft)'
+  const burnTint = !hasExpenseData ? 'var(--surface-2)'
+    : burnMonths >= 6 ? 'var(--c-mint-soft)'
     : burnMonths >= 3 ? 'var(--c-amber-soft)'
     : 'var(--c-coral-soft)'
-  const burnVerdict = burnMonths >= 6 ? 'Sangat aman'
+  const burnVerdict = !hasExpenseData ? 'Belum ada data pengeluaran'
+    : burnMonths >= 6 ? 'Sangat aman'
     : burnMonths >= 3 ? 'Cukup aman'
     : burnMonths >= 1 ? 'Tipis'
     : 'Risiko tinggi'
@@ -157,7 +162,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                   letterSpacing: '-0.03em',
                 }}
               >
-                {burnMonths > 99 ? '99+' : burnMonths.toFixed(1)}
+                {!hasExpenseData ? '—' : burnMonths > 99 ? '99+' : burnMonths.toFixed(1)}
               </span>
               <span
                 className="text-sm font-medium"
@@ -178,10 +183,14 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
               className="text-[11.5px] mt-2 leading-relaxed"
               style={{ color: 'var(--ink-muted)' }}
             >
-              Tanpa pemasukan baru, liquid cash bisa cover{' '}
-              <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
-                {burnMonths > 99 ? '> 99' : burnMonths.toFixed(1)}
-              </span> bulan pengeluaran.
+              {hasExpenseData ? (
+                <>Tanpa pemasukan baru, liquid cash bisa cover{' '}
+                <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
+                  {burnMonths > 99 ? '> 99' : burnMonths.toFixed(1)}
+                </span> bulan pengeluaran.</>
+              ) : (
+                'Belum cukup data pengeluaran bulan ini buat hitung cash coverage.'
+              )}
             </p>
 
             {/* Push detail rows to bottom of panel */}

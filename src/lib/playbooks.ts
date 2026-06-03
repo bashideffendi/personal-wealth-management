@@ -20,6 +20,8 @@ export interface PlaybookInputField {
   options?: { value: string; label: string }[]
   /** Prefix unit (mis. "Rp") untuk number. */
   prefix?: string
+  /** Izinkan satu pemisah desimal (mis. bunga 2,5%). Default integer-only. */
+  decimal?: boolean
   hint?: string
   /** Coba prefill dari data user: 'monthlyExpense' | 'monthlyIncome' | 'liquidSavings'. */
   prefillFrom?: 'monthlyExpense' | 'monthlyIncome' | 'liquidSavings'
@@ -134,7 +136,7 @@ export const PLAYBOOKS: Playbook[] = [
     ],
     inputs: [
       { key: 'totalDebt', label: 'Total sisa utang', type: 'number', prefix: 'Rp', placeholder: '15.000.000' },
-      { key: 'avgInterest', label: 'Bunga rata-rata per bulan (%)', type: 'number', placeholder: '3' },
+      { key: 'avgInterest', label: 'Bunga rata-rata per bulan (%)', type: 'number', placeholder: '3', decimal: true },
       { key: 'monthlyPayment', label: 'Sanggup bayar per bulan', type: 'number', prefix: 'Rp', placeholder: '2.000.000' },
       {
         key: 'method',

@@ -267,7 +267,7 @@ export default function DashboardPage() {
     // Investment value
     const investmentValue = investments.reduce((s, i) => s + (i.total_value || 0), 0)
 
-    return computeFinancialHealth({
+    const fhs = computeFinancialHealth({
       monthlyIncome,
       monthlyExpense,
       monthlySaved,
@@ -284,6 +284,9 @@ export default function DashboardPage() {
       })),
       // userAge: not tracked yet — calculator falls back to mid-career default
     })
+    // Expose pengeluaran 90-hari (avg) ke kartu — Cash Coverage konsisten sama
+    // skor FHS, gak reset ke 0 pas bulan berjalan masih kosong.
+    return { ...fhs, _monthlyExpense: monthlyExpense }
   }, [yearTransactions, totals, creditCards, activeDebts, contracts, investments, liquidTotal, activeGoals])
 
   // ---- Money Flow Sankey data ----
@@ -488,7 +491,7 @@ export default function DashboardPage() {
       <FinancialHealthCard
         result={fhsResult}
         liquidBalance={liquidTotal}
-        monthlyExpense={totals.expense}
+        monthlyExpense={fhsResult._monthlyExpense}
       />
 
       {/* Cash-flow forecast — compact reminder of upcoming events.

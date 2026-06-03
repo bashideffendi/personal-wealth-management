@@ -110,6 +110,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Playbook tidak dikenal' }, { status: 400 })
   }
 
+  // Jangan charge kredit kalau user belum isi angka apapun.
+  const filledCount = playbook.inputs.filter((f) => {
+    const v = body.inputs?.[f.key]
+    return v !== undefined && v !== '' && v !== null
+  }).length
+  if (filledCount === 0) {
+    return NextResponse.json({ error: 'Isi minimal satu angka dulu biar rencananya relevan.' }, { status: 400 })
+  }
+
   // Charge credits before generating
   const credit = await consumeAICredits(supabase, user.id, 'playbook')
   if (!credit.ok) {
@@ -155,7 +164,7 @@ export async function POST(request: NextRequest) {
   try {
     const response = await client.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 1600,
+      max_tokens: 2400,
       system: SYSTEM_PROMPT,
       tools: [
         {
@@ -168,6 +177,11 @@ export async function POST(request: NextRequest) {
       messages: [{ role: 'user', content: sections.join('\n') }],
     })
 
+    // Output kepotong karena max_tokens → JSON parsial (angka jadi 'Rp 0'). Refund + error.
+    if (response.stop_reason === 'max_tokens') {
+      await refundAICredits(supabase, user.id, 'playbook')
+      return NextResponse.json({ error: 'Rencana kepotong (terlalu panjang). Coba lagi.' }, { status: 502 })
+    }
     const block = response.content.find((b) => b.type === 'tool_use')
     if (!block || block.type !== 'tool_use') {
       await refundAICredits(supabase, user.id, 'playbook')

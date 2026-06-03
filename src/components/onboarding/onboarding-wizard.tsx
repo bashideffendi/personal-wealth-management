@@ -112,17 +112,20 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) {
+      setSubmitting(false)
       router.replace('/login')
       return
     }
 
     // 1) Simpan fokus — best-effort, resilient kalau kolom belum ada (pre-039).
     try {
-      const { error } = await supabase
+      // upsert (bukan update) + verify ter-tulis: update().eq() pada 0 baris
+      // gak balikin error → onboarding_focus bisa tetap NULL → loop balik ke wizard.
+      const { data, error } = await supabase
         .from('profiles')
-        .update({ onboarding_focus: focus })
-        .eq('id', user.id)
-      if (error) console.warn('[onboarding] simpan fokus gagal:', error.message)
+        .upsert({ id: user.id, onboarding_focus: focus }, { onConflict: 'id' })
+        .select('id')
+      if (error || !data?.length) console.warn('[onboarding] simpan fokus gagal:', error?.message)
     } catch (e) {
       console.warn('[onboarding] simpan fokus error:', e)
     }

@@ -105,8 +105,11 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
     }
   }, [playbook])
 
-  function setNumber(key: string, raw: string) {
-    setValues((v) => ({ ...v, [key]: raw.replace(/[^\d]/g, '') }))
+  function setNumber(key: string, raw: string, decimal = false) {
+    const cleaned = decimal
+      ? raw.replace(/[^\d.,]/g, '').replace(',', '.').replace(/(\..*)\./g, '$1')
+      : raw.replace(/[^\d]/g, '')
+    setValues((v) => ({ ...v, [key]: cleaned }))
   }
 
   async function generate() {
@@ -250,7 +253,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
                           ? Number(values[f.key]).toLocaleString('id-ID')
                           : values[f.key]
                       }
-                      onChange={(e) => setNumber(f.key, e.target.value)}
+                      onChange={(e) => setNumber(f.key, e.target.value, f.decimal)}
                       placeholder={f.placeholder}
                       className="flex-1 min-w-0 bg-transparent outline-none num t-body"
                       style={{ color: 'var(--ink)' }}
