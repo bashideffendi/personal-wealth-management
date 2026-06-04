@@ -102,6 +102,7 @@ export default function DebtsOverviewPage() {
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState('Semua')
   const [tlStrategy, setTlStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
+  const [extraPayment, setExtraPayment] = useState(0)
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -191,6 +192,11 @@ export default function DebtsOverviewPage() {
 
   // "Bebas utang konsumtif" = bulan terakhir utang non-jangka-panjang lunas (pakai strategi aktif).
   const tlResult = tlStrategy === 'snowball' ? snowball : avalanche
+  // What-if percepat pelunasan: engine udah dukung param `extra` — bandingin vs base (extra=0).
+  const extraMax = Math.max(5_000_000, Math.ceil(totalMonthly / 1_000_000) * 1_000_000)
+  const whatIf = useMemo(() => simulatePayoff(allActive, tlStrategy, extraPayment), [allActive, tlStrategy, extraPayment])
+  const monthsSaved = Math.max(0, tlResult.months - whatIf.months)
+  const interestSaved = Math.max(0, tlResult.totalInterest - whatIf.totalInterest)
   const consumerFreeMonth = useMemo(() => {
     const months = allActive.filter((d) => d.category !== 'long_term').map((d) => tlResult.perDebt[d.id] ?? 0)
     return months.length ? Math.max(...months) : 0
@@ -401,6 +407,42 @@ export default function DebtsOverviewPage() {
               </div>
             </div>
             <PayoffTimeline result={tlResult} accent={tlStrategy === 'snowball' ? '#10B981' : '#8B5CF6'} />
+          </div>
+
+          {/* What-If: percepat pelunasan dengan cicilan ekstra */}
+          <div className="s-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Percepat Pelunasan</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+                  Tambah cicilan ekstra/bulan (strategi <span className="capitalize font-medium" style={{ color: 'var(--ink)' }}>{tlStrategy}</span>) — geser buat liat lunas lebih cepat &amp; hemat bunga.
+                </p>
+              </div>
+              {extraPayment > 0 && (
+                <button type="button" onClick={() => setExtraPayment(0)} className="text-[11px] font-medium shrink-0" style={{ color: 'var(--ink-soft)' }}>Reset</button>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {[0, 500_000, 1_000_000, 2_000_000, 5_000_000].map((v) => (
+                <button key={v} type="button" onClick={() => setExtraPayment(v)} aria-pressed={extraPayment === v} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                  style={{ background: extraPayment === v ? 'var(--c-mint)' : 'var(--surface-2)', color: extraPayment === v ? '#FFF' : 'var(--ink)' }}>
+                  {v === 0 ? 'Tanpa ekstra' : `+${formatCompactCurrency(v)}`}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <input
+                type="range" min={0} max={extraMax} step={100_000} value={Math.min(extraPayment, extraMax)}
+                onChange={(e) => setExtraPayment(Number(e.target.value))}
+                className="flex-1 accent-[#10B981]" aria-label="Cicilan ekstra per bulan"
+              />
+              <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint)' }}>+{formatCurrency(extraPayment)}</span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lunas Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months)}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lebih Cepat</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} bln` : '—'}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Hemat Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCompactCurrency(Math.round(interestSaved)) : '—'}</p></div>
+            </div>
           </div>
 
           {/* Pembayaran mendatang + Rasio */}
