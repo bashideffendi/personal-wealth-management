@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import {
   Plus, Pencil, Trash2, Loader2, PartyPopper, Receipt, Home, CreditCard, Banknote, Wallet,
-  Car, Smartphone, Zap, CheckCircle2, AlertCircle, type LucideIcon,
+  Car, Smartphone, Zap, CheckCircle2, AlertCircle, Lightbulb, TrendingDown, type LucideIcon,
 } from 'lucide-react'
 
 const CAT: Record<string, { label: string; color: string; icon: LucideIcon }> = {
@@ -189,6 +189,14 @@ export default function DebtsOverviewPage() {
   // Highlight perbandingan: selisih bunga + siapa yg lebih cepat lunas.
   const interestDiff = Math.round(Math.abs(snowball.totalInterest - avalanche.totalInterest))
   const cheaper: 'snowball' | 'avalanche' = avalanche.totalInterest <= snowball.totalInterest ? 'avalanche' : 'snowball'
+  const monthsDiff = Math.max(0, snowball.months - avalanche.months) // Avalanche biasanya lunas duluan
+  const snowFirst = snowball.order[0]
+  const snowFirstMonth = snowFirst ? (snowball.perDebt[snowFirst.id] ?? 0) : 0
+  // Nudge refinance: utang APR tinggi (>=18%) — estimasi hemat SETAHUN kalau pindah ke ~12%.
+  const REFI_TARGET = 12
+  const highApr = allActive.filter((d) => d.interest_rate >= 18)
+  const maxApr = highApr.reduce((m, d) => Math.max(m, d.interest_rate), 0)
+  const refiSaving = Math.round(highApr.reduce((s, d) => s + (d.remaining * Math.max(0, d.interest_rate - REFI_TARGET)) / 100, 0))
 
   // "Bebas utang konsumtif" = bulan terakhir utang non-jangka-panjang lunas (pakai strategi aktif).
   const tlResult = tlStrategy === 'snowball' ? snowball : avalanche
@@ -284,6 +292,21 @@ export default function DebtsOverviewPage() {
             </div>
           </div>
 
+          {/* Nudge refinance — utang bunga tinggi */}
+          {highApr.length > 0 && refiSaving > 0 && (
+            <div className="s-card flex items-start gap-3 p-4" style={{ borderColor: 'color-mix(in srgb, var(--c-amber) 32%, var(--border-soft))', background: 'color-mix(in srgb, var(--c-amber) 5%, var(--surface))' }}>
+              <div className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber)' }}>
+                <TrendingDown className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold" style={{ color: 'var(--ink)' }}>Bunga tinggi — pertimbangin pindah</p>
+                <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} bunganya sampai <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{maxApr}%/thn</span>. Balance transfer atau KTA bunga ~12% bisa hemat sekitar <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCompactCurrency(refiSaving)}/tahun</span>. Strategi <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> udah otomatis prioritasin ini.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Tabel utang */}
           <div className="s-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
@@ -368,9 +391,17 @@ export default function DebtsOverviewPage() {
           <div>
             <div className="mb-3">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Strategi Pelunasan</p>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                Dua jalur lunas yang sama-sama valid — pilih yang paling cocok sama gaya kamu.
-                {interestDiff > 0 && <> <span style={{ color: cheaper === 'avalanche' ? 'var(--c-violet)' : 'var(--c-mint)' }}>Avalanche hemat {formatCompactCurrency(interestDiff)} bunga</span>, Snowball menang momentum.</>}
+              <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>Dua jalur lunas yang sama-sama valid — pilih yang cocok sama gaya kamu.</p>
+            </div>
+            {/* Rekomendasi tradeoff eksplisit */}
+            <div className="mb-3 flex items-start gap-2.5 rounded-xl p-3.5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
+              <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                {interestDiff > 0 ? (
+                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> hemat <span className="num">{formatCompactCurrency(interestDiff)}</span> bunga{monthsDiff > 0 ? <> &amp; lunas <span className="num">{monthsDiff} bln</span> lebih cepat</> : null}. Pilih <span style={{ color: 'var(--c-mint)', fontWeight: 600 }}>Snowball</span> kalau butuh dorongan — utang pertama{snowFirst ? ` (${snowFirst.name})` : ''} lunas <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
+                ) : (
+                  <>Buat utang kamu sekarang, dua strategi hasilnya mirip — pilih yang bikin kamu paling konsisten bayar.</>
+                )}
               </p>
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
@@ -555,7 +586,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
   const karakter = isSnow ? 'Cepat' : 'Efisien'
   const byId = new Map(debts.map((d) => [d.id, d]))
   return (
-    <div className="rounded-2xl p-5 sm:p-6" style={{ background: accentSoft, border: `1.5px solid color-mix(in srgb, ${accent} 55%, transparent)` }}>
+    <div className="rounded-2xl p-5 sm:p-6 transition-shadow hover:shadow-lg" style={{ background: accentSoft, border: `1.5px solid color-mix(in srgb, ${accent} 55%, transparent)` }}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>Strategi</p>
