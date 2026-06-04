@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import {
   Plus, Pencil, Trash2, Loader2, PartyPopper, Receipt, Home, CreditCard, Banknote, Wallet,
-  Car, Smartphone, Zap, CheckCircle2, AlertCircle, Lightbulb, TrendingDown, type LucideIcon,
+  Car, Smartphone, Zap, CheckCircle2, AlertCircle, Lightbulb, TrendingDown, Flag, type LucideIcon,
 } from 'lucide-react'
 
 const CAT: Record<string, { label: string; color: string; icon: LucideIcon }> = {
@@ -179,6 +179,8 @@ export default function DebtsOverviewPage() {
   const consumerMonthly = allActive.filter((d) => d.category !== 'long_term').reduce((s, d) => s + d.monthly_payment, 0)
   const totalPaid = Math.max(0, totalPrincipal - totalRemaining)
   const paidPct = totalPrincipal > 0 ? (totalPaid / totalPrincipal) * 100 : 0
+  // Bunga berjalan: biaya bunga/bulan di saldo SEKARANG (Σ saldo × APR/12) — cost of waiting.
+  const monthlyInterestNow = allActive.reduce((s, d) => s + (d.remaining * (d.interest_rate / 100)) / 12, 0)
   const dti = monthlyIncome > 0 ? (totalMonthly / monthlyIncome) * 100 : null
   const frontEnd = monthlyIncome > 0 ? (longTermMonthly / monthlyIncome) * 100 : null
   const debtToAsset = totalAssets > 0 ? (totalRemaining / totalAssets) * 100 : null
@@ -259,6 +261,18 @@ export default function DebtsOverviewPage() {
               <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
                 <span className="num">{paidPct.toFixed(0)}% lunas</span><span className="num">{Math.max(0, 100 - paidPct).toFixed(0)}% tersisa</span>
               </div>
+              {/* Countdown bebas utang — focal point (pakai strategi aktif) */}
+              <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid var(--border-soft)' }}>
+                <Flag className="size-3.5 shrink-0" style={{ color: 'var(--c-mint)' }} />
+                {tlResult.feasible && tlResult.months > 0 && tlResult.months < 600 ? (
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-muted)' }}>
+                    Bebas utang <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(tlResult.months)}</span>
+                    <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} thn` : `${tlResult.months} bln`} lagi</span>
+                  </p>
+                ) : (
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--c-amber)' }}>Cicilan belum nutup bunga — naikin biar utang turun</p>
+                )}
+              </div>
             </div>
 
             <div className="s-card p-5">
@@ -274,6 +288,11 @@ export default function DebtsOverviewPage() {
                   <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(consumerMonthly)}</span>
                 </div>
               </div>
+              {monthlyInterestNow > 0 && (
+                <p className="text-[11px] mt-2.5 pt-2.5 leading-snug" style={{ borderTop: '1px solid var(--border-soft)', color: 'var(--ink-soft)' }}>
+                  Dari cicilan ini, ± <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{formatCurrency(Math.round(monthlyInterestNow))}</span>/bln masih kebakar bunga
+                </p>
+              )}
             </div>
 
             <div className="s-card p-5">
