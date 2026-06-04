@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
+import { projectNetWorth } from '@/lib/net-worth-projection'
+import type { PayoffDebt } from '@/lib/debt-payoff'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
@@ -27,6 +29,15 @@ interface NetWorthData {
 
 const todayLong = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 
+function nwMonthLabel(monthsAhead: number): string {
+  const d = new Date(); d.setMonth(d.getMonth() + monthsAhead)
+  return d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' })
+}
+function ccMinPaymentNW(balance: number): number {
+  if (balance <= 0) return 0
+  return Math.min(balance, Math.max(50_000, Math.round(balance * 0.1)))
+}
+
 export default function NetWorthPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
@@ -39,6 +50,8 @@ export default function NetWorthPage() {
     longTermInvestment: 0, consumerDebt: 0, creditCard: 0, cashLoan: 0, longTermDebt: 0,
   })
   const [debtCount, setDebtCount] = useState(0)
+  const [payoffDebts, setPayoffDebts] = useState<PayoffDebt[]>([])
+  const [nwStrategy, setNwStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
 
   useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -51,21 +64,26 @@ export default function NetWorthPage() {
       fetchLiquidEntries(supabase, user.id),
       supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
       supabase.from('investments').select('total_value').eq('user_id', user.id),
-      supabase.from('debts').select('category, remaining').eq('user_id', user.id).eq('is_active', true),
-      supabase.from('credit_cards').select('current_balance').eq('user_id', user.id).eq('is_active', true),
+      supabase.from('debts').select('id, name, category, remaining, interest_rate, monthly_payment').eq('user_id', user.id).eq('is_active', true),
+      supabase.from('credit_cards').select('id, name, current_balance, interest_rate').eq('user_id', user.id).eq('is_active', true),
       supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('snapshot_date'),
       supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
     ])
 
     type NonLiquidRow = { category: string; current_value: number }
-    type DebtRow = { category: string; remaining: number }
+    type DebtRow = { id: string; name: string; category: string; remaining: number; interest_rate: number; monthly_payment: number }
     const nonLiquidAssets = (nonLiquidRes.data ?? []) as NonLiquidRow[]
     const investments = (investmentRes.data ?? []) as { total_value: number }[]
     const debts = (debtRes.data ?? []) as DebtRow[]
     // Kartu kredit = utang revolving → ikut liabilitas
-    const cards = (ccRes.data ?? []) as { current_balance: number }[]
+    const cards = (ccRes.data ?? []) as { id: string; name: string; current_balance: number; interest_rate: number }[]
     const creditCardDebt = cards.reduce((s, c) => s + (c.current_balance || 0), 0)
     setDebtCount(debts.filter((d) => d.remaining > 0).length + cards.filter((c) => (c.current_balance || 0) > 0).length)
+    // PayoffDebt[] buat proyeksi — mapping CC persis kayak halaman Utang (interest ×12, min payment).
+    setPayoffDebts([
+      ...debts.filter((d) => d.remaining > 0).map((d) => ({ id: d.id, name: d.name, remaining: d.remaining, interest_rate: d.interest_rate || 0, monthly_payment: d.monthly_payment || 0 })),
+      ...cards.filter((c) => (c.current_balance || 0) > 0).map((c) => ({ id: `cc:${c.id}`, name: c.name, remaining: c.current_balance, interest_rate: (c.interest_rate || 0) * 12, monthly_payment: ccMinPaymentNW(c.current_balance) })),
+    ])
 
     const incomeRows = (txRes.data ?? []) as { amount: number }[]
     setMonthlyIncome(incomeRows.length > 0 ? incomeRows.reduce((s, t) => s + (t.amount || 0), 0) / 3 : 0)
@@ -108,6 +126,9 @@ export default function NetWorthPage() {
   const totalDebt = totalCurrentDebt + data.longTermDebt
   const netWorth = totalAssets - totalDebt
   const isPositive = netWorth >= 0
+  const projection = useMemo(() => projectNetWorth(totalAssets, payoffDebts, nwStrategy), [totalAssets, payoffDebts, nwStrategy])
+  const projAccent = nwStrategy === 'snowball' ? '#10B981' : '#8B5CF6'
+  const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month), netWorth: p.netWorth })), [projection])
 
   const assetClasses = useMemo(() => ([
     { label: 'Investasi', value: data.longTermInvestment, color: '#8B5CF6' },
@@ -193,6 +214,48 @@ export default function NetWorthPage() {
       <div id="nw-history">
         <NetWorthHistoryCard snapshots={snapshots} period={period} onPeriodChange={setPeriod} onSnapshot={takeManualSnapshot} snapshotting={snapshotting} />
       </div>
+
+      {/* Proyeksi net worth saat utang lunas — pakai engine payoff yg sama dgn halaman Utang */}
+      {payoffDebts.length > 0 && totalDebt > 0 && (
+        <section className="s-card p-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="max-w-md">
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Proyeksi Bebas Utang</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Kekayaan bersih kalau semua utang dilunasi pakai strategi pilihanmu. Aset di luar utang diasumsikan tetap.</p>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              {(['snowball', 'avalanche'] as const).map((s) => (
+                <button key={s} onClick={() => setNwStrategy(s)} aria-pressed={nwStrategy === s} aria-label={`Strategi ${s}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
+                  style={{ background: nwStrategy === s ? (s === 'snowball' ? '#10B981' : '#8B5CF6') : 'var(--surface-2)', color: nwStrategy === s ? '#FFF' : 'var(--ink)' }}>{s}</button>
+              ))}
+            </div>
+          </div>
+          {projection.feasible ? (
+            <>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Bebas Utang</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Net Worth Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>{formatCompactCurrency(projection.endNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Naik</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCompactCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
+              </div>
+              <div className="mt-4" style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={projChartData} margin={{ top: 6, right: 10, bottom: 0, left: -8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} interval="preserveStartEnd" minTickGap={28} tickLine={false} axisLine={false} />
+                    <YAxis tickFormatter={(v) => formatCompactCurrency(Number(v))} tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} width={62} tickLine={false} axisLine={false} />
+                    <Tooltip formatter={(v: number | string) => [formatCurrency(Number(v)), 'Net worth']} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }} />
+                    <ReferenceLine y={0} stroke="var(--border)" />
+                    <Line type="monotone" dataKey="netWorth" stroke={projAccent} strokeWidth={2} dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>Atur cicilan ekstra &amp; bandingkan strategi lebih detail di <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>halaman Utang</a>.</p>
+            </>
+          ) : (
+            <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber)' }}>Cicilan saat ini belum menutup bunga, jadi proyeksi belum bisa dihitung. Naikin cicilan di halaman Utang dulu.</p>
+          )}
+        </section>
+      )}
 
       {/* Rincian aset & liabilitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
