@@ -222,9 +222,8 @@ export default function DebtsOverviewPage() {
 
   // Validasi form dialog — pesan per-field, ditampilin setelah user coba simpan (triedSave).
   const formErrors: Record<string, string> = {}
-  if (!form.name.trim()) formErrors.name = 'Nama utang wajib diisi'
+  if (!(form.name ?? '').trim()) formErrors.name = 'Nama utang wajib diisi'
   if (!form.type) formErrors.type = 'Pilih tipe utang'
-  if (form.principal <= 0) formErrors.principal = 'Pokok harus lebih dari 0'
   if (form.remaining < 0) formErrors.remaining = 'Sisa tidak boleh negatif'
   else if (form.principal > 0 && form.remaining > form.principal) formErrors.remaining = 'Sisa melebihi pokok'
   if (form.type && !isRevolving(form.type) && form.monthly_payment <= 0) formErrors.monthly_payment = 'Cicilan harus lebih dari 0'
@@ -416,7 +415,7 @@ export default function DebtsOverviewPage() {
                         </td>
                         <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>
                           {tenor}
-                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>lunas {payoffDate(tlResult.perDebt[d.id])}</p>}
+                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>lunas {payoffDate(tlResult.perDebt[d.id] ?? 0)}</p>}
                         </td>
                       </tr>
                     )
@@ -448,13 +447,13 @@ export default function DebtsOverviewPage() {
                       <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                         <div className="h-full rounded-full" style={{ width: `${Math.min(paid, 100)}%`, background: meta.color }} />
                       </div>
-                      <div className="mt-2 flex items-center justify-between gap-2 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
                         <span>Bunga <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span></span>
                         <span>Cicilan <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
                         <span className="num shrink-0">{tenor}</span>
                       </div>
                       {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && (
-                        <p className="num text-[10px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>Lunas {payoffDate(tlResult.perDebt[d.id])}{(tlResult.perDebtInterest[d.id] ?? 0) > 0 ? ` · ± ${formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} bunga` : ''}</p>
+                        <p className="num text-[10px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>Lunas {payoffDate(tlResult.perDebt[d.id] ?? 0)}{(tlResult.perDebtInterest[d.id] ?? 0) > 0 ? ` · ± ${formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} bunga` : ''}</p>
                       )}
                       {!isCC && (
                         <div className="mt-2 flex gap-3">
@@ -634,7 +633,7 @@ export default function DebtsOverviewPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Pokok Awal</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" />{triedSave && formErrors.principal && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.principal}</p>}</div>
+              <div className="grid gap-1.5"><Label>Pokok Awal</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
               <div className="grid gap-1.5"><Label>Sisa</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.remaining}</p>}</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
