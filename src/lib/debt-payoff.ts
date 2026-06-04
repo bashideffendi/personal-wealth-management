@@ -16,7 +16,7 @@ export interface PayoffDebt {
 }
 
 export interface PayoffResult {
-  order: { id: string; name: string; key: string }[] // urutan prioritas (label = bunga/saldo)
+  order: { id: string; name: string }[] // urutan prioritas pelunasan
   months: number                  // total bulan sampai semua lunas (MAX = gak lunas)
   totalInterest: number
   perDebt: Record<string, number> // id -> bulan ke- lunas
@@ -40,11 +40,7 @@ export function simulatePayoff(
   const priority = (a: { bal: number; interest_rate: number }, b: { bal: number; interest_rate: number }) =>
     strategy === 'snowball' ? a.bal - b.bal : b.interest_rate - a.interest_rate
 
-  const order = [...ds].sort(priority).map((d) => ({
-    id: d.id,
-    name: d.name,
-    key: strategy === 'snowball' ? formatRp(d.remaining) : `${d.interest_rate}%`,
-  }))
+  const order = [...ds].sort(priority).map((d) => ({ id: d.id, name: d.name }))
 
   if (ds.length === 0) {
     return { order: [], months: 0, totalInterest: 0, perDebt: {}, perDebtInterest: {}, timeline: [], events: [], feasible: true }
@@ -98,10 +94,4 @@ export function simulatePayoff(
 
   const feasible = month < MAX_MONTHS
   return { order, months: month, totalInterest, perDebt, perDebtInterest, timeline, events, feasible }
-}
-
-function formatRp(n: number): string {
-  if (n >= 1e9) return `Rp${(n / 1e9).toFixed(1)}M`
-  if (n >= 1e6) return `Rp${Math.round(n / 1e6)}jt`
-  return `Rp${Math.round(n / 1e3)}rb`
 }
