@@ -243,9 +243,9 @@ export default function NetWorthPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} interval="preserveStartEnd" minTickGap={28} tickLine={false} axisLine={false} />
                     <YAxis tickFormatter={(v) => formatCompactCurrency(Number(v))} tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} width={62} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(v: number | string) => [formatCurrency(Number(v)), 'Net worth']} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }} />
+                    <Tooltip formatter={(v) => formatCurrency(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }} />
                     <ReferenceLine y={0} stroke="var(--border)" />
-                    <Line type="monotone" dataKey="netWorth" stroke={projAccent} strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="netWorth" name="Net worth" stroke={projAccent} strokeWidth={2} dot={false} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
