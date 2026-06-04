@@ -320,7 +320,7 @@ export default function DebtsOverviewPage() {
                 ))}
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
@@ -384,6 +384,46 @@ export default function DebtsOverviewPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+            {/* Mobile: kartu per-utang (tabel di-hide di <sm) */}
+            <div className="sm:hidden divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+              {visible.map((d) => {
+                const meta = CAT[d.category] ?? CAT.consumer
+                const Icon = typeIcon(d.type)
+                const isCC = d.id.startsWith('cc:')
+                const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
+                const tenor = isRevolving(d.type) ? 'Revolving' : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} bln` : '—')
+                return (
+                  <div key={d.id} className="flex items-start gap-3 p-4">
+                    <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}>
+                      <Icon className="size-4" style={{ color: meta.color }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
+                        <span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: `${meta.color}1A`, color: meta.color }}>{getTypeLabel(d.type)}</span>
+                      </div>
+                      <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
+                        {formatCurrency(d.remaining)} <span className="text-[10px] font-normal" style={{ color: 'var(--ink-soft)' }}>/ {formatCurrency(d.principal)}</span>
+                      </p>
+                      <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(paid, 100)}%`, background: meta.color }} />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                        <span>Bunga <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span></span>
+                        <span>Cicilan <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
+                        <span className="num shrink-0">{tenor}</span>
+                      </div>
+                      {!isCC && (
+                        <div className="mt-2 flex gap-3">
+                          <button type="button" onClick={() => openEdit(d)} className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>Edit</button>
+                          <button type="button" onClick={() => remove(d.id)} className="text-[11px] font-medium" style={{ color: 'var(--c-coral)' }}>Hapus</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
