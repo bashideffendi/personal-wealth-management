@@ -103,6 +103,7 @@ export default function DebtsOverviewPage() {
   const [filter, setFilter] = useState('Semua')
   const [tlStrategy, setTlStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
   const [extraPayment, setExtraPayment] = useState(0)
+  const [triedSave, setTriedSave] = useState(false)
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -155,6 +156,7 @@ export default function DebtsOverviewPage() {
     setForm({ id: d.id, name: d.name, category: d.category, type: d.type,
       principal: d.principal, remaining: d.remaining, interest_rate: d.interest_rate,
       monthly_payment: d.monthly_payment, due_date: d.due_date, is_active: d.is_active })
+    setTriedSave(false)
     setDialogOpen(true)
   }
 
@@ -218,6 +220,16 @@ export default function DebtsOverviewPage() {
   }, [allActive, filter])
   const upcoming = useMemo(() => [...allActive].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || '')).slice(0, 4), [allActive])
 
+  // Validasi form dialog — pesan per-field, ditampilin setelah user coba simpan (triedSave).
+  const formErrors: Record<string, string> = {}
+  if (!form.name.trim()) formErrors.name = 'Nama utang wajib diisi'
+  if (!form.type) formErrors.type = 'Pilih tipe utang'
+  if (form.principal <= 0) formErrors.principal = 'Pokok harus lebih dari 0'
+  if (form.remaining < 0) formErrors.remaining = 'Sisa tidak boleh negatif'
+  else if (form.principal > 0 && form.remaining > form.principal) formErrors.remaining = 'Sisa melebihi pokok'
+  if (form.type && !isRevolving(form.type) && form.monthly_payment <= 0) formErrors.monthly_payment = 'Cicilan harus lebih dari 0'
+  const hasErrors = Object.keys(formErrors).length > 0
+
   return (
     <div className="space-y-6">
       {/* Header terang — eyebrow + judul serif + subtitle + aksi (pola Dana Darurat) */}
@@ -233,7 +245,7 @@ export default function DebtsOverviewPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/dashboard/debts/payments"><Button variant="outline"><Receipt className="h-4 w-4" /> Pembayaran</Button></Link>
-          <Button onClick={() => { setForm(emptyForm); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Utang baru</Button>
+          <Button onClick={() => { setForm(emptyForm); setTriedSave(false); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Utang baru</Button>
         </div>
       </header>
 
@@ -332,7 +344,7 @@ export default function DebtsOverviewPage() {
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Daftar Utang</p>
               <div className="flex flex-wrap gap-1.5">
                 {FILTERS.filter((f) => f.cat == null || allActive.some((d) => d.category === f.cat)).map((f) => (
-                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} aria-label={`Filter kategori: ${f.key}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                     style={{ background: filter === f.key ? 'var(--ink)' : 'var(--surface-2)', color: filter === f.key ? 'var(--surface)' : 'var(--ink)' }}>
                     {f.key}
                   </button>
@@ -343,12 +355,12 @@ export default function DebtsOverviewPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                    <th className="text-left font-medium px-4 py-2.5">Utang</th>
-                    <th className="text-left font-medium px-3 py-2.5">Jenis</th>
-                    <th className="text-right font-medium px-3 py-2.5">Sisa / Pokok</th>
-                    <th className="text-right font-medium px-3 py-2.5">Bunga</th>
-                    <th className="text-right font-medium px-3 py-2.5">Cicilan</th>
-                    <th className="text-right font-medium px-4 py-2.5">Tenor</th>
+                    <th scope="col" className="text-left font-medium px-4 py-2.5">Utang</th>
+                    <th scope="col" className="text-left font-medium px-3 py-2.5">Jenis</th>
+                    <th scope="col" className="text-right font-medium px-3 py-2.5">Sisa / Pokok</th>
+                    <th scope="col" className="text-right font-medium px-3 py-2.5">Bunga</th>
+                    <th scope="col" className="text-right font-medium px-3 py-2.5">Cicilan</th>
+                    <th scope="col" className="text-right font-medium px-4 py-2.5">Tenor</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -380,8 +392,13 @@ export default function DebtsOverviewPage() {
                           <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>dari {formatCurrency(d.principal)}</p>
                         </td>
                         <td className="px-3 py-3 text-right">
-                          <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span>
+                          <span className="inline-flex items-center justify-end gap-1">
+                            {d.interest_rate >= 18 && <AlertCircle className="size-3" style={{ color: 'var(--c-coral)' }} aria-hidden="true" />}
+                            <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span>
+                            {d.interest_rate >= 18 && <span className="sr-only">bunga tinggi</span>}
+                          </span>
                           <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>per tahun</p>
+                          {(tlResult.perDebtInterest[d.id] ?? 0) > 0 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>± {formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} bunga</p>}
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="num" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span>
@@ -391,13 +408,16 @@ export default function DebtsOverviewPage() {
                               <Link href="/dashboard/credit-cards"><Button variant="ghost" size="icon-sm" title="Kelola di Kartu Kredit"><CreditCard className="h-3 w-3" /></Button></Link>
                             ) : (
                               <>
-                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)}><Pencil className="h-3 w-3" /></Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)} title={`Edit ${d.name}`} aria-label={`Edit ${d.name}`}><Pencil className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)} title={`Hapus ${d.name}`} aria-label={`Hapus ${d.name}`}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                               </>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>{tenor}</td>
+                        <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>
+                          {tenor}
+                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>lunas {payoffDate(tlResult.perDebt[d.id])}</p>}
+                        </td>
                       </tr>
                     )
                   })}
@@ -433,6 +453,9 @@ export default function DebtsOverviewPage() {
                         <span>Cicilan <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
                         <span className="num shrink-0">{tenor}</span>
                       </div>
+                      {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && (
+                        <p className="num text-[10px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>Lunas {payoffDate(tlResult.perDebt[d.id])}{(tlResult.perDebtInterest[d.id] ?? 0) > 0 ? ` · ± ${formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} bunga` : ''}</p>
+                      )}
                       {!isCC && (
                         <div className="mt-2 flex gap-3">
                           <button type="button" onClick={() => openEdit(d)} className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>Edit</button>
@@ -577,7 +600,7 @@ export default function DebtsOverviewPage() {
       )}
 
       {/* Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setTriedSave(false) }}>
         <DialogContent>
           <DialogHeader>
             <div className="flex items-start gap-3">
@@ -591,7 +614,8 @@ export default function DebtsOverviewPage() {
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
               <Label>Nama</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={triedSave && !!formErrors.name} />
+              {triedSave && formErrors.name && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.name}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
@@ -610,18 +634,18 @@ export default function DebtsOverviewPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Pokok Awal</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Sisa</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>Pokok Awal</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" />{triedSave && formErrors.principal && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.principal}</p>}</div>
+              <div className="grid gap-1.5"><Label>Sisa</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.remaining}</p>}</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5"><Label>Bunga %</Label><Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} /></div>
-              <div className="grid gap-1.5"><Label>Cicilan/bln</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>Cicilan/bln</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.monthly_payment}</p>}</div>
               <div className="grid gap-1.5"><Label>Jatuh Tempo</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-            <Button onClick={save} disabled={saving || !form.name || !form.type || (!isRevolving(form.type) && form.monthly_payment <= 0)}>
+            <Button onClick={() => { setTriedSave(true); if (!hasErrors) save() }} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? 'Simpan' : 'Tambah'}
             </Button>
           </DialogFooter>

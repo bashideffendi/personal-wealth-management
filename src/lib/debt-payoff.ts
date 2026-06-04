@@ -20,6 +20,7 @@ export interface PayoffResult {
   months: number                  // total bulan sampai semua lunas (MAX = gak lunas)
   totalInterest: number
   perDebt: Record<string, number> // id -> bulan ke- lunas
+  perDebtInterest: Record<string, number> // id -> total bunga dibayar utang itu
   timeline: { month: number; remaining: number }[]
   events: { month: number; name: string }[] // event "X lunas"
   feasible: boolean               // false kalau ada utang yg cicilannya < bunga (gak akan lunas)
@@ -46,12 +47,13 @@ export function simulatePayoff(
   }))
 
   if (ds.length === 0) {
-    return { order: [], months: 0, totalInterest: 0, perDebt: {}, timeline: [], events: [], feasible: true }
+    return { order: [], months: 0, totalInterest: 0, perDebt: {}, perDebtInterest: {}, timeline: [], events: [], feasible: true }
   }
 
   const baseMin = ds.reduce((s, d) => s + d.monthly_payment, 0)
   const budget = baseMin + extra
   const perDebt: Record<string, number> = {}
+  const perDebtInterest: Record<string, number> = {}
   const timeline: { month: number; remaining: number }[] = []
   const events: { month: number; name: string }[] = []
   let totalInterest = 0
@@ -65,6 +67,7 @@ export function simulatePayoff(
         const i = d.bal * (d.interest_rate / 100 / 12)
         d.bal += i
         totalInterest += i
+        perDebtInterest[d.id] = (perDebtInterest[d.id] || 0) + i
       }
     }
     // 2. Bayar minimum tiap utang aktif
@@ -94,7 +97,7 @@ export function simulatePayoff(
   }
 
   const feasible = month < MAX_MONTHS
-  return { order, months: month, totalInterest, perDebt, timeline, events, feasible }
+  return { order, months: month, totalInterest, perDebt, perDebtInterest, timeline, events, feasible }
 }
 
 function formatRp(n: number): string {
