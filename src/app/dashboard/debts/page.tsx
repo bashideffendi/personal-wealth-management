@@ -113,16 +113,19 @@ export default function DebtsOverviewPage() {
     const [debtsRes, ccRes, txRes, liqEntries, nlqRes, invRes] = await Promise.all([
       supabase.from('debts').select('*').eq('user_id', user.id).order('remaining', { ascending: false }),
       supabase.from('credit_cards').select('*').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
-      supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
+      supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
       fetchLiquidEntries(supabase, user.id),
       supabase.from('assets_non_liquid').select('current_value').eq('user_id', user.id),
       supabase.from('investments').select('total_value').eq('user_id', user.id),
     ])
     setDebts((debtsRes.data ?? []) as Debt[])
     setCards((ccRes.data ?? []) as CreditCardRow[])
-    const incomeRows = (txRes.data ?? []) as { amount: number }[]
+    const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
     const totalIncome = incomeRows.reduce((s, t) => s + (t.amount || 0), 0)
-    setMonthlyIncome(incomeRows.length > 0 ? totalIncome / 3 : 0)
+    // Bagi pakai jumlah bulan DISTINCT yg beneran ada (cap 3, lantai 1) — bukan
+    // hardcode /3 yg under-estimate income kalau histori < 3 bln → DTI palsu rendah.
+    const incomeMonths = new Set(incomeRows.map((t) => (t.date || '').slice(0, 7)).filter(Boolean)).size
+    setMonthlyIncome(incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0)
     const nlq = ((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0)
     const inv = ((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0)
     setTotalAssets(sumLiquid(liqEntries) + nlq + inv)
@@ -178,7 +181,6 @@ export default function DebtsOverviewPage() {
   const dti = monthlyIncome > 0 ? (totalMonthly / monthlyIncome) * 100 : null
   const frontEnd = monthlyIncome > 0 ? (longTermMonthly / monthlyIncome) * 100 : null
   const debtToAsset = totalAssets > 0 ? (totalRemaining / totalAssets) * 100 : null
-  const backEnd = dti // Back-End = total cicilan / pendapatan (basis sama dgn DTI)
   const dtiColor = dti == null ? 'var(--ink-soft)' : dti <= 36 ? 'var(--c-mint)' : dti <= 60 ? 'var(--c-amber)' : 'var(--c-coral)'
 
   const snowball = useMemo(() => simulatePayoff(allActive, 'snowball'), [allActive])
@@ -264,7 +266,8 @@ export default function DebtsOverviewPage() {
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Debt-to-Income</p>
               <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: dtiColor, letterSpacing: '-0.02em' }}>{dti != null ? `${dti.toFixed(1)}%` : '—'}</p>
               <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>dari pendapatan bulanan</p>
-              <div className="mt-3 relative h-2 w-full rounded-full overflow-hidden" role="img"
+              <div className="mt-3 relative h-2 w-full rounded-full overflow-hidden" role="progressbar"
+                aria-valuenow={dti != null ? Math.round(dti) : 0} aria-valuemin={0} aria-valuemax={60}
                 aria-label={dti != null ? `Debt-to-Income ${dti.toFixed(1)} persen — ideal di bawah 36 persen` : 'Debt-to-Income belum ada data pendapatan'}
                 style={{ background: 'var(--surface-2)' }}>
                 <div className="absolute inset-y-0 left-0 rounded-full transition-all" style={{ width: `${Math.min((dti ?? 0) / 60 * 100, 100)}%`, background: dtiColor }} />
@@ -280,8 +283,8 @@ export default function DebtsOverviewPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Daftar Utang</p>
               <div className="flex flex-wrap gap-1.5">
-                {FILTERS.map((f) => (
-                  <button key={f.key} onClick={() => setFilter(f.key)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                {FILTERS.filter((f) => f.cat == null || allActive.some((d) => d.category === f.cat)).map((f) => (
+                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                     style={{ background: filter === f.key ? 'var(--ink)' : 'var(--surface-2)', color: filter === f.key ? 'var(--surface)' : 'var(--ink)' }}>
                     {f.key}
                   </button>
@@ -335,7 +338,7 @@ export default function DebtsOverviewPage() {
                         <td className="px-3 py-3 text-right">
                           <span className="num" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span>
                           {d.monthly_payment > 0 && <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>per bulan</p>}
-                          <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition mt-1">
+                          <div className="flex justify-end gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition mt-1">
                             {isCC ? (
                               <Link href="/dashboard/credit-cards"><Button variant="ghost" size="icon-sm" title="Kelola di Kartu Kredit"><CreditCard className="h-3 w-3" /></Button></Link>
                             ) : (
@@ -390,7 +393,7 @@ export default function DebtsOverviewPage() {
               </div>
               <div className="flex gap-1.5">
                 {(['snowball', 'avalanche'] as const).map((s) => (
-                  <button key={s} onClick={() => setTlStrategy(s)} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
+                  <button key={s} onClick={() => setTlStrategy(s)} aria-pressed={tlStrategy === s} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
                     style={{ background: tlStrategy === s ? (s === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)') : 'var(--surface-2)', color: tlStrategy === s ? '#FFF' : 'var(--ink)' }}>
                     {s}
                   </button>
@@ -435,7 +438,6 @@ export default function DebtsOverviewPage() {
                 <RatioRow label="Debt-to-Income (DTI)" ideal="Ideal < 36%" value={dti} idealMax={36} />
                 <RatioRow label="Debt-to-Asset" ideal="Ideal < 50%" value={debtToAsset} idealMax={50} />
                 <RatioRow label="Front-End (KPR / Pendapatan)" ideal="Ideal < 28%" value={frontEnd} idealMax={28} />
-                <RatioRow label="Back-End (Total / Pendapatan)" ideal="Ideal < 36%" value={backEnd} idealMax={36} />
               </div>
             </div>
           </div>
@@ -487,7 +489,7 @@ export default function DebtsOverviewPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-            <Button onClick={save} disabled={saving || !form.name || !form.type}>
+            <Button onClick={save} disabled={saving || !form.name || !form.type || (!isRevolving(form.type) && form.monthly_payment <= 0)}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? 'Simpan' : 'Tambah'}
             </Button>
           </DialogFooter>
@@ -567,7 +569,7 @@ function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: stri
   const fill = `color-mix(in srgb, ${accent} 12%, transparent)`
   return (
     <div className="mt-4">
-      <div className="relative" style={{ height: 140 }}>
+      <div className="relative" role="img" aria-label="Grafik timeline pelunasan: sisa utang menurun seiring bulan sampai lunas" style={{ height: 140 }}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
           <polygon points={`0,100 ${pts} 100,100`} fill={fill} />
           <polyline points={pts} fill="none" stroke={accent} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
