@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
@@ -15,6 +15,18 @@ const inter = Inter({
   display: "swap",
 });
 
+// Instrument Serif (italic) — "moments of personality" ONLY. Called inline via
+// var(--font-instrument-serif) on a handful of landing/auth phrases. Deliberately
+// NOT wired to --font-display / --font-mono (those stay Inter app-wide → zero
+// dashboard regression). Body stays Inter too.
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  style: "italic",
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   // Canonical base URL — used by Next.js to resolve absolute URLs for
   // OpenGraph, Twitter cards, sitemap, robots.txt, etc. Override locally
@@ -23,7 +35,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://klunting.com",
   ),
   title: {
-    default: "Klunting — Wealth Management App",
+    default: "Klunting — Atur uang tanpa drama",
     template: "%s · Klunting",
   },
   description:
@@ -52,13 +64,13 @@ export const metadata: Metadata = {
     locale: "id_ID",
     url: "https://klunting.com",
     siteName: "Klunting",
-    title: "Klunting — Wealth Management App",
+    title: "Klunting — Atur uang tanpa drama",
     description:
       "Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai AI biar cepat.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Klunting — Wealth Management App",
+    title: "Klunting — Atur uang tanpa drama",
     description:
       "Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai AI biar cepat.",
   },
@@ -99,7 +111,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

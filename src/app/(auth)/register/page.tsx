@@ -1,7 +1,8 @@
 'use client'
 
 /**
- * Register page — Wise/Bibit-inspired clean fintech.
+ * Register — mirrors login on the shared (auth)/layout shell.
+ * Warm headline + friction-killers, password toggle, honest success view.
  */
 
 import { useState } from 'react'
@@ -9,11 +10,24 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Eye, EyeOff, Check, Loader2 } from 'lucide-react'
+
+const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
+
+function humanError(msg: string): string {
+  const m = msg.toLowerCase()
+  if (m.includes('already registered') || m.includes('already exists') || m.includes('user already')) return 'Email ini udah terdaftar. Coba masuk?'
+  if (m.includes('password') && m.includes('weak')) return 'Password terlalu lemah — coba yang lebih panjang.'
+  if (m.includes('rate limit') || m.includes('too many')) return 'Kebanyakan percobaan. Tunggu sebentar, terus coba lagi.'
+  if (m.includes('invalid') && m.includes('email')) return 'Format email-nya kurang pas. Cek lagi ya.'
+  return 'Ada masalah. Coba lagi sebentar.'
+}
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -30,10 +44,7 @@ export default function RegisterPage() {
         password,
         options: { data: { full_name: fullName } },
       })
-      if (error) {
-        setError(error.message)
-        return
-      }
+      if (error) { setError(humanError(error.message)); return }
       setSuccess(true)
     } catch {
       setError('Ada masalah. Coba lagi sebentar.')
@@ -43,199 +54,91 @@ export default function RegisterPage() {
   }
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-4 py-12"
-      style={{ background: 'var(--bg)' }}
-    >
-      <div className="w-full" style={{ maxWidth: 400 }}>
-        {/* Brand lock-up */}
-        <div className="flex flex-col items-center mb-8">
-          <Link href="/" aria-label="Klunting">
-            <div
-              className="grid place-items-center mb-4"
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: 'var(--c-primary)',
-                color: 'var(--c-primary-foreground)',
-                boxShadow: '0 8px 24px -8px rgba(16, 24, 40, 0.12)',
-                fontWeight: 800,
-                fontSize: 28,
-                fontFamily: 'var(--font-sans)',
-                letterSpacing: '-0.04em',
-              }}
-            >
-              K
-            </div>
-          </Link>
-          <h1
-            className="font-bold tracking-tight"
-            style={{
-              fontSize: 28,
-              color: 'var(--ink)',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            Bikin akun
+    <>
+      {!success && (
+        <div className="text-center mb-8">
+          <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
+            Yuk, mulai <span style={SERIF}>tenang</span> soal uang.
           </h1>
-          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-            Coba 14 hari gratis. Tanpa kartu kredit.
-          </p>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 14 hari gratis. Tanpa kartu kredit.</p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+            {['Akses penuh 14 hari', 'Tanpa kartu kredit', 'Cancel kapan aja'].map((t) => (
+              <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* Form / Success card */}
-        <div className="s-card s-card-pad-lg">
-          {success ? (
-            <div className="text-center py-2">
-              <div
-                className="mx-auto grid place-items-center"
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  background: 'var(--c-mint-soft)',
-                  color: 'var(--c-mint)',
-                }}
-              >
-                <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="mt-4 text-lg font-bold" style={{ color: 'var(--ink)' }}>
-                Cek inbox kamu
-              </h2>
-              <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-                Link konfirmasi udah dikirim ke{' '}
-                <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Klik link itu buat aktifkan akun.
-              </p>
-              <p className="mt-4 text-xs" style={{ color: 'var(--ink-soft)' }}>
-                Belum dapet dalam 5 menit? Cek folder spam.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSuccess(false)
-                  setEmail('')
-                  setPassword('')
-                  setFullName('')
-                }}
-                className="mt-4 text-sm font-semibold hover:underline"
-                style={{ color: 'var(--c-mint)' }}
-              >
-                Daftar email lain
-              </button>
+      <div className="s-card s-card-pad-lg">
+        {success ? (
+          <div className="text-center py-2">
+            <div className="mx-auto grid place-items-center" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
+              <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-          ) : (
-            <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
-              {error && (
-                <div
-                  className="rounded-lg border p-3 text-sm"
-                  style={{
-                    background: 'var(--c-coral-soft)',
-                    borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)',
-                    color: 'var(--c-coral)',
-                  }}
-                >
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <label
-                  className="text-xs font-semibold block mb-1.5"
-                  style={{ color: 'var(--ink-muted)' }}
-                >
-                  Nama lengkap
-                </label>
-                <Input
-                  type="text"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  className="h-11"
-                  autoComplete="name"
-                />
-              </div>
-
-              <div>
-                <label
-                  className="text-xs font-semibold block mb-1.5"
-                  style={{ color: 'var(--ink-muted)' }}
-                >
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  placeholder="kamu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-11"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label
-                  className="text-xs font-semibold block mb-1.5"
-                  style={{ color: 'var(--ink-muted)' }}
-                >
-                  Password
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Minimal 6 karakter"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="h-11"
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="mt-2 h-11 w-full text-sm font-semibold"
-                style={{
-                  background: 'var(--c-primary)',
-                  color: 'var(--c-primary-foreground)',
-                  border: 0,
-                  boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
-                }}
-              >
-                {loading ? 'Memproses…' : 'Daftar'}
-              </Button>
-
-              <p
-                className="text-center text-[11px] leading-relaxed mt-1"
-                style={{ color: 'var(--ink-soft)' }}
-              >
-                Dengan daftar, kamu setuju dengan{' '}
-                <Link href="/terms" className="underline">Syarat & Ketentuan</Link>
-                {' '}dan{' '}
-                <Link href="/privacy" className="underline">Kebijakan Privasi</Link>.
-              </p>
-            </form>
-          )}
-        </div>
-
-        {!success && (
-          <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-            Udah punya akun?{' '}
-            <Link
-              href="/login"
-              className="font-semibold hover:underline"
-              style={{ color: 'var(--ink)' }}
+            <h2 className="mt-4 text-lg font-bold" style={{ color: 'var(--ink)' }}>Cek inbox kamu</h2>
+            <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
+              Link konfirmasi udah dikirim ke <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Klik link itu buat aktifkan akun.
+            </p>
+            <p className="mt-4 text-xs" style={{ color: 'var(--ink-soft)' }}>Belum dapet dalam 5 menit? Cek folder spam.</p>
+            <button
+              type="button"
+              onClick={() => { setSuccess(false); setEmail(''); setPassword(''); setFullName('') }}
+              className="mt-4 text-sm font-semibold hover:underline"
+              style={{ color: 'var(--c-mint)' }}
             >
-              Masuk
-            </Link>
-          </p>
+              Daftar email lain
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
+            {error && (
+              <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral)' }}>
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Nama lengkap</label>
+              <Input type="text" placeholder="Budi Santoso" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" autoComplete="name" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Email</label>
+              <Input type="email" placeholder="kamu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" autoComplete="email" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Password</label>
+              <div className="relative">
+                <Input type={showPw ? 'text' : 'password'} placeholder="Minimal 8 karakter" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="h-11 pr-10" autoComplete="new-password" />
+                <button type="button" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Sembunyikan password' : 'Lihat password'} className="absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center size-7 rounded-md" style={{ color: 'var(--ink-soft)' }}>
+                  {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Minimal 8 karakter — campur huruf & angka biar kuat.</p>
+            </div>
+
+            <Button type="submit" disabled={loading} className="mt-2 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
+              {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Coba gratis 14 hari'}
+            </Button>
+
+            <p className="text-center text-[11px] leading-relaxed mt-1" style={{ color: 'var(--ink-soft)' }}>
+              Dengan daftar, kamu setuju dengan{' '}
+              <Link href="/terms" className="underline">Syarat & Ketentuan</Link> dan{' '}
+              <Link href="/privacy" className="underline">Kebijakan Privasi</Link>.
+            </p>
+          </form>
         )}
       </div>
-    </div>
+
+      {!success && (
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
+          Udah punya akun?{' '}
+          <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--ink)' }}>Masuk</Link>
+        </p>
+      )}
+    </>
   )
 }
