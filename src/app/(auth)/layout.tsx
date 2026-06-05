@@ -1,13 +1,13 @@
 import Link from 'next/link'
-import { Shield, Receipt } from 'lucide-react'
+import { Shield, TrendingUp } from 'lucide-react'
 
 /**
- * Shared auth shell — split with a PRODUCT-PREVIEW brand panel.
- * LEFT (desktop, always dark): logo + short promise + a live-looking net-worth
- * preview card (number + sparkline + stat tiles) with a floating transaction
- * chip for depth — "see the app you're logging into", not a flat colour block.
- * Honest only (no fabricated stat). RIGHT: themed form area. Mobile collapses
- * to the form + a compact logo.
+ * Shared auth shell — GRAPHIC brand scene (YNAB-style "graphic play", not a
+ * flat colour split). LEFT (desktop): a composed "net-worth growing" scene —
+ * layered hills + flowing ribbons + a glowing growth line with nodes + floating
+ * glass data chips, with subtle motion. The graphic IS the product (your money
+ * climbing). Honest demo numbers, no fabricated stat. RIGHT: themed form.
+ * Mobile: form + compact logo only.
  */
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
@@ -15,85 +15,85 @@ const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-2">
-      {/* LEFT — product-preview brand panel (desktop only) */}
+      {/* LEFT — graphic brand scene (desktop only) */}
       <div
         className="hidden lg:flex flex-col justify-between relative overflow-hidden p-12 xl:p-16"
-        style={{ background: 'linear-gradient(150deg, #0A0A0F 0%, #14141A 55%, #1C1C24 100%)', color: '#F5F5F7' }}
+        style={{ background: 'linear-gradient(160deg, #07070B 0%, #0E0E14 52%, #17171F 100%)', color: '#F5F5F7' }}
       >
-        {/* ambient glows for depth */}
-        <div className="absolute pointer-events-none" style={{ top: -140, right: -120, width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.12), transparent 65%)' }} />
-        <div className="absolute pointer-events-none" style={{ bottom: -160, left: -120, width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,211,252,0.08), transparent 65%)' }} />
+        <style>{`
+          @keyframes authGlow { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.1)} }
+          @keyframes authFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+          @keyframes authDraw { to { stroke-dashoffset:0 } }
+          @media (prefers-reduced-motion: reduce){ .auth-anim{animation:none!important} }
+        `}</style>
 
-        {/* logo */}
-        <Link href="/" aria-label="Klunting" className="relative inline-flex items-center gap-2.5 w-fit">
+        {/* glow orbs */}
+        <div className="auth-anim absolute pointer-events-none" style={{ top: '6%', right: '-14%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.22), transparent 65%)', animation: 'authGlow 7s ease-in-out infinite' }} />
+        <div className="auth-anim absolute pointer-events-none" style={{ bottom: '2%', left: '-16%', width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,211,252,0.13), transparent 65%)', animation: 'authGlow 9s ease-in-out infinite 1.2s' }} />
+
+        {/* composed graphic scene */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="hillA" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#7DD3FC" stopOpacity="0.10" /><stop offset="100%" stopColor="#7DD3FC" stopOpacity="0" /></linearGradient>
+            <linearGradient id="hillB" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#34D399" stopOpacity="0.13" /><stop offset="100%" stopColor="#34D399" stopOpacity="0" /></linearGradient>
+            <linearGradient id="hillC" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.22" /><stop offset="100%" stopColor="#10B981" stopOpacity="0" /></linearGradient>
+            <linearGradient id="lineG" x1="0" x2="1" y1="1" y2="0"><stop offset="0%" stopColor="#34D399" stopOpacity="0.25" /><stop offset="55%" stopColor="#34D399" stopOpacity="0.95" /><stop offset="100%" stopColor="#A7F3D0" stopOpacity="1" /></linearGradient>
+            <linearGradient id="areaG" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.26" /><stop offset="100%" stopColor="#10B981" stopOpacity="0" /></linearGradient>
+          </defs>
+
+          {/* layered hills — depth */}
+          <path d="M0,540 C120,500 260,580 380,520 C480,470 560,520 600,495 L600,760 L0,760 Z" fill="url(#hillA)" />
+          <path d="M0,612 C140,560 280,632 420,566 C512,524 566,566 600,548 L600,760 L0,760 Z" fill="url(#hillB)" />
+          <path d="M0,678 C160,636 320,692 470,642 C546,616 582,642 600,634 L600,760 L0,760 Z" fill="url(#hillC)" />
+
+          {/* flowing ribbons */}
+          <path d="M-20,252 C150,212 320,302 500,236 C582,210 632,236 654,226" stroke="rgba(255,255,255,0.06)" strokeWidth="1.5" fill="none" />
+          <path d="M-20,158 C170,118 342,206 540,150 C612,131 652,150 674,143" stroke="rgba(255,255,255,0.045)" strokeWidth="1.5" fill="none" />
+
+          {/* hero growth: area + line + nodes */}
+          <path d="M60,560 C150,540 215,486 300,440 C390,392 452,300 560,180 L560,634 L60,634 Z" fill="url(#areaG)" />
+          <path className="auth-anim" d="M60,560 C150,540 215,486 300,440 C390,392 452,300 560,180" stroke="url(#lineG)" strokeWidth="3" fill="none" strokeLinecap="round" strokeDasharray="900" strokeDashoffset="900" style={{ animation: 'authDraw 2.2s ease-out 0.2s forwards' }} />
+          <circle cx="300" cy="440" r="17" fill="#34D399" opacity="0.16" />
+          <circle cx="300" cy="440" r="4.5" fill="#6EE7B7" />
+          <circle className="auth-anim" cx="560" cy="180" r="26" fill="#34D399" opacity="0.18" style={{ transformOrigin: '560px 180px', animation: 'authGlow 4.5s ease-in-out infinite' }} />
+          <circle cx="560" cy="180" r="6" fill="#A7F3D0" />
+        </svg>
+
+        {/* floating glass data chips — product hint + composition depth */}
+        <div
+          className="auth-anim absolute z-10 rounded-2xl px-4 py-3"
+          style={{ top: '40%', right: '9%', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(6px)', boxShadow: '0 20px 50px -20px rgba(0,0,0,0.6)', animation: 'authFloat 6s ease-in-out infinite' }}
+        >
+          <p className="text-[9px] uppercase font-semibold" style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '0.16em' }}>Net Worth</p>
+          <p className="num font-bold leading-none mt-1" style={{ color: '#FFFFFF', fontSize: 22, letterSpacing: '-0.02em' }}>Rp 72.480.000</p>
+        </div>
+        <div
+          className="auth-anim absolute z-10 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
+          style={{ top: '62%', right: '24%', background: 'rgba(16,185,129,0.16)', border: '1px solid rgba(52,211,153,0.3)', color: '#6EE7B7', backdropFilter: 'blur(6px)', animation: 'authFloat 5s ease-in-out infinite 0.6s' }}
+        >
+          <TrendingUp className="size-3.5" />
+          <span className="num text-[13px] font-semibold">+Rp 1.240.000</span>
+        </div>
+
+        {/* logo (top) */}
+        <Link href="/" aria-label="Klunting" className="relative z-10 inline-flex items-center gap-2.5 w-fit">
           <span className="grid place-items-center" style={{ width: 34, height: 34, borderRadius: 10, background: '#FFFFFF', color: '#0A0A0F', fontWeight: 800, fontSize: 17, letterSpacing: '-0.04em' }}>K</span>
           <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em' }}>Klunting</span>
         </Link>
 
-        {/* promise + product preview */}
-        <div className="relative">
-          <h2 className="font-bold max-w-md" style={{ fontSize: 'clamp(28px, 2.8vw, 40px)', lineHeight: 1.12, letterSpacing: '-0.03em', color: '#FFFFFF' }}>
+        {/* headline (just under logo) */}
+        <div className="relative z-10 max-w-md -mt-24">
+          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: '#A1A1AA' }}>Atur uang tanpa drama</p>
+          <h2 className="mt-3 font-bold" style={{ fontSize: 'clamp(30px, 3vw, 44px)', lineHeight: 1.12, letterSpacing: '-0.03em', color: '#FFFFFF' }}>
             Akhirnya, <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span> soal uang.
           </h2>
-          <p className="mt-3 text-[15px] leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
-            Saldo, investasi, sampai utang — jadi satu angka yang update sendiri. Tinggal masuk.
+          <p className="mt-4 text-[15px] leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.68)' }}>
+            Saldo, investasi, sampai utang — jadi satu angka yang naik pelan-pelan. Tinggal masuk.
           </p>
-
-          {/* Net-worth preview card (glassy, elevated on the dark panel) */}
-          <div className="relative mt-8 max-w-sm">
-            <div
-              className="rounded-3xl p-6"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 30px 70px -25px rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            >
-              <p className="text-[10px] uppercase font-semibold" style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '0.16em' }}>Net Worth · Hari ini</p>
-              <p className="num tabular font-bold mt-2 leading-none" style={{ color: '#FFFFFF', fontSize: 38, letterSpacing: '-0.03em' }}>Rp 72.480.000</p>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold mt-3" style={{ background: 'rgba(16,185,129,0.18)', color: '#6EE7B7' }}>
-                ↑ Rp 1.240.000 bulan ini
-              </span>
-
-              <svg viewBox="0 0 320 70" className="w-full mt-4" style={{ height: 64 }} aria-hidden="true">
-                <defs>
-                  <linearGradient id="auth-spark" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M0,52 L40,48 L80,50 L120,34 L160,38 L200,24 L240,22 L280,13 L320,8 L320,70 L0,70 Z" fill="url(#auth-spark)" />
-                <path d="M0,52 L40,48 L80,50 L120,34 L160,38 L200,24 L240,22 L280,13 L320,8" stroke="#34D399" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-
-              <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                {[
-                  { label: 'Aset Cair', value: 'Rp 24.310.000', color: '#34D399' },
-                  { label: 'Investasi', value: 'Rp 51.310.000', color: '#7DD3FC' },
-                  { label: 'Utang', value: 'Rp 3.140.000', color: '#FB7185' },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <p className="text-[9px] font-semibold uppercase" style={{ color: 'rgba(255,255,255,0.5)', letterSpacing: '0.08em' }}>{s.label}</p>
-                    <p className="num text-[13px] font-semibold mt-1" style={{ color: s.color }}>{s.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* floating transaction chip — light surface pops off the dark panel (depth) */}
-            <div
-              className="absolute -bottom-5 -right-4 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 max-w-[230px]"
-              style={{ background: '#FFFFFF', color: '#0A0A0F', boxShadow: '0 18px 40px -12px rgba(0,0,0,0.55)' }}
-            >
-              <span className="grid place-items-center size-8 rounded-xl shrink-0" style={{ background: '#F3EFE7' }}>
-                <Receipt className="size-4" style={{ color: '#0A0A0F' }} />
-              </span>
-              <span>
-                <span className="block text-[12px] font-semibold leading-tight">Indomaret · Rp 47.500</span>
-                <span className="block text-[10.5px] mt-0.5" style={{ color: '#71717A' }}>Kamu ketik, langsung rapi.</span>
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* honest trust line */}
-        <p className="relative inline-flex items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.62)' }}>
+        {/* trust line (bottom) */}
+        <p className="relative z-10 inline-flex items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.6)' }}>
           <Shield className="size-4" style={{ color: '#34D399' }} /> Datamu dienkripsi, password di-hash, gak dijual.
         </p>
       </div>
