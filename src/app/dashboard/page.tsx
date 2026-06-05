@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
+import { formatCurrency, getMonthName } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
@@ -991,7 +991,7 @@ export default function DashboardPage() {
                     color: isSurplus ? 'var(--c-mint)' : 'var(--c-coral)',
                   }}
                 >
-                  {isSurplus ? 'Surplus' : 'Defisit'} {formatCompactCurrency(Math.abs(yearNet))}
+                  {isSurplus ? 'Surplus' : 'Defisit'} {formatCurrency(Math.abs(yearNet))}
                 </span>
               )
             })()}

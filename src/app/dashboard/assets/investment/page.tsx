@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
@@ -649,7 +649,7 @@ export default function InvestmentOverviewPage() {
                     {donut.length} Kelas
                   </p>
                   <p className="num tabular text-base font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-                    {formatCompactCurrency(totals.market)}
+                    {formatCurrency(totals.market)}
                   </p>
                 </div>
               </div>

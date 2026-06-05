@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { EduTip } from '@/components/edu/edu-tip'
 import type { Budget } from '@/types'
@@ -488,7 +488,7 @@ export default function BudgetingPage() {
               style={{ color: 'var(--ink-muted)' }}
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
-              {v ? formatCompactCurrency(v) : '—'}
+              {v ? formatCurrency(v) : '—'}
             </td>
           )
         })}
@@ -594,7 +594,7 @@ export default function BudgetingPage() {
               className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
-              {formatCompactCurrency(v)}
+              {formatCurrency(v)}
             </td>
           )
         })}
@@ -686,7 +686,7 @@ export default function BudgetingPage() {
               className="num tabular ml-auto text-[11px] font-bold tabular-nums"
               title={privacyHidden ? '••••••' : formatCurrency(annualTotal)}
             >
-              {isCollapsed ? formatCompactCurrency(annualTotal) : ''}
+              {isCollapsed ? formatCurrency(annualTotal) : ''}
             </span>
           </button>
         </td>
@@ -722,7 +722,7 @@ export default function BudgetingPage() {
                 const v = allocatedOf(i + 1)
                 return (
                   <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular" style={{ color: 'var(--ink-muted)' }} title={privacyHidden ? '••••••' : formatCurrency(v)}>
-                    {v ? formatCompactCurrency(v) : '—'}
+                    {v ? formatCurrency(v) : '—'}
                   </td>
                 )
               })}
@@ -735,7 +735,7 @@ export default function BudgetingPage() {
                 const color = Math.abs(left) < 1 ? '#059669' : left > 0 ? '#B45309' : '#E11D48'
                 return (
                   <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular" style={{ color }} title={privacyHidden ? '••••••' : formatCurrency(left)}>
-                    {formatCompactCurrency(left)}
+                    {formatCurrency(left)}
                   </td>
                 )
               })}

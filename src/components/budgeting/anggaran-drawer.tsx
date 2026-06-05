@@ -21,7 +21,7 @@ import { ArrowLeft, ArrowRight, ExternalLink, Copy } from 'lucide-react'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 const MONTHS_FULL = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -388,7 +388,7 @@ export function AnggaranMonthDrawer({
                           className="num tabular"
                           style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}
                         >
-                          {formatCompactCurrency(e.val)}
+                          {formatCurrency(e.val)}
                         </p>
                         <p
                           className="num tabular"
@@ -495,7 +495,7 @@ function SummaryTile({
         className="num tabular mt-2"
         style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}
       >
-        {formatCompactCurrency(value)}
+        {formatCurrency(value)}
       </p>
       <p
         className="num tabular mt-0.5"
@@ -564,7 +564,7 @@ function Rule50Row({
           style={{ fontSize: 11, color: 'var(--text-mute)' }}
         >
           Target <strong style={{ color: 'var(--ink)' }}>{target}%</strong>{' '}
-          (~{formatCompactCurrency(targetAmount)})
+          (~{formatCurrency(targetAmount)})
         </span>
       </div>
       <div className="flex items-center gap-2">
@@ -591,7 +591,7 @@ function Rule50Row({
         className="num tabular"
         style={{ fontSize: 10, color: statusColor, marginTop: 2 }}
       >
-        {statusLabel} · aktual {formatCompactCurrency(actualAmount)}
+        {statusLabel} · aktual {formatCurrency(actualAmount)}
       </p>
     </div>
   )

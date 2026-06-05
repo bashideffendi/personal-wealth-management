@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Transaction } from '@/types'
@@ -242,7 +242,7 @@ export function MonthlyReportBody({
   const topCat = r.expense_by_category[0] ?? null
   const topCatBudget = topCat ? (r.budgetVsActual.find((b) => b.category === topCat.name) ?? null) : null
   // Print = angka presisi penuh (dokumen rekonsiliasi); layar = ringkas.
-  const money = variant === 'print' ? formatCurrency : formatCompactCurrency
+  const money = formatCurrency
   const lastDay = new Date(year, month, 0).getDate()
   // Langkah berikutnya — rule-based (ambang + angka riil), bukan generatif.
   const steps: string[] = []
@@ -359,7 +359,7 @@ export function MonthlyReportBody({
                   <div key={s.name} className="flex items-center justify-between gap-3">
                     <span className="t-sm truncate" style={{ color: 'var(--ink)' }}>{s.name}</span>
                     <span className="flex items-center gap-2 shrink-0">
-                      <span className="num t-sm font-medium" style={{ color: up ? 'var(--c-coral)' : 'var(--c-mint)' }}>{up ? '+' : '−'}{formatCompactCurrency(Math.abs(s.delta))}</span>
+                      <span className="num t-sm font-medium" style={{ color: up ? 'var(--c-coral)' : 'var(--c-mint)' }}>{up ? '+' : '−'}{formatCurrency(Math.abs(s.delta))}</span>
                       {s.pct != null && <span className="inline-flex items-center gap-0.5 t-cap num" style={{ color: 'var(--text-mute)' }}>{up ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}{Math.abs(s.pct).toFixed(0)}%</span>}
                     </span>
                   </div>
@@ -410,7 +410,7 @@ export function MonthlyReportBody({
                     <div className="h-full rounded-full" style={{ width: `${(row.amount / r.maxExp) * 100}%`, background: 'var(--c-violet)' }} />
                   </div>
                   <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{money(row.amount)}</span>
-                  {r.hasPrev && <span className="num t-cap w-16 text-right shrink-0" style={{ color: row.delta > 0 ? 'var(--c-coral)' : row.delta < 0 ? 'var(--c-mint)' : 'var(--text-mute)' }}>{row.delta === 0 ? '—' : `${row.delta > 0 ? '+' : '−'}${formatCompactCurrency(Math.abs(row.delta))}`}</span>}
+                  {r.hasPrev && <span className="num t-cap w-16 text-right shrink-0" style={{ color: row.delta > 0 ? 'var(--c-coral)' : row.delta < 0 ? 'var(--c-mint)' : 'var(--text-mute)' }}>{row.delta === 0 ? '—' : `${row.delta > 0 ? '+' : '−'}${formatCurrency(Math.abs(row.delta))}`}</span>}
                 </div>
               ))}
             </div>
@@ -499,8 +499,8 @@ export function MonthlyReportBody({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `Saving rate ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? 'Naik' : 'Turun'} ${Math.abs(r.savingRateDelta).toFixed(0)}pp dari ${r.prevMonthLabel}` : 'Bulan ini' },
-            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} turun`, sub: `Hemat ${formatCompactCurrency(Math.abs(topDown.delta))} vs ${r.prevMonthLabel}` },
-            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} naik`, sub: `+${formatCompactCurrency(topUp.delta)} vs ${r.prevMonthLabel}` },
+            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} turun`, sub: `Hemat ${formatCurrency(Math.abs(topDown.delta))} vs ${r.prevMonthLabel}` },
+            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} naik`, sub: `+${formatCurrency(topUp.delta)} vs ${r.prevMonthLabel}` },
           ].filter(Boolean).slice(0, 3).map((h, i) => {
             const item = h as { icon: React.ReactNode; title: string; sub: string }
             return <div key={i} className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}><div className="mb-1.5">{item.icon}</div><p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</p><p className="t-cap mt-0.5" style={{ color: 'var(--text-mute)' }}>{item.sub}</p></div>
@@ -572,7 +572,7 @@ function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; v
   return (
     <div className="stat-tile">
       <div className="flex items-center justify-between"><p className="eyebrow">{label}</p><div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>{icon}</div></div>
-      <p className="num tabular font-bold mt-2" style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--ink)' }}><span className="sm:hidden">{formatCompactCurrency(value)}</span><span className="hidden sm:inline">{formatCurrency(value)}</span></p>
+      <p className="num tabular font-bold mt-2" style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--ink)' }}><span className="sm:hidden">{formatCurrency(value)}</span><span className="hidden sm:inline">{formatCurrency(value)}</span></p>
       {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint)' : 'var(--c-coral)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% vs bln lalu</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
     </div>
   )
@@ -583,7 +583,7 @@ function Mini({ label, value, text, color, signed }: { label: string; value?: nu
     <div>
       <p className="t-cap" style={{ color: 'var(--text-mute)' }}>{label}</p>
       <p className="num tabular font-bold mt-0.5" style={{ fontSize: 17, color }}>
-        {text != null ? text : `${signed && (value ?? 0) >= 0 ? '+' : signed && (value ?? 0) < 0 ? '−' : ''}${formatCompactCurrency(Math.abs(value ?? 0))}`}
+        {text != null ? text : `${signed && (value ?? 0) >= 0 ? '+' : signed && (value ?? 0) < 0 ? '−' : ''}${formatCurrency(Math.abs(value ?? 0))}`}
       </p>
     </div>
   )

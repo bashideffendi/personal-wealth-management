@@ -7,7 +7,7 @@
 
 import Link from 'next/link'
 import { ChevronRight, Target } from 'lucide-react'
-import { formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 interface GoalsWidgetProps {
   goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }>
@@ -137,8 +137,8 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
                   className="num tabular"
                   style={{ fontSize: 11.5, color: 'var(--text-mute)', marginTop: 1 }}
                 >
-                  {formatCompactCurrency(g.current_amount)}
-                  <span style={{ opacity: 0.6 }}> / {formatCompactCurrency(g.target_amount)}</span>
+                  {formatCurrency(g.current_amount)}
+                  <span style={{ opacity: 0.6 }}> / {formatCurrency(g.target_amount)}</span>
                   {eta && <span style={{ marginLeft: 6, opacity: 0.7 }}>· {eta}</span>}
                 </p>
               </div>

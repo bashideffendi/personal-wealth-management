@@ -189,7 +189,7 @@ export default function NetWorthPage() {
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? '#6EE7B7' : '#FDA4AF' }}>
                 {heroStats.vs1mo.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                {heroStats.vs1mo.delta >= 0 ? '+' : ''}{formatCompactCurrency(heroStats.vs1mo.delta)} vs bln lalu
+                {heroStats.vs1mo.delta >= 0 ? '+' : ''}{formatCurrency(heroStats.vs1mo.delta)} vs bln lalu
               </span>
             )}
             {heroStats?.vsYtd && (
@@ -234,8 +234,8 @@ export default function NetWorthPage() {
             <>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Bebas Utang</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Net Worth Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>{formatCompactCurrency(projection.endNetWorth)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Naik</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCompactCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Net Worth Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>{formatCurrency(projection.endNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Naik</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
               <div className="mt-4" style={{ height: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -516,7 +516,7 @@ function ChangeStat({ label, change }: { label: string; change: { delta: number;
   return (
     <div>
       <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
-      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1" style={{ color }}><Icon className="size-3.5" />{positive ? '+' : ''}{formatCompactCurrency(change.delta)}</p>
+      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1" style={{ color }}><Icon className="size-3.5" />{positive ? '+' : ''}{formatCurrency(change.delta)}</p>
       <p className="text-[11px] mt-0.5" style={{ color }}>{positive ? '+' : ''}{change.pct.toFixed(1)}%</p>
     </div>
   )

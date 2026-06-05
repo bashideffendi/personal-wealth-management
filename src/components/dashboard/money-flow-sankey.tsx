@@ -33,7 +33,7 @@ import {
   Rectangle,
   ResponsiveContainer,
 } from 'recharts'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 export type FlowKind = 'income' | 'expense' | 'saving' | 'investment' | 'middle'
 
@@ -143,7 +143,7 @@ function makeRenderNode(compact: boolean) {
             fontVariantNumeric: 'tabular-nums',
           }}
         >
-          {compact ? formatCompactCurrency(payload.value) : formatCurrency(payload.value)}
+          {compact ? formatCurrency(payload.value) : formatCurrency(payload.value)}
         </text>
       </Layer>
     )

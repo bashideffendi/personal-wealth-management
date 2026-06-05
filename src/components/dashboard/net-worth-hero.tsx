@@ -14,7 +14,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowUp, ArrowDown, ArrowUpRight } from 'lucide-react'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 interface MonthlyData {
   month: string
@@ -166,7 +166,7 @@ export function NetWorthHero({
               >
                 {monthDelta > 0 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
                 {monthDelta > 0 ? '+' : '−'}
-                {formatCompactCurrency(Math.abs(monthDelta))} bulan ini
+                {formatCurrency(Math.abs(monthDelta))} bulan ini
               </span>
             )}
             {ytdPct !== 0 && (
@@ -284,7 +284,7 @@ export function NetWorthHero({
                   }}
                 >
                   {sparkline.change >= 0 ? '+' : '−'}
-                  {formatCompactCurrency(Math.abs(sparkline.change))}{' '}
+                  {formatCurrency(Math.abs(sparkline.change))}{' '}
                   <span style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 500 }}>
                     ({sparkline.changePct >= 0 ? '+' : ''}
                     {sparkline.changePct.toFixed(1)}%)

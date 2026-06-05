@@ -15,7 +15,7 @@
  */
 
 import { useT } from '@/lib/i18n/context'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, ArrowLeftRight,
   TrendingUp, TrendingDown,
@@ -101,7 +101,7 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
               letterSpacing: '-0.025em',
             }}
           >
-            <span className="sm:hidden">{formatCompactCurrency(value)}</span>
+            <span className="sm:hidden">{formatCurrency(value)}</span>
             <span className="hidden sm:inline">{formatCurrency(value)}</span>
           </p>
         </div>

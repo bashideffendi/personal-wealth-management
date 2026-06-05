@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Debt, CreditCard as CreditCardRow } from '@/types'
 import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
@@ -331,7 +331,7 @@ export default function DebtsOverviewPage() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold" style={{ color: 'var(--ink)' }}>Bunga tinggi — pertimbangin pindah</p>
                 <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} bunganya sampai <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{maxApr}%/thn</span>. Balance transfer atau KTA bunga ~12% bisa hemat sekitar <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCompactCurrency(refiSaving)}/tahun</span>. Strategi <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> udah otomatis prioritasin ini.
+                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} bunganya sampai <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{maxApr}%/thn</span>. Balance transfer atau KTA bunga ~12% bisa hemat sekitar <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(refiSaving)}/tahun</span>. Strategi <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> udah otomatis prioritasin ini.
                 </p>
               </div>
             </div>
@@ -479,7 +479,7 @@ export default function DebtsOverviewPage() {
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
-                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> hemat <span className="num">{formatCompactCurrency(interestDiff)}</span> bunga{monthsDiff > 0 ? <> &amp; lunas <span className="num">{monthsDiff} bln</span> lebih cepat</> : null}. Pilih <span style={{ color: 'var(--c-mint)', fontWeight: 600 }}>Snowball</span> kalau butuh dorongan — utang pertama{snowFirst ? ` (${snowFirst.name})` : ''} lunas <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
+                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> hemat <span className="num">{formatCurrency(interestDiff)}</span> bunga{monthsDiff > 0 ? <> &amp; lunas <span className="num">{monthsDiff} bln</span> lebih cepat</> : null}. Pilih <span style={{ color: 'var(--c-mint)', fontWeight: 600 }}>Snowball</span> kalau butuh dorongan — utang pertama{snowFirst ? ` (${snowFirst.name})` : ''} lunas <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
                 ) : (
                   <>Buat utang kamu sekarang, dua strategi hasilnya mirip — pilih yang bikin kamu paling konsisten bayar.</>
                 )}
@@ -489,12 +489,12 @@ export default function DebtsOverviewPage() {
               <StrategyCard
                 strategy="snowball" result={snowball} debts={allActive}
                 accent="var(--c-mint)" accentSoft="var(--c-mint-soft)"
-                savedNote={cheaper === 'snowball' && interestDiff > 0 ? `Bunga termurah · hemat ${formatCompactCurrency(interestDiff)}` : 'Win tercepat — momentum dulu'}
+                savedNote={cheaper === 'snowball' && interestDiff > 0 ? `Bunga termurah · hemat ${formatCurrency(interestDiff)}` : 'Win tercepat — momentum dulu'}
               />
               <StrategyCard
                 strategy="avalanche" result={avalanche} debts={allActive}
                 accent="var(--c-violet)" accentSoft="var(--c-violet-soft)"
-                savedNote={cheaper === 'avalanche' && interestDiff > 0 ? `Bunga termurah · hemat ${formatCompactCurrency(interestDiff)}` : 'Paling efisien matematis'}
+                savedNote={cheaper === 'avalanche' && interestDiff > 0 ? `Bunga termurah · hemat ${formatCurrency(interestDiff)}` : 'Paling efisien matematis'}
               />
             </div>
           </div>
@@ -538,7 +538,7 @@ export default function DebtsOverviewPage() {
               {[0, 500_000, 1_000_000, 2_000_000, 5_000_000].map((v) => (
                 <button key={v} type="button" onClick={() => setExtraPayment(v)} aria-pressed={extraPayment === v} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                   style={{ background: extraPayment === v ? 'var(--c-mint)' : 'var(--surface-2)', color: extraPayment === v ? '#FFF' : 'var(--ink)' }}>
-                  {v === 0 ? 'Tanpa ekstra' : `+${formatCompactCurrency(v)}`}
+                  {v === 0 ? 'Tanpa ekstra' : `+${formatCurrency(v)}`}
                 </button>
               ))}
             </div>
@@ -553,7 +553,7 @@ export default function DebtsOverviewPage() {
             <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
               <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lunas Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months)}</p></div>
               <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lebih Cepat</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} bln` : '—'}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Hemat Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCompactCurrency(Math.round(interestSaved)) : '—'}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Hemat Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCurrency(Math.round(interestSaved)) : '—'}</p></div>
             </div>
           </div>
 
@@ -695,8 +695,8 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
               </span>
               <span className="num text-[12px] shrink-0 ml-2" style={{ color: 'var(--ink-muted)' }}>
                 {isSnow
-                  ? formatCompactCurrency(d?.remaining ?? 0)
-                  : <>{(d?.interest_rate ?? 0)}% · <span style={{ color: 'var(--ink-soft)' }}>{formatCompactCurrency(d?.remaining ?? 0)}</span></>}
+                  ? formatCurrency(d?.remaining ?? 0)
+                  : <>{(d?.interest_rate ?? 0)}% · <span style={{ color: 'var(--ink-soft)' }}>{formatCurrency(d?.remaining ?? 0)}</span></>}
               </span>
             </div>
           )
@@ -704,7 +704,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: `1px solid color-mix(in srgb, ${accent} 28%, transparent)` }}>
         <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lunas Total</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months)}</p></div>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Total Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCompactCurrency(Math.round(result.totalInterest))}</p></div>
+        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Total Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
         <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Karakter</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
       </div>
       {!result.feasible && <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--c-coral)' }}>Cicilan masih lebih kecil dari bunga — naikin cicilan biar utang beneran turun.</p>}
