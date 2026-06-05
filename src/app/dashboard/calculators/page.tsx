@@ -86,7 +86,7 @@ function KprFeatured() {
   const total = monthly * n
   const bungaTotal = Math.max(0, total - principal)
   const pokokPct = total > 0 ? (principal / total) * 100 : 0
-  const jt = (v: number) => v >= 1e9 ? `Rp${(v / 1e9).toFixed(2)} M` : `Rp${Math.round(v / 1e6)} jt`
+  const jt = formatCurrency
 
   async function makeGoal() {
     setCreating(true)

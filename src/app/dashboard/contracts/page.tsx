@@ -140,7 +140,7 @@ export default function ContractsPage() {
   const coverageTotal = active.filter((c) => c.category === 'insurance').reduce((s, c) => s + (c.coverage || 0), 0)
   const monthlyCost = Math.round(active.reduce((s, c) => s + monthlyOf(c), 0))
 
-  const big = (v: number) => v >= 1e9 ? `Rp ${(v / 1e9).toFixed(2).replace('.', ',')} M` : v >= 1e6 ? `Rp ${(v / 1e6).toFixed(2).replace('.', ',')} jt` : formatCurrency(v)
+  const big = formatCurrency
   const stats = [
     { label: 'Total Kontrak Aktif', value: `${active.length} item`, sub: `Tersebar di ${catsPresent.length} kategori`, icon: ShieldCheck, color: INDIGO, tint: 'rgba(99,102,241,0.12)' },
     { label: 'Akan Perpanjang', value: `${expiring.length} item`, sub: 'Dalam 3 bulan ke depan', icon: RefreshCw, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
