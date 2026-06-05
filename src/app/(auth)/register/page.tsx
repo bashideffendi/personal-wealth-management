@@ -69,8 +69,7 @@ export default function RegisterPage() {
         </div>
       )}
 
-      <div className="s-card s-card-pad-lg">
-        {success ? (
+      {success ? (
           <div className="text-center py-2">
             <div className="mx-auto grid place-items-center" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
               <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -131,7 +130,6 @@ export default function RegisterPage() {
             </p>
           </form>
         )}
-      </div>
 
       {!success && (
         <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>

@@ -57,8 +57,7 @@ export default function LoginPage() {
         <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Uangmu udah nungguin, udah dirapihin.</p>
       </div>
 
-      <div className="s-card s-card-pad-lg">
-        <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
+      <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
           {error && (
             <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral)' }}>
               {error}
@@ -96,7 +95,6 @@ export default function LoginPage() {
             <Shield className="size-3.5" style={{ color: 'var(--c-mint)' }} /> Datamu dienkripsi, password di-hash. Aman.
           </p>
         </form>
-      </div>
 
       <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         Belum punya akun Klunting?{' '}

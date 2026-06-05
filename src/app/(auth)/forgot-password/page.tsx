@@ -71,8 +71,7 @@ export default function ForgotPasswordPage() {
         <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masukin email, link reset bakal dikirim ke inbox.</p>
       </div>
 
-      <div className="s-card s-card-pad-lg">
-        {sent ? (
+      {sent ? (
           <div className="text-center py-2">
             <div className="mx-auto grid place-items-center mb-4" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
               <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -113,7 +112,6 @@ export default function ForgotPasswordPage() {
             </Button>
           </form>
         )}
-      </div>
 
       <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         Inget password kamu?{' '}
