@@ -23,11 +23,17 @@ alter table public.household_members add column if not exists relationship text
   check (relationship in ('pasangan', 'orang_tua', 'anak', 'saudara', 'lainnya'));
 alter table public.household_members add column if not exists share_net_worth boolean not null default false;
 
--- Owner can never be view-only (prevents self-lockout from own household data).
+-- Tie the member row to ACTUAL ownership: the real household owner is always
+-- role=owner + can_edit (prevents owner self-demotion and self-lockout from own data).
 create or replace function public.enforce_owner_can_edit()
 returns trigger language plpgsql as $$
 begin
-  if new.role = 'owner' then new.can_edit := true; end if;
+  if exists (select 1 from public.households h where h.id = new.household_id and h.owner_user_id = new.user_id) then
+    new.role := 'owner';
+    new.can_edit := true;
+  elsif new.role = 'owner' then
+    new.can_edit := true;
+  end if;
   return new;
 end;
 $$;
@@ -35,6 +41,19 @@ drop trigger if exists trg_owner_can_edit on public.household_members;
 create trigger trg_owner_can_edit
   before insert or update on public.household_members
   for each row execute function public.enforce_owner_can_edit();
+
+-- Harden membership INSERT: you may only insert YOURSELF as the OWNER of a household
+-- you created (the create-household flow). Joining someone else's household MUST go
+-- through accept_household_invitation() (SECURITY DEFINER, bypasses RLS) which enforces
+-- invite validity + capacity + one-household-per-user. Closes the 015 self-join bypass.
+drop policy if exists "Anyone can insert self into household" on public.household_members;
+drop policy if exists "Owner can insert self on create" on public.household_members;
+create policy "Owner can insert self on create"
+  on public.household_members for insert
+  with check (
+    auth.uid() = user_id
+    and exists (select 1 from public.households h where h.id = household_id and h.owner_user_id = auth.uid())
+  );
 
 -- Single source of truth for "can this user WRITE household rows": member AND (owner OR can_edit).
 create or replace function public.can_member_write(hid uuid)

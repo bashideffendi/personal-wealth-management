@@ -22,6 +22,11 @@ declare
   res jsonb;
   total_members int;
 begin
+  -- Defensive: reject null id (no global/null household allowed).
+  if hh_id is null then
+    return jsonb_build_object('success', false, 'error', 'Household tidak valid.');
+  end if;
+
   -- Caller must be a member of this household.
   if not exists (
     select 1 from public.household_members where household_id = hh_id and user_id = auth.uid()
