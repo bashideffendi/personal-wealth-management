@@ -12,6 +12,8 @@ export interface Account {
   type: 'cash' | 'bank' | 'digital_wallet' | 'rdn' | 'investment'
   starting_balance: number
   current_balance: number
+  /** Optional account/e-wallet number — shown masked in UI (migration 045). */
+  account_number?: string | null
   created_at: string
 }
 

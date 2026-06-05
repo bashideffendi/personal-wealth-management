@@ -178,6 +178,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Kekayaan', titleKey: 'nav.wealth', href: '/dashboard/net-worth', icon: 'Building2', section: 'primary',
     children: [
       { label: 'Net Worth',       titleKey: 'nav.net_worth',         href: '/dashboard/net-worth',        icon: '' },
+      { label: 'Akun & Rekening', titleKey: 'nav.accounts',          href: '/dashboard/accounts',         icon: '' },
       { label: 'Aset Likuid',     titleKey: 'nav.assets_liquid',     href: '/dashboard/assets/liquid',    icon: '' },
       { label: 'Aset Non-Likuid', titleKey: 'nav.assets_non_liquid', href: '/dashboard/assets/non-liquid', icon: '' },
       { label: 'Utang',           titleKey: 'nav.debts',             href: '/dashboard/debts',            icon: '' },
@@ -189,7 +190,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Keluarga',    titleKey: 'nav.family',        href: '/dashboard/family',            icon: 'Home',            section: 'primary' },
 
   // ─── SECONDARY (utility tools, smaller styling) ───
-  { label: 'Akun',            titleKey: 'nav.accounts',       href: '/dashboard/accounts',       icon: 'CircleDollarSign', section: 'secondary' },
+  // (Akun moved into the Kekayaan group — it's a money-structure page, not a utility tool)
   { label: 'Recurring',       titleKey: 'nav.recurring',      href: '/dashboard/recurring',      icon: 'Repeat',           section: 'secondary' },
   { label: 'Laporan Bulanan', titleKey: 'nav.monthly_report', href: '/dashboard/monthly-report', icon: 'FileText',         section: 'secondary' },
   { label: 'Kontrak & Polis',     titleKey: 'nav.contracts',  href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
