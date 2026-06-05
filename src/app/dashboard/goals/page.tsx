@@ -127,7 +127,9 @@ export default function GoalsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { data } = await supabase.from('goals').select('*').eq('user_id', user.id).order('deadline', { ascending: true })
-    setGoals((data ?? []) as Goal[])
+    // Exclude tujuan bersama (household_id set) — itu tampil di halaman Keluarga,
+    // biar gak kehitung dobel. Pre-migration: household_id undefined → tetap tampil.
+    setGoals(((data ?? []) as (Goal & { household_id?: string | null })[]).filter((g) => !g.household_id))
 
     // Pemasukan rata-rata/bln dari 3 bln terakhir — buat ngukur "iuran wajib"
     // vs cashflow REAL (bukan ngarang). Mirror cara dashboard hitung income.

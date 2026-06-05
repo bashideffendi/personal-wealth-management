@@ -172,10 +172,12 @@ export default function AccountsPage() {
       // shared with family members.
       const memRes = await supabase
         .from('household_members')
-        .select('household_id')
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle()
-      const householdId = (memRes.data as { household_id: string } | null)?.household_id ?? null
+      const mem = memRes.data as { household_id: string; role?: string; can_edit?: boolean } | null
+      // Member "Lihat saja" (can_edit=false) bikin data PERSONAL — gak di-tag household.
+      const householdId = mem && (mem.role === 'owner' || (mem.can_edit ?? true)) ? mem.household_id : null
 
       const insertPayload: Record<string, unknown> = {
         user_id: user.id,

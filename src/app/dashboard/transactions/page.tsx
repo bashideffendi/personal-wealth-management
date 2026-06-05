@@ -517,10 +517,11 @@ export default function TransactionsPage() {
     // become visible to all family members (if user is in a household).
     const memRes = await supabase
       .from('household_members')
-      .select('household_id')
+      .select('*')
       .eq('user_id', user.id)
       .maybeSingle()
-    const householdId = (memRes.data as { household_id: string } | null)?.household_id ?? null
+    const mem = memRes.data as { household_id: string; role?: string; can_edit?: boolean } | null
+    const householdId = mem && (mem.role === 'owner' || (mem.can_edit ?? true)) ? mem.household_id : null
 
     // Upload receipt to Storage first (if attached on a NEW transaction)
     let receiptPath: string | null = null
@@ -627,8 +628,9 @@ export default function TransactionsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setQuickSaving(false); return }
     // Auto-tag household if member
-    const memRes = await supabase.from('household_members').select('household_id').eq('user_id', user.id).maybeSingle()
-    const householdId = (memRes.data as { household_id: string } | null)?.household_id ?? null
+    const memRes = await supabase.from('household_members').select('*').eq('user_id', user.id).maybeSingle()
+    const mem = memRes.data as { household_id: string; role?: string; can_edit?: boolean } | null
+    const householdId = mem && (mem.role === 'owner' || (mem.can_edit ?? true)) ? mem.household_id : null
 
     const payload: Record<string, unknown> = {
       user_id: user.id,
