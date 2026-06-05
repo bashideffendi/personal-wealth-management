@@ -250,6 +250,16 @@ export function StockResearchTab() {
                   </tr>
                 )
               })}
+              {loading && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>Memuat data emiten…</td>
+                </tr>
+              )}
+              {!loading && sorted.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>Nggak ada emiten yang cocok sama filter kamu.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

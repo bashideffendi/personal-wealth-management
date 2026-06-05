@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
+import { FX_FALLBACK_USDIDR } from '@/lib/constants'
 import { CryptoLogo } from '@/components/investment/crypto-logo'
 import { StockPriceChart } from '@/components/investment/stock-price-chart'
 import { ArrowLeft, Plus } from 'lucide-react'
@@ -31,7 +32,7 @@ export default function CryptoCoinPage() {
   const [name, setName] = useState<string>(base)
   const [price, setPrice] = useState<number | null>(null) // USD
   const [changePct, setChangePct] = useState<number | null>(null)
-  const [usdIdr, setUsdIdr] = useState<number>(16500)
+  const [usdIdr, setUsdIdr] = useState<number>(FX_FALLBACK_USDIDR)
 
   // Holding kamu di coin ini (kalau ada).
   useEffect(() => {

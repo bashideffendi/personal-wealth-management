@@ -105,6 +105,14 @@ export const MONTHS = [
   'Desember',
 ] as const
 
+/**
+ * Fallback USD→IDR rate, used ONLY when the live Yahoo `USDIDR=X` quote fails.
+ * Better to show a ballpark IDR value than one that's 13.000× wrong. The live
+ * quote always wins when the fetch succeeds. Bump this (and the date) if it
+ * drifts far from market. Last reviewed: 2026-06-05.
+ */
+export const FX_FALLBACK_USDIDR = 16500
+
 // Investment subcategories — used both for routing and for the page-level tiles
 export const INVESTMENT_SUBCATS = [
   { slug: 'stock',        label: 'Saham',          emoji: '📈' },

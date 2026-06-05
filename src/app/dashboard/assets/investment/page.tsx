@@ -341,7 +341,7 @@ export default function InvestmentOverviewPage() {
           <Link
             href="/dashboard/assets/investment/stock"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
-            style={{ background: 'var(--c-primary)', color: '#fff' }}
+            style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
           >
             <Plus className="size-3.5" /> Tambah holding
           </Link>
@@ -419,7 +419,7 @@ export default function InvestmentOverviewPage() {
                 <Tooltip
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Nilai']}
-                  contentStyle={{ background: '#fff', border: '1px solid var(--border-soft)', borderRadius: 10, fontSize: 12 }}
+                  contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
                 />
                 <Area type="monotone" dataKey="value" stroke={up ? '#10B981' : '#F43F5E'} strokeWidth={2} fill="url(#equityFill)" />
               </AreaChart>
@@ -574,7 +574,7 @@ export default function InvestmentOverviewPage() {
                     <span
                       className="num font-semibold tabular px-1.5 py-0.5 rounded"
                       style={{
-                        color: plUp ? '#10B981' : '#F43F5E',
+                        color: plUp ? 'var(--c-mint)' : 'var(--c-coral)',
                         background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)',
                       }}
                     >
@@ -606,7 +606,7 @@ export default function InvestmentOverviewPage() {
                 className="size-12 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: 'rgba(14, 165, 233, 0.12)' }}
               >
-                <TrendingUp className="size-6" style={{ color: '#0EA5E9' }} />
+                <TrendingUp className="size-6" style={{ color: 'var(--info)' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Belum ada posisi</p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
@@ -636,8 +636,9 @@ export default function InvestmentOverviewPage() {
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(v: any) => formatCurrency(Number(v) || 0)}
                       contentStyle={{
-                        background: '#fff',
-                        border: '1px solid var(--border-soft)',
+                        background: 'var(--black)',
+                        color: 'var(--on-black)',
+                        border: '1px solid var(--black-line)',
                         borderRadius: 10,
                         fontSize: 12,
                       }}
@@ -746,7 +747,7 @@ export default function InvestmentOverviewPage() {
                     onClick={() => setTab(t.key)}
                     className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
                     style={active
-                      ? { background: 'var(--c-primary)', color: '#fff' }
+                      ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
                       : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                   >
                     {t.label}
@@ -840,7 +841,7 @@ export default function InvestmentOverviewPage() {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Dividen']}
                     cursor={{ fill: 'var(--surface-2)' }}
-                    contentStyle={{ background: '#fff', border: '1px solid var(--border-soft)', borderRadius: 10, fontSize: 12 }}
+                    contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
                   />
                   <Bar dataKey="total" radius={[6, 6, 0, 0]}>
                     {(() => {

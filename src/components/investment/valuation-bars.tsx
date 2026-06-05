@@ -67,7 +67,7 @@ export function ValuationBars({
             return (
               <div
                 className="rounded-lg px-2.5 py-1.5 shadow"
-                style={{ background: '#fff', border: '1px solid var(--border-soft)' }}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
               >
                 <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
                   {String(label)}

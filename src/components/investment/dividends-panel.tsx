@@ -156,7 +156,7 @@ export function DividendsPanel() {
                 formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
                 contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 8, fontSize: 12 }}
               />
-              <Bar dataKey="value" fill="#A3E635" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="var(--c-mint)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -191,7 +191,7 @@ export function DividendsPanel() {
                   <tr key={d.id} className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
                     <Td>{formatDate(d.pay_date)}</Td>
                     <Td>
-                      <span className="rounded-sm px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
                         {d.ticker ?? s?.ticker ?? '—'}
                       </span>
                     </Td>
@@ -204,7 +204,7 @@ export function DividendsPanel() {
                     </Td>
                     <Td style={{ color: 'var(--ink-muted)' }}>{d.notes}</Td>
                     <Td className="text-right">
-                      <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)}>
+                      <Button variant="ghost" size="icon-sm" aria-label="Hapus catatan dividen" onClick={() => remove(d.id)}>
                         <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                       </Button>
                     </Td>

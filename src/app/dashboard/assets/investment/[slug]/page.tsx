@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatPercent } from '@/lib/utils'
-import { INVESTMENT_SUBCATS, INVESTMENT_SLUG_TO_CATEGORY } from '@/lib/constants'
+import { INVESTMENT_SUBCATS, INVESTMENT_SLUG_TO_CATEGORY, FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment, Quote } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -153,7 +153,7 @@ export default function InvestmentCategoryPage() {
         }
         // Default fallback rate if Yahoo FX endpoint fails — better to show a
         // ballpark IDR value than a 13000× wrong one. Updated periodically.
-        let usdIdr = 16500
+        let usdIdr = FX_FALLBACK_USDIDR
         if (fxRes.ok) {
           const fxJson = (await fxRes.json()) as { quotes?: Array<{ ticker: string; price: number }> }
           const fx = fxJson.quotes?.find((q) => q.ticker === 'USDIDR=X')
@@ -659,10 +659,10 @@ export default function InvestmentCategoryPage() {
                       <Td style={{ color: 'var(--ink-muted)' }}>{e.i.platform || '—'}</Td>
                       <Td>
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon-sm" onClick={() => openEdit(e.i)}>
+                          <Button variant="ghost" size="icon-sm" aria-label="Edit posisi" onClick={() => openEdit(e.i)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => remove(e.i.id)}>
+                          <Button variant="ghost" size="icon-sm" aria-label="Hapus posisi" onClick={() => remove(e.i.id)}>
                             <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                           </Button>
                         </div>
@@ -707,10 +707,10 @@ export default function InvestmentCategoryPage() {
                         </p>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-                        <Button variant="ghost" size="icon-sm" onClick={() => openEdit(e.i)}>
+                        <Button variant="ghost" size="icon-sm" aria-label="Edit posisi" onClick={() => openEdit(e.i)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon-sm" onClick={() => remove(e.i.id)}>
+                        <Button variant="ghost" size="icon-sm" aria-label="Hapus posisi" onClick={() => remove(e.i.id)}>
                           <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                         </Button>
                       </div>

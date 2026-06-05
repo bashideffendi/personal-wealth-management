@@ -237,7 +237,7 @@ export function StockLogPanel() {
                   <Td className="text-right num font-semibold">{formatCurrency(t.total)}</Td>
                   <Td style={{ color: 'var(--ink-muted)' }}>{t.broker || '—'}</Td>
                   <Td className="text-right">
-                    <Button variant="ghost" size="icon-sm" onClick={() => remove(t.id)}>
+                    <Button variant="ghost" size="icon-sm" aria-label="Hapus catatan transaksi" onClick={() => remove(t.id)}>
                       <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                     </Button>
                   </Td>

@@ -115,7 +115,7 @@ export function TrendsPanel({
               className="px-3 py-1.5 rounded-md text-xs font-semibold transition"
               style={
                 isActive
-                  ? { background: 'var(--c-primary)', color: '#fff' }
+                  ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
                   : { background: 'var(--surface-2)', color: 'var(--ink-soft)' }
               }
               onMouseEnter={(e) => {

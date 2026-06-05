@@ -79,7 +79,7 @@ export function MetricLineChart({
             return (
               <div
                 className="rounded-lg px-2.5 py-1.5 shadow"
-                style={{ background: '#fff', border: '1px solid var(--border-soft)' }}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
               >
                 <p className="num tabular text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                   {typeof v === 'number' ? fmt(v, format) : '—'}

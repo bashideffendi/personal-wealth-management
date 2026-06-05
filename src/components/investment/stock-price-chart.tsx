@@ -203,7 +203,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
                 className="px-2.5 py-1 rounded-md text-[12px] font-semibold transition"
                 style={
                   active
-                    ? { background: 'var(--c-primary)', color: '#fff' }
+                    ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
                     : { background: 'transparent', color: 'var(--ink-soft)' }
                 }
                 onMouseEnter={(e) => {
@@ -275,7 +275,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
                   return (
                     <div
                       className="rounded-lg px-2.5 py-1.5 shadow"
-                      style={{ background: '#fff', border: '1px solid var(--border-soft)' }}
+                      style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                     >
                       <p className="num tabular text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                         {sym} {fmtPrice(p.c, currency)}

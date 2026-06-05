@@ -417,6 +417,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
           disabled={scaleIdx === 0}
           className="h-7 w-7 p-0 font-mono text-base"
           title="Skala lebih besar (ringkas)"
+          aria-label="Skala lebih besar (ringkas)"
         >
           −
         </Button>
@@ -430,6 +431,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
           disabled={scaleIdx === SCALE_ORDER.length - 1}
           className="h-7 w-7 p-0 font-mono text-base"
           title="Skala lebih detail"
+          aria-label="Skala lebih detail"
         >
           +
         </Button>
@@ -458,7 +460,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
                 className="h-7 px-3 text-xs rounded-md"
                 style={{
                   background: incomeView === 'annual' ? 'var(--c-primary)' : 'transparent',
-                  color: incomeView === 'annual' ? '#FFFFFF' : 'var(--ink-muted)',
+                  color: incomeView === 'annual' ? 'var(--on-black)' : 'var(--ink-muted)',
                 }}
               >
                 Tahunan
@@ -470,7 +472,7 @@ export function FinancialStatements({ stock, quarterly }: FinancialStatementsPro
                 className="h-7 px-3 text-xs rounded-md"
                 style={{
                   background: incomeView === 'quarterly' ? 'var(--c-primary)' : 'transparent',
-                  color: incomeView === 'quarterly' ? '#FFFFFF' : 'var(--ink-muted)',
+                  color: incomeView === 'quarterly' ? 'var(--on-black)' : 'var(--ink-muted)',
                 }}
               >
                 Kuartalan
