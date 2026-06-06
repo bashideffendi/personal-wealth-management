@@ -68,21 +68,25 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Shield className="size-3.5" style={{ color: '#34D399' }} /> Data kamu dienkripsi dan tidak dijual.
       </p>
 
-      {/* centered content band: headline left + card right */}
-      <div className="relative z-10 mx-auto max-w-5xl px-6 min-h-screen grid lg:grid-cols-2 items-center gap-10 lg:gap-12">
-        <div className="hidden lg:block max-w-md">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Keuangan pribadi</p>
-          <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(38px, 3.6vw, 52px)', lineHeight: 1.1, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
-            Kelola keuanganmu dengan <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span>.
-          </h2>
+      {/* balanced halves: brand centered in the left half, card centered in the right */}
+      <div className="relative z-10 min-h-screen grid lg:grid-cols-2 items-center">
+        <div className="hidden lg:flex items-center justify-center px-12">
+          <div className="max-w-sm text-center">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Keuangan pribadi</p>
+            <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(38px, 3.4vw, 50px)', lineHeight: 1.14, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
+              Kelola keuanganmu dengan <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span>.
+            </h2>
+          </div>
         </div>
 
-        <div className="w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end py-24 lg:py-0">
-          <div
-            className="rounded-3xl p-7 sm:p-8"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 30px 80px -24px rgba(0,0,0,0.6)' }}
-          >
-            {children}
+        <div className="flex items-center justify-center px-6 py-12 lg:py-16">
+          <div className="w-full max-w-md">
+            <div
+              className="rounded-3xl p-7 sm:p-8"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 30px 80px -24px rgba(0,0,0,0.6)' }}
+            >
+              {children}
+            </div>
           </div>
         </div>
       </div>
