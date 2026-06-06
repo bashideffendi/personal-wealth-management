@@ -5,11 +5,10 @@
  *
  * Layout (3-col grid):
  *   Brand left · primary menus (+ dropdown utk item ber-children spt Kekayaan)
- *   + "Lainnya" dropdown center · search + AI credits + plus + bell + avatar right.
+ *   + "Lainnya" dropdown center · search + lang + AI credits + plus + bell + avatar right.
  *
- * Active state: background surface-2 + underline indigo 16×2px di bawah.
- * Sticky top, blur backdrop saat scroll. Hide nav center di mobile,
- * drawer yang handle navigasi utama mobile.
+ * Labels are i18n-wired (t(titleKey)); a language toggle (ID/EN) sits in the
+ * top actions so switching is one tap from anywhere.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -22,14 +21,13 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
+import { useI18n, useT } from '@/lib/i18n/context'
 import type { User } from '@supabase/supabase-js'
 
 interface TopNavProps {
   user: User
 }
 
-// Primary menus (top-level). Kekayaan jadi dropdown (punya children); sisanya
-// flat link. Item lain masuk "Lainnya".
 const PRIMARY_HREFS = new Set<string>([
   '/dashboard',
   '/dashboard/transactions',
@@ -39,9 +37,6 @@ const PRIMARY_HREFS = new Set<string>([
   '/dashboard/goals',
 ])
 
-// Item yang disembunyiin dari nav (fitur/route masih ada, cuma gak ditampilin).
-// - Aturan Kategori: redundant sama auto-kategori AI.
-// - Subscription: dilebur ke "Langganan & Kontrak" (/contracts redirect).
 const HIDDEN_HREFS = new Set<string>([
   '/dashboard/rules',
   '/dashboard/subscriptions',
@@ -52,14 +47,45 @@ function matchesPath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
-// Untuk parent dengan children (Kekayaan), juga match kalau pathname
-// ada di salah satu child.
 function isActiveItem(pathname: string, item: NavItem): boolean {
   if (matchesPath(pathname, item.href)) return true
   if (item.children) {
     return item.children.some((c) => matchesPath(pathname, c.href))
   }
   return false
+}
+
+/** Language toggle (ID / EN) — segmented pill. */
+function LangToggle({ full = false }: { full?: boolean }) {
+  const { locale, setLocale } = useI18n()
+  return (
+    <div
+      className={`inline-flex items-center rounded-lg p-0.5 ${full ? 'w-full' : ''}`}
+      style={{ background: 'var(--surface-2)', border: '1px solid var(--line)' }}
+      role="group"
+      aria-label="Bahasa / Language"
+    >
+      {(['id', 'en'] as const).map((l) => {
+        const active = locale === l
+        return (
+          <button
+            key={l}
+            type="button"
+            onClick={() => setLocale(l)}
+            aria-pressed={active}
+            className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${full ? 'flex-1' : ''}`}
+            style={{
+              background: active ? 'var(--surface)' : 'transparent',
+              color: active ? 'var(--ink)' : 'var(--text-mute)',
+              boxShadow: active ? '0 1px 2px rgba(16,24,40,0.10)' : undefined,
+            }}
+          >
+            {l.toUpperCase()}
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 /** Dropdown nav reusable — dipakai buat "Kekayaan" (children) + "Lainnya". */
@@ -73,6 +99,7 @@ function NavDropdown({
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const t = useT()
   const active = items.some((it) => isActiveItem(pathname, it))
 
   useEffect(() => {
@@ -142,7 +169,7 @@ function NavDropdown({
                   onMouseEnter={(e) => { if (!a) e.currentTarget.style.background = 'var(--surface-2)' }}
                   onMouseLeave={(e) => { if (!a) e.currentTarget.style.background = 'transparent' }}
                 >
-                  {it.label}
+                  {it.titleKey ? t(it.titleKey) : it.label}
                 </Link>
               )
             })}
@@ -155,10 +182,11 @@ function NavDropdown({
 
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname()
+  const { t } = useI18n()
+  const navLabel = (it: NavItem) => (it.titleKey ? t(it.titleKey) : it.label)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Blur backdrop on scroll (≥ 8px)
   useEffect(() => {
     function onScroll() {
       setScrolled(window.scrollY > 8)
@@ -169,18 +197,12 @@ export function TopNav({ user }: TopNavProps) {
   }, [])
 
   const primary = NAV_ITEMS.filter((it) => PRIMARY_HREFS.has(it.href))
-  // "Lainnya" = item non-primary. Anak Kekayaan (Aset Likuid/Non-Likuid/Utang/
-  // Dana Darurat) TIDAK di sini lagi — sekarang nongol di dropdown "Kekayaan".
   const lainnya = NAV_ITEMS.filter((it) => !PRIMARY_HREFS.has(it.href) && !HIDDEN_HREFS.has(it.href))
 
-  // Trigger Cmd+K palette by dispatching keyboard event (CommandPalette
-  // sudah listen ke ⌘K)
   function openCommandPalette() {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
   }
 
-  // QuickAddLauncher fired via custom event (existing pattern, dipakai
-  // BottomTabBar mobile juga)
   function openQuickAdd() {
     window.dispatchEvent(new CustomEvent('klunting:quick-add'))
   }
@@ -216,28 +238,16 @@ export function TopNav({ user }: TopNavProps) {
             <div
               className="grid place-items-center"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 10,
-                background: 'var(--c-primary)',
-                color: 'var(--c-primary-foreground)',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 800,
-                fontSize: 16,
-                letterSpacing: '-0.04em',
+                width: 32, height: 32, borderRadius: 10,
+                background: 'var(--c-primary)', color: 'var(--c-primary-foreground)',
+                fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em',
               }}
             >
               K
             </div>
             <span
               className="hidden sm:inline"
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 700,
-                fontSize: 18,
-                letterSpacing: '-0.02em',
-                color: 'var(--ink)',
-              }}
+              style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}
             >
               Klunting
             </span>
@@ -246,9 +256,8 @@ export function TopNav({ user }: TopNavProps) {
           {/* ─── Nav center (desktop) ─── */}
           <nav className="hidden lg:flex items-center justify-center gap-0.5">
             {primary.map((it) => {
-              // Item ber-children (Kekayaan) → dropdown. Sisanya → flat link.
               if (it.children?.length) {
-                return <NavDropdown key={it.href} label={it.label} items={it.children} pathname={pathname} />
+                return <NavDropdown key={it.href} label={navLabel(it)} items={it.children} pathname={pathname} />
               }
               const active = isActiveItem(pathname, it)
               return (
@@ -262,79 +271,61 @@ export function TopNav({ user }: TopNavProps) {
                     background: active ? 'var(--surface-2)' : 'transparent',
                   }}
                 >
-                  {it.label}
+                  {navLabel(it)}
                   {active && (
                     <span
                       className="absolute left-1/2 -translate-x-1/2"
-                      style={{
-                        bottom: -13,
-                        width: 16,
-                        height: 2,
-                        borderRadius: 2,
-                        background: 'var(--c-primary)',
-                      }}
+                      style={{ bottom: -13, width: 16, height: 2, borderRadius: 2, background: 'var(--c-primary)' }}
                     />
                   )}
                 </Link>
               )
             })}
 
-            {/* "Lainnya" dropdown */}
-            <NavDropdown label="Lainnya" items={lainnya} pathname={pathname} align="right" />
+            <NavDropdown label={t('nav.section.secondary')} items={lainnya} pathname={pathname} align="right" />
           </nav>
 
-          {/* ─── Mobile menu trigger (replaces center nav on small screens) ─── */}
+          {/* ─── Mobile menu trigger ─── */}
           <div className="lg:hidden flex justify-center">
             <button
               onClick={() => setMobileOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium"
-              style={{
-                color: 'var(--ink-muted)',
-                background: 'var(--surface-2)',
-                border: '1px solid var(--line)',
-              }}
+              style={{ color: 'var(--ink-muted)', background: 'var(--surface-2)', border: '1px solid var(--line)' }}
               aria-label="Buka menu"
             >
               <MenuIcon className="size-4" />
-              Menu
+              {t('nav.menu')}
             </button>
           </div>
 
           {/* ─── Actions right ─── */}
           <div className="flex items-center gap-2">
-            {/* Search (desktop only) */}
             <button
               onClick={openCommandPalette}
               className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] transition-colors"
-              style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--line)',
-                color: 'var(--text-mute)',
-                width: 180,
-              }}
+              style={{ background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--text-mute)', width: 180 }}
               onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
             >
               <Search className="size-3.5" />
-              <span className="flex-1 text-left">Cari…</span>
+              <span className="flex-1 text-left">{t('common.search')}</span>
               <kbd
                 className="text-[10px] px-1.5 py-px rounded"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--text-faint)',
-                  border: '1px solid var(--line)',
-                }}
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-faint)', border: '1px solid var(--line)' }}
               >
                 ⌘K
               </kbd>
             </button>
 
-            {/* AI Credits badge (existing component) */}
+            {/* Language toggle (ID / EN) */}
+            <div className="hidden sm:block">
+              <LangToggle />
+            </div>
+
             <div className="hidden sm:block">
               <AICreditsBadge />
             </div>
 
-            {/* Quick-add (+) — primary button per design */}
             <button
               onClick={openQuickAdd}
               className="btn-outline btn-primary"
@@ -344,42 +335,23 @@ export function TopNav({ user }: TopNavProps) {
               <Plus className="size-3.5" />
             </button>
 
-            {/* Bell — placeholder for notifications (no implementation yet) */}
             <button
               className="relative grid place-items-center"
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                border: '1px solid var(--line)',
-                background: 'var(--surface)',
-                color: 'var(--text-2)',
-              }}
+              style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text-2)' }}
               aria-label="Notifikasi"
               title="Notifikasi (segera)"
             >
               <Bell className="size-3.5" />
-              {/* Placeholder dot — toggle when ada notifikasi unread real */}
               <span
                 className="absolute"
-                style={{
-                  top: 7,
-                  right: 7,
-                  width: 7,
-                  height: 7,
-                  background: 'var(--c-coral)',
-                  borderRadius: '50%',
-                  border: '2px solid var(--bg)',
-                }}
+                style={{ top: 7, right: 7, width: 7, height: 7, background: 'var(--c-coral)', borderRadius: '50%', border: '2px solid var(--bg)' }}
               />
             </button>
 
-            {/* Avatar dropdown (existing component) */}
             <div className="hidden sm:block">
               <AvatarMenu user={user} />
             </div>
             <div className="sm:hidden">
-              {/* Mobile compact avatar — opens AvatarMenu via existing component */}
               <AvatarMenu user={user} />
             </div>
           </div>
@@ -394,63 +366,28 @@ export function TopNav({ user }: TopNavProps) {
           aria-modal="true"
           role="dialog"
         >
-          <div
-            className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }}
-          />
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} />
           <div
             className="absolute top-0 right-0 bottom-0 w-[320px] max-w-[88vw] flex flex-col"
-            style={{
-              background: 'var(--surface)',
-              borderLeft: '1px solid var(--line)',
-              boxShadow: 'var(--shadow-lg)',
-            }}
+            style={{ background: 'var(--surface)', borderLeft: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="flex items-center justify-between px-5 py-4 border-b"
-              style={{ borderColor: 'var(--line)' }}
-            >
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--line)' }}>
               <div className="flex items-center gap-2">
                 <div
                   className="grid place-items-center"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'var(--c-primary)',
-                    color: 'var(--c-primary-foreground)',
-                    fontFamily: 'var(--font-sans)',
-                    fontWeight: 800,
-                    fontSize: 16,
-                    letterSpacing: '-0.04em',
-                    boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
-                  }}
+                  style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)' }}
                 >
                   K
                 </div>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-sans)', fontWeight: 700,
-                    fontSize: 18,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                  }}
-                >
+                <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
                   Klunting
                 </span>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}
                 className="grid place-items-center"
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  border: '1px solid var(--line)',
-                  background: 'var(--surface-2)',
-                  color: 'var(--ink-muted)',
-                }}
+                style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                 aria-label="Tutup"
               >
                 <X className="size-4" />
@@ -458,28 +395,18 @@ export function TopNav({ user }: TopNavProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
-              <p
-                className="px-3 py-2 text-[10px] font-bold uppercase"
-                style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}
-              >
-                Utama
+              <p className="px-3 py-2 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
+                {t('nav.section.main')}
               </p>
               <div className="flex flex-col gap-0.5 mb-3">
                 {primary.map((it) => {
-                  // Kekayaan (ber-children) → sub-grup: label + anak ter-indent.
                   if (it.children?.length) {
                     return (
                       <div key={it.href} className="mt-1">
-                        <p
-                          className="px-3 py-1.5 text-[13px] font-semibold"
-                          style={{ color: 'var(--ink)' }}
-                        >
-                          {it.label}
+                        <p className="px-3 py-1.5 text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                          {navLabel(it)}
                         </p>
-                        <div
-                          className="ml-3 flex flex-col gap-0.5 border-l pl-2"
-                          style={{ borderColor: 'var(--line)' }}
-                        >
+                        <div className="ml-3 flex flex-col gap-0.5 border-l pl-2" style={{ borderColor: 'var(--line)' }}>
                           {it.children.map((c) => {
                             const active = isActiveItem(pathname, c)
                             return (
@@ -494,7 +421,7 @@ export function TopNav({ user }: TopNavProps) {
                                   background: active ? 'var(--c-primary-soft)' : 'transparent',
                                 }}
                               >
-                                {c.label}
+                                {navLabel(c)}
                               </Link>
                             )
                           })}
@@ -515,17 +442,14 @@ export function TopNav({ user }: TopNavProps) {
                         background: active ? 'var(--c-primary-soft)' : 'transparent',
                       }}
                     >
-                      {it.label}
+                      {navLabel(it)}
                     </Link>
                   )
                 })}
               </div>
 
-              <p
-                className="px-3 py-2 text-[10px] font-bold uppercase"
-                style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}
-              >
-                Lainnya
+              <p className="px-3 py-2 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
+                {t('nav.section.secondary')}
               </p>
               <div className="flex flex-col gap-0.5">
                 {lainnya.map((it) => {
@@ -542,17 +466,20 @@ export function TopNav({ user }: TopNavProps) {
                         background: active ? 'var(--c-primary-soft)' : 'transparent',
                       }}
                     >
-                      {it.label}
+                      {navLabel(it)}
                     </Link>
                   )
                 })}
               </div>
+
+              {/* Language toggle (mobile) */}
+              <div className="px-3 mt-5">
+                <p className="text-[10px] font-bold uppercase mb-2" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>{t('common.language')}</p>
+                <LangToggle full />
+              </div>
             </div>
 
-            <div
-              className="px-5 py-3 border-t"
-              style={{ borderColor: 'var(--line)' }}
-            >
+            <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--line)' }}>
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9">
                   <AvatarFallback>{initials}</AvatarFallback>

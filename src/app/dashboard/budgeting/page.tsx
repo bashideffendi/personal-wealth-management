@@ -757,7 +757,7 @@ export default function BudgetingPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow={`Perencanaan · ${year}`}
-        title="Anggaran Tahunan"
+        title="Anggaran"
         subtitle={
           <span className="inline-flex items-center gap-1.5">
             Distribusi pendapatan, pengeluaran, tabungan, &amp; investasi sepanjang tahun.

@@ -85,6 +85,7 @@ export const messages = {
       section: {
         primary: '',
         secondary: 'Lainnya',
+        main: 'Utama',
         // Legacy (kept for any stragglers)
         overview: '',
         activity: 'Aktivitas',
@@ -255,6 +256,7 @@ export const messages = {
       section: {
         primary: '',
         secondary: 'More',
+        main: 'Main',
         overview: '',
         activity: 'Activity',
         wealth: 'Wealth',
