@@ -15,6 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Plus, Trash2, Loader2, Sparkles } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -31,6 +32,7 @@ const EMPTY: FormState = {
 
 export default function RulesPage() {
   const supabase = createClient()
+  const t = useT()
   const { optionsForType, firstOf } = useCategoryOptions()
   const [loading, setLoading] = useState(true)
   const [rules, setRules] = useState<CategorizationRule[]>([])
@@ -86,16 +88,16 @@ export default function RulesPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Auto-Categorize"
-        title="Aturan Kategori"
-        subtitle={'Saat deskripsi transaksi mengandung teks yang cocok, kategori & tipe otomatis diisi. Contoh: “GRAB RIDE 25K” → auto Transportasi.'}
+        title={t('rules.page_title')}
+        subtitle={t('rules.page_subtitle')}
       />
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {rules.filter((r) => r.is_active).length} aturan aktif · total {rules.length}
+          {rules.filter((r) => r.is_active).length} {t('rules.active_count')} · {t('rules.total_count')} {rules.length}
         </p>
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Tambah Aturan
+          <Plus className="h-4 w-4" /> {t('rules.add_rule')}
         </Button>
       </div>
 
@@ -104,9 +106,9 @@ export default function RulesPage() {
       ) : rules.length === 0 ? (
         <div className="s-card p-12 text-center">
           <Sparkles className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--ink-soft)' }} />
-          <p className="font-semibold">Belum ada aturan</p>
+          <p className="font-semibold">{t('rules.empty_title')}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Tambah aturan pertama. Contoh: &ldquo;GRAB&rdquo; → Transportasi.
+            {t('rules.empty_body')}
           </p>
         </div>
       ) : (
@@ -148,14 +150,14 @@ export default function RulesPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tambah Aturan</DialogTitle>
+            <DialogTitle>{t('rules.dialog_title')}</DialogTitle>
             <DialogDescription>
-              Jika deskripsi transaksi mengandung teks ini, kategori akan di-set otomatis.
+              {t('rules.dialog_description')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Teks yang Dicari (case-insensitive)</Label>
+              <Label>{t('rules.label_match_text')}</Label>
               <Input
                 value={form.match_text}
                 onChange={(e) => setForm({ ...form, match_text: e.target.value })}
@@ -164,32 +166,32 @@ export default function RulesPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Tipe</Label>
+                <Label>{t('rules.label_type')}</Label>
                 <Select value={form.type} onValueChange={(v) => v && setForm({ ...form, type: v as TxType, category: firstOf(v as TxType) })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih tipe">
+                    <SelectValue placeholder={t('rules.type_placeholder')}>
                       {(v) => ({
-                        expense: 'Pengeluaran',
-                        income: 'Pemasukan',
-                        saving: 'Tabungan',
-                        investment: 'Investasi',
-                      } as Record<string, string>)[v] ?? 'Pilih tipe'}
+                        expense: t('rules.type_expense'),
+                        income: t('rules.type_income'),
+                        saving: t('rules.type_saving'),
+                        investment: t('rules.type_investment'),
+                      } as Record<string, string>)[v] ?? t('rules.type_placeholder')}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="expense">Pengeluaran</SelectItem>
-                    <SelectItem value="income">Pemasukan</SelectItem>
-                    <SelectItem value="saving">Tabungan</SelectItem>
-                    <SelectItem value="investment">Investasi</SelectItem>
+                    <SelectItem value="expense">{t('rules.type_expense')}</SelectItem>
+                    <SelectItem value="income">{t('rules.type_income')}</SelectItem>
+                    <SelectItem value="saving">{t('rules.type_saving')}</SelectItem>
+                    <SelectItem value="investment">{t('rules.type_investment')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Kategori</Label>
+                <Label>{t('rules.label_category')}</Label>
                 <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih kategori">
-                      {(v) => v || 'Pilih kategori'}
+                    <SelectValue placeholder={t('rules.category_placeholder')}>
+                      {(v) => v || t('rules.category_placeholder')}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -207,15 +209,15 @@ export default function RulesPage() {
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Prioritas (1-10, tinggi dieksekusi duluan)</Label>
+              <Label>{t('rules.label_priority')}</Label>
               <Input type="number" min={1} max={10} value={form.priority} onChange={(e) => setForm({ ...form, priority: Number(e.target.value) || 1 })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('rules.cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.match_text.trim()}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Simpan
+              {t('rules.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

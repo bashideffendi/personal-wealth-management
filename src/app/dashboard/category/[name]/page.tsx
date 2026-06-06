@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Transaction } from '@/types'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useT } from '@/lib/i18n/context'
 
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
 
@@ -15,6 +16,7 @@ export default function CategoryDrilldownPage() {
   const params = useParams<{ name: string }>()
   const category = decodeURIComponent(params.name)
   const supabase = createClient()
+  const t = useT()
   const [loading, setLoading] = useState(true)
   const [txs, setTxs] = useState<Transaction[]>([])
 
@@ -67,13 +69,14 @@ export default function CategoryDrilldownPage() {
 
   // Merchant/description breakdown — naive: group by first 2 words
   const merchants = useMemo(() => {
+    const otherLabel = t('category_detail.merchant_other')
     const map: Record<string, number> = {}
     for (const t of txs) {
-      const key = (t.description || 'Lainnya').split(/\s+/).slice(0, 2).join(' ')
+      const key = (t.description || otherLabel).split(/\s+/).slice(0, 2).join(' ')
       map[key] = (map[key] || 0) + t.amount
     }
     return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 8)
-  }, [txs])
+  }, [txs, t])
 
   return (
     <div className="space-y-6">
@@ -82,7 +85,7 @@ export default function CategoryDrilldownPage() {
         className="inline-flex items-center gap-1 text-sm hover:underline"
         style={{ color: 'var(--ink-muted)' }}
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Transaksi
+        <ArrowLeft className="h-3.5 w-3.5" /> {t('category_detail.back_to_transactions')}
       </Link>
 
       <section
@@ -106,7 +109,7 @@ export default function CategoryDrilldownPage() {
           className="text-[11px] font-semibold tracking-[0.18em] uppercase"
           style={{ color: 'rgba(255,255,255,0.55)' }}
         >
-          Drill-Down Kategori
+          {t('category_detail.eyebrow_drilldown')}
         </p>
         <h1
           className="font-bold tracking-tight mt-2"
@@ -120,25 +123,25 @@ export default function CategoryDrilldownPage() {
         </h1>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>Total</p>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_total')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.total)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>YTD</p>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_ytd')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.thisYear)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>Bulan Ini</p>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_this_month')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.thisMonth)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>Rata-rata/tx</p>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_avg_per_tx')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
               {formatCurrency(stats.avg)}
             </p>
@@ -151,14 +154,14 @@ export default function CategoryDrilldownPage() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : stats.count === 0 ? (
         <div className="s-card p-12 text-center">
-          <p className="font-semibold">Tidak ada transaksi</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Belum ada data di kategori ini.</p>
+          <p className="font-semibold">{t('category_detail.empty_title')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('category_detail.empty_desc')}</p>
         </div>
       ) : (
         <>
           <div className="s-card p-5">
-            <p className="eyebrow">Trend 12 Bulan</p>
-            <h3 className="t-h2 mt-0.5">Per Bulan</h3>
+            <p className="eyebrow">{t('category_detail.chart_eyebrow_12mo')}</p>
+            <h3 className="t-h2 mt-0.5">{t('category_detail.chart_title_monthly')}</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -175,8 +178,8 @@ export default function CategoryDrilldownPage() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="s-card p-5">
-              <p className="eyebrow">Breakdown</p>
-              <h3 className="t-h2 mt-0.5">Top Merchant / Deskripsi</h3>
+              <p className="eyebrow">{t('category_detail.merchant_eyebrow')}</p>
+              <h3 className="t-h2 mt-0.5">{t('category_detail.merchant_title')}</h3>
               <ul className="mt-4 space-y-2">
                 {merchants.map(([name, amt]) => {
                   const pct = stats.total > 0 ? (amt / stats.total) * 100 : 0
@@ -196,8 +199,8 @@ export default function CategoryDrilldownPage() {
             </div>
 
             <div className="s-card p-5">
-              <p className="eyebrow">Transaksi Terbaru</p>
-              <h3 className="t-h2 mt-0.5">Recent</h3>
+              <p className="eyebrow">{t('category_detail.recent_eyebrow')}</p>
+              <h3 className="t-h2 mt-0.5">{t('category_detail.recent_title')}</h3>
               <ul className="mt-4 divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {txs.slice(0, 8).map((t) => (
                   <li key={t.id} className="py-2 flex items-center justify-between">

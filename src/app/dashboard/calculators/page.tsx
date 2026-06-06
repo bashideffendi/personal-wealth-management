@@ -15,21 +15,23 @@ import {
   ArrowRight, Target, Loader2, type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useT } from '@/lib/i18n/context'
 
 const VIOLET = '#8B5CF6', MINT = '#10B981', AMBER = '#F59E0B', CORAL = '#F43F5E'
 
 type CalcKey = 'kpr' | 'pensiun' | 'pendidikan' | 'bpjs' | 'dca' | 'pajak' | 'zakat'
-const CALCS: { key: CalcKey; title: string; desc: string; icon: LucideIcon; color: string }[] = [
-  { key: 'kpr', title: 'KPR & Cicilan Rumah', desc: 'Simulasi cicilan bulanan + total bunga selama tenor.', icon: Home, color: VIOLET },
-  { key: 'pensiun', title: 'Dana Pensiun (FIRE)', desc: 'Berapa nabung/bln biar bisa pensiun di umur target.', icon: Shield, color: MINT },
-  { key: 'pendidikan', title: 'Dana Pendidikan Anak', desc: 'Proyeksi biaya kuliah dengan inflasi pendidikan.', icon: GraduationCap, color: AMBER },
-  { key: 'bpjs', title: 'Pensiun BPJS (3 Pilar)', desc: 'JHT + JP + DPLK vs target replacement ratio.', icon: Landmark, color: MINT },
-  { key: 'dca', title: 'DCA & Bunga Majemuk', desc: 'Lihat efek snowball investasi rutin tiap bulan.', icon: TrendingUp, color: VIOLET },
-  { key: 'pajak', title: 'Pajak PPh 21', desc: 'Hitung pajak tahunan + take-home pay (tarif 2024).', icon: Receipt, color: CORAL },
-  { key: 'zakat', title: 'Zakat Maal & Profesi', desc: '2.5% dari nisab harta & penghasilan.', icon: Coins, color: MINT },
+const CALCS: { key: CalcKey; titleKey: string; descKey: string; icon: LucideIcon; color: string }[] = [
+  { key: 'kpr', titleKey: 'card_kpr_title', descKey: 'card_kpr_desc', icon: Home, color: VIOLET },
+  { key: 'pensiun', titleKey: 'card_pensiun_title', descKey: 'card_pensiun_desc', icon: Shield, color: MINT },
+  { key: 'pendidikan', titleKey: 'card_pendidikan_title', descKey: 'card_pendidikan_desc', icon: GraduationCap, color: AMBER },
+  { key: 'bpjs', titleKey: 'card_bpjs_title', descKey: 'card_bpjs_desc', icon: Landmark, color: MINT },
+  { key: 'dca', titleKey: 'card_dca_title', descKey: 'card_dca_desc', icon: TrendingUp, color: VIOLET },
+  { key: 'pajak', titleKey: 'card_pajak_title', descKey: 'card_pajak_desc', icon: Receipt, color: CORAL },
+  { key: 'zakat', titleKey: 'card_zakat_title', descKey: 'card_zakat_desc', icon: Coins, color: MINT },
 ]
 
 export default function CalculatorsPage() {
+  const t = useT()
   const [selected, setSelected] = useState<CalcKey>('kpr')
 
   function pick(k: CalcKey) {
@@ -41,9 +43,9 @@ export default function CalculatorsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="min-w-0">
-        <p className="eyebrow mb-1.5">{CALCS.length} alat hitung cepat</p>
-        <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>Kalkulator Finansial</h1>
-        <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--ink-muted)' }}>Jawaban cepat buat pertanyaan klasik: &ldquo;Berapa cicilan KPR?&rdquo;, &ldquo;Bisa pensiun kapan?&rdquo;, &ldquo;Kalau aku investasi sekarang…&rdquo;</p>
+        <p className="eyebrow mb-1.5">{CALCS.length} {t('calculators.eyebrow_quick_tools')}</p>
+        <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
+        <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--ink-muted)' }}>{t('calculators.page_subtitle')}</p>
       </div>
 
       {/* Featured calculator */}
@@ -60,9 +62,9 @@ export default function CalculatorsPage() {
         {CALCS.filter((c) => c.key !== selected).map((c) => (
           <button key={c.key} type="button" onClick={() => pick(c.key)} className="s-card p-5 text-left transition hover:border-[var(--ink)]" style={{ borderColor: 'var(--border-soft)' }}>
             <div className="size-10 rounded-xl grid place-items-center" style={{ background: `${c.color}1A` }}><c.icon className="size-5" style={{ color: c.color }} /></div>
-            <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{c.title}</p>
-            <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{c.desc}</p>
-            <span className="inline-flex items-center gap-1 text-[13px] font-semibold mt-3" style={{ color: c.color }}>Buka kalkulator <ArrowRight className="size-3.5" /></span>
+            <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
+            <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t(`calculators.${c.descKey}`)}</p>
+            <span className="inline-flex items-center gap-1 text-[13px] font-semibold mt-3" style={{ color: c.color }}>{t('calculators.open_calculator')} <ArrowRight className="size-3.5" /></span>
           </button>
         ))}
       </div>
@@ -72,6 +74,7 @@ export default function CalculatorsPage() {
 
 // ─── KPR featured (slider + komposisi, gaya hero mockup) ──────────
 function KprFeatured() {
+  const t = useT()
   const supabase = createClient()
   const [harga, setHarga] = useState(1_200_000_000)
   const [dpPct, setDpPct] = useState(20)
@@ -99,7 +102,7 @@ function KprFeatured() {
       notes: `KPR ${formatCurrency(harga)} · tenor ${tenor} thn @ ${bunga}%`, is_active: true,
     })
     setCreating(false)
-    toast.success('Tujuan "DP Rumah (KPR)" dibuat — cek di halaman Tujuan')
+    toast.success(t('calculators.toast_goal_created'))
   }
 
   return (
@@ -107,39 +110,39 @@ function KprFeatured() {
       {/* Input (kiri, tinted) */}
       <div className="p-6 sm:p-7" style={{ background: 'var(--surface-2)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET }}>
-          <span className="size-7 rounded-lg grid place-items-center" style={{ background: `${VIOLET}1A` }}><Home className="size-4" /></span> Kalkulator Populer
+          <span className="size-7 rounded-lg grid place-items-center" style={{ background: `${VIOLET}1A` }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
-        <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--ink)' }}>KPR &amp; Cicilan Rumah</p>
+        <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--ink)' }}>{t('calculators.kpr_featured_title')}</p>
         <div className="mt-5 space-y-5">
           <div className="grid gap-1.5">
-            <Label>Harga Properti</Label>
+            <Label>{t('calculators.kpr_property_price')}</Label>
             <NumberInput value={harga} onChange={setHarga} placeholder="0" />
           </div>
-          <Slider label="Uang Muka" valueLabel={formatCurrency(dp)} min={10} max={50} value={dpPct} onChange={setDpPct} suffix={`${dpPct}% · 10–50`} />
-          <Slider label="Tenor Pinjaman" valueLabel={`${tenor} tahun`} min={5} max={30} value={tenor} onChange={setTenor} suffix="5–30 tahun" />
-          <Slider label="Bunga (efektif)" valueLabel={`${bunga.toFixed(2)}%`} min={4} max={15} step={0.25} value={bunga} onChange={setBunga} suffix="4–15%" />
+          <Slider label={t('calculators.kpr_down_payment')} valueLabel={formatCurrency(dp)} min={10} max={50} value={dpPct} onChange={setDpPct} suffix={`${dpPct}% · 10–50`} />
+          <Slider label={t('calculators.kpr_loan_tenor')} valueLabel={`${tenor} ${t('calculators.unit_years')}`} min={5} max={30} value={tenor} onChange={setTenor} suffix={t('calculators.kpr_tenor_range')} />
+          <Slider label={t('calculators.kpr_interest_effective')} valueLabel={`${bunga.toFixed(2)}%`} min={4} max={15} step={0.25} value={bunga} onChange={setBunga} suffix="4–15%" />
         </div>
       </div>
       {/* Result (kanan) */}
       <div className="p-6 sm:p-7" style={{ background: 'var(--surface)' }}>
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Hasil Kalkulasi</p>
+        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
         <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(34px,4.5vw,46px)', color: VIOLET, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
-        <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Cicilan per bulan selama {tenor} tahun</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_monthly_for')} {tenor} {t('calculators.unit_years')}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Total Bayar</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Total Bunga</p><p className="num font-bold mt-0.5" style={{ color: CORAL }}>{jt(bungaTotal)}</p></div>
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Pokok</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(principal)}</p></div>
+          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
+          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_interest')}</p><p className="num font-bold mt-0.5" style={{ color: CORAL }}>{jt(bungaTotal)}</p></div>
+          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_principal')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(principal)}</p></div>
         </div>
-        <p className="text-[10px] uppercase tracking-wide mt-5 mb-1.5" style={{ color: 'var(--ink-soft)' }}>Komposisi Cicilan</p>
+        <p className="text-[10px] uppercase tracking-wide mt-5 mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_payment_composition')}</p>
         <div className="flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
           <div style={{ width: `${pokokPct}%`, background: VIOLET }} />
           <div style={{ width: `${100 - pokokPct}%`, background: CORAL }} />
         </div>
         <div className="flex items-center justify-between mt-1.5 text-[11px]">
-          <span style={{ color: VIOLET }}>● Pokok {pokokPct.toFixed(0)}%</span>
-          <span style={{ color: CORAL }}>Bunga {(100 - pokokPct).toFixed(0)}% ●</span>
+          <span style={{ color: VIOLET }}>● {t('calculators.kpr_principal')} {pokokPct.toFixed(0)}%</span>
+          <span style={{ color: CORAL }}>{t('calculators.kpr_interest')} {(100 - pokokPct).toFixed(0)}% ●</span>
         </div>
-        <Button className="mt-5" onClick={makeGoal} disabled={creating || dp <= 0}>{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />} Jadikan tujuan finansial</Button>
+        <Button className="mt-5" onClick={makeGoal} disabled={creating || dp <= 0}>{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />} {t('calculators.kpr_make_goal')}</Button>
       </div>
     </div>
   )
@@ -175,6 +178,7 @@ function Slider({ label, valueLabel, suffix, min, max, step = 1, value, onChange
 //
 // Aturan & angka harus diparameterkan — bisa berubah tiap revisi UU/PMK.
 function PensionGapCalculator() {
+  const t = useT()
   const [currentAge, setCurrentAge] = useState(30)
   const [retireAge, setRetireAge] = useState(56)  // BPJS JHT eligibility usia 56
   const [monthlySalary, setMonthlySalary] = useState(15_000_000)
@@ -255,9 +259,9 @@ function PensionGapCalculator() {
       currentDplkBalance, dplkMonthly, replacementTarget])
 
   const onTrack = result.replacementActual >= replacementTarget
-  const status = onTrack ? 'Sehat'
-    : result.replacementActual >= replacementTarget * 0.7 ? 'Caution'
-    : 'At Risk'
+  const status = onTrack ? t('calculators.status_healthy')
+    : result.replacementActual >= replacementTarget * 0.7 ? t('calculators.status_caution')
+    : t('calculators.status_at_risk')
   const statusColor = onTrack ? '#10B981'
     : result.replacementActual >= replacementTarget * 0.7 ? '#F59E0B'
     : '#F43F5E'
@@ -265,28 +269,28 @@ function PensionGapCalculator() {
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
       <div className="s-card p-6">
-        <h3 className="font-semibold">Parameter Pensiun</h3>
+        <h3 className="font-semibold">{t('calculators.bpjs_param_title')}</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-          Estimasi 3 pilar: BPJS JHT (5.7% upah) + Jaminan Pensiun + DPLK sukarela.
+          {t('calculators.bpjs_param_desc')}
         </p>
         <div className="mt-4 space-y-3">
-          <Row label="Umur Sekarang" v={currentAge} onChange={setCurrentAge} unit="thn" />
-          <Row label="Target Umur Pensiun" v={retireAge} onChange={setRetireAge} unit="thn" />
-          <Row label="Gaji Bulanan (kotor)" v={monthlySalary} onChange={setMonthlySalary} />
-          <Row label="Sudah Kerja" v={yearsContributed} onChange={setYearsContributed} unit="thn" />
-          <Row label="Saldo JHT Sekarang" v={currentJhtBalance} onChange={setCurrentJhtBalance} />
-          <Row label="Saldo DPLK Sekarang" v={currentDplkBalance} onChange={setCurrentDplkBalance} />
-          <Row label="DPLK Sukarela / bln" v={dplkMonthly} onChange={setDplkMonthly} />
-          <Row label="Target Replacement Ratio" v={replacementTarget} onChange={setReplacementTarget} unit="%" />
+          <Row label={t('calculators.bpjs_current_age')} v={currentAge} onChange={setCurrentAge} unit={t('calculators.unit_yr')} />
+          <Row label={t('calculators.bpjs_retire_age')} v={retireAge} onChange={setRetireAge} unit={t('calculators.unit_yr')} />
+          <Row label={t('calculators.bpjs_monthly_salary')} v={monthlySalary} onChange={setMonthlySalary} />
+          <Row label={t('calculators.bpjs_years_worked')} v={yearsContributed} onChange={setYearsContributed} unit={t('calculators.unit_yr')} />
+          <Row label={t('calculators.bpjs_jht_balance')} v={currentJhtBalance} onChange={setCurrentJhtBalance} />
+          <Row label={t('calculators.bpjs_dplk_balance')} v={currentDplkBalance} onChange={setCurrentDplkBalance} />
+          <Row label={t('calculators.bpjs_dplk_voluntary')} v={dplkMonthly} onChange={setDplkMonthly} />
+          <Row label={t('calculators.bpjs_replacement_target')} v={replacementTarget} onChange={setReplacementTarget} unit="%" />
         </div>
       </div>
 
       <div className="s-card p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-semibold">Replacement Ratio Pensiun</h3>
+            <h3 className="font-semibold">{t('calculators.bpjs_result_title')}</h3>
             <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-              % gaji terakhir yang bisa kamu replace di pensiun.
+              {t('calculators.bpjs_result_desc')}
             </p>
           </div>
           <span
@@ -302,24 +306,24 @@ function PensionGapCalculator() {
             {result.replacementActual.toFixed(0)}%
           </p>
           <p className="text-xs mt-2" style={{ color: 'var(--ink-soft)' }}>
-            dari target {replacementTarget}%
+            {t('calculators.bpjs_of_target')} {replacementTarget}%
           </p>
         </div>
 
         <div className="mt-5 space-y-2">
-          <ResultRow label="JHT (lump sum @ pensiun)" v={result.jhtAtRetire} />
-          <ResultRow label="DPLK (lump sum @ pensiun)" v={result.dplkAtRetire} />
-          <ResultRow label="Income dari lump sum (4% rule/bln)" v={result.monthlyFromLumpSum} />
-          <ResultRow label="JP (benefit bulanan)" v={result.jpMonthly} />
+          <ResultRow label={t('calculators.bpjs_jht_lump')} v={result.jhtAtRetire} />
+          <ResultRow label={t('calculators.bpjs_dplk_lump')} v={result.dplkAtRetire} />
+          <ResultRow label={t('calculators.bpjs_income_lump')} v={result.monthlyFromLumpSum} />
+          <ResultRow label={t('calculators.bpjs_jp_monthly')} v={result.jpMonthly} />
           <ResultRow
-            label="Total Income / bln @ pensiun"
+            label={t('calculators.bpjs_total_income')}
             v={result.monthlyIncomeAtRetire}
             accent="var(--ink)"
             big
           />
-          <ResultRow label="Target / bln" v={result.targetMonthly} />
+          <ResultRow label={t('calculators.bpjs_target_monthly')} v={result.targetMonthly} />
           {result.gap > 0 && (
-            <ResultRow label="GAP / bln" v={result.gap} accent="#F43F5E" />
+            <ResultRow label={t('calculators.bpjs_gap_monthly')} v={result.gap} accent="#F43F5E" />
           )}
         </div>
 
@@ -332,27 +336,25 @@ function PensionGapCalculator() {
             }}
           >
             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#10B981' }}>
-              Rekomendasi
+              {t('calculators.bpjs_recommendation')}
             </p>
             <p className="text-sm mt-2" style={{ color: 'var(--ink)' }}>
-              Top-up DPLK{' '}
+              {t('calculators.bpjs_topup_dplk')}{' '}
               <span className="num font-bold">
                 +{formatCurrency(result.suggestedDplkExtra)}/bln
               </span>{' '}
-              untuk menutup gap.
+              {t('calculators.bpjs_to_close_gap')}
             </p>
             {result.taxSaving > 0 && (
               <p className="text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>
-                Bonus: kontribusi DPLK Rp {formatCurrency(result.deductibleAmount)}/thn deductible →
-                hemat pajak ±{formatCurrency(result.taxSaving)}/thn (PMK 168/2023, asumsi PPh marginal 15%).
+                {t('calculators.bpjs_tax_bonus_prefix')} {formatCurrency(result.deductibleAmount)}{t('calculators.bpjs_tax_bonus_suffix')} ±{formatCurrency(result.taxSaving)}{t('calculators.bpjs_tax_bonus_note')}
               </p>
             )}
           </div>
         )}
 
         <p className="text-[10px] mt-4" style={{ color: 'var(--ink-soft)' }}>
-          Estimasi kasar — return JHT diasumsikan 6%/thn, JP capped Rp 4.25jt/bln (2024). Gunakan iAkun
-          BPJS TK untuk angka aktual.
+          {t('calculators.bpjs_disclaimer')}
         </p>
       </div>
     </div>
@@ -361,6 +363,7 @@ function PensionGapCalculator() {
 
 // ─── FIRE / Retirement ──────────────────────────
 function FireCalculator() {
+  const t = useT()
   const [currentAge, setCurrentAge] = useState(30)
   const [retireAge, setRetireAge] = useState(55)
   const [monthlyExpense, setMonthlyExpense] = useState(15_000_000)
@@ -389,41 +392,41 @@ function FireCalculator() {
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
       <div className="s-card p-6">
-        <h3 className="font-semibold">Parameter FIRE</h3>
+        <h3 className="font-semibold">{t('calculators.fire_param_title')}</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-          4% rule: butuh 25× pengeluaran tahunan untuk financial independence.
+          {t('calculators.fire_param_desc')}
         </p>
         <div className="mt-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label>Umur Sekarang</Label>
+              <Label>{t('calculators.fire_current_age')}</Label>
               <Input type="number" min={18} max={80} value={currentAge || ''} onChange={(e) => setCurrentAge(Number(e.target.value) || 0)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Umur Target Pensiun</Label>
+              <Label>{t('calculators.fire_retire_age')}</Label>
               <Input type="number" min={currentAge + 1} max={90} value={retireAge || ''} onChange={(e) => setRetireAge(Number(e.target.value) || 0)} />
             </div>
           </div>
-          <Row label="Pengeluaran / bulan saat pensiun" v={monthlyExpense} onChange={setMonthlyExpense} />
-          <Row label="Tabungan/investasi saat ini" v={currentSavings} onChange={setCurrentSavings} />
+          <Row label={t('calculators.fire_monthly_expense')} v={monthlyExpense} onChange={setMonthlyExpense} />
+          <Row label={t('calculators.fire_current_savings')} v={currentSavings} onChange={setCurrentSavings} />
           <div className="grid gap-1.5">
-            <Label>Assumed Return tahunan (%)</Label>
+            <Label>{t('calculators.fire_annual_return')}</Label>
             <Input type="number" step="any" value={annualReturn || ''} onChange={(e) => setAnnualReturn(Number(e.target.value) || 0)} />
           </div>
         </div>
       </div>
 
       <div className="s-card p-6">
-        <h3 className="font-semibold">Hasil</h3>
+        <h3 className="font-semibold">{t('calculators.result_heading')}</h3>
         <div className="mt-4 space-y-2">
-          <ResultRow label={`Target (25× annual expense)`} v={result.targetCorpus} />
-          <ResultRow label={`FV tabungan saat ini (${result.yearsToRetire} tahun lagi)`} v={result.fvCurrent} />
-          <ResultRow label="Kekurangan" v={result.needed} accent="var(--danger)" />
+          <ResultRow label={t('calculators.fire_target_corpus')} v={result.targetCorpus} />
+          <ResultRow label={`${t('calculators.fire_fv_savings')} (${result.yearsToRetire} ${t('calculators.years_left')})`} v={result.fvCurrent} />
+          <ResultRow label={t('calculators.shortfall')} v={result.needed} accent="var(--danger)" />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint)" />
           <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
-            Dengan menabung/investasi <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>/bulan selama {result.yearsToRetire} tahun pada return {annualReturn}%/tahun, kamu bisa pensiun umur {retireAge}.
+            {t('calculators.fire_summary_prefix')} <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>{t('calculators.fire_summary_mid')} {result.yearsToRetire} {t('calculators.fire_summary_years_at')} {annualReturn}{t('calculators.fire_summary_return_suffix')} {retireAge}.
           </p>
         </div>
       </div>
@@ -433,6 +436,7 @@ function FireCalculator() {
 
 // ─── Kids Education ─────────────────────────────
 function KidsEducationCalculator() {
+  const t = useT()
   const [childAge, setChildAge] = useState(5)
   const [collegeAge, setCollegeAge] = useState(18)
   const [currentCost, setCurrentCost] = useState(200_000_000) // Biaya kuliah 4 tahun hari ini
@@ -457,42 +461,42 @@ function KidsEducationCalculator() {
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
       <div className="s-card p-6">
-        <h3 className="font-semibold">Parameter</h3>
+        <h3 className="font-semibold">{t('calculators.param_heading')}</h3>
         <div className="mt-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label>Umur Anak Sekarang</Label>
+              <Label>{t('calculators.edu_child_age')}</Label>
               <Input type="number" min={0} max={25} value={childAge || ''} onChange={(e) => setChildAge(Number(e.target.value) || 0)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Umur Masuk Kuliah</Label>
+              <Label>{t('calculators.edu_college_age')}</Label>
               <Input type="number" min={childAge + 1} max={30} value={collegeAge || ''} onChange={(e) => setCollegeAge(Number(e.target.value) || 0)} />
             </div>
           </div>
-          <Row label="Biaya kuliah (nilai hari ini)" v={currentCost} onChange={setCurrentCost} />
+          <Row label={t('calculators.edu_current_cost')} v={currentCost} onChange={setCurrentCost} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label>Inflasi pendidikan %/tahun</Label>
+              <Label>{t('calculators.edu_inflation')}</Label>
               <Input type="number" step="any" value={inflation || ''} onChange={(e) => setInflation(Number(e.target.value) || 0)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Return investasi %/tahun</Label>
+              <Label>{t('calculators.edu_return')}</Label>
               <Input type="number" step="any" value={annualReturn || ''} onChange={(e) => setAnnualReturn(Number(e.target.value) || 0)} />
             </div>
           </div>
-          <Row label="Tabungan pendidikan saat ini" v={currentSavings} onChange={setCurrentSavings} />
+          <Row label={t('calculators.edu_current_savings')} v={currentSavings} onChange={setCurrentSavings} />
         </div>
       </div>
 
       <div className="s-card p-6">
-        <h3 className="font-semibold">Hasil</h3>
+        <h3 className="font-semibold">{t('calculators.result_heading')}</h3>
         <div className="mt-4 space-y-2">
-          <ResultRow label={`Kebutuhan ${result.years} tahun lagi`} v={result.futureCost} />
-          <ResultRow label="FV tabungan saat ini" v={result.fvCurrent} />
-          <ResultRow label="Kekurangan" v={result.needed} accent="var(--danger)" />
+          <ResultRow label={`${t('calculators.edu_need_in')} ${result.years} ${t('calculators.years_left')}`} v={result.futureCost} />
+          <ResultRow label={t('calculators.edu_fv_savings')} v={result.fvCurrent} />
+          <ResultRow label={t('calculators.shortfall')} v={result.needed} accent="var(--danger)" />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Tabung / bulan" v={result.monthlySave} big accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint)" />
         </div>
       </div>
     </div>
@@ -501,6 +505,7 @@ function KidsEducationCalculator() {
 
 // ─── DCA Simulator ──────────────────────────────
 function DCASimulator() {
+  const t = useT()
   const [monthly, setMonthly] = useState(2_000_000)
   const [years, setYears] = useState(5)
   const [annualReturn, setAnnualReturn] = useState(12) // saham Indo avg ~12%
@@ -529,19 +534,19 @@ function DCASimulator() {
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
       <div className="s-card p-6">
-        <h3 className="font-semibold">DCA Input</h3>
+        <h3 className="font-semibold">{t('calculators.dca_input_title')}</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-          Dollar Cost Averaging — invest jumlah tetap setiap bulan.
+          {t('calculators.dca_input_desc')}
         </p>
         <div className="mt-4 space-y-3">
-          <Row label="DCA / bulan" v={monthly} onChange={setMonthly} />
+          <Row label={t('calculators.dca_monthly')} v={monthly} onChange={setMonthly} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label>Durasi (tahun)</Label>
+              <Label>{t('calculators.dca_duration')}</Label>
               <Input type="number" min={1} max={50} value={years || ''} onChange={(e) => setYears(Number(e.target.value) || 0)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Return %/tahun</Label>
+              <Label>{t('calculators.dca_return')}</Label>
               <Input type="number" step="any" value={annualReturn || ''} onChange={(e) => setAnnualReturn(Number(e.target.value) || 0)} />
             </div>
           </div>
@@ -549,19 +554,19 @@ function DCASimulator() {
       </div>
 
       <div className="s-card p-6">
-        <h3 className="font-semibold">Hasil {years} Tahun</h3>
+        <h3 className="font-semibold">{t('calculators.dca_result_prefix')} {years} {t('calculators.unit_years')}</h3>
         <div className="mt-4 space-y-2">
-          <ResultRow label="Total diinvestasikan" v={result.invested} />
-          <ResultRow label="Nilai akhir (compounding)" v={result.fv} big accent="var(--c-mint)" />
-          <ResultRow label="Capital gain" v={result.gain} accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.dca_total_invested')} v={result.invested} />
+          <ResultRow label={t('calculators.dca_final_value')} v={result.fv} big accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.dca_capital_gain')} v={result.gain} accent="var(--c-mint)" />
         </div>
         {result.data.length > 0 && (
           <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="eyebrow mb-2">Proyeksi per Tahun</p>
+            <p className="eyebrow mb-2">{t('calculators.dca_projection_per_year')}</p>
             <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
               {result.data.map((d) => (
                 <div key={d.year} className="flex items-center justify-between" style={{ color: 'var(--ink-muted)' }}>
-                  <span>Tahun {d.year}</span>
+                  <span>{t('calculators.dca_year')} {d.year}</span>
                   <span className="num tabular font-medium" style={{ color: 'var(--ink)' }}>
                     {formatCurrency(d.value)}
                   </span>
@@ -577,6 +582,7 @@ function DCASimulator() {
 
 // ─── Zakat ─────────────────────────────────────────
 function ZakatCalculator() {
+  const t = useT()
   const [goldPricePerGram, setGoldPricePerGram] = useState(1_250_000) // Rp / gram emas
   const [cash, setCash] = useState(0)
   const [savings, setSavings] = useState(0)
@@ -598,54 +604,54 @@ function ZakatCalculator() {
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
       <div className="s-card p-6">
-        <h3 className="font-semibold">Zakat Maal (Harta)</h3>
+        <h3 className="font-semibold">{t('calculators.zakat_maal_title')}</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-          2.5% dari aset bersih, jika mencapai nisab (senilai 85gr emas).
+          {t('calculators.zakat_maal_desc')}
         </p>
         <div className="mt-4 space-y-3">
-          <Row label="Harga Emas / gram" v={goldPricePerGram} onChange={setGoldPricePerGram} />
-          <Row label="Uang Tunai & Setara" v={cash} onChange={setCash} />
-          <Row label="Tabungan" v={savings} onChange={setSavings} />
-          <Row label="Investasi (saham/RD)" v={investments} onChange={setInvestments} />
-          <Row label="Nilai Emas (Rp)" v={goldValue} onChange={setGoldValue} />
-          <Row label="Utang Jatuh Tempo" v={debts} onChange={setDebts} />
+          <Row label={t('calculators.zakat_gold_price')} v={goldPricePerGram} onChange={setGoldPricePerGram} />
+          <Row label={t('calculators.zakat_cash')} v={cash} onChange={setCash} />
+          <Row label={t('calculators.zakat_savings')} v={savings} onChange={setSavings} />
+          <Row label={t('calculators.zakat_investments')} v={investments} onChange={setInvestments} />
+          <Row label={t('calculators.zakat_gold_value')} v={goldValue} onChange={setGoldValue} />
+          <Row label={t('calculators.zakat_debts')} v={debts} onChange={setDebts} />
         </div>
         <div className="mt-5 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Nisab (85gr emas)" v={nisabGold} />
-          <ResultRow label="Aset bersih" v={netAssets} />
+          <ResultRow label={t('calculators.zakat_nisab')} v={nisabGold} />
+          <ResultRow label={t('calculators.zakat_net_assets')} v={netAssets} />
           <ResultRow
-            label="Zakat Maal (2.5%)"
+            label={t('calculators.zakat_maal_result')}
             v={zakatMaal}
             accent={zakatMaal > 0 ? 'var(--ink)' : 'var(--ink-soft)'}
             big
           />
           {netAssets < nisabGold && netAssets > 0 && (
             <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
-              Belum mencapai nisab — kekurangan {formatCurrency(nisabGold - netAssets)}
+              {t('calculators.zakat_below_nisab')} {formatCurrency(nisabGold - netAssets)}
             </p>
           )}
         </div>
       </div>
 
       <div className="s-card p-6">
-        <h3 className="font-semibold">Zakat Profesi</h3>
+        <h3 className="font-semibold">{t('calculators.zakat_profesi_title')}</h3>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-          2.5% dari gaji bulanan (jika setahun ≥ nisab).
+          {t('calculators.zakat_profesi_desc')}
         </p>
         <div className="mt-4 space-y-3">
-          <Row label="Penghasilan Bersih / bulan" v={monthlyIncome} onChange={setMonthlyIncome} />
+          <Row label={t('calculators.zakat_net_income')} v={monthlyIncome} onChange={setMonthlyIncome} />
         </div>
         <div className="mt-5 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Penghasilan / tahun" v={yearlyIncome} />
+          <ResultRow label={t('calculators.zakat_yearly_income')} v={yearlyIncome} />
           <ResultRow
-            label="Zakat Profesi / bulan"
+            label={t('calculators.zakat_profesi_result')}
             v={zakatProfesi}
             accent={zakatProfesi > 0 ? 'var(--ink)' : 'var(--ink-soft)'}
             big
           />
           {yearlyIncome < nisabYearly && yearlyIncome > 0 && (
             <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
-              Belum mencapai nisab tahunan ({formatCurrency(nisabYearly)})
+              {t('calculators.zakat_below_nisab_yearly')} ({formatCurrency(nisabYearly)})
             </p>
           )}
         </div>
@@ -661,6 +667,7 @@ const PTKP = {
 }
 
 function TaxCalculator() {
+  const t = useT()
   const [monthlyGross, setMonthlyGross] = useState(0)
   const [bonusYearly, setBonusYearly] = useState(0)
   const [status, setStatus] = useState<keyof typeof PTKP>('TK/0')
@@ -706,18 +713,18 @@ function TaxCalculator() {
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
       <div className="s-card p-6">
-        <h3 className="font-semibold">Input</h3>
+        <h3 className="font-semibold">{t('calculators.input_heading')}</h3>
         <div className="mt-4 space-y-3">
-          <Row label="Gaji Bulanan Bruto" v={monthlyGross} onChange={setMonthlyGross} />
-          <Row label="Bonus / THR per tahun" v={bonusYearly} onChange={setBonusYearly} />
+          <Row label={t('calculators.tax_monthly_gross')} v={monthlyGross} onChange={setMonthlyGross} />
+          <Row label={t('calculators.tax_bonus_yearly')} v={bonusYearly} onChange={setBonusYearly} />
           <div className="grid gap-1.5">
-            <Label>Status Keluarga (PTKP)</Label>
+            <Label>{t('calculators.tax_family_status')}</Label>
             <Select value={status} onValueChange={(v) => v && setStatus(v as keyof typeof PTKP)}>
               <SelectTrigger>
-                <SelectValue placeholder="Pilih status">
+                <SelectValue placeholder={t('calculators.tax_select_status')}>
                   {(v) => v && PTKP[v as keyof typeof PTKP] !== undefined
                     ? `${v} — ${formatCurrency(PTKP[v as keyof typeof PTKP])}`
-                    : 'Pilih status'}
+                    : t('calculators.tax_select_status')}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -731,17 +738,17 @@ function TaxCalculator() {
       </div>
 
       <div className="s-card p-6">
-        <h3 className="font-semibold">Hasil</h3>
+        <h3 className="font-semibold">{t('calculators.result_heading')}</h3>
         <div className="mt-4 space-y-2">
-          <ResultRow label="Gross / tahun" v={result.annualGross} />
-          <ResultRow label="Biaya jabatan" v={result.biayaJabatan} />
+          <ResultRow label={t('calculators.tax_gross_yearly')} v={result.annualGross} />
+          <ResultRow label={t('calculators.tax_biaya_jabatan')} v={result.biayaJabatan} />
           <ResultRow label="PTKP" v={PTKP[status]} />
-          <ResultRow label="PKP (Pajak Kena Pajak)" v={result.pkp} />
+          <ResultRow label={t('calculators.tax_pkp')} v={result.pkp} />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
           {result.breakdown.length > 0 && (
             <>
-              <p className="eyebrow mb-2">Breakdown Tarif</p>
+              <p className="eyebrow mb-2">{t('calculators.tax_breakdown')}</p>
               <div className="space-y-1 text-xs">
                 {result.breakdown.map((b, i) => (
                   <div key={i} className="flex items-center justify-between" style={{ color: 'var(--ink-muted)' }}>
@@ -754,9 +761,9 @@ function TaxCalculator() {
           )}
         </div>
         <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label="Pajak / tahun" v={result.tax} accent="var(--danger)" big />
-          <ResultRow label="Pajak / bulan" v={result.monthlyTax} accent="var(--ink)" />
-          <ResultRow label="Take home / tahun" v={result.takeHome} accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.tax_yearly')} v={result.tax} accent="var(--danger)" big />
+          <ResultRow label={t('calculators.tax_monthly')} v={result.monthlyTax} accent="var(--ink)" />
+          <ResultRow label={t('calculators.tax_take_home')} v={result.takeHome} accent="var(--c-mint)" />
         </div>
       </div>
     </div>

@@ -39,6 +39,7 @@ import { NewsTab } from '@/components/investment/news-tab'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { getCategoryFormConfig } from '@/lib/investment-forms'
+import { useT } from '@/lib/i18n/context'
 
 // Yahoo IDX pakai suffix .JK. Helper lokal — emitten.ts `server-only`, gak bisa di client.
 function toYahooTicker(t: string): string {
@@ -73,6 +74,7 @@ export default function InvestmentCategoryPage() {
   const params = useParams<{ slug: string }>()
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
 
   const slug = params.slug
   // Virtual slugs stock-idx / stock-us = category `stock` filtered by market.
@@ -86,8 +88,8 @@ export default function InvestmentCategoryPage() {
   const subcat = useMemo(
     () =>
       INVESTMENT_SUBCATS.find((s) => s.slug === slug) ??
-      (marketFilter ? { slug, label: marketFilter === 'us' ? 'Saham US' : 'Saham IHSG', emoji: '📈' } : undefined),
-    [slug, marketFilter],
+      (marketFilter ? { slug, label: marketFilter === 'us' ? t('investment_detail.market_us_stock') : t('investment_detail.market_idx_stock'), emoji: '📈' } : undefined),
+    [slug, marketFilter, t],
   )
   const category: Investment['category'] = (INVESTMENT_SLUG_TO_CATEGORY[slug] ?? 'stock') as Investment['category']
   // Fitur fundamental hanya untuk saham IDX (bukan US).
@@ -267,7 +269,7 @@ export default function InvestmentCategoryPage() {
     void load()
   }
   async function remove(id: string) {
-    if (!confirm('Hapus posisi ini?')) return
+    if (!confirm(t('investment_detail.confirm_delete'))) return
     await supabase.from('investments').delete().eq('id', id)
     void load()
   }
@@ -346,7 +348,7 @@ export default function InvestmentCategoryPage() {
           className="inline-flex items-center gap-1.5 text-xs font-medium mb-4 rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-white/10"
           style={{ color: 'rgba(255,255,255,0.6)' }}
         >
-          <ArrowLeft className="size-3.5" /> Semua Investasi
+          <ArrowLeft className="size-3.5" /> {t('investment_detail.back_all_investments')}
         </Link>
         <div className="flex items-start justify-between gap-3">
           <p
@@ -365,7 +367,7 @@ export default function InvestmentCategoryPage() {
         {category === 'stock' && (
           <div className="mt-3 flex gap-1.5">
             {[
-              { key: 'stock', label: 'Semua', href: '/dashboard/assets/investment/stock' },
+              { key: 'stock', label: t('investment_detail.market_all'), href: '/dashboard/assets/investment/stock' },
               { key: 'stock-idx', label: 'IHSG', href: '/dashboard/assets/investment/stock-idx' },
               { key: 'stock-us', label: 'US', href: '/dashboard/assets/investment/stock-us' },
             ].map((m) => {
@@ -412,7 +414,7 @@ export default function InvestmentCategoryPage() {
           )}
         </div>
         <p className="text-sm mt-2 inline-flex items-center gap-1.5 flex-wrap" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          <span>{items.length} posisi · Modal <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(totals.invested)}</span>
+          <span>{items.length} {t('investment_detail.positions')} · {t('investment_detail.capital')} <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(totals.invested)}</span>
           {' · '}
           P/L <span className="num font-semibold" style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}>{formatCurrency(totals.pl)}</span></span>
           {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && totals.invested > 0 && (
@@ -426,7 +428,7 @@ export default function InvestmentCategoryPage() {
         {category === 'stock' && (
           <div className="overflow-x-auto -mx-1 px-1 pb-1">
             <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
-              <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />Posisi</TabsTrigger>
+              <TabsTrigger value="holdings"><TrendingUp className="size-3.5 mr-1.5" />{t('investment_detail.tab_positions')}</TabsTrigger>
               {/* Watchlist/Research/Compare butuh data emiten + fundamental IDX -> US off */}
               {showStockResearch && (
                 <>
@@ -435,12 +437,12 @@ export default function InvestmentCategoryPage() {
                   <TabsTrigger value="compare"><GitCompare className="size-3.5 mr-1.5" />Compare</TabsTrigger>
                 </>
               )}
-              <TabsTrigger value="dividen-pro"><Calendar className="size-3.5 mr-1.5" />Dividen</TabsTrigger>
-              <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />Log Manual</TabsTrigger>
-              <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />Log Dividen</TabsTrigger>
+              <TabsTrigger value="dividen-pro"><Calendar className="size-3.5 mr-1.5" />{t('investment_detail.tab_dividend')}</TabsTrigger>
+              <TabsTrigger value="log"><LineChart className="size-3.5 mr-1.5" />{t('investment_detail.tab_manual_log')}</TabsTrigger>
+              <TabsTrigger value="dividen"><Coins className="size-3.5 mr-1.5" />{t('investment_detail.tab_dividend_log')}</TabsTrigger>
               {/* Berita: agregator RSS finansial ID — IDX-only (US gak relevan) */}
               {showNews && (
-                <TabsTrigger value="berita"><Newspaper className="size-3.5 mr-1.5" />Berita</TabsTrigger>
+                <TabsTrigger value="berita"><Newspaper className="size-3.5 mr-1.5" />{t('investment_detail.tab_news')}</TabsTrigger>
               )}
             </TabsList>
           </div>
@@ -451,9 +453,9 @@ export default function InvestmentCategoryPage() {
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
           {(category === 'stock' || category === 'crypto')
             ? (quotesUpdatedAt
-                ? `Harga terakhir diperbarui ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · bukan real-time, tekan Refresh Harga untuk memperbarui.`
-                : 'Harga bukan real-time — tekan Refresh Harga untuk memperbarui.')
-            : `Kelola posisi ${subcat.label.toLowerCase()}.`}
+                ? `${t('investment_detail.price_updated_at')} ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${t('investment_detail.price_not_realtime_suffix')}`
+                : t('investment_detail.price_not_realtime'))
+            : `${t('investment_detail.manage_positions')} ${subcat.label.toLowerCase()}.`}
         </p>
         <div className="flex gap-2 items-center">
           {/* View toggle — Card / List. Hidden when no positions yet. */}
@@ -470,8 +472,8 @@ export default function InvestmentCategoryPage() {
                   background: view === 'card' ? 'var(--ink)' : 'var(--surface)',
                   color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)',
                 }}
-                title="Tampilan kartu"
-                aria-label="Tampilan kartu"
+                title={t('investment_detail.view_card')}
+                aria-label={t('investment_detail.view_card')}
               >
                 <LayoutGrid className="size-4" />
               </button>
@@ -483,8 +485,8 @@ export default function InvestmentCategoryPage() {
                   background: view === 'list' ? 'var(--ink)' : 'var(--surface)',
                   color: view === 'list' ? 'var(--surface)' : 'var(--ink-muted)',
                 }}
-                title="Tampilan tabel"
-                aria-label="Tampilan tabel"
+                title={t('investment_detail.view_table')}
+                aria-label={t('investment_detail.view_table')}
               >
                 <List className="size-4" />
               </button>
@@ -497,11 +499,11 @@ export default function InvestmentCategoryPage() {
               disabled={refreshing || !items.some((i) => i.ticker)}
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh Harga
+              {t('investment_detail.refresh_price')}
             </Button>
           )}
           <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Tambah
+            <Plus className="h-4 w-4" /> {t('investment_detail.add')}
           </Button>
         </div>
       </div>
@@ -511,8 +513,8 @@ export default function InvestmentCategoryPage() {
       ) : items.length === 0 ? (
         <div className="s-card p-12 text-center">
           <p className="text-5xl">{subcat.emoji}</p>
-          <p className="mt-3 font-semibold">Belum ada posisi {subcat.label}</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Klik Tambah untuk memulai.</p>
+          <p className="mt-3 font-semibold">{t('investment_detail.empty_no_positions')} {subcat.label}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('investment_detail.empty_hint')}</p>
         </div>
       ) : (
       <>
@@ -520,16 +522,16 @@ export default function InvestmentCategoryPage() {
             Untung-Rugi/Hari Ini). "Hari Ini" cuma real buat kelas ber-harga
             live (saham & kripto); sisanya "—". */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MiniStat label="Nilai" value={formatCurrency(totals.market)} glow="glow-violet" />
-          <MiniStat label="Modal" value={formatCurrency(totals.invested)} glow="glow-indigo" />
+          <MiniStat label={t('investment_detail.stat_value')} value={formatCurrency(totals.market)} glow="glow-violet" />
+          <MiniStat label={t('investment_detail.stat_invested')} value={formatCurrency(totals.invested)} glow="glow-indigo" />
           <MiniStat
-            label="Untung / Rugi"
+            label={t('investment_detail.stat_profit_loss')}
             value={`${formatCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
             glow={up ? 'glow-emerald' : 'glow-rose'}
             accent={up ? '#10B981' : '#F43F5E'}
           />
           <MiniStat
-            label="Hari Ini"
+            label={t('investment_detail.stat_today')}
             value={
               todayPL
                 ? `${todayPL.value >= 0 ? '+' : ''}${formatCurrency(todayPL.value)}  ·  ${todayPL.pct >= 0 ? '+' : ''}${todayPL.pct.toFixed(2)}%`
@@ -548,17 +550,17 @@ export default function InvestmentCategoryPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                  <Th>{category === 'stock' ? 'Ticker' : 'Coin'}</Th>
-                  <Th>{category === 'stock' ? 'Perusahaan' : 'Nama'}</Th>
-                  {category === 'stock' && <Th>Sektor</Th>}
-                  <Th className="text-right">{category === 'stock' ? 'Shares' : 'Qty'}</Th>
-                  <Th className="text-right">Avg Cost</Th>
-                  <Th className="text-right">Invested</Th>
-                  <Th className="text-right">Harga</Th>
-                  <Th className="text-right">Market Value</Th>
-                  <Th className="text-right">P/L</Th>
-                  <Th className="text-right">%P/L</Th>
-                  <Th>Platform</Th>
+                  <Th>{category === 'stock' ? t('investment_detail.th_ticker') : t('investment_detail.th_coin')}</Th>
+                  <Th>{category === 'stock' ? t('investment_detail.th_company') : t('investment_detail.th_name')}</Th>
+                  {category === 'stock' && <Th>{t('investment_detail.th_sector')}</Th>}
+                  <Th className="text-right">{category === 'stock' ? t('investment_detail.th_shares') : t('investment_detail.th_qty')}</Th>
+                  <Th className="text-right">{t('investment_detail.th_avg_cost')}</Th>
+                  <Th className="text-right">{t('investment_detail.th_invested')}</Th>
+                  <Th className="text-right">{t('investment_detail.th_price')}</Th>
+                  <Th className="text-right">{t('investment_detail.th_market_value')}</Th>
+                  <Th className="text-right">{t('investment_detail.th_pl')}</Th>
+                  <Th className="text-right">{t('investment_detail.th_pl_pct')}</Th>
+                  <Th>{t('investment_detail.th_platform')}</Th>
                   <Th className="text-right"></Th>
                 </tr>
               </thead>
@@ -572,7 +574,7 @@ export default function InvestmentCategoryPage() {
                           <Link
                             href={`/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`}
                             className="flex items-center gap-2.5 group/row"
-                            title={`Lihat riset ${fromYahooTicker(e.i.ticker)}`}
+                            title={`${t('investment_detail.view_research')} ${fromYahooTicker(e.i.ticker)}`}
                           >
                             <StockLogo ticker={e.i.ticker} size={36} />
                             <Badge
@@ -586,7 +588,7 @@ export default function InvestmentCategoryPage() {
                           <Link
                             href={`/dashboard/assets/investment/crypto/${cryptoBase(e.i.ticker)}`}
                             className="flex items-center gap-2.5 group/row"
-                            title={`Lihat ${cryptoBase(e.i.ticker)}`}
+                            title={`${t('investment_detail.view_coin')} ${cryptoBase(e.i.ticker)}`}
                           >
                             <CryptoLogo symbol={e.i.ticker} size={36} />
                             <Badge
@@ -659,10 +661,10 @@ export default function InvestmentCategoryPage() {
                       <Td style={{ color: 'var(--ink-muted)' }}>{e.i.platform || '—'}</Td>
                       <Td>
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon-sm" aria-label="Edit posisi" onClick={() => openEdit(e.i)}>
+                          <Button variant="ghost" size="icon-sm" aria-label={t('investment_detail.aria_edit_position')} onClick={() => openEdit(e.i)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" aria-label="Hapus posisi" onClick={() => remove(e.i.id)}>
+                          <Button variant="ghost" size="icon-sm" aria-label={t('investment_detail.aria_delete_position')} onClick={() => remove(e.i.id)}>
                             <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                           </Button>
                         </div>
@@ -707,10 +709,10 @@ export default function InvestmentCategoryPage() {
                         </p>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-                        <Button variant="ghost" size="icon-sm" aria-label="Edit posisi" onClick={() => openEdit(e.i)}>
+                        <Button variant="ghost" size="icon-sm" aria-label={t('investment_detail.aria_edit_position')} onClick={() => openEdit(e.i)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon-sm" aria-label="Hapus posisi" onClick={() => remove(e.i.id)}>
+                        <Button variant="ghost" size="icon-sm" aria-label={t('investment_detail.aria_delete_position')} onClick={() => remove(e.i.id)}>
                           <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                         </Button>
                       </div>
@@ -775,13 +777,13 @@ export default function InvestmentCategoryPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{form.id ? `Edit ${subcat.label}` : `Tambah ${subcat.label}`}</DialogTitle>
+            <DialogTitle>{form.id ? `${t('investment_detail.dialog_edit')} ${subcat.label}` : `${t('investment_detail.dialog_add')} ${subcat.label}`}</DialogTitle>
             <DialogDescription>
               {category === 'stock'
-                ? 'Cari emiten, lalu lengkapi jumlah lot dan harga rata-rata.'
+                ? t('investment_detail.dialog_desc_stock')
                 : category === 'crypto'
-                  ? 'Cari aset kripto, lalu lengkapi jumlah dan harga rata-rata.'
-                  : 'Lengkapi detail posisi investasi.'}
+                  ? t('investment_detail.dialog_desc_crypto')
+                  : t('investment_detail.dialog_desc_default')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
@@ -789,7 +791,7 @@ export default function InvestmentCategoryPage() {
             {category === 'stock' ? (
               <>
                 <div className="grid gap-1.5">
-                  <Label>Cari Saham</Label>
+                  <Label>{t('investment_detail.label_search_stock')}</Label>
                   <StockTickerSearch
                     value={form.ticker ?? ''}
                     onSelect={(s) =>
@@ -805,15 +807,15 @@ export default function InvestmentCategoryPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
-                    <Label>Nama</Label>
+                    <Label>{t('investment_detail.label_name')}</Label>
                     <Input
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="auto dari pencarian"
+                      placeholder={t('investment_detail.placeholder_auto_search')}
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label>Ticker</Label>
+                    <Label>{t('investment_detail.label_ticker')}</Label>
                     <Input
                       value={form.ticker}
                       onChange={(e) => setForm({ ...form, ticker: e.target.value })}
@@ -822,11 +824,11 @@ export default function InvestmentCategoryPage() {
                   </div>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>Sektor</Label>
+                  <Label>{t('investment_detail.label_sector')}</Label>
                   <Input
                     value={form.sector}
                     onChange={(e) => setForm({ ...form, sector: e.target.value })}
-                    placeholder="auto dari pencarian"
+                    placeholder={t('investment_detail.placeholder_auto_search')}
                   />
                 </div>
               </>
@@ -834,7 +836,7 @@ export default function InvestmentCategoryPage() {
               <>
                 {/* Crypto category: searchable coin catalog auto-fills name + ticker */}
                 <div className="grid gap-1.5">
-                  <Label>Cari Coin</Label>
+                  <Label>{t('investment_detail.label_search_coin')}</Label>
                   <CryptoSearch
                     value={form.ticker?.split(/[-_]/)[0] ?? ''}
                     onSelect={(c) =>
@@ -849,15 +851,15 @@ export default function InvestmentCategoryPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
-                    <Label>Nama</Label>
+                    <Label>{t('investment_detail.label_name')}</Label>
                     <Input
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="auto dari pencarian"
+                      placeholder={t('investment_detail.placeholder_auto_search')}
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label>Ticker</Label>
+                    <Label>{t('investment_detail.label_ticker')}</Label>
                     <Input
                       value={form.ticker}
                       onChange={(e) => setForm({ ...form, ticker: e.target.value })}
@@ -920,9 +922,9 @@ export default function InvestmentCategoryPage() {
                 Indonesian platforms (APERD, banks, OJK-licensed P2P, etc.) */}
             {(() => {
               const cfg = getCategoryFormConfig(category)
-              const platformLabel = cfg?.platform.label ?? 'Platform / Sekuritas'
+              const platformLabel = cfg?.platform.label ?? t('investment_detail.platform_label_default')
               const platformHelp = cfg?.platform.help
-              const platformPlaceholder = cfg?.platform.placeholder ?? 'Bibit, Pintu, ...'
+              const platformPlaceholder = cfg?.platform.placeholder ?? t('investment_detail.platform_placeholder_default')
               const platformOptions = cfg?.platform.options
               return (
                 <div className="grid gap-1.5">
@@ -933,10 +935,10 @@ export default function InvestmentCategoryPage() {
                       onValueChange={(v) => setForm({ ...form, platform: v ?? '' })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Pilih sekuritas">
+                        <SelectValue placeholder={t('investment_detail.select_brokerage')}>
                           {(v) => {
                             const broker = IDX_BROKERS.find((b) => b.short === v || b.name === v)
-                            if (!broker) return v || 'Pilih sekuritas'
+                            if (!broker) return v || t('investment_detail.select_brokerage')
                             return broker.code ? `${broker.short} (${broker.code})` : broker.short
                           }}
                         </SelectValue>
@@ -958,7 +960,7 @@ export default function InvestmentCategoryPage() {
                               </span>
                               {b.buyRate > 0 && (
                                 <span className="text-[10px] tabular" style={{ color: 'var(--ink-soft)' }}>
-                                  Beli {(b.buyRate * 100).toFixed(2)}% · Jual {(b.sellRate * 100).toFixed(2)}%
+                                  {t('investment_detail.fee_buy')} {(b.buyRate * 100).toFixed(2)}% · {t('investment_detail.fee_sell')} {(b.sellRate * 100).toFixed(2)}%
                                 </span>
                               )}
                             </div>
@@ -1012,7 +1014,7 @@ export default function InvestmentCategoryPage() {
               const cfg = getCategoryFormConfig(category)
               const qtyCfg = cfg?.quantity ?? { label: 'Qty', placeholder: '0' }
               const costCfg = cfg?.avgCost ?? { label: 'Avg Cost', placeholder: '0' }
-              const priceCfg = cfg?.currentPrice ?? { label: 'Harga Saat Ini', placeholder: '0' }
+              const priceCfg = cfg?.currentPrice ?? { label: t('investment_detail.label_current_price'), placeholder: '0' }
               return (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="grid gap-1.5">
@@ -1059,11 +1061,11 @@ export default function InvestmentCategoryPage() {
               const cfg = getCategoryFormConfig(category)
               return (
                 <div className="grid gap-1.5">
-                  <Label>Catatan</Label>
+                  <Label>{t('investment_detail.label_notes')}</Label>
                   <Input
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    placeholder={cfg?.notesHelp ?? 'Catatan tambahan'}
+                    placeholder={cfg?.notesHelp ?? t('investment_detail.placeholder_notes')}
                   />
                   {cfg?.notesHelp && (
                     <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{cfg.notesHelp}</p>
@@ -1073,10 +1075,10 @@ export default function InvestmentCategoryPage() {
             })()}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('investment_detail.cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.name}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {form.id ? 'Simpan' : 'Tambah'}
+              {form.id ? t('investment_detail.save') : t('investment_detail.add')}
             </Button>
           </DialogFooter>
         </DialogContent>

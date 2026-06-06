@@ -9,6 +9,7 @@ import {
   Loader2, Home, AlertCircle, CheckCircle, Users, Calendar,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 interface InvitePreview {
   household_name: string
@@ -30,6 +31,7 @@ export default function JoinHouseholdPage() {
   const params = useParams<{ token: string }>()
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
   const [state, setState] = useState<State>({ kind: 'loading' })
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function JoinHouseholdPage() {
 
   async function load() {
     const token = params.token
-    if (!token) { setState({ kind: 'invalid', reason: 'Token undangan tidak ada di URL.' }); return }
+    if (!token) { setState({ kind: 'invalid', reason: t('join.reason_no_token') }); return }
 
     // Look up the invitation via a SECURITY DEFINER RPC that returns ONLY the
     // single row matching this exact token (safe display fields, never the
@@ -51,7 +53,7 @@ export default function JoinHouseholdPage() {
       .maybeSingle()
 
     if (error || !data) {
-      setState({ kind: 'invalid', reason: 'Undangan tidak ditemukan. Mungkin sudah kedaluwarsa atau dibatalkan.' })
+      setState({ kind: 'invalid', reason: t('join.reason_not_found') })
       return
     }
 
@@ -67,12 +69,12 @@ export default function JoinHouseholdPage() {
     const inv = data as InvRow
 
     if (inv.status !== 'pending') {
-      setState({ kind: 'invalid', reason: `Undangan ini sudah ${inv.status === 'accepted' ? 'diterima' : inv.status === 'revoked' ? 'dibatalkan' : 'kedaluwarsa'}.` })
+      setState({ kind: 'invalid', reason: `${t('join.reason_already_prefix')} ${inv.status === 'accepted' ? t('join.status_accepted') : inv.status === 'revoked' ? t('join.status_revoked') : t('join.status_expired')}.` })
       return
     }
 
     if (new Date(inv.expires_at) < new Date()) {
-      setState({ kind: 'invalid', reason: 'Undangan sudah kedaluwarsa (lewat 7 hari).' })
+      setState({ kind: 'invalid', reason: t('join.reason_expired_7d') })
       return
     }
 
@@ -101,7 +103,7 @@ export default function JoinHouseholdPage() {
 
     const result = data as { success: boolean; error?: string; household_id?: string }
     if (!result.success) {
-      setState({ kind: 'error', message: result.error ?? 'Gagal terima undangan.' })
+      setState({ kind: 'error', message: result.error ?? t('join.accept_failed_fallback') })
       return
     }
 
@@ -115,7 +117,7 @@ export default function JoinHouseholdPage() {
         {state.kind === 'loading' && (
           <div className="py-12">
             <Loader2 className="size-8 mx-auto animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground mt-3 text-sm">Memuat undangan...</p>
+            <p className="text-muted-foreground mt-3 text-sm">{t('join.loading')}</p>
           </div>
         )}
 
@@ -124,10 +126,10 @@ export default function JoinHouseholdPage() {
             <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--c-coral-soft)' }}>
               <AlertCircle className="size-7" style={{ color: 'var(--c-coral)' }} />
             </div>
-            <h2 className="text-xl font-bold">Undangan Tidak Valid</h2>
+            <h2 className="text-xl font-bold">{t('join.invalid_title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm">{state.reason}</p>
             <Link href="/dashboard" className="mt-5 inline-block">
-              <Button variant="outline">Kembali ke Dashboard</Button>
+              <Button variant="outline">{t('join.back_to_dashboard')}</Button>
             </Link>
           </div>
         )}
@@ -143,9 +145,9 @@ export default function JoinHouseholdPage() {
             >
               <Home className="size-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold">Undangan Keluarga</h2>
+            <h2 className="text-2xl font-bold">{t('join.preview_title')}</h2>
             <p className="text-muted-foreground mt-2">
-              Kamu diundang bergabung dengan
+              {t('join.preview_subtitle')}
             </p>
             <p className="text-2xl font-bold mt-1" style={{ color: 'var(--c-mint)' }}>
               {state.data.household_name}
@@ -154,16 +156,16 @@ export default function JoinHouseholdPage() {
             <div className="mt-5 space-y-2 text-sm">
               <div className="flex items-center justify-center gap-2 text-muted-foreground">
                 <Users className="size-4" />
-                {state.data.member_count} dari {state.data.max_seats} anggota
+                {state.data.member_count} {t('join.member_count_connector')} {state.data.max_seats} {t('join.member_count_unit')}
               </div>
               {state.data.invited_by_name && (
                 <p className="text-muted-foreground">
-                  Diundang oleh <strong className="text-foreground">{state.data.invited_by_name}</strong>
+                  {t('join.invited_by')} <strong className="text-foreground">{state.data.invited_by_name}</strong>
                 </p>
               )}
               <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                 <Calendar className="size-3" />
-                Berlaku sampai {formatDate(new Date(state.data.expires_at))}
+                {t('join.valid_until')} {formatDate(new Date(state.data.expires_at))}
               </div>
             </div>
 
@@ -175,17 +177,16 @@ export default function JoinHouseholdPage() {
                 color: 'var(--sky-600)',
               }}
             >
-              Setelah gabung, kamu akan punya akses bersama ke <strong>akun, transaksi, dan budget</strong> keluarga.
-              Data personalmu yang sudah ada tetap aman dan tidak ter-share.
+              {t('join.info_share_prefix')} <strong>{t('join.info_share_scope')}</strong> {t('join.info_share_suffix')}
             </div>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-2">
               <Button onClick={accept} className="flex-1">
                 <CheckCircle className="size-4" data-icon="inline-start" />
-                Terima Undangan
+                {t('join.accept_button')}
               </Button>
               <Link href="/dashboard" className="flex-1">
-                <Button variant="outline" className="w-full">Tolak</Button>
+                <Button variant="outline" className="w-full">{t('join.decline_button')}</Button>
               </Link>
             </div>
           </div>
@@ -194,7 +195,7 @@ export default function JoinHouseholdPage() {
         {state.kind === 'accepting' && (
           <div className="py-12">
             <Loader2 className="size-8 mx-auto animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground mt-3 text-sm">Memproses...</p>
+            <p className="text-muted-foreground mt-3 text-sm">{t('join.processing')}</p>
           </div>
         )}
 
@@ -203,9 +204,9 @@ export default function JoinHouseholdPage() {
             <div className="mx-auto h-14 w-14 rounded-full bg-[var(--c-mint-soft)] flex items-center justify-center mb-3">
               <CheckCircle className="size-7 text-[var(--c-mint)]" />
             </div>
-            <h2 className="text-xl font-bold">Selamat bergabung!</h2>
+            <h2 className="text-xl font-bold">{t('join.accepted_title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm">
-              Kamu sekarang anggota keluarga. Mengarahkan ke halaman keluarga...
+              {t('join.accepted_desc')}
             </p>
           </div>
         )}
@@ -215,11 +216,11 @@ export default function JoinHouseholdPage() {
             <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--c-coral-soft)' }}>
               <AlertCircle className="size-7" style={{ color: 'var(--c-coral)' }} />
             </div>
-            <h2 className="text-xl font-bold">Gagal Terima Undangan</h2>
+            <h2 className="text-xl font-bold">{t('join.error_title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm">{state.message}</p>
             <div className="mt-5 flex gap-2 justify-center">
-              <Button variant="outline" onClick={load}>Coba Lagi</Button>
-              <Link href="/dashboard"><Button variant="outline">Dashboard</Button></Link>
+              <Button variant="outline" onClick={load}>{t('join.retry')}</Button>
+              <Link href="/dashboard"><Button variant="outline">{t('join.dashboard')}</Button></Link>
             </div>
           </div>
         )}

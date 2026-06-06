@@ -11,6 +11,7 @@ import { CryptoLogo } from '@/components/investment/crypto-logo'
 import { StockPriceChart } from '@/components/investment/stock-price-chart'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useT } from '@/lib/i18n/context'
 
 /** Normalize any stored/URL form (BTC, BTC-USD, BTCUSDT) → base symbol (BTC). */
 function toBase(raw: string): string {
@@ -21,6 +22,7 @@ function toBase(raw: string): string {
 }
 
 export default function CryptoCoinPage() {
+  const t = useT()
   const params = useParams<{ symbol: string }>()
   const supabase = createClient()
 
@@ -98,14 +100,14 @@ export default function CryptoCoinPage() {
           className="inline-flex items-center gap-1.5 text-xs font-medium mb-3 rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-[var(--surface-2)]"
           style={{ color: 'var(--ink-muted)' }}
         >
-          <ArrowLeft className="size-3.5" /> Crypto
+          <ArrowLeft className="size-3.5" /> {t('crypto_detail.back')}
         </Link>
         <div className="flex items-center gap-3">
           <CryptoLogo symbol={pair} size={48} shape="circle" />
           <div className="min-w-0">
             <h1 className="text-2xl font-bold truncate" style={{ color: 'var(--ink)' }}>{name}</h1>
             <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-              <span className="font-mono font-semibold">{base}</span> · Crypto
+              <span className="font-mono font-semibold">{base}</span> · {t('crypto_detail.asset_type')}
             </p>
           </div>
         </div>
@@ -114,32 +116,32 @@ export default function CryptoCoinPage() {
       {/* Stats: harga USD + IDR + posisi kamu */}
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat
-          label="Harga (USD)"
+          label={t('crypto_detail.price_usd')}
           value={price != null ? `$ ${price.toLocaleString('id-ID', { maximumFractionDigits: 2 })}` : '—'}
-          sub={changePct != null ? `${up24 ? '+' : ''}${changePct.toFixed(2)}% · 24 jam` : undefined}
+          sub={changePct != null ? `${up24 ? '+' : ''}${changePct.toFixed(2)}% · ${t('crypto_detail.window_24h')}` : undefined}
           accent={changePct != null ? (up24 ? '#10B981' : '#F43F5E') : undefined}
         />
         <Stat
-          label="Harga (IDR)"
+          label={t('crypto_detail.price_idr')}
           value={priceIdr != null ? formatCurrency(priceIdr) : '—'}
-          sub={`kurs ${formatCurrency(usdIdr)}/$`}
+          sub={`${t('crypto_detail.rate')} ${formatCurrency(usdIdr)}/$`}
         />
         {loading ? (
-          <Stat label="Posisi kamu" value="…" />
+          <Stat label={t('crypto_detail.your_position')} value="…" />
         ) : pos ? (
           <Stat
-            label="Posisi kamu"
+            label={t('crypto_detail.your_position')}
             value={formatCurrency(pos.market)}
-            sub={`${pos.qty.toLocaleString('id-ID')} unit · ${pos.plPct >= 0 ? '+' : ''}${pos.plPct.toFixed(2)}%`}
+            sub={`${pos.qty.toLocaleString('id-ID')} ${t('crypto_detail.unit')} · ${pos.plPct >= 0 ? '+' : ''}${pos.plPct.toFixed(2)}%`}
             accent={pos.pl >= 0 ? '#10B981' : '#F43F5E'}
           />
         ) : (
           <div className="s-card p-4 flex flex-col justify-between">
-            <p className="eyebrow">Posisi kamu</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--ink-soft)' }}>Belum punya {base}.</p>
+            <p className="eyebrow">{t('crypto_detail.your_position')}</p>
+            <p className="text-sm mt-2" style={{ color: 'var(--ink-soft)' }}>{t('crypto_detail.no_holding')} {base}.</p>
             <Link href="/dashboard/assets/investment/crypto" className="mt-2">
               <Button variant="outline" size="sm" className="w-full">
-                <Plus className="size-3.5" /> Tambah di Crypto
+                <Plus className="size-3.5" /> {t('crypto_detail.add_in_crypto')}
               </Button>
             </Link>
           </div>

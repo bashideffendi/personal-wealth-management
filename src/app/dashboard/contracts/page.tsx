@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { Contract, ContractCategory, ContractFrequency } from '@/types'
@@ -76,6 +77,7 @@ const monthlyOf = (c: Contract) => !c.cost || !c.frequency ? 0 : c.frequency ===
 const fullDate = (iso: string) => new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 
 export default function ContractsPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Contract[]>([])
@@ -117,7 +119,7 @@ export default function ContractsPage() {
     setSaving(false); setDialogOpen(false); void load()
   }
   async function remove(id: string) {
-    if (!confirm('Hapus kontrak ini? Tidak bisa dikembalikan.')) return
+    if (!confirm(t('contracts.confirm_delete'))) return
     await supabase.from('contracts').delete().eq('id', id); void load()
   }
   async function toggleArchive(c: Contract) {
@@ -142,10 +144,10 @@ export default function ContractsPage() {
 
   const big = formatCurrency
   const stats = [
-    { label: 'Total Kontrak Aktif', value: `${active.length} item`, sub: `Tersebar di ${catsPresent.length} kategori`, icon: ShieldCheck, color: INDIGO, tint: 'rgba(99,102,241,0.12)' },
-    { label: 'Akan Perpanjang', value: `${expiring.length} item`, sub: 'Dalam 3 bulan ke depan', icon: RefreshCw, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
-    { label: 'Total Coverage Asuransi', value: big(coverageTotal), sub: 'UP gabungan', icon: Shield, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
-    { label: 'Premi & Komitmen', value: big(monthlyCost), sub: 'Per bulan', icon: CalendarClock, color: MINT, tint: 'rgba(16,185,129,0.12)' },
+    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: INDIGO, tint: 'rgba(99,102,241,0.12)' },
+    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
+    { label: t('contracts.stat_coverage_total'), value: big(coverageTotal), sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
+    { label: t('contracts.stat_premium'), value: big(monthlyCost), sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: 'rgba(16,185,129,0.12)' },
   ]
 
   const visible = active
@@ -162,13 +164,13 @@ export default function ContractsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{items.length} kontrak tercatat</p>
-          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>Kontrak &amp; Polis</h1>
-          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>Polis asuransi, kontrak kerja, pinjaman &amp; kewajiban berjangka. Klunting ingetin jelang perpanjangan.</p>
+          <p className="eyebrow mb-1.5">{items.length} {t('contracts.eyebrow_recorded')}</p>
+          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('contracts.page_title')}</h1>
+          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>{t('contracts.page_subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button variant="outline" onClick={() => setSearchOpen((v) => !v)}><Search className="h-4 w-4" /> Cari kontrak</Button>
-          <Button onClick={openAdd}><Plus className="h-4 w-4" /> Tambah kontrak</Button>
+          <Button variant="outline" onClick={() => setSearchOpen((v) => !v)}><Search className="h-4 w-4" /> {t('contracts.btn_search')}</Button>
+          <Button onClick={openAdd}><Plus className="h-4 w-4" /> {t('contracts.btn_add')}</Button>
         </div>
       </div>
 
@@ -195,18 +197,18 @@ export default function ContractsPage() {
           {items.length === 0 ? (
             <div className="s-card p-12 text-center">
               <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}><ShieldCheck className="size-6" style={{ color: 'var(--ink-soft)' }} /></div>
-              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Belum ada kontrak</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambah polis asuransi, kontrak kerja, KPR, atau sewa biar kepantau jatuh temponya.</p>
-              <Button className="mt-4" onClick={openAdd}><Plus className="h-4 w-4" /> Tambah kontrak</Button>
+              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t('contracts.empty_title')}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('contracts.empty_desc')}</p>
+              <Button className="mt-4" onClick={openAdd}><Plus className="h-4 w-4" /> {t('contracts.btn_add')}</Button>
             </div>
           ) : (
             <>
               {/* Tabel */}
               <div className="s-card overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Semua Kontrak</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.table_title')}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => setFilter('all')} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === 'all' ? 'var(--ink)' : 'var(--surface-2)', color: filter === 'all' ? 'var(--surface)' : 'var(--ink-muted)' }}>Semua</button>
+                    <button onClick={() => setFilter('all')} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === 'all' ? 'var(--ink)' : 'var(--surface-2)', color: filter === 'all' ? 'var(--surface)' : 'var(--ink-muted)' }}>{t('contracts.filter_all')}</button>
                     {catsPresent.map((c) => (
                       <button key={c} onClick={() => setFilter(c)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === c ? 'var(--ink)' : 'var(--surface-2)', color: filter === c ? 'var(--surface)' : 'var(--ink-muted)' }}>{CAT[c].label}</button>
                     ))}
@@ -214,7 +216,7 @@ export default function ContractsPage() {
                 </div>
                 {searchOpen && (
                   <div className="px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                    <Input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cari nama / provider kontrak…" />
+                    <Input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('contracts.search_placeholder')} />
                   </div>
                 )}
                 <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
@@ -225,7 +227,7 @@ export default function ContractsPage() {
                     const sub = c.category === 'insurance' && c.coverage > 0 ? `UP ${big(c.coverage)}`
                       : c.provider ? c.provider
                       : c.policy_number || meta.label
-                    const badge = st === 'overdue' ? { t: 'Lewat', c: CORAL } : st === 'expiring' ? { t: 'Perpanjangan', c: AMBER } : { t: 'Aktif', c: MINT }
+                    const badge = st === 'overdue' ? { t: t('contracts.badge_overdue'), c: CORAL } : st === 'expiring' ? { t: t('contracts.badge_renewal'), c: AMBER } : { t: t('contracts.badge_active'), c: MINT }
                     return (
                       <div key={c.id} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-2)] transition-colors">
                         <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
@@ -235,7 +237,7 @@ export default function ContractsPage() {
                         </div>
                         <span className="hidden sm:inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
                         <div className="hidden md:block text-right w-24 shrink-0">
-                          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Sisa kontrak</p>
+                          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('contracts.col_remaining')}</p>
                           <p className="num text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{humanizeSisa(c.end_date, today)}</p>
                         </div>
                         <div className="text-right w-28 shrink-0">
@@ -244,21 +246,21 @@ export default function ContractsPage() {
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: `${badge.c}1A`, color: badge.c }}>{badge.t}</span>
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
                           <Button variant="ghost" size="icon-sm" onClick={() => openEdit(c)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => toggleArchive(c)} title={c.is_archived ? 'Keluarkan arsip' : 'Arsipkan'}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
+                          <Button variant="ghost" size="icon-sm" onClick={() => toggleArchive(c)} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
                           <Button variant="ghost" size="icon-sm" onClick={() => remove(c.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                         </div>
                       </div>
                     )
                   })}
-                  {visible.length === 0 && <p className="px-4 py-8 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>Gak ada kontrak yang cocok.</p>}
+                  {visible.length === 0 && <p className="px-4 py-8 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>{t('contracts.no_match')}</p>}
                 </div>
               </div>
 
               {/* Timeline tanggal kunci */}
               {timeline.length > 0 && (
                 <div className="s-card p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Timeline Tanggal Kunci</p>
-                  <p className="text-base mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{expiring.length} perpanjangan dalam 3 bulan</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.timeline_title')}</p>
+                  <p className="text-base mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{expiring.length} {t('contracts.timeline_subtitle')}</p>
                   <div className="mt-4 space-y-3">
                     {timeline.map((c) => {
                       const st = getStatus(c, today)
@@ -267,7 +269,7 @@ export default function ContractsPage() {
                         <div key={c.id} className="flex items-start gap-4 rounded-xl px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
                           <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date)}</span>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ' · perpanjangan otomatis' : ''}</p>
+                            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
                             <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
                           </div>
                         </div>
@@ -288,29 +290,29 @@ export default function ContractsPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(99,102,241,0.12)' }}><ShieldCheck className="size-5" style={{ color: INDIGO }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Kontrak' : 'Tambah Kontrak'}</DialogTitle>
-                <DialogDescription>Catat kontrak/polis yang perlu dipantau jatuh temponya.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('contracts.dialog_title_edit') : t('contracts.dialog_title_add')}</DialogTitle>
+                <DialogDescription>{t('contracts.dialog_desc')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           <div className="grid gap-3 py-2">
-            <div className="grid gap-1.5"><Label>Nama Kontrak</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Asuransi Jiwa Allianz, Kontrak Kerja, KPR…" /></div>
+            <div className="grid gap-1.5"><Label>{t('contracts.field_name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('contracts.ph_name')} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Kategori</Label>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_category')}</Label>
                 <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v as ContractCategory })}>
-                  <SelectTrigger><SelectValue>{(v) => CAT[v as ContractCategory]?.label ?? 'Pilih'}</SelectValue></SelectTrigger>
+                  <SelectTrigger><SelectValue>{(v) => CAT[v as ContractCategory]?.label ?? t('contracts.select_placeholder')}</SelectValue></SelectTrigger>
                   <SelectContent>{(Object.keys(CAT) as ContractCategory[]).map((k) => <SelectItem key={k} value={k}>{CAT[k].label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-1.5"><Label>Provider</Label><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder="Allianz, BCA, PT…" /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_provider')}</Label><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder={t('contracts.ph_provider')} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Mulai</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
-              <div className="grid gap-1.5"><Label>Jatuh Tempo / Berakhir *</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_start')}</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_end')}</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Biaya / Premi</Label><NumberInput value={form.cost ?? 0} onChange={(n) => setForm({ ...form, cost: n || null })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Frekuensi</Label>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_cost')}</Label><NumberInput value={form.cost ?? 0} onChange={(n) => setForm({ ...form, cost: n || null })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_frequency')}</Label>
                 <Select value={form.frequency || ''} onValueChange={(v) => setForm({ ...form, frequency: (v || '') as ContractFrequency | '' })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>{(Object.keys(FREQ) as ContractFrequency[]).map((k) => <SelectItem key={k} value={k}>{FREQ[k]}</SelectItem>)}</SelectContent>
@@ -318,20 +320,20 @@ export default function ContractsPage() {
               </div>
             </div>
             {(form.category === 'insurance' || form.category === 'property') && (
-              <div className="grid gap-1.5"><Label>Uang Pertanggungan / Nilai Coverage (UP)</Label><NumberInput value={form.coverage} onChange={(n) => setForm({ ...form, coverage: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_coverage')}</Label><NumberInput value={form.coverage} onChange={(n) => setForm({ ...form, coverage: n })} placeholder="0" /></div>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>No. Polis / Referensi</Label><Input value={form.policy_number} onChange={(e) => setForm({ ...form, policy_number: e.target.value })} placeholder="Opsional" /></div>
-              <div className="grid gap-1.5"><Label>Ingatkan (hari sebelum)</Label><Input type="number" min={1} max={365} value={form.reminder_days_before} onChange={(e) => setForm({ ...form, reminder_days_before: Math.max(1, Number(e.target.value) || 1) })} /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_policy')}</Label><Input value={form.policy_number} onChange={(e) => setForm({ ...form, policy_number: e.target.value })} placeholder={t('contracts.ph_optional')} /></div>
+              <div className="grid gap-1.5"><Label>{t('contracts.field_reminder')}</Label><Input type="number" min={1} max={365} value={form.reminder_days_before} onChange={(e) => setForm({ ...form, reminder_days_before: Math.max(1, Number(e.target.value) || 1) })} /></div>
             </div>
             <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              <input type="checkbox" checked={form.auto_renew} onChange={(e) => setForm({ ...form, auto_renew: e.target.checked })} className="h-4 w-4" /> Diperpanjang otomatis
+              <input type="checkbox" checked={form.auto_renew} onChange={(e) => setForm({ ...form, auto_renew: e.target.checked })} className="h-4 w-4" /> {t('contracts.field_auto_renew')}
             </label>
-            <div className="grid gap-1.5"><Label>Catatan</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Detail tambahan (opsional)" /></div>
+            <div className="grid gap-1.5"><Label>{t('contracts.field_notes')}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={t('contracts.ph_notes')} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-            <Button onClick={save} disabled={saving || !form.name || !form.end_date}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Simpan</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('contracts.btn_cancel')}</Button>
+            <Button onClick={save} disabled={saving || !form.name || !form.end_date}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('contracts.btn_save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

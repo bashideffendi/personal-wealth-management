@@ -29,6 +29,7 @@ import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useLock } from '@/components/security/lock-provider'
 import { ExportDataButton } from '@/components/export-data-button'
+import { useT } from '@/lib/i18n/context'
 
 interface Profile {
   id: string
@@ -79,6 +80,7 @@ export default function ProfilePage() {
   const supabase = createClient()
   const router = useRouter()
   const lock = useLock()
+  const t = useT()
 
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
@@ -108,25 +110,25 @@ export default function ProfilePage() {
 
   async function savePin() {
     if (!/^\d{4,6}$/.test(pinInput)) {
-      toast.error('PIN harus 4-6 digit angka.')
+      toast.error(t('profile.toast_pin_format'))
       return
     }
     if (pinInput !== pinConfirm) {
-      toast.error('Konfirmasi PIN tidak cocok.')
+      toast.error(t('profile.toast_pin_mismatch'))
       return
     }
     setSavingPin(true)
     const ok = await lock.setPin(pinInput)
     setSavingPin(false)
     if (!ok) {
-      toast.error('Gagal simpan PIN.')
+      toast.error(t('profile.toast_pin_save_failed'))
       return
     }
     setPinInput('')
     setPinConfirm('')
     setPinDialogOpen(false)
-    toast.success('PIN aktif.', {
-      description: `App akan kunci otomatis setelah ${lock.lockAfterMin} menit idle.`,
+    toast.success(t('profile.toast_pin_active'), {
+      description: `${t('profile.toast_pin_active_desc_prefix')} ${lock.lockAfterMin} ${t('profile.toast_pin_active_desc_suffix')}`,
     })
   }
 
@@ -135,12 +137,12 @@ export default function ProfilePage() {
     const ok = await lock.removePin(pinRemoveInput)
     setSavingPin(false)
     if (!ok) {
-      toast.error('PIN salah.')
+      toast.error(t('profile.toast_pin_wrong'))
       return
     }
     setPinRemoveInput('')
     setPinRemoveDialogOpen(false)
-    toast.success('PIN dimatikan.')
+    toast.success(t('profile.toast_pin_disabled'))
   }
 
   // Biometric enrollment uses a separate dialog to capture the current PIN
@@ -155,21 +157,21 @@ export default function ProfilePage() {
     const ok = await lock.enrollBiometric(bioPin)
     setBioBusy(false)
     if (!ok) {
-      toast.error('Gagal enroll biometric', {
-        description: 'Cek PIN atau pastikan device support Face/Touch ID.',
+      toast.error(t('profile.toast_bio_enroll_failed'), {
+        description: t('profile.toast_bio_enroll_failed_desc'),
       })
       return
     }
     setBioPin('')
     setBioDialogOpen(false)
-    toast.success('Biometric aktif.', {
-      description: 'Sekarang bisa unlock pakai Face/Touch ID di lock screen.',
+    toast.success(t('profile.toast_bio_active'), {
+      description: t('profile.toast_bio_active_desc'),
     })
   }
 
   function disableBiometric() {
     lock.removeBiometric()
-    toast.success('Biometric dimatikan.')
+    toast.success(t('profile.toast_bio_disabled'))
   }
 
   // Reset confirmation
@@ -258,19 +260,19 @@ export default function ProfilePage() {
       })
       .eq('id', user.id)
     setSavingPrefs(false)
-    if (error) { toast.error('Gagal simpan', { description: error.message }); return }
-    toast.success('Preferensi tersimpan.')
+    if (error) { toast.error(t('profile.toast_save_failed'), { description: error.message }); return }
+    toast.success(t('profile.toast_prefs_saved'))
   }
 
   async function updatePassword() {
-    if (newPassword.length < 8) { toast.error('Password minimal 8 karakter.'); return }
-    if (newPassword !== confirmPassword) { toast.error('Konfirmasi password tidak cocok.'); return }
+    if (newPassword.length < 8) { toast.error(t('profile.toast_password_min')); return }
+    if (newPassword !== confirmPassword) { toast.error(t('profile.toast_password_mismatch')); return }
     setSavingPassword(true)
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setSavingPassword(false)
-    if (error) { toast.error('Gagal update password', { description: error.message }); return }
+    if (error) { toast.error(t('profile.toast_password_failed'), { description: error.message }); return }
     setNewPassword(''); setConfirmPassword('')
-    toast.success('Password berhasil diperbarui.')
+    toast.success(t('profile.toast_password_updated'))
   }
 
   async function toggleDailyReminder(enabled: boolean) {
@@ -282,7 +284,7 @@ export default function ProfilePage() {
       .eq('id', user.id)
     if (error) {
       setProfile({ ...profile, daily_reminder_enabled: !enabled })
-      toast.error('Gagal update', { description: error.message })
+      toast.error(t('profile.toast_update_failed'), { description: error.message })
     }
   }
 
@@ -301,7 +303,7 @@ export default function ProfilePage() {
 
   async function resetAllData() {
     if (!user) return
-    if (resetTyped !== 'HAPUS SEMUA') { toast.error('Ketik "HAPUS SEMUA" persis untuk konfirmasi.'); return }
+    if (resetTyped !== 'HAPUS SEMUA') { toast.error(t('profile.toast_reset_confirm_required')); return }
     setResetting(true)
     // Delete all user-scoped data (RLS filters per user, so this is safe)
     await Promise.all([
@@ -327,7 +329,7 @@ export default function ProfilePage() {
     ])
     setResetting(false)
     setResetDialogOpen(false)
-    toast.success('Semua data dihapus.', { description: 'Akan reload halaman.' })
+    toast.success(t('profile.toast_reset_done'), { description: t('profile.toast_reset_done_desc') })
     window.location.href = '/dashboard'
   }
 
@@ -339,13 +341,13 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="size-5 animate-spin mr-2" /> Memuat profil...
+        <Loader2 className="size-5 animate-spin mr-2" /> {t('profile.loading')}
       </div>
     )
   }
 
   if (!profile || !user) {
-    return <div className="text-muted-foreground">Tidak bisa muat profil.</div>
+    return <div className="text-muted-foreground">{t('profile.load_failed')}</div>
   }
 
   const today = formatDate(new Date())
@@ -380,7 +382,7 @@ export default function ProfilePage() {
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'rgba(255,255,255,0.55)' }}
           >
-            Profil
+            {t('profile.eyebrow')}
           </p>
           <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
@@ -408,7 +410,7 @@ export default function ProfilePage() {
                     letterSpacing: '-0.035em',
                   }}
                 >
-                  {profile.full_name?.trim() || 'Pengguna'}
+                  {profile.full_name?.trim() || t('profile.default_name')}
                 </h1>
                 <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
                   {user.email}
@@ -423,11 +425,11 @@ export default function ProfilePage() {
                   >
                     {subscription?.plan_id === 'full' && <Crown className="size-3" />}
                     {subscription?.status === 'trialing' && <Sparkles className="size-3" />}
-                    Paket {planBadge.label}
-                    {subscription?.status === 'trialing' && ' (Trial)'}
+                    {t('profile.plan_prefix')} {planBadge.label}
+                    {subscription?.status === 'trialing' && ` (${t('profile.plan_trial')})`}
                   </span>
                   <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                    {accountCount} akun · {txCount} transaksi · sejak {formatDate(new Date(subscription?.started_at ?? Date.now()))}
+                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')} · {t('profile.stat_since')} {formatDate(new Date(subscription?.started_at ?? Date.now()))}
                   </span>
                 </div>
               </div>
@@ -442,7 +444,7 @@ export default function ProfilePage() {
               }}
             >
               <Crown className="size-4" />
-              {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? 'Upgrade ke Full Service' : 'Kelola Langganan'}
+              {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? t('profile.cta_upgrade') : t('profile.cta_manage_sub')}
             </Link>
           </div>
           <p className="text-xs mt-3" style={{ color: 'rgba(255,255,255,0.45)' }}>{today}</p>
@@ -457,13 +459,13 @@ export default function ProfilePage() {
               <Sparkles className="size-5 text-amber-600" />
             </div>
             <div>
-              <p className="font-semibold">Kredit AI</p>
+              <p className="font-semibold">{t('profile.ai_credits_title')}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Dipakai untuk fitur AI: scan struk, AI Advisor, auto-kategori.
+                {t('profile.ai_credits_desc')}
               </p>
               <p className="mt-3 text-3xl font-bold tabular-nums">
                 {profile.ai_credits.toLocaleString('id-ID')}
-                <span className="text-sm font-normal text-muted-foreground ml-1">kredit</span>
+                <span className="text-sm font-normal text-muted-foreground ml-1">{t('profile.ai_credits_unit')}</span>
               </p>
             </div>
           </div>
@@ -472,7 +474,7 @@ export default function ProfilePage() {
             className="self-end inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 transition"
           >
             <Sparkles className="size-3.5" />
-            Top Up Kredit
+            {t('profile.ai_credits_topup')}
           </Link>
         </div>
       </div>
@@ -480,41 +482,41 @@ export default function ProfilePage() {
       {/* Tabs section */}
       <Tabs defaultValue="preferensi" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="preferensi"><User className="size-3.5 mr-1.5" />Preferensi</TabsTrigger>
-          <TabsTrigger value="keamanan"><Shield className="size-3.5 mr-1.5" />Keamanan</TabsTrigger>
-          <TabsTrigger value="notifikasi"><Bell className="size-3.5 mr-1.5" />Notifikasi</TabsTrigger>
-          <TabsTrigger value="data"><Database className="size-3.5 mr-1.5" />Data</TabsTrigger>
+          <TabsTrigger value="preferensi"><User className="size-3.5 mr-1.5" />{t('profile.tab_preferences')}</TabsTrigger>
+          <TabsTrigger value="keamanan"><Shield className="size-3.5 mr-1.5" />{t('profile.tab_security')}</TabsTrigger>
+          <TabsTrigger value="notifikasi"><Bell className="size-3.5 mr-1.5" />{t('profile.tab_notifications')}</TabsTrigger>
+          <TabsTrigger value="data"><Database className="size-3.5 mr-1.5" />{t('profile.tab_data')}</TabsTrigger>
         </TabsList>
 
         {/* PREFERENSI */}
         <TabsContent value="preferensi" className="space-y-6 mt-6">
           <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
-            <h3 className="font-semibold">Identitas</h3>
+            <h3 className="font-semibold">{t('profile.identity_title')}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <Label htmlFor="fullname">Nama tampilan</Label>
+                <Label htmlFor="fullname">{t('profile.display_name_label')}</Label>
                 <Input
                   id="fullname"
                   value={profile.full_name}
                   onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                  placeholder="Nama lengkapmu"
+                  placeholder={t('profile.display_name_placeholder')}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Email</Label>
+                <Label>{t('profile.email_label')}</Label>
                 <Input value={user.email} disabled />
               </div>
             </div>
           </section>
 
           <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
-            <h3 className="font-semibold">Tampilan</h3>
+            <h3 className="font-semibold">{t('profile.appearance_title')}</h3>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-1.5">
-                <Label>Mata uang</Label>
+                <Label>{t('profile.currency_label')}</Label>
                 <Select value={profile.currency} onValueChange={(v) => setProfile({ ...profile, currency: v ?? 'IDR' })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih mata uang">
+                    <SelectValue placeholder={t('profile.currency_placeholder')}>
                       {(v) => ({
                         IDR: 'Rupiah (Rp)',
                         USD: 'US Dollar ($)',
@@ -532,10 +534,10 @@ export default function ProfilePage() {
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Bahasa</Label>
+                <Label>{t('profile.language_label')}</Label>
                 <Select value={profile.language} onValueChange={(v) => setProfile({ ...profile, language: v ?? 'id' })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih bahasa">
+                    <SelectValue placeholder={t('profile.language_placeholder')}>
                       {(v) => v === 'en' ? 'English' : 'Bahasa Indonesia'}
                     </SelectValue>
                   </SelectTrigger>
@@ -546,25 +548,25 @@ export default function ProfilePage() {
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label className="flex items-center gap-1.5">Tampilkan desimal</Label>
+                <Label className="flex items-center gap-1.5">{t('profile.show_decimals_label')}</Label>
                 <button
                   type="button"
                   onClick={() => setProfile({ ...profile, show_decimals: !profile.show_decimals })}
                   className={`h-10 rounded-lg border text-sm font-medium transition ${profile.show_decimals ? 'bg-[var(--c-mint-soft)] border-emerald-300 text-[var(--c-mint)]' : 'bg-muted/40 border-muted text-muted-foreground'}`}
                 >
-                  {profile.show_decimals ? `Aktif (${formatCurrency(12500.5)})` : `Nonaktif (${formatCurrency(12500)})`}
+                  {profile.show_decimals ? `${t('profile.decimals_on')} (${formatCurrency(12500.5)})` : `${t('profile.decimals_off')} (${formatCurrency(12500)})`}
                 </button>
               </div>
             </div>
             <div>
-              <Label className="flex items-center gap-1.5 mb-2"><Moon className="size-4" />Mode tampilan</Label>
+              <Label className="flex items-center gap-1.5 mb-2"><Moon className="size-4" />{t('profile.theme_mode_label')}</Label>
               <ThemeToggle />
               <p className="text-xs text-muted-foreground mt-2">
-                Pilih Auto untuk ikutin sistem (sinkron sama dark mode HP/laptop kamu).
+                {t('profile.theme_mode_hint')}
               </p>
             </div>
             <div>
-              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />Warna aksen</Label>
+              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />{t('profile.accent_color_label')}</Label>
               <div className="flex flex-wrap gap-2">
                 {ACCENT_COLORS.map((c) => (
                   <button
@@ -578,14 +580,14 @@ export default function ProfilePage() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Warna aksen aktif segera setelah disimpan, di seluruh app.</p>
+              <p className="text-xs text-muted-foreground mt-2">{t('profile.accent_color_hint')}</p>
             </div>
           </section>
 
           <div className="flex justify-end">
             <Button onClick={savePreferences} disabled={savingPrefs}>
               {savingPrefs && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              Simpan Preferensi
+              {t('profile.save_prefs_btn')}
             </Button>
           </div>
         </TabsContent>
@@ -595,28 +597,28 @@ export default function ProfilePage() {
           <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Lock className="size-4 text-muted-foreground" />
-              <h3 className="font-semibold">Ganti Password</h3>
+              <h3 className="font-semibold">{t('profile.change_password_title')}</h3>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input type="password" placeholder="Password baru (min 8 karakter)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              <Input type="password" placeholder="Konfirmasi password baru" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Input type="password" placeholder={t('profile.new_password_placeholder')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <Input type="password" placeholder={t('profile.confirm_password_placeholder')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
             <Button onClick={updatePassword} disabled={savingPassword || !newPassword}>
               {savingPassword && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              Perbarui Password
+              {t('profile.update_password_btn')}
             </Button>
           </section>
 
           <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Mail className="size-4 text-muted-foreground" />
-              <h3 className="font-semibold">Email</h3>
+              <h3 className="font-semibold">{t('profile.email_section_title')}</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Email akun: <span className="font-medium text-foreground">{user.email}</span>
+              {t('profile.account_email_label')} <span className="font-medium text-foreground">{user.email}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Untuk ganti email, hubungi support — verifikasi tambahan diperlukan.
+              {t('profile.change_email_hint')}
             </p>
           </section>
 
@@ -625,29 +627,28 @@ export default function ProfilePage() {
               <div className="flex items-start gap-2">
                 <Shield className="size-4 mt-0.5 text-muted-foreground" />
                 <div>
-                  <h3 className="font-semibold">PIN Lock</h3>
+                  <h3 className="font-semibold">{t('profile.pin_lock_title')}</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    PIN 4-6 digit dibutuhin setelah app idle — proteksi tambahan kalau HP dipinjem.
-                    Disimpan per device, gak sinkron antar HP.
+                    {t('profile.pin_lock_desc')}
                   </p>
                 </div>
               </div>
               {lock.hasPin ? (
                 <div className="flex gap-2">
-                  <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">Aktif</Badge>
+                  <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">{t('profile.badge_active')}</Badge>
                   <Button variant="outline" size="sm" onClick={() => setPinRemoveDialogOpen(true)}>
-                    Matikan PIN
+                    {t('profile.pin_disable_btn')}
                   </Button>
                 </div>
               ) : (
-                <Button size="sm" onClick={() => setPinDialogOpen(true)}>Atur PIN</Button>
+                <Button size="sm" onClick={() => setPinDialogOpen(true)}>{t('profile.pin_set_btn')}</Button>
               )}
             </div>
 
             {lock.hasPin && (
               <div className="pt-3 border-t flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <Label htmlFor="lock-after" className="text-sm sm:min-w-[140px]">
-                  Auto-lock setelah
+                  {t('profile.autolock_label')}
                 </Label>
                 <Select
                   value={String(lock.lockAfterMin)}
@@ -657,11 +658,11 @@ export default function ProfilePage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 menit</SelectItem>
-                    <SelectItem value="5">5 menit</SelectItem>
-                    <SelectItem value="15">15 menit</SelectItem>
-                    <SelectItem value="30">30 menit</SelectItem>
-                    <SelectItem value="60">60 menit</SelectItem>
+                    <SelectItem value="1">1 {t('profile.minutes_unit')}</SelectItem>
+                    <SelectItem value="5">5 {t('profile.minutes_unit')}</SelectItem>
+                    <SelectItem value="15">15 {t('profile.minutes_unit')}</SelectItem>
+                    <SelectItem value="30">30 {t('profile.minutes_unit')}</SelectItem>
+                    <SelectItem value="60">60 {t('profile.minutes_unit')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -669,12 +670,12 @@ export default function ProfilePage() {
                   size="sm"
                   onClick={() => {
                     lock.lockNow()
-                    toast.success('App dikunci.')
+                    toast.success(t('profile.toast_app_locked'))
                   }}
                   className="sm:ml-auto"
                 >
                   <LockKeyhole className="size-3.5" />
-                  Kunci sekarang
+                  {t('profile.lock_now_btn')}
                 </Button>
               </div>
             )}
@@ -687,23 +688,22 @@ export default function ProfilePage() {
                 <div className="flex items-start gap-2">
                   <Shield className="size-4 mt-0.5 text-muted-foreground" />
                   <div>
-                    <h3 className="font-semibold">Unlock dengan biometric</h3>
+                    <h3 className="font-semibold">{t('profile.biometric_title')}</h3>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                      Pakai Face/Touch ID buat unlock cepat. PIN tetap dibutuhin
-                      sebagai fallback. Disimpan di device ini.
+                      {t('profile.biometric_desc')}
                     </p>
                   </div>
                 </div>
                 {lock.hasBiometric ? (
                   <div className="flex gap-2">
-                    <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">Aktif</Badge>
+                    <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">{t('profile.badge_active')}</Badge>
                     <Button variant="outline" size="sm" onClick={disableBiometric}>
-                      Matikan
+                      {t('profile.biometric_disable_btn')}
                     </Button>
                   </div>
                 ) : (
                   <Button size="sm" onClick={() => setBioDialogOpen(true)}>
-                    Aktifkan biometric
+                    {t('profile.biometric_enable_btn')}
                   </Button>
                 )}
               </div>
@@ -718,9 +718,9 @@ export default function ProfilePage() {
               <div className="flex items-start gap-2">
                 <Bell className="size-4 mt-0.5 text-muted-foreground" />
                 <div>
-                  <h3 className="font-semibold">Pengingat Catat Harian</h3>
+                  <h3 className="font-semibold">{t('profile.daily_reminder_title')}</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Notifikasi push tiap hari biar ga lupa nyatet transaksi (butuh izin browser).
+                    {t('profile.daily_reminder_desc')}
                   </p>
                 </div>
               </div>
@@ -734,7 +734,7 @@ export default function ProfilePage() {
             </div>
             {profile.daily_reminder_enabled && (
               <div className="grid gap-1.5 sm:max-w-xs">
-                <Label htmlFor="reminder-time">Jam pengingat</Label>
+                <Label htmlFor="reminder-time">{t('profile.reminder_time_label')}</Label>
                 <Input
                   id="reminder-time"
                   type="time"
@@ -747,7 +747,7 @@ export default function ProfilePage() {
 
           <section className="rounded-xl border bg-amber-50 border-amber-200 p-5">
             <p className="text-sm text-amber-900">
-              Notifikasi push browser butuh setup PWA. Lebih reliable: aktifin <strong>WhatsApp reminder</strong> di paket Pro/Family (segera hadir).
+              {t('profile.push_notice_prefix')} <strong>{t('profile.push_notice_bold')}</strong> {t('profile.push_notice_suffix')}
             </p>
           </section>
         </TabsContent>
@@ -758,15 +758,15 @@ export default function ProfilePage() {
             <div className="flex items-start gap-2">
               <Download className="size-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <h3 className="font-semibold">Export Data</h3>
+                <h3 className="font-semibold">{t('profile.export_title')}</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Unduh seluruh datamu — transaksi, akun, investasi, goal, anggaran, dan lainnya — sebagai satu file JSON. Hak akses data pribadi sesuai UU PDP.
+                  {t('profile.export_desc')}
                 </p>
                 <div className="mt-3">
                   <ExportDataButton />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Khusus transaksi dalam format CSV, buka menu Transaksi → Export CSV.
+                  {t('profile.export_csv_hint')}
                 </p>
               </div>
             </div>
@@ -782,9 +782,9 @@ export default function ProfilePage() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
               <div className="flex-1">
-                <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>Zona Berbahaya</h3>
+                <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{t('profile.danger_zone_title')}</h3>
                 <p className="text-sm mt-1" style={{ color: 'var(--c-coral)' }}>
-                  Hapus semua transaksi, akun, budget, goal, investasi, dan aset. Akun login & profil tetap. Aksi ini <strong>tidak bisa dibatalkan</strong>.
+                  {t('profile.danger_zone_prefix')} <strong>{t('profile.danger_zone_bold')}</strong>.
                 </p>
                 <Button
                   variant="destructive"
@@ -793,7 +793,7 @@ export default function ProfilePage() {
                   onClick={() => setResetDialogOpen(true)}
                 >
                   <Trash2 className="size-4" data-icon="inline-start" />
-                  Reset Semua Data
+                  {t('profile.reset_all_btn')}
                 </Button>
               </div>
             </div>
@@ -805,15 +805,15 @@ export default function ProfilePage() {
       <div className="rounded-xl border bg-[var(--surface)] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="#" className="hover:underline text-muted-foreground">Tutorial</Link>
-            <Link href="#" className="hover:underline text-muted-foreground">Yang Baru</Link>
+            <Link href="#" className="hover:underline text-muted-foreground">{t('profile.footer_tutorial')}</Link>
+            <Link href="#" className="hover:underline text-muted-foreground">{t('profile.footer_whats_new')}</Link>
             <a href="mailto:support@klunting.com" className="hover:underline text-muted-foreground inline-flex items-center gap-1">
-              Hubungi Support <ExternalLink className="size-3" />
+              {t('profile.footer_contact_support')} <ExternalLink className="size-3" />
             </a>
           </div>
           <Button variant="outline" size="sm" onClick={logout}>
             <LogOut className="size-4" data-icon="inline-start" />
-            Keluar
+            {t('profile.logout_btn')}
           </Button>
         </div>
       </div>
@@ -822,27 +822,26 @@ export default function ProfilePage() {
       <Dialog open={pinDialogOpen} onOpenChange={setPinDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Atur PIN Lock</DialogTitle>
+            <DialogTitle>{t('profile.pin_dialog_title')}</DialogTitle>
             <DialogDescription>
-              PIN 4-6 digit. App akan minta PIN setelah idle beberapa menit.
-              PIN disimpan di device ini saja.
+              {t('profile.pin_dialog_desc')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="pin">PIN baru</Label>
+              <Label htmlFor="pin">{t('profile.pin_new_label')}</Label>
               <Input id="pin" type="password" inputMode="numeric" maxLength={6} value={pinInput} onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))} placeholder="••••" autoFocus />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="pin-confirm">Konfirmasi PIN</Label>
+              <Label htmlFor="pin-confirm">{t('profile.pin_confirm_label')}</Label>
               <Input id="pin-confirm" type="password" inputMode="numeric" maxLength={6} value={pinConfirm} onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ''))} placeholder="••••" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPinDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setPinDialogOpen(false)}>{t('profile.cancel_btn')}</Button>
             <Button onClick={savePin} disabled={savingPin || pinInput.length < 4 || pinConfirm.length < 4}>
               {savingPin && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              Simpan PIN
+              {t('profile.pin_save_btn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -852,15 +851,14 @@ export default function ProfilePage() {
       <Dialog open={bioDialogOpen} onOpenChange={setBioDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Aktifkan biometric</DialogTitle>
+            <DialogTitle>{t('profile.bio_dialog_title')}</DialogTitle>
             <DialogDescription>
-              Masukin PIN saat ini buat konfirmasi. Setelah itu device akan minta
-              Face/Touch ID buat enroll.
+              {t('profile.bio_dialog_desc')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="bio-pin">PIN saat ini</Label>
+              <Label htmlFor="bio-pin">{t('profile.current_pin_label')}</Label>
               <Input
                 id="bio-pin"
                 type="password"
@@ -875,11 +873,11 @@ export default function ProfilePage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setBioDialogOpen(false); setBioPin('') }}>
-              Batal
+              {t('profile.cancel_btn')}
             </Button>
             <Button onClick={enrollBiometric} disabled={bioBusy || bioPin.length < 4}>
               {bioBusy && <Loader2 className="size-4 animate-spin" />}
-              Lanjut
+              {t('profile.continue_btn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -889,24 +887,24 @@ export default function ProfilePage() {
       <Dialog open={pinRemoveDialogOpen} onOpenChange={setPinRemoveDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Matikan PIN Lock</DialogTitle>
+            <DialogTitle>{t('profile.pin_remove_dialog_title')}</DialogTitle>
             <DialogDescription>
-              Masukin PIN saat ini buat konfirmasi. Setelah dimatikan, app gak akan minta PIN lagi.
+              {t('profile.pin_remove_dialog_desc')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="pin-current">PIN saat ini</Label>
+              <Label htmlFor="pin-current">{t('profile.current_pin_label')}</Label>
               <Input id="pin-current" type="password" inputMode="numeric" maxLength={8} value={pinRemoveInput} onChange={(e) => setPinRemoveInput(e.target.value.replace(/\D/g, ''))} placeholder="••••" autoFocus />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setPinRemoveDialogOpen(false); setPinRemoveInput('') }}>
-              Batal
+              {t('profile.cancel_btn')}
             </Button>
             <Button onClick={confirmRemovePin} disabled={savingPin || pinRemoveInput.length < 4} variant="destructive">
               {savingPin && <Loader2 className="size-4 animate-spin" />}
-              Matikan
+              {t('profile.pin_remove_btn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -916,14 +914,13 @@ export default function ProfilePage() {
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle style={{ color: 'var(--c-coral)' }}>Reset Semua Data?</DialogTitle>
+            <DialogTitle style={{ color: 'var(--c-coral)' }}>{t('profile.reset_dialog_title')}</DialogTitle>
             <DialogDescription>
-              Semua transaksi, akun, budget, goal, investasi, aset, dan utang akan <strong>dihapus permanen</strong>.
-              Akun login + email + paket langganan tetap aman.
+              {t('profile.reset_dialog_desc_prefix')} <strong>{t('profile.reset_dialog_desc_bold')}</strong>. {t('profile.reset_dialog_desc_suffix')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label htmlFor="confirm-input">Ketik <strong>HAPUS SEMUA</strong> untuk konfirmasi:</Label>
+            <Label htmlFor="confirm-input">{t('profile.reset_type_prefix')} <strong>HAPUS SEMUA</strong> {t('profile.reset_type_suffix')}</Label>
             <Input
               id="confirm-input"
               value={resetTyped}
@@ -933,10 +930,10 @@ export default function ProfilePage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setResetDialogOpen(false); setResetTyped('') }}>Batal</Button>
+            <Button variant="outline" onClick={() => { setResetDialogOpen(false); setResetTyped('') }}>{t('profile.cancel_btn')}</Button>
             <Button variant="destructive" onClick={resetAllData} disabled={resetting || resetTyped !== 'HAPUS SEMUA'}>
               {resetting && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              Reset Semua
+              {t('profile.reset_submit_btn')}
             </Button>
           </DialogFooter>
         </DialogContent>

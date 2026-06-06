@@ -23,6 +23,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -78,6 +79,7 @@ function categoriesForType(type: TxType): readonly string[] {
 export default function ImportMutasiPage() {
   const supabase = createClient()
   const router = useRouter()
+  const t = useT()
 
   const [stage, setStage] = useState<Stage>('input')
   const [error, setError] = useState<string | null>(null)
@@ -119,15 +121,15 @@ export default function ImportMutasiPage() {
   async function handleProcess(mode: 'pdf' | 'text') {
     setError(null)
     if (!accountId) {
-      toast.error('Pilih akun tujuan dulu.')
+      toast.error(t('import_tx.toast_pick_account'))
       return
     }
     if (mode === 'pdf' && !pdfFile) {
-      toast.error('Upload PDF dulu.')
+      toast.error(t('import_tx.toast_upload_pdf'))
       return
     }
     if (mode === 'text' && text.trim().length < 20) {
-      toast.error('Paste text mutasi yang valid (minimal 20 karakter).')
+      toast.error(t('import_tx.toast_paste_valid'))
       return
     }
 
@@ -150,14 +152,14 @@ export default function ImportMutasiPage() {
       const json = (await res.json()) as ImportResponse & { error?: string }
 
       if (!res.ok) {
-        setError(json.error ?? `Gagal: ${res.status}`)
+        setError(json.error ?? `${t('import_tx.error_failed')}: ${res.status}`)
         setStage('input')
         return
       }
 
       const transactions = json.data.transactions ?? []
       if (transactions.length === 0) {
-        setError('AI gak nemu transaksi yang bisa di-import. Cek mutasinya — mungkin format gak terbaca.')
+        setError(t('import_tx.error_no_tx'))
         setStage('input')
         return
       }
@@ -185,7 +187,7 @@ export default function ImportMutasiPage() {
       })
       setStage('preview')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal proses')
+      setError(err instanceof Error ? err.message : t('import_tx.error_process'))
       setStage('input')
     } finally {
       notifyAICreditsChanged()
@@ -222,14 +224,14 @@ export default function ImportMutasiPage() {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) {
-      setError('Belum login.')
+      setError(t('import_tx.error_not_logged_in'))
       setStage('preview')
       return
     }
 
     const toInsert = rows.filter((r) => r.selected)
     if (toInsert.length === 0) {
-      toast.error('Pilih minimal satu transaksi buat di-import.')
+      toast.error(t('import_tx.toast_pick_one'))
       setStage('preview')
       return
     }
@@ -249,7 +251,7 @@ export default function ImportMutasiPage() {
       .insert(insertPayload)
 
     if (insErr) {
-      toast.error('Gagal import', { description: insErr.message })
+      toast.error(t('import_tx.toast_import_failed'), { description: insErr.message })
       setStage('preview')
       return
     }
@@ -259,7 +261,7 @@ export default function ImportMutasiPage() {
       skipped: rows.length - toInsert.length,
     })
     setStage('done')
-    toast.success(`${toInsert.length} transaksi tercatat.`)
+    toast.success(`${toInsert.length} ${t('import_tx.toast_recorded')}`)
   }
 
   function updateRow(id: string, patch: Partial<PreviewRow>) {
@@ -281,13 +283,13 @@ export default function ImportMutasiPage() {
         style={{ color: 'var(--ink-muted)' }}
       >
         <ArrowLeft className="size-3.5" />
-        Kembali ke Transaksi
+        {t('import_tx.back_to_transactions')}
       </Link>
 
       <PageHeader
-        eyebrow="Bulk Import · AI"
-        title="Import mutasi rekening"
-        subtitle="Upload PDF mutasi dari bank atau paste text dari mobile banking. AI parse jadi list transaksi, kamu konfirmasi, terus import bulk."
+        eyebrow={t('import_tx.eyebrow')}
+        title={t('import_tx.title')}
+        subtitle={t('import_tx.subtitle')}
       />
 
       {error && (
@@ -328,10 +330,10 @@ export default function ImportMutasiPage() {
             style={{ color: 'var(--c-mint)' }}
           />
           <p className="text-sm font-medium mt-3" style={{ color: 'var(--ink)' }}>
-            AI lagi parse mutasi...
+            {t('import_tx.processing_title')}
           </p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Bisa 20-40 detik tergantung jumlah halaman. Sabar dikit ya.
+            {t('import_tx.processing_hint')}
           </p>
         </div>
       )}
@@ -357,7 +359,7 @@ export default function ImportMutasiPage() {
             style={{ color: 'var(--c-mint)' }}
           />
           <p className="text-sm font-medium mt-3" style={{ color: 'var(--ink)' }}>
-            Lagi simpan transaksi...
+            {t('import_tx.importing_title')}
           </p>
         </div>
       )}
@@ -377,11 +379,11 @@ export default function ImportMutasiPage() {
             <Check className="size-7" />
           </div>
           <h2 className="mt-4 text-lg font-bold" style={{ color: 'var(--ink)' }}>
-            {importStats.inserted} transaksi tercatat
+            {importStats.inserted} {t('import_tx.done_recorded')}
           </h2>
           {importStats.skipped > 0 && (
             <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              {importStats.skipped} di-skip (transfer / duplikat / kamu uncheck)
+              {importStats.skipped} {t('import_tx.done_skipped')}
             </p>
           )}
           <div className="mt-6 flex justify-center gap-2">
@@ -395,13 +397,13 @@ export default function ImportMutasiPage() {
                 setImportStats(null)
               }}
             >
-              Import lagi
+              {t('import_tx.btn_import_again')}
             </Button>
             <Button
               onClick={() => router.push('/dashboard/transactions')}
               style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
             >
-              Lihat transaksi
+              {t('import_tx.btn_view_transactions')}
             </Button>
           </div>
         </div>
@@ -433,6 +435,7 @@ function InputStage({
   setText: (v: string) => void
   onProcess: (mode: 'pdf' | 'text') => void
 }) {
+  const t = useT()
   return (
     <div
       className="rounded-2xl border p-5 sm:p-6 space-y-5"
@@ -440,10 +443,10 @@ function InputStage({
     >
       {/* Account selector */}
       <div className="grid gap-1.5">
-        <Label htmlFor="import-account">Akun tujuan</Label>
+        <Label htmlFor="import-account">{t('import_tx.account_label')}</Label>
         <Select value={accountId} onValueChange={(v) => setAccountId(v ?? '')}>
           <SelectTrigger id="import-account" className="max-w-sm">
-            <SelectValue placeholder="Pilih akun yang dimutasi" />
+            <SelectValue placeholder={t('import_tx.account_placeholder')} />
           </SelectTrigger>
           <SelectContent>
             {accounts.map((a) => (
@@ -453,20 +456,20 @@ function InputStage({
             ))}
             {cards.map((c) => (
               <SelectItem key={c.id} value={c.id}>
-                Kredit · {c.name}
+                {t('import_tx.credit_prefix')} · {c.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-          Semua transaksi yang di-import bakal masuk ke akun ini.
+          {t('import_tx.account_hint')}
         </p>
       </div>
 
       <Tabs defaultValue="pdf" className="w-full">
         <TabsList>
-          <TabsTrigger value="pdf"><FileText className="size-3.5 mr-1.5" />PDF mutasi</TabsTrigger>
-          <TabsTrigger value="text">Paste text</TabsTrigger>
+          <TabsTrigger value="pdf"><FileText className="size-3.5 mr-1.5" />{t('import_tx.tab_pdf')}</TabsTrigger>
+          <TabsTrigger value="text">{t('import_tx.tab_text')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pdf" className="mt-4 space-y-3">
@@ -480,10 +483,10 @@ function InputStage({
           >
             <Upload className="size-6" style={{ color: 'var(--ink-muted)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
-              {pdfFile ? pdfFile.name : 'Klik atau drop PDF mutasi'}
+              {pdfFile ? pdfFile.name : t('import_tx.pdf_drop')}
             </span>
             <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-              Maks 10MB. Kalau ada password proteksi, buka di reader dulu &amp; export ulang.
+              {t('import_tx.pdf_drop_hint')}
             </span>
             <input
               id="mutasi-pdf"
@@ -505,25 +508,23 @@ function InputStage({
               style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
             >
               <Sparkles className="size-4" />
-              Parse mutasi
+              {t('import_tx.btn_parse')}
             </Button>
           </div>
 
           <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
-            Format yang umum: PDF e-statement dari BCA, Mandiri, BNI, BRI, Jago,
-            Jenius, dll. Yang berbasis foto/scan kualitas rendah hasilnya bisa
-            kurang akurat — cek preview sebelum import.
+            {t('import_tx.pdf_note')}
           </p>
         </TabsContent>
 
         <TabsContent value="text" className="mt-4 space-y-3">
           <div className="grid gap-1.5">
-            <Label htmlFor="mutasi-text">Text mutasi</Label>
+            <Label htmlFor="mutasi-text">{t('import_tx.text_label')}</Label>
             <textarea
               id="mutasi-text"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste mutasi dari mobile banking di sini..."
+              placeholder={t('import_tx.text_placeholder')}
               rows={10}
               className="w-full rounded-lg border p-3 text-sm font-mono outline-none focus:ring-2"
               style={{
@@ -533,8 +534,7 @@ function InputStage({
               }}
             />
             <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-              Copy mutasi dari mBanking → paste di sini. Format apapun OK selama
-              ada info tanggal + nominal + keterangan per baris.
+              {t('import_tx.text_hint')}
             </p>
           </div>
 
@@ -545,7 +545,7 @@ function InputStage({
               style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
             >
               <Sparkles className="size-4" />
-              Parse mutasi
+              {t('import_tx.btn_parse')}
             </Button>
           </div>
         </TabsContent>
@@ -559,9 +559,7 @@ function InputStage({
           color: 'var(--ink)',
         }}
       >
-        <strong>Biaya kredit AI:</strong> 25 kredit per import. Sebelum
-        diparkan dimuat, kredit kepotong dulu — kalo AI gagal parse, kredit
-        di-refund otomatis.
+        <strong>{t('import_tx.credit_cost_label')}</strong> {t('import_tx.credit_cost_body')}
       </div>
     </div>
   )
@@ -582,6 +580,7 @@ function PreviewStage({
   onImport: () => void
   onBack: () => void
 }) {
+  const t = useT()
   const selected = rows.filter((r) => r.selected).length
   const transferCount = rows.filter((r) => r.is_transfer).length
   const duplicateCount = rows.filter((r) => r.isDuplicate).length
@@ -597,21 +596,21 @@ function PreviewStage({
       >
         <div>
           <p className="eyebrow">
-            Preview · {selected} / {rows.length} dipilih
+            {t('import_tx.preview_eyebrow')} · {selected} / {rows.length} {t('import_tx.preview_selected')}
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
             {meta.bank_name ? `${meta.bank_name} · ` : ''}
             {meta.period_start && meta.period_end
               ? `${meta.period_start} → ${meta.period_end}`
-              : `${rows.length} transaksi terbaca`}
+              : `${rows.length} ${t('import_tx.preview_tx_read')}`}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => onToggleAll(true)}>
-            Pilih semua
+            {t('import_tx.btn_select_all')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => onToggleAll(false)}>
-            Hapus semua
+            {t('import_tx.btn_clear_all')}
           </Button>
         </div>
       </div>
@@ -627,12 +626,12 @@ function PreviewStage({
         >
           {transferCount > 0 && (
             <span>
-              {transferCount} transfer antar-akun (default skip)
+              {transferCount} {t('import_tx.banner_transfers')}
             </span>
           )}
           {duplicateCount > 0 && (
             <span>
-              {duplicateCount} duplikat dari transaksi yang udah ada (default skip)
+              {duplicateCount} {t('import_tx.banner_duplicates')}
             </span>
           )}
         </div>
@@ -646,11 +645,11 @@ function PreviewStage({
               style={{ color: 'var(--ink-soft)' }}
             >
               <th className="px-3 py-2 w-8"></th>
-              <th className="px-3 py-2">Tanggal</th>
-              <th className="px-3 py-2">Deskripsi</th>
-              <th className="px-3 py-2">Tipe</th>
-              <th className="px-3 py-2">Kategori</th>
-              <th className="px-3 py-2 text-right">Jumlah</th>
+              <th className="px-3 py-2">{t('import_tx.col_date')}</th>
+              <th className="px-3 py-2">{t('import_tx.col_description')}</th>
+              <th className="px-3 py-2">{t('import_tx.col_type')}</th>
+              <th className="px-3 py-2">{t('import_tx.col_category')}</th>
+              <th className="px-3 py-2 text-right">{t('import_tx.col_amount')}</th>
               <th className="px-3 py-2 w-8"></th>
             </tr>
           </thead>
@@ -683,9 +682,9 @@ function PreviewStage({
                   />
                   {(r.is_transfer || r.isDuplicate || r.confidence === 'low') && (
                     <div className="mt-1 flex gap-1 flex-wrap">
-                      {r.is_transfer && <Tag color="var(--sky-600)" bg="var(--sky-100)">Transfer</Tag>}
-                      {r.isDuplicate && <Tag color="var(--amber-700)" bg="var(--amber-100)">Duplikat</Tag>}
-                      {r.confidence === 'low' && <Tag color="var(--c-coral)" bg="var(--c-coral-soft)">Akurasi rendah</Tag>}
+                      {r.is_transfer && <Tag color="var(--sky-600)" bg="var(--sky-100)">{t('import_tx.tag_transfer')}</Tag>}
+                      {r.isDuplicate && <Tag color="var(--amber-700)" bg="var(--amber-100)">{t('import_tx.tag_duplicate')}</Tag>}
+                      {r.confidence === 'low' && <Tag color="var(--c-coral)" bg="var(--c-coral-soft)">{t('import_tx.tag_low_confidence')}</Tag>}
                     </div>
                   )}
                 </td>
@@ -698,8 +697,8 @@ function PreviewStage({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="expense">Pengeluaran</SelectItem>
-                      <SelectItem value="income">Pemasukan</SelectItem>
+                      <SelectItem value="expense">{t('import_tx.type_expense')}</SelectItem>
+                      <SelectItem value="income">{t('import_tx.type_income')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </td>
@@ -728,7 +727,7 @@ function PreviewStage({
                     type="button"
                     onClick={() => onUpdate(r.id, { selected: false })}
                     className="text-[var(--ink-soft)] hover:text-[var(--danger)]"
-                    title="Skip transaksi ini"
+                    title={t('import_tx.skip_row_title')}
                   >
                     <X className="size-4" />
                   </button>
@@ -744,14 +743,14 @@ function PreviewStage({
         style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}
       >
         <Button variant="ghost" onClick={onBack}>
-          ← Mulai ulang
+          ← {t('import_tx.btn_restart')}
         </Button>
         <Button
           onClick={onImport}
           disabled={selected === 0}
           style={{ background: 'var(--c-mint)', color: '#FFFFFF' }}
         >
-          Import {selected} transaksi
+          {t('import_tx.btn_import')} {selected} {t('import_tx.btn_import_suffix')}
         </Button>
       </div>
     </div>
