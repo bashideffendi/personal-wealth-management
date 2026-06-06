@@ -73,13 +73,6 @@ interface ReceiptData {
   confidence: 'high' | 'medium' | 'low'
 }
 
-const TYPE_LABEL: Record<TxType, string> = {
-  income: 'Pemasukan',
-  expense: 'Pengeluaran',
-  saving: 'Tabungan',
-  investment: 'Investasi',
-}
-
 const TYPE_TINT: Record<TxType, string> = {
   income: 'var(--c-mint)',
   expense: 'var(--c-coral)',
@@ -593,6 +586,12 @@ function PreviewView({
   onSave: () => void
 }) {
   const t = useT()
+  const typeLabel: Record<TxType, string> = {
+    income: t('quickadd.type_income'),
+    expense: t('quickadd.type_expense'),
+    saving: t('quickadd.type_saving'),
+    investment: t('quickadd.type_investment'),
+  }
   const confidenceLabel =
     data.confidence === 'high'
       ? t('quickadd.confidence_high')
@@ -646,7 +645,7 @@ function PreviewView({
               letterSpacing: '0.04em',
             }}
           >
-            {TYPE_LABEL[data.type]}
+            {typeLabel[data.type]}
           </span>
           <span
             className="inline-flex items-center px-2 py-1 rounded-full"

@@ -80,16 +80,18 @@ function pushRecent(href: string) {
 
 // ─── Quick actions ───────────────────────────────────────────────
 
-const QUICK_ACTIONS: PaletteItem[] = [
-  { id: 'a:add-tx',       label: 'Tambah Transaksi',     href: '/dashboard/transactions',  kind: 'action', icon: <Plus className="size-4" /> },
-  { id: 'a:add-account',  label: 'Buat Akun Baru',       href: '/dashboard/accounts',      kind: 'action', icon: <Wallet className="size-4" /> },
-  { id: 'a:add-goal',     label: 'Buat Goal Baru',       href: '/dashboard/goals',         kind: 'action', icon: <Target className="size-4" /> },
-  { id: 'a:set-budget',   label: 'Atur Anggaran Bulanan', href: '/dashboard/budgeting',     kind: 'action', icon: <FileText className="size-4" /> },
-  { id: 'a:scan-receipt', label: 'Scan Struk dengan AI', href: '/dashboard/transactions',  kind: 'action', icon: <Sparkles className="size-4" /> },
-  { id: 'a:report',       label: 'Lihat Laporan Bulanan', href: '/dashboard/monthly-report', kind: 'action', icon: <Receipt className="size-4" /> },
-  { id: 'a:calc',         label: 'Buka Kalkulator',      href: '/dashboard/calculators',   kind: 'action', icon: <Calculator className="size-4" /> },
-  { id: 'a:playbook',     label: 'Buka Playbook (panduan finansial)', href: '/dashboard/playbook', kind: 'action', icon: <Sparkles className="size-4" /> },
-]
+function buildQuickActions(t: (path: string) => string): PaletteItem[] {
+  return [
+    { id: 'a:add-tx',       label: t('command_palette.action_add_tx'),       href: '/dashboard/transactions',  kind: 'action', icon: <Plus className="size-4" /> },
+    { id: 'a:add-account',  label: t('command_palette.action_add_account'),  href: '/dashboard/accounts',      kind: 'action', icon: <Wallet className="size-4" /> },
+    { id: 'a:add-goal',     label: t('command_palette.action_add_goal'),     href: '/dashboard/goals',         kind: 'action', icon: <Target className="size-4" /> },
+    { id: 'a:set-budget',   label: t('command_palette.action_set_budget'),   href: '/dashboard/budgeting',     kind: 'action', icon: <FileText className="size-4" /> },
+    { id: 'a:scan-receipt', label: t('command_palette.action_scan_receipt'), href: '/dashboard/transactions',  kind: 'action', icon: <Sparkles className="size-4" /> },
+    { id: 'a:report',       label: t('command_palette.action_report'),       href: '/dashboard/monthly-report', kind: 'action', icon: <Receipt className="size-4" /> },
+    { id: 'a:calc',         label: t('command_palette.action_calc'),         href: '/dashboard/calculators',   kind: 'action', icon: <Calculator className="size-4" /> },
+    { id: 'a:playbook',     label: t('command_palette.action_playbook'),     href: '/dashboard/playbook',      kind: 'action', icon: <Sparkles className="size-4" /> },
+  ]
+}
 
 // ─── Component ───────────────────────────────────────────────────
 
@@ -122,6 +124,7 @@ export function CommandPalette() {
   const t = useT()
 
   const allPages = useMemo(() => flatten(NAV_ITEMS), [])
+  const quickActions = useMemo(() => buildQuickActions(t), [t])
 
   // ─── Voice input (Web Speech API, id-ID) ──────────────────────
   // Live partial transcripts update the input. When recognition ends,
@@ -171,7 +174,7 @@ export function CommandPalette() {
       : []
 
     const pages = allPages.filter(matches).slice(0, 8)
-    const actions = QUICK_ACTIONS.filter(matches)
+    const actions = quickActions.filter(matches)
 
     // AI quick-add detection — if query has digits, treat as potential transaction
     const aiItems: PaletteItem[] = []
@@ -192,7 +195,7 @@ export function CommandPalette() {
       { key: 'pages', label: t('command_palette.group_pages'), items: pages },
       { key: 'actions', label: t('command_palette.group_actions'), items: actions },
     ].filter((g) => g.items.length > 0)
-  }, [query, allPages, recentHrefs, router, t])
+  }, [query, allPages, quickActions, recentHrefs, router, t])
 
   // Flat list for keyboard navigation
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
@@ -613,7 +616,10 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
   if (state.kind === 'preview') {
     const d = state.data
     const typeLabel: Record<string, string> = {
-      expense: 'Pengeluaran', income: 'Pemasukan', saving: 'Tabungan', investment: 'Investasi',
+      expense: t('command_palette.type_expense'),
+      income: t('command_palette.type_income'),
+      saving: t('command_palette.type_saving'),
+      investment: t('command_palette.type_investment'),
     }
     const typeColor: Record<string, string> = {
       expense: '#F43F5E', income: '#10B981', saving: '#F59E0B', investment: '#0EA5E9',

@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import { FileText, CreditCard as CreditCardIcon, Repeat, Target } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 import type { Contract, CreditCard } from '@/types'
 
 interface BillItem {
@@ -26,6 +27,7 @@ interface UpcomingBillsProps {
 const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
 export function UpcomingBills({ contracts, debts, creditCards, recurring }: UpcomingBillsProps) {
+  const t = useT()
   const bills = useMemo<BillItem[]>(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -83,9 +85,9 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
   if (bills.length === 0) {
     return (
       <article className="s-card s-card-pad-lg">
-        <p className="eyebrow">Tagihan Mendatang</p>
+        <p className="eyebrow">{t('upcoming_bills.title')}</p>
         <p className="text-sm py-6 text-center" style={{ color: 'var(--text-mute)' }}>
-          Tidak ada tagihan dalam 14 hari ke depan.
+          {t('upcoming_bills.empty')}
         </p>
       </article>
     )
@@ -94,12 +96,12 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
   return (
     <article className="s-card s-card-pad-lg">
       <div className="flex items-center justify-between">
-        <p className="eyebrow">Tagihan Mendatang</p>
+        <p className="eyebrow">{t('upcoming_bills.title')}</p>
         <span
           className="chip chip-neutral"
           style={{ fontSize: 10 }}
         >
-          {bills.length} dalam 14 hari
+          {bills.length} {t('upcoming_bills.within_14_days')}
         </span>
       </div>
       <div className="flex flex-col mt-3">
@@ -156,7 +158,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
                     color: urgent ? 'var(--c-coral)' : 'var(--text-mute)',
                   }}
                 >
-                  {urgent ? 'Mendesak' : b.daysUntil === 0 ? 'Hari ini' : `${b.daysUntil} hari lagi`}
+                  {urgent ? t('upcoming_bills.urgent') : b.daysUntil === 0 ? t('upcoming_bills.today') : `${b.daysUntil} ${t('upcoming_bills.days_left')}`}
                 </p>
               </div>
               <p
@@ -174,7 +176,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
           className="text-[11px] text-center mt-2"
           style={{ color: 'var(--text-mute)' }}
         >
-          +{bills.length - 6} tagihan lainnya
+          +{bills.length - 6} {t('upcoming_bills.more_bills')}
         </p>
       )}
     </article>

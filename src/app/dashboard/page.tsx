@@ -429,7 +429,7 @@ export default function DashboardPage() {
       const rest = sorted.slice(8)
       if (rest.length > 0) {
         const restSum = rest.reduce((s, c) => s + c.amount, 0)
-        if (restSum > 0) top.push({ name: `+${rest.length} lainnya`, amount: restSum, kind })
+        if (restSum > 0) top.push({ name: `+${rest.length} ${t('dashboard.others')}`, amount: restSum, kind })
       }
       return top
     }
@@ -577,7 +577,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
         <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Memuat dashboard...
+          {t('dashboard.loading')}
         </span>
       </div>
     )
@@ -648,7 +648,7 @@ export default function DashboardPage() {
           Removed from the hero per mockup; lives here as a compact pill row. */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <p className="eyebrow">Periode</p>
+          <p className="eyebrow">{t('dashboard.period')}</p>
           <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {currentMonthYear}
           </p>
@@ -656,7 +656,7 @@ export default function DashboardPage() {
         <div className="flex gap-2">
           <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
             <SelectTrigger className="w-[130px] h-9 text-sm">
-              <SelectValue placeholder="Bulan">{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
+              <SelectValue placeholder={t('dashboard.month_placeholder')}>{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
@@ -664,7 +664,7 @@ export default function DashboardPage() {
           </Select>
           <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
             <SelectTrigger className="w-[100px] h-9 text-sm">
-              <SelectValue placeholder="Tahun">{(v) => v}</SelectValue>
+              <SelectValue placeholder={t('dashboard.year_placeholder')}>{(v) => v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
@@ -705,28 +705,28 @@ export default function DashboardPage() {
       <SortableSection id="aliran" order={blockOrder} className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="eyebrow">Aliran Uang</p>
+            <p className="eyebrow">{t('dashboard.money_flow')}</p>
             <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-              Dari mana datangnya, ke mana perginya — bulan ini
+              {t('dashboard.money_flow_sub')}
             </p>
           </div>
           {/* Legend — wraps on narrow screens */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: '#10B981' }} />
-              Pemasukan
+              {t('dashboard.kpi_income')}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: '#F43F5E' }} />
-              Pengeluaran
+              {t('dashboard.kpi_expense')}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: '#F59E0B' }} />
-              Tabungan
+              {t('dashboard.saving')}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: '#0EA5E9' }} />
-              Investasi
+              {t('dashboard.investment')}
             </span>
           </div>
         </div>
@@ -738,7 +738,7 @@ export default function DashboardPage() {
             income={sankeyData.income}
             outflow={sankeyData.outflow}
             height={Math.max(360, Math.min(480, 90 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 36))}
-            emptyMessage="Belum ada transaksi bulan ini — input dulu transaksi pertamamu."
+            emptyMessage={t('dashboard.sankey_empty')}
           />
         </div>
         <div className="md:hidden">
@@ -747,7 +747,7 @@ export default function DashboardPage() {
             outflow={sankeyData.outflow}
             compact
             height={Math.max(300, Math.min(420, 60 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 30))}
-            emptyMessage="Belum ada transaksi bulan ini — input dulu transaksi pertamamu."
+            emptyMessage={t('dashboard.sankey_empty')}
           />
         </div>
       </SortableSection>
@@ -770,7 +770,7 @@ export default function DashboardPage() {
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
-              <p className="eyebrow">Aktivitas Bulan Ini</p>
+              <p className="eyebrow">{t('dashboard.activity_this_month')}</p>
               <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
                 {MONTHS[selectedMonth - 1]} {selectedYear}
               </h3>
@@ -778,11 +778,11 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded" style={{ background: '#10B981' }} />
-                Pemasukan
+                {t('dashboard.kpi_income')}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded" style={{ background: '#F43F5E' }} />
-                Pengeluaran
+                {t('dashboard.kpi_expense')}
               </span>
             </div>
           </div>
@@ -799,7 +799,15 @@ export default function DashboardPage() {
               .filter((c) => c.day !== null)
               .map((c) => Math.max(c.income, c.expense))
             const maxAmt = Math.max(...allAmounts, 1)
-            const dayLabels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+            const dayLabels = [
+              t('dashboard.dow_sun'),
+              t('dashboard.dow_mon'),
+              t('dashboard.dow_tue'),
+              t('dashboard.dow_wed'),
+              t('dashboard.dow_thu'),
+              t('dashboard.dow_fri'),
+              t('dashboard.dow_sat'),
+            ]
 
             return (
               <>
@@ -837,10 +845,10 @@ export default function DashboardPage() {
                           ? `rgba(239, 68, 68, ${Math.max(0.10, intensity * 0.45)})`
                           : 'transparent'
 
-                    const tooltipParts: string[] = [`Tgl ${d.day}`]
+                    const tooltipParts: string[] = [`${t('dashboard.date_prefix')} ${d.day}`]
                     if (hasIncome) tooltipParts.push(`+${formatCurrency(d.income)}`)
                     if (hasExpense) tooltipParts.push(`-${formatCurrency(d.expense)}`)
-                    if (d.count > 0) tooltipParts.push(`${d.count} transaksi`)
+                    if (d.count > 0) tooltipParts.push(`${d.count} ${t('dashboard.transactions_unit')}`)
 
                     // Tiny "Rp"-less format optimized for narrow cells:
                     //   12,500,000 → "12,5jt"  ·  500,000 → "500rb"
@@ -991,7 +999,7 @@ export default function DashboardPage() {
                     color: isSurplus ? 'var(--c-mint)' : 'var(--c-coral)',
                   }}
                 >
-                  {isSurplus ? 'Surplus' : 'Defisit'} {formatCurrency(Math.abs(yearNet))}
+                  {isSurplus ? t('dashboard.surplus') : t('dashboard.deficit')} {formatCurrency(Math.abs(yearNet))}
                 </span>
               )
             })()}
@@ -1027,8 +1035,8 @@ export default function DashboardPage() {
               />
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
               {/* Emerald + coral matching mockup palette (line 181-182) */}
-              <Bar dataKey="income" name="Pemasukan" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
-              <Bar dataKey="expense" name="Pengeluaran" fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="income" name={t('dashboard.kpi_income')} fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="expense" name={t('dashboard.kpi_expense')} fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1036,9 +1044,9 @@ export default function DashboardPage() {
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="eyebrow">Portofolio</p>
+              <p className="eyebrow">{t('dashboard.portfolio')}</p>
               <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
-                Alokasi Investasi
+                {t('dashboard.investment_allocation')}
               </h3>
             </div>
             <Link
@@ -1046,7 +1054,7 @@ export default function DashboardPage() {
               className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
               style={{ color: 'var(--c-mint)' }}
             >
-              Detail <ArrowRight className="size-3" />
+              {t('dashboard.detail')} <ArrowRight className="size-3" />
             </Link>
           </div>
 
@@ -1057,10 +1065,10 @@ export default function DashboardPage() {
                 <TrendingUp className="size-7" style={{ color: '#0EA5E9' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
-                Belum ada investasi
+                {t('dashboard.no_investment')}
               </p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
-                Mulai catat saham, reksa dana, crypto, atau emas yang kamu pegang.
+                {t('dashboard.no_investment_desc')}
               </p>
               <Link
                 href="/dashboard/assets/investment"
@@ -1070,7 +1078,7 @@ export default function DashboardPage() {
                   color: 'var(--c-primary-foreground)',
                 }}
               >
-                Tambah investasi <ArrowRight className="size-3" />
+                {t('dashboard.add_investment')} <ArrowRight className="size-3" />
               </Link>
             </div>
           ) : (
@@ -1079,7 +1087,7 @@ export default function DashboardPage() {
               <div className="mt-3 flex items-end gap-3 flex-wrap">
                 <div>
                   <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                    Total Nilai
+                    {t('dashboard.total_value')}
                   </p>
                   <p className="num tabular text-2xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                     {formatCurrency(investmentSummary.totalValue)}
@@ -1088,7 +1096,7 @@ export default function DashboardPage() {
                 {investmentSummary.totalCost > 0 && (
                   <div className="ml-auto text-right">
                     <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                      Untung / Rugi
+                      {t('dashboard.profit_loss')}
                     </p>
                     <p
                       className="num tabular text-sm font-semibold mt-0.5"
@@ -1153,7 +1161,7 @@ export default function DashboardPage() {
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>
-                      Top Holding
+                      {t('dashboard.top_holding')}
                     </p>
                     <span
                       className="text-[10px] px-2 py-0.5 rounded-full font-medium"
@@ -1167,9 +1175,9 @@ export default function DashboardPage() {
                           : investmentSummary.risk === 'sedang' ? '#92400E'
                           : '#065F46',
                       }}
-                      title={`Top holding = ${investmentSummary.topPct.toFixed(0)}% dari total. >40% = risiko konsentrasi tinggi.`}
+                      title={`${t('dashboard.top_holding')} = ${investmentSummary.topPct.toFixed(0)}${t('dashboard.concentration_tooltip')}`}
                     >
-                      Konsentrasi {investmentSummary.risk}
+                      {t('dashboard.concentration')} {t(`dashboard.risk_${investmentSummary.risk}`)}
                     </span>
                   </div>
                   <div className="space-y-2">
@@ -1226,7 +1234,7 @@ export default function DashboardPage() {
                   </div>
                   {investmentSummary.count > 4 && (
                     <p className="text-[10px] mt-2.5 text-center" style={{ color: 'var(--ink-soft)' }}>
-                      +{investmentSummary.count - 4} holding lainnya
+                      +{investmentSummary.count - 4} {t('dashboard.more_holdings')}
                     </p>
                   )}
                 </div>

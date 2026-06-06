@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { Plus, X, Search, Loader2, Star, TrendingUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { useT } from '@/lib/i18n/context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -47,6 +48,7 @@ interface Quote {
 }
 
 export function StockWatchlistTab() {
+  const t = useT()
   const supabase = createClient()
   const router = useRouter()
 
@@ -151,21 +153,21 @@ export function StockWatchlistTab() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        toast.error('Belum login')
+        toast.error(t('watchlist.notLoggedIn'))
         return
       }
-      const t = ticker.trim().toUpperCase()
+      const tk = ticker.trim().toUpperCase()
       const { error } = await supabase
         .from('watchlist')
         .upsert(
-          { user_id: user.id, ticker: t, note: null },
+          { user_id: user.id, ticker: tk, note: null },
           { onConflict: 'user_id,ticker', ignoreDuplicates: true },
         )
       if (error) {
         toast.error(error.message)
         return
       }
-      toast.success(`${t} ditambah ke watchlist`)
+      toast.success(`${tk} ${t('watchlist.addedToWatchlist')}`)
       setAddOpen(false)
       await refresh()
     })
@@ -186,7 +188,7 @@ export function StockWatchlistTab() {
         toast.error(error.message)
         return
       }
-      toast.success(`${ticker} dihapus`)
+      toast.success(`${ticker} ${t('watchlist.removed')}`)
       await refresh()
     })
   }
@@ -195,7 +197,7 @@ export function StockWatchlistTab() {
     return (
       <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         <Loader2 className="size-5 mx-auto animate-spin mb-2" />
-        Memuat watchlist…
+        {t('watchlist.loading')}
       </div>
     )
   }
@@ -207,10 +209,10 @@ export function StockWatchlistTab() {
           onClick={() => setAddOpen(true)}
           disabled={pending}
         >
-          <Plus className="size-4" /> Tambah saham
+          <Plus className="size-4" /> {t('watchlist.addStock')}
         </Button>
         <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-          {rows.length} saham · {loadingQuotes ? 'memuat harga…' : 'harga live (cache 5 menit)'}
+          {rows.length} {t('watchlist.stocksLabel')} · {loadingQuotes ? t('watchlist.loadingPrices') : t('watchlist.livePriceCache')}
         </p>
       </div>
 
@@ -228,12 +230,12 @@ export function StockWatchlistTab() {
                   className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
                   style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
                 >
-                  <th className="px-3 py-2.5">Ticker</th>
-                  <th className="px-3 py-2.5">Nama</th>
-                  <th className="px-3 py-2.5 text-right">Harga</th>
-                  <th className="px-3 py-2.5 text-right">Perubahan</th>
-                  <th className="px-3 py-2.5 text-right">Target</th>
-                  <th className="px-3 py-2.5">Catatan</th>
+                  <th className="px-3 py-2.5">{t('watchlist.colTicker')}</th>
+                  <th className="px-3 py-2.5">{t('watchlist.colName')}</th>
+                  <th className="px-3 py-2.5 text-right">{t('watchlist.colPrice')}</th>
+                  <th className="px-3 py-2.5 text-right">{t('watchlist.colChange')}</th>
+                  <th className="px-3 py-2.5 text-right">{t('watchlist.colTarget')}</th>
+                  <th className="px-3 py-2.5">{t('watchlist.colNote')}</th>
                   <th className="px-3 py-2.5 w-10"></th>
                 </tr>
               </thead>
@@ -258,7 +260,7 @@ export function StockWatchlistTab() {
                           href={`/dashboard/assets/investment/stock/research/${row.ticker}`}
                           className="hover:underline"
                           style={{ color: 'var(--ink)' }}
-                          title={`Lihat riset ${row.ticker}`}
+                          title={`${t('watchlist.viewResearch')} ${row.ticker}`}
                         >
                           {row.ticker}
                         </Link>
@@ -294,7 +296,7 @@ export function StockWatchlistTab() {
                           <span style={{ color: reachedTarget ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
                             {formatCurrency(row.target_price)}
                             {reachedTarget && (
-                              <Badge className="ml-1 bg-[var(--c-mint-soft)] text-[var(--c-mint)]">tercapai</Badge>
+                              <Badge className="ml-1 bg-[var(--c-mint-soft)] text-[var(--c-mint)]">{t('watchlist.targetReached')}</Badge>
                             )}
                           </span>
                         ) : (
@@ -316,7 +318,7 @@ export function StockWatchlistTab() {
                             onClick={() => setEditTicker(row.ticker)}
                             className="text-[var(--ink-soft)] hover:underline"
                           >
-                            + tambah
+                            {t('watchlist.addNote')}
                           </button>
                         )}
                       </td>
@@ -326,7 +328,7 @@ export function StockWatchlistTab() {
                           onClick={() => remove(row.ticker)}
                           disabled={pending}
                           className="text-[var(--ink-soft)] hover:text-[var(--danger)] transition"
-                          aria-label={`Hapus ${row.ticker}`}
+                          aria-label={`${t('watchlist.removeAria')} ${row.ticker}`}
                         >
                           <X className="size-4" />
                         </button>
@@ -363,6 +365,7 @@ export function StockWatchlistTab() {
 }
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const t = useT()
   return (
     <div
       className="rounded-2xl border p-10 text-center"
@@ -375,17 +378,16 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         <Star className="size-6" style={{ color: 'var(--ink-muted)' }} />
       </div>
       <p className="mt-4 text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-        Belum ada saham di watchlist
+        {t('watchlist.emptyTitle')}
       </p>
       <p className="mt-1 text-xs max-w-sm mx-auto" style={{ color: 'var(--ink-muted)' }}>
-        Tambah saham yang lagi kamu incar — bisa kasih target harga, catatan, dan lihat
-        harga live tanpa perlu beli dulu.
+        {t('watchlist.emptyDesc')}
       </p>
       <Button
         onClick={onAdd}
         className="mt-4"
       >
-        <Plus className="size-4" /> Tambah saham pertama
+        <Plus className="size-4" /> {t('watchlist.addFirstStock')}
       </Button>
     </div>
   )
@@ -401,6 +403,7 @@ function AddDialog({
   onAdd: (ticker: string) => void
   pending: boolean
 }) {
+  const t = useT()
   const [query, setQuery] = useState('')
 
   const matches = useMemo(() => {
@@ -428,9 +431,9 @@ function AddDialog({
     >
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-2">
-          <DialogTitle>Tambah saham ke watchlist</DialogTitle>
+          <DialogTitle>{t('watchlist.addDialogTitle')}</DialogTitle>
           <DialogDescription>
-            Ketik ticker (BBCA) atau nama emiten. Cuma saham aktif di IDX yang ditampilin.
+            {t('watchlist.addDialogDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="px-5 pb-2">
@@ -451,7 +454,7 @@ function AddDialog({
         <div className="max-h-[50vh] overflow-y-auto px-2 pb-3">
           {matches.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Gak ada hasil.
+              {t('watchlist.noResults')}
             </p>
           ) : (
             <ul>
@@ -500,6 +503,7 @@ function EditNoteDialog({
   onClose: () => void
   onSaved: () => Promise<void>
 }) {
+  const t = useT()
   const supabase = createClient()
   const [note, setNote] = useState(initialNote)
   const [target, setTarget] = useState<string>(initialTarget ? String(initialTarget) : '')
@@ -512,7 +516,7 @@ function EditNoteDialog({
     } = await supabase.auth.getUser()
     if (!user) {
       setSaving(false)
-      toast.error('Belum login')
+      toast.error(t('watchlist.notLoggedIn'))
       return
     }
     const targetNum = target.trim() ? parseFloat(target) : null
@@ -529,7 +533,7 @@ function EditNoteDialog({
       toast.error(error.message)
       return
     }
-    toast.success('Tersimpan.')
+    toast.success(t('watchlist.saved'))
     await onSaved()
     onClose()
   }
@@ -538,40 +542,39 @@ function EditNoteDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit {ticker}</DialogTitle>
+          <DialogTitle>{t('watchlist.editTitle')} {ticker}</DialogTitle>
           <DialogDescription>
-            Tambah catatan + target harga (opsional). Kalau harga live turun ke
-            target, dapet badge &ldquo;tercapai&rdquo;.
+            {t('watchlist.editDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5">
-            <Label htmlFor="wl-target">Target harga (Rp)</Label>
+            <Label htmlFor="wl-target">{t('watchlist.targetLabel')}</Label>
             <Input
               id="wl-target"
               type="number"
               inputMode="numeric"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              placeholder="contoh: 5500"
+              placeholder={t('watchlist.targetPlaceholder')}
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="wl-note">Catatan</Label>
+            <Label htmlFor="wl-note">{t('watchlist.noteLabel')}</Label>
             <Input
               id="wl-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="contoh: nunggu earnings Q1"
+              placeholder={t('watchlist.notePlaceholder')}
               maxLength={200}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>Batal</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{t('watchlist.cancel')}</Button>
           <Button onClick={save} disabled={saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Simpan
+            {t('watchlist.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

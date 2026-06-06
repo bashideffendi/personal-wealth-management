@@ -256,7 +256,7 @@ export function AIInsightsCard({
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               {generatedAt
-                ? `${t('ai_insights.updated_prefix')} ${formatRelative(generatedAt)} ${t('ai_insights.cache_suffix')}`
+                ? `${t('ai_insights.updated_prefix')} ${formatRelative(generatedAt, t)} ${t('ai_insights.cache_suffix')}`
                 : loading
                   ? t('ai_insights.analyzing')
                   : t('ai_insights.click_refresh')}
@@ -368,15 +368,15 @@ export function AIInsightsCard({
   )
 }
 
-function formatRelative(iso: string): string {
+function formatRelative(iso: string, t: (path: string) => string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const minutes = Math.floor(diff / (1000 * 60))
-  if (minutes < 1) return 'baru saja'
-  if (minutes < 60) return `${minutes} menit lalu`
+  if (minutes < 1) return t('ai_insights.relative_just_now')
+  if (minutes < 60) return t('ai_insights.relative_minutes').replace('{n}', String(minutes))
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} jam lalu`
+  if (hours < 24) return t('ai_insights.relative_hours').replace('{n}', String(hours))
   const days = Math.floor(hours / 24)
-  return `${days} hari lalu`
+  return t('ai_insights.relative_days').replace('{n}', String(days))
 }
 
 // ─── Welcome card for users with zero data ───────────────────────
@@ -384,35 +384,36 @@ function formatRelative(iso: string): string {
 
 const WELCOME_TIPS: Array<{
   Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-  title: string
-  body: string
+  titleKey: string
+  bodyKey: string
   href: string
   tone: Insight['tone']
 }> = [
   {
     Icon: PenLine,
-    title: 'Mulai dari Tambah Cepat',
-    body: 'Buka /Transaksi → bar inline di atas tabel. Tab antar field, Enter simpan. 5 detik per transaksi.',
+    titleKey: 'ai_insights.welcome_tip1_title',
+    bodyKey: 'ai_insights.welcome_tip1_body',
     href: '/dashboard/transactions',
     tone: 'observation',
   },
   {
     Icon: Camera,
-    title: 'Foto struk → otomatis tercatat',
-    body: 'Klik "Tambah Transaksi" → upload foto struk. AI ekstrak merchant, tanggal, total, kategori dalam 3 detik.',
+    titleKey: 'ai_insights.welcome_tip2_title',
+    bodyKey: 'ai_insights.welcome_tip2_body',
     href: '/dashboard/transactions',
     tone: 'positive',
   },
   {
     Icon: CommandIcon,
-    title: 'Tekan ⌘K dari mana aja',
-    body: 'Quick add via natural language — ketik "indomaret 47rb cash", AI parse + langsung simpan ke akun default.',
+    titleKey: 'ai_insights.welcome_tip3_title',
+    bodyKey: 'ai_insights.welcome_tip3_body',
     href: '/dashboard',
     tone: 'observation',
   },
 ]
 
 function WelcomeInsights() {
+  const t = useT()
   return (
     <div className="s-card p-5" style={{ background: 'var(--c-violet-soft)' }}>
       <div className="flex items-center gap-2 mb-4">
@@ -424,38 +425,38 @@ function WelcomeInsights() {
         </div>
         <div>
           <p className="eyebrow" style={{ color: 'var(--c-violet)' }}>
-            Insight AI personal
+            {t('ai_insights.welcome_eyebrow')}
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-mute)' }}>
-            Catat transaksi pertama, AI bakal kasih analisis pola pengeluaran dan saran konkret.
+            {t('ai_insights.welcome_desc')}
           </p>
         </div>
       </div>
 
       <div className="grid gap-2.5 sm:grid-cols-3">
         {WELCOME_TIPS.map((tip, i) => {
-          const t = TONE_STYLES[tip.tone]
+          const toneStyle = TONE_STYLES[tip.tone]
           const Icon = tip.Icon
           return (
             <a
               key={i}
               href={tip.href}
               className="rounded-lg border p-3 transition hover:scale-[1.02] hover:shadow-sm cursor-pointer"
-              style={{ background: t.bg, borderColor: t.border }}
+              style={{ background: toneStyle.bg, borderColor: toneStyle.border }}
             >
               <div className="flex items-start gap-2.5">
                 <div
                   className="size-8 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: t.emoji_bg, color: t.tint }}
+                  style={{ background: toneStyle.emoji_bg, color: toneStyle.tint }}
                 >
                   <Icon className="size-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--ink)' }}>
-                    {tip.title}
+                    {t(tip.titleKey)}
                   </p>
                   <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                    {tip.body}
+                    {t(tip.bodyKey)}
                   </p>
                 </div>
               </div>

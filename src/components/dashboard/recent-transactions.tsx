@@ -36,13 +36,13 @@ function categoryStyle(
   return { Icon: Receipt, tone: 'primary' }
 }
 
-function relativeTime(dateStr: string): string {
+function relativeTime(dateStr: string, t: (path: string) => string): string {
   const d = new Date(dateStr)
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000)
-  if (diffDays === 0) return 'Hari ini'
-  if (diffDays === 1) return 'Kemarin'
-  if (diffDays < 7) return `${diffDays} hari lalu`
+  if (diffDays === 0) return t('recent_tx.today')
+  if (diffDays === 1) return t('recent_tx.yesterday')
+  if (diffDays < 7) return `${diffDays} ${t('recent_tx.days_ago')}`
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
 }
 
@@ -107,7 +107,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                     className="truncate"
                     style={{ fontSize: 11.5, color: 'var(--text-mute)' }}
                   >
-                    {tx.category} · {relativeTime(tx.date)}
+                    {tx.category} · {relativeTime(tx.date, t)}
                   </p>
                 </div>
                 <p

@@ -23,23 +23,23 @@ interface NewsItem {
 }
 
 /** Waktu relatif Bahasa Indonesia: "baru saja" / "5 menit lalu" / "3 hari lalu". */
-function relativeTimeID(pubDate: string): string {
+function relativeTimeID(pubDate: string, t: (key: string) => string): string {
   const ms = Date.parse(pubDate)
   if (isNaN(ms)) return ''
   const diff = Date.now() - ms
-  if (diff < 0) return 'baru saja'
+  if (diff < 0) return t('news.justNow')
   const min = Math.floor(diff / 60000)
-  if (min < 1) return 'baru saja'
-  if (min < 60) return `${min} menit lalu`
+  if (min < 1) return t('news.justNow')
+  if (min < 60) return `${min} ${t('news.minutesAgo')}`
   const jam = Math.floor(min / 60)
-  if (jam < 24) return `${jam} jam lalu`
+  if (jam < 24) return `${jam} ${t('news.hoursAgo')}`
   const hari = Math.floor(jam / 24)
-  if (hari < 7) return `${hari} hari lalu`
+  if (hari < 7) return `${hari} ${t('news.daysAgo')}`
   const minggu = Math.floor(hari / 7)
-  if (minggu < 5) return `${minggu} minggu lalu`
+  if (minggu < 5) return `${minggu} ${t('news.weeksAgo')}`
   const bulan = Math.floor(hari / 30)
-  if (bulan < 12) return `${bulan} bulan lalu`
-  return `${Math.floor(hari / 365)} tahun lalu`
+  if (bulan < 12) return `${bulan} ${t('news.monthsAgo')}`
+  return `${Math.floor(hari / 365)} ${t('news.yearsAgo')}`
 }
 
 export function NewsTab() {
@@ -107,7 +107,7 @@ export function NewsTab() {
       <div className="s-card p-0 overflow-hidden">
         <ul>
           {items.map((item, i) => {
-            const rel = relativeTimeID(item.pubDate)
+            const rel = relativeTimeID(item.pubDate, t)
             return (
               <li
                 key={item.link}

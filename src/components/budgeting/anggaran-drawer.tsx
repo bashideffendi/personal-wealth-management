@@ -24,10 +24,15 @@ import {
 import { formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
-const MONTHS_FULL = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-]
+const MONTH_KEYS = [
+  'month_jan', 'month_feb', 'month_mar', 'month_apr', 'month_may', 'month_jun',
+  'month_jul', 'month_aug', 'month_sep', 'month_oct', 'month_nov', 'month_dec',
+] as const
+
+/** Localized full month name for a 1-12 month. */
+function monthName(t: (path: string) => string, month: number): string {
+  return t(`anggaran_drawer.${MONTH_KEYS[month - 1]}`)
+}
 
 interface AnggaranDrawerProps {
   open: boolean
@@ -150,7 +155,7 @@ export function AnggaranMonthDrawer({
                 <p className="eyebrow">{t('anggaran_drawer.eyebrow')} · {year}</p>
                 {/* Visually-rich title; sr-only SheetTitle for a11y */}
                 <SheetTitle className="sr-only">
-                  {t('anggaran_drawer.eyebrow')} {MONTHS_FULL[month - 1]} {year}
+                  {t('anggaran_drawer.eyebrow')} {monthName(t, month)} {year}
                 </SheetTitle>
                 <h2
                   className="display"
@@ -161,7 +166,7 @@ export function AnggaranMonthDrawer({
                   }}
                   aria-hidden="true"
                 >
-                  {MONTHS_FULL[month - 1]}
+                  {monthName(t, month)}
                   {isCurrentMonth && (
                     <span
                       className="chip ml-2"
@@ -433,7 +438,7 @@ export function AnggaranMonthDrawer({
                 {formatCurrency(projection.projectedExpense)}
               </p>
               <p className="text-xs mt-1.5" style={{ color: 'var(--text-2)' }}>
-                {t('anggaran_drawer.projection_desc').replace('{month}', MONTHS_FULL[month - 1])}
+                {t('anggaran_drawer.projection_desc').replace('{month}', monthName(t, month))}
               </p>
             </div>
           )}

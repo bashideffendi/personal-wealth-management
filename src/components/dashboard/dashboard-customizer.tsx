@@ -19,21 +19,22 @@ import { useT } from '@/lib/i18n/context'
 
 export interface DashBlock {
   id: string
-  label: string
+  /** i18n leaf under `dashboard_customizer.*` for the section label. */
+  labelKey: string
 }
 
 const LS_KEY = 'pwm.dashboard.hidden'
 
 /** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
 export const DASHBOARD_BLOCKS: DashBlock[] = [
-  { id: 'kpi', label: 'Ringkasan KPI (Pemasukan / Pengeluaran / dll)' },
-  { id: 'ai-insights', label: 'Insight AI' },
-  { id: 'aliran', label: 'Aliran Uang (Sankey)' },
-  { id: 'aktivitas', label: 'Transaksi · Tagihan · Tujuan' },
-  { id: 'kalender', label: 'Kalender Aktivitas & Progress Anggaran' },
-  { id: 'grafik', label: 'Grafik (Kategori / Hari / Saving Rate)' },
-  { id: 'insights', label: 'Insight & Peringatan' },
-  { id: 'investasi', label: 'Grafik Bulanan & Alokasi Investasi' },
+  { id: 'kpi', labelKey: 'block_kpi' },
+  { id: 'ai-insights', labelKey: 'block_ai_insights' },
+  { id: 'aliran', labelKey: 'block_aliran' },
+  { id: 'aktivitas', labelKey: 'block_aktivitas' },
+  { id: 'kalender', labelKey: 'block_kalender' },
+  { id: 'grafik', labelKey: 'block_grafik' },
+  { id: 'insights', labelKey: 'block_insights' },
+  { id: 'investasi', labelKey: 'block_investasi' },
 ]
 
 function readHidden(): string[] {
@@ -156,7 +157,7 @@ export function DashboardCustomizer() {
                     }}
                   >
                     <span className="t-sm" style={{ color: on ? 'var(--ink)' : 'var(--text-mute)' }}>
-                      {b.label}
+                      {t(`dashboard_customizer.${b.labelKey}`)}
                     </span>
                     {on ? (
                       <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary)' }} />

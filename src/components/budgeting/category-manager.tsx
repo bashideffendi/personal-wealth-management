@@ -51,11 +51,11 @@ import {
 import { CategoryIcon, CATEGORY_COLORS, CATEGORY_ICON_CHOICES } from '@/components/transactions/category-icon'
 import { useT } from '@/lib/i18n/context'
 
-const TYPE_META: Record<BudgetType, { label: string; accent: string }> = {
-  income: { label: 'Pendapatan', accent: 'var(--c-mint)' },
-  expense: { label: 'Pengeluaran', accent: 'var(--c-coral)' },
-  saving: { label: 'Tabungan', accent: 'var(--c-amber)' },
-  investment: { label: 'Investasi', accent: 'var(--c-violet)' },
+const TYPE_META: Record<BudgetType, { labelKey: string; accent: string }> = {
+  income: { labelKey: 'type_income', accent: 'var(--c-mint)' },
+  expense: { labelKey: 'type_expense', accent: 'var(--c-coral)' },
+  saving: { labelKey: 'type_saving', accent: 'var(--c-amber)' },
+  investment: { labelKey: 'type_investment', accent: 'var(--c-violet)' },
 }
 
 interface PendingDelete {
@@ -288,22 +288,22 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
 
         {/* Type tabs — segmented control */}
         <div className="flex gap-1 rounded-xl p-1" style={{ background: 'var(--surface-2)' }}>
-          {BUDGET_TYPES.map((t) => {
-            const m = TYPE_META[t]
-            const active = t === type
+          {BUDGET_TYPES.map((bt) => {
+            const m = TYPE_META[bt]
+            const active = bt === type
             return (
               <button
-                key={t}
+                key={bt}
                 type="button"
-                onClick={() => setType(t)}
+                onClick={() => setType(bt)}
                 className="flex-1 rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors whitespace-nowrap"
                 style={{
                   background: active ? m.accent : 'transparent',
                   color: active ? '#FFF' : 'var(--ink-muted)',
                 }}
               >
-                {m.label}
-                <span className="ml-1.5 opacity-70 num text-[11px]">{draft[t].length}</span>
+                {t(`category_manager.${m.labelKey}`)}
+                <span className="ml-1.5 opacity-70 num text-[11px]">{draft[bt].length}</span>
               </button>
             )
           })}
@@ -363,7 +363,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
           <input
             value={newCat}
             onChange={(e) => setNewCat(e.target.value)}
-            placeholder={`${t('category_manager.add_cat_placeholder')} ${meta.label.toLowerCase()}…`}
+            placeholder={`${t('category_manager.add_cat_placeholder')} ${t(`category_manager.${meta.labelKey}`).toLowerCase()}…`}
             className="h-10 flex-1 rounded-lg border px-3.5 text-sm outline-none transition-colors focus:border-[var(--ink)] focus:ring-2 focus:ring-[var(--ink)]/10"
             style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
           />
