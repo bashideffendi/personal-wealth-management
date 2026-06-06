@@ -19,6 +19,7 @@ import {
 import { LeafletMap } from '@/components/map/map-client'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
 import { depreciate, METODE_LABEL, type MetodePenyusutan } from '@/lib/depreciation'
+import { useT } from '@/lib/i18n/context'
 
 type Category = 'property' | 'vehicle' | 'personal_item'
 
@@ -94,6 +95,7 @@ const EMPTY: FormState = {
 }
 
 export default function NonLiquidAssetsPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<AssetNonLiquid[]>([])
@@ -185,7 +187,7 @@ export default function NonLiquidAssetsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Hapus aset ini?')) return
+    if (!confirm(t('assets_nonliquid.confirm_delete'))) return
     await supabase.from('assets_non_liquid').delete().eq('id', id)
     void load()
   }
@@ -274,13 +276,13 @@ export default function NonLiquidAssetsPage() {
         <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
         <div className="mt-1.5 flex items-center gap-2 text-[11px]">
           <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: `${up ? '#10B981' : '#F43F5E'}1A`, color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
-          <span style={{ color: 'var(--ink-muted)' }}>dari <span className="num">{formatCurrency(a.purchase_value)}</span></span>
+          <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
         </div>
         <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
-          <span style={{ color: 'var(--ink-soft)' }}>Dibeli {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
+          <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
           {hasMap && (
             <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
-              Buka Maps <ExternalLink className="h-3 w-3" />
+              {t('assets_nonliquid.open_maps')} <ExternalLink className="h-3 w-3" />
             </a>
           )}
         </div>
@@ -349,30 +351,30 @@ export default function NonLiquidAssetsPage() {
   return (
     <div className="space-y-6">
       <WealthHeader
-        eyebrow={`${items.length} aset tercatat`}
-        title="Aset Non-Likuid"
-        subtitle="Properti, kendaraan, dan barang pribadi bernilai. Update penilaian berkala biar net worth akurat."
+        eyebrow={`${items.length} ${t('assets_nonliquid.eyebrow_suffix')}`}
+        title={t('assets_nonliquid.title')}
+        subtitle={t('assets_nonliquid.subtitle')}
       >
-        {items.length > 0 && <Button variant="outline" onClick={openReval}><RefreshCw className="h-4 w-4" /> Revaluasi semua</Button>}
-        <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Tambah aset</Button>
+        {items.length > 0 && <Button variant="outline" onClick={openReval}><RefreshCw className="h-4 w-4" /> {t('assets_nonliquid.revalue_all')}</Button>}
+        <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> {t('assets_nonliquid.add_asset')}</Button>
       </WealthHeader>
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : items.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <p className="font-semibold" style={{ color: 'var(--ink)' }}>Belum ada aset non-likuid</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambahkan properti, kendaraan, atau barang berharga kamu.</p>
+          <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('assets_nonliquid.empty_title')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.empty_desc')}</p>
         </div>
       ) : (
         <>
           {/* Strip stat 4-sel (ikut mock) */}
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
             <div className="p-5">
-              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>Nilai Pasar Saat Ini</p>
+              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.market_value_now')}</p>
               <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-                Modal awal <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
+                {t('assets_nonliquid.initial_capital')} <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
                 <span className="num font-semibold" style={{ color: totalDelta >= 0 ? '#10B981' : '#F43F5E' }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
               </p>
             </div>
@@ -385,7 +387,7 @@ export default function NonLiquidAssetsPage() {
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].color }}><CatIcon className="size-3" />{CAT[cat].label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-                    {s.count} item{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? '#10B981' : '#F43F5E' }}>{s.pct >= 0 ? 'apresiasi +' : 'depresiasi '}{s.pct.toFixed(1)}%</span></>}
+                    {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? '#10B981' : '#F43F5E' }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}
                   </p>
                 </div>
               )
@@ -419,12 +421,12 @@ export default function NonLiquidAssetsPage() {
 
           {/* Toolbar — judul + toggle Kartu/Tabel */}
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rincian Aset</p>
+            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.asset_details')}</p>
             <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
-              <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title="Tampilan kartu" aria-label="Tampilan kartu">
+              <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_nonliquid.card_view')} aria-label={t('assets_nonliquid.card_view')}>
                 <LayoutGrid className="size-4" />
               </button>
-              <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title="Tampilan tabel" aria-label="Tampilan tabel">
+              <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_nonliquid.table_view')} aria-label={t('assets_nonliquid.table_view')}>
                 <List className="size-4" />
               </button>
             </div>
@@ -436,15 +438,15 @@ export default function NonLiquidAssetsPage() {
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium">Aset</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">Tipe</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Dibeli {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">Umur</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">Modal Awal</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Nilai Sekarang {sortKey === 'value' && <ArrowUpDown className="size-3" />}</button></th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">Selisih</th>
+                    <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_asset')}</th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_type')}</th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_bought')} {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_age')}</th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_initial_capital')}</th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_current_value')} {sortKey === 'value' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_diff')}</th>
                     <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ% {sortKey === 'gain' && <ArrowUpDown className="size-3" />}</button></th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">Metode</th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_method')}</th>
                     <th className="px-3 py-2.5" />
                   </tr>
                 </thead>
@@ -459,7 +461,7 @@ export default function NonLiquidAssetsPage() {
                     const up = delta >= 0
                     const tipe = a.type || '—'
                     const ageYears = a.purchase_date ? (Date.now() - new Date(a.purchase_date).getTime()) / (365.25 * 86400000) : 0
-                    const statusLabel = cat === 'property' ? 'Apresiasi' : dd?.metode ? METODE_LABEL[dd.metode] : up ? 'Tidak menyusut' : 'Depresiasi'
+                    const statusLabel = cat === 'property' ? t('assets_nonliquid.status_appreciation') : dd?.metode ? METODE_LABEL[dd.metode] : up ? t('assets_nonliquid.status_no_depreciation') : t('assets_nonliquid.status_depreciation')
                     return (
                       <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
@@ -470,7 +472,7 @@ export default function NonLiquidAssetsPage() {
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{tipe}</td>
                         <td className="px-3 py-3 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
-                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{ageYears > 0 ? `${ageYears.toFixed(1)} thn` : '—'}</td>
+                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{ageYears > 0 ? `${ageYears.toFixed(1)} ${t('assets_nonliquid.unit_years')}` : '—'}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
                         <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{delta >= 0 ? '+' : '−'}{formatCurrency(Math.abs(delta))}</td>
@@ -501,7 +503,7 @@ export default function NonLiquidAssetsPage() {
                     <div className="flex items-center gap-2 mb-3">
                       <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                       <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{s.count} item</span>
+                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{s.count} {t('assets_nonliquid.item')}</span>
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
                       <span className="num text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(s.cur)}</span>
                       <div className="flex-1 h-px ml-1.5" style={{ background: 'var(--border-soft)' }} />
@@ -526,8 +528,8 @@ export default function NonLiquidAssetsPage() {
                 {(() => { const I = CAT[form.category].icon; return <I className="size-5" style={{ color: '#8B5CF6' }} /> })()}
               </div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Aset Non-Likuid' : 'Tambah Aset Non-Likuid'}</DialogTitle>
-                <DialogDescription>Properti, kendaraan, atau barang berharga — lengkapi datanya biar net worth akurat.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('assets_nonliquid.dialog_title_edit') : t('assets_nonliquid.dialog_title_add')}</DialogTitle>
+                <DialogDescription>{t('assets_nonliquid.dialog_desc')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -536,7 +538,7 @@ export default function NonLiquidAssetsPage() {
             {/* LEFT — form */}
             <div className="space-y-5">
               <div>
-                <StepLabel n={1} text="Kategori" />
+                <StepLabel n={1} text={t('assets_nonliquid.step_category')} />
                 <div className="grid grid-cols-3 gap-2 mt-2">
                   {(Object.keys(CAT) as Category[]).map((c) => {
                     const m = CAT[c]; const Icon = m.icon; const on = form.category === c
@@ -555,20 +557,20 @@ export default function NonLiquidAssetsPage() {
               </div>
 
               <div>
-                <StepLabel n={2} text="Nama aset" />
+                <StepLabel n={2} text={t('assets_nonliquid.step_asset_name')} />
                 <Input className="mt-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={PLACEHOLDERS[form.category].name} />
               </div>
 
               <div>
-                <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tipe</Label>
+                <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_type')}</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {TYPE_PILLS[form.category].map((t) => {
-                    const on = form.type === t
+                  {TYPE_PILLS[form.category].map((tp) => {
+                    const on = form.type === tp
                     return (
-                      <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
+                      <button key={tp} type="button" onClick={() => setForm({ ...form, type: tp })}
                         className="rounded-full px-3 py-1.5 text-[12px] font-medium transition"
                         style={{ background: on ? 'var(--ink)' : 'var(--surface-2)', color: on ? 'var(--surface)' : 'var(--ink-muted)' }}>
-                        {t}
+                        {tp}
                       </button>
                     )
                   })}
@@ -577,30 +579,30 @@ export default function NonLiquidAssetsPage() {
 
               {form.category === 'vehicle' && (
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Detail Kendaraan</Label>
+                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_vehicle_detail')}</Label>
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>No. Plat</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} placeholder="B 1234 XYZ" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Tahun</Label><Input value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2022" inputMode="numeric" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Warna</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="Putih" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>No. Mesin / Rangka</Label><Input value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} placeholder="opsional" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_plate')}</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} placeholder="B 1234 XYZ" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_year')}</Label><Input value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2022" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_color')}</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder={t('assets_nonliquid.ph_color')} /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_engine')}</Label><Input value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} placeholder={t('assets_nonliquid.ph_optional')} /></div>
                   </div>
                 </div>
               )}
 
               {form.category === 'property' && (
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Detail Properti</Label>
+                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_property_detail')}</Label>
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Luas Tanah (m²)</Label><Input type="number" value={form.luasTanah} onChange={(e) => setForm({ ...form, luasTanah: e.target.value })} placeholder="144" inputMode="numeric" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Luas Bangunan (m²)</Label><Input type="number" value={form.luasBangunan} onChange={(e) => setForm({ ...form, luasBangunan: e.target.value })} placeholder="90" inputMode="numeric" /></div>
-                    <div className="grid gap-1.5 col-span-2"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Spesifikasi</Label><Input value={form.spesifikasi} onChange={(e) => setForm({ ...form, spesifikasi: e.target.value })} placeholder="3 KT · 2 KM · SHM" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_land_area')}</Label><Input type="number" value={form.luasTanah} onChange={(e) => setForm({ ...form, luasTanah: e.target.value })} placeholder="144" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_building_area')}</Label><Input type="number" value={form.luasBangunan} onChange={(e) => setForm({ ...form, luasBangunan: e.target.value })} placeholder="90" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5 col-span-2"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_specification')}</Label><Input value={form.spesifikasi} onChange={(e) => setForm({ ...form, spesifikasi: e.target.value })} placeholder={t('assets_nonliquid.ph_specification')} /></div>
                   </div>
                 </div>
               )}
 
               {form.category !== 'property' && (
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Penyusutan</Label>
+                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_depreciation')}</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {(['garis_lurus', 'saldo_menurun_ganda', 'none'] as MetodePenyusutan[]).map((m) => {
                       const on = form.metode === m
@@ -615,26 +617,26 @@ export default function NonLiquidAssetsPage() {
                   </div>
                   {form.metode !== 'none' && (
                     <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Masa manfaat (tahun)</Label><Input type="number" min={1} value={form.masaManfaat || ''} onChange={(e) => setForm({ ...form, masaManfaat: Number(e.target.value), deprOverride: false })} placeholder="8" inputMode="numeric" /></div>
-                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Nilai residu (opsional)</Label><RpField value={form.residu} onChange={(n) => setForm({ ...form, residu: n, deprOverride: false })} /></div>
+                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_useful_life')}</Label><Input type="number" min={1} value={form.masaManfaat || ''} onChange={(e) => setForm({ ...form, masaManfaat: Number(e.target.value), deprOverride: false })} placeholder="8" inputMode="numeric" /></div>
+                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_residual')}</Label><RpField value={form.residu} onChange={(n) => setForm({ ...form, residu: n, deprOverride: false })} /></div>
                     </div>
                   )}
                 </div>
               )}
 
               <div>
-                <StepLabel n={3} text="Nilai aset" />
+                <StepLabel n={3} text={t('assets_nonliquid.step_asset_value')} />
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <div className="grid gap-1.5">
-                    <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Harga beli</Label>
+                    <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_price')}</Label>
                     <RpField value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} />
                   </div>
                   <div className="grid gap-1.5">
                     <Label className="text-[11px] flex items-center justify-between gap-2" style={{ color: 'var(--ink-muted)' }}>
-                      <span>{isDeprForm ? 'Nilai sekarang · nilai buku' : 'Nilai sekarang'}</span>
+                      <span>{isDeprForm ? t('assets_nonliquid.label_current_book') : t('assets_nonliquid.label_current')}</span>
                       {isDeprForm && (form.deprOverride
-                        ? <button type="button" onClick={() => setForm({ ...form, deprOverride: false })} className="text-[10px] underline" style={{ color: 'var(--ink-soft)' }}>pakai auto</button>
-                        : <span className="text-[10px] font-semibold" style={{ color: '#10B981' }}>auto</span>)}
+                        ? <button type="button" onClick={() => setForm({ ...form, deprOverride: false })} className="text-[10px] underline" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.use_auto')}</button>
+                        : <span className="text-[10px] font-semibold" style={{ color: '#10B981' }}>{t('assets_nonliquid.auto')}</span>)}
                     </Label>
                     <RpField value={shownCurrent} onChange={(n) => setForm({ ...form, current_value: n, deprOverride: true })} />
                   </div>
@@ -642,14 +644,14 @@ export default function NonLiquidAssetsPage() {
                 {isDeprForm && deprPreview ? (
                   <div className="mt-2.5 rounded-lg p-3" style={{ background: 'var(--surface-2)' }}>
                     <div className="grid grid-cols-3 gap-2 text-[12px]">
-                      <div><p style={{ color: 'var(--ink-soft)' }}>Penyusutan/thn</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.perYearFirst))}</p></div>
-                      <div><p style={{ color: 'var(--ink-soft)' }}>Akumulasi</p><p className="num font-semibold mt-0.5" style={{ color: '#E11D48' }}>−{formatCurrency(Math.round(deprPreview.accumulated))}</p></div>
-                      <div><p style={{ color: 'var(--ink-soft)' }}>Nilai buku</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.bookValue))}</p></div>
+                      <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_per_year')}</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.perYearFirst))}</p></div>
+                      <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_accumulated')}</p><p className="num font-semibold mt-0.5" style={{ color: '#E11D48' }}>−{formatCurrency(Math.round(deprPreview.accumulated))}</p></div>
+                      <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_book_value')}</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.bookValue))}</p></div>
                     </div>
                     <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
-                      Umur {deprPreview.yearsElapsed.toFixed(1)} thn · {METODE_LABEL[form.metode]}
-                      {deprPreview.fullyDepreciated ? ' · sudah habis disusutkan' : ''}
-                      {form.deprOverride ? ' · nilai ditimpa manual' : ''}
+                      {t('assets_nonliquid.age')} {deprPreview.yearsElapsed.toFixed(1)} {t('assets_nonliquid.unit_years')} · {METODE_LABEL[form.metode]}
+                      {deprPreview.fullyDepreciated ? ` · ${t('assets_nonliquid.fully_depreciated')}` : ''}
+                      {form.deprOverride ? ` · ${t('assets_nonliquid.manually_overridden')}` : ''}
                     </p>
                   </div>
                 ) : (form.purchase_value > 0 && form.current_value > 0 && (() => {
@@ -659,15 +661,15 @@ export default function NonLiquidAssetsPage() {
                   return (
                     <div className="mt-2.5 rounded-lg px-3 py-2 text-[12px] flex items-center gap-2" style={{ background: `${up ? '#10B981' : '#F43F5E'}14`, color: up ? '#059669' : '#E11D48' }}>
                       {up ? <TrendingUp className="size-3.5 shrink-0" /> : <TrendingDown className="size-3.5 shrink-0" />}
-                      {up ? 'Apresiasi' : 'Depresiasi'} <span className="num font-semibold">{up ? '+' : ''}{formatCurrency(d)} ({up ? '+' : ''}{p.toFixed(1)}%)</span> sejak dibeli
+                      {up ? t('assets_nonliquid.status_appreciation') : t('assets_nonliquid.status_depreciation')} <span className="num font-semibold">{up ? '+' : ''}{formatCurrency(d)} ({up ? '+' : ''}{p.toFixed(1)}%)</span> {t('assets_nonliquid.since_bought')}
                     </div>
                   )
                 })())}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Tanggal beli</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
-                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Catatan (opsional)</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={PLACEHOLDERS[form.category].note} /></div>
+                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_date')}</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
+                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_notes')}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={PLACEHOLDERS[form.category].note} /></div>
               </div>
             </div>
 
@@ -675,10 +677,10 @@ export default function NonLiquidAssetsPage() {
             {form.category === 'property' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} /> Lokasi di Peta</Label>
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>Opsional</span>
+                  <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} /> {t('assets_nonliquid.location_on_map')}</Label>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('assets_nonliquid.optional')}</span>
                 </div>
-                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Alamat lengkap aset" />
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('assets_nonliquid.ph_full_address')} />
                 <LeafletMap lat={form.latitude} lng={form.longitude} onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} height={380} />
               </div>
             )}
@@ -686,11 +688,11 @@ export default function NonLiquidAssetsPage() {
 
           <DialogFooter className="sm:justify-between sm:items-center">
             <p className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              <ShieldCheck className="size-3.5" style={{ color: '#10B981' }} /> Data terenkripsi · cuma kamu yang bisa lihat
+              <ShieldCheck className="size-3.5" style={{ color: '#10B981' }} /> {t('assets_nonliquid.encrypted_note')}
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-              <Button onClick={save} disabled={saving || !form.name}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}<Plus className="h-4 w-4" />{form.id ? 'Simpan' : 'Tambah aset'}</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('assets_nonliquid.cancel')}</Button>
+              <Button onClick={save} disabled={saving || !form.name}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}<Plus className="h-4 w-4" />{form.id ? t('assets_nonliquid.save') : t('assets_nonliquid.add_asset')}</Button>
             </div>
           </DialogFooter>
         </DialogContent>
@@ -700,23 +702,23 @@ export default function NonLiquidAssetsPage() {
       <Dialog open={revalOpen} onOpenChange={setRevalOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Revaluasi semua aset</DialogTitle>
-            <DialogDescription>Update nilai pasar terkini tiap aset. Yang gak diubah dilewati.</DialogDescription>
+            <DialogTitle>{t('assets_nonliquid.reval_title')}</DialogTitle>
+            <DialogDescription>{t('assets_nonliquid.reval_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             {items.map((a) => (
               <div key={a.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Lama: <span className="num">{formatCurrency(a.current_value)}</span></p>
+                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.reval_old')} <span className="num">{formatCurrency(a.current_value)}</span></p>
                 </div>
                 <div className="w-40"><NumberInput value={revalValues[a.id] ?? a.current_value} onChange={(n) => setRevalValues((p) => ({ ...p, [a.id]: n }))} placeholder="0" /></div>
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRevalOpen(false)}>Batal</Button>
-            <Button onClick={saveReval} disabled={revalSaving}>{revalSaving && <Loader2 className="h-4 w-4 animate-spin" />}Simpan semua</Button>
+            <Button variant="outline" onClick={() => setRevalOpen(false)}>{t('assets_nonliquid.cancel')}</Button>
+            <Button onClick={saveReval} disabled={revalSaving}>{revalSaving && <Loader2 className="h-4 w-4 animate-spin" />}{t('assets_nonliquid.save_all')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

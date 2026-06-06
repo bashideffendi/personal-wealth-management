@@ -22,6 +22,7 @@ import { InstitutionSearch } from '@/components/accounts/institution-search'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { identifyInstitution } from '@/lib/indonesian-institutions'
 import { CompoundDebtWarning } from '@/components/debt/compound-debt-warning'
+import { useT } from '@/lib/i18n/context'
 
 interface CardFormState {
   id: string | null
@@ -107,6 +108,7 @@ function minPayment(balance: number): number {
 const MINT = '#10B981', AMBER = '#F59E0B', CORAL = '#F43F5E'
 
 export default function CreditCardsPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [cards, setCards] = useState<CreditCardType[]>([])
@@ -165,7 +167,7 @@ export default function CreditCardsPage() {
   }
 
   async function removeCard(id: string) {
-    if (!confirm('Hapus kartu ini?')) return
+    if (!confirm(t('credit_cards.confirm_delete'))) return
     await supabase.from('credit_cards').delete().eq('id', id); void load()
   }
 
@@ -223,7 +225,7 @@ export default function CreditCardsPage() {
   }, [active])
 
   const utilColor = totals.utilization < 30 ? MINT : totals.utilization < 70 ? AMBER : CORAL
-  const utilZone = totals.utilization < 30 ? 'di zona aman' : totals.utilization < 70 ? 'mulai tinggi' : 'terlalu tinggi'
+  const utilZone = totals.utilization < 30 ? t('credit_cards.util_zone_safe') : totals.utilization < 70 ? t('credit_cards.util_zone_high') : t('credit_cards.util_zone_too_high')
 
   const today = new Date()
   function nextDueDate(dueDay: number) {
@@ -251,10 +253,10 @@ export default function CreditCardsPage() {
   const dueSoon = dueList.filter((d) => d.days <= 7)
 
   const stats: { label: string; value: string; sub: string; icon: LucideIcon; color: string; tint: string }[] = [
-    { label: 'Total Limit', value: formatCurrency(totals.limit), sub: `Dari ${totals.count} kartu`, icon: CreditCard, color: '#64748B', tint: 'rgba(100,116,139,0.12)' },
-    { label: 'Total Terpakai', value: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% dari limit`, icon: ArrowUpRight, color: CORAL, tint: 'rgba(244,63,94,0.12)' },
-    { label: 'Limit Tersedia', value: formatCurrency(totals.available), sub: 'Siap dipakai', icon: CheckCircle2, color: MINT, tint: 'rgba(16,185,129,0.12)' },
-    { label: 'Jatuh Tempo Terdekat', value: nearest ? formatDate(nearest.due.toISOString()) : '—', sub: nearest ? `${nearest.days} hari lagi` : 'Gak ada tagihan', icon: CalendarClock, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
+    { label: t('credit_cards.stat_total_limit'), value: formatCurrency(totals.limit), sub: `${t('credit_cards.stat_from_n_cards_prefix')} ${totals.count} ${t('credit_cards.cards_unit')}`, icon: CreditCard, color: '#64748B', tint: 'rgba(100,116,139,0.12)' },
+    { label: t('credit_cards.stat_total_used'), value: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% ${t('credit_cards.stat_of_limit_suffix')}`, icon: ArrowUpRight, color: CORAL, tint: 'rgba(244,63,94,0.12)' },
+    { label: t('credit_cards.stat_available_limit'), value: formatCurrency(totals.available), sub: t('credit_cards.stat_ready_to_use'), icon: CheckCircle2, color: MINT, tint: 'rgba(16,185,129,0.12)' },
+    { label: t('credit_cards.stat_nearest_due'), value: nearest ? formatDate(nearest.due.toISOString()) : '—', sub: nearest ? `${nearest.days} ${t('credit_cards.days_left_suffix')}` : t('credit_cards.no_bills'), icon: CalendarClock, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
   ]
 
   return (
@@ -262,20 +264,20 @@ export default function CreditCardsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{totals.count} kartu aktif</p>
+          <p className="eyebrow mb-1.5">{totals.count} {t('credit_cards.active_cards_suffix')}</p>
           <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-            Kartu Kredit
+            {t('credit_cards.title')}
           </h1>
           <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>
-            Pantau limit, tagihan &amp; jatuh tempo. Klunting bantu jaga utilization di bawah 30%.
+            {t('credit_cards.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={() => openPayCard()} disabled={active.length === 0}>
-            <Wallet className="h-4 w-4" /> Bayar Tagihan
+            <Wallet className="h-4 w-4" /> {t('credit_cards.pay_bill')}
           </Button>
           <Button onClick={openAddCard}>
-            <Plus className="h-4 w-4" /> Tambah Kartu
+            <Plus className="h-4 w-4" /> {t('credit_cards.add_card')}
           </Button>
         </div>
       </div>
@@ -287,9 +289,9 @@ export default function CreditCardsPage() {
           <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}>
             <CreditCard className="size-6" style={{ color: 'var(--ink-soft)' }} />
           </div>
-          <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Belum ada kartu kredit</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambah kartu pertama buat lacak tagihan, limit &amp; jatuh tempo.</p>
-          <Button className="mt-4" onClick={openAddCard}><Plus className="h-4 w-4" /> Tambah Kartu</Button>
+          <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t('credit_cards.empty_title')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('credit_cards.empty_desc')}</p>
+          <Button className="mt-4" onClick={openAddCard}><Plus className="h-4 w-4" /> {t('credit_cards.add_card')}</Button>
         </div>
       ) : (
         <>
@@ -323,9 +325,9 @@ export default function CreditCardsPage() {
             >
               <CalendarClock className="size-4 shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }} />
               <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
-                <strong>{dueSoon.length} kartu</strong> jatuh tempo ≤7 hari — <strong>{dueSoon[0].c.name}</strong> {dueSoon[0].days} hari lagi ({formatCurrency(dueSoon[0].c.current_balance)}).
+                <strong>{dueSoon.length} {t('credit_cards.cards_unit')}</strong> {t('credit_cards.nudge_due_within_7d')} — <strong>{dueSoon[0].c.name}</strong> {dueSoon[0].days} {t('credit_cards.days_left_suffix')} ({formatCurrency(dueSoon[0].c.current_balance)}).
               </p>
-              <span className="text-[12px] font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }}>Bayar →</span>
+              <span className="text-[12px] font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }}>{t('credit_cards.pay_arrow')}</span>
             </button>
           )}
 
@@ -347,8 +349,8 @@ export default function CreditCardsPage() {
                     </div>
                     {/* Hover actions */}
                     <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                      <button onClick={() => openEditCard(c)} aria-label="Edit" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Pencil className="h-3 w-3" /></button>
-                      <button onClick={() => removeCard(c.id)} aria-label="Hapus" className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
+                      <button onClick={() => openEditCard(c)} aria-label={t('credit_cards.aria_edit')} className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Pencil className="h-3 w-3" /></button>
+                      <button onClick={() => removeCard(c.id)} aria-label={t('credit_cards.aria_delete')} className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
                     </div>
                     <p className="absolute left-5" style={{ top: 56, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 19, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{c.name}</p>
                     <div className="absolute bottom-5 left-5" style={{ fontFamily: 'var(--font-mono)', fontSize: 15, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.92)' }}>
@@ -362,7 +364,7 @@ export default function CreditCardsPage() {
                   {/* Stats bottom */}
                   <div className="p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Utilization</p>
+                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.utilization')}</p>
                       <p className="num tabular text-[12px] font-semibold" style={{ color: uColor }}>{util.toFixed(0)}%</p>
                     </div>
                     <div className="kl-bar mt-2" style={{ color: uColor }}><i style={{ width: `${Math.min(util, 100)}%` }} /></div>
@@ -371,15 +373,15 @@ export default function CreditCardsPage() {
                     </p>
                     <div className="mt-3 pt-3 border-t flex items-end justify-between gap-2" style={{ borderColor: 'var(--border-soft)' }}>
                       <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tagihan</p>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.bill')}</p>
                         <p className="num tabular font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(c.current_balance)}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Jatuh Tempo</p>
-                        <p className="num tabular font-medium mt-0.5 text-[12px]" style={{ color: urgency }}>{formatDate(due.toISOString())} <span className="opacity-70">({daysLeft}h)</span></p>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.due_date')}</p>
+                        <p className="num tabular font-medium mt-0.5 text-[12px]" style={{ color: urgency }}>{formatDate(due.toISOString())} <span className="opacity-70">({daysLeft}{t('credit_cards.days_short')})</span></p>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => openPayCard(c)} disabled={c.current_balance === 0}>Bayar Tagihan</Button>
+                    <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => openPayCard(c)} disabled={c.current_balance === 0}>{t('credit_cards.pay_bill')}</Button>
                   </div>
                 </div>
               )
@@ -389,24 +391,24 @@ export default function CreditCardsPage() {
           {/* Tagihan Bulanan + Utilization */}
           <div className="grid gap-3 lg:grid-cols-[1.5fr_1fr]">
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Tagihan Bulanan</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.monthly_bills')}</p>
               <div className="mt-3 divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {active.map((c) => (
                   <div key={c.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
                     <div className="min-w-0">
                       <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                      <p className="text-[11px] num" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four || '••••'} · cetak tgl {c.billing_day}</p>
+                      <p className="text-[11px] num" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four || '••••'} · {t('credit_cards.statement_day_prefix')} {c.billing_day}</p>
                     </div>
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="text-right hidden sm:block">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Minimum</p>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.minimum')}</p>
                         <p className="num tabular text-[12px]" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(minPayment(c.current_balance))}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Tagihan</p>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.bill')}</p>
                         <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.current_balance)}</p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => openPayCard(c)} disabled={c.current_balance === 0}>Bayar</Button>
+                      <Button size="sm" variant="outline" onClick={() => openPayCard(c)} disabled={c.current_balance === 0}>{t('credit_cards.pay')}</Button>
                     </div>
                   </div>
                 ))}
@@ -414,30 +416,30 @@ export default function CreditCardsPage() {
             </div>
 
             <div className="s-card p-5" style={{ background: `color-mix(in srgb, ${utilColor} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${utilColor} 25%, var(--border-soft))` }}>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: utilColor }}>Utilization Rate</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: utilColor }}>{t('credit_cards.utilization_rate')}</p>
               <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 52, color: utilColor, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
               <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
-                <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> dari limit total <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>
+                <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> {t('credit_cards.of_total_limit')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>
               </p>
               <div className="mt-4 flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
                 <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: utilColor }} />
                 <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  Buat skor kredit terbaik, jaga utilization <strong style={{ color: 'var(--ink)' }}>di bawah 30%</strong>. Kamu saat ini <strong style={{ color: utilColor }}>{utilZone}</strong>.
+                  {t('credit_cards.advice_prefix')} <strong style={{ color: 'var(--ink)' }}>{t('credit_cards.advice_below_30')}</strong>. {t('credit_cards.advice_you_are')} <strong style={{ color: utilColor }}>{utilZone}</strong>.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Bunga berbunga — wake-up call kalau cuma bayar minimum (pakai bunga kartu) */}
-          <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label="Total kartu kredit" />
+          <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label={t('credit_cards.total_credit_card')} />
 
           {/* Riwayat pembayaran */}
           <div className="s-card overflow-hidden">
             <div className="flex items-center justify-between gap-3 p-5 pb-3">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Riwayat Pembayaran</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.payment_history')}</p>
             </div>
             {payments.length === 0 ? (
-              <p className="px-5 pb-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>Belum ada pembayaran tercatat. Pembayaran tagihan bakal muncul di sini.</p>
+              <p className="px-5 pb-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.no_payments')}</p>
             ) : (
               <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {payments.slice(0, 8).map((p) => {
@@ -448,7 +450,7 @@ export default function CreditCardsPage() {
                       <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: MINT }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c?.name ?? '—'}</p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{formatDate(p.date)}{a ? ` · dari ${a.name}` : ''}{p.notes ? ` · ${p.notes}` : ''}</p>
+                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{formatDate(p.date)}{a ? ` · ${t('credit_cards.from_prefix')} ${a.name}` : ''}{p.notes ? ` · ${p.notes}` : ''}</p>
                       </div>
                       <p className="num font-semibold tabular" style={{ color: MINT }}>−{formatCurrency(p.amount)}</p>
                     </div>
@@ -469,23 +471,23 @@ export default function CreditCardsPage() {
                 <CreditCard className="size-5" style={{ color: CORAL }} />
               </div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{cardForm.id ? 'Edit Kartu Kredit' : 'Tambah Kartu Kredit'}</DialogTitle>
-                <DialogDescription>Pilih bank penerbit, isi limit &amp; tanggal tagihan.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{cardForm.id ? t('credit_cards.dialog_edit_title') : t('credit_cards.dialog_add_title')}</DialogTitle>
+                <DialogDescription>{t('credit_cards.dialog_card_desc')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             {/* Bank penerbit — pemilih berlogo (kayak di Akun) */}
             <div className="grid gap-1.5">
-              <Label>Bank Penerbit</Label>
+              <Label>{t('credit_cards.issuer_bank')}</Label>
               {cardForm.issuer ? (
                 <div className="flex items-center gap-3 rounded-xl border p-2.5" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
                   <InstitutionLogo accountName={cardForm.issuer} size={38} shape="rounded" />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{cardForm.issuer}</p>
-                    <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{identifyInstitution(cardForm.issuer)?.legal ?? 'Bank penerbit kartu'}</p>
+                    <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{identifyInstitution(cardForm.issuer)?.legal ?? t('credit_cards.card_issuer_bank')}</p>
                   </div>
-                  <button type="button" onClick={() => { setCardForm({ ...cardForm, issuer: '' }); setIssuerQuery('') }} className="text-[12px] font-medium px-2 py-1 rounded-md transition hover:bg-[var(--surface)]" style={{ color: 'var(--ink-muted)' }}>Ganti</button>
+                  <button type="button" onClick={() => { setCardForm({ ...cardForm, issuer: '' }); setIssuerQuery('') }} className="text-[12px] font-medium px-2 py-1 rounded-md transition hover:bg-[var(--surface)]" style={{ color: 'var(--ink-muted)' }}>{t('credit_cards.change')}</button>
                 </div>
               ) : (
                 <InstitutionSearch
@@ -493,24 +495,24 @@ export default function CreditCardsPage() {
                   onTextChange={setIssuerQuery}
                   onPick={(inst) => { setCardForm((f) => ({ ...f, issuer: inst.brand, name: f.name || inst.brand })); setIssuerQuery('') }}
                   restrictTypes={['bank']}
-                  placeholder="Cari bank (BCA, Mandiri, BNI, ...)"
+                  placeholder={t('credit_cards.search_bank_placeholder')}
                 />
               )}
             </div>
             {/* Nama kartu + 4 digit */}
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Nama Kartu</Label>
-                <Input value={cardForm.name} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} placeholder="BCA Platinum" />
+                <Label>{t('credit_cards.card_name')}</Label>
+                <Input value={cardForm.name} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} placeholder={t('credit_cards.card_name_placeholder')} />
               </div>
               <div className="grid gap-1.5">
-                <Label>4 Digit Terakhir</Label>
+                <Label>{t('credit_cards.last_four')}</Label>
                 <Input value={cardForm.last_four} maxLength={4} inputMode="numeric" onChange={(e) => setCardForm({ ...cardForm, last_four: e.target.value.replace(/\D/g, '') })} placeholder="1234" />
               </div>
             </div>
             {/* Jaringan kartu — logonya muncul di kartu */}
             <div className="grid gap-1.5">
-              <Label>Jaringan</Label>
+              <Label>{t('credit_cards.network')}</Label>
               <div className="flex flex-wrap gap-2">
                 {NETWORKS.map((net) => {
                   const on = cardForm.network === net.value
@@ -530,20 +532,20 @@ export default function CreditCardsPage() {
             </div>
             {/* Limit + tagihan */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Limit (Rp)</Label><NumberInput value={cardForm.credit_limit} onChange={(n) => setCardForm({ ...cardForm, credit_limit: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Tagihan saat ini (Rp)</Label><NumberInput value={cardForm.current_balance} onChange={(n) => setCardForm({ ...cardForm, current_balance: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('credit_cards.limit_field')}</Label><NumberInput value={cardForm.credit_limit} onChange={(n) => setCardForm({ ...cardForm, credit_limit: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('credit_cards.current_bill_field')}</Label><NumberInput value={cardForm.current_balance} onChange={(n) => setCardForm({ ...cardForm, current_balance: n })} placeholder="0" /></div>
             </div>
             {/* Tanggal cetak / jatuh tempo / bunga */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="grid gap-1.5"><Label>Tgl Cetak</Label><Input type="number" min={1} max={31} value={cardForm.billing_day} onChange={(e) => setCardForm({ ...cardForm, billing_day: Number(e.target.value) || 1 })} /></div>
-              <div className="grid gap-1.5"><Label>Jatuh Tempo</Label><Input type="number" min={1} max={31} value={cardForm.due_day} onChange={(e) => setCardForm({ ...cardForm, due_day: Number(e.target.value) || 1 })} /></div>
-              <div className="grid gap-1.5"><Label>Bunga %/bln</Label><Input type="number" step="any" min={0} value={cardForm.interest_rate || ''} onChange={(e) => setCardForm({ ...cardForm, interest_rate: Number(e.target.value) || 0 })} /></div>
+              <div className="grid gap-1.5"><Label>{t('credit_cards.statement_day')}</Label><Input type="number" min={1} max={31} value={cardForm.billing_day} onChange={(e) => setCardForm({ ...cardForm, billing_day: Number(e.target.value) || 1 })} /></div>
+              <div className="grid gap-1.5"><Label>{t('credit_cards.due_date')}</Label><Input type="number" min={1} max={31} value={cardForm.due_day} onChange={(e) => setCardForm({ ...cardForm, due_day: Number(e.target.value) || 1 })} /></div>
+              <div className="grid gap-1.5"><Label>{t('credit_cards.interest_per_month')}</Label><Input type="number" step="any" min={0} value={cardForm.interest_rate || ''} onChange={(e) => setCardForm({ ...cardForm, interest_rate: Number(e.target.value) || 0 })} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCardDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setCardDialogOpen(false)}>{t('credit_cards.cancel')}</Button>
             <Button onClick={saveCard} disabled={cardSaving || !cardForm.name || !cardForm.issuer}>
-              {cardSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Simpan
+              {cardSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('credit_cards.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -553,41 +555,41 @@ export default function CreditCardsPage() {
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Bayar Tagihan Kartu</DialogTitle>
-            <DialogDescription>Outstanding kartu turun &amp; saldo rekening sumber otomatis berkurang.</DialogDescription>
+            <DialogTitle>{t('credit_cards.pay_dialog_title')}</DialogTitle>
+            <DialogDescription>{t('credit_cards.pay_dialog_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Kartu</Label>
+              <Label>{t('credit_cards.card')}</Label>
               <Select value={payForm.card_id} onValueChange={(v) => setPayForm({ ...payForm, card_id: v ?? '' })}>
-                <SelectTrigger><SelectValue placeholder="Pilih kartu" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('credit_cards.select_card')} /></SelectTrigger>
                 <SelectContent>
                   {active.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name} — outstanding {formatCurrency(c.current_balance)}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.name} — {t('credit_cards.outstanding')} {formatCurrency(c.current_balance)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Jumlah Bayar</Label>
+                <Label>{t('credit_cards.amount')}</Label>
                 <NumberInput value={payForm.amount} onChange={(n) => setPayForm({ ...payForm, amount: n })} placeholder="0" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Tanggal</Label>
+                <Label>{t('credit_cards.date')}</Label>
                 <Input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })} />
               </div>
             </div>
             {payCard && payCard.current_balance > 0 && (
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setPayForm({ ...payForm, amount: minPayment(payCard.current_balance) })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>Minimum {formatCurrency(minPayment(payCard.current_balance))}</button>
-                <button type="button" onClick={() => setPayForm({ ...payForm, amount: payCard.current_balance })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>Penuh {formatCurrency(payCard.current_balance)}</button>
+                <button type="button" onClick={() => setPayForm({ ...payForm, amount: minPayment(payCard.current_balance) })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{t('credit_cards.minimum')} {formatCurrency(minPayment(payCard.current_balance))}</button>
+                <button type="button" onClick={() => setPayForm({ ...payForm, amount: payCard.current_balance })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{t('credit_cards.full')} {formatCurrency(payCard.current_balance)}</button>
               </div>
             )}
             <div className="grid gap-1.5">
-              <Label>Dari Rekening</Label>
+              <Label>{t('credit_cards.from_account')}</Label>
               <Select value={payForm.from_account_id} onValueChange={(v) => setPayForm({ ...payForm, from_account_id: v ?? '' })}>
-                <SelectTrigger><SelectValue placeholder="Opsional — rekening asal" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('credit_cards.from_account_placeholder')} /></SelectTrigger>
                 <SelectContent>
                   {accounts.filter((a) => a.type !== 'investment').map((a) => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -596,14 +598,14 @@ export default function CreditCardsPage() {
               </Select>
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
-              <Input value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} placeholder="Opsional" />
+              <Label>{t('credit_cards.notes')}</Label>
+              <Input value={payForm.notes} onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })} placeholder={t('credit_cards.optional')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setPayDialogOpen(false)}>{t('credit_cards.cancel')}</Button>
             <Button onClick={savePayment} disabled={paySaving || !payForm.card_id || payForm.amount <= 0}>
-              {paySaving && <Loader2 className="h-4 w-4 animate-spin" />}Simpan
+              {paySaving && <Loader2 className="h-4 w-4 animate-spin" />}{t('credit_cards.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

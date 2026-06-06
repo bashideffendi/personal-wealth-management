@@ -9,8 +9,10 @@ import { Label } from '@/components/ui/label'
 import { Snowflake, TrendingDown, Target, Loader2, Zap, Flame, ArrowRight, PartyPopper } from 'lucide-react'
 import Link from 'next/link'
 import { EduTip } from '@/components/edu/edu-tip'
+import { useT } from '@/lib/i18n/context'
 
 export default function DebtStrategyPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [debts, setDebts] = useState<Debt[]>([])
@@ -61,7 +63,7 @@ export default function DebtStrategyPage() {
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: '#FCD34D' }}
           >
-            Strategi Pelunasan
+            {t('debts_strategy.eyebrow')}
           </p>
           <h1
             className="font-bold tracking-tight mt-2 flex items-center gap-2"
@@ -71,12 +73,11 @@ export default function DebtStrategyPage() {
               letterSpacing: '-0.035em',
             }}
           >
-            Atur Prioritas Utang
+            {t('debts_strategy.title')}
             <EduTip topic="debt-strategy" side="bottom" iconSize={18} />
           </h1>
           <p className="text-sm mt-2 max-w-xl" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Pilih Snowball (saldo terkecil dulu) atau Avalanche (bunga tertinggi dulu). Tambahkan pembayaran
-            ekstra untuk mempercepat lunas.
+            {t('debts_strategy.subtitle')}
           </p>
         </div>
       </section>
@@ -103,18 +104,17 @@ export default function DebtStrategyPage() {
             </div>
             <div className="flex-1">
               <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-                Bebas utang — keren!
+                {t('debts_strategy.empty_title')}
               </p>
               <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-                Begitu ada utang baru (KPR, KKB, paylater, kartu kredit),
-                tool ini ngitungin urutan bayar terbaik biar lunas lebih cepat & lebih hemat bunga.
+                {t('debts_strategy.empty_desc')}
               </p>
               <Link
                 href="/dashboard/debts"
                 className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium"
                 style={{ color: 'var(--c-mint)' }}
               >
-                Catat utang pertamamu
+                {t('debts_strategy.empty_cta')}
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>
@@ -126,18 +126,18 @@ export default function DebtStrategyPage() {
               active={false}
               onClick={() => {}}
               icon={<Snowflake className="h-4 w-4" />}
-              title="Snowball"
-              subtitle="Saldo Terkecil Dulu"
-              desc="Lunasi utang dengan saldo terkecil dulu — momentum cepat, bagus buat motivasi disiplin."
+              title={t('debts_strategy.snowball_title')}
+              subtitle={t('debts_strategy.snowball_subtitle')}
+              desc={t('debts_strategy.snowball_desc_demo')}
               accent="linear-gradient(135deg, #06B6D4, #3B82F6)"
             />
             <StrategyCard
               active={false}
               onClick={() => {}}
               icon={<TrendingDown className="h-4 w-4" />}
-              title="Avalanche"
-              subtitle="Bunga Tertinggi Dulu"
-              desc="Lunasi utang dengan bunga tertinggi dulu — paling hemat secara matematika."
+              title={t('debts_strategy.avalanche_title')}
+              subtitle={t('debts_strategy.avalanche_subtitle')}
+              desc={t('debts_strategy.avalanche_desc_demo')}
               accent="linear-gradient(135deg, #F43F5E, #F97316)"
             />
           </div>
@@ -150,13 +150,13 @@ export default function DebtStrategyPage() {
               color: 'var(--ink-muted)',
             }}
           >
-            <p className="font-medium mb-1" style={{ color: 'var(--ink)' }}>Contoh kasus:</p>
+            <p className="font-medium mb-1" style={{ color: 'var(--ink)' }}>{t('debts_strategy.example_title')}</p>
             <p>
-              Misal punya 3 utang: KPR Rp 250jt (bunga 8%), KKB Rp 80jt (bunga 11%), kartu kredit Rp 12jt (bunga 24%).
+              {t('debts_strategy.example_intro')}
             </p>
             <ul className="mt-2 space-y-1 list-disc pl-5">
-              <li><strong>Snowball</strong>: Kartu kredit dulu (paling kecil) → KKB → KPR. Cepat ada win pertama.</li>
-              <li><strong>Avalanche</strong>: Kartu kredit dulu (bunga 24%) → KKB (11%) → KPR (8%). Hemat bunga ratusan juta.</li>
+              <li><strong>{t('debts_strategy.snowball_title')}</strong>: {t('debts_strategy.example_snowball')}</li>
+              <li><strong>{t('debts_strategy.avalanche_title')}</strong>: {t('debts_strategy.example_avalanche')}</li>
             </ul>
           </div>
         </>
@@ -168,18 +168,18 @@ export default function DebtStrategyPage() {
               active={strategy === 'snowball'}
               onClick={() => setStrategy('snowball')}
               icon={<Snowflake className="h-4 w-4" />}
-              title="Snowball"
-              subtitle="Saldo Terkecil Dulu"
-              desc="Cepat menang kecil. Bagus untuk motivasi & disiplin awal."
+              title={t('debts_strategy.snowball_title')}
+              subtitle={t('debts_strategy.snowball_subtitle')}
+              desc={t('debts_strategy.snowball_desc')}
               accent="linear-gradient(135deg, #06B6D4, #3B82F6)"
             />
             <StrategyCard
               active={strategy === 'avalanche'}
               onClick={() => setStrategy('avalanche')}
               icon={<TrendingDown className="h-4 w-4" />}
-              title="Avalanche"
-              subtitle="Bunga Tertinggi Dulu"
-              desc="Menghemat bunga. Paling optimal secara matematis."
+              title={t('debts_strategy.avalanche_title')}
+              subtitle={t('debts_strategy.avalanche_subtitle')}
+              desc={t('debts_strategy.avalanche_desc')}
               accent="linear-gradient(135deg, #F43F5E, #F97316)"
             />
           </div>
@@ -188,10 +188,10 @@ export default function DebtStrategyPage() {
           <div className="s-card p-5">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4" style={{ color: 'var(--c-mint)' }} />
-              <Label htmlFor="extra" className="text-sm font-semibold">Pembayaran Ekstra per Bulan</Label>
+              <Label htmlFor="extra" className="text-sm font-semibold">{t('debts_strategy.extra_label')}</Label>
             </div>
             <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
-              Tambahan di luar cicilan minimum, otomatis dialokasikan ke utang prioritas.
+              {t('debts_strategy.extra_desc')}
             </p>
             <div className="mt-3 flex items-center gap-3">
               <div className="text-lg font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</div>
@@ -204,9 +204,9 @@ export default function DebtStrategyPage() {
               />
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]">
-              <Stat label="Total cicilan/bln" value={formatCurrency(totalMin)} />
-              <Stat label="Ekstra" value={formatCurrency(extraPayment)} />
-              <Stat label="Total out/bln" value={formatCurrency(totalMonthly)} highlight />
+              <Stat label={t('debts_strategy.stat_total_min')} value={formatCurrency(totalMin)} />
+              <Stat label={t('debts_strategy.stat_extra')} value={formatCurrency(extraPayment)} />
+              <Stat label={t('debts_strategy.stat_total_out')} value={formatCurrency(totalMonthly)} highlight />
             </div>
           </div>
 
@@ -214,10 +214,10 @@ export default function DebtStrategyPage() {
           <div className="s-card p-5">
             <div className="flex items-center gap-2 mb-1">
               <Flame className="h-4 w-4" style={{ color: 'var(--danger)' }} />
-              <h3 className="text-xl font-bold">Urutan Prioritas</h3>
+              <h3 className="text-xl font-bold">{t('debts_strategy.queue_title')}</h3>
             </div>
             <p className="text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>
-              Sisa total {formatCurrency(totalRemaining)} · {active.length} utang
+              {t('debts_strategy.queue_total_remaining')} {formatCurrency(totalRemaining)} · {active.length} {t('debts_strategy.queue_debts_unit')}
             </p>
             <div className="space-y-2.5">
               {ordered.map((d, i) => {
@@ -249,14 +249,14 @@ export default function DebtStrategyPage() {
                           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{d.name}</p>
                           {focus && (
                             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: '#FFF' }}>
-                              <Target className="h-2.5 w-2.5" /> Fokus
+                              <Target className="h-2.5 w-2.5" /> {t('debts_strategy.focus_badge')}
                             </span>
                           )}
                         </div>
                         <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                          {strategy === 'avalanche' ? `Bunga ${d.interest_rate}%` : `Sisa ${formatCurrency(d.remaining)}`}
+                          {strategy === 'avalanche' ? `${t('debts_strategy.row_interest')} ${d.interest_rate}%` : `${t('debts_strategy.row_remaining')} ${formatCurrency(d.remaining)}`}
                           {' · '}
-                          Cicilan {formatCurrency(d.monthly_payment)}/bln
+                          {t('debts_strategy.row_installment')} {formatCurrency(d.monthly_payment)}{t('debts_strategy.per_month_suffix')}
                         </p>
                       </div>
                     </div>

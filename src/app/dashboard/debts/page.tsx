@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Debt, CreditCard as CreditCardRow } from '@/types'
 import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
+import { useT } from '@/lib/i18n/context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
@@ -91,6 +92,7 @@ const emptyForm = {
 }
 
 export default function DebtsOverviewPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [debts, setDebts] = useState<Debt[]>([])
@@ -149,7 +151,7 @@ export default function DebtsOverviewPage() {
     setSaving(false); setDialogOpen(false); void load()
   }
   async function remove(id: string) {
-    if (!confirm('Hapus utang ini?')) return
+    if (!confirm(t('debts.confirm_delete'))) return
     await supabase.from('debts').delete().eq('id', id); void load()
   }
   function openEdit(d: Debt) {
@@ -222,11 +224,11 @@ export default function DebtsOverviewPage() {
 
   // Validasi form dialog — pesan per-field, ditampilin setelah user coba simpan (triedSave).
   const formErrors: Record<string, string> = {}
-  if (!(form.name ?? '').trim()) formErrors.name = 'Nama utang wajib diisi'
-  if (!form.type) formErrors.type = 'Pilih tipe utang'
-  if (form.remaining < 0) formErrors.remaining = 'Sisa tidak boleh negatif'
-  else if (form.principal > 0 && form.remaining > form.principal) formErrors.remaining = 'Sisa melebihi pokok'
-  if (form.type && !isRevolving(form.type) && form.monthly_payment <= 0) formErrors.monthly_payment = 'Cicilan harus lebih dari 0'
+  if (!(form.name ?? '').trim()) formErrors.name = t('debts.err_name_required')
+  if (!form.type) formErrors.type = t('debts.err_type_required')
+  if (form.remaining < 0) formErrors.remaining = t('debts.err_remaining_negative')
+  else if (form.principal > 0 && form.remaining > form.principal) formErrors.remaining = t('debts.err_remaining_exceeds')
+  if (form.type && !isRevolving(form.type) && form.monthly_payment <= 0) formErrors.monthly_payment = t('debts.err_payment_positive')
   const hasErrors = Object.keys(formErrors).length > 0
 
   return (
@@ -234,17 +236,17 @@ export default function DebtsOverviewPage() {
       {/* Header terang — eyebrow + judul serif + subtitle + aksi (pola Dana Darurat) */}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="max-w-xl">
-          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{allActive.length} utang aktif</p>
+          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{allActive.length} {t('debts.active_debts')}</p>
           <h1 className="mt-1 text-2xl sm:text-[28px] leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
-            Utang &amp; Strategi Pelunasan
+            {t('debts.page_title')}
           </h1>
           <p className="text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-            Konsolidasi seluruh kewajiban, dengan dua strategi pelunasan untuk dibandingkan.
+            {t('debts.page_subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link href="/dashboard/debts/payments"><Button variant="outline"><Receipt className="h-4 w-4" /> Pembayaran</Button></Link>
-          <Button onClick={() => { setForm(emptyForm); setTriedSave(false); setDialogOpen(true) }}><Plus className="h-4 w-4" /> Utang baru</Button>
+          <Link href="/dashboard/debts/payments"><Button variant="outline"><Receipt className="h-4 w-4" /> {t('debts.payments')}</Button></Link>
+          <Button onClick={() => { setForm(emptyForm); setTriedSave(false); setDialogOpen(true) }}><Plus className="h-4 w-4" /> {t('debts.new_debt')}</Button>
         </div>
       </header>
 
@@ -253,72 +255,72 @@ export default function DebtsOverviewPage() {
       ) : allActive.length === 0 ? (
         <div className="s-card p-12 text-center">
           <PartyPopper className="size-12 mx-auto" style={{ color: '#10B981' }} />
-          <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>Bebas utang</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Gak ada utang aktif. Mantap — jaga terus.</p>
+          <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.debt_free')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts.debt_free_desc')}</p>
         </div>
       ) : (
         <>
           {/* 3 stat card ringkasan */}
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="s-card p-5">
-              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Sisa Total Utang</p>
+              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_remaining')}</p>
               <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--c-coral)', letterSpacing: '-0.02em' }}>{formatCurrency(totalRemaining)}</p>
               <p className="text-[12px] mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                Sudah dibayar <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(totalPaid)}</span> dari pokok awal <span className="num">{formatCurrency(totalPrincipal)}</span>
+                {t('debts.already_paid')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(totalPaid)}</span> {t('debts.of_principal')} <span className="num">{formatCurrency(totalPrincipal)}</span>
               </p>
               <div className="mt-3 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                 <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(paidPct, 100)}%`, background: 'var(--c-mint)' }} />
               </div>
               <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
-                <span className="num">{paidPct.toFixed(0)}% lunas</span><span className="num">{Math.max(0, 100 - paidPct).toFixed(0)}% tersisa</span>
+                <span className="num">{paidPct.toFixed(0)}% {t('debts.paid_off')}</span><span className="num">{Math.max(0, 100 - paidPct).toFixed(0)}% {t('debts.remaining_label')}</span>
               </div>
               {/* Countdown bebas utang — focal point (pakai strategi aktif) */}
               <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid var(--border-soft)' }}>
                 <Flag className="size-3.5 shrink-0" style={{ color: 'var(--c-mint)' }} />
                 {tlResult.feasible && tlResult.months > 0 && tlResult.months < 600 ? (
                   <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-muted)' }}>
-                    Bebas utang <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(tlResult.months)}</span>
-                    <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} thn` : `${tlResult.months} bln`} lagi</span>
+                    {t('debts.debt_free_by')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(tlResult.months)}</span>
+                    <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} ${t('debts.years')}` : `${tlResult.months} ${t('debts.months')}`} {t('debts.to_go')}</span>
                   </p>
                 ) : (
-                  <p className="text-[12px] leading-snug" style={{ color: 'var(--c-amber)' }}>Cicilan belum nutup bunga — naikin biar utang turun</p>
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--c-amber)' }}>{t('debts.payment_below_interest')}</p>
                 )}
               </div>
             </div>
 
             <div className="s-card p-5">
-              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Cicilan / Bulan</p>
+              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.monthly_payment')}</p>
               <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{formatCurrency(totalMonthly)}</p>
               <div className="mt-3 space-y-1.5 text-[12px]">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}><span className="size-2 rounded-full" style={{ background: 'var(--c-violet)' }} />Jangka Panjang</span>
+                  <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}><span className="size-2 rounded-full" style={{ background: 'var(--c-violet)' }} />{t('debts.long_term')}</span>
                   <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(longTermMonthly)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}><span className="size-2 rounded-full" style={{ background: 'var(--c-coral)' }} />Konsumtif</span>
+                  <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}><span className="size-2 rounded-full" style={{ background: 'var(--c-coral)' }} />{t('debts.consumer')}</span>
                   <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(consumerMonthly)}</span>
                 </div>
               </div>
               {monthlyInterestNow > 0 && (
                 <p className="text-[11px] mt-2.5 pt-2.5 leading-snug" style={{ borderTop: '1px solid var(--border-soft)', color: 'var(--ink-soft)' }}>
-                  Dari cicilan ini, ± <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{formatCurrency(Math.round(monthlyInterestNow))}</span>/bln masih kebakar bunga
+                  {t('debts.of_this_payment')} ± <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{formatCurrency(Math.round(monthlyInterestNow))}</span>{t('debts.per_month_interest_burn')}
                 </p>
               )}
             </div>
 
             <div className="s-card p-5">
-              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Debt-to-Income</p>
+              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.dti')}</p>
               <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: dtiColor, letterSpacing: '-0.02em' }}>{dti != null ? `${dti.toFixed(1)}%` : '—'}</p>
-              <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>dari pendapatan bulanan</p>
+              <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{t('debts.of_monthly_income')}</p>
               <div className="mt-3 relative h-2 w-full rounded-full overflow-hidden" role="progressbar"
                 aria-valuenow={dti != null ? Math.round(dti) : 0} aria-valuemin={0} aria-valuemax={60}
-                aria-label={dti != null ? `Debt-to-Income ${dti.toFixed(1)} persen — ideal di bawah 36 persen` : 'Debt-to-Income belum ada data pendapatan'}
+                aria-label={dti != null ? `${t('debts.dti')} ${dti.toFixed(1)}% — ${t('debts.dti_aria_ideal')}` : t('debts.dti_aria_no_data')}
                 style={{ background: 'var(--surface-2)' }}>
                 <div className="absolute inset-y-0 left-0 rounded-full transition-all" style={{ width: `${Math.min((dti ?? 0) / 60 * 100, 100)}%`, background: dtiColor }} />
                 {/* tanda ambang ideal 36% (di 60% lebar = skala 0–60%) */}
                 <div className="absolute inset-y-0" style={{ left: '60%', width: 1.5, background: 'var(--ink-soft)', opacity: 0.45 }} />
               </div>
-              <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}><span>Ideal &lt; 36%</span><span>60%+</span></div>
+              <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}><span>{t('debts.ideal_under_36')}</span><span>60%+</span></div>
             </div>
           </div>
 
@@ -329,9 +331,9 @@ export default function DebtsOverviewPage() {
                 <TrendingDown className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold" style={{ color: 'var(--ink)' }}>Bunga tinggi — pertimbangin pindah</p>
+                <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.high_interest_title')}</p>
                 <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} bunganya sampai <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{maxApr}%/thn</span>. Balance transfer atau KTA bunga ~12% bisa hemat sekitar <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(refiSaving)}/tahun</span>. Strategi <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> udah otomatis prioritasin ini.
+                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
                 </p>
               </div>
             </div>
@@ -340,10 +342,10 @@ export default function DebtsOverviewPage() {
           {/* Tabel utang */}
           <div className="s-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Daftar Utang</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.debt_list')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {FILTERS.filter((f) => f.cat == null || allActive.some((d) => d.category === f.cat)).map((f) => (
-                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} aria-label={`Filter kategori: ${f.key}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} aria-label={`${t('debts.filter_category_aria')} ${f.key}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                     style={{ background: filter === f.key ? 'var(--ink)' : 'var(--surface-2)', color: filter === f.key ? 'var(--surface)' : 'var(--ink)' }}>
                     {f.key}
                   </button>
@@ -354,12 +356,12 @@ export default function DebtsOverviewPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                    <th scope="col" className="text-left font-medium px-4 py-2.5">Utang</th>
-                    <th scope="col" className="text-left font-medium px-3 py-2.5">Jenis</th>
-                    <th scope="col" className="text-right font-medium px-3 py-2.5">Sisa / Pokok</th>
-                    <th scope="col" className="text-right font-medium px-3 py-2.5">Bunga</th>
-                    <th scope="col" className="text-right font-medium px-3 py-2.5">Cicilan</th>
-                    <th scope="col" className="text-right font-medium px-4 py-2.5">Tenor</th>
+                    <th scope="col" className="text-left font-medium px-4 py-2.5">{t('debts.col_debt')}</th>
+                    <th scope="col" className="text-left font-medium px-3 py-2.5">{t('debts.col_type')}</th>
+                    <th scope="col" className="text-right font-medium px-3 py-2.5">{t('debts.col_remaining_principal')}</th>
+                    <th scope="col" className="text-right font-medium px-3 py-2.5">{t('debts.col_interest')}</th>
+                    <th scope="col" className="text-right font-medium px-3 py-2.5">{t('debts.col_payment')}</th>
+                    <th scope="col" className="text-right font-medium px-4 py-2.5">{t('debts.col_tenor')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -368,7 +370,7 @@ export default function DebtsOverviewPage() {
                     const Icon = typeIcon(d.type)
                     const isCC = d.id.startsWith('cc:')
                     const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
-                    const tenor = isRevolving(d.type) ? 'Revolving' : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} bln` : '—')
+                    const tenor = isRevolving(d.type) ? t('debts.revolving') : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} ${t('debts.months')}` : '—')
                     return (
                       <tr key={d.id} className="group border-t align-top" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
@@ -378,7 +380,7 @@ export default function DebtsOverviewPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                              <p className="text-[10.5px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>jatuh tempo {d.due_date ? new Date(d.due_date).getDate() : '—'}/bulan</p>
+                              <p className="text-[10.5px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.due_on')} {d.due_date ? new Date(d.due_date).getDate() : '—'}{t('debts.day_of_month_suffix')}</p>
                               <div className="mt-1.5 h-1 w-28 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                                 <div className="h-full rounded-full" style={{ width: `${Math.min(paid, 100)}%`, background: meta.color }} />
                               </div>
@@ -388,34 +390,34 @@ export default function DebtsOverviewPage() {
                         <td className="px-3 py-3"><span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${meta.color}1A`, color: meta.color }}>{getTypeLabel(d.type)}</span></td>
                         <td className="px-3 py-3 text-right">
                           <p className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
-                          <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>dari {formatCurrency(d.principal)}</p>
+                          <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.of_amount')} {formatCurrency(d.principal)}</p>
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="inline-flex items-center justify-end gap-1">
                             {d.interest_rate >= 18 && <AlertCircle className="size-3" style={{ color: 'var(--c-coral)' }} aria-hidden="true" />}
                             <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span>
-                            {d.interest_rate >= 18 && <span className="sr-only">bunga tinggi</span>}
+                            {d.interest_rate >= 18 && <span className="sr-only">{t('debts.high_interest_sr')}</span>}
                           </span>
-                          <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>per tahun</p>
-                          {(tlResult.perDebtInterest[d.id] ?? 0) > 0 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>± {formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} bunga</p>}
+                          <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.per_year')}</p>
+                          {(tlResult.perDebtInterest[d.id] ?? 0) > 0 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>± {formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} {t('debts.interest_word')}</p>}
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="num" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span>
-                          {d.monthly_payment > 0 && <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>per bulan</p>}
+                          {d.monthly_payment > 0 && <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.per_month')}</p>}
                           <div className="flex justify-end gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition mt-1">
                             {isCC ? (
-                              <Link href="/dashboard/credit-cards"><Button variant="ghost" size="icon-sm" title="Kelola di Kartu Kredit"><CreditCard className="h-3 w-3" /></Button></Link>
+                              <Link href="/dashboard/credit-cards"><Button variant="ghost" size="icon-sm" title={t('debts.manage_in_credit_cards')}><CreditCard className="h-3 w-3" /></Button></Link>
                             ) : (
                               <>
-                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)} title={`Edit ${d.name}`} aria-label={`Edit ${d.name}`}><Pencil className="h-3 w-3" /></Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)} title={`Hapus ${d.name}`} aria-label={`Hapus ${d.name}`}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(d)} title={`${t('debts.edit')} ${d.name}`} aria-label={`${t('debts.edit')} ${d.name}`}><Pencil className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => remove(d.id)} title={`${t('debts.delete')} ${d.name}`} aria-label={`${t('debts.delete')} ${d.name}`}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                               </>
                             )}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>
                           {tenor}
-                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>lunas {payoffDate(tlResult.perDebt[d.id] ?? 0)}</p>}
+                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_lower')} {payoffDate(tlResult.perDebt[d.id] ?? 0)}</p>}
                         </td>
                       </tr>
                     )
@@ -430,7 +432,7 @@ export default function DebtsOverviewPage() {
                 const Icon = typeIcon(d.type)
                 const isCC = d.id.startsWith('cc:')
                 const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
-                const tenor = isRevolving(d.type) ? 'Revolving' : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} bln` : '—')
+                const tenor = isRevolving(d.type) ? t('debts.revolving') : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} ${t('debts.months')}` : '—')
                 return (
                   <div key={d.id} className="flex items-start gap-3 p-4">
                     <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}>
@@ -448,17 +450,17 @@ export default function DebtsOverviewPage() {
                         <div className="h-full rounded-full" style={{ width: `${Math.min(paid, 100)}%`, background: meta.color }} />
                       </div>
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                        <span>Bunga <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span></span>
-                        <span>Cicilan <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
+                        <span>{t('debts.interest_label')} <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span></span>
+                        <span>{t('debts.payment_label')} <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
                         <span className="num shrink-0">{tenor}</span>
                       </div>
                       {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && (
-                        <p className="num text-[10px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>Lunas {payoffDate(tlResult.perDebt[d.id] ?? 0)}{(tlResult.perDebtInterest[d.id] ?? 0) > 0 ? ` · ± ${formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} bunga` : ''}</p>
+                        <p className="num text-[10px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_cap')} {payoffDate(tlResult.perDebt[d.id] ?? 0)}{(tlResult.perDebtInterest[d.id] ?? 0) > 0 ? ` · ± ${formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} ${t('debts.interest_word')}` : ''}</p>
                       )}
                       {!isCC && (
                         <div className="mt-2 flex gap-3">
-                          <button type="button" onClick={() => openEdit(d)} className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>Edit</button>
-                          <button type="button" onClick={() => remove(d.id)} className="text-[11px] font-medium" style={{ color: 'var(--c-coral)' }}>Hapus</button>
+                          <button type="button" onClick={() => openEdit(d)} className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>{t('debts.edit')}</button>
+                          <button type="button" onClick={() => remove(d.id)} className="text-[11px] font-medium" style={{ color: 'var(--c-coral)' }}>{t('debts.delete')}</button>
                         </div>
                       )}
                     </div>
@@ -471,17 +473,17 @@ export default function DebtsOverviewPage() {
           {/* ★ CENTERPIECE — Dua strategi pelunasan, di-highlight */}
           <div>
             <div className="mb-3">
-              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Strategi Pelunasan</p>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>Dua jalur lunas yang sama-sama valid — pilih yang cocok sama gaya kamu.</p>
+              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_strategy')}</p>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('debts.payoff_strategy_subtitle')}</p>
             </div>
             {/* Rekomendasi tradeoff eksplisit */}
             <div className="mb-3 flex items-start gap-2.5 rounded-xl p-3.5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
-                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> hemat <span className="num">{formatCurrency(interestDiff)}</span> bunga{monthsDiff > 0 ? <> &amp; lunas <span className="num">{monthsDiff} bln</span> lebih cepat</> : null}. Pilih <span style={{ color: 'var(--c-mint)', fontWeight: 600 }}>Snowball</span> kalau butuh dorongan — utang pertama{snowFirst ? ` (${snowFirst.name})` : ''} lunas <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
+                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
                 ) : (
-                  <>Buat utang kamu sekarang, dua strategi hasilnya mirip — pilih yang bikin kamu paling konsisten bayar.</>
+                  <>{t('debts.tradeoff_similar')}</>
                 )}
               </p>
             </div>
@@ -489,12 +491,12 @@ export default function DebtsOverviewPage() {
               <StrategyCard
                 strategy="snowball" result={snowball} debts={allActive}
                 accent="var(--c-mint)" accentSoft="var(--c-mint-soft)"
-                savedNote={cheaper === 'snowball' && interestDiff > 0 ? `Bunga termurah · hemat ${formatCurrency(interestDiff)}` : 'Win tercepat — momentum dulu'}
+                savedNote={cheaper === 'snowball' && interestDiff > 0 ? `${t('debts.cheapest_interest')} · ${t('debts.save_word')} ${formatCurrency(interestDiff)}` : t('debts.note_fastest_win')}
               />
               <StrategyCard
                 strategy="avalanche" result={avalanche} debts={allActive}
                 accent="var(--c-violet)" accentSoft="var(--c-violet-soft)"
-                savedNote={cheaper === 'avalanche' && interestDiff > 0 ? `Bunga termurah · hemat ${formatCurrency(interestDiff)}` : 'Paling efisien matematis'}
+                savedNote={cheaper === 'avalanche' && interestDiff > 0 ? `${t('debts.cheapest_interest')} · ${t('debts.save_word')} ${formatCurrency(interestDiff)}` : t('debts.note_most_efficient')}
               />
             </div>
           </div>
@@ -503,10 +505,10 @@ export default function DebtsOverviewPage() {
           <div className="s-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Timeline Pelunasan</p>
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_timeline')}</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-                  {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>Bebas utang konsumtif <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(consumerFreeMonth)}</span> · </>)}
-                  Semua lunas <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate(tlResult.months)}</span>
+                  {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>{t('debts.consumer_debt_free')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(consumerFreeMonth)}</span> · </>)}
+                  {t('debts.all_paid_off')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate(tlResult.months)}</span>
                 </p>
               </div>
               <div className="flex gap-1.5">
@@ -525,20 +527,20 @@ export default function DebtsOverviewPage() {
           <div className="s-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Percepat Pelunasan</p>
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.speed_up_payoff')}</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-                  Tambah cicilan ekstra/bulan (strategi <span className="capitalize font-medium" style={{ color: 'var(--ink)' }}>{tlStrategy}</span>) — geser buat liat lunas lebih cepat &amp; hemat bunga.
+                  {t('debts.speed_up_prefix')} <span className="capitalize font-medium" style={{ color: 'var(--ink)' }}>{tlStrategy}</span>{t('debts.speed_up_suffix')}
                 </p>
               </div>
               {extraPayment > 0 && (
-                <button type="button" onClick={() => setExtraPayment(0)} className="text-[11px] font-medium shrink-0" style={{ color: 'var(--ink-soft)' }}>Reset</button>
+                <button type="button" onClick={() => setExtraPayment(0)} className="text-[11px] font-medium shrink-0" style={{ color: 'var(--ink-soft)' }}>{t('debts.reset')}</button>
               )}
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {[0, 500_000, 1_000_000, 2_000_000, 5_000_000].map((v) => (
                 <button key={v} type="button" onClick={() => setExtraPayment(v)} aria-pressed={extraPayment === v} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                   style={{ background: extraPayment === v ? 'var(--c-mint)' : 'var(--surface-2)', color: extraPayment === v ? '#FFF' : 'var(--ink)' }}>
-                  {v === 0 ? 'Tanpa ekstra' : `+${formatCurrency(v)}`}
+                  {v === 0 ? t('debts.no_extra') : `+${formatCurrency(v)}`}
                 </button>
               ))}
             </div>
@@ -546,21 +548,21 @@ export default function DebtsOverviewPage() {
               <input
                 type="range" min={0} max={extraMax} step={100_000} value={Math.min(extraPayment, extraMax)}
                 onChange={(e) => setExtraPayment(Number(e.target.value))}
-                className="flex-1 accent-[#10B981]" aria-label="Cicilan ekstra per bulan"
+                className="flex-1 accent-[#10B981]" aria-label={t('debts.extra_payment_aria')}
               />
               <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint)' }}>+{formatCurrency(extraPayment)}</span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lunas Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months)}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lebih Cepat</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} bln` : '—'}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Hemat Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCurrency(Math.round(interestSaved)) : '—'}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.now_paid_off')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months)}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.faster')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} ${t('debts.months')}` : '—'}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.interest_saved')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCurrency(Math.round(interestSaved)) : '—'}</p></div>
             </div>
           </div>
 
           {/* Pembayaran mendatang + Rasio */}
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Pembayaran Mendatang</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.upcoming_payments')}</p>
               <div className="mt-3 space-y-2.5">
                 {upcoming.map((d) => {
                   const days = daysUntil(d.due_date)
@@ -576,7 +578,7 @@ export default function DebtsOverviewPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
                           <p className="text-[10px] flex items-center gap-1" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
-                            {urgent ? <><AlertCircle className="size-2.5" /> Mendesak · {days <= 0 ? 'jatuh tempo' : `${days} hari lagi`}</> : isCC ? <><CheckCircle2 className="size-2.5" style={{ color: 'var(--c-mint)' }} /> Auto-debet aktif</> : `${days} hari lagi`}
+                            {urgent ? <><AlertCircle className="size-2.5" /> {t('debts.urgent')} · {days <= 0 ? t('debts.due_now') : `${days} ${t('debts.days_left')}`}</> : isCC ? <><CheckCircle2 className="size-2.5" style={{ color: 'var(--c-mint)' }} /> {t('debts.autodebit_active')}</> : `${days} ${t('debts.days_left')}`}
                           </p>
                         </div>
                       </div>
@@ -587,11 +589,11 @@ export default function DebtsOverviewPage() {
               </div>
             </div>
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rasio Utang</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.debt_ratios')}</p>
               <div className="mt-3 space-y-3.5">
-                <RatioRow label="Debt-to-Income (DTI)" ideal="Ideal < 36%" value={dti} idealMax={36} />
-                <RatioRow label="Debt-to-Asset" ideal="Ideal < 50%" value={debtToAsset} idealMax={50} />
-                <RatioRow label="Front-End (KPR / Pendapatan)" ideal="Ideal < 28%" value={frontEnd} idealMax={28} />
+                <RatioRow label={t('debts.ratio_dti')} ideal={t('debts.ideal_under_36')} value={dti} idealMax={36} />
+                <RatioRow label={t('debts.ratio_debt_to_asset')} ideal={t('debts.ideal_under_50')} value={debtToAsset} idealMax={50} />
+                <RatioRow label={t('debts.ratio_front_end')} ideal={t('debts.ideal_under_28')} value={frontEnd} idealMax={28} />
               </div>
             </div>
           </div>
@@ -605,47 +607,47 @@ export default function DebtsOverviewPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(244,63,94,0.12)' }}><Banknote className="size-5" style={{ color: '#F43F5E' }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Utang' : 'Utang Baru'}</DialogTitle>
-                <DialogDescription>Catat utang biar masuk hitungan net worth, DTI &amp; strategi pelunasan.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('debts.dialog_edit_title') : t('debts.dialog_new_title')}</DialogTitle>
+                <DialogDescription>{t('debts.dialog_description')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Nama</Label>
+              <Label>{t('debts.field_name')}</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={triedSave && !!formErrors.name} />
               {triedSave && formErrors.name && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.name}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Kategori</Label>
+                <Label>{t('debts.field_category')}</Label>
                 <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v, type: '' })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih kategori">{(v) => CAT[v as string]?.label ?? 'Pilih kategori'}</SelectValue></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('debts.select_category')}>{(v) => CAT[v as string]?.label ?? t('debts.select_category')}</SelectValue></SelectTrigger>
                   <SelectContent>{Object.entries(CAT).map(([k, v]) => (<SelectItem key={k} value={k}>{v.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Tipe</Label>
+                <Label>{t('debts.field_type')}</Label>
                 <Select value={form.type} onValueChange={(v) => v && setForm({ ...form, type: v })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih tipe" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('debts.select_type')} /></SelectTrigger>
                   <SelectContent>{(DEBT_TYPE_OPTIONS[form.category] ?? []).map((t) => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Pokok Awal</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Sisa</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.remaining}</p>}</div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_principal')}</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_remaining')}</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.remaining}</p>}</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="grid gap-1.5"><Label>Bunga %</Label><Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} /></div>
-              <div className="grid gap-1.5"><Label>Cicilan/bln</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.monthly_payment}</p>}</div>
-              <div className="grid gap-1.5"><Label>Jatuh Tempo</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_interest')}</Label><Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} /></div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_monthly')}</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.monthly_payment}</p>}</div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_due_date')}</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('debts.cancel')}</Button>
             <Button onClick={() => { setTriedSave(true); if (!hasErrors) save() }} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? 'Simpan' : 'Tambah'}
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}{form.id ? t('debts.save') : t('debts.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -657,24 +659,25 @@ export default function DebtsOverviewPage() {
 function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }: {
   strategy: 'snowball' | 'avalanche'; result: PayoffResult; debts: Debt[]; accent: string; accentSoft: string; savedNote?: string
 }) {
+  const t = useT()
   const isSnow = strategy === 'snowball'
   const title = isSnow ? 'Snowball' : 'Avalanche'
   const desc = isSnow
-    ? "Lunasi yang paling kecil dulu. Cepat dapat 'kemenangan' kecil, momentum motivasi."
-    : 'Lunasi yang paling tinggi bunganya dulu. Total bunga paling hemat secara matematika.'
+    ? t('debts.snowball_desc')
+    : t('debts.avalanche_desc')
   const cocok = isSnow
-    ? 'Cocok jika kamu butuh dorongan emosional dan disiplin baru terbentuk.'
-    : 'Cocok jika kamu kuat menahan diri dan mengejar efisiensi maksimum.'
-  const karakter = isSnow ? 'Cepat' : 'Efisien'
+    ? t('debts.snowball_fit')
+    : t('debts.avalanche_fit')
+  const karakter = isSnow ? t('debts.character_fast') : t('debts.character_efficient')
   const byId = new Map(debts.map((d) => [d.id, d]))
   return (
     <div className="rounded-2xl p-5 sm:p-6 transition-shadow hover:shadow-lg" style={{ background: accentSoft, border: `1.5px solid color-mix(in srgb, ${accent} 55%, transparent)` }}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>Strategi</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>{t('debts.strategy')}</p>
           <h3 className="text-2xl leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
         </div>
-        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>Lunas {payoffDate(result.months)}</span>
+        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months)}</span>
       </div>
       <p className="mt-3 text-[15px] leading-snug italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
       <p className="text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
@@ -683,7 +686,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
           <Zap className="size-3" /> {savedNote}
         </div>
       )}
-      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Urutan Pelunasan</p>
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_order')}</p>
       <div className="mt-2 space-y-1.5">
         {result.order.slice(0, 5).map((o, i) => {
           const d = byId.get(o.id)
@@ -703,18 +706,19 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
         })}
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: `1px solid color-mix(in srgb, ${accent} 28%, transparent)` }}>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Lunas Total</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months)}</p></div>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Total Bunga</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Karakter</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
+        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_payoff')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months)}</p></div>
+        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_interest')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
+        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.character')}</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
       </div>
-      {!result.feasible && <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--c-coral)' }}>Cicilan masih lebih kecil dari bunga — naikin cicilan biar utang beneran turun.</p>}
+      {!result.feasible && <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--c-coral)' }}>{t('debts.infeasible_note')}</p>}
     </div>
   )
 }
 
 function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: string }) {
+  const t = useT()
   const tl = result.timeline
-  if (tl.length < 2) return <p className="mt-4 text-sm" style={{ color: 'var(--ink-soft)' }}>Timeline belum bisa dihitung (cek cicilan vs bunga).</p>
+  if (tl.length < 2) return <p className="mt-4 text-sm" style={{ color: 'var(--ink-soft)' }}>{t('debts.timeline_not_available')}</p>
   const maxM = tl[tl.length - 1].month
   const maxR = tl[0].remaining || 1
   const xs = (m: number) => (m / maxM) * 100
@@ -724,7 +728,7 @@ function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: stri
   const fill = `color-mix(in srgb, ${accent} 12%, transparent)`
   return (
     <div className="mt-4">
-      <div className="relative" role="img" aria-label="Grafik timeline pelunasan: sisa utang menurun seiring bulan sampai lunas" style={{ height: 140 }}>
+      <div className="relative" role="img" aria-label={t('debts.timeline_chart_aria')} style={{ height: 140 }}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
           <polygon points={`0,100 ${pts} 100,100`} fill={fill} />
           <polyline points={pts} fill="none" stroke={accent} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
@@ -733,21 +737,21 @@ function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: stri
           const rAt = tl.find((p) => p.month === e.month)?.remaining ?? 0
           return (
             <div key={`${e.name}-${e.month}`} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${xs(e.month)}%`, top: `${ys(rAt)}%` }}>
-              <div className="size-2 rounded-full ring-2 ring-[var(--surface)]" style={{ background: accent }} title={`${e.name} lunas`} />
+              <div className="size-2 rounded-full ring-2 ring-[var(--surface)]" style={{ background: accent }} title={`${e.name} ${t('debts.paid_off_lower')}`} />
             </div>
           )
         })}
       </div>
       <div className="mt-1.5 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
-        <span>Sekarang</span>
-        {axisMarks.map((m) => (<span key={m} className="num">{m} bln</span>))}
+        <span>{t('debts.now')}</span>
+        {axisMarks.map((m) => (<span key={m} className="num">{m} {t('debts.months')}</span>))}
       </div>
       {result.events.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {result.events.slice(0, 6).map((e) => (
             <span key={`leg-${e.name}-${e.month}`} className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px]" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
               <span className="size-1.5 rounded-full" style={{ background: accent }} />
-              {e.name} lunas · <span className="num">{payoffDate(e.month)}</span>
+              {e.name} {t('debts.paid_off_lower')} · <span className="num">{payoffDate(e.month)}</span>
             </span>
           ))}
         </div>

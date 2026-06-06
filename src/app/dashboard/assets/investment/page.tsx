@@ -14,6 +14,7 @@ import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
+import { useT } from '@/lib/i18n/context'
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
@@ -32,6 +33,7 @@ interface RdnAccount {
 }
 
 export default function InvestmentOverviewPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Investment[]>([])
@@ -177,8 +179,8 @@ export default function InvestmentOverviewPage() {
   // Today's P/L estimate = Σ market × changePct (only quoted holdings).
   const todayPL = useMemo(() => {
     return enriched.reduce((s, e) => {
-      const t = e.i.ticker?.toUpperCase()
-      const cp = t ? quotes[t]?.changePct : null
+      const sym = e.i.ticker?.toUpperCase()
+      const cp = sym ? quotes[sym]?.changePct : null
       return cp == null ? s : s + e.market * (cp / 100)
     }, 0)
   }, [enriched, quotes])
@@ -187,17 +189,17 @@ export default function InvestmentOverviewPage() {
   const holdingTabs = useMemo(() => {
     const present = ASSET_CLASS_ORDER.filter((k) => (byClass[k]?.count ?? 0) > 0)
     return [
-      { key: 'all' as const, label: 'Semua' },
+      { key: 'all' as const, label: t('investment.tab_all') },
       ...present.map((k) => ({ key: k as 'all' | AssetClassKey, label: ASSET_CLASS_META[k].label })),
     ]
-  }, [byClass])
+  }, [byClass, t])
 
   const holdingRows = useMemo(() => {
     return enriched
       .filter((e) => tab === 'all' || assetClassKey(e.i) === tab)
       .map((e) => {
         const ck = assetClassKey(e.i)
-        const t = e.i.ticker?.toUpperCase()
+        const sym = e.i.ticker?.toUpperCase()
         return {
           id: e.i.id,
           name: e.i.name,
@@ -208,7 +210,7 @@ export default function InvestmentOverviewPage() {
           price: e.i.current_price || e.i.avg_cost,
           market: e.market,
           plPct: e.invested > 0 ? (e.pl / e.invested) * 100 : null,
-          changePct: t ? (quotes[t]?.changePct ?? null) : null,
+          changePct: sym ? (quotes[sym]?.changePct ?? null) : null,
         }
       })
       .sort((a, b) => b.market - a.market)
@@ -218,8 +220,8 @@ export default function InvestmentOverviewPage() {
   const movers = useMemo(() => {
     return enriched
       .map((e) => {
-        const t = e.i.ticker?.toUpperCase()
-        const cp = t ? (quotes[t]?.changePct ?? null) : null
+        const sym = e.i.ticker?.toUpperCase()
+        const cp = sym ? (quotes[sym]?.changePct ?? null) : null
         if (cp == null) return null
         const ck = assetClassKey(e.i)
         return {
@@ -320,13 +322,13 @@ export default function InvestmentOverviewPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">
-            Portofolio{institutionCount > 0 ? ` · ${institutionCount} institusi` : ''}
+            {t('investment.eyebrow_portfolio')}{institutionCount > 0 ? ` · ${institutionCount} ${t('investment.institutions')}` : ''}
           </p>
           <h1 className="text-3xl font-bold tracking-tight mt-1" style={{ color: 'var(--ink)' }}>
-            Investasi
+            {t('investment.title')}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Ringkasan nilai portofolio, alokasi, dan holding kamu.
+            {t('investment.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -336,14 +338,14 @@ export default function InvestmentOverviewPage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
             style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           >
-            <History className="size-3.5" /> Riwayat dividen
+            <History className="size-3.5" /> {t('investment.dividend_history')}
           </Link>
           <Link
             href="/dashboard/assets/investment/stock"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
             style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
           >
-            <Plus className="size-3.5" /> Tambah holding
+            <Plus className="size-3.5" /> {t('investment.add_holding')}
           </Link>
         </div>
       </header>
@@ -352,7 +354,7 @@ export default function InvestmentOverviewPage() {
       <section className="s-card p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="eyebrow">Total Nilai Portofolio</p>
+            <p className="eyebrow">{t('investment.total_value')}</p>
             <div className="mt-2 flex flex-wrap items-end gap-3">
               <p
                 className="num tabular font-bold leading-none whitespace-nowrap"
@@ -373,11 +375,11 @@ export default function InvestmentOverviewPage() {
               </span>
             </div>
             <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
-              Total {up ? 'untung' : 'rugi'}{' '}
+              {up ? t('investment.total_gain') : t('investment.total_loss')}{' '}
               <span className="num tabular font-semibold" style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}>
                 {up ? '+' : ''}{formatCurrency(totals.pl)}
               </span>{' '}
-              sejak awal investasi
+              {t('investment.since_inception')}
             </p>
           </div>
           <div className="flex gap-0.5 shrink-0 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
@@ -391,7 +393,7 @@ export default function InvestmentOverviewPage() {
                   className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
                   style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(16,24,40,0.08)' } : { color: 'var(--ink-soft)' }}
                 >
-                  {r.label}
+                  {r.key === 'all' ? t('investment.range_all') : r.label}
                 </button>
               )
             })}
@@ -402,9 +404,9 @@ export default function InvestmentOverviewPage() {
         <div className="mt-4" style={{ height: 150 }}>
           {chartData.length < 2 ? (
             <div className="h-full rounded-xl flex flex-col items-center justify-center text-center px-6" style={{ background: 'var(--surface-2)' }}>
-              <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>Grafik riwayat lagi dikumpulin</p>
+              <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>{t('investment.chart_collecting_title')}</p>
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                Nilai portofolio direkam tiap kamu buka halaman ini — balik lagi besok buat lihat kurvanya tumbuh.
+                {t('investment.chart_collecting_desc')}
               </p>
             </div>
           ) : (
@@ -418,7 +420,7 @@ export default function InvestmentOverviewPage() {
                 </defs>
                 <Tooltip
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Nilai']}
+                  formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.value')]}
                   contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
                 />
                 <Area type="monotone" dataKey="value" stroke={up ? '#10B981' : '#F43F5E'} strokeWidth={2} fill="url(#equityFill)" />
@@ -432,18 +434,18 @@ export default function InvestmentOverviewPage() {
           className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl overflow-hidden border"
           style={{ background: 'var(--border-soft)', borderColor: 'var(--border-soft)' }}
         >
-          <HeroStat label="Modal Ditanam" value={formatCurrency(totals.invested)} />
+          <HeroStat label={t('investment.stat_invested')} value={formatCurrency(totals.invested)} />
           <HeroStat
-            label="Untung / Rugi"
+            label={t('investment.stat_pl')}
             value={`${up ? '+' : ''}${formatCurrency(totals.pl)}`}
             accent={up ? 'var(--c-mint)' : 'var(--c-coral)'}
           />
           <HeroStat
-            label="Hari Ini"
+            label={t('investment.stat_today')}
             value={`${todayPL >= 0 ? '+' : '−'}${formatCurrency(Math.abs(todayPL))}`}
             accent={todayPL >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'}
           />
-          <HeroStat label="Dividen YTD" value={formatCurrency(dividenYtd)} />
+          <HeroStat label={t('investment.stat_dividend_ytd')} value={formatCurrency(dividenYtd)} />
         </div>
       </section>
 
@@ -462,7 +464,7 @@ export default function InvestmentOverviewPage() {
             <Wallet className="size-5" style={{ color: '#0D9488' }} />
           </div>
           <div>
-            <p className="eyebrow">Kas di RDN / RDI</p>
+            <p className="eyebrow">{t('investment.rdn_cash')}</p>
             <p className="num tabular text-2xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
               {formatCurrency(rdnTotal)}
             </p>
@@ -488,12 +490,12 @@ export default function InvestmentOverviewPage() {
           {/* tombol tambah RDN — selalu tampil di sebelah chip */}
           <Link
             href="/dashboard/accounts"
-            title="Tambah rekening RDN"
+            title={t('investment.add_rdn_account')}
             className="inline-flex items-center gap-1 rounded-full border border-dashed px-3 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
             style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
           >
             <Plus className="size-3.5" />
-            {rdnAccounts.length === 0 ? <span>Tambah rekening RDN</span> : null}
+            {rdnAccounts.length === 0 ? <span>{t('investment.add_rdn_account')}</span> : null}
           </Link>
         </div>
         <Link
@@ -501,23 +503,23 @@ export default function InvestmentOverviewPage() {
           className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
           style={{ color: '#0D9488' }}
         >
-          Kelola <ArrowUpRight className="size-3.5" />
+          {t('investment.manage')} <ArrowUpRight className="size-3.5" />
         </Link>
       </div>
 
       {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug) */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
-          <p className="eyebrow">Kelas Aset</p>
-          <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Klik buat rincian tiap kelas</span>
+          <p className="eyebrow">{t('investment.asset_classes')}</p>
+          <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {INVESTMENT_SUBCATS.flatMap((sc) => {
             // Saham dipecah jadi 2 kartu (IDX & US) -> nge-link ke halaman terpisah.
             const cards = sc.slug === 'stock'
               ? [
-                  { key: 'stock-idx', label: 'Saham IDX', href: '/dashboard/assets/investment/stock-idx', d: byClass.stock_idx },
-                  { key: 'stock-us', label: 'Saham US', href: '/dashboard/assets/investment/stock-us', d: byClass.stock_us },
+                  { key: 'stock-idx', label: t('investment.stock_idx'), href: '/dashboard/assets/investment/stock-idx', d: byClass.stock_idx },
+                  { key: 'stock-us', label: t('investment.stock_us'), href: '/dashboard/assets/investment/stock-us', d: byClass.stock_us },
                 ]
               : [{
                   key: sc.slug,
@@ -568,7 +570,7 @@ export default function InvestmentOverviewPage() {
                 </p>
                 <div className="mt-1.5 flex items-center justify-between text-[11px]">
                   <span style={{ color: 'var(--ink-soft)' }}>
-                    {hasPosition ? `${data.count} posisi` : 'Belum ada posisi'}
+                    {hasPosition ? `${data.count} ${t('investment.positions')}` : t('investment.no_position')}
                   </span>
                   {data.invested > 0 && (
                     <span
@@ -593,9 +595,9 @@ export default function InvestmentOverviewPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="mb-4">
-            <p className="eyebrow">Alokasi</p>
+            <p className="eyebrow">{t('investment.allocation')}</p>
             <h3 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
-              Komposisi Portofolio
+              {t('investment.portfolio_composition')}
               <EduTip topic="diversification" side="bottom" />
             </h3>
           </div>
@@ -608,9 +610,9 @@ export default function InvestmentOverviewPage() {
               >
                 <TrendingUp className="size-6" style={{ color: 'var(--info)' }} />
               </div>
-              <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Belum ada posisi</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{t('investment.no_position')}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
-                Catat saham, reksa dana, crypto, atau emas yang kamu pegang.
+                {t('investment.allocation_empty_desc')}
               </p>
             </div>
           ) : (
@@ -647,7 +649,7 @@ export default function InvestmentOverviewPage() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                    {donut.length} Kelas
+                    {donut.length} {t('investment.classes')}
                   </p>
                   <p className="num tabular text-base font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                     {formatCurrency(totals.market)}
@@ -680,14 +682,14 @@ export default function InvestmentOverviewPage() {
         <div className="s-card p-5 sm:p-6 lg:col-span-3 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>
-              <p className="eyebrow">Kinerja</p>
-              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>Return per Kelas Aset</h3>
+              <p className="eyebrow">{t('investment.performance')}</p>
+              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.return_per_class')}</h3>
             </div>
-            <span className="text-[11px] shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>sejak awal · per kelas</span>
+            <span className="text-[11px] shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
           </div>
           {kinerja.length === 0 ? (
             <div className="flex-1 min-h-[180px] flex flex-col items-center justify-center text-center">
-              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada posisi dengan modal tercatat.</p>
+              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_empty')}</p>
             </div>
           ) : (
             <div className="space-y-3.5 flex-1 flex flex-col justify-center">
@@ -734,23 +736,23 @@ export default function InvestmentOverviewPage() {
         <div className="s-card overflow-hidden">
           <div className="p-5 sm:p-6 pb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="eyebrow">Holding</p>
-              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>Daftar Holding</h3>
+              <p className="eyebrow">{t('investment.holding')}</p>
+              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.holding_list')}</h3>
             </div>
             <div className="flex flex-wrap gap-1">
-              {holdingTabs.map((t) => {
-                const active = tab === t.key
+              {holdingTabs.map((tabItem) => {
+                const active = tab === tabItem.key
                 return (
                   <button
-                    key={t.key}
+                    key={tabItem.key}
                     type="button"
-                    onClick={() => setTab(t.key)}
+                    onClick={() => setTab(tabItem.key)}
                     className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
                     style={active
                       ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
                       : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                   >
-                    {t.label}
+                    {tabItem.label}
                   </button>
                 )
               })}
@@ -760,12 +762,12 @@ export default function InvestmentOverviewPage() {
             <table className="w-full text-sm border-collapse" style={{ minWidth: 640 }}>
               <thead>
                 <tr style={{ background: 'var(--surface-3)' }}>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Sym</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2" style={{ color: 'var(--ink-muted)' }}>Nama</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Lot/Unit</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Nilai</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>U/R</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Δ Hari</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_sym')}</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_name')}</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_lot_unit')}</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_value')}</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_pl')}</th>
+                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_day_change')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -810,7 +812,7 @@ export default function InvestmentOverviewPage() {
         <div className={`s-card p-5 sm:p-6 ${movers.length === 0 ? 'lg:col-span-2' : ''}`}>
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <p className="eyebrow">Dividen 6 Bulan</p>
+              <p className="eyebrow">{t('investment.dividend_6mo')}</p>
               <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>{formatCurrency(dividen6Total)}</p>
             </div>
             {dividen6DeltaPct != null && (
@@ -821,15 +823,15 @@ export default function InvestmentOverviewPage() {
                   color: dividen6DeltaPct >= 0 ? 'var(--c-mint)' : 'var(--c-coral)',
                 }}
               >
-                {dividen6DeltaPct >= 0 ? '+' : ''}{dividen6DeltaPct.toFixed(0)}% vs 6 bln lalu
+                {dividen6DeltaPct >= 0 ? '+' : ''}{dividen6DeltaPct.toFixed(0)}% {t('investment.vs_prev_6mo')}
               </span>
             )}
           </div>
           {dividen6Total === 0 ? (
             <div className="h-[160px] flex flex-col items-center justify-center text-center">
-              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada dividen tercatat 6 bulan terakhir.</p>
+              <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('investment.dividend_empty')}</p>
               <Link href="/dashboard/assets/investment/stock?tab=dividen" className="text-xs mt-1 hover:underline" style={{ color: '#0D9488' }}>
-                Catat dividen →
+                {t('investment.record_dividend')} →
               </Link>
             </div>
           ) : (
@@ -839,7 +841,7 @@ export default function InvestmentOverviewPage() {
                   <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
                   <Tooltip
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(v: any) => [formatCurrency(Number(v) || 0), 'Dividen']}
+                    formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.dividend')]}
                     cursor={{ fill: 'var(--surface-2)' }}
                     contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
                   />
@@ -860,8 +862,8 @@ export default function InvestmentOverviewPage() {
         {/* Pergerakan hari ini */}
         {movers.length > 0 && (
           <div className="s-card p-5 sm:p-6">
-            <p className="eyebrow">Hari Ini</p>
-            <h3 className="text-xl font-semibold mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>Pergerakan Hari Ini</h3>
+            <p className="eyebrow">{t('investment.today')}</p>
+            <h3 className="text-xl font-semibold mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>{t('investment.movers_today')}</h3>
             <div>
               {movers.map((m) => {
                 const pos = m.changePct >= 0

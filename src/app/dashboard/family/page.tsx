@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 import {
   fetchActiveHousehold, generateInviteToken, isOwner, relationshipLabel,
@@ -56,6 +57,7 @@ function timeAgo(iso: string): string {
 
 export default function FamilyPage() {
   const supabase = createClient()
+  const t = useT()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<MyUser | null>(null)
   const [household, setHousehold] = useState<Household | null>(null)
@@ -154,7 +156,7 @@ export default function FamilyPage() {
 
   async function createHousehold() {
     if (!user) return
-    if (!newHouseholdName.trim()) { toast.error('Nama keluarga wajib diisi.'); return }
+    if (!newHouseholdName.trim()) { toast.error(t('family.toast_name_required')); return }
     setCreating(true)
     const { data: hhData, error } = await supabase
       .from('households')
@@ -163,7 +165,7 @@ export default function FamilyPage() {
       .single()
     if (error || !hhData) {
       setCreating(false)
-      toast.error(`Gagal buat keluarga: ${error?.message ?? 'unknown'}`)
+      toast.error(`${t('family.toast_create_failed')}: ${error?.message ?? 'unknown'}`)
       return
     }
     const { error: memErr } = await supabase
@@ -171,20 +173,20 @@ export default function FamilyPage() {
       .insert({ household_id: hhData.id, user_id: user.id, role: 'owner' })
     setCreating(false)
     if (memErr) {
-      toast.error(`Keluarga dibuat tapi gagal join sebagai owner: ${memErr.message}`)
+      toast.error(`${t('family.toast_create_join_failed')}: ${memErr.message}`)
       return
     }
     await logActivity(supabase, hhData.id as string, user.id, 'household_created', `Membuat keluarga "${newHouseholdName.trim()}"`)
     setCreateDialogOpen(false)
     setNewHouseholdName('')
-    toast.success('Keluarga dibuat. Kamu jadi pemilik.')
+    toast.success(t('family.toast_created'))
     await load()
   }
 
   async function generateInvite() {
     if (!household || !user) return
     if (members.length >= household.max_seats) {
-      toast.error(`Kuota anggota keluarga sudah penuh (maks ${household.max_seats}).`)
+      toast.error(`${t('family.toast_seats_full')} (${t('family.max_short')} ${household.max_seats}).`)
       return
     }
     setInviting(true)
@@ -196,7 +198,7 @@ export default function FamilyPage() {
       .single()
     setInviting(false)
     if (error || !data) {
-      toast.error(`Gagal bikin undangan: ${error?.message ?? 'unknown'}`)
+      toast.error(`${t('family.toast_invite_failed')}: ${error?.message ?? 'unknown'}`)
       return
     }
     await logActivity(supabase, household.id, user.id, 'invite_sent', `Mengundang anggota baru${inviteEmail.trim() ? ` (${inviteEmail.trim()})` : ''}`)
@@ -213,18 +215,18 @@ export default function FamilyPage() {
   }
 
   async function revokeInvite(id: string) {
-    if (!confirm('Batalkan undangan ini?')) return
+    if (!confirm(t('family.confirm_revoke_invite'))) return
     const { error } = await supabase.from('household_invitations').update({ status: 'revoked' }).eq('id', id)
-    if (error) { toast.error(`Gagal: ${error.message}`); return }
+    if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}`); return }
     if (household && user) await logActivity(supabase, household.id, user.id, 'invite_revoked', 'Membatalkan undangan')
-    toast.success('Undangan dibatalkan.')
+    toast.success(t('family.toast_invite_revoked'))
     void load()
   }
 
   async function removeMember(memberId: string) {
     if (!household || !user) return
     const target = members.find((m) => m.user_id === memberId)
-    if (!confirm('Keluarkan anggota ini dari keluarga?')) return
+    if (!confirm(t('family.confirm_remove_member'))) return
     setRemovingMemberId(memberId)
     const { error } = await supabase
       .from('household_members')
@@ -232,9 +234,9 @@ export default function FamilyPage() {
       .eq('household_id', household.id)
       .eq('user_id', memberId)
     setRemovingMemberId(null)
-    if (error) { toast.error(`Gagal: ${error.message}`); return }
+    if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}`); return }
     await logActivity(supabase, household.id, user.id, 'member_removed', `Mengeluarkan ${target?.full_name || 'anggota'}`)
-    toast.success('Anggota dikeluarkan.')
+    toast.success(t('family.toast_member_removed'))
     void load()
   }
 
@@ -247,17 +249,17 @@ export default function FamilyPage() {
       .delete()
       .eq('household_id', household.id)
       .eq('user_id', user.id)
-    if (error) { toast.error(`Gagal keluar: ${error.message}`); return }
-    toast.success('Kamu sudah keluar dari keluarga.')
+    if (error) { toast.error(`${t('family.toast_leave_failed')}: ${error.message}`); return }
+    toast.success(t('family.toast_left'))
     void load()
   }
 
   async function deleteHousehold() {
     if (!household) return
-    if (!confirm(`Bubarkan keluarga "${household.name}"? Semua anggota otomatis keluar. Data bersama jadi milikmu lagi (tidak hilang).`)) return
+    if (!confirm(`${t('family.confirm_disband_prefix')} "${household.name}"? ${t('family.confirm_disband_suffix')}`)) return
     const { error } = await supabase.from('households').delete().eq('id', household.id)
-    if (error) { toast.error(`Gagal bubarkan: ${error.message}`); return }
-    toast.success('Keluarga dibubarkan.')
+    if (error) { toast.error(`${t('family.toast_disband_failed')}: ${error.message}`); return }
+    toast.success(t('family.toast_disbanded'))
     void load()
   }
 
@@ -267,8 +269,8 @@ export default function FamilyPage() {
     setTogglingNW(true)
     const ok = await setMyNetWorthSharing(supabase, !self.share_net_worth)
     setTogglingNW(false)
-    if (!ok) { toast.error('Gagal ubah. Pastikan migration 041 sudah dijalankan.'); return }
-    toast.success(self.share_net_worth ? 'Net worth-mu disembunyikan.' : 'Net worth-mu kini dihitung di total keluarga.')
+    if (!ok) { toast.error(t('family.toast_nw_failed')); return }
+    toast.success(self.share_net_worth ? t('family.toast_nw_hidden') : t('family.toast_nw_shared'))
     void load()
   }
 
@@ -287,17 +289,17 @@ export default function FamilyPage() {
       .eq('household_id', household.id)
       .eq('user_id', permsMember.user_id)
     setSavingPerms(false)
-    if (error) { toast.error(`Gagal: ${error.message}. Pastikan migration 041 sudah dijalankan.`); return }
+    if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}. ${t('family.toast_migration_041')}`); return }
     await logActivity(supabase, household.id, user.id, 'permission_changed', `Mengubah izin ${permsMember.full_name || 'anggota'}`)
-    toast.success('Izin diperbarui.')
+    toast.success(t('family.toast_perms_updated'))
     setPermsMember(null)
     void load()
   }
 
   async function createSharedGoal() {
     if (!household || !user) return
-    if (!goalName.trim()) { toast.error('Nama tujuan wajib diisi.'); return }
-    if (goalTarget <= 0) { toast.error('Target harus lebih dari 0.'); return }
+    if (!goalName.trim()) { toast.error(t('family.toast_goal_name_required')); return }
+    if (goalTarget <= 0) { toast.error(t('family.toast_goal_target_positive')); return }
     setSavingGoal(true)
     const { error } = await supabase.from('goals').insert({
       user_id: user.id, household_id: household.id, name: goalName.trim(),
@@ -305,16 +307,16 @@ export default function FamilyPage() {
       deadline: goalDeadline || null, is_active: true,
     })
     setSavingGoal(false)
-    if (error) { toast.error(`Gagal: ${error.message}. Pastikan migration 042 sudah dijalankan.`); return }
+    if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}. ${t('family.toast_migration_042')}`); return }
     await logActivity(supabase, household.id, user.id, 'goal_created', `Membuat tujuan bersama "${goalName.trim()}"`)
-    toast.success('Tujuan bersama ditambahkan.')
+    toast.success(t('family.toast_goal_added'))
     setGoalDialogOpen(false)
     setGoalName(''); setGoalTarget(0); setGoalDeadline('')
     void load()
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20" style={{ color: 'var(--ink-soft)' }}><Loader2 className="size-5 animate-spin mr-2" /> Memuat...</div>
+    return <div className="flex items-center justify-center py-20" style={{ color: 'var(--ink-soft)' }}><Loader2 className="size-5 animate-spin mr-2" /> {t('family.loading')}</div>
   }
 
   const isUserOwner = isOwner(household, user?.id ?? '')
@@ -333,28 +335,28 @@ export default function FamilyPage() {
           <div className="mx-auto size-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-primary)' }}>
             <Home className="size-7" style={{ color: 'var(--surface)' }} />
           </div>
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>Belum punya keluarga</h2>
+          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('family.empty_title')}</h2>
           <p className="mt-2 max-w-md mx-auto text-sm" style={{ color: 'var(--ink-muted)' }}>
-            Bikin lingkar keluargamu, ajak pasangan / orang tua sampai 4 anggota. Akun, transaksi, anggaran &amp; tujuan bersama ke-share — sisanya tetap privat.
+            {t('family.empty_desc')}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Button onClick={() => setCreateDialogOpen(true)}><Home className="size-4" /> Buat keluarga</Button>
-            <Link href="/dashboard/pricing" className="text-sm inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>Lihat paket Family</Link>
+            <Button onClick={() => setCreateDialogOpen(true)}><Home className="size-4" /> {t('family.create_household')}</Button>
+            <Link href="/dashboard/pricing" className="text-sm inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.view_family_plan')}</Link>
           </div>
           <p className="mt-5 text-xs" style={{ color: 'var(--ink-soft)' }}>
-            Dapat link undangan dari anggota keluarga? Buka link <code className="rounded px-1 py-0.5" style={{ background: 'var(--surface-2)' }}>/dashboard/join/…</code> yang mereka kirim.
+            {t('family.empty_invite_prefix')} <code className="rounded px-1 py-0.5" style={{ background: 'var(--surface-2)' }}>/dashboard/join/…</code> {t('family.empty_invite_suffix')}
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
-            { icon: Home, title: 'Buat keluarga', desc: 'Kasih nama. Kamu jadi pemilik.' },
-            { icon: UserPlus, title: 'Undang anggota', desc: 'Kirim link unik, sampai 4 anggota.' },
-            { icon: Users, title: 'Kelola bareng', desc: 'Akun, anggaran, tujuan & net worth gabungan.' },
+            { icon: Home, title: t('family.step1_title'), desc: t('family.step1_desc') },
+            { icon: UserPlus, title: t('family.step2_title'), desc: t('family.step2_desc') },
+            { icon: Users, title: t('family.step3_title'), desc: t('family.step3_desc') },
           ].map((step, i) => (
             <div key={i} className="s-card p-5">
               <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--c-mint)' }}>
                 <step.icon className="size-4" />
-                <span className="eyebrow" style={{ color: 'var(--c-mint)' }}>Langkah {i + 1}</span>
+                <span className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('family.step_label')} {i + 1}</span>
               </div>
               <p className="font-semibold" style={{ color: 'var(--ink)' }}>{step.title}</p>
               <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
@@ -374,7 +376,7 @@ export default function FamilyPage() {
       <FamilyHeader
         action={isUserOwner ? (
           <Button onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }} disabled={members.length >= household.max_seats}>
-            <UserPlus className="size-4" /> Undang anggota
+            <UserPlus className="size-4" /> {t('family.invite_member')}
           </Button>
         ) : undefined}
       />
@@ -382,19 +384,19 @@ export default function FamilyPage() {
       {/* Hero — Lingkar Keluarga (data REAL) */}
       <section className="s-card overflow-hidden grid sm:grid-cols-[1.6fr_1fr_1fr]" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>
         <div className="p-5 sm:p-6 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--coral-700)' }}>Lingkar Keluarga</p>
+          <p className="eyebrow" style={{ color: 'var(--coral-700)' }}>{t('family.family_circle')}</p>
           <h2 className="mt-1.5 text-xl sm:text-2xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
-          <p className="text-[13px] mt-2" style={{ color: 'var(--ink-muted)' }}>{members.length} anggota aktif · dibuat {formatDate(new Date(household.created_at))}</p>
+          <p className="text-[13px] mt-2" style={{ color: 'var(--ink-muted)' }}>{members.length} {t('family.active_members')} · {t('family.created_on')} {formatDate(new Date(household.created_at))}</p>
         </div>
         <div className="p-5 sm:p-6 border-t sm:border-t-0 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Anggota</p>
+          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.members')}</p>
           <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{members.length}<span className="text-base font-medium" style={{ color: 'var(--ink-soft)' }}> / {household.max_seats}</span></p>
-          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{household.max_seats - members.length} kursi tersisa</p>
+          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{household.max_seats - members.length} {t('family.seats_remaining')}</p>
         </div>
         <div className="p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Undangan</p>
+          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.invitations')}</p>
           <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: invitations.length > 0 ? 'var(--c-amber)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
-          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? 'menunggu diterima' : 'tidak ada yang tertunda'}</p>
+          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? t('family.awaiting_acceptance') : t('family.none_pending')}</p>
         </div>
       </section>
 
@@ -403,17 +405,17 @@ export default function FamilyPage() {
         <section className="s-card p-5">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Net Worth Gabungan</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.combined_net_worth')}</p>
               {(netWorth?.members_sharing ?? 0) > 0 ? (
                 <>
                   <p className="num font-bold mt-2 leading-none" style={{ fontSize: 28, color: 'var(--c-mint)', letterSpacing: '-0.02em' }}>{formatCurrency(netWorth?.combined_net_worth ?? 0)}</p>
                   <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>
-                    Aset <span className="num">{formatCurrency(netWorth?.combined_assets ?? 0)}</span> · Utang <span className="num">{formatCurrency(netWorth?.combined_debts ?? 0)}</span>
+                    {t('family.assets')} <span className="num">{formatCurrency(netWorth?.combined_assets ?? 0)}</span> · {t('family.debts')} <span className="num">{formatCurrency(netWorth?.combined_debts ?? 0)}</span>
                   </p>
-                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{netWorth?.members_sharing} dari {netWorth?.members_total} anggota berbagi · hanya total yang dibagikan, detail tiap anggota tetap privat</p>
+                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{netWorth?.members_sharing} {t('family.of')} {netWorth?.members_total} {t('family.members_sharing_note')}</p>
                 </>
               ) : (
-                <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>Belum ada anggota yang berbagi. Aktifkan toggle di bawah buat mulai menghitung kekayaan bersih keluarga.</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>{t('family.nw_none_sharing')}</p>
               )}
             </div>
             <TrendingUp className="size-5 shrink-0" style={{ color: 'var(--c-mint)' }} />
@@ -427,7 +429,7 @@ export default function FamilyPage() {
             style={{ background: 'var(--surface-2)' }}
           >
             <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--ink)' }}>
-              <Eye className="size-4" style={{ color: 'var(--ink-soft)' }} /> Bagikan net worth saya ke keluarga
+              <Eye className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('family.share_my_nw')}
             </span>
             <span className="relative inline-flex h-5 w-9 items-center rounded-full transition" style={{ background: self?.share_net_worth ? 'var(--c-mint)' : 'var(--border)' }}>
               {togglingNW
@@ -441,10 +443,10 @@ export default function FamilyPage() {
       {/* Anggota Keluarga */}
       <section className="s-card overflow-hidden">
         <div className="flex items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Anggota Keluarga</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.section_members')}</p>
           {isUserOwner && (
             <Button variant="outline" size="sm" onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }} disabled={members.length >= household.max_seats}>
-              <UserPlus className="size-3.5" /> Undang
+              <UserPlus className="size-3.5" /> {t('family.invite')}
             </Button>
           )}
         </div>
@@ -461,20 +463,20 @@ export default function FamilyPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{me ? 'Kamu' : (m.full_name || 'Anggota')}</p>
+                    <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{me ? t('family.you') : (m.full_name || t('family.member_fallback'))}</p>
                     <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber)' : 'var(--ink-muted)' }}>
                       {owner && <Crown className="size-2.5" />}{relLabel ?? ROLE_LABEL[m.role]}
                     </span>
-                    {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />Lihat saja</span>}
+                    {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />{t('family.view_only')}</span>}
                   </div>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>Gabung {formatDate(new Date(m.joined_at))}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('family.joined')} {formatDate(new Date(m.joined_at))}</p>
                 </div>
                 {isUserOwner && !me && (
                   <>
-                    <Button variant="ghost" size="icon-sm" onClick={() => openPerms(m)} title={`Atur izin ${m.full_name || 'anggota'}`} aria-label={`Atur izin ${m.full_name || 'anggota'}`}>
+                    <Button variant="ghost" size="icon-sm" onClick={() => openPerms(m)} title={`${t('family.set_perms_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.set_perms_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
                       <SlidersHorizontal className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
                     </Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeMember(m.user_id)} disabled={removingMemberId === m.user_id} title={`Keluarkan ${m.full_name || 'anggota'}`} aria-label={`Keluarkan ${m.full_name || 'anggota'}`}>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeMember(m.user_id)} disabled={removingMemberId === m.user_id} title={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
                       {removingMemberId === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />}
                     </Button>
                   </>
@@ -489,7 +491,7 @@ export default function FamilyPage() {
       {isUserOwner && invitations.length > 0 && (
         <section className="s-card overflow-hidden">
           <div className="p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Undangan Aktif</p>
+            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.active_invitations')}</p>
           </div>
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
             {invitations.map((inv) => {
@@ -501,11 +503,11 @@ export default function FamilyPage() {
                     <Mail className="size-4" style={{ color: 'var(--c-amber)' }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || 'Tanpa email (link sharing)'}</p>
-                    <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}><CalendarClock className="size-3" /> Berakhir {formatDate(new Date(inv.expires_at))}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || t('family.no_email_link')}</p>
+                    <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}><CalendarClock className="size-3" /> {t('family.expires')} {formatDate(new Date(inv.expires_at))}</p>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(link); toast.success('Link undangan disalin.') }}><Copy className="size-3.5" /> Salin</Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => revokeInvite(inv.id)} title="Batalkan undangan" aria-label="Batalkan undangan"><Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(link); toast.success(t('family.toast_invite_link_copied')) }}><Copy className="size-3.5" /> {t('family.copy')}</Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => revokeInvite(inv.id)} title={t('family.revoke_invite')} aria-label={t('family.revoke_invite')}><Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} /></Button>
                 </div>
               )
             })}
@@ -516,16 +518,16 @@ export default function FamilyPage() {
       {/* Tujuan Bersama */}
       <section className="s-card overflow-hidden">
         <div className="flex items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Tujuan Bersama</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_goals')}</p>
           {canWrite && (
             <Button variant="outline" size="sm" onClick={() => { setGoalName(''); setGoalTarget(0); setGoalDeadline(''); setGoalDialogOpen(true) }}>
-              <Target className="size-3.5" /> Tambah tujuan
+              <Target className="size-3.5" /> {t('family.add_goal')}
             </Button>
           )}
         </div>
         {goals.length === 0 ? (
           <div className="p-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-            Belum ada tujuan bersama. {canWrite ? 'Buat target nabung keluarga — DP rumah, dana pendidikan, liburan.' : 'Pemilik / anggota bisa nambah target nabung keluarga.'}
+            {t('family.goals_empty')} {canWrite ? t('family.goals_empty_can_write') : t('family.goals_empty_readonly')}
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
@@ -538,8 +540,8 @@ export default function FamilyPage() {
                     <span className="num text-[13px] font-semibold" style={{ color: 'var(--c-mint)' }}>{pct.toFixed(0)}%</span>
                   </div>
                   <p className="num text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                    {formatCurrency(g.current_amount)} <span style={{ color: 'var(--ink-soft)' }}>dari {formatCurrency(g.target_amount)}</span>
-                    {g.deadline && <span style={{ color: 'var(--ink-soft)' }}> · target {formatDate(new Date(g.deadline))}</span>}
+                    {formatCurrency(g.current_amount)} <span style={{ color: 'var(--ink-soft)' }}>{t('family.of')} {formatCurrency(g.target_amount)}</span>
+                    {g.deadline && <span style={{ color: 'var(--ink-soft)' }}> · {t('family.target')} {formatDate(new Date(g.deadline))}</span>}
                   </p>
                   <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
@@ -551,7 +553,7 @@ export default function FamilyPage() {
         )}
         {goals.length > 0 && (
           <div className="p-3 border-t text-center" style={{ borderColor: 'var(--border-soft)' }}>
-            <Link href="/dashboard/goals" className="text-[12px] inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>Kelola di halaman Tujuan</Link>
+            <Link href="/dashboard/goals" className="text-[12px] inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.manage_in_goals')}</Link>
           </div>
         )}
       </section>
@@ -560,7 +562,7 @@ export default function FamilyPage() {
       {activities.length > 0 && (
         <section className="s-card overflow-hidden">
           <div className="p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><Activity className="size-3.5" /> Aktivitas Terkini</p>
+            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><Activity className="size-3.5" /> {t('family.recent_activity')}</p>
           </div>
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
             {activities.map((a) => (
@@ -569,7 +571,7 @@ export default function FamilyPage() {
                   {(a.full_name || '?').slice(0, 1).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] truncate" style={{ color: 'var(--ink)' }}><span className="font-medium">{a.user_id === user?.id ? 'Kamu' : (a.full_name || 'Anggota')}</span> · {a.description}</p>
+                  <p className="text-[13px] truncate" style={{ color: 'var(--ink)' }}><span className="font-medium">{a.user_id === user?.id ? t('family.you') : (a.full_name || t('family.member_fallback'))}</span> · {a.description}</p>
                 </div>
                 <span className="text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>{timeAgo(a.created_at)}</span>
               </div>
@@ -580,30 +582,30 @@ export default function FamilyPage() {
 
       {/* Yang Dibagikan */}
       <section className="s-card p-5">
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Yang Dibagikan</p>
-        <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Cuma yang baru kamu input setelah gabung yang ke-share. Data lama tetap privat.</p>
+        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.whats_shared')}</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.whats_shared_desc')}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl p-4" style={{ background: 'var(--c-mint-soft)' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--c-mint)' }}><Check className="size-3.5" /> Dibagikan</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--c-mint)' }}><Check className="size-3.5" /> {t('family.shared')}</p>
             <ul className="mt-2.5 space-y-2 text-sm" style={{ color: 'var(--ink)' }}>
-              <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> Akun &amp; dompet keluarga</li>
-              <li className="flex items-center gap-2"><ArrowLeftRight className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> Transaksi (dengan label pencatat)</li>
-              <li className="flex items-center gap-2"><PieChart className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> Anggaran &amp; tujuan bersama</li>
-              <li className="flex items-center gap-2"><TrendingUp className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> Net worth gabungan <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>(opt-in, total saja)</span></li>
+              <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_accounts')}</li>
+              <li className="flex items-center gap-2"><ArrowLeftRight className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_transactions')}</li>
+              <li className="flex items-center gap-2"><PieChart className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_budgets_goals')}</li>
+              <li className="flex items-center gap-2"><TrendingUp className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_net_worth')} <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_net_worth_note')}</span></li>
             </ul>
           </div>
           <div className="rounded-xl p-4" style={{ background: 'var(--surface-2)' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><Lock className="size-3.5" /> Tetap privat</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><Lock className="size-3.5" /> {t('family.stays_private')}</p>
             <ul className="mt-2.5 space-y-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> Detail aset &amp; investasi</li>
-              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> Utang &amp; kartu kredit</li>
-              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> Tujuan pribadi &amp; transaksi sebelum gabung</li>
+              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> {t('family.private_assets')}</li>
+              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> {t('family.private_debts')}</li>
+              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> {t('family.private_personal_goals')}</li>
             </ul>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/dashboard/accounts"><Button variant="outline" size="sm"><Wallet className="size-3.5" /> Akun bersama</Button></Link>
-          <Link href="/dashboard/budgeting"><Button variant="outline" size="sm"><PieChart className="size-3.5" /> Anggaran bersama</Button></Link>
+          <Link href="/dashboard/accounts"><Button variant="outline" size="sm"><Wallet className="size-3.5" /> {t('family.shared_accounts_btn')}</Button></Link>
+          <Link href="/dashboard/budgeting"><Button variant="outline" size="sm"><PieChart className="size-3.5" /> {t('family.shared_budgets_btn')}</Button></Link>
         </div>
       </section>
 
@@ -612,16 +614,16 @@ export default function FamilyPage() {
         <div className="flex items-start gap-3">
           <AlertCircle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
           <div className="flex-1">
-            <p className="font-semibold" style={{ color: 'var(--ink)' }}>Zona Berbahaya</p>
+            <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('family.danger_zone')}</p>
             {isUserOwner ? (
               <>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Bubarkan keluarga — semua anggota otomatis keluar. Data bersama kembali jadi milikmu (tidak hilang).</p>
-                <Button variant="destructive" size="sm" className="mt-3" onClick={deleteHousehold}><Trash2 className="size-4" /> Bubarkan keluarga</Button>
+                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.disband_desc')}</p>
+                <Button variant="destructive" size="sm" className="mt-3" onClick={deleteHousehold}><Trash2 className="size-4" /> {t('family.disband_household')}</Button>
               </>
             ) : (
               <>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Keluar dari keluarga. Akses ke akun, transaksi, anggaran &amp; tujuan bersama akan hilang. Data pribadimu tetap aman.</p>
-                <Button variant="destructive" size="sm" className="mt-3" onClick={() => setLeaveDialogOpen(true)}><LogOut className="size-4" /> Keluar dari keluarga</Button>
+                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.leave_desc')}</p>
+                <Button variant="destructive" size="sm" className="mt-3" onClick={() => setLeaveDialogOpen(true)}><LogOut className="size-4" /> {t('family.leave_household')}</Button>
               </>
             )}
           </div>
@@ -632,20 +634,20 @@ export default function FamilyPage() {
       <Dialog open={inviteDialogOpen} onOpenChange={(o) => { setInviteDialogOpen(o); if (!o) { setGeneratedLink(null); setInviteEmail('') } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>Undang anggota</DialogTitle>
-            <DialogDescription>Generate link unik (berlaku 7 hari) — kirim ke calon anggota via WA, email, atau lainnya.</DialogDescription>
+            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>{t('family.invite_member')}</DialogTitle>
+            <DialogDescription>{t('family.invite_dialog_desc')}</DialogDescription>
           </DialogHeader>
           {!generatedLink ? (
             <>
               <div className="grid gap-3 py-2">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="invite-email">Email (opsional, untuk catatan)</Label>
+                  <Label htmlFor="invite-email">{t('family.email_optional_label')}</Label>
                   <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="anggota@email.com" />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>Batal</Button>
-                <Button onClick={generateInvite} disabled={inviting}>{inviting && <Loader2 className="size-4 animate-spin" />} Generate link</Button>
+                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>{t('family.cancel')}</Button>
+                <Button onClick={generateInvite} disabled={inviting}>{inviting && <Loader2 className="size-4 animate-spin" />} {t('family.generate_link')}</Button>
               </DialogFooter>
             </>
           ) : (
@@ -653,19 +655,19 @@ export default function FamilyPage() {
               <div className="space-y-3 py-2">
                 <div className="rounded-lg p-3 text-sm flex items-start gap-2" style={{ background: 'var(--c-mint-soft)', color: 'var(--ink)' }}>
                   <Check className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--c-mint)' }} />
-                  <span>Link undangan berhasil dibuat. Salin &amp; kirim ke calon anggota.</span>
+                  <span>{t('family.invite_link_created')}</span>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>Link undangan</Label>
+                  <Label>{t('family.invite_link_label')}</Label>
                   <div className="flex gap-2">
                     <Input value={generatedLink} readOnly onFocus={(e) => e.currentTarget.select()} />
-                    <Button onClick={copyLink} size="sm">{linkCopied ? <Check className="size-4" /> : <Copy className="size-4" />}{linkCopied ? 'Disalin' : 'Salin'}</Button>
+                    <Button onClick={copyLink} size="sm">{linkCopied ? <Check className="size-4" /> : <Copy className="size-4" />}{linkCopied ? t('family.copied') : t('family.copy')}</Button>
                   </div>
                 </div>
-                <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Berlaku 7 hari. Penerima harus login (atau daftar) dulu sebelum bisa terima undangan.</p>
+                <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{t('family.invite_link_note')}</p>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>Selesai</Button>
+                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>{t('family.done')}</Button>
               </DialogFooter>
             </>
           )}
@@ -676,21 +678,21 @@ export default function FamilyPage() {
       <Dialog open={!!permsMember} onOpenChange={(o) => { if (!o) setPermsMember(null) }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>Atur izin</DialogTitle>
-            <DialogDescription>{permsMember?.full_name || 'Anggota'} — atur hubungan &amp; akses ke data bersama.</DialogDescription>
+            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>{t('family.set_permissions')}</DialogTitle>
+            <DialogDescription>{permsMember?.full_name || t('family.member_fallback')} — {t('family.perms_dialog_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
-              <Label>Hubungan keluarga</Label>
+              <Label>{t('family.relationship_label')}</Label>
               <Select value={permRel} onValueChange={(v) => v && setPermRel(v)}>
-                <SelectTrigger><SelectValue placeholder="Pilih (opsional)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('family.relationship_placeholder')} /></SelectTrigger>
                 <SelectContent>{REL_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <button type="button" onClick={() => setPermCanEdit((v) => !v)} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left" style={{ background: 'var(--surface-2)' }}>
               <span className="min-w-0">
-                <span className="text-sm font-medium block" style={{ color: 'var(--ink)' }}>{permCanEdit ? 'Akses penuh' : 'Lihat saja'}</span>
-                <span className="text-[12px] block mt-0.5" style={{ color: 'var(--ink-soft)' }}>{permCanEdit ? 'Bisa lihat & edit akun, transaksi, anggaran, tujuan bersama.' : 'Cuma bisa lihat data bersama, tidak bisa edit/hapus.'}</span>
+                <span className="text-sm font-medium block" style={{ color: 'var(--ink)' }}>{permCanEdit ? t('family.full_access') : t('family.view_only')}</span>
+                <span className="text-[12px] block mt-0.5" style={{ color: 'var(--ink-soft)' }}>{permCanEdit ? t('family.full_access_desc') : t('family.view_only_desc')}</span>
               </span>
               <span className="relative inline-flex h-5 w-9 items-center rounded-full transition shrink-0" style={{ background: permCanEdit ? 'var(--c-mint)' : 'var(--border)' }}>
                 <span className="inline-block size-4 rounded-full bg-white transition" style={{ transform: permCanEdit ? 'translateX(18px)' : 'translateX(2px)' }} />
@@ -698,8 +700,8 @@ export default function FamilyPage() {
             </button>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPermsMember(null)}>Batal</Button>
-            <Button onClick={savePerms} disabled={savingPerms}>{savingPerms && <Loader2 className="size-4 animate-spin" />} Simpan izin</Button>
+            <Button variant="outline" onClick={() => setPermsMember(null)}>{t('family.cancel')}</Button>
+            <Button onClick={savePerms} disabled={savingPerms}>{savingPerms && <Loader2 className="size-4 animate-spin" />} {t('family.save_permissions')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -708,19 +710,19 @@ export default function FamilyPage() {
       <Dialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>Tambah tujuan bersama</DialogTitle>
-            <DialogDescription>Target nabung yang dikejar bareng. Semua anggota bisa lihat &amp; nambah saldonya.</DialogDescription>
+            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>{t('family.add_shared_goal')}</DialogTitle>
+            <DialogDescription>{t('family.goal_dialog_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
-            <div className="grid gap-1.5"><Label>Nama tujuan</Label><Input value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="cth: DP Rumah, Dana Pendidikan" autoFocus /></div>
+            <div className="grid gap-1.5"><Label>{t('family.goal_name_label')}</Label><Input value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder={t('family.goal_name_placeholder')} autoFocus /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Target</Label><NumberInput value={goalTarget} onChange={setGoalTarget} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Target tanggal (opsional)</Label><Input type="date" value={goalDeadline} onChange={(e) => setGoalDeadline(e.target.value)} /></div>
+              <div className="grid gap-1.5"><Label>{t('family.target')}</Label><NumberInput value={goalTarget} onChange={setGoalTarget} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('family.target_date_label')}</Label><Input type="date" value={goalDeadline} onChange={(e) => setGoalDeadline(e.target.value)} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setGoalDialogOpen(false)}>Batal</Button>
-            <Button onClick={createSharedGoal} disabled={savingGoal}>{savingGoal && <Loader2 className="size-4 animate-spin" />} Tambah</Button>
+            <Button variant="outline" onClick={() => setGoalDialogOpen(false)}>{t('family.cancel')}</Button>
+            <Button onClick={createSharedGoal} disabled={savingGoal}>{savingGoal && <Loader2 className="size-4 animate-spin" />} {t('family.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -729,12 +731,12 @@ export default function FamilyPage() {
       <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>Keluar dari keluarga?</DialogTitle>
-            <DialogDescription>Kamu akan keluar dari <strong>{household.name}</strong>. Akses ke data bersama hilang. Data pribadimu tetap aman.</DialogDescription>
+            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>{t('family.leave_dialog_title')}</DialogTitle>
+            <DialogDescription>{t('family.leave_dialog_prefix')} <strong>{household.name}</strong>. {t('family.leave_dialog_suffix')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLeaveDialogOpen(false)}>Batal</Button>
-            <Button variant="destructive" onClick={leaveHousehold}>Keluar</Button>
+            <Button variant="outline" onClick={() => setLeaveDialogOpen(false)}>{t('family.cancel')}</Button>
+            <Button variant="destructive" onClick={leaveHousehold}>{t('family.leave')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -747,15 +749,16 @@ export default function FamilyPage() {
 // ───────────────────────────────────────────────────────────
 
 function FamilyHeader({ action }: { action?: ReactNode }) {
+  const t = useT()
   return (
     <header className="flex items-start justify-between gap-4 flex-wrap">
       <div className="max-w-xl">
-        <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>Berbagi keuangan dengan orang tersayang</p>
+        <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.header_eyebrow')}</p>
         <h1 className="mt-1 text-2xl sm:text-[28px] leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
-          Keluarga
+          {t('family.header_title')}
         </h1>
         <p className="text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-          Atur akses, tujuan &amp; net worth bersama. Privasi tetap di tanganmu — bagikan hanya yang ingin dibagikan.
+          {t('family.header_subtitle')}
         </p>
       </div>
       {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}
@@ -777,22 +780,23 @@ function CreateHouseholdDialog({
   onSubmit: () => void
   loading: boolean
 }) {
+  const t = useT()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>Buat keluarga baru</DialogTitle>
-          <DialogDescription>Kasih nama keluargamu. Kamu jadi pemilik — bisa undang &amp; keluarkan anggota.</DialogDescription>
+          <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>{t('family.create_dialog_title')}</DialogTitle>
+          <DialogDescription>{t('family.create_dialog_desc')}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5">
-            <Label htmlFor="hh-name">Nama keluarga</Label>
-            <Input id="hh-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="cth: Keluarga Andi &amp; Sari" autoFocus />
+            <Label htmlFor="hh-name">{t('family.household_name_label')}</Label>
+            <Input id="hh-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('family.household_name_placeholder')} autoFocus />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button onClick={onSubmit} disabled={loading}>{loading && <Loader2 className="size-4 animate-spin" />} Buat keluarga</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('family.cancel')}</Button>
+          <Button onClick={onSubmit} disabled={loading}>{loading && <Loader2 className="size-4 animate-spin" />} {t('family.create_household')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

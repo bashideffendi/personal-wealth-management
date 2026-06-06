@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import { Loader2, TrendingUp, TrendingDown, Camera, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useT } from '@/lib/i18n/context'
 
 interface NetWorthData {
   cashAndEquivalent: number
@@ -40,6 +41,7 @@ function ccMinPaymentNW(balance: number): number {
 
 export default function NetWorthPage() {
   const supabase = createClient()
+  const t = useT()
   const [loading, setLoading] = useState(true)
   const [snapshotting, setSnapshotting] = useState(false)
   const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([])
@@ -131,13 +133,13 @@ export default function NetWorthPage() {
   const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month), netWorth: p.netWorth })), [projection])
 
   const assetClasses = useMemo(() => ([
-    { label: 'Investasi', value: data.longTermInvestment, color: '#8B5CF6' },
-    { label: 'Kas & Setara', value: data.cashAndEquivalent, color: '#10B981' },
-    { label: 'Properti', value: data.property, color: '#F59E0B' },
-    { label: 'Kendaraan', value: data.vehicle, color: '#6366F1' },
-    { label: 'Barang Pribadi', value: data.personalItem, color: '#F43F5E' },
-    { label: 'Piutang', value: data.receivable, color: '#14B8A6' },
-  ].filter((c) => c.value > 0)), [data])
+    { label: t('networth.class_investment'), value: data.longTermInvestment, color: '#8B5CF6' },
+    { label: t('networth.class_cash'), value: data.cashAndEquivalent, color: '#10B981' },
+    { label: t('networth.class_property'), value: data.property, color: '#F59E0B' },
+    { label: t('networth.class_vehicle'), value: data.vehicle, color: '#6366F1' },
+    { label: t('networth.class_personal_item'), value: data.personalItem, color: '#F43F5E' },
+    { label: t('networth.class_receivable'), value: data.receivable, color: '#14B8A6' },
+  ].filter((c) => c.value > 0)), [data, t])
 
   const heroStats = useMemo(() => {
     if (snapshots.length < 2) return null
@@ -165,14 +167,14 @@ export default function NetWorthPage() {
       {/* Slim header — judul gak diulang (ada di hero card di bawah) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
-          Neraca Pribadi · {todayLong}
+          {t('networth.eyebrow')} · {todayLong}
         </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => document.getElementById('nw-history')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
-            <History className="h-4 w-4" /> Riwayat
+            <History className="h-4 w-4" /> {t('networth.history')}
           </Button>
           <Button onClick={takeManualSnapshot} disabled={snapshotting}>
-            {snapshotting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} Snapshot manual
+            {snapshotting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {t('networth.manual_snapshot')}
           </Button>
         </div>
       </div>
@@ -183,13 +185,13 @@ export default function NetWorthPage() {
         <div className="absolute pointer-events-none" style={{ top: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.20), transparent 65%)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.16), transparent 65%)' }} />
         <div className="relative p-6 sm:p-7 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>Kekayaan Bersih</p>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>{t('networth.net_worth')}</p>
           <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(40px,6vw,64px)', letterSpacing: '-0.04em', color: isPositive ? '#FFFFFF' : '#FDA4AF' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? '#6EE7B7' : '#FDA4AF' }}>
                 {heroStats.vs1mo.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                {heroStats.vs1mo.delta >= 0 ? '+' : ''}{formatCurrency(heroStats.vs1mo.delta)} vs bln lalu
+                {heroStats.vs1mo.delta >= 0 ? '+' : ''}{formatCurrency(heroStats.vs1mo.delta)} {t('networth.vs_last_month_short')}
               </span>
             )}
             {heroStats?.vsYtd && (
@@ -200,14 +202,14 @@ export default function NetWorthPage() {
           </div>
         </div>
         <div className="relative p-6 sm:p-7 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>Total Aset</p>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>{t('networth.total_assets')}</p>
           <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: '#6EE7B7' }}>{formatCurrency(totalAssets)}</p>
-          <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{assetClasses.length} kelas aset</p>
+          <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{assetClasses.length} {t('networth.asset_classes')}</p>
         </div>
         <div className="relative p-6 sm:p-7 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>Total Utang</p>
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>{t('networth.total_debt')}</p>
           <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? '#FDA4AF' : '#6EE7B7' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</p>
-          <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{debtCount} utang aktif</p>
+          <p className="text-[11px] mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>{debtCount} {t('networth.active_debts')}</p>
         </div>
       </section>
 
@@ -220,12 +222,12 @@ export default function NetWorthPage() {
         <section className="s-card p-5">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="max-w-md">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Proyeksi Bebas Utang</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Kekayaan bersih kalau semua utang dilunasi pakai strategi pilihanmu. Aset di luar utang diasumsikan tetap.</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_projection')}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('networth.debt_free_projection_desc')}</p>
             </div>
             <div className="flex gap-1.5 shrink-0">
               {(['snowball', 'avalanche'] as const).map((s) => (
-                <button key={s} onClick={() => setNwStrategy(s)} aria-pressed={nwStrategy === s} aria-label={`Strategi ${s}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
+                <button key={s} onClick={() => setNwStrategy(s)} aria-pressed={nwStrategy === s} aria-label={`${t('networth.strategy')} ${s}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
                   style={{ background: nwStrategy === s ? (s === 'snowball' ? '#10B981' : '#8B5CF6') : 'var(--surface-2)', color: nwStrategy === s ? '#FFF' : 'var(--ink)' }}>{s}</button>
               ))}
             </div>
@@ -233,9 +235,9 @@ export default function NetWorthPage() {
           {projection.feasible ? (
             <>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Bebas Utang</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Net Worth Jadi</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>{formatCurrency(projection.endNetWorth)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Naik</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>{formatCurrency(projection.endNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
               <div className="mt-4" style={{ height: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -245,14 +247,14 @@ export default function NetWorthPage() {
                     <YAxis tickFormatter={(v) => formatCompactCurrency(Number(v))} tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} width={62} tickLine={false} axisLine={false} />
                     <Tooltip formatter={(v) => formatCurrency(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }} />
                     <ReferenceLine y={0} stroke="var(--border)" />
-                    <Line type="monotone" dataKey="netWorth" name="Net worth" stroke={projAccent} strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="netWorth" name={t('networth.net_worth')} stroke={projAccent} strokeWidth={2} dot={false} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
-              <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>Atur cicilan ekstra &amp; bandingkan strategi lebih detail di <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>halaman Utang</a>.</p>
+              <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
             </>
           ) : (
-            <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber)' }}>Cicilan saat ini belum menutup bunga, jadi proyeksi belum bisa dihitung. Naikin cicilan di halaman Utang dulu.</p>
+            <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber)' }}>{t('networth.projection_not_feasible')}</p>
           )}
         </section>
       )}
@@ -260,46 +262,46 @@ export default function NetWorthPage() {
       {/* Rincian aset & liabilitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#10B981' }}>Rincian Aset</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#10B981' }}>{t('networth.asset_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>Aset Lancar</p>
-              <Row label="Kas & Setara Kas" value={data.cashAndEquivalent} />
-              <Row label="Piutang" value={data.receivable} />
-              <SubtotalRow label="Subtotal Aset Lancar" value={totalCurrentAssets} color="#10B981" />
+              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_assets')}</p>
+              <Row label={t('networth.cash_and_equivalent')} value={data.cashAndEquivalent} />
+              <Row label={t('networth.receivable')} value={data.receivable} />
+              <SubtotalRow label={t('networth.subtotal_current_assets')} value={totalCurrentAssets} color="#10B981" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>Aset Tidak Lancar</p>
-              <Row label="Investasi Jangka Panjang" value={data.longTermInvestment} />
-              <Row label="Properti" value={data.property} />
-              <Row label="Kendaraan & Peralatan" value={data.vehicle} />
-              <Row label="Barang Pribadi" value={data.personalItem} />
-              <SubtotalRow label="Subtotal Aset Tidak Lancar" value={totalNonCurrentAssets} color="#10B981" />
+              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.non_current_assets')}</p>
+              <Row label={t('networth.long_term_investment')} value={data.longTermInvestment} />
+              <Row label={t('networth.property')} value={data.property} />
+              <Row label={t('networth.vehicle_equipment')} value={data.vehicle} />
+              <Row label={t('networth.personal_item')} value={data.personalItem} />
+              <SubtotalRow label={t('networth.subtotal_non_current_assets')} value={totalNonCurrentAssets} color="#10B981" />
             </div>
             <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-              <span className="font-semibold" style={{ color: 'var(--ink)' }}>Total Aset</span>
+              <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('networth.total_assets')}</span>
               <span className="num font-bold" style={{ color: '#10B981' }}>{formatCurrency(totalAssets)}</span>
             </div>
           </div>
         </div>
 
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#F43F5E' }}>Rincian Liabilitas</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#F43F5E' }}>{t('networth.liabilities_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>Utang Lancar</p>
-              <Row label="Utang Konsumer" value={data.consumerDebt} neg />
-              <Row label="Kartu Kredit" value={data.creditCard} neg />
-              <Row label="Pinjaman Tunai" value={data.cashLoan} neg />
-              <SubtotalRow label="Subtotal Utang Lancar" value={totalCurrentDebt} color="#F43F5E" neg />
+              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_debt')}</p>
+              <Row label={t('networth.consumer_debt')} value={data.consumerDebt} neg />
+              <Row label={t('networth.credit_card')} value={data.creditCard} neg />
+              <Row label={t('networth.cash_loan')} value={data.cashLoan} neg />
+              <SubtotalRow label={t('networth.subtotal_current_debt')} value={totalCurrentDebt} color="#F43F5E" neg />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>Utang Jangka Panjang</p>
-              <Row label="KPR / Jangka Panjang" value={data.longTermDebt} neg />
-              <SubtotalRow label="Subtotal Jangka Panjang" value={data.longTermDebt} color="#F43F5E" neg />
+              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.long_term_debt')}</p>
+              <Row label={t('networth.mortgage_long_term')} value={data.longTermDebt} neg />
+              <SubtotalRow label={t('networth.subtotal_long_term')} value={data.longTermDebt} color="#F43F5E" neg />
             </div>
             <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-              <span className="font-semibold" style={{ color: 'var(--ink)' }}>Total Utang</span>
+              <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('networth.total_debt')}</span>
               <span className="num font-bold" style={{ color: '#F43F5E' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</span>
             </div>
           </div>
@@ -309,7 +311,7 @@ export default function NetWorthPage() {
       {/* Komposisi + Rasio */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Komposisi Aset</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_composition')}</p>
           {totalAssets > 0 ? (
             <>
               <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
@@ -324,7 +326,7 @@ export default function NetWorthPage() {
                 ))}
               </div>
             </>
-          ) : <p className="text-sm mt-3" style={{ color: 'var(--ink-soft)' }}>Belum ada aset.</p>}
+          ) : <p className="text-sm mt-3" style={{ color: 'var(--ink-soft)' }}>{t('networth.no_assets')}</p>}
         </div>
 
         <HealthRatiosCard
@@ -344,19 +346,20 @@ export default function NetWorthPage() {
 function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, investmentValue, netWorth, monthlyIncome }: {
   liquidAssets: number; totalAssets: number; totalDebt: number; currentDebt: number; investmentValue: number; netWorth: number; monthlyIncome: number
 }) {
+  const t = useT()
   const liquidity = currentDebt > 0 ? liquidAssets / currentDebt : null
   const solvency = totalAssets > 0 ? (totalDebt / totalAssets) * 100 : null
   const dti = monthlyIncome > 0 ? (totalDebt / (monthlyIncome * 12)) * 100 : null
   const investRatio = netWorth > 0 ? (investmentValue / netWorth) * 100 : null
   const rows = [
-    { label: 'Likuiditas (kas / utang lancar)', ideal: 'Ideal > 1x', value: liquidity != null ? `${liquidity >= 99 ? '∞' : liquidity.toFixed(0)}x` : '—', ok: liquidity == null || liquidity >= 1 },
-    { label: 'Solvabilitas (utang / aset)', ideal: 'Ideal < 50%', value: solvency != null ? `${solvency.toFixed(1)}%` : '—', ok: solvency != null && solvency < 50 },
-    { label: 'DTI (utang / pendapatan tahunan)', ideal: 'Ideal < 36%', value: dti != null ? `${dti.toFixed(1)}%` : '—', ok: dti != null && dti < 36 },
-    { label: 'Investasi / Net Worth', ideal: 'Ideal > 30%', value: investRatio != null ? `${investRatio.toFixed(1)}%` : '—', ok: investRatio != null && investRatio >= 30 },
+    { label: t('networth.ratio_liquidity'), ideal: t('networth.ratio_liquidity_ideal'), value: liquidity != null ? `${liquidity >= 99 ? '∞' : liquidity.toFixed(0)}x` : '—', ok: liquidity == null || liquidity >= 1 },
+    { label: t('networth.ratio_solvency'), ideal: t('networth.ratio_solvency_ideal'), value: solvency != null ? `${solvency.toFixed(1)}%` : '—', ok: solvency != null && solvency < 50 },
+    { label: t('networth.ratio_dti'), ideal: t('networth.ratio_dti_ideal'), value: dti != null ? `${dti.toFixed(1)}%` : '—', ok: dti != null && dti < 36 },
+    { label: t('networth.ratio_investment'), ideal: t('networth.ratio_investment_ideal'), value: investRatio != null ? `${investRatio.toFixed(1)}%` : '—', ok: investRatio != null && investRatio >= 30 },
   ]
   return (
     <div className="s-card p-5">
-      <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Rasio Kesehatan Neraca</p>
+      <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.balance_health_ratios')}</p>
       <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5">
         {rows.map((r) => {
           const c = r.value === '—' ? 'var(--ink-soft)' : r.ok ? '#10B981' : '#F59E0B'
@@ -402,6 +405,7 @@ interface HistoryProps {
 }
 
 function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, snapshotting }: HistoryProps) {
+  const t = useT()
   const filtered = useMemo(() => {
     if (period === 'all' || snapshots.length === 0) return snapshots
     const now = new Date()
@@ -436,14 +440,14 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
     rawDate: s.snapshot_date, assets: s.total_assets, debts: -s.total_debts, net: s.net_worth,
   })), [filtered])
 
-  const periodLabels = { '3m': '3B', '6m': '6B', '12m': '12B', all: 'Semua' } as const
+  const periodLabels = { '3m': t('networth.period_3m'), '6m': t('networth.period_6m'), '12m': t('networth.period_12m'), all: t('networth.period_all') }
 
   return (
     <div className="s-card p-5 sm:p-6">
       <div className="mb-4 flex items-start justify-between flex-wrap gap-3">
         <div>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Riwayat</p>
-          <h3 className="text-lg mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>Aset, Utang, dan Net Worth</h3>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.history')}</p>
+          <h3 className="text-lg mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('networth.history_heading')}</h3>
         </div>
         <div className="flex items-center gap-1.5">
           {(['3m', '6m', '12m', 'all'] as const).map((p) => (
@@ -461,8 +465,8 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
       {snapshots.length <= 1 ? (
         <div className="rounded-xl border-2 border-dashed p-8 text-center" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
           <Sparkles className="size-7 mx-auto mb-2 opacity-50" style={{ color: '#10B981' }} />
-          <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Snapshot pertama tercatat hari ini</p>
-          <p className="text-xs mt-1.5">Grafik muncul begitu ada minimal 2 titik data. Tiap buka halaman ini, snapshot baru otomatis dicatat.</p>
+          <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{t('networth.first_snapshot_today')}</p>
+          <p className="text-xs mt-1.5">{t('networth.first_snapshot_hint')}</p>
         </div>
       ) : (
         <>
@@ -482,22 +486,22 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
                 return (
                   <div className="rounded-md border px-3 py-2 text-xs shadow-md" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
                     <p className="font-semibold mb-1.5">{new Date(p.rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    <p className="num tabular flex justify-between gap-3"><span style={{ color: '#10B981' }}>● Aset</span><span>{formatCurrency(p.assets)}</span></p>
-                    <p className="num tabular flex justify-between gap-3"><span style={{ color: '#F43F5E' }}>● Utang</span><span>{formatCurrency(Math.abs(p.debts))}</span></p>
-                    <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}><span style={{ color: '#8B5CF6' }}>● Net Worth</span><span>{formatCurrency(p.net)}</span></p>
+                    <p className="num tabular flex justify-between gap-3"><span style={{ color: '#10B981' }}>● {t('networth.assets')}</span><span>{formatCurrency(p.assets)}</span></p>
+                    <p className="num tabular flex justify-between gap-3"><span style={{ color: '#F43F5E' }}>● {t('networth.debt')}</span><span>{formatCurrency(Math.abs(p.debts))}</span></p>
+                    <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}><span style={{ color: '#8B5CF6' }}>● {t('networth.net_worth')}</span><span>{formatCurrency(p.net)}</span></p>
                   </div>
                 )
               }} />
-              <Bar dataKey="assets" name="Aset" fill="url(#g-assets)" stackId="a" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="debts" name="Utang" fill="url(#g-debts)" stackId="a" radius={[0, 0, 4, 4]} />
-              <Line type="monotone" dataKey="net" name="Net Worth" stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 3, fill: '#8B5CF6', stroke: 'var(--surface)', strokeWidth: 2 }} activeDot={{ r: 5 }} />
+              <Bar dataKey="assets" name={t('networth.assets')} fill="url(#g-assets)" stackId="a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="debts" name={t('networth.debt')} fill="url(#g-debts)" stackId="a" radius={[0, 0, 4, 4]} />
+              <Line type="monotone" dataKey="net" name={t('networth.net_worth')} stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 3, fill: '#8B5CF6', stroke: 'var(--surface)', strokeWidth: 2 }} activeDot={{ r: 5 }} />
             </ComposedChart>
           </ResponsiveContainer>
           {stats && (
             <div className="mt-5 pt-4 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
-              <ChangeStat label="vs Bulan Lalu" change={stats.vs1mo} />
-              <ChangeStat label="vs 3 Bulan Lalu" change={stats.vs3mo} />
-              <ChangeStat label="YTD (Awal Tahun)" change={stats.vsYtd} />
+              <ChangeStat label={t('networth.vs_last_month')} change={stats.vs1mo} />
+              <ChangeStat label={t('networth.vs_3_months_ago')} change={stats.vs3mo} />
+              <ChangeStat label={t('networth.ytd_start_of_year')} change={stats.vsYtd} />
             </div>
           )}
         </>

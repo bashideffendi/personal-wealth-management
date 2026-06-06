@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
+import { useT } from '@/lib/i18n/context'
 import type { AssetNonLiquid, Investment } from '@/types'
 
 import { Loader2, ArrowUpRight } from 'lucide-react'
@@ -20,6 +21,7 @@ const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
 }
 
 export default function AssetsOverviewPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [liquidTotal, setLiquidTotal] = useState(0)
@@ -53,10 +55,10 @@ export default function AssetsOverviewPage() {
   }, [liquidTotal, nonLiquid, investments])
 
   const compositionBuckets = useMemo(() => [
-    { label: 'Aset Likuid',     value: totals.liq, href: '/dashboard/assets/liquid' },
-    { label: 'Aset Non-Likuid', value: totals.nlq, href: '/dashboard/assets/non-liquid' },
-    { label: 'Investasi',       value: totals.inv, href: '/dashboard/assets/investment' },
-  ], [totals])
+    { id: 'liquid',     label: t('assets.liquid_assets'),     value: totals.liq, href: '/dashboard/assets/liquid' },
+    { id: 'non_liquid', label: t('assets.non_liquid_assets'), value: totals.nlq, href: '/dashboard/assets/non-liquid' },
+    { id: 'investment', label: t('assets.investments'),       value: totals.inv, href: '/dashboard/assets/investment' },
+  ], [totals, t])
 
   const nonLiquidByCategory = useMemo(() => {
     const map: Record<string, number> = {}
@@ -84,7 +86,7 @@ export default function AssetsOverviewPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
-        <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>Memuat aset...</span>
+        <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('assets.loading')}</span>
       </div>
     )
   }
@@ -112,7 +114,7 @@ export default function AssetsOverviewPage() {
           className="text-[11px] font-semibold tracking-[0.18em] uppercase"
           style={{ color: 'rgba(255,255,255,0.55)' }}
         >
-          Total Kekayaan Tercatat
+          {t('assets.total_recorded_wealth')}
         </p>
         <p
           className="num tabular font-bold mt-4 leading-none whitespace-nowrap"
@@ -148,7 +150,7 @@ export default function AssetsOverviewPage() {
                   <span className="text-[11px] num font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>{pct.toFixed(0)}%</span>
                 </div>
                 <div className="mt-2 flex items-center gap-0.5 text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                  Lihat detail
+                  {t('assets.view_detail')}
                 </div>
               </Link>
             )
@@ -160,11 +162,11 @@ export default function AssetsOverviewPage() {
       {/* Row: Investment allocation + Non-liquid breakdown */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="s-card p-6 lg:col-span-2">
-          <p className="eyebrow">Investasi</p>
-          <h3 className="text-xl font-semibold mt-0.5">Alokasi per Kategori</h3>
+          <p className="eyebrow">{t('assets.investments')}</p>
+          <h3 className="text-xl font-semibold mt-0.5">{t('assets.allocation_by_category')}</h3>
           {allocation.length === 0 ? (
             <div className="flex h-[240px] items-center justify-center text-sm" style={{ color: 'var(--ink-soft)' }}>
-              Belum ada investasi.
+              {t('assets.no_investments')}
             </div>
           ) : (
             <>
@@ -202,11 +204,11 @@ export default function AssetsOverviewPage() {
         </div>
 
         <div className="s-card p-6 lg:col-span-3">
-          <p className="eyebrow">Aset Non-Likuid</p>
-          <h3 className="text-xl font-semibold mt-0.5">Breakdown per Tipe</h3>
+          <p className="eyebrow">{t('assets.non_liquid_assets')}</p>
+          <h3 className="text-xl font-semibold mt-0.5">{t('assets.breakdown_by_type')}</h3>
           {Object.keys(nonLiquidByCategory).length === 0 ? (
             <div className="flex h-[240px] items-center justify-center text-sm" style={{ color: 'var(--ink-soft)' }}>
-              Belum ada aset non-likuid.
+              {t('assets.no_non_liquid_assets')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
@@ -234,9 +236,9 @@ export default function AssetsOverviewPage() {
 
       {/* Quick links */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <QuickLink href="/dashboard/assets/liquid" title="Aset Likuid" note="Akun + aset cair" />
-        <QuickLink href="/dashboard/assets/non-liquid" title="Aset Non-Likuid" note={`${nonLiquid.length} aset`} />
-        <QuickLink href="/dashboard/assets/investment" title="Investasi" note={`${investments.length} posisi`} />
+        <QuickLink href="/dashboard/assets/liquid" title={t('assets.liquid_assets')} note={t('assets.liquid_note')} />
+        <QuickLink href="/dashboard/assets/non-liquid" title={t('assets.non_liquid_assets')} note={`${nonLiquid.length} ${t('assets.assets_unit')}`} />
+        <QuickLink href="/dashboard/assets/investment" title={t('assets.investments')} note={`${investments.length} ${t('assets.positions_unit')}`} />
       </div>
     </div>
   )

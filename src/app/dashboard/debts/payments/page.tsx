@@ -15,6 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Plus, Loader2, Receipt } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 interface DebtPayment {
   id: string
@@ -37,6 +38,7 @@ export default function DebtPaymentsPage() {
     notes: '',
   })
   const [saving, setSaving] = useState(false)
+  const t = useT()
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -104,7 +106,7 @@ export default function DebtPaymentsPage() {
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'rgba(255,255,255,0.55)' }}
           >
-            Pembayaran Utang
+            {t('debts_payments.eyebrow')}
           </p>
           <p
             className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
@@ -117,19 +119,19 @@ export default function DebtPaymentsPage() {
             {formatCurrency(totalPaid)}
           </p>
           <div className="mt-3 flex flex-wrap gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            <span>{payments.length} transaksi</span>
+            <span>{payments.length} {t('debts_payments.transactions')}</span>
             <span>·</span>
-            <span>Bulan ini: <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(thisMonth)}</span></span>
+            <span>{t('debts_payments.this_month')}: <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(thisMonth)}</span></span>
           </div>
         </div>
       </section>
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Catat setiap pembayaran — otomatis mengurangi saldo utang.
+          {t('debts_payments.subtitle')}
         </p>
         <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4" /> Catat Pembayaran
+          <Plus className="h-4 w-4" /> {t('debts_payments.record_payment')}
         </Button>
       </div>
 
@@ -138,8 +140,8 @@ export default function DebtPaymentsPage() {
       ) : payments.length === 0 ? (
         <div className="s-card p-12 text-center">
           <Receipt className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
-          <p className="mt-3 font-semibold">Belum ada riwayat pembayaran</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat pembayaran pertama kamu.</p>
+          <p className="mt-3 font-semibold">{t('debts_payments.empty_title')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.empty_subtitle')}</p>
         </div>
       ) : (
         <div className="s-card overflow-hidden">
@@ -175,18 +177,18 @@ export default function DebtPaymentsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Catat Pembayaran Utang</DialogTitle>
-            <DialogDescription>Transaksi ini akan langsung mengurangi saldo utang.</DialogDescription>
+            <DialogTitle>{t('debts_payments.dialog_title')}</DialogTitle>
+            <DialogDescription>{t('debts_payments.dialog_description')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Utang</Label>
+              <Label>{t('debts_payments.field_debt')}</Label>
               <Select value={form.debt_id} onValueChange={(v) => setForm({ ...form, debt_id: v ?? '' })}>
-                <SelectTrigger><SelectValue placeholder="Pilih utang" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('debts_payments.select_debt_placeholder')} /></SelectTrigger>
                 <SelectContent>
                   {debts.filter((d) => d.is_active).map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {d.name} — sisa {formatCurrency(d.remaining)}
+                      {d.name} — {t('debts_payments.remaining_label')} {formatCurrency(d.remaining)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -194,24 +196,24 @@ export default function DebtPaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Jumlah</Label>
+                <Label>{t('debts_payments.field_amount')}</Label>
                 <NumberInput value={form.amount} onChange={(n) => setForm({ ...form, amount: n })} placeholder="0" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Tanggal</Label>
+                <Label>{t('debts_payments.field_date')}</Label>
                 <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
-              <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Opsional" />
+              <Label>{t('debts_payments.field_notes')}</Label>
+              <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={t('debts_payments.notes_placeholder')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('debts_payments.cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.debt_id || form.amount <= 0}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Simpan
+              {t('debts_payments.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
