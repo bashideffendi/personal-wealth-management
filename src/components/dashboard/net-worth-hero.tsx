@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowUp, ArrowDown, ArrowUpRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 interface MonthlyData {
   month: string
@@ -44,6 +45,7 @@ export function NetWorthHero({
   debtTotal,
   monthlyTrend = [],
 }: NetWorthHeroProps) {
+  const t = useT()
   const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
   const netWorth = totalAssets - debtTotal
 
@@ -138,7 +140,7 @@ export function NetWorthHero({
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'rgba(255,255,255,0.72)' }}
           >
-            Kekayaan Bersih
+            {t('nw_hero.label_net_worth')}
           </p>
 
           {/* Hero net worth — MONO bold large */}
@@ -166,7 +168,7 @@ export function NetWorthHero({
               >
                 {monthDelta > 0 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
                 {monthDelta > 0 ? '+' : '−'}
-                {formatCurrency(Math.abs(monthDelta))} bulan ini
+                {formatCurrency(Math.abs(monthDelta))} {t('nw_hero.this_month')}
               </span>
             )}
             {ytdPct !== 0 && (
@@ -192,11 +194,11 @@ export function NetWorthHero({
               className="text-[13px] mt-5 leading-relaxed"
               style={{ color: 'rgba(255,255,255,0.72)' }}
             >
-              Kalau ritme ini lanjut, kamu capai{' '}
+              {t('nw_hero.forecast_prefix')}{' '}
               <span className="font-semibold" style={{ color: '#6EE7B7' }}>
-                Rp 1 miliar
+                {t('nw_hero.forecast_target')}
               </span>{' '}
-              dalam {forecastMonths} bulan.
+              {t('nw_hero.forecast_in')} {forecastMonths} {t('nw_hero.forecast_months')}.
             </p>
           )}
 
@@ -210,7 +212,7 @@ export function NetWorthHero({
                 className="text-[11px] font-bold tracking-[0.12em] uppercase"
                 style={{ color: 'rgba(255,255,255,0.62)' }}
               >
-                Total Aset
+                {t('nw_hero.total_assets')}
               </p>
               <p
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
@@ -224,7 +226,7 @@ export function NetWorthHero({
                 className="text-[11px] font-bold tracking-[0.12em] uppercase"
                 style={{ color: 'rgba(255,255,255,0.62)' }}
               >
-                Total Utang
+                {t('nw_hero.total_debt')}
               </p>
               <p
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
@@ -248,7 +250,7 @@ export function NetWorthHero({
                 color: '#0A0A0F',
               }}
             >
-              Rincian kekayaan
+              {t('nw_hero.cta_detail')}
               <ArrowUpRight className="size-3.5" />
             </Link>
             <Link
@@ -260,7 +262,7 @@ export function NetWorthHero({
                 border: '1px solid rgba(255,255,255,0.10)',
               }}
             >
-              Import mutasi
+              {t('nw_hero.cta_import')}
             </Link>
           </div>
         </div>
@@ -273,7 +275,7 @@ export function NetWorthHero({
                 className="text-[11px] font-semibold tracking-[0.14em] uppercase"
                 style={{ color: 'rgba(255,255,255,0.66)' }}
               >
-                Pertumbuhan
+                {t('nw_hero.growth')}
               </p>
               {sparkline && (
                 <p
@@ -366,7 +368,7 @@ export function NetWorthHero({
                 className="h-full flex items-center justify-center text-sm"
                 style={{ color: 'rgba(255,255,255,0.60)' }}
               >
-                Catat transaksi untuk lihat trend
+                {t('nw_hero.empty_chart')}
               </div>
             )}
           </div>

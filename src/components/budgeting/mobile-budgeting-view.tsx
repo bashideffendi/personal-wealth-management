@@ -25,6 +25,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
+import { useT } from '@/lib/i18n/context'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -54,6 +55,7 @@ export function MobileBudgetingView({
   getValue,
   onCellChange,
 }: MobileBudgetingViewProps) {
+  const t = useT()
   const today = new Date()
   const initialMonth =
     today.getFullYear() === year ? today.getMonth() + 1 : 1
@@ -93,14 +95,14 @@ export function MobileBudgetingView({
           onClick={prev}
           className="flex size-9 items-center justify-center rounded-lg transition active:scale-95"
           style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
-          aria-label="Bulan sebelumnya"
+          aria-label={t('mobile_budget.prev_month')}
         >
           <ChevronLeft className="size-4" />
         </button>
 
         <div className="text-center">
           <p className="text-[11px] uppercase tracking-wide font-medium" style={{ color: 'var(--ink-soft)' }}>
-            Bulan
+            {t('mobile_budget.month')}
           </p>
           <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
             {MONTHS[month - 1]} {year}
@@ -112,7 +114,7 @@ export function MobileBudgetingView({
           onClick={next}
           className="flex size-9 items-center justify-center rounded-lg transition active:scale-95"
           style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
-          aria-label="Bulan berikutnya"
+          aria-label={t('mobile_budget.next_month')}
         >
           <ChevronRight className="size-4" />
         </button>
@@ -125,7 +127,7 @@ export function MobileBudgetingView({
           style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-            Dialokasikan
+            {t('mobile_budget.allocated')}
           </p>
           <p className="num tabular text-base font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(totalAllocated)}
@@ -136,7 +138,7 @@ export function MobileBudgetingView({
           style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-            Sisa
+            {t('mobile_budget.remaining')}
           </p>
           <p
             className="num tabular text-base font-semibold mt-0.5"

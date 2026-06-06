@@ -26,6 +26,7 @@ import {
   signColorVar,
   verdictStyle,
 } from '@/lib/invest/format'
+import { useT } from '@/lib/i18n/context'
 import { MethodInfoDialog } from './method-info-dialog'
 
 // Defer recharts: fetched only when the Valuasi tab renders the bar chart, not
@@ -59,6 +60,7 @@ export function ValuationConsensus({
   price: number | null
   sector: string | null
 }) {
+  const t = useT()
   const barData = data.results.map((r) => ({
     method: r.method,
     fairValue: r.fairValue,
@@ -72,9 +74,9 @@ export function ValuationConsensus({
       {/* ── Header — verdict + counters ───────────────────────────── */}
       <div className="p-5 sm:p-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between border-b" style={{ borderColor: 'var(--border-soft)' }}>
         <div>
-          <p className="eyebrow">Valuasi Konsensus</p>
+          <p className="eyebrow">{t('valuation.title')}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-            13 metode · weighted by sector fit (ideal 2× · berlaku 1× · kurang cocok diabaikan)
+            {t('valuation.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -84,9 +86,9 @@ export function ValuationConsensus({
           >
             {data.verdict}
           </span>
-          <Counter>{data.methodsValid} / 13 valid</Counter>
-          <Counter>{data.methodsRelevant} relevan</Counter>
-          <Counter>{data.undervaluedCount} undervalued</Counter>
+          <Counter>{data.methodsValid} / 13 {t('valuation.valid')}</Counter>
+          <Counter>{data.methodsRelevant} {t('valuation.relevant')}</Counter>
+          <Counter>{data.undervaluedCount} {t('valuation.undervalued')}</Counter>
         </div>
       </div>
 
@@ -102,25 +104,25 @@ export function ValuationConsensus({
         {/* ── 4 summary cards ─────────────────────────────────────── */}
         <div className="grid gap-3 md:grid-cols-4">
           <SummaryStat
-            label="Weighted Fair Value"
+            label={t('valuation.weightedFairValue')}
             value={`Rp ${formatPrice(data.weightedFairValue)}`}
-            sub="Ideal 2× · berlaku 1×"
+            sub={t('valuation.weightedFairValueSub')}
           />
           <SummaryStat
-            label="Weighted MoS"
+            label={t('valuation.weightedMos')}
             value={formatPercentValue(data.weightedMoS)}
             valueColor={signColorVar(data.weightedMoS)}
-            sub="vs harga pasar"
+            sub={t('valuation.weightedMosSub')}
           />
           <SummaryStat
-            label="Avg Fair Value"
+            label={t('valuation.avgFairValue')}
             value={`Rp ${formatPrice(data.avgFairValue)}`}
-            sub="Rata-rata sederhana"
+            sub={t('valuation.avgFairValueSub')}
           />
           <SummaryStat
-            label="Median Fair Value"
+            label={t('valuation.medianFairValue')}
             value={`Rp ${formatPrice(data.medianFairValue)}`}
-            sub="Tahan outlier"
+            sub={t('valuation.medianFairValueSub')}
           />
         </div>
 
@@ -139,12 +141,12 @@ export function ValuationConsensus({
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: 'var(--surface-2)' }}>
-                <th className="eyebrow px-3 py-2 text-left">Metode</th>
-                <th className="eyebrow px-3 py-2 text-left">Sektor Fit</th>
-                <th className="eyebrow px-3 py-2 text-right">Fair Value</th>
-                <th className="eyebrow px-3 py-2 text-right">MoS</th>
-                <th className="eyebrow px-3 py-2 text-right">Status</th>
-                <th className="eyebrow px-3 py-2 text-left">Rumus</th>
+                <th className="eyebrow px-3 py-2 text-left">{t('valuation.colMethod')}</th>
+                <th className="eyebrow px-3 py-2 text-left">{t('valuation.colSectorFit')}</th>
+                <th className="eyebrow px-3 py-2 text-right">{t('valuation.colFairValue')}</th>
+                <th className="eyebrow px-3 py-2 text-right">{t('valuation.colMos')}</th>
+                <th className="eyebrow px-3 py-2 text-right">{t('valuation.colStatus')}</th>
+                <th className="eyebrow px-3 py-2 text-left">{t('valuation.colFormula')}</th>
               </tr>
             </thead>
             <tbody>
@@ -197,7 +199,7 @@ export function ValuationConsensus({
                           }}
                         >
                           {undervalued ? <Check className="size-3" /> : <X className="size-3" />}
-                          {undervalued ? 'Under' : 'Over'}
+                          {undervalued ? t('valuation.under') : t('valuation.over')}
                         </span>
                       )}
                     </td>
@@ -216,7 +218,7 @@ export function ValuationConsensus({
           className="rounded-md p-3 text-xs"
           style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
         >
-          <p className="font-semibold" style={{ color: 'var(--ink)' }}>Asumsi global (Indonesia, April 2026):</p>
+          <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('valuation.globalAssumptions')}</p>
           <p className="num mt-0.5">
             Risk-free {(ASSUMPTIONS.riskFreeRate * 100).toFixed(2)}% · Equity risk premium{' '}
             {(ASSUMPTIONS.equityRiskPremium * 100).toFixed(0)}% · Cost of equity{' '}
@@ -279,6 +281,7 @@ function TimeGapDisclosure({
   gapConfidence: 'high' | 'medium' | 'low' | 'unknown'
   currentPrice: number | null
 }) {
+  const t = useT()
   if (anchorYear === null) {
     return (
       <div
@@ -287,10 +290,9 @@ function TimeGapDisclosure({
       >
         <AlertTriangle className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral)' }} />
         <div>
-          <p className="font-semibold" style={{ color: 'var(--ink)' }}>Belum ada tahun fiskal lengkap</p>
+          <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('valuation.noFiscalYearTitle')}</p>
           <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-            Emiten ini belum punya satu pun tahun dengan Revenue + Net Profit lengkap, jadi valuasi
-            gak bisa dihitung.
+            {t('valuation.noFiscalYearBody')}
           </p>
         </div>
       </div>
@@ -312,29 +314,24 @@ function TimeGapDisclosure({
       <Info className="size-4 shrink-0 mt-0.5" style={{ color: tone.ink }} />
       <div className="flex-1">
         <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-          Basis: Laporan Tahunan FY{anchorYear}
+          {t('valuation.basisPrefix')}{anchorYear}
           {gapMonths !== null && gapMonths > 0 && (
-            <span style={{ color: 'var(--ink-soft)' }}> · {gapMonths} bulan lalu</span>
+            <span style={{ color: 'var(--ink-soft)' }}> · {gapMonths} {t('valuation.monthsAgo')}</span>
           )}
         </p>
         <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-          Fair value dihitung dari data FY{anchorYear} ke bawah. Margin of Safety dibandingin sama{' '}
-          <span className="font-semibold" style={{ color: 'var(--ink)' }}>harga pasar hari ini</span>
+          {t('valuation.fairValueBasisPrefix')}{anchorYear}{t('valuation.fairValueBasisMid')}{' '}
+          <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('valuation.marketPriceToday')}</span>
           {currentPrice !== null && (
             <span className="num"> (Rp {currentPrice.toLocaleString('id-ID')})</span>
           )}
-          . Makin besar gap waktu, makin besar risiko &ldquo;blind spot&rdquo; — fair value bisa
-          overstated kalau fundamental udah turun di luar data annual. Metode relatif (PER, PBV,
-          EV/EBIT) relatif lebih tahan karena median peer juga diambil dari tahun anchor
-          masing-masing.
+          {t('valuation.blindSpotNote')}
         </p>
         {gapConfidence !== 'high' && (
           <p className="mt-1 text-xs font-semibold" style={{ color: tone.ink }}>
-            Confidence: {gapConfidence.toUpperCase()}
-            {gapConfidence === 'medium' &&
-              ' — gap 12–24 bulan, cek berita & laporan kuartalan terbaru sebelum action.'}
-            {gapConfidence === 'low' &&
-              ' — gap >24 bulan, data udah ketinggalan banget. Anggap indikatif aja.'}
+            {t('valuation.confidence')}: {gapConfidence.toUpperCase()}
+            {gapConfidence === 'medium' && t('valuation.confidenceMedium')}
+            {gapConfidence === 'low' && t('valuation.confidenceLow')}
           </p>
         )}
       </div>

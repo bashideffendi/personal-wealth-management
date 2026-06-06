@@ -13,6 +13,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Sparkles, RefreshCw, Loader2, AlertCircle, PenLine, Camera, Command as CommandIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useT } from '@/lib/i18n/context'
 import { rootCategory } from '@/lib/budget-categories'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import type { Transaction } from '@/types'
@@ -78,6 +79,7 @@ export function AIInsightsCard({
   selectedMonth,
   goals,
 }: Props) {
+  const t = useT()
   const supabase = createClient()
   const [insights, setInsights] = useState<Insight[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -202,13 +204,13 @@ export function AIInsightsCard({
       })
       const json = await res.json()
       if (!res.ok) {
-        setError(json.error ?? 'Gagal generate insights')
+        setError(json.error ?? t('ai_insights.error_generate'))
         setLoading(false)
         return
       }
       const data = json.data?.insights as Insight[] | undefined
       if (!data || !Array.isArray(data)) {
-        setError('Response format tidak valid')
+        setError(t('ai_insights.error_format'))
         setLoading(false)
         return
       }
@@ -217,7 +219,7 @@ export function AIInsightsCard({
       setGeneratedAt(now)
       setCache({ period: periodKey, data, generated_at: now })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal fetch')
+      setError(err instanceof Error ? err.message : t('ai_insights.error_fetch'))
     } finally {
       setLoading(false)
       // Refresh badge — credits were either consumed (success) or refunded
@@ -250,14 +252,14 @@ export function AIInsightsCard({
           </div>
           <div>
             <p className="eyebrow" style={{ color: 'var(--c-violet)' }}>
-              Insight Klunting AI
+              {t('ai_insights.title')}
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               {generatedAt
-                ? `Diperbarui ${formatRelative(generatedAt)} · cache 24 jam`
+                ? `${t('ai_insights.updated_prefix')} ${formatRelative(generatedAt)} ${t('ai_insights.cache_suffix')}`
                 : loading
-                  ? 'Sedang menganalisis pola keuanganmu…'
-                  : 'Klik refresh untuk generate insight'}
+                  ? t('ai_insights.analyzing')
+                  : t('ai_insights.click_refresh')}
             </p>
           </div>
         </div>
@@ -267,7 +269,7 @@ export function AIInsightsCard({
           disabled={loading}
           className="rounded-md p-1.5 transition hover:bg-[var(--surface-2)] disabled:opacity-50"
           aria-label="Refresh insights"
-          title="Generate ulang (pakai 1 kredit AI)"
+          title={t('ai_insights.refresh_title')}
         >
           {loading ? (
             <Loader2 className="size-3.5 animate-spin" style={{ color: 'var(--ink-muted)' }} />
@@ -337,7 +339,7 @@ export function AIInsightsCard({
                   className="text-[11px] font-semibold mb-2"
                   style={{ color: 'var(--ink-soft)' }}
                 >
-                  {rest.length} saran lainnya
+                  {rest.length} {t('ai_insights.other_suggestions')}
                 </p>
                 <div className="space-y-1.5">
                   {rest.map((ins, i) => (
@@ -358,7 +360,7 @@ export function AIInsightsCard({
 
       {insights && insights.length === 0 && (
         <p className="text-xs text-center py-6" style={{ color: 'var(--ink-soft)' }}>
-          Belum ada insight untuk periode ini. Coba lagi setelah ada lebih banyak transaksi.
+          {t('ai_insights.empty_state')}
         </p>
       )}
       </div>

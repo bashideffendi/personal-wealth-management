@@ -15,6 +15,7 @@ import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
 import { Network, Building2, Users, UserRound } from 'lucide-react'
 import { formatTanggalID, formatIDRCompact } from '@/lib/invest/format'
+import { useT } from '@/lib/i18n/context'
 import type { Ownership } from '@/lib/invest/ownership'
 
 // Island: Sigma graph cuma di-mount di client.
@@ -64,6 +65,7 @@ interface OwnershipTabProps {
 }
 
 export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
+  const t = useT()
   const hasNetwork = !!ownership?.network?.nodes?.length
 
   // Komposisi: sort desc by pct, drop yang null/0, ambil yang berarti (>=0.05%).
@@ -147,11 +149,10 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
             <Network className="size-6" />
           </div>
           <h3 className="mt-4 text-lg font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
-            Data kepemilikan {ticker} belum ada
+            {t('ownership.emptyTitlePrefix')} {ticker} {t('ownership.emptyTitleSuffix')}
           </h3>
           <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
-            Data kepemilikan belum tersedia buat emiten ini — baru sebagian emiten
-            yang ke-scrape. Nyusul di batch berikutnya.
+            {t('ownership.emptyDesc')}
           </p>
         </div>
       </div>
@@ -168,11 +169,11 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
       {/* Header line */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Jaring Kepemilikan</p>
+          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('ownership.eyebrowNetwork')}</p>
           <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-            Per {formatTanggalID(ownership.asOf)} ·{' '}
-            <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>{investorCount}</span> investor ·{' '}
-            <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>{companyCount}</span> perusahaan terhubung
+            {t('ownership.asOf')} {formatTanggalID(ownership.asOf)} ·{' '}
+            <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>{investorCount}</span> {t('ownership.investorsLabel')} ·{' '}
+            <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>{companyCount}</span> {t('ownership.companiesConnectedLabel')}
           </p>
         </div>
       </div>
@@ -187,23 +188,22 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
 
       <p className="text-[11px] flex items-start gap-1.5" style={{ color: 'var(--ink-soft)' }}>
         <Network className="size-3.5 shrink-0 mt-0.5" />
-        Buat lihat pengendali &amp; kepemilikan silang antar emiten (pihak terkait).
-        Arah panah = pemegang → emiten yang dipegang; tebal garis ∝ persentase.
+        {t('ownership.graphCaption')}
       </p>
 
       {/* Pemegang Saham (bernama) — diturunkan dari jaringan kepemilikan */}
       <div className="s-card p-5">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-4">
           <UserRound className="size-4 self-center" style={{ color: 'var(--c-mint)' }} />
-          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Pemegang Saham</p>
+          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('ownership.shareholdersTitle')}</p>
           {namedHolders.length > 0 && (
             <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              dari jaringan kepemilikan · per {formatTanggalID(ownership.asOf)}
+              {t('ownership.fromNetwork')} {formatTanggalID(ownership.asOf)}
             </span>
           )}
           {namedHolders.length > 0 && (
             <span className="ml-auto text-xs num tabular" style={{ color: 'var(--ink-soft)' }}>
-              {namedHolders.length} pemegang
+              {namedHolders.length} {t('ownership.holdersCountLabel')}
             </span>
           )}
         </div>
@@ -215,9 +215,9 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
               className="hidden sm:flex items-center gap-3 pb-2 mb-1 text-[11px] font-medium uppercase tracking-wide"
               style={{ color: 'var(--ink-soft)', borderBottom: '1px solid var(--border-soft)' }}
             >
-              <span className="flex-1">Nama</span>
+              <span className="flex-1">{t('ownership.colName')}</span>
               <span className="w-20 text-right">%</span>
-              <span className="w-28 text-right">Lembar</span>
+              <span className="w-28 text-right">{t('ownership.colShares')}</span>
             </div>
             <div className="space-y-0.5">
               {namedHolders.map((h, i) => {
@@ -242,8 +242,8 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                         <span
                           className="size-2.5 rounded-full shrink-0"
                           style={{ background: isCompany ? 'var(--c-mint)' : 'var(--ink-soft)' }}
-                          title={isCompany ? 'Perusahaan' : 'Investor'}
-                          aria-label={isCompany ? 'Perusahaan' : 'Investor'}
+                          title={isCompany ? t('ownership.kindCompany') : t('ownership.kindInvestor')}
+                          aria-label={isCompany ? t('ownership.kindCompany') : t('ownership.kindInvestor')}
                         />
                       )}
                       <span
@@ -265,7 +265,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                     <span
                       className="num tabular text-[12px] shrink-0 w-28 text-right"
                       style={{ color: 'var(--ink-muted)' }}
-                      title={h.shares != null ? new Intl.NumberFormat('id-ID').format(h.shares) + ' lembar' : ''}
+                      title={h.shares != null ? new Intl.NumberFormat('id-ID').format(h.shares) + ' ' + t('ownership.sharesUnit') : ''}
                     >
                       {formatShares(h.shares)}
                     </span>
@@ -276,7 +276,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
           </div>
         ) : (
           <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
-            Daftar pemegang saham bernama belum tersedia.
+            {t('ownership.namedHoldersEmpty')}
           </p>
         )}
       </div>
@@ -288,7 +288,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
           <div className="flex items-center gap-2 mb-4">
             <Users className="size-4" style={{ color: 'var(--c-mint)' }} />
             <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-              Komposisi Pemegang Saham
+              {t('ownership.compositionTitle')}
             </p>
           </div>
 
@@ -317,7 +317,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
 
             {composition.tailPct > 0 && (
               <div className="flex items-center justify-between gap-2 text-[13px] pt-1">
-                <span style={{ color: 'var(--ink-soft)' }}>Lainnya (gabungan kecil)</span>
+                <span style={{ color: 'var(--ink-soft)' }}>{t('ownership.othersCombined')}</span>
                 <span className="num tabular shrink-0" style={{ color: 'var(--ink-muted)' }}>
                   {composition.tailPct.toFixed(2)}%
                 </span>
@@ -327,11 +327,11 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
 
           {ownership.totalShares != null && (
             <p className="text-[11px] mt-4 pt-3" style={{ color: 'var(--ink-soft)', borderTop: '1px solid var(--border-soft)' }}>
-              Total saham beredar{' '}
+              {t('ownership.totalSharesOutstanding')}{' '}
               <span className="num tabular font-medium" style={{ color: 'var(--ink-muted)' }}>
                 {formatIDRCompact(ownership.totalShares)}
               </span>{' '}
-              lembar
+              {t('ownership.sharesUnit')}
             </p>
           )}
         </div>
@@ -341,7 +341,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
           <div className="flex items-center gap-2 mb-4">
             <Building2 className="size-4" style={{ color: 'var(--c-mint)' }} />
             <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-              Anak Usaha
+              {t('ownership.subsidiariesTitle')}
             </p>
             <span className="ml-auto text-xs" style={{ color: 'var(--ink-soft)' }}>
               {subsidiaries.length}
@@ -372,7 +372,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
             </div>
           ) : (
             <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
-              Belum ada data anak usaha.
+              {t('ownership.subsidiariesEmpty')}
             </p>
           )}
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 interface SavingRateRingProps {
   savingRate: number
@@ -9,20 +10,21 @@ interface SavingRateRingProps {
 }
 
 export function SavingRateRing({ savingRate, income, savings }: SavingRateRingProps) {
+  const t = useT()
   const rateCapped = Math.min(100, Math.max(0, savingRate))
   const circumference = 2 * Math.PI * 44
   const offset = circumference - (rateCapped / 100) * circumference
   const color = savingRate >= 20 ? 'var(--c-mint)' : savingRate >= 10 ? 'var(--c-amber)' : 'var(--c-coral)'
-  const verdict = savingRate >= 30 ? 'Excellent'
-    : savingRate >= 20 ? 'Sehat'
-    : savingRate >= 10 ? 'Cukup'
-    : savingRate > 0 ? 'Rendah'
-    : 'Negatif'
+  const verdict = savingRate >= 30 ? t('saving_ring.verdict_excellent')
+    : savingRate >= 20 ? t('saving_ring.verdict_healthy')
+    : savingRate >= 10 ? t('saving_ring.verdict_adequate')
+    : savingRate > 0 ? t('saving_ring.verdict_low')
+    : t('saving_ring.verdict_negative')
 
   return (
     <div className="s-card p-5">
-      <p className="eyebrow">Saving Rate</p>
-      <h3 className="text-base font-semibold mt-0.5">Tabungan / Pemasukan</h3>
+      <p className="eyebrow">{t('saving_ring.eyebrow')}</p>
+      <h3 className="text-base font-semibold mt-0.5">{t('saving_ring.title')}</h3>
       <div className="mt-4 flex items-center gap-4">
         <div className="relative shrink-0">
           <svg width={110} height={110} viewBox="0 0 110 110">
@@ -55,19 +57,19 @@ export function SavingRateRing({ savingRate, income, savings }: SavingRateRingPr
         </div>
         <div className="flex-1 space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <span style={{ color: 'var(--ink-muted)' }}>Pemasukan</span>
+            <span style={{ color: 'var(--ink-muted)' }}>{t('saving_ring.income')}</span>
             <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(income)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span style={{ color: 'var(--ink-muted)' }}>Ditabung</span>
+            <span style={{ color: 'var(--ink-muted)' }}>{t('saving_ring.saved')}</span>
             <span className="num tabular font-semibold" style={{ color: 'var(--c-mint)' }}>
               {formatCurrency(savings)}
             </span>
           </div>
           <div className="pt-2 border-t text-[10px]" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
-            Target sehat: <span className="font-semibold">≥ 20%</span>
+            {t('saving_ring.healthy_target')} <span className="font-semibold">≥ 20%</span>
           </div>
         </div>
       </div>

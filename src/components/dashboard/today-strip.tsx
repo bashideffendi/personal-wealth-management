@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { ArrowRight, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { rootCategory } from '@/lib/budget-categories'
+import { useT } from '@/lib/i18n/context'
 
 interface Tx {
   type: 'income' | 'expense' | 'saving' | 'investment'
@@ -46,6 +47,7 @@ function isToday(dateStr: string): boolean {
 }
 
 export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripProps) {
+  const t = useT()
   // ─── Today's transactions ──────────────────────────────────────
   const today = monthTransactions.filter((t) => isToday(t.date))
   if (today.length === 0) return null
@@ -102,7 +104,7 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
         background: 'var(--surface)',
         borderColor: 'var(--border)',
       }}
-      aria-label="Ringkasan hari ini"
+      aria-label={t('today_strip.section_label')}
     >
       <div className="px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex items-center justify-between gap-3 mb-3">
@@ -110,34 +112,34 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
             className="text-[10px] uppercase font-semibold tracking-[0.10em]"
             style={{ color: 'var(--ink-soft)' }}
           >
-            Hari ini
+            {t('today_strip.heading')}
           </span>
           <Link
             href="/dashboard/transactions"
             className="text-[11px] font-medium hover:underline inline-flex items-center gap-0.5"
             style={{ color: 'var(--c-mint)' }}
           >
-            Lihat semua
+            {t('today_strip.view_all')}
             <ArrowRight className="size-3" />
           </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           <Stat
-            label="Total spending"
+            label={t('today_strip.total_spending')}
             value={spendToday > 0 ? formatCurrency(spendToday) : 'Rp 0'}
             tint="var(--c-coral)"
           />
           <Stat
-            label="Top kategori"
+            label={t('today_strip.top_category')}
             value={topToday ? topToday[0] : '—'}
             sub={topToday ? formatCurrency(topToday[1]) : undefined}
             tint="var(--ink)"
           />
           <Stat
-            label="Transaksi"
+            label={t('today_strip.transactions')}
             value={`${today.length}`}
-            sub={today.length === 1 ? 'tercatat' : 'tercatat'}
+            sub={t('today_strip.recorded')}
             tint="var(--ink)"
           />
         </div>
@@ -158,12 +160,12 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
           />
           <p className="flex-1 text-xs sm:text-sm" style={{ color: 'var(--ink)' }}>
             <strong className="font-semibold">{warning.category}</strong>{' '}
-            <span style={{ color: 'var(--ink-muted)' }}>udah pakai</span>{' '}
+            <span style={{ color: 'var(--ink-muted)' }}>{t('today_strip.warning_used')}</span>{' '}
             <span className="num font-semibold" style={{ color: 'var(--amber-700)' }}>
               {Math.round(warning.pct)}%
             </span>{' '}
             <span style={{ color: 'var(--ink-muted)' }}>
-              dari anggaran ({formatCurrency(warning.used)} dari{' '}
+              {t('today_strip.warning_of_budget')} ({formatCurrency(warning.used)} {t('today_strip.warning_from')}{' '}
               {formatCurrency(warning.budget)})
             </span>
           </p>

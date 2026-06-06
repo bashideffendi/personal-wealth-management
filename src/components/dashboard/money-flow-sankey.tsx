@@ -34,6 +34,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 export type FlowKind = 'income' | 'expense' | 'saving' | 'investment' | 'middle'
 
@@ -208,13 +209,19 @@ function renderLink(props: SankeyLinkData) {
 export function MoneyFlowSankey({
   income,
   outflow,
-  middleLabel = 'Total Pemasukan',
-  surplusLabel = 'Belum Terpakai',
-  deficitLabel = 'Defisit Bulan Ini',
+  middleLabel: middleLabelProp,
+  surplusLabel: surplusLabelProp,
+  deficitLabel: deficitLabelProp,
   height = 360,
-  emptyMessage = 'Belum ada transaksi untuk periode ini.',
+  emptyMessage: emptyMessageProp,
   compact = false,
 }: MoneyFlowSankeyProps) {
+  const t = useT()
+  const middleLabel = middleLabelProp ?? t('sankey.middleLabel')
+  const surplusLabel = surplusLabelProp ?? t('sankey.surplusLabel')
+  const deficitLabel = deficitLabelProp ?? t('sankey.deficitLabel')
+  const emptyMessage = emptyMessageProp ?? t('sankey.emptyMessage')
+
   const data = useMemo(() => {
     const incomeFiltered = income.filter((c) => c.amount > 0)
     const outflowFiltered = outflow.filter((c) => c.amount > 0)

@@ -14,6 +14,7 @@ import { Sparkles } from 'lucide-react'
 import type { FHSResult, FHSIndicator } from '@/lib/financial-health'
 import { formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
+import { useT } from '@/lib/i18n/context'
 
 interface Props {
   result: FHSResult
@@ -32,6 +33,7 @@ function tierChipStyle(color: string): React.CSSProperties {
 }
 
 export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: Props) {
+  const t = useT()
   const { score, tier, tierMeta, breakdown } = result
   // arcAngle no longer needed — SVG ring uses strokeDasharray instead.
 
@@ -48,11 +50,11 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
     : burnMonths >= 6 ? 'var(--c-mint-soft)'
     : burnMonths >= 3 ? 'var(--c-amber-soft)'
     : 'var(--c-coral-soft)'
-  const burnVerdict = !hasExpenseData ? 'Belum ada data pengeluaran'
-    : burnMonths >= 6 ? 'Sangat aman'
-    : burnMonths >= 3 ? 'Cukup aman'
-    : burnMonths >= 1 ? 'Tipis'
-    : 'Risiko tinggi'
+  const burnVerdict = !hasExpenseData ? t('health_card.verdict_no_data')
+    : burnMonths >= 6 ? t('health_card.verdict_very_safe')
+    : burnMonths >= 3 ? t('health_card.verdict_safe_enough')
+    : burnMonths >= 1 ? t('health_card.verdict_thin')
+    : t('health_card.verdict_high_risk')
 
   return (
     <div className="s-card p-6 sm:p-7">
@@ -60,7 +62,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
         {/* ─── Col 1: BIG score centered + tier label below ─────────── */}
         <div className="lg:col-span-4 flex flex-col items-center text-center">
           <div className="flex items-center gap-1.5 mb-4 self-stretch justify-center">
-            <p className="eyebrow">Skor Kesehatan Finansial</p>
+            <p className="eyebrow">{t('health_card.eyebrow_score')}</p>
             <EduTip topic="financial-health" side="bottom" />
           </div>
 
@@ -108,7 +110,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                   className="text-[11px] mt-1.5 font-medium opacity-50"
                   style={{ color: tierMeta.color }}
                 >
-                  dari 100
+                  {t('health_card.out_of_100')}
                 </span>
               </div>
             </div>
@@ -135,7 +137,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
           className="lg:col-span-5 lg:border-l lg:border-r lg:px-6 flex flex-col"
           style={{ borderColor: 'var(--border-soft)' }}
         >
-          <p className="eyebrow mb-4">Breakdown</p>
+          <p className="eyebrow mb-4">{t('health_card.breakdown')}</p>
           <div className="space-y-2.5 flex-1">
             {breakdown.map((ind) => (
               <IndicatorBar key={ind.key} indicator={ind} />
@@ -145,7 +147,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
 
         {/* ─── Col 3: Cash Coverage (BIG hero, fills column) ───────── */}
         <div className="lg:col-span-3 flex flex-col">
-          <p className="eyebrow mb-4">Cash Coverage</p>
+          <p className="eyebrow mb-4">{t('health_card.cash_coverage')}</p>
           <div
             className="rounded-xl p-4 flex-1 flex flex-col"
             style={{
@@ -168,7 +170,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
                 className="text-sm font-medium"
                 style={{ color: burnColor }}
               >
-                bulan
+                {t('health_card.months')}
               </span>
             </div>
 
@@ -184,12 +186,12 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
               style={{ color: 'var(--ink-muted)' }}
             >
               {hasExpenseData ? (
-                <>Tanpa pemasukan baru, liquid cash bisa cover{' '}
+                <>{t('health_card.coverage_prefix')}{' '}
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
                   {burnMonths > 99 ? '> 99' : burnMonths.toFixed(1)}
-                </span> bulan pengeluaran.</>
+                </span> {t('health_card.coverage_suffix')}</>
               ) : (
-                'Belum cukup data pengeluaran bulan ini buat hitung cash coverage.'
+                t('health_card.coverage_no_data')
               )}
             </p>
 
@@ -199,13 +201,13 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
               style={{ borderColor: `${burnColor}20` }}
             >
               <div className="flex items-center justify-between text-[11px]">
-                <span style={{ color: 'var(--ink-muted)' }}>Liquid cash</span>
+                <span style={{ color: 'var(--ink-muted)' }}>{t('health_card.liquid_cash')}</span>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(liquidBalance)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
-                <span style={{ color: 'var(--ink-muted)' }}>Pengeluaran/bln</span>
+                <span style={{ color: 'var(--ink-muted)' }}>{t('health_card.expense_per_month')}</span>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(monthlyExpense)}
                 </span>
@@ -223,6 +225,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense }: P
  * Hover for full explainer + tip via native browser tooltip.
  */
 function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
+  const t = useT()
   const isNa = indicator.status === 'na'
   const barColor = (() => {
     if (isNa) return 'var(--ink-soft)'
@@ -233,7 +236,7 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
   const pct = isNa ? 0 : Math.min(100, Math.max(0, indicator.score))
 
   const tooltip = indicator.tip
-    ? `${indicator.explainer}\n\nTip: ${indicator.tip}`
+    ? `${indicator.explainer}\n\n${t('health_card.tip_label')} ${indicator.tip}`
     : indicator.explainer
 
   return (

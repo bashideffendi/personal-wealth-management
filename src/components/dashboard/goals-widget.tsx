@@ -8,6 +8,7 @@
 import Link from 'next/link'
 import { ChevronRight, Target } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 interface GoalsWidgetProps {
   goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }>
@@ -20,17 +21,18 @@ function etaLabel(deadline: string | null): string | null {
 }
 
 export function GoalsWidget({ goals }: GoalsWidgetProps) {
+  const t = useT()
   if (goals.length === 0) {
     return (
       <article className="s-card s-card-pad-lg">
         <div className="flex items-center justify-between mb-3">
-          <p className="eyebrow">Tujuan Aktif</p>
+          <p className="eyebrow">{t('goals_widget.eyebrow')}</p>
           <Link
             href="/dashboard/goals"
             className="btn-outline"
             style={{ fontSize: 11, padding: '6px 10px' }}
           >
-            Buat tujuan
+            {t('goals_widget.create_goal')}
           </Link>
         </div>
         <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -47,10 +49,10 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
             <Target className="size-5" />
           </div>
           <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
-            Belum ada tujuan
+            {t('goals_widget.empty_title')}
           </p>
           <p className="text-xs mt-1 max-w-xs" style={{ color: 'var(--text-mute)' }}>
-            Set target keuangan biar ada arah — &ldquo;DP Rumah&rdquo;, &ldquo;Liburan Bali&rdquo;, dll.
+            {t('goals_widget.empty_desc')}
           </p>
         </div>
       </article>
@@ -60,13 +62,13 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
   return (
     <article className="s-card s-card-pad-lg">
       <div className="flex items-center justify-between mb-4">
-        <p className="eyebrow">Tujuan Aktif</p>
+        <p className="eyebrow">{t('goals_widget.eyebrow')}</p>
         <Link
           href="/dashboard/goals"
           className="text-xs font-semibold inline-flex items-center gap-0.5 hover:underline"
           style={{ color: 'var(--c-mint)' }}
         >
-          Lihat semua
+          {t('goals_widget.view_all')}
           <ChevronRight className="size-3" />
         </Link>
       </div>

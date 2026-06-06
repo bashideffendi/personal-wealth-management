@@ -7,6 +7,7 @@ import {
   TrendingUp, Wallet, Heart, Gamepad2, BanknoteArrowDown, Receipt,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 import type { Transaction } from '@/types'
 
 /**
@@ -46,6 +47,7 @@ function relativeTime(dateStr: string): string {
 }
 
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
+  const t = useT()
   const recent = useMemo(
     () => [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
     [transactions],
@@ -54,18 +56,18 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
   return (
     <article className="s-card" style={{ padding: 24 }}>
       <div className="flex items-center justify-between">
-        <p className="eyebrow">Transaksi Terkini</p>
+        <p className="eyebrow">{t('recent_tx.title')}</p>
         <Link
           href="/dashboard/transactions"
           className="btn-outline"
           style={{ fontSize: 11, padding: '6px 10px' }}
         >
-          Semua transaksi <ChevronRight className="size-3" />
+          {t('recent_tx.view_all')} <ChevronRight className="size-3" />
         </Link>
       </div>
       {recent.length === 0 ? (
         <p className="text-sm py-6 text-center" style={{ color: 'var(--text-mute)' }}>
-          Belum ada transaksi bulan ini.
+          {t('recent_tx.empty')}
         </p>
       ) : (
         <div className="flex flex-col mt-3">

@@ -19,6 +19,7 @@ import {
   type PyramidLayer,
 } from '@/lib/goal-probability'
 import { EduTip } from '@/components/edu/edu-tip'
+import { useT } from '@/lib/i18n/context'
 
 interface Goal {
   id: string
@@ -41,6 +42,7 @@ const BOTTOM_UP: PyramidLayer[] = ['pelindung', 'pertumbuhan', 'mimpi']
 const goalPct = (g: Goal) => (g.target_amount > 0 ? g.current_amount / g.target_amount : 1)
 
 export function GoalPyramid({ goals, onSetor }: Props) {
+  const t = useT()
   const { grouped, agg, focus, focusGoalId } = useMemo(() => {
     const grouped: Record<PyramidLayer, Goal[]> = { pelindung: [], pertumbuhan: [], mimpi: [] }
     for (const g of goals) grouped[categoryToPyramidLayer(g.category)].push(g)
@@ -69,20 +71,20 @@ export function GoalPyramid({ goals, onSetor }: Props) {
   let insight: { text: string; tone: 'focus' | 'warn' | 'done'; color: string }
   if (!hasAman) {
     insight = {
-      text: 'Belum ada tujuan tier Aman (dana darurat / proteksi). Bangun fondasi ini dulu sebelum kejar tier atas.',
+      text: t('goal_pyramid.insight_no_safe'),
       tone: 'warn',
       color: '#F59E0B',
     }
   } else if (focus) {
     const meta = PYRAMID_LAYERS[focus]
     insight = {
-      text: `Amankan tier ${meta.label} dulu — baru ${agg[focus].pct.toFixed(0)}% terkumpul (${formatCurrency(agg[focus].current)} dari ${formatCurrency(agg[focus].target)}). Prioritaskan setoran ke sini.`,
+      text: `${t('goal_pyramid.insight_secure_prefix')} ${meta.label} ${t('goal_pyramid.insight_secure_mid')} ${agg[focus].pct.toFixed(0)}% ${t('goal_pyramid.insight_secure_collected')} (${formatCurrency(agg[focus].current)} ${t('goal_pyramid.insight_of')} ${formatCurrency(agg[focus].target)}). ${t('goal_pyramid.insight_prioritize')}`,
       tone: 'focus',
       color: meta.color,
     }
   } else {
     insight = {
-      text: 'Semua tier yang aktif udah penuh — fondasi aman. Mantap, tinggal jaga konsistensi.',
+      text: t('goal_pyramid.insight_all_full'),
       tone: 'done',
       color: '#10B981',
     }
@@ -103,11 +105,11 @@ export function GoalPyramid({ goals, onSetor }: Props) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
-            Goal Pyramid
+            {t('goal_pyramid.title')}
             <EduTip topic="goal-based-investing" side="bottom" />
           </p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-            Fondasi (bawah) dulu, ambisi (atas) belakangan. Selesaikan tier bawah sebelum naik.
+            {t('goal_pyramid.subtitle')}
           </p>
         </div>
       </div>
@@ -127,7 +129,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
             className="mt-2.5 ml-[26px] inline-flex items-center gap-1 text-[12px] font-semibold hover:underline"
             style={{ color: insight.color }}
           >
-            Setor ke tier ini <ArrowRight className="size-3.5" />
+            {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3.5" />
           </button>
         )}
       </div>
