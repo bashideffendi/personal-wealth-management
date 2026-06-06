@@ -12,8 +12,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Check, Loader2 } from 'lucide-react'
 
-const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
-
 function humanError(msg: string): string {
   const m = msg.toLowerCase()
   if (m.includes('already registered') || m.includes('already exists') || m.includes('user already')) return 'Email ini udah terdaftar. Coba masuk?'
@@ -58,11 +56,11 @@ export default function RegisterPage() {
       {!success && (
         <div className="text-center mb-8">
           <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
-            Yuk, mulai <span style={SERIF}>tenang</span> soal uang.
+            Buat akun Klunting.
           </h1>
-          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 14 hari gratis. Tanpa kartu kredit.</p>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 14 hari gratis, tanpa kartu kredit.</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
-            {['Akses penuh 14 hari', 'Tanpa kartu kredit', 'Cancel kapan aja'].map((t) => (
+            {['Akses penuh', 'Tanpa kartu kredit', 'Batal kapan saja'].map((t) => (
               <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
             ))}
           </div>
@@ -76,18 +74,18 @@ export default function RegisterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="mt-4 text-lg font-bold" style={{ color: 'var(--ink)' }}>Cek inbox kamu</h2>
+            <h2 className="mt-4 text-lg font-bold" style={{ color: 'var(--ink)' }}>Cek email kamu</h2>
             <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Link konfirmasi udah dikirim ke <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Klik link itu buat aktifkan akun.
+              Tautan konfirmasi sudah dikirim ke <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Klik untuk mengaktifkan akun.
             </p>
-            <p className="mt-4 text-xs" style={{ color: 'var(--ink-soft)' }}>Belum dapet dalam 5 menit? Cek folder spam.</p>
+            <p className="mt-4 text-xs" style={{ color: 'var(--ink-soft)' }}>Belum diterima dalam 5 menit? Cek folder spam.</p>
             <button
               type="button"
               onClick={() => { setSuccess(false); setEmail(''); setPassword(''); setFullName('') }}
               className="mt-4 text-sm font-semibold hover:underline"
               style={{ color: 'var(--c-mint)' }}
             >
-              Daftar email lain
+              Gunakan email lain
             </button>
           </div>
         ) : (
@@ -116,7 +114,7 @@ export default function RegisterPage() {
                   {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Minimal 8 karakter — campur huruf & angka biar kuat.</p>
+              <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Minimal 8 karakter, kombinasi huruf dan angka.</p>
             </div>
 
             <Button type="submit" disabled={loading} className="mt-2 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
@@ -133,7 +131,7 @@ export default function RegisterPage() {
 
       {!success && (
         <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Udah punya akun?{' '}
+          Sudah punya akun?{' '}
           <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--ink)' }}>Masuk</Link>
         </p>
       )}

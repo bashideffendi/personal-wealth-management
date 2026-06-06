@@ -67,8 +67,8 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>Reset password</h1>
-        <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masukin email, link reset bakal dikirim ke inbox.</p>
+        <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>Atur ulang password</h1>
+        <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masukkan email kamu. Kami kirim tautan untuk atur ulang.</p>
       </div>
 
       {sent ? (
@@ -79,10 +79,10 @@ export default function ForgotPasswordPage() {
               </svg>
             </div>
             <p className="text-sm" style={{ color: 'var(--ink)' }}>
-              Link reset terkirim ke <strong>{email}</strong>.
+              Tautan terkirim ke <strong>{email}</strong>.
             </p>
             <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Cek inbox dan folder spam. Belum dapet dalam 5 menit? Kirim ulang di bawah.
+              Cek inbox dan folder spam. Belum diterima dalam 5 menit? Kirim ulang di bawah.
             </p>
             {error && <p className="mt-2 text-sm" style={{ color: 'var(--c-coral)' }}>{error}</p>}
             <button
@@ -108,13 +108,13 @@ export default function ForgotPasswordPage() {
               <Input type="email" placeholder="kamu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" autoComplete="email" />
             </div>
             <Button type="submit" disabled={loading} className="mt-2 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
-              {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Kirim link reset'}
+              {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Kirim tautan'}
             </Button>
           </form>
         )}
 
       <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-        Inget password kamu?{' '}
+        Ingat password kamu?{' '}
         <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--ink)' }}>Masuk</Link>
       </p>
     </>

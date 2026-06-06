@@ -52,9 +52,9 @@ export default function LoginPage() {
     <>
       <div className="text-center mb-8">
         <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
-          Selamat datang <span style={SERIF}>lagi.</span>
+          Selamat datang <span style={SERIF}>kembali.</span>
         </h1>
-        <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Uangmu udah nungguin, udah dirapihin.</p>
+        <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masuk untuk melanjutkan.</p>
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
           <label className="flex items-center gap-2 text-sm select-none cursor-pointer" style={{ color: 'var(--ink-muted)' }}>
             <input type="checkbox" defaultChecked className="size-4 rounded" style={{ accentColor: 'var(--c-primary)' }} />
-            Biarin aku tetap masuk
+            Tetap masuk di perangkat ini
           </label>
 
           <Button type="submit" disabled={loading} className="mt-1 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>

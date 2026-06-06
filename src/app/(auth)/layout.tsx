@@ -53,15 +53,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       {/* trust — bottom-left viewport edge (desktop) */}
       <p className="hidden lg:inline-flex absolute z-20 bottom-12 left-12 items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
-        <Shield className="size-3.5" style={{ color: '#34D399' }} /> Datamu dienkripsi, gak dijual.
+        <Shield className="size-3.5" style={{ color: '#34D399' }} /> Data kamu dienkripsi dan tidak dijual.
       </p>
 
       {/* centered content band (~1024px ≈ YNAB 1006): headline left + card right */}
       <div className="relative z-10 mx-auto max-w-5xl px-6 min-h-screen grid lg:grid-cols-2 items-center gap-10 lg:gap-12">
         <div className="hidden lg:block max-w-md">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Atur uang tanpa drama</p>
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Keuangan pribadi</p>
           <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(38px, 3.6vw, 52px)', lineHeight: 1.1, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
-            Akhirnya, <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span> soal uang.
+            Kelola keuanganmu dengan <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span>.
           </h2>
         </div>
 
