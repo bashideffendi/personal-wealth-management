@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
+import { useT } from '@/lib/i18n/context'
 
 export interface DashBlock {
   id: string
@@ -46,6 +47,7 @@ function readHidden(): string[] {
 }
 
 export function DashboardCustomizer() {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [hidden, setHidden] = useState<string[]>(() =>
     typeof window === 'undefined' ? [] : readHidden(),
@@ -109,9 +111,9 @@ export function DashboardCustomizer() {
         style={{ padding: '7px 12px', fontSize: 13 }}
       >
         <Settings2 className="size-4" />
-        Atur
+        {t('dashboard_customizer.trigger')}
         {hiddenCount > 0 && (
-          <span className="num" style={{ color: 'var(--text-mute)' }}>· {hiddenCount} disembunyiin</span>
+          <span className="num" style={{ color: 'var(--text-mute)' }}>· {hiddenCount} {t('dashboard_customizer.hidden_count_suffix')}</span>
         )}
       </button>
 
@@ -128,17 +130,16 @@ export function DashboardCustomizer() {
           >
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
-                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Atur Dashboard</p>
-                <h2 className="t-h2" style={{ color: 'var(--ink)' }}>Tampilkan / sembunyikan</h2>
+                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>{t('dashboard_customizer.modal_eyebrow')}</p>
+                <h2 className="t-h2" style={{ color: 'var(--ink)' }}>{t('dashboard_customizer.modal_title')}</h2>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Tutup">
+              <button type="button" onClick={() => setOpen(false)} aria-label={t('dashboard_customizer.close_aria')}>
                 <X className="size-5" style={{ color: 'var(--text-mute)' }} />
               </button>
             </div>
             <p className="t-sm mb-4" style={{ color: 'var(--ink-soft)' }}>
-              Matiin yang gak kamu butuh — kamu yang kontrol, gak ada yang hilang diam-diam. Buat
-              <strong> ngatur urutan</strong>, tarik kartunya langsung di dashboard (grip muncul pas hover).
-              Tersimpan di perangkat ini.
+              {t('dashboard_customizer.modal_desc_1')}
+              <strong> {t('dashboard_customizer.modal_desc_strong')}</strong>{t('dashboard_customizer.modal_desc_2')}
             </p>
             <div className="space-y-1.5">
               {DASHBOARD_BLOCKS.map((b) => {
@@ -173,7 +174,7 @@ export function DashboardCustomizer() {
                 className="mt-4 inline-flex items-center gap-1.5 t-sm font-medium"
                 style={{ color: 'var(--c-primary)' }}
               >
-                <RotateCcw className="size-3.5" /> Tampilkan semua
+                <RotateCcw className="size-3.5" /> {t('dashboard_customizer.show_all')}
               </button>
             )}
           </div>

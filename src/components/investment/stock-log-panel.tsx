@@ -22,6 +22,7 @@ import {
 import { Plus, Trash2, Loader2, TrendingUp, TrendingDown } from 'lucide-react'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { IDX_BROKERS, getBrokerByName, computeFee } from '@/lib/idx-brokers'
+import { useT } from '@/lib/i18n/context'
 
 interface FormState {
   id: string | null
@@ -73,6 +74,7 @@ function computeRealizedPL(txs: StockTransaction[]): number {
 }
 
 export function StockLogPanel() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<StockTransaction[]>([])
@@ -124,7 +126,7 @@ export function StockLogPanel() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Hapus transaksi saham?')) return
+    if (!confirm(t('stock_log.confirm_delete'))) return
     await supabase.from('stock_transactions').delete().eq('id', id)
     void load()
   }
@@ -149,19 +151,19 @@ export function StockLogPanel() {
       {/* Stats inline (no dark hero — parent page already has one) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-[var(--surface)] p-5">
         <div>
-          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Total Buy</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('stock_log.total_buy')}</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.totalBuys)}
           </p>
         </div>
         <div>
-          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Total Sell</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('stock_log.total_sell')}</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.totalSells)}
           </p>
         </div>
         <div>
-          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Realized P/L (FIFO)</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('stock_log.realized_pl')}</p>
           <p className="num tabular text-xl font-semibold flex items-center gap-1 mt-0.5" style={{ color: plPositive ? 'var(--c-mint)' : 'var(--danger)' }}>
             {plPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             {formatCurrency(stats.realizedPL)}
@@ -171,17 +173,17 @@ export function StockLogPanel() {
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Filter:</span>
+          <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('stock_log.filter_label')}</span>
           <Select value={filterTicker} onValueChange={(v) => setFilterTicker(v ?? 'all')}>
             <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua ticker</SelectItem>
+              <SelectItem value="all">{t('stock_log.all_tickers')}</SelectItem>
               {tickers.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Tambah Transaksi
+          <Plus className="h-4 w-4" /> {t('stock_log.add_transaction')}
         </Button>
       </div>
 
@@ -189,22 +191,22 @@ export function StockLogPanel() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : filtered.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <p className="font-semibold">Belum ada transaksi saham</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Mulai catat buy/sell per saham — penting buat lapor SPT tahunan.</p>
+          <p className="font-semibold">{t('stock_log.empty_title')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('stock_log.empty_desc')}</p>
         </div>
       ) : (
         <div className="s-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
-                <Th>Tanggal</Th>
-                <Th>Ticker</Th>
-                <Th>Side</Th>
-                <Th className="text-right">Shares</Th>
-                <Th className="text-right">Harga</Th>
-                <Th className="text-right">Fee</Th>
-                <Th className="text-right">Total</Th>
-                <Th>Broker</Th>
+                <Th>{t('stock_log.col_date')}</Th>
+                <Th>{t('stock_log.col_ticker')}</Th>
+                <Th>{t('stock_log.col_side')}</Th>
+                <Th className="text-right">{t('stock_log.col_shares')}</Th>
+                <Th className="text-right">{t('stock_log.col_price')}</Th>
+                <Th className="text-right">{t('stock_log.col_fee')}</Th>
+                <Th className="text-right">{t('stock_log.col_total')}</Th>
+                <Th>{t('stock_log.col_broker')}</Th>
                 <Th className="text-right"></Th>
               </tr>
             </thead>
@@ -251,12 +253,12 @@ export function StockLogPanel() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Edit Transaksi' : 'Tambah Transaksi Saham'}</DialogTitle>
-            <DialogDescription>Buy / Sell untuk hitung realized P/L FIFO.</DialogDescription>
+            <DialogTitle>{form.id ? t('stock_log.dialog_title_edit') : t('stock_log.dialog_title_add')}</DialogTitle>
+            <DialogDescription>{t('stock_log.dialog_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Saham</Label>
+              <Label>{t('stock_log.label_stock')}</Label>
               <Select
                 value={form.investment_id}
                 onValueChange={(v) => {
@@ -264,7 +266,7 @@ export function StockLogPanel() {
                   setForm({ ...form, investment_id: v ?? '', ticker: s?.ticker ?? '' })
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="Pilih saham" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('stock_log.placeholder_stock')} /></SelectTrigger>
                 <SelectContent>
                   {stocks.map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.ticker ?? s.name}</SelectItem>
@@ -274,7 +276,7 @@ export function StockLogPanel() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Side</Label>
+                <Label>{t('stock_log.label_side')}</Label>
                 <Select value={form.side} onValueChange={(v) => v && setForm({ ...form, side: v as 'buy' | 'sell' })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -284,26 +286,26 @@ export function StockLogPanel() {
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Tanggal</Label>
+                <Label>{t('stock_log.label_date')}</Label>
                 <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5">
-                <Label>Shares</Label>
+                <Label>{t('stock_log.label_shares')}</Label>
                 <Input type="number" step="any" min={0} value={form.shares || ''} onChange={(e) => setForm({ ...form, shares: Number(e.target.value) || 0 })} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Harga/share</Label>
+                <Label>{t('stock_log.label_price_per_share')}</Label>
                 <Input type="number" min={0} value={form.price || ''} onChange={(e) => setForm({ ...form, price: Number(e.target.value) || 0 })} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Fee</Label>
+                <Label>{t('stock_log.label_fee')}</Label>
                 <Input type="number" min={0} value={form.fee || ''} onChange={(e) => setForm({ ...form, fee: Number(e.target.value) || 0 })} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Broker / Sekuritas</Label>
+              <Label>{t('stock_log.label_broker')}</Label>
               <Select
                 value={form.broker || ''}
                 onValueChange={(v) => {
@@ -319,10 +321,10 @@ export function StockLogPanel() {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih sekuritas">
+                  <SelectValue placeholder={t('stock_log.placeholder_broker')}>
                     {(v) => {
                       const b = getBrokerByName(v)
-                      if (!b) return v || 'Pilih sekuritas'
+                      if (!b) return v || t('stock_log.placeholder_broker')
                       return b.code ? `${b.short} (${b.code})` : b.short
                     }}
                   </SelectValue>
@@ -344,7 +346,7 @@ export function StockLogPanel() {
                         </span>
                         {b.buyRate > 0 && (
                           <span className="text-[10px] tabular" style={{ color: 'var(--ink-soft)' }}>
-                            Beli {(b.buyRate * 100).toFixed(2)}% · Jual {(b.sellRate * 100).toFixed(2)}%
+                            {t('stock_log.rate_buy')} {(b.buyRate * 100).toFixed(2)}% · {t('stock_log.rate_sell')} {(b.sellRate * 100).toFixed(2)}%
                           </span>
                         )}
                       </div>
@@ -359,7 +361,7 @@ export function StockLogPanel() {
                 const fee = computeFee(b.code, form.side, txValue) ?? 0
                 return (
                   <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                    Auto-fee {form.side === 'buy' ? 'beli' : 'jual'}: {formatCurrency(fee)}
+                    {t('stock_log.auto_fee')} {form.side === 'buy' ? t('stock_log.side_buy') : t('stock_log.side_sell')}: {formatCurrency(fee)}
                     {' '}({((form.side === 'buy' ? b.buyRate : b.sellRate) * 100).toFixed(2)}%)
                     {form.fee !== fee && (
                       <button
@@ -368,7 +370,7 @@ export function StockLogPanel() {
                         className="ml-1.5 underline hover:no-underline"
                         style={{ color: 'var(--c-mint)' }}
                       >
-                        Pakai
+                        {t('stock_log.use')}
                       </button>
                     )}
                   </p>
@@ -376,22 +378,22 @@ export function StockLogPanel() {
               })()}
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
+              <Label>{t('stock_log.label_notes')}</Label>
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             {form.shares > 0 && form.price > 0 && (
               <p className="text-xs p-2 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
-                Total: <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
+                {t('stock_log.total_preview')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(form.shares * form.price + (form.side === 'buy' ? form.fee : -form.fee))}
                 </span>
               </p>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('stock_log.cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.investment_id || form.shares <= 0 || form.price <= 0}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Simpan
+              {t('stock_log.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

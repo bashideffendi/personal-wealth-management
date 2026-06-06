@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label'
 import { NumberInput } from '@/components/ui/number-input'
 import { Loader2, Plus, Trash2, Shield, Target, PiggyBank, MoreHorizontal } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 import type { Account, AllocationPurpose } from '@/types'
 
 interface Allocation {
@@ -72,6 +73,7 @@ const PURPOSE_ICONS: Record<AllocationPurpose, React.ComponentType<{ className?:
 }
 
 export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Props) {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -169,17 +171,17 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
     for (const a of allocations) {
       if (a.amount <= 0) continue // ignore empty rows
       if (a.purpose_kind === 'emergency_fund' && !a.emergency_fund_id) {
-        alert('Untuk Dana Darurat, kamu perlu set up Dana Darurat dulu di menu Dana Darurat.')
+        alert(t('allocations.alert_setup_ef'))
         setSaving(false)
         return
       }
       if (a.purpose_kind === 'goal' && !a.goal_id) {
-        alert('Pilih goal yang dituju untuk alokasi ini.')
+        alert(t('allocations.alert_pick_goal'))
         setSaving(false)
         return
       }
       if ((a.purpose_kind === 'sinking_fund' || a.purpose_kind === 'other') && !a.custom_label.trim()) {
-        alert('Beri label untuk alokasi sinking fund / lainnya.')
+        alert(t('allocations.alert_label_required'))
         setSaving(false)
         return
       }
@@ -192,7 +194,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
       .delete()
       .eq('account_id', account.id)
     if (delErr) {
-      alert(`Gagal hapus alokasi lama: ${delErr.message}`)
+      alert(`${t('allocations.alert_delete_failed')}: ${delErr.message}`)
       setSaving(false)
       return
     }
@@ -213,7 +215,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
     if (toInsert.length > 0) {
       const { error } = await supabase.from('account_allocations').insert(toInsert)
       if (error) {
-        alert(`Gagal simpan alokasi: ${error.message}`)
+        alert(`${t('allocations.alert_save_failed')}: ${error.message}`)
         setSaving(false)
         return
       }
@@ -228,11 +230,9 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Alokasi · {account?.name ?? 'Akun'}</DialogTitle>
+          <DialogTitle>{t('allocations.title')} · {account?.name ?? t('allocations.account_fallback')}</DialogTitle>
           <DialogDescription>
-            Tandai berapa dari saldo akun ini yang dialokasikan untuk Dana Darurat,
-            goal tertentu, atau sinking fund. Halaman Dana Darurat & Goals akan otomatis
-            menjumlahkan alokasi dari semua akun.
+            {t('allocations.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -247,7 +247,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
           <div className="flex items-end justify-between gap-3 flex-wrap">
             <div>
               <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                Saldo Akun
+                {t('allocations.account_balance')}
               </p>
               <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                 {formatCurrency(balance)}
@@ -255,7 +255,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                {overAllocated ? 'Over alokasi' : 'Sisa Bebas'}
+                {overAllocated ? t('allocations.over_allocated_label') : t('allocations.free_label')}
               </p>
               <p
                 className="num tabular text-xl font-semibold mt-0.5"
@@ -281,7 +281,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
           )}
           {overAllocated && (
             <p className="text-[11px] mt-2" style={{ color: 'var(--c-coral)' }}>
-              Total alokasi melebihi saldo akun. Cek lagi saldo atau kurangi alokasi.
+              {t('allocations.over_allocated_warning')}
             </p>
           )}
         </div>
@@ -295,7 +295,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
           <div className="space-y-2">
             {allocations.length === 0 && (
               <p className="text-sm text-center py-8" style={{ color: 'var(--ink-soft)' }}>
-                Belum ada alokasi. Tambahkan alokasi pertama untuk akun ini.
+                {t('allocations.empty')}
               </p>
             )}
             {allocations.map((a, idx) => {
@@ -315,19 +315,19 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                     </div>
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-[11px]">Tujuan</Label>
+                        <Label className="text-[11px]">{t('allocations.purpose')}</Label>
                         <Select
                           value={a.purpose_kind}
                           onValueChange={(v) => v && handlePurposeChange(idx, v as AllocationPurpose)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue>{(v) => PURPOSE_LABELS[v as AllocationPurpose] ?? 'Pilih'}</SelectValue>
+                            <SelectValue>{(v) => PURPOSE_LABELS[v as AllocationPurpose] ?? t('allocations.select')}</SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="emergency_fund">Dana Darurat</SelectItem>
-                            <SelectItem value="goal">Goal / Tujuan</SelectItem>
-                            <SelectItem value="sinking_fund">Sinking Fund</SelectItem>
-                            <SelectItem value="other">Lainnya</SelectItem>
+                            <SelectItem value="emergency_fund">{t('allocations.purpose_emergency_fund')}</SelectItem>
+                            <SelectItem value="goal">{t('allocations.purpose_goal')}</SelectItem>
+                            <SelectItem value="sinking_fund">{t('allocations.purpose_sinking_fund')}</SelectItem>
+                            <SelectItem value="other">{t('allocations.purpose_other')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -335,10 +335,10 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                       {/* Conditional second field based on purpose */}
                       {a.purpose_kind === 'goal' && (
                         <div>
-                          <Label className="text-[11px]">Goal</Label>
+                          <Label className="text-[11px]">{t('allocations.goal')}</Label>
                           {goals.length === 0 ? (
                             <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
-                              Belum ada goal aktif. Buat di menu Goals dulu.
+                              {t('allocations.no_active_goals')}
                             </p>
                           ) : (
                             <Select
@@ -346,8 +346,8 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                               onValueChange={(v) => updateAllocation(idx, { goal_id: v ?? null })}
                             >
                               <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Pilih goal">
-                                  {(v) => goals.find((g) => g.id === v)?.name ?? 'Pilih goal'}
+                                <SelectValue placeholder={t('allocations.pick_goal')}>
+                                  {(v) => goals.find((g) => g.id === v)?.name ?? t('allocations.pick_goal')}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
@@ -362,14 +362,14 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
 
                       {a.purpose_kind === 'emergency_fund' && (
                         <div>
-                          <Label className="text-[11px]">Status</Label>
+                          <Label className="text-[11px]">{t('allocations.status')}</Label>
                           {emergencyFund ? (
                             <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--c-mint)' }}>
-                              ✓ Terhubung
+                              ✓ {t('allocations.connected')}
                             </p>
                           ) : (
                             <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
-                              Set up Dana Darurat dulu di menunya.
+                              {t('allocations.setup_ef_hint')}
                             </p>
                           )}
                         </div>
@@ -377,11 +377,11 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
 
                       {(a.purpose_kind === 'sinking_fund' || a.purpose_kind === 'other') && (
                         <div>
-                          <Label className="text-[11px]">Label</Label>
+                          <Label className="text-[11px]">{t('allocations.label')}</Label>
                           <Input
                             value={a.custom_label}
                             onChange={(e) => updateAllocation(idx, { custom_label: e.target.value })}
-                            placeholder="Contoh: Liburan Bali, Pajak Tahunan"
+                            placeholder={t('allocations.label_placeholder')}
                             className="h-8 text-sm"
                           />
                         </div>
@@ -393,14 +393,14 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                       onClick={() => removeAllocation(idx)}
                       className="size-8 rounded-md flex items-center justify-center transition hover:bg-[rgba(239,68,68,0.10)]"
                       style={{ color: 'var(--ink-soft)' }}
-                      aria-label="Hapus"
+                      aria-label={t('allocations.remove')}
                     >
                       <Trash2 className="size-4" />
                     </button>
                   </div>
 
                   <div>
-                    <Label className="text-[11px]">Jumlah</Label>
+                    <Label className="text-[11px]">{t('allocations.amount')}</Label>
                     <NumberInput
                       value={a.amount}
                       onChange={(n) => updateAllocation(idx, { amount: n })}
@@ -418,16 +418,16 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
               className="w-full"
             >
               <Plus className="size-4 mr-1" />
-              Tambah alokasi
+              {t('allocations.add')}
             </Button>
           </div>
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button variant="outline" onClick={onClose}>{t('allocations.cancel')}</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
-            Simpan
+            {t('allocations.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

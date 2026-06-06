@@ -21,6 +21,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition'
+import { useT } from '@/lib/i18n/context'
 
 const RECENT_KEY = 'pwm-recent-pages'
 const RECENT_LIMIT = 3
@@ -118,6 +119,7 @@ export function CommandPalette() {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+  const t = useT()
 
   const allPages = useMemo(() => flatten(NAV_ITEMS), [])
 
@@ -176,8 +178,8 @@ export function CommandPalette() {
     if (q && /\d/.test(q) && q.length > 4) {
       aiItems.push({
         id: 'ai:quick-add',
-        label: `AI Quick Add: "${query.trim()}"`,
-        breadcrumb: 'Tekan Enter untuk parse otomatis',
+        label: `${t('command_palette.ai_quick_add')}: "${query.trim()}"`,
+        breadcrumb: t('command_palette.ai_quick_add_hint'),
         kind: 'ai',
         icon: <Sparkles className="size-4" />,
         onSelect: () => parseAndPreview(query.trim()),
@@ -185,12 +187,12 @@ export function CommandPalette() {
     }
 
     return [
-      { key: 'recent', label: 'Terakhir Dibuka', items: recent },
-      { key: 'ai', label: 'AI Asisten', items: aiItems },
-      { key: 'pages', label: 'Halaman', items: pages },
-      { key: 'actions', label: 'Aksi Cepat', items: actions },
+      { key: 'recent', label: t('command_palette.group_recent'), items: recent },
+      { key: 'ai', label: t('command_palette.group_ai'), items: aiItems },
+      { key: 'pages', label: t('command_palette.group_pages'), items: pages },
+      { key: 'actions', label: t('command_palette.group_actions'), items: actions },
     ].filter((g) => g.items.length > 0)
-  }, [query, allPages, recentHrefs, router])
+  }, [query, allPages, recentHrefs, router, t])
 
   // Flat list for keyboard navigation
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
@@ -253,14 +255,14 @@ export function CommandPalette() {
       })
       const json = await res.json()
       if (!res.ok) {
-        setAiState({ kind: 'error', message: json.error ?? 'Gagal parse' })
+        setAiState({ kind: 'error', message: json.error ?? t('command_palette.parse_failed') })
         return
       }
       setAiState({ kind: 'preview', data: json.data as ParsedTransaction })
     } catch (err) {
       setAiState({
         kind: 'error',
-        message: err instanceof Error ? err.message : 'Gagal parse',
+        message: err instanceof Error ? err.message : t('command_palette.parse_failed'),
       })
     } finally {
       // Refresh badge — credits consumed (success) or refunded (server-side failure)
@@ -272,7 +274,7 @@ export function CommandPalette() {
     setAiState({ kind: 'saving' })
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      setAiState({ kind: 'error', message: 'Tidak login' })
+      setAiState({ kind: 'error', message: t('command_palette.error_not_logged_in') })
       return
     }
 
@@ -291,7 +293,7 @@ export function CommandPalette() {
     if (accounts.length === 0) {
       setAiState({
         kind: 'error',
-        message: 'Belum ada akun. Bikin akun dulu di menu Akun.',
+        message: t('command_palette.error_no_account'),
       })
       return
     }
@@ -382,8 +384,8 @@ export function CommandPalette() {
             onKeyDown={onInputKey}
             placeholder={
               speech.listening
-                ? 'Mendengarkan… ucapkan transaksimu'
-                : "Cari halaman, aksi, atau ketik 'indomaret 50rb'…"
+                ? t('command_palette.listening_placeholder')
+                : t('command_palette.search_placeholder')
             }
             className="flex-1 bg-transparent outline-none text-[15px]"
             style={{ color: 'var(--ink)' }}
@@ -401,8 +403,8 @@ export function CommandPalette() {
                   : 'var(--surface-2)',
                 color: speech.listening ? '#FFFFFF' : 'var(--ink-muted)',
               }}
-              aria-label={speech.listening ? 'Berhenti merekam' : 'Mulai input suara'}
-              title={speech.listening ? 'Berhenti (atau diam sebentar)' : 'Voice input — bicara transaksimu'}
+              aria-label={speech.listening ? t('command_palette.mic_stop_label') : t('command_palette.mic_start_label')}
+              title={speech.listening ? t('command_palette.mic_stop_title') : t('command_palette.mic_start_title')}
             >
               {speech.listening ? <MicOff className="size-3.5" /> : <Mic className="size-3.5" />}
             </button>
@@ -436,10 +438,10 @@ export function CommandPalette() {
                 style={{ color: 'var(--ink-soft)' }}
               />
               <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-                Gak ketemu &ldquo;{query}&rdquo;.
+                {t('command_palette.empty_not_found')} &ldquo;{query}&rdquo;.
               </p>
               <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
-                Coba salah satu:
+                {t('command_palette.empty_try_one')}
               </p>
               <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                 {['indomaret 47rb cash', 'gaji 8jt', 'transaksi', 'budget bulan ini', 'net worth'].map((ex) => (
@@ -549,17 +551,17 @@ export function CommandPalette() {
               <Kbd>
                 <ChevronDown className="size-2.5" />
               </Kbd>
-              <span className="ml-1">navigasi</span>
+              <span className="ml-1">{t('command_palette.hint_navigate')}</span>
             </span>
             <span className="flex items-center gap-1">
               <Kbd>
                 <CornerDownLeft className="size-2.5" />
               </Kbd>
-              <span>pilih</span>
+              <span>{t('command_palette.hint_select')}</span>
             </span>
             <span className="flex items-center gap-1">
               <Kbd>esc</Kbd>
-              <span>tutup</span>
+              <span>{t('command_palette.hint_close')}</span>
             </span>
           </span>
           <span className="flex items-center gap-1">
@@ -593,12 +595,13 @@ interface AIPanelProps {
 }
 
 function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
+  const t = useT()
   if (state.kind === 'parsing') {
     return (
       <div className="px-6 py-12 text-center">
         <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint)' }} />
         <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
-          AI sedang parse transaksi...
+          {t('command_palette.ai_parsing')}
         </p>
         <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
           &ldquo;{text}&rdquo;
@@ -621,7 +624,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
           <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--c-mint)' }}>
-            AI Quick Add — Konfirmasi
+            {t('command_palette.ai_confirm_title')}
           </p>
         </div>
         <div
@@ -636,7 +639,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
               {typeLabel[d.type] ?? d.type}
             </span>
             <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
-              Akurasi: <strong style={{ color: 'var(--ink)' }}>{d.confidence === 'high' ? 'Tinggi' : d.confidence === 'medium' ? 'Sedang' : 'Rendah'}</strong>
+              {t('command_palette.accuracy_label')} <strong style={{ color: 'var(--ink)' }}>{d.confidence === 'high' ? t('command_palette.confidence_high') : d.confidence === 'medium' ? t('command_palette.confidence_medium') : t('command_palette.confidence_low')}</strong>
             </p>
           </div>
           <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
@@ -657,7 +660,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             className="text-xs px-3 py-1.5 rounded-md transition hover:bg-[var(--surface-2)]"
             style={{ color: 'var(--ink-muted)' }}
           >
-            ← Kembali
+            ← {t('command_palette.back')}
           </button>
           <button
             type="button"
@@ -669,11 +672,11 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             }}
           >
             <Check className="size-4" />
-            Simpan ke Akun Default
+            {t('command_palette.save_to_default')}
           </button>
         </div>
         <p className="text-[10px] mt-2 text-center" style={{ color: 'var(--ink-soft)' }}>
-          Akan dicatat hari ini ke akun default kamu. Edit nanti di /Transaksi kalau perlu.
+          {t('command_palette.save_footnote')}
         </p>
       </div>
     )
@@ -683,7 +686,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
     return (
       <div className="px-6 py-12 text-center">
         <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint)' }} />
-        <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>Menyimpan...</p>
+        <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>{t('command_palette.saving')}</p>
       </div>
     )
   }
@@ -698,7 +701,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
           <Check className="size-6" style={{ color: 'var(--c-mint)' }} />
         </div>
         <p className="text-sm mt-3 font-semibold" style={{ color: 'var(--ink)' }}>
-          Tercatat.
+          {t('command_palette.recorded')}
         </p>
       </div>
     )
@@ -714,7 +717,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         <AlertCircle className="size-5" style={{ color: 'var(--c-coral)' }} />
       </div>
       <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
-        Gagal parse
+        {t('command_palette.parse_failed')}
       </p>
       <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{state.message}</p>
       <button
@@ -723,7 +726,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         className="text-xs mt-4 px-3 py-1.5 rounded-md transition hover:bg-[var(--surface-2)]"
         style={{ color: 'var(--ink-muted)' }}
       >
-        ← Kembali
+        ← {t('command_palette.back')}
       </button>
     </div>
   )

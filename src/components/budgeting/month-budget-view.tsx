@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
 import { computeTargetAmount, type CatTarget } from '@/lib/budget-categories'
 import { toast } from 'sonner'
+import { useT } from '@/lib/i18n/context'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -55,6 +56,7 @@ export function MonthBudgetView({
   targets,
   onCellChange,
 }: MonthBudgetViewProps) {
+  const t = useT()
   const visibleByType: Record<BudgetType, string[]> = {
     income: visibleIncome,
     expense: visibleExpense,
@@ -88,8 +90,8 @@ export function MonthBudgetView({
     planOut === 0
       ? null
       : over
-        ? { text: `Over anggaran ${formatCurrency(actualOut - planOut)}`, tone: 'over' as const }
-        : { text: `Sesuai rencana — sisa ${formatCurrency(planOut - actualOut)}`, tone: 'ok' as const }
+        ? { text: `${t('month_budget.verdict_over')} ${formatCurrency(actualOut - planOut)}`, tone: 'over' as const }
+        : { text: `${t('month_budget.verdict_ok')} ${formatCurrency(planOut - actualOut)}`, tone: 'ok' as const }
 
   const prev = () => onMonthChange(month === 1 ? 12 : month - 1)
   const next = () => onMonthChange(month === 12 ? 1 : month + 1)
@@ -100,7 +102,7 @@ export function MonthBudgetView({
     const months: number[] = []
     for (let m = Math.max(1, month - 3); m < month; m++) months.push(m)
     if (!months.length) {
-      toast.error('Belum ada bulan sebelumnya di tahun ini buat dirata-rata')
+      toast.error(t('month_budget.toast_no_prev_months'))
       return
     }
     let filled = 0
@@ -117,15 +119,15 @@ export function MonthBudgetView({
     }
     toast.success(
       filled > 0
-        ? `Mengisi ${filled} kategori dari rata-rata ${months.length} bulan terakhir`
-        : 'Belum ada realisasi yang bisa dirata-rata',
+        ? `${t('month_budget.toast_filled_pre')} ${filled} ${t('month_budget.toast_filled_mid')} ${months.length} ${t('month_budget.toast_filled_post')}`
+        : t('month_budget.toast_no_actuals_to_average'),
     )
   }
 
   // Salin rencana bulan sebelumnya (tahun yang sama) ke sel yang masih kosong.
   function copyFromPrevMonth() {
     if (month <= 1) {
-      toast.error('Bulan lalu ada di tahun sebelumnya — belum didukung')
+      toast.error(t('month_budget.toast_prev_year_unsupported'))
       return
     }
     const prevM = month - 1
@@ -142,8 +144,8 @@ export function MonthBudgetView({
     }
     toast.success(
       filled > 0
-        ? `Menyalin ${filled} kategori dari ${MONTHS[prevM - 1]}`
-        : `Belum ada rencana di ${MONTHS[prevM - 1]} buat disalin`,
+        ? `${t('month_budget.toast_copied_pre')} ${filled} ${t('month_budget.toast_copied_mid')} ${MONTHS[prevM - 1]}`
+        : `${t('month_budget.toast_no_copy_pre')} ${MONTHS[prevM - 1]} ${t('month_budget.toast_no_copy_post')}`,
     )
   }
 
@@ -168,16 +170,16 @@ export function MonthBudgetView({
     }
     toast.success(
       filled > 0
-        ? `Menerapkan target ke ${filled} kategori`
-        : 'Belum ada kategori dengan target (set di Kelola Kategori)',
+        ? `${t('month_budget.toast_applied_pre')} ${filled} ${t('month_budget.toast_applied_post')}`
+        : t('month_budget.toast_no_targets'),
     )
   }
 
   const stats = [
-    { label: 'Pemasukan (real.)', value: incomeActual, sub: `rencana ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
-    { label: 'Rencana keluar', value: planOut, sub: 'keluar + nabung + investasi', color: 'var(--ink)' },
-    { label: 'Realisasi keluar', value: actualOut, sub: planOut > 0 ? `${Math.round((actualOut / planOut) * 100)}% dari rencana` : '—', color: over ? 'var(--c-coral)' : 'var(--ink)' },
-    { label: 'Sisa anggaran', value: planOut - actualOut, sub: over ? 'kelebihan' : 'tersisa', color: planOut - actualOut >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' },
+    { label: t('month_budget.stat_income_actual'), value: incomeActual, sub: `${t('month_budget.stat_income_plan_pre')} ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
+    { label: t('month_budget.stat_plan_out'), value: planOut, sub: t('month_budget.stat_plan_out_sub'), color: 'var(--ink)' },
+    { label: t('month_budget.stat_actual_out'), value: actualOut, sub: planOut > 0 ? `${Math.round((actualOut / planOut) * 100)}${t('month_budget.stat_actual_out_pct_post')}` : '—', color: over ? 'var(--c-coral)' : 'var(--ink)' },
+    { label: t('month_budget.stat_remaining'), value: planOut - actualOut, sub: over ? t('month_budget.stat_remaining_over') : t('month_budget.stat_remaining_left'), color: planOut - actualOut >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' },
   ]
 
   return (
@@ -193,7 +195,7 @@ export function MonthBudgetView({
             onClick={prev}
             className="grid size-8 place-items-center rounded-lg transition active:scale-95"
             style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
-            aria-label="Bulan sebelumnya"
+            aria-label={t('month_budget.aria_prev_month')}
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -205,7 +207,7 @@ export function MonthBudgetView({
             onClick={next}
             className="grid size-8 place-items-center rounded-lg transition active:scale-95"
             style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
-            aria-label="Bulan berikutnya"
+            aria-label={t('month_budget.aria_next_month')}
           >
             <ChevronRight className="size-4" />
           </button>
@@ -216,20 +218,20 @@ export function MonthBudgetView({
             onClick={autoFillFromAverage}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
             style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
-            title="Isi rencana yang masih kosong dari rata-rata realisasi 3 bulan terakhir"
+            title={t('month_budget.btn_fill_average_title')}
           >
             <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
-            Isi dari rata-rata
+            {t('month_budget.btn_fill_average')}
           </button>
           <button
             type="button"
             onClick={copyFromPrevMonth}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
             style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
-            title="Salin rencana bulan sebelumnya ke sel yang masih kosong"
+            title={t('month_budget.btn_copy_prev_title')}
           >
             <Copy className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
-            Salin bulan lalu
+            {t('month_budget.btn_copy_prev')}
           </button>
           {Object.keys(targets).length > 0 && (
             <button
@@ -237,10 +239,10 @@ export function MonthBudgetView({
               onClick={applyTargets}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
               style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
-              title="Isi rencana kosong dari target tiap kategori"
+              title={t('month_budget.btn_apply_targets_title')}
             >
               <Target className="size-3.5" style={{ color: 'var(--c-violet)' }} />
-              Terapkan target
+              {t('month_budget.btn_apply_targets')}
             </button>
           )}
           {verdict && (
@@ -290,8 +292,8 @@ export function MonthBudgetView({
                 <p className="t-title">{sec.label}</p>
               </div>
               <div className="flex items-center gap-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
-                <span>Rencana <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(planTotal(sec.key))}</strong></span>
-                <span>Realisasi <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(actualTotal(sec.key))}</strong></span>
+                <span>{t('month_budget.col_plan')} <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(planTotal(sec.key))}</strong></span>
+                <span>{t('month_budget.col_actual')} <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(actualTotal(sec.key))}</strong></span>
               </div>
             </div>
 
@@ -300,10 +302,10 @@ export function MonthBudgetView({
               className="grid grid-cols-[1fr_148px_148px_148px] gap-3 px-3.5 py-1.5 border-b eyebrow"
               style={{ borderColor: 'var(--border-soft)' }}
             >
-              <span>Kategori</span>
-              <span className="text-right">Rencana</span>
-              <span className="text-right">Realisasi</span>
-              <span className="text-right">Sisa</span>
+              <span>{t('month_budget.col_category')}</span>
+              <span className="text-right">{t('month_budget.col_plan')}</span>
+              <span className="text-right">{t('month_budget.col_actual')}</span>
+              <span className="text-right">{t('month_budget.col_remaining')}</span>
             </div>
 
             {/* Rows */}
@@ -334,7 +336,7 @@ export function MonthBudgetView({
                         const met = plan >= tgt
                         return (
                           <p className="num text-[10px] mt-0.5" style={{ color: met ? 'var(--c-mint)' : 'var(--c-violet)' }}>
-                            Target {formatCurrency(tgt)}{met ? ' ✓' : ''}
+                            {t('month_budget.row_target')} {formatCurrency(tgt)}{met ? ' ✓' : ''}
                           </p>
                         )
                       })()}

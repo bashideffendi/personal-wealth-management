@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useT } from '@/lib/i18n/context'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import {
   loadTree,
@@ -56,6 +57,7 @@ const TOTAL_STEPS = 4
 
 export function OnboardingWizard({ firstName }: { firstName: string }) {
   const router = useRouter()
+  const t = useT()
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
 
@@ -142,7 +144,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
           starting_balance: bal,
           current_balance: bal,
         })
-        if (error) toast.error(`Akun gagal disimpan: ${error.message}`)
+        if (error) toast.error(`${t('onboarding.account_save_failed')}: ${error.message}`)
       } catch {
         /* swallow — jangan sampai nge-block ke dashboard */
       }
@@ -164,11 +166,13 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
       }
     }
 
-    toast.success(`Siap${firstName ? `, ${firstName}` : ''}! Selamat datang di Klunting.`)
+    toast.success(
+      `${t('onboarding.toast_ready')}${firstName ? `, ${firstName}` : ''}! ${t('onboarding.toast_welcome')}`,
+    )
     router.replace(dest)
   }
 
-  const hello = firstName ? `Halo, ${firstName}!` : 'Halo!'
+  const hello = firstName ? `${t('onboarding.hello')}, ${firstName}!` : `${t('onboarding.hello')}!`
   const expenseCats = tree?.expense ?? []
   const activeCatCount = expenseCats.filter((c) => !disabledCats.has(c.name)).length
 
@@ -185,7 +189,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
           </span>
           <div className="flex items-center gap-3">
             <span className="t-cap" style={{ color: 'var(--text-mute)' }}>
-              Langkah {step + 1} dari {TOTAL_STEPS}
+              {t('onboarding.step')} {step + 1} {t('onboarding.of')} {TOTAL_STEPS}
             </span>
             {step < TOTAL_STEPS - 1 && (
               <button
@@ -195,7 +199,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                 className="t-cap transition hover:opacity-70"
                 style={{ color: 'var(--text-mute)' }}
               >
-                Lewati
+                {t('onboarding.skip')}
               </button>
             )}
           </div>
@@ -217,11 +221,10 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
           {step === 0 && (
             <div>
               <h1 className="t-h2 mb-1.5" style={{ color: 'var(--ink)' }}>
-                {hello} Mau benahi apa dulu?
+                {hello} {t('onboarding.focus_title')}
               </h1>
               <p className="t-body mb-5" style={{ color: 'var(--ink-soft)' }}>
-                Pilih yang paling relevan — kami pakai ini buat nyusun langkah pertama kamu. Bisa
-                lebih dari satu, bisa diubah kapan saja.
+                {t('onboarding.focus_desc')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {FOCUS_OPTIONS.map((opt) => {
@@ -276,21 +279,20 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
           {step === 1 && (
             <div>
               <h1 className="t-h2 mb-1.5" style={{ color: 'var(--ink)' }}>
-                Akun pertama kamu
+                {t('onboarding.account_title')}
               </h1>
               <p className="t-body mb-5" style={{ color: 'var(--ink-soft)' }}>
-                Tempat uang kamu sekarang — rekening bank, dompet digital, atau cash. Bisa tambah
-                yang lain nanti.
+                {t('onboarding.account_desc')}
               </p>
 
               <label className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
-                Nama akun
+                {t('onboarding.account_name_label')}
               </label>
               <input
                 type="text"
                 value={acctName}
                 onChange={(e) => setAcctName(e.target.value)}
-                placeholder="cth. BCA, GoPay, Dompet"
+                placeholder={t('onboarding.account_name_placeholder')}
                 className="w-full rounded-xl px-3.5 py-2.5 t-body outline-none transition mb-4"
                 style={{
                   background: 'var(--surface)',
@@ -300,7 +302,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
               />
 
               <label className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
-                Jenis akun
+                {t('onboarding.account_type_label')}
               </label>
               <div className="flex flex-wrap gap-2 mb-4">
                 {ACCOUNT_TYPE_ENTRIES.map(([value, label]) => {
@@ -324,7 +326,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
               </div>
 
               <label className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
-                Saldo sekarang
+                {t('onboarding.account_balance_label')}
               </label>
               <div
                 className="flex items-center rounded-xl px-3.5 py-2.5 mb-1"
@@ -344,7 +346,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                 />
               </div>
               <p className="t-cap" style={{ color: 'var(--text-mute)' }}>
-                Kosongin dulu juga gapapa — bisa diisi belakangan.
+                {t('onboarding.account_balance_hint')}
               </p>
             </div>
           )}
@@ -353,16 +355,15 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
           {step === 2 && (
             <div>
               <h1 className="t-h2 mb-1.5" style={{ color: 'var(--ink)' }}>
-                Kategori pengeluaran
+                {t('onboarding.categories_title')}
               </h1>
               <p className="t-body mb-5" style={{ color: 'var(--ink-soft)' }}>
-                Kami sudah siapkan kategori umum. Matiin yang ga kamu pakai biar anggaran lebih
-                ringkas — semuanya bisa diatur ulang di halaman Anggaran.
+                {t('onboarding.categories_desc')}
               </p>
               {tree == null ? (
                 <div className="flex items-center gap-2 py-6 justify-center" style={{ color: 'var(--text-mute)' }}>
                   <Loader2 className="size-4 animate-spin" />
-                  <span className="t-sm">Memuat kategori…</span>
+                  <span className="t-sm">{t('onboarding.categories_loading')}</span>
                 </div>
               ) : (
                 <>
@@ -389,7 +390,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                     })}
                   </div>
                   <p className="t-cap" style={{ color: 'var(--text-mute)' }}>
-                    <span className="num font-semibold">{activeCatCount}</span> kategori aktif
+                    <span className="num font-semibold">{activeCatCount}</span> {t('onboarding.categories_active')}
                   </p>
                 </>
               )}
@@ -406,12 +407,12 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                 <Check className="size-6 text-white" />
               </div>
               <h1 className="t-h2 mb-1.5" style={{ color: 'var(--ink)' }}>
-                Semua siap{firstName ? `, ${firstName}` : ''}!
+                {t('onboarding.done_title')}{firstName ? `, ${firstName}` : ''}!
               </h1>
               <p className="t-body mb-5" style={{ color: 'var(--ink-soft)' }}>
                 {focus.length > 0
-                  ? 'Berdasarkan fokus kamu, ini langkah pertama yang kami sarankan:'
-                  : 'Klunting siap dipakai. Beberapa tempat bagus buat mulai:'}
+                  ? t('onboarding.done_desc_focused')
+                  : t('onboarding.done_desc_default')}
               </p>
 
               <div className="space-y-2 mb-2">
@@ -456,7 +457,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
               style={{ color: 'var(--ink-soft)' }}
             >
               <ChevronLeft className="size-4" />
-              Kembali
+              {t('onboarding.back')}
             </button>
           ) : (
             <span />
@@ -468,7 +469,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
               onClick={() => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1))}
               className="btn-primary inline-flex items-center gap-1.5"
             >
-              Lanjut
+              {t('onboarding.next')}
               <ArrowRight className="size-4" />
             </button>
           ) : (
@@ -479,7 +480,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
               className="btn-primary inline-flex items-center gap-1.5"
             >
               {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-              Buka Dashboard
+              {t('onboarding.open_dashboard')}
               {!submitting && <ArrowRight className="size-4" />}
             </button>
           )}

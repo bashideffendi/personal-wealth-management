@@ -22,6 +22,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
 import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 const MONTHS_FULL = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -52,6 +53,7 @@ export function AnggaranMonthDrawer({
   visibleIncome, visibleExpense, visibleSaving, visibleInvestment,
   onPrevMonth, onNextMonth,
 }: AnggaranDrawerProps) {
+  const t = useT()
   // Compute totals for the month
   const totals = useMemo(() => {
     const income = visibleIncome.reduce((s, c) => s + getValue('income', c, month), 0)
@@ -132,7 +134,7 @@ export function AnggaranMonthDrawer({
             <div className="flex items-center gap-2">
               <button
                 onClick={onPrevMonth}
-                aria-label="Bulan sebelumnya"
+                aria-label={t('anggaran_drawer.prev_month')}
                 className="grid place-items-center rounded-lg transition-colors"
                 style={{
                   width: 32,
@@ -145,10 +147,10 @@ export function AnggaranMonthDrawer({
                 <ArrowLeft className="size-4" />
               </button>
               <div>
-                <p className="eyebrow">Anggaran · {year}</p>
+                <p className="eyebrow">{t('anggaran_drawer.eyebrow')} · {year}</p>
                 {/* Visually-rich title; sr-only SheetTitle for a11y */}
                 <SheetTitle className="sr-only">
-                  Anggaran {MONTHS_FULL[month - 1]} {year}
+                  {t('anggaran_drawer.eyebrow')} {MONTHS_FULL[month - 1]} {year}
                 </SheetTitle>
                 <h2
                   className="display"
@@ -171,14 +173,14 @@ export function AnggaranMonthDrawer({
                         padding: '0 8px',
                       }}
                     >
-                      Sekarang
+                      {t('anggaran_drawer.now_badge')}
                     </span>
                   )}
                 </h2>
               </div>
               <button
                 onClick={onNextMonth}
-                aria-label="Bulan berikutnya"
+                aria-label={t('anggaran_drawer.next_month')}
                 className="grid place-items-center rounded-lg transition-colors ml-2"
                 style={{
                   width: 32,
@@ -204,26 +206,26 @@ export function AnggaranMonthDrawer({
           {/* ─── 4 SummaryTile ─── */}
           <div className="grid grid-cols-2 gap-3">
             <SummaryTile
-              label="Pendapatan"
+              label={t('anggaran_drawer.tile_income')}
               value={inc}
               tone="mint"
               pct={100}
               isReference
             />
             <SummaryTile
-              label="Pengeluaran"
+              label={t('anggaran_drawer.tile_expense')}
               value={totals.expense}
               tone="coral"
               pct={expensePct}
             />
             <SummaryTile
-              label="Tabungan"
+              label={t('anggaran_drawer.tile_saving')}
               value={totals.saving}
               tone="amber"
               pct={savingPct}
             />
             <SummaryTile
-              label="Investasi"
+              label={t('anggaran_drawer.tile_investment')}
               value={totals.investment}
               tone="primary"
               pct={investPct}
@@ -234,12 +236,12 @@ export function AnggaranMonthDrawer({
           {inc > 0 && (
             <div className="s-card p-5">
               <div className="flex items-center justify-between">
-                <p className="eyebrow">Alokasi Pendapatan</p>
+                <p className="eyebrow">{t('anggaran_drawer.allocation_title')}</p>
                 <p
                   className="num tabular"
                   style={{ fontSize: 11, color: 'var(--text-mute)' }}
                 >
-                  Sisa{' '}
+                  {t('anggaran_drawer.leftover_label')}{' '}
                   <strong
                     style={{ color: leftover >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}
                   >
@@ -272,9 +274,9 @@ export function AnggaranMonthDrawer({
                 />
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
-                <LegendItem tone="coral" label="Pengeluaran" pct={expensePct} />
-                <LegendItem tone="amber" label="Tabungan" pct={savingPct} />
-                <LegendItem tone="primary" label="Investasi" pct={investPct} />
+                <LegendItem tone="coral" label={t('anggaran_drawer.legend_expense')} pct={expensePct} />
+                <LegendItem tone="amber" label={t('anggaran_drawer.legend_saving')} pct={savingPct} />
+                <LegendItem tone="primary" label={t('anggaran_drawer.legend_investment')} pct={investPct} />
               </div>
             </div>
           )}
@@ -282,13 +284,13 @@ export function AnggaranMonthDrawer({
           {/* ─── Aturan 50/30/20 ─── */}
           {inc > 0 && (
             <div className="s-card p-5">
-              <p className="eyebrow">Aturan 50/30/20</p>
+              <p className="eyebrow">{t('anggaran_drawer.rule_title')}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--text-mute)' }}>
-                Pedoman alokasi pendapatan ala financial planner.
+                {t('anggaran_drawer.rule_desc')}
               </p>
               <div className="mt-4 space-y-3">
                 <Rule50Row
-                  label="Pengeluaran (kebutuhan)"
+                  label={t('anggaran_drawer.rule_expense')}
                   target={50}
                   targetAmount={rule.expenseTarget}
                   actual={expensePct}
@@ -296,7 +298,7 @@ export function AnggaranMonthDrawer({
                   tone="coral"
                 />
                 <Rule50Row
-                  label="Tabungan (dana darurat & jangka pendek)"
+                  label={t('anggaran_drawer.rule_saving')}
                   target={30}
                   targetAmount={rule.savingTarget}
                   actual={savingPct}
@@ -304,7 +306,7 @@ export function AnggaranMonthDrawer({
                   tone="amber"
                 />
                 <Rule50Row
-                  label="Investasi (wealth building)"
+                  label={t('anggaran_drawer.rule_investment')}
                   target={20}
                   targetAmount={rule.investTarget}
                   actual={investPct}
@@ -319,12 +321,12 @@ export function AnggaranMonthDrawer({
           {topExpenses.length > 0 && (
             <div className="s-card p-5">
               <div className="flex items-center justify-between">
-                <p className="eyebrow">Top Pengeluaran Kategori</p>
+                <p className="eyebrow">{t('anggaran_drawer.top_expense_title')}</p>
                 <p
                   className="num tabular"
                   style={{ fontSize: 11, color: 'var(--text-mute)' }}
                 >
-                  {topExpenses.length} kategori
+                  {topExpenses.length} {t('anggaran_drawer.category_count_suffix')}
                 </p>
               </div>
               <div className="mt-3 space-y-2">
@@ -356,7 +358,7 @@ export function AnggaranMonthDrawer({
                                 padding: '0 6px',
                               }}
                             >
-                              Over
+                              {t('anggaran_drawer.chip_over')}
                             </span>
                           )}
                           {!isOver && isWarn && (
@@ -370,7 +372,7 @@ export function AnggaranMonthDrawer({
                                 padding: '0 6px',
                               }}
                             >
-                              Hampir habis
+                              {t('anggaran_drawer.chip_warn')}
                             </span>
                           )}
                         </div>
@@ -415,13 +417,13 @@ export function AnggaranMonthDrawer({
                   className="eyebrow"
                   style={{ color: 'var(--c-primary)' }}
                 >
-                  Proyeksi Akhir Bulan
+                  {t('anggaran_drawer.projection_title')}
                 </p>
                 <p
                   className="text-[11px] num tabular"
                   style={{ color: 'var(--c-primary)' }}
                 >
-                  {projection.daysLeft} hari lagi
+                  {projection.daysLeft} {t('anggaran_drawer.days_left_suffix')}
                 </p>
               </div>
               <p
@@ -431,8 +433,7 @@ export function AnggaranMonthDrawer({
                 {formatCurrency(projection.projectedExpense)}
               </p>
               <p className="text-xs mt-1.5" style={{ color: 'var(--text-2)' }}>
-                Estimasi total pengeluaran jika ritme harian saat ini berlanjut sampai akhir{' '}
-                {MONTHS_FULL[month - 1]}.
+                {t('anggaran_drawer.projection_desc').replace('{month}', MONTHS_FULL[month - 1])}
               </p>
             </div>
           )}
@@ -444,7 +445,7 @@ export function AnggaranMonthDrawer({
               className="btn-outline flex-1"
             >
               <ExternalLink className="size-3.5" />
-              Buka di Transaksi
+              {t('anggaran_drawer.cta_open_transactions')}
             </Link>
             <button
               type="button"
@@ -453,12 +454,12 @@ export function AnggaranMonthDrawer({
                 // Future: implement copy-to-other-month
                 onOpenChange(false)
               }}
-              title="Salin alokasi ke bulan lain (segera)"
+              title={t('anggaran_drawer.cta_copy_title')}
               disabled
               style={{ opacity: 0.6 }}
             >
               <Copy className="size-3.5" />
-              Salin
+              {t('anggaran_drawer.cta_copy')}
             </button>
           </div>
         </div>
@@ -478,6 +479,7 @@ function SummaryTile({
   pct: number
   isReference?: boolean
 }) {
+  const t = useT()
   return (
     <div className="s-card p-4">
       <div className="flex items-center gap-1.5">
@@ -501,7 +503,7 @@ function SummaryTile({
         className="num tabular mt-0.5"
         style={{ fontSize: 11, color: `var(--c-${tone})`, fontWeight: 700 }}
       >
-        {isReference ? 'Referensi' : `${pct.toFixed(0)}% dari pemasukan`}
+        {isReference ? t('anggaran_drawer.reference') : `${pct.toFixed(0)}% ${t('anggaran_drawer.of_income')}`}
       </p>
     </div>
   )
@@ -541,6 +543,7 @@ function Rule50Row({
   actualAmount: number
   tone: 'mint' | 'coral' | 'amber' | 'primary'
 }) {
+  const t = useT()
   const delta = actual - target
   const onTrack = Math.abs(delta) <= 5
   const overTarget = delta > 5
@@ -551,9 +554,9 @@ function Rule50Row({
     status === 'under' && tone !== 'coral' ? 'var(--c-coral)' :
     'var(--c-amber)'
   const statusLabel =
-    status === 'on-track' ? 'On track' :
-    status === 'over' ? 'Lewat target' :
-    'Kurang dari target'
+    status === 'on-track' ? t('anggaran_drawer.status_on_track') :
+    status === 'over' ? t('anggaran_drawer.status_over') :
+    t('anggaran_drawer.status_under')
 
   return (
     <div>
@@ -563,7 +566,7 @@ function Rule50Row({
           className="num tabular"
           style={{ fontSize: 11, color: 'var(--text-mute)' }}
         >
-          Target <strong style={{ color: 'var(--ink)' }}>{target}%</strong>{' '}
+          {t('anggaran_drawer.target_label')} <strong style={{ color: 'var(--ink)' }}>{target}%</strong>{' '}
           (~{formatCurrency(targetAmount)})
         </span>
       </div>
@@ -591,7 +594,7 @@ function Rule50Row({
         className="num tabular"
         style={{ fontSize: 10, color: statusColor, marginTop: 2 }}
       >
-        {statusLabel} · aktual {formatCurrency(actualAmount)}
+        {statusLabel} · {t('anggaran_drawer.actual_label')} {formatCurrency(actualAmount)}
       </p>
     </div>
   )

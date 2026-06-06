@@ -49,6 +49,7 @@ import {
   BUDGET_TYPES,
 } from '@/lib/budget-categories'
 import { CategoryIcon, CATEGORY_COLORS, CATEGORY_ICON_CHOICES } from '@/components/transactions/category-icon'
+import { useT } from '@/lib/i18n/context'
 
 const TYPE_META: Record<BudgetType, { label: string; accent: string }> = {
   income: { label: 'Pendapatan', accent: 'var(--c-mint)' },
@@ -76,6 +77,7 @@ export interface CategoryManagerProps {
 }
 
 export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}, onCommit }: CategoryManagerProps) {
+  const t = useT()
   const [type, setType] = useState<BudgetType>('expense')
   const [draft, setDraft] = useState<CategoryTree>(tree)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -113,7 +115,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
     const name = newCat.trim()
     if (!name) return
     if (nodes.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-      toast.error(`Kategori "${name}" sudah ada`)
+      toast.error(`${t('category_manager.cat_prefix')} "${name}" ${t('category_manager.already_exists')}`)
       return
     }
     updateType([...nodes, { id: newId(), name, subs: [] }])
@@ -124,7 +126,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
     const name = (newSub[cat.id] ?? '').trim()
     if (!name) return
     if (cat.subs.some((s) => s.name.toLowerCase() === name.toLowerCase())) {
-      toast.error(`"${name}" sudah ada di ${cat.name}`)
+      toast.error(`"${name}" ${t('category_manager.already_exists_in')} ${cat.name}`)
       return
     }
     const next = nodes.map((c) =>
@@ -178,7 +180,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
     updateType(pendingDelete.nextNodes, pairs)
     if (targetKey) {
       const tgt = pendingDelete.targets.find((t) => t.key === targetKey)
-      toast.success(`${pendingDelete.count} transaksi dipindah ke ${tgt?.label ?? targetKey}`)
+      toast.success(`${pendingDelete.count} ${t('category_manager.tx_moved_to')} ${tgt?.label ?? targetKey}`)
     }
     setPendingDelete(null)
   }
@@ -213,7 +215,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
     setEditing(null)
     if (!next || next === cat.name) return
     if (nodes.some((c) => c.id !== cat.id && c.name.toLowerCase() === next.toLowerCase())) {
-      toast.error(`Kategori "${next}" sudah ada`)
+      toast.error(`${t('category_manager.cat_prefix')} "${next}" ${t('category_manager.already_exists')}`)
       return
     }
     const pairs: [string, string][] = [[cat.name, next]]
@@ -227,7 +229,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
     const sub = cat.subs.find((s) => s.id === subId)
     if (!sub || !next || next === sub.name) return
     if (cat.subs.some((s) => s.id !== subId && s.name.toLowerCase() === next.toLowerCase())) {
-      toast.error(`"${next}" sudah ada di ${cat.name}`)
+      toast.error(`"${next}" ${t('category_manager.already_exists_in')} ${cat.name}`)
       return
     }
     const pairs: [string, string][] = [[subKey(cat.name, sub.name), subKey(cat.name, next)]]
@@ -266,22 +268,21 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Kelola Kategori
+            {t('category_manager.title')}
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-medium"
               style={{
                 background: dbSynced ? 'color-mix(in srgb, var(--c-mint) 14%, transparent)' : 'var(--surface-2)',
                 color: dbSynced ? '#047857' : 'var(--ink-soft)',
               }}
-              title={dbSynced ? 'Tersinkron ke semua device' : 'Tersimpan di device ini (apply migration 031 buat sync)'}
+              title={dbSynced ? t('category_manager.synced_tooltip') : t('category_manager.local_tooltip')}
             >
               {dbSynced ? <Cloud className="size-3" /> : <CloudOff className="size-3" />}
-              {dbSynced ? 'Tersinkron' : 'Lokal'}
+              {dbSynced ? t('category_manager.synced') : t('category_manager.local')}
             </span>
           </DialogTitle>
           <DialogDescription>
-            Tambah, ubah nama, hapus, atau seret buat atur urutan. Kategori dengan subkategori jadi total
-            otomatis di tabel anggaran.
+            {t('category_manager.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -342,7 +343,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
                 ))}
                 {!nodes.length && (
                   <p className="py-6 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>
-                    Belum ada kategori. Tambah di bawah.
+                    {t('category_manager.empty')}
                   </p>
                 )}
               </div>
@@ -362,7 +363,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
           <input
             value={newCat}
             onChange={(e) => setNewCat(e.target.value)}
-            placeholder={`Tambah kategori ${meta.label.toLowerCase()}…`}
+            placeholder={`${t('category_manager.add_cat_placeholder')} ${meta.label.toLowerCase()}…`}
             className="h-10 flex-1 rounded-lg border px-3.5 text-sm outline-none transition-colors focus:border-[var(--ink)] focus:ring-2 focus:ring-[var(--ink)]/10"
             style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
           />
@@ -372,7 +373,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
             className="inline-flex h-10 items-center gap-1 rounded-lg px-4 text-sm font-semibold text-white transition disabled:opacity-40"
             style={{ background: meta.accent }}
           >
-            <Plus className="size-4" /> Tambah
+            <Plus className="size-4" /> {t('category_manager.add')}
           </button>
         </form>
       </DialogContent>
@@ -406,6 +407,7 @@ function AppearanceDialog({
   onPick: (patch: { color?: string; icon?: string; target?: CatTarget; clearColor?: boolean; clearIcon?: boolean; clearTarget?: boolean }) => void
   onClose: () => void
 }) {
+  const t = useT()
   const [tMode, setTMode] = useState<CatTarget['mode'] | 'none'>('none')
   const [tAmount, setTAmount] = useState('')
   const [tBy, setTBy] = useState('')
@@ -444,16 +446,16 @@ function AppearanceDialog({
             </div>
             <div className="min-w-0">
               <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                Tampilan “{cat.name}”
+                {t('category_manager.appearance_title')} “{cat.name}”
               </DialogTitle>
-              <DialogDescription>Pilih warna &amp; ikon biar gampang dikenali sekilas.</DialogDescription>
+              <DialogDescription>{t('category_manager.appearance_desc')}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-2">
           <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-            Warna
+            {t('category_manager.color')}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {CATEGORY_COLORS.map((hex) => {
@@ -465,7 +467,7 @@ function AppearanceDialog({
                   onClick={() => onPick({ color: hex })}
                   className="grid size-7 place-items-center rounded-full transition hover:scale-105"
                   style={{ background: hex, outline: sel ? `2px solid ${hex}` : 'none', outlineOffset: 2 }}
-                  aria-label={`Warna ${hex}`}
+                  aria-label={`${t('category_manager.color')} ${hex}`}
                 >
                   {sel && <Check className="size-3.5 text-white" />}
                 </button>
@@ -477,14 +479,14 @@ function AppearanceDialog({
               className="rounded-lg px-2.5 py-1 text-xs font-medium"
               style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
             >
-              Default
+              {t('category_manager.default')}
             </button>
           </div>
         </div>
 
         <div className="space-y-2">
           <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-            Ikon
+            {t('category_manager.icon')}
           </p>
           <div className="grid grid-cols-8 gap-1.5">
             {CATEGORY_ICON_CHOICES.map(({ key, Icon }) => {
@@ -513,22 +515,22 @@ function AppearanceDialog({
             className="text-xs font-medium underline-offset-2 hover:underline"
             style={{ color: 'var(--ink-soft)' }}
           >
-            Pakai ikon otomatis
+            {t('category_manager.use_auto_icon')}
           </button>
         </div>
 
         {/* Target anggaran — leaf only (kategori tanpa subkategori) */}
         <div className="space-y-2">
-          <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>Target anggaran</p>
+          <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>{t('category_manager.budget_target')}</p>
           {isLeaf ? (
             <>
               <div className="flex flex-wrap gap-1.5">
                 {([
-                  ['none', 'Tanpa'],
-                  ['fixed', 'Tetap'],
-                  ['byDate', 'Sampai tgl'],
-                  ['percentIncome', '% pemasukan'],
-                  ['average', 'Rata-rata 3 bln'],
+                  ['none', t('category_manager.target_none')],
+                  ['fixed', t('category_manager.target_fixed')],
+                  ['byDate', t('category_manager.target_by_date')],
+                  ['percentIncome', t('category_manager.target_percent_income')],
+                  ['average', t('category_manager.target_average')],
                 ] as const).map(([m, label]) => {
                   const sel = tMode === m
                   return (
@@ -549,7 +551,7 @@ function AppearanceDialog({
                   inputMode="numeric"
                   value={tAmount}
                   onChange={(e) => setTAmount(e.target.value)}
-                  placeholder={tMode === 'byDate' ? 'Total yang mau dikumpulin (Rp)' : 'Rp per bulan'}
+                  placeholder={tMode === 'byDate' ? t('category_manager.target_total_placeholder') : t('category_manager.target_monthly_placeholder')}
                   className="h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]"
                   style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
                 />
@@ -568,18 +570,18 @@ function AppearanceDialog({
                   inputMode="numeric"
                   value={tPercent}
                   onChange={(e) => setTPercent(e.target.value)}
-                  placeholder="% dari pemasukan (mis. 10)"
+                  placeholder={t('category_manager.target_percent_placeholder')}
                   className="h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-[var(--ink)]"
                   style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
                 />
               )}
               <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                Tersimpan pas klik Selesai. Pakai tombol &quot;Terapkan target&quot; di view Bulan buat ngisi rencana otomatis.
+                {t('category_manager.target_hint')}
               </p>
             </>
           ) : (
             <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              Kategori ini punya subkategori — target diatur per subkategori (segera).
+              {t('category_manager.target_subcat_note')}
             </p>
           )}
         </div>
@@ -591,7 +593,7 @@ function AppearanceDialog({
             className="h-9 rounded-lg px-4 text-sm font-semibold text-white"
             style={{ background: activeColor }}
           >
-            Selesai
+            {t('category_manager.done')}
           </button>
         </div>
       </DialogContent>
@@ -610,6 +612,7 @@ function ReassignDialog({
   onCancel: () => void
   onConfirm: (targetKey: string | null) => void
 }) {
+  const t = useT()
   const [target, setTarget] = useState<string>('')
   useEffect(() => {
     setTarget(pending?.targets[0]?.key ?? '')
@@ -628,11 +631,11 @@ function ReassignDialog({
             </div>
             <div className="min-w-0">
               <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                Hapus “{pending.label}”?
+                {t('category_manager.delete_title')} “{pending.label}”?
               </DialogTitle>
               <DialogDescription>
-                Kategori ini dipakai <strong className="num" style={{ color: 'var(--ink)' }}>{pending.count}</strong>{' '}
-                transaksi. Pindahkan dulu biar datanya gak ikut hilang.
+                {t('category_manager.delete_desc_prefix')} <strong className="num" style={{ color: 'var(--ink)' }}>{pending.count}</strong>{' '}
+                {t('category_manager.delete_desc_suffix')}
               </DialogDescription>
             </div>
           </div>
@@ -641,19 +644,19 @@ function ReassignDialog({
         {pending.targets.length > 0 ? (
           <div className="space-y-1.5">
             <label className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-              Pindahkan transaksi ke
+              {t('category_manager.move_tx_to')}
             </label>
             <div
               className="max-h-[38vh] overflow-y-auto rounded-xl border"
               style={{ borderColor: 'var(--border-soft)' }}
             >
-              {pending.targets.map((t) => {
-                const sel = target === t.key
+              {pending.targets.map((tg) => {
+                const sel = target === tg.key
                 return (
                   <button
-                    key={t.key}
+                    key={tg.key}
                     type="button"
-                    onClick={() => setTarget(t.key)}
+                    onClick={() => setTarget(tg.key)}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors"
                     style={{ background: sel ? 'var(--surface-2)' : 'transparent', color: 'var(--ink)' }}
                   >
@@ -663,7 +666,7 @@ function ReassignDialog({
                     >
                       {sel && <span className="size-2 rounded-full" style={{ background: accent }} />}
                     </span>
-                    <span className="truncate">{t.label}</span>
+                    <span className="truncate">{tg.label}</span>
                   </button>
                 )
               })}
@@ -671,8 +674,8 @@ function ReassignDialog({
           </div>
         ) : (
           <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
-            Belum ada kategori lain buat nampung. Kamu bisa hapus aja — transaksinya tetap nyimpen label
-            “{pending.label}”, tinggal dikategoriin ulang nanti.
+            {t('category_manager.no_targets_prefix')}
+            “{pending.label}”{t('category_manager.no_targets_suffix')}
           </p>
         )}
 
@@ -683,7 +686,7 @@ function ReassignDialog({
             className="text-xs font-medium underline-offset-2 hover:underline"
             style={{ color: 'var(--ink-soft)' }}
           >
-            Hapus tanpa pindahkan
+            {t('category_manager.delete_without_move')}
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -692,7 +695,7 @@ function ReassignDialog({
               className="h-9 rounded-lg px-3 text-sm font-medium"
               style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
             >
-              Batal
+              {t('category_manager.cancel')}
             </button>
             <button
               type="button"
@@ -701,7 +704,7 @@ function ReassignDialog({
               className="h-9 rounded-lg px-4 text-sm font-semibold text-white transition disabled:opacity-40"
               style={{ background: accent }}
             >
-              Pindahkan &amp; hapus
+              {t('category_manager.move_and_delete')}
             </button>
           </div>
         </div>
@@ -736,6 +739,7 @@ interface SortableCategoryProps {
 }
 
 function SortableCategory(props: SortableCategoryProps) {
+  const t = useT()
   const { cat, accent, enabled, expanded, editing } = props
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id })
   const style = {
@@ -759,7 +763,7 @@ function SortableCategory(props: SortableCategoryProps) {
         <button
           type="button"
           className="cursor-grab touch-none rounded p-1 text-[var(--ink-soft)] hover:bg-[var(--surface-2)] active:cursor-grabbing"
-          aria-label="Seret"
+          aria-label={t('category_manager.drag')}
           {...attributes}
           {...listeners}
         >
@@ -770,7 +774,7 @@ function SortableCategory(props: SortableCategoryProps) {
           type="button"
           onClick={props.onToggleExpand}
           className="rounded p-0.5 text-[var(--ink-soft)] hover:bg-[var(--surface-2)]"
-          aria-label={expanded ? 'Tutup' : 'Buka'}
+          aria-label={expanded ? t('category_manager.collapse') : t('category_manager.expand')}
         >
           <ChevronRight
             className="size-4 transition-transform"
@@ -790,7 +794,7 @@ function SortableCategory(props: SortableCategoryProps) {
                 color: dotColor,
                 opacity: enabled ? 1 : 0.55,
               }}
-              title="Atur warna & ikon"
+              title={t('category_manager.set_color_icon')}
             >
               {cat.icon ? (
                 <CategoryIcon category={cat.name} iconKey={cat.icon} className="size-3.5" />
@@ -814,21 +818,21 @@ function SortableCategory(props: SortableCategoryProps) {
             onClick={() => props.onStartEdit(cat.id, cat.name)}
             className="flex-1 truncate rounded px-1 py-0.5 text-left text-sm font-semibold hover:bg-[var(--surface-2)]"
             style={{ color: enabled ? 'var(--ink)' : 'var(--ink-soft)' }}
-            title="Klik buat ubah nama"
+            title={t('category_manager.click_to_rename')}
           >
             {cat.name}
             {cat.subs.length > 0 && (
               <span className="ml-1.5 num text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>
-                {cat.subs.length} sub
+                {cat.subs.length} {t('category_manager.sub')}
               </span>
             )}
             {props.count > 0 && (
               <span
                 className="ml-1.5 num text-[11px] font-medium"
                 style={{ color: 'var(--ink-soft)' }}
-                title={`${props.count} transaksi pakai kategori ini`}
+                title={`${props.count} ${t('category_manager.tx_using_cat')}`}
               >
-                · {props.count} tx
+                · {props.count} {t('category_manager.tx')}
               </span>
             )}
             {!enabled && (
@@ -836,7 +840,7 @@ function SortableCategory(props: SortableCategoryProps) {
                 className="ml-1.5 rounded px-1 py-0.5 align-middle text-[9px] font-semibold uppercase tracking-wide"
                 style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
               >
-                nonaktif
+                {t('category_manager.inactive')}
               </span>
             )}
           </button>
@@ -846,8 +850,8 @@ function SortableCategory(props: SortableCategoryProps) {
           type="button"
           onClick={props.onToggleEnabled}
           className="rounded p-1 text-[var(--ink-soft)] transition hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
-          aria-label={enabled ? `Nonaktifkan ${cat.name}` : `Aktifkan ${cat.name}`}
-          title={enabled ? 'Nonaktifkan — sembunyikan dari tabel anggaran (data tetap disimpan)' : 'Aktifkan — tampilkan lagi di tabel'}
+          aria-label={enabled ? `${t('category_manager.disable')} ${cat.name}` : `${t('category_manager.enable')} ${cat.name}`}
+          title={enabled ? t('category_manager.disable_tooltip') : t('category_manager.enable_tooltip')}
         >
           {enabled ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
         </button>
@@ -856,7 +860,7 @@ function SortableCategory(props: SortableCategoryProps) {
           type="button"
           onClick={props.onDeleteCat}
           className="rounded p-1 text-[var(--ink-soft)] transition hover:bg-[color:color-mix(in_srgb,var(--c-coral)_14%,transparent)] hover:text-[var(--c-coral)]"
-          aria-label={`Hapus ${cat.name}`}
+          aria-label={`${t('category_manager.delete')} ${cat.name}`}
         >
           <Trash2 className="size-3.5" />
         </button>
@@ -897,7 +901,7 @@ function SortableCategory(props: SortableCategoryProps) {
             <input
               value={props.newSubValue}
               onChange={(e) => props.onNewSubChange(e.target.value)}
-              placeholder="Tambah subkategori…"
+              placeholder={t('category_manager.add_sub_placeholder')}
               className="h-8 flex-1 rounded-md border px-2 text-[13px] outline-none focus:border-[var(--ink)]"
               style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
             />
@@ -930,6 +934,7 @@ interface SortableSubProps {
 }
 
 function SortableSub(props: SortableSubProps) {
+  const t = useT()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -946,7 +951,7 @@ function SortableSub(props: SortableSubProps) {
       <button
         type="button"
         className="cursor-grab touch-none rounded p-0.5 text-[var(--ink-soft)] hover:bg-[var(--surface-2)] active:cursor-grabbing"
-        aria-label="Seret"
+        aria-label={t('category_manager.drag')}
         {...attributes}
         {...listeners}
       >
@@ -966,12 +971,12 @@ function SortableSub(props: SortableSubProps) {
           onClick={props.onStartEdit}
           className="flex-1 truncate rounded px-1 py-0.5 text-left text-[13px] hover:bg-[var(--surface-2)]"
           style={{ color: 'var(--ink-muted)' }}
-          title="Klik buat ubah nama"
+          title={t('category_manager.click_to_rename')}
         >
           {props.name}
           {props.count > 0 && (
             <span className="ml-1.5 num text-[10.5px]" style={{ color: 'var(--ink-soft)' }}>
-              · {props.count} tx
+              · {props.count} {t('category_manager.tx')}
             </span>
           )}
         </button>
@@ -980,7 +985,7 @@ function SortableSub(props: SortableSubProps) {
         type="button"
         onClick={props.onDelete}
         className="rounded p-1 text-[var(--ink-soft)] transition hover:text-[var(--c-coral)]"
-        aria-label={`Hapus ${props.name}`}
+        aria-label={`${t('category_manager.delete')} ${props.name}`}
       >
         <Trash2 className="size-3" />
       </button>
@@ -1001,6 +1006,7 @@ function NameInput({
   onCancel: () => void
   small?: boolean
 }) {
+  const t = useT()
   return (
     <div className="flex flex-1 items-center gap-1">
       <input
@@ -1025,7 +1031,7 @@ function NameInput({
         onMouseDown={(e) => e.preventDefault()}
         onClick={onCommit}
         className="rounded p-1 text-[var(--c-mint)] hover:bg-[var(--surface-2)]"
-        aria-label="Simpan"
+        aria-label={t('category_manager.save')}
       >
         <Check className="size-4" />
       </button>

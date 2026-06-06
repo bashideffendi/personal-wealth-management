@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useT } from '@/lib/i18n/context'
 import { formatCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
@@ -43,6 +44,7 @@ export function MonthlyReportBody({
   month: number
   variant?: 'screen' | 'print'
 }) {
+  const t = useT()
   const supabase = createClient()
   const now = new Date()
   const [loading, setLoading] = useState(true)
@@ -67,7 +69,7 @@ export function MonthlyReportBody({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !alive) { setLoading(false); return }
       const profRes = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
-      const fullName = (profRes.data as { full_name: string } | null)?.full_name?.trim() || user.email?.split('@')[0] || 'Pengguna'
+      const fullName = (profRes.data as { full_name: string } | null)?.full_name?.trim() || user.email?.split('@')[0] || t('report.default_user')
 
       const sixStart = new Date(year, month - 6, 1)
       const startBound = `${sixStart.getFullYear()}-${String(sixStart.getMonth() + 1).padStart(2, '0')}-01`
@@ -193,7 +195,7 @@ export function MonthlyReportBody({
     function bucketFlow(type: 'income' | 'expense' | 'saving' | 'investment') {
       const arr = Object.entries(byCat(cur, type)).map(([name, amount]) => ({ name, amount, kind: type as FlowKind })).sort((a, b) => b.amount - a.amount)
       const top = arr.slice(0, 8); const rest = arr.slice(8)
-      if (rest.length) { const s = rest.reduce((x, c) => x + c.amount, 0); if (s > 0) top.push({ name: `+${rest.length} lainnya`, amount: s, kind: type as FlowKind }) }
+      if (rest.length) { const s = rest.reduce((x, c) => x + c.amount, 0); if (s > 0) top.push({ name: `+${rest.length} ${t('report.flow_others')}`, amount: s, kind: type as FlowKind }) }
       return top
     }
     const sankeyIncome = bucketFlow('income')
@@ -211,10 +213,10 @@ export function MonthlyReportBody({
         : x.frequency === 'yearly' ? x.amount / 12
         : x.frequency === 'daily' ? (x.amount * 365) / 12
         : x.amount
-      if (m > 0) upcoming.push({ name: x.name, amount: Math.round(m), kind: 'Rutin' })
+      if (m > 0) upcoming.push({ name: x.name, amount: Math.round(m), kind: t('report.kind_recurring') })
     }
-    for (const d of debts) if ((d.monthly_payment ?? 0) > 0) upcoming.push({ name: d.name, amount: d.monthly_payment, kind: 'Cicilan' })
-    for (const c of contracts) if ((c.frequency === 'monthly') && (c.cost ?? 0) > 0) upcoming.push({ name: c.name, amount: c.cost ?? 0, kind: 'Langganan' })
+    for (const d of debts) if ((d.monthly_payment ?? 0) > 0) upcoming.push({ name: d.name, amount: d.monthly_payment, kind: t('report.kind_installment') })
+    for (const c of contracts) if ((c.frequency === 'monthly') && (c.cost ?? 0) > 0) upcoming.push({ name: c.name, amount: c.cost ?? 0, kind: t('report.kind_subscription') })
     upcoming.sort((a, b) => b.amount - a.amount)
     const upcomingTotal = upcoming.reduce((s, u) => s + u.amount, 0)
 
@@ -228,13 +230,13 @@ export function MonthlyReportBody({
       upcoming: upcoming.slice(0, 8), upcomingTotal,
       tx_count: cur.length, hasPrev: prev.length > 0,
     }
-  }, [allTx, budgets, year, month, liquidTotal, nonLiquidTotal, investTotal, debtTotal, ccTotal, recurring, debts, contracts])
+  }, [allTx, budgets, year, month, liquidTotal, nonLiquidTotal, investTotal, debtTotal, ccTotal, recurring, debts, contracts, t])
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-mute)' }}><Loader2 className="size-5 animate-spin mr-2" /> Menyiapkan laporan…</div>
+    return <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-mute)' }}><Loader2 className="size-5 animate-spin mr-2" /> {t('report.preparing')}</div>
   }
 
-  const surplusWord = r.surplus >= 0 ? 'surplus' : 'defisit'
+  const surplusWord = r.surplus >= 0 ? t('report.word_surplus') : t('report.word_deficit')
   const generatedAt = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
   const nextMonthLabel = MONTHS[month % 12]
   const topUp = r.shifts.find((s) => s.delta > 0)
@@ -248,19 +250,19 @@ export function MonthlyReportBody({
   const steps: string[] = []
   if (r.income > 0 && r.savingRate < 20) {
     const kurang = Math.round(r.income * 0.2 - (r.saving + r.investment))
-    if (kurang > 0) steps.push(`Naikkan tabungan + investasi ke ≥20% pendapatan — kurang sekitar ${money(kurang)}/bulan.`)
+    if (kurang > 0) steps.push(`${t('report.step_increase_savings_pre')} ${money(kurang)}${t('report.step_increase_savings_post')}`)
   }
   const overB = r.budgetVsActual.filter((b) => b.ratio > 100)
-  if (overB.length) steps.push(`${overB.length} kategori lewat anggaran (mis. ${overB[0].category} ${overB[0].ratio.toFixed(0)}%) — tinjau & sesuaikan ${nextMonthLabel}.`)
-  if (r.upcomingTotal > 0 && r.upcomingTotal > r.surplus) steps.push(`Kewajiban ${nextMonthLabel} (${money(r.upcomingTotal)}) lebih besar dari surplus bulan ini — siapkan dananya dari awal.`)
-  if (r.surplus > 0 && r.savingRate >= 20) steps.push(`Surplus ${money(r.surplus)} dengan saving rate sehat — pertimbangkan dorong kelebihannya ke tujuan atau investasi.`)
+  if (overB.length) steps.push(`${overB.length} ${t('report.step_over_budget_mid')} (${t('report.step_over_budget_eg')} ${overB[0].category} ${overB[0].ratio.toFixed(0)}%) — ${t('report.step_over_budget_review')} ${nextMonthLabel}.`)
+  if (r.upcomingTotal > 0 && r.upcomingTotal > r.surplus) steps.push(`${t('report.step_obligations_pre')} ${nextMonthLabel} (${money(r.upcomingTotal)}) ${t('report.step_obligations_post')}`)
+  if (r.surplus > 0 && r.savingRate >= 20) steps.push(`${t('report.step_surplus_pre')} ${money(r.surplus)} ${t('report.step_surplus_post')}`)
 
   if (r.tx_count === 0) {
     return (
       <div className="s-card p-10 sm:p-14 text-center">
         <Calendar className="size-12 mx-auto" style={{ color: 'var(--text-mute)' }} />
-        <h3 className="t-h2 mt-4" style={{ color: 'var(--ink)' }}>Tidak ada transaksi di {MONTHS[month - 1]} {year}</h3>
-        <p className="t-sm max-w-md mx-auto mt-2" style={{ color: 'var(--ink-soft)' }}>Belum ada data buat di-recap. Pilih bulan lain.</p>
+        <h3 className="t-h2 mt-4" style={{ color: 'var(--ink)' }}>{t('report.empty_title')} {MONTHS[month - 1]} {year}</h3>
+        <p className="t-sm max-w-md mx-auto mt-2" style={{ color: 'var(--ink-soft)' }}>{t('report.empty_desc')}</p>
       </div>
     )
   }
@@ -273,75 +275,75 @@ export function MonthlyReportBody({
         {variant === 'print' && (
           <div className="flex items-center justify-between pb-2.5 mb-4" style={{ borderBottom: '1px solid var(--line-strong)' }}>
             <span className="t-title font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>Klunting</span>
-            <span className="eyebrow" style={{ color: 'var(--text-mute)' }}>Laporan Keuangan Bulanan</span>
+            <span className="eyebrow" style={{ color: 'var(--text-mute)' }}>{t('report.letterhead')}</span>
           </div>
         )}
-        <p className="eyebrow">Ringkasan Bulanan · {MONTHS[month - 1]} {year}</p>
-        <h1 className="t-display mt-1" style={{ color: 'var(--ink)' }}>Laporan {MONTHS[month - 1]}</h1>
+        <p className="eyebrow">{t('report.eyebrow_summary')} · {MONTHS[month - 1]} {year}</p>
+        <h1 className="t-display mt-1" style={{ color: 'var(--ink)' }}>{t('report.title')} {MONTHS[month - 1]}</h1>
         {variant === 'print' ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-            <Meta label="Disiapkan untuk" value={userName} />
-            <Meta label="Periode" value={`1–${lastDay} ${MONTHS[month - 1]} ${year}`} />
-            <Meta label="Transaksi" value={`${r.tx_count}`} />
-            <Meta label="Tanggal terbit" value={generatedAt} />
+            <Meta label={t('report.meta_prepared_for')} value={userName} />
+            <Meta label={t('report.meta_period')} value={`1–${lastDay} ${MONTHS[month - 1]} ${year}`} />
+            <Meta label={t('report.meta_transactions')} value={`${r.tx_count}`} />
+            <Meta label={t('report.meta_issued_date')} value={generatedAt} />
           </div>
         ) : (
           <p className="t-body mt-1.5" style={{ color: 'var(--ink-soft)' }}>
-            Disiapkan untuk <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{userName}</span> · dibuat {generatedAt}
+            {t('report.prepared_for')} <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{userName}</span> · {t('report.created')} {generatedAt}
           </p>
         )}
       </header>
 
       {/* KPI */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Pemasukan" value={r.income} pct={r.incomePct} icon={<TrendingUp className="size-4" />} kind="income" goodUp />
-        <Kpi label="Pengeluaran" value={r.expense} pct={r.expensePct} icon={<TrendingDown className="size-4" />} kind="expense" goodUp={false} />
-        <Kpi label="Ditabung" value={r.saving} note={`${r.income > 0 ? ((r.saving / r.income) * 100).toFixed(0) : 0}% dari pendapatan`} icon={<PiggyBank className="size-4" />} kind="amber" />
-        <Kpi label="Diinvestasikan" value={r.investment} note={`${r.income > 0 ? ((r.investment / r.income) * 100).toFixed(0) : 0}% dari pendapatan`} icon={<LineChartIcon className="size-4" />} kind="violet" />
+        <Kpi label={t('report.kpi_income')} value={r.income} pct={r.incomePct} icon={<TrendingUp className="size-4" />} kind="income" goodUp />
+        <Kpi label={t('report.kpi_expense')} value={r.expense} pct={r.expensePct} icon={<TrendingDown className="size-4" />} kind="expense" goodUp={false} />
+        <Kpi label={t('report.kpi_saved')} value={r.saving} note={`${r.income > 0 ? ((r.saving / r.income) * 100).toFixed(0) : 0}% ${t('report.pct_of_income')}`} icon={<PiggyBank className="size-4" />} kind="amber" />
+        <Kpi label={t('report.kpi_invested')} value={r.investment} note={`${r.income > 0 ? ((r.investment / r.income) * 100).toFixed(0) : 0}% ${t('report.pct_of_income')}`} icon={<LineChartIcon className="size-4" />} kind="violet" />
       </div>
 
       {/* Ringkasan eksekutif — narasi prosa 3 sub-paragraf + strip arus kas */}
       <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
-        <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Ringkasan Eksekutif</p>
+        <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('report.exec_summary')}</p>
         <div className="mt-2.5 space-y-2.5" style={{ maxWidth: variant === 'print' ? '64ch' : undefined }}>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
-            <strong>Arus kas.</strong> Sepanjang {MONTHS[month - 1]} {year}, pemasukan {money(r.income)} dan pengeluaran {money(r.expense)} menghasilkan {surplusWord}{' '}
-            <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{money(Math.abs(r.surplus))}</span>{r.surplusStreak >= 2 ? ` — surplus ${r.surplusStreak} bulan beruntun` : ''}.
+            <strong>{t('report.cashflow_label')}</strong> {t('report.cashflow_during')} {MONTHS[month - 1]} {year}, {t('report.cashflow_income')} {money(r.income)} {t('report.cashflow_and_expense')} {money(r.expense)} {t('report.cashflow_result')} {surplusWord}{' '}
+            <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{money(Math.abs(r.surplus))}</span>{r.surplusStreak >= 2 ? ` — ${t('report.surplus_streak_pre')} ${r.surplusStreak} ${t('report.surplus_streak_post')}` : ''}.
           </p>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
-            <strong>Alokasi.</strong> <span className="num font-semibold">{r.savingRate.toFixed(0)}%</span> dari pendapatan disisihkan ke tabungan &amp; investasi — {r.savingRate >= 20 ? 'di atas' : 'di bawah'} ambang ideal 20%.{topCat ? ` Pengeluaran terbesar di ${topCat.name} (${money(topCat.amount)})${topCatBudget ? (topCatBudget.ratio > 100 ? `, melampaui anggaran ${topCatBudget.ratio.toFixed(0)}%` : `, ${topCatBudget.ratio.toFixed(0)}% dari anggaran`) : ''}.` : ''}
+            <strong>{t('report.allocation_label')}</strong> <span className="num font-semibold">{r.savingRate.toFixed(0)}%</span> {t('report.allocation_set_aside')} {r.savingRate >= 20 ? t('report.above') : t('report.below')} {t('report.allocation_threshold')}{topCat ? ` ${t('report.top_expense_at')} ${topCat.name} (${money(topCat.amount)})${topCatBudget ? (topCatBudget.ratio > 100 ? `, ${t('report.over_budget_suffix')} ${topCatBudget.ratio.toFixed(0)}%` : `, ${topCatBudget.ratio.toFixed(0)}% ${t('report.of_budget_suffix')}`) : ''}.` : ''}
           </p>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
-            <strong>Posisi &amp; rencana.</strong> Kekayaan bersih saat ini {money(r.netWorth)}.{r.upcomingTotal > 0 ? ` Untuk ${nextMonthLabel}, siapkan sekitar ${money(r.upcomingTotal)} untuk kewajiban rutin.` : ''}
+            <strong>{t('report.position_label')}</strong> {t('report.net_worth_now')} {money(r.netWorth)}.{r.upcomingTotal > 0 ? ` ${t('report.prepare_obligations_pre')} ${nextMonthLabel}, ${t('report.prepare_obligations_mid')} ${money(r.upcomingTotal)} ${t('report.prepare_obligations_post')}` : ''}
           </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-          <Mini label="Uang Masuk" value={r.income} color="var(--c-mint)" />
-          <Mini label="Belanja" value={r.expense} color="var(--c-coral)" />
-          <Mini label="Nabung + Investasi" value={r.saving + r.investment} color="var(--c-violet)" />
-          <Mini label="Selisih" value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'} signed />
+          <Mini label={t('report.mini_money_in')} value={r.income} color="var(--c-mint)" />
+          <Mini label={t('report.mini_spending')} value={r.expense} color="var(--c-coral)" />
+          <Mini label={t('report.mini_save_invest')} value={r.saving + r.investment} color="var(--c-violet)" />
+          <Mini label={t('report.mini_difference')} value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'} signed />
         </div>
       </div>
 
       {/* Sankey */}
       <div data-report-block="aliran" className="s-card p-4 sm:p-6">
-        <p className="eyebrow">Aliran Uang</p>
-        <h3 className="t-h2 mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>Dari mana &amp; ke mana — {MONTHS[month - 1]}</h3>
-        <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage="Belum ada aliran bulan ini." />
+        <p className="eyebrow">{t('report.flow_eyebrow')}</p>
+        <h3 className="t-h2 mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>{t('report.flow_title')} — {MONTHS[month - 1]}</h3>
+        <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage={t('report.flow_empty')} />
       </div>
 
       {/* 6 month + shifts */}
       <div data-report-block="perbandingan" className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
-          <p className="eyebrow">Perbandingan 6 Bulan</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Tren pemasukan vs pengeluaran</h3>
+          <p className="eyebrow">{t('report.compare_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.compare_title')}</h3>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={r.series} barGap={3} barCategoryGap="22%" margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
               <XAxis dataKey="label" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
               <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v: unknown, n) => [formatCurrency(Number(v) || 0), n === 'income' ? 'Pemasukan' : n === 'expense' ? 'Pengeluaran' : 'Nabung+Investasi']} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} formatter={(v) => (v === 'income' ? 'Pemasukan' : v === 'expense' ? 'Pengeluaran' : 'Nabung+Investasi')} />
+              <Tooltip formatter={(v: unknown, n) => [formatCurrency(Number(v) || 0), n === 'income' ? t('report.kpi_income') : n === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest')]} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} formatter={(v) => (v === 'income' ? t('report.kpi_income') : v === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest'))} />
               <Bar dataKey="income" name="income" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={20} />
               <Bar dataKey="expense" name="expense" fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={20} />
               <Bar dataKey="saved" name="saved" fill="#8B5CF6" radius={[3, 3, 0, 0]} maxBarSize={20} />
@@ -349,9 +351,9 @@ export function MonthlyReportBody({
           </ResponsiveContainer>
         </div>
         <div className="s-card p-5 sm:p-6 lg:col-span-2">
-          <p className="eyebrow">Pergeseran Terbesar</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>vs {r.prevMonthLabel}</h3>
-          {(!r.hasPrev || r.shifts.length === 0) ? <p className="t-sm mt-4" style={{ color: 'var(--text-mute)' }}>Belum cukup data bulan lalu.</p> : (
+          <p className="eyebrow">{t('report.shifts_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.vs_prefix')} {r.prevMonthLabel}</h3>
+          {(!r.hasPrev || r.shifts.length === 0) ? <p className="t-sm mt-4" style={{ color: 'var(--text-mute)' }}>{t('report.shifts_empty')}</p> : (
             <div className="mt-4 space-y-3">
               {r.shifts.map((s) => {
                 const up = s.delta > 0
@@ -373,8 +375,8 @@ export function MonthlyReportBody({
       {/* Budget vs actual */}
       {r.budgetVsActual.length > 0 && (
         <div data-report-block="anggaran" className="s-card p-5 sm:p-6">
-          <p className="eyebrow">Anggaran vs Realisasi</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Disiplin anggaran {MONTHS[month - 1]}</h3>
+          <p className="eyebrow">{t('report.budget_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.budget_title')} {MONTHS[month - 1]}</h3>
           <div className="mt-4 space-y-3">
             {r.budgetVsActual.map((b) => {
               const over = b.ratio > 100
@@ -400,8 +402,8 @@ export function MonthlyReportBody({
       <div data-report-block="kategori" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {r.expense_by_category.length > 0 && (
           <div className="s-card p-5 sm:p-6">
-            <p className="eyebrow">Pengeluaran per Kategori</p>
-            <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{MONTHS[month - 1]}{r.hasPrev && <span className="t-sm font-normal" style={{ color: 'var(--text-mute)' }}> · delta vs {r.prevMonthLabel}</span>}</h3>
+            <p className="eyebrow">{t('report.expense_cat_eyebrow')}</p>
+            <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{MONTHS[month - 1]}{r.hasPrev && <span className="t-sm font-normal" style={{ color: 'var(--text-mute)' }}> · {t('report.delta_vs')} {r.prevMonthLabel}</span>}</h3>
             <div className="mt-4 space-y-2.5">
               {r.expense_by_category.map((row) => (
                 <div key={row.name} className="flex items-center gap-2.5">
@@ -418,8 +420,8 @@ export function MonthlyReportBody({
         )}
         {r.income_by_source.length > 0 && (
           <div className="s-card p-5 sm:p-6">
-            <p className="eyebrow">Pemasukan per Sumber</p>
-            <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Dari mana uang masuk</h3>
+            <p className="eyebrow">{t('report.income_src_eyebrow')}</p>
+            <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.income_src_title')}</h3>
             <div className="mt-4 space-y-2.5">
               {r.income_by_source.map((row) => (
                 <div key={row.name} className="flex items-center gap-2.5">
@@ -439,22 +441,22 @@ export function MonthlyReportBody({
       {/* Net worth + Goals */}
       <div data-report-block="networth" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="s-card p-5 sm:p-6">
-          <p className="eyebrow">Net Worth</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Posisi terkini</h3>
+          <p className="eyebrow">{t('report.networth_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.networth_title')}</h3>
           <p className="num font-bold mt-3" style={{ fontSize: 30, letterSpacing: '-0.03em', color: 'var(--ink)' }}>{formatCurrency(r.netWorth)}</p>
           <div className="mt-4 space-y-2">
-            <Nw label="Aset Likuid" value={liquidTotal} />
-            <Nw label="Investasi" value={investTotal} />
-            <Nw label="Aset Non-Likuid" value={nonLiquidTotal} />
-            <Nw label="Utang" value={-debtTotal} />
-            <Nw label="Kartu Kredit" value={-ccTotal} />
+            <Nw label={t('report.nw_liquid')} value={liquidTotal} />
+            <Nw label={t('report.nw_investment')} value={investTotal} />
+            <Nw label={t('report.nw_non_liquid')} value={nonLiquidTotal} />
+            <Nw label={t('report.nw_debt')} value={-debtTotal} />
+            <Nw label={t('report.nw_credit_card')} value={-ccTotal} />
           </div>
-          <p className="t-cap mt-3" style={{ color: 'var(--text-mute)' }}>Saldo posisi terkini (snapshot bulanan menyusul).</p>
+          <p className="t-cap mt-3" style={{ color: 'var(--text-mute)' }}>{t('report.networth_note')}</p>
         </div>
         <div className="s-card p-5 sm:p-6">
-          <p className="eyebrow">Tujuan</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Kemajuan tujuan</h3>
-          {goals.length === 0 ? <p className="t-sm mt-4" style={{ color: 'var(--text-mute)' }}>Belum ada tujuan aktif.</p> : (
+          <p className="eyebrow">{t('report.goals_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.goals_title')}</h3>
+          {goals.length === 0 ? <p className="t-sm mt-4" style={{ color: 'var(--text-mute)' }}>{t('report.goals_empty')}</p> : (
             <div className="mt-4 space-y-3.5">
               {goals.slice(0, 5).map((g) => {
                 const p = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0
@@ -479,9 +481,9 @@ export function MonthlyReportBody({
         <div data-report-block="kewajiban" className="s-card p-5 sm:p-6">
           <div className="flex items-center gap-2">
             <CalendarClock className="size-4" style={{ color: 'var(--c-violet)' }} />
-            <p className="eyebrow">Kewajiban Bulan Depan · {nextMonthLabel}</p>
+            <p className="eyebrow">{t('report.obligations_eyebrow')} · {nextMonthLabel}</p>
           </div>
-          <p className="t-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Perkiraan rutin/cicilan/langganan yang bakal jalan — total <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(r.upcomingTotal)}</span></p>
+          <p className="t-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('report.obligations_desc')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(r.upcomingTotal)}</span></p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {r.upcoming.map((u, i) => (
               <div key={i} className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
@@ -495,12 +497,12 @@ export function MonthlyReportBody({
 
       {/* Sorotan */}
       <div data-report-block="sorotan" className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
-        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Sorotan Bulan Ini</p></div>
+        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('report.highlights_eyebrow')}</p></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `Saving rate ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? 'Naik' : 'Turun'} ${Math.abs(r.savingRateDelta).toFixed(0)}pp dari ${r.prevMonthLabel}` : 'Bulan ini' },
-            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} turun`, sub: `Hemat ${formatCurrency(Math.abs(topDown.delta))} vs ${r.prevMonthLabel}` },
-            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} naik`, sub: `+${formatCurrency(topUp.delta)} vs ${r.prevMonthLabel}` },
+            { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `${t('report.highlight_saving_rate')} ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? t('report.dir_up') : t('report.dir_down')} ${Math.abs(r.savingRateDelta).toFixed(0)}pp ${t('report.from_prefix')} ${r.prevMonthLabel}` : t('report.this_month') },
+            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} ${t('report.dir_down_word')}`, sub: `${t('report.highlight_saved')} ${formatCurrency(Math.abs(topDown.delta))} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
+            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} ${t('report.dir_up_word')}`, sub: `+${formatCurrency(topUp.delta)} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
           ].filter(Boolean).slice(0, 3).map((h, i) => {
             const item = h as { icon: React.ReactNode; title: string; sub: string }
             return <div key={i} className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}><div className="mb-1.5">{item.icon}</div><p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</p><p className="t-cap mt-0.5" style={{ color: 'var(--text-mute)' }}>{item.sub}</p></div>
@@ -511,8 +513,8 @@ export function MonthlyReportBody({
       {/* Langkah Berikutnya — rule-based, bukan generatif */}
       {steps.length > 0 && (
         <div data-report-block="langkah" className="s-card p-5 sm:p-6 print-avoid-break">
-          <p className="eyebrow">Langkah Berikutnya</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Rekomendasi {nextMonthLabel}</h3>
+          <p className="eyebrow">{t('report.steps_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.steps_title')} {nextMonthLabel}</h3>
           <ul className="mt-3 space-y-2">
             {steps.map((s, i) => (
               <li key={i} className="flex gap-2.5">
@@ -527,11 +529,11 @@ export function MonthlyReportBody({
       {/* Top 10 */}
       {r.top_expenses.length > 0 && (
         <div data-report-block="top10" className="s-card p-5 sm:p-6">
-          <p className="eyebrow">Transaksi Terbesar</p>
-          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>Top 10 pengeluaran</h3>
+          <p className="eyebrow">{t('report.top_eyebrow')}</p>
+          <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.top_title')}</h3>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full t-sm">
-              <thead><tr className="text-left eyebrow" style={{ color: 'var(--text-mute)' }}><th className="pb-2 font-medium">Tanggal</th><th className="pb-2 font-medium">Deskripsi</th><th className="pb-2 font-medium">Kategori</th><th className="pb-2 font-medium text-right">Jumlah</th></tr></thead>
+              <thead><tr className="text-left eyebrow" style={{ color: 'var(--text-mute)' }}><th className="pb-2 font-medium">{t('report.col_date')}</th><th className="pb-2 font-medium">{t('report.col_description')}</th><th className="pb-2 font-medium">{t('report.col_category')}</th><th className="pb-2 font-medium text-right">{t('report.col_amount')}</th></tr></thead>
               <tbody>
                 {r.top_expenses.map((tx, i) => (
                   <tr key={i} style={{ borderTop: '1px solid var(--line)' }}>
@@ -548,7 +550,7 @@ export function MonthlyReportBody({
       )}
 
       {variant === 'print' && (
-        <p className="t-cap text-center pt-2" style={{ color: 'var(--text-mute)' }}>Klunting · klunting.com · dibuat {generatedAt}</p>
+        <p className="t-cap text-center pt-2" style={{ color: 'var(--text-mute)' }}>Klunting · klunting.com · {t('report.created')} {generatedAt}</p>
       )}
     </div>
   )
@@ -564,6 +566,7 @@ function Meta({ label, value }: { label: string; value: string }) {
 }
 
 function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; value: number; pct?: number | null; note?: string; icon: React.ReactNode; kind: 'income' | 'expense' | 'amber' | 'violet'; goodUp?: boolean }) {
+  const t = useT()
   const tone: Record<string, { bg: string; fg: string }> = {
     income: { bg: 'var(--c-mint-soft)', fg: 'var(--c-mint)' }, expense: { bg: 'var(--c-coral-soft)', fg: 'var(--c-coral)' },
     amber: { bg: 'var(--c-amber-soft)', fg: 'var(--c-amber)' }, violet: { bg: 'var(--c-violet-soft)', fg: 'var(--c-violet)' },
@@ -573,7 +576,7 @@ function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; v
     <div className="stat-tile">
       <div className="flex items-center justify-between"><p className="eyebrow">{label}</p><div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>{icon}</div></div>
       <p className="num tabular font-bold mt-2" style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--ink)' }}><span className="sm:hidden">{formatCurrency(value)}</span><span className="hidden sm:inline">{formatCurrency(value)}</span></p>
-      {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint)' : 'var(--c-coral)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% vs bln lalu</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
+      {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint)' : 'var(--c-coral)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% {t('report.vs_last_month')}</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
     </div>
   )
 }

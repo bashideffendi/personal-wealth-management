@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useCategoryOptions } from '@/lib/use-category-options'
@@ -95,6 +96,7 @@ interface QuickAddLauncherProps {
 }
 
 export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps) {
+  const t = useT()
   const router = useRouter()
   const supabase = createClient()
   const { firstOf } = useCategoryOptions()
@@ -213,11 +215,11 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
   async function handleFile(file: File) {
     if (!file.type.startsWith('image/')) {
-      setScanError('File harus berupa gambar.')
+      setScanError(t('quickadd.err_not_image'))
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      setScanError('File terlalu besar (maks 10MB).')
+      setScanError(t('quickadd.err_too_large'))
       return
     }
     setMode('scanning')
@@ -228,7 +230,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       const res = await fetch('/api/extract-receipt', { method: 'POST', body: fd })
       const json = await res.json()
       if (!res.ok) {
-        setScanError(json.error ?? `Gagal: ${res.status}`)
+        setScanError(json.error ?? `${t('quickadd.failed_prefix')} ${res.status}`)
         setMode('menu')
         return
       }
@@ -236,7 +238,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       setPreviewData(data)
       setMode('preview')
     } catch (err) {
-      setScanError(err instanceof Error ? err.message : 'Gagal memproses struk')
+      setScanError(err instanceof Error ? err.message : t('quickadd.scan_failed'))
       setMode('menu')
     } finally {
       notifyAICreditsChanged()
@@ -272,14 +274,14 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     } = await supabase.auth.getUser()
     if (!user) {
       setSavingReceipt(false)
-      toast.error('Belum login.')
+      toast.error(t('quickadd.not_logged_in'))
       return
     }
     const acc = await pickDefaultAccount()
     if (!acc) {
       setSavingReceipt(false)
-      toast.error('Belum ada akun', {
-        description: 'Bikin akun dulu di menu "Akun" sebelum simpan transaksi.',
+      toast.error(t('quickadd.no_account_title'), {
+        description: t('quickadd.no_account_desc'),
       })
       return
     }
@@ -294,10 +296,10 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     })
     setSavingReceipt(false)
     if (error) {
-      toast.error('Gagal simpan transaksi', { description: error.message })
+      toast.error(t('quickadd.save_failed'), { description: error.message })
       return
     }
-    toast.success('Tercatat.', {
+    toast.success(t('quickadd.saved'), {
       description: `${previewData.merchant} · Rp ${previewData.total.toLocaleString('id-ID')}`,
     })
     setOpen(false)
@@ -316,11 +318,11 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
   async function saveManual() {
     if (!form.account_id) {
-      toast.error('Pilih akun dulu.')
+      toast.error(t('quickadd.pick_account_first'))
       return
     }
     if (!form.amount || form.amount <= 0) {
-      toast.error('Jumlah harus lebih dari 0.')
+      toast.error(t('quickadd.amount_gt_zero'))
       return
     }
     setManualSaving(true)
@@ -352,10 +354,10 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
     setManualSaving(false)
     if (error) {
-      toast.error('Gagal simpan transaksi', { description: error.message })
+      toast.error(t('quickadd.save_failed'), { description: error.message })
       return
     }
-    toast.success('Tercatat.')
+    toast.success(t('quickadd.saved'))
     setOpen(false)
     router.refresh()
   }
@@ -400,8 +402,8 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
             color: 'var(--c-primary-foreground)',
             boxShadow: '0 10px 24px -6px rgba(16, 24, 40, 0.14)',
           }}
-          aria-label="Tambah transaksi"
-          title="Tambah transaksi"
+          aria-label={t('quickadd.add_transaction')}
+          title={t('quickadd.add_transaction')}
         >
           <Plus className="h-6 w-6 stroke-[2.5]" />
         </button>
@@ -462,12 +464,13 @@ function MenuView({
   onPickManual: () => void
   scanError: string | null
 }) {
+  const t = useT()
   const items = [
     {
       key: 'receipt',
       icon: Camera,
-      title: 'Foto struk',
-      body: 'Buka kamera, AI baca total & kategori.',
+      title: t('quickadd.receipt_title'),
+      body: t('quickadd.receipt_body'),
       tint: 'var(--c-mint)',
       bg: 'var(--c-mint-soft)',
       onSelect: onPickReceipt,
@@ -475,8 +478,8 @@ function MenuView({
     {
       key: 'ai',
       icon: MessageSquareText,
-      title: 'Ketik dengan AI',
-      body: '"indomaret 47rb cash" — selesai.',
+      title: t('quickadd.ai_title'),
+      body: t('quickadd.ai_body'),
       tint: '#8B5CF6',
       bg: 'rgba(139,92,246,0.12)',
       onSelect: onPickAI,
@@ -484,8 +487,8 @@ function MenuView({
     {
       key: 'manual',
       icon: PenLine,
-      title: 'Form manual',
-      body: 'Pilih kategori & akun sendiri.',
+      title: t('quickadd.manual_title'),
+      body: t('quickadd.manual_body'),
       tint: 'var(--ink-muted)',
       bg: 'var(--surface-2)',
       onSelect: onPickManual,
@@ -495,8 +498,8 @@ function MenuView({
   return (
     <>
       <DialogHeader className="px-5 pt-5">
-        <DialogTitle>Tambah transaksi</DialogTitle>
-        <DialogDescription>Pilih cara paling cepat buatmu.</DialogDescription>
+        <DialogTitle>{t('quickadd.add_transaction')}</DialogTitle>
+        <DialogDescription>{t('quickadd.menu_subtitle')}</DialogDescription>
       </DialogHeader>
 
       <div className="px-3 pb-3 pt-2">
@@ -553,6 +556,7 @@ function MenuView({
 }
 
 function ScanningView() {
+  const t = useT()
   return (
     <div className="px-6 py-12 text-center">
       <div className="relative mx-auto size-12 flex items-center justify-center">
@@ -566,10 +570,10 @@ function ScanningView() {
         />
       </div>
       <p className="mt-4 text-sm font-medium" style={{ color: 'var(--ink)' }}>
-        Membaca struk...
+        {t('quickadd.scanning_title')}
       </p>
       <p className="mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-        AI lagi ekstrak total, merchant & kategori. Sebentar saja.
+        {t('quickadd.scanning_body')}
       </p>
     </div>
   )
@@ -588,12 +592,13 @@ function PreviewView({
   onBack: () => void
   onSave: () => void
 }) {
+  const t = useT()
   const confidenceLabel =
     data.confidence === 'high'
-      ? 'Tinggi'
+      ? t('quickadd.confidence_high')
       : data.confidence === 'medium'
-        ? 'Sedang'
-        : 'Rendah — cek ulang'
+        ? t('quickadd.confidence_medium')
+        : t('quickadd.confidence_low')
 
   return (
     <>
@@ -607,7 +612,7 @@ function PreviewView({
           style={{ color: 'var(--ink-muted)' }}
         >
           <ChevronLeft className="size-4" />
-          Kembali
+          {t('quickadd.back')}
         </button>
         <span
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
@@ -618,7 +623,7 @@ function PreviewView({
           }}
         >
           <Sparkles className="size-3" />
-          Akurasi {confidenceLabel}
+          {t('quickadd.accuracy')} {confidenceLabel}
         </span>
       </div>
 
@@ -674,12 +679,11 @@ function PreviewView({
         >
           {accounts.length === 0 ? (
             <span style={{ color: 'var(--danger)' }}>
-              Belum ada akun terdaftar. Bikin dulu sebelum simpan transaksi.
+              {t('quickadd.no_account_notice')}
             </span>
           ) : (
             <>
-              Akan dicatat ke akun default kamu. Detail bisa diedit dari halaman
-              Transaksi setelah disimpan.
+              {t('quickadd.default_account_notice')}
             </>
           )}
         </div>
@@ -692,7 +696,7 @@ function PreviewView({
           disabled={saving}
           className="sm:flex-none flex-1"
         >
-          Edit dulu
+          {t('quickadd.edit_first')}
         </Button>
         <Button
           onClick={onSave}
@@ -707,12 +711,12 @@ function PreviewView({
           {saving ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Simpan...
+              {t('quickadd.saving')}
             </>
           ) : (
             <>
               <Check className="size-4" />
-              Simpan
+              {t('quickadd.save')}
             </>
           )}
         </Button>
@@ -774,6 +778,7 @@ function ManualForm({
   onBack: () => void
   onSave: () => void
 }) {
+  const t = useT()
   const { optionsForType } = useCategoryOptions()
   const suggested = suggestCategory(form.description, recentTx, form.type, form.category)
   return (
@@ -786,10 +791,10 @@ function ManualForm({
           style={{ color: 'var(--ink-muted)' }}
         >
           <ChevronLeft className="size-4" />
-          Kembali
+          {t('quickadd.back')}
         </button>
         <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-          Form manual
+          {t('quickadd.manual_title')}
         </p>
         <span className="w-12" />
       </div>
@@ -797,7 +802,7 @@ function ManualForm({
       <div className="grid gap-3 px-5 pb-2">
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label>Tipe</Label>
+            <Label>{t('quickadd.type')}</Label>
             <Select
               value={form.type}
               onValueChange={(v) => v && setType(v as TxType)}
@@ -806,15 +811,15 @@ function ManualForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="expense">Pengeluaran</SelectItem>
-                <SelectItem value="income">Pemasukan</SelectItem>
-                <SelectItem value="saving">Tabungan</SelectItem>
-                <SelectItem value="investment">Investasi</SelectItem>
+                <SelectItem value="expense">{t('quickadd.type_expense')}</SelectItem>
+                <SelectItem value="income">{t('quickadd.type_income')}</SelectItem>
+                <SelectItem value="saving">{t('quickadd.type_saving')}</SelectItem>
+                <SelectItem value="investment">{t('quickadd.type_investment')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label>Kategori</Label>
+            <Label>{t('quickadd.category')}</Label>
             <Select
               value={form.category}
               onValueChange={(v) => v && setForm({ ...form, category: v })}
@@ -839,7 +844,7 @@ function ManualForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label>Jumlah</Label>
+            <Label>{t('quickadd.amount')}</Label>
             <Input
               type="number"
               min={0}
@@ -852,7 +857,7 @@ function ManualForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>Tanggal</Label>
+            <Label>{t('quickadd.date')}</Label>
             <Input
               type="date"
               value={form.date}
@@ -862,13 +867,13 @@ function ManualForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Akun / Kartu</Label>
+          <Label>{t('quickadd.account_or_card')}</Label>
           <Select
             value={form.account_id}
             onValueChange={(v) => setForm({ ...form, account_id: v ?? '' })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Pilih akun" />
+              <SelectValue placeholder={t('quickadd.pick_account')} />
             </SelectTrigger>
             <SelectContent>
               {accounts.map((a) => (
@@ -878,7 +883,7 @@ function ManualForm({
               ))}
               {cards.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  Kredit · {c.name}
+                  {t('quickadd.credit_prefix')} {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -886,13 +891,13 @@ function ManualForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Deskripsi</Label>
+          <Label>{t('quickadd.description')}</Label>
           <Input
             value={form.description}
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })
             }
-            placeholder="Beli kopi..."
+            placeholder={t('quickadd.description_placeholder')}
           />
           {suggested && (
             <button
@@ -904,10 +909,10 @@ function ManualForm({
                 color: 'var(--c-mint)',
                 border: '1px solid color-mix(in srgb, var(--c-mint) 25%, transparent)',
               }}
-              title="Klik untuk pakai kategori ini"
+              title={t('quickadd.suggestion_tooltip')}
             >
               <Sparkles className="size-3" />
-              Saran kategori: <strong>{suggested}</strong>
+              {t('quickadd.suggestion_label')} <strong>{suggested}</strong>
             </button>
           )}
         </div>
@@ -915,7 +920,7 @@ function ManualForm({
 
       <DialogFooter className="px-5 pb-5 pt-2">
         <Button variant="outline" onClick={onBack} disabled={saving}>
-          Batal
+          {t('quickadd.cancel')}
         </Button>
         <Button
           onClick={onSave}
@@ -927,7 +932,7 @@ function ManualForm({
           }}
         >
           {saving && <Loader2 className="size-4 animate-spin" />}
-          Simpan
+          {t('quickadd.save')}
         </Button>
       </DialogFooter>
     </>

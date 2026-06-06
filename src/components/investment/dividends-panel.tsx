@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
+import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Dividend, Investment } from '@/types'
@@ -38,6 +39,7 @@ const EMPTY: FormState = {
 }
 
 export function DividendsPanel() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Dividend[]>([])
@@ -84,7 +86,7 @@ export function DividendsPanel() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Hapus catatan dividen?')) return
+    if (!confirm(t('dividends.confirm_delete'))) return
     await supabase.from('dividends').delete().eq('id', id)
     void load()
   }
@@ -115,7 +117,7 @@ export function DividendsPanel() {
       {/* Stats inline (no dark hero — parent page already has one) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border bg-[var(--surface)] p-5">
         <div>
-          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>YTD Dividen</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('dividends.stat_ytd')}</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.ytd)}
           </p>
@@ -127,7 +129,7 @@ export function DividendsPanel() {
           </p>
         </div>
         <div>
-          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>Rata-rata / Bulan</p>
+          <p className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('dividends.stat_avg_monthly')}</p>
           <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
             {formatCurrency(stats.avgMonthly)}
           </p>
@@ -136,17 +138,17 @@ export function DividendsPanel() {
 
       <div className="flex items-center justify-between">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {stats.count} catatan · dari {stocks.length} saham aktif
+          {stats.count} {t('dividends.records_label')} · {t('dividends.from_label')} {stocks.length} {t('dividends.active_stocks_label')}
         </p>
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-          <Plus className="h-4 w-4" /> Catat Dividen
+          <Plus className="h-4 w-4" /> {t('dividends.add_button')}
         </Button>
       </div>
 
       {monthlyData.length > 0 && (
         <div className="s-card p-5">
-          <p className="eyebrow">Riwayat Pembayaran</p>
-          <h3 className="text-lg font-semibold mt-0.5">Per Bulan</h3>
+          <p className="eyebrow">{t('dividends.chart_eyebrow')}</p>
+          <h3 className="text-lg font-semibold mt-0.5">{t('dividends.chart_title')}</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
@@ -166,8 +168,8 @@ export function DividendsPanel() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : items.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <p className="font-semibold">Belum ada catatan dividen</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Catat dividen yang diterima dari saham-saham kamu.</p>
+          <p className="font-semibold">{t('dividends.empty_title')}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('dividends.empty_desc')}</p>
         </div>
       ) : (
         <div className="s-card overflow-x-auto">
@@ -177,9 +179,9 @@ export function DividendsPanel() {
                 <Th>Pay Date</Th>
                 <Th>Ticker</Th>
                 <Th className="text-right">Shares</Th>
-                <Th className="text-right">Jumlah</Th>
+                <Th className="text-right">{t('dividends.col_amount')}</Th>
                 <Th className="text-right">Per Share</Th>
-                <Th>Catatan</Th>
+                <Th>{t('dividends.col_notes')}</Th>
                 <Th className="text-right"></Th>
               </tr>
             </thead>
@@ -204,7 +206,7 @@ export function DividendsPanel() {
                     </Td>
                     <Td style={{ color: 'var(--ink-muted)' }}>{d.notes}</Td>
                     <Td className="text-right">
-                      <Button variant="ghost" size="icon-sm" aria-label="Hapus catatan dividen" onClick={() => remove(d.id)}>
+                      <Button variant="ghost" size="icon-sm" aria-label={t('dividends.delete_aria')} onClick={() => remove(d.id)}>
                         <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                       </Button>
                     </Td>
@@ -219,12 +221,12 @@ export function DividendsPanel() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Catat Dividen</DialogTitle>
-            <DialogDescription>Pembayaran dividen dari saham holdings.</DialogDescription>
+            <DialogTitle>{t('dividends.dialog_title')}</DialogTitle>
+            <DialogDescription>{t('dividends.dialog_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Saham</Label>
+              <Label>{t('dividends.field_stock')}</Label>
               <Select
                 value={form.investment_id}
                 onValueChange={(v) => {
@@ -232,7 +234,7 @@ export function DividendsPanel() {
                   setForm({ ...form, investment_id: v ?? '', ticker: s?.ticker ?? '', shares: s?.quantity ?? 0 })
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="Pilih saham" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('dividends.select_stock_placeholder')} /></SelectTrigger>
                 <SelectContent>
                   {stocks.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
@@ -244,11 +246,11 @@ export function DividendsPanel() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Jumlah Dividen (Rp)</Label>
+                <Label>{t('dividends.field_amount')}</Label>
                 <Input type="number" min={0} value={form.amount || ''} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) || 0 })} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Shares saat itu</Label>
+                <Label>{t('dividends.field_shares')}</Label>
                 <Input type="number" min={0} value={form.shares || ''} onChange={(e) => setForm({ ...form, shares: Number(e.target.value) || 0 })} />
               </div>
             </div>
@@ -263,15 +265,15 @@ export function DividendsPanel() {
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
+              <Label>{t('dividends.field_notes')}</Label>
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Interim/Final/Q1..." />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('dividends.cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.investment_id || form.amount <= 0}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Simpan
+              {t('dividends.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
