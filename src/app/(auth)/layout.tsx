@@ -3,10 +3,10 @@ import { Shield } from 'lucide-react'
 
 /**
  * Shared auth shell — YNAB composition, minimalist premium.
- * ONE unified dark canvas with subtle flowing curve art. Logo top-left,
- * a single brand line vertically centered on the left, the form card centered
- * on the right, one quiet trust line bottom-left. No feature copy, no stat
- * chips — just the sentence. Mobile: logo top-left + card centered.
+ * ONE unified dark canvas with subtle flowing curve art. Full-bleed (NOT a
+ * centered narrow container): logo pinned to the true top-left viewport edge,
+ * one brand line vertically centered on the left (aligned under the logo), the
+ * form card on the right, one quiet trust line bottom-left. No feature copy.
  */
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
@@ -39,39 +39,36 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <path className="auth-anim" d="M-60,628 C260,556 470,592 720,452 C920,340 1080,356 1260,238" stroke="url(#sweep)" strokeWidth="2.25" fill="none" strokeLinecap="round" strokeDasharray="1700" strokeDashoffset="1700" style={{ animation: 'authDraw 2.6s ease-out 0.25s forwards' }} />
       </svg>
 
-      {/* content (positioned relative to the centered container) */}
-      <div className="relative z-10 mx-auto max-w-6xl min-h-screen px-6 sm:px-10 lg:px-16">
-        {/* logo — top-left */}
-        <Link
-          href="/"
-          aria-label="Klunting"
-          className="absolute top-9 left-6 sm:left-10 lg:left-16 inline-flex items-center gap-2.5"
-        >
-          <span className="grid place-items-center" style={{ width: 34, height: 34, borderRadius: 10, background: '#FFFFFF', color: '#0A0A0F', fontWeight: 800, fontSize: 17, letterSpacing: '-0.04em' }}>K</span>
-          <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em' }}>Klunting</span>
-        </Link>
+      {/* logo — pinned to the true top-left viewport edge (YNAB) */}
+      <Link
+        href="/"
+        aria-label="Klunting"
+        className="absolute z-20 top-8 left-8 sm:top-10 sm:left-12 lg:left-16 inline-flex items-center gap-2.5"
+      >
+        <span className="grid place-items-center" style={{ width: 34, height: 34, borderRadius: 10, background: '#FFFFFF', color: '#0A0A0F', fontWeight: 800, fontSize: 17, letterSpacing: '-0.04em' }}>K</span>
+        <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em' }}>Klunting</span>
+      </Link>
 
-        {/* trust — bottom-left (desktop) */}
-        <p className="hidden lg:inline-flex absolute bottom-9 left-16 items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          <Shield className="size-3.5" style={{ color: '#34D399' }} /> Datamu dienkripsi, gak dijual.
-        </p>
+      {/* trust — bottom-left viewport edge (desktop) */}
+      <p className="hidden lg:inline-flex absolute z-20 bottom-9 left-16 items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <Shield className="size-3.5" style={{ color: '#34D399' }} /> Datamu dienkripsi, gak dijual.
+      </p>
 
-        {/* centered row: brand line (left) + form card (right) */}
-        <div className="grid lg:grid-cols-2 items-center min-h-screen lg:gap-16">
-          <div className="hidden lg:block max-w-md">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Atur uang tanpa drama</p>
-            <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(40px, 4.4vw, 58px)', lineHeight: 1.08, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
-              Akhirnya, <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span> soal uang.
-            </h2>
-          </div>
+      {/* content — full-bleed grid, edge padding aligns headline under the logo */}
+      <div className="relative z-10 min-h-screen grid lg:grid-cols-2 items-center px-8 sm:px-12 lg:px-16 xl:px-24 gap-8 lg:gap-12">
+        <div className="hidden lg:block max-w-lg">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Atur uang tanpa drama</p>
+          <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(40px, 4.4vw, 58px)', lineHeight: 1.08, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
+            Akhirnya, <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span> soal uang.
+          </h2>
+        </div>
 
-          <div className="w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end py-24 lg:py-0">
-            <div
-              className="rounded-3xl p-7 sm:p-8"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 30px 80px -24px rgba(0,0,0,0.6)' }}
-            >
-              {children}
-            </div>
+        <div className="w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end py-24 lg:py-0">
+          <div
+            className="rounded-3xl p-7 sm:p-8"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 30px 80px -24px rgba(0,0,0,0.6)' }}
+          >
+            {children}
           </div>
         </div>
       </div>
