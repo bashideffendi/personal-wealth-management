@@ -7,6 +7,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account, AllocationPurpose } from '@/types'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
+import { useT } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -84,6 +85,7 @@ type AllocationSummary = {
 export default function AccountsPage() {
   const supabase = createClient()
   const { hidden: privacyHidden } = usePrivacy()
+  const t = useT()
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null)
@@ -158,9 +160,9 @@ export default function AccountsPage() {
     const map: Record<string, AllocationSummary[]> = {}
     ;((allocRes.data ?? []) as AllocRow[]).forEach((row) => {
       const label =
-        row.purpose_kind === 'emergency_fund' ? 'Dana Darurat'
-        : row.purpose_kind === 'goal' ? (goalNameById[row.goal_id ?? ''] ?? 'Goal')
-        : (row.custom_label?.trim() || 'Sinking Fund')
+        row.purpose_kind === 'emergency_fund' ? t('accounts.alloc_emergency_fund')
+        : row.purpose_kind === 'goal' ? (goalNameById[row.goal_id ?? ''] ?? t('accounts.alloc_goal'))
+        : (row.custom_label?.trim() || t('accounts.alloc_sinking_fund'))
       if (!map[row.account_id]) map[row.account_id] = []
       map[row.account_id].push({ purpose_kind: row.purpose_kind, label, amount: row.amount })
     })
@@ -215,14 +217,14 @@ export default function AccountsPage() {
       const { account_number, ...rest } = payload
       void account_number
       error = await exec(rest)
-      if (!error) toast('Akun tersimpan, tapi nomor rekening belum aktif — jalankan migrasi 045 dulu.')
+      if (!error) toast(t('accounts.toast_saved_no_number'))
     }
     return { error }
   }
 
   async function handleSave() {
     if (!form.name.trim()) {
-      toast.error('Nama akun wajib diisi.')
+      toast.error(t('accounts.toast_name_required'))
       return
     }
     setSaving(true)
@@ -245,7 +247,7 @@ export default function AccountsPage() {
         current_balance: newCurrent,
         account_number: accountNumber,
       }, editingId)
-      if (error) { setSaving(false); toast.error(`Gagal update akun: ${error.message}`); return }
+      if (error) { setSaving(false); toast.error(`${t('accounts.toast_update_failed')}: ${error.message}`); return }
     } else {
       // Auto-tag household_id if the user is an owner or edit-capable member.
       const memRes = await supabase
@@ -267,7 +269,7 @@ export default function AccountsPage() {
       if (householdId) insertPayload.household_id = householdId
 
       const { error } = await writeAccount('insert', insertPayload)
-      if (error) { setSaving(false); toast.error(`Gagal buat akun: ${error.message}`); return }
+      if (error) { setSaving(false); toast.error(`${t('accounts.toast_create_failed')}: ${error.message}`); return }
     }
 
     setSaving(false)
@@ -279,7 +281,7 @@ export default function AccountsPage() {
     if (!deleteId) return
     const { error } = await supabase.from('accounts').delete().eq('id', deleteId)
     if (error) {
-      toast.error('Gagal hapus akun. Mungkin masih dipakai di transaksi — hapus transaksinya dulu atau pindahkan ke akun lain.')
+      toast.error(t('accounts.toast_delete_failed'))
     }
     setDeleteId(null)
     fetchData()
@@ -294,9 +296,9 @@ export default function AccountsPage() {
       .update({ default_account_id: accountId })
       .eq('id', user.id)
     setSettingDefaultId(null)
-    if (error) { toast.error(`Gagal set default: ${error.message}`); return }
+    if (error) { toast.error(`${t('accounts.toast_set_default_failed')}: ${error.message}`); return }
     setDefaultAccountId(accountId)
-    toast.success('Akun default diperbarui.')
+    toast.success(t('accounts.toast_default_updated'))
   }
 
   const today = formatDate(new Date())
@@ -311,18 +313,18 @@ export default function AccountsPage() {
   // both the card and table views without re-mounting.
   const renderRowActions = (a: Account) => (
     <>
-      <Button variant="ghost" size="icon-sm" aria-label="Atur alokasi" onClick={() => setAllocAccount(a)} title="Atur alokasi">
+      <Button variant="ghost" size="icon-sm" aria-label={t('accounts.action_set_allocation')} onClick={() => setAllocAccount(a)} title={t('accounts.action_set_allocation')}>
         <Layers className="size-3.5" />
       </Button>
       {a.id !== defaultAccountId && (
-        <Button variant="ghost" size="icon-sm" aria-label="Jadikan default" onClick={() => handleSetDefault(a.id)} disabled={settingDefaultId === a.id} title="Jadikan default">
+        <Button variant="ghost" size="icon-sm" aria-label={t('accounts.action_make_default')} onClick={() => handleSetDefault(a.id)} disabled={settingDefaultId === a.id} title={t('accounts.action_make_default')}>
           {settingDefaultId === a.id ? <Loader2 className="size-3.5 animate-spin" /> : <Star className="size-3.5" />}
         </Button>
       )}
-      <Button variant="ghost" size="icon-sm" aria-label="Edit akun" onClick={() => openEditDialog(a)} title="Edit">
+      <Button variant="ghost" size="icon-sm" aria-label={t('accounts.action_edit')} onClick={() => openEditDialog(a)} title={t('accounts.action_edit_short')}>
         <Pencil className="size-3.5" />
       </Button>
-      <Button variant="ghost" size="icon-sm" aria-label="Hapus akun" onClick={() => setDeleteId(a.id)} title="Hapus">
+      <Button variant="ghost" size="icon-sm" aria-label={t('accounts.action_delete')} onClick={() => setDeleteId(a.id)} title={t('accounts.action_delete_short')}>
         <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />
       </Button>
     </>
@@ -332,11 +334,11 @@ export default function AccountsPage() {
     const act = activityByAccount[a.id]
     const color = opts?.muted ? 'var(--ink-soft)' : 'var(--ink-muted)'
     if (!act || act.count === 0) {
-      return <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{opts?.showWindow ? 'Belum ada aktivitas · 30 hari' : 'Belum ada'}</span>
+      return <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{opts?.showWindow ? `${t('accounts.no_activity')} · ${t('accounts.days_30')}` : t('accounts.none_yet')}</span>
     }
     return (
       <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]" style={{ color }}>
-        <span>{act.count} trx{opts?.showWindow ? ' · 30 hari' : ''}</span>
+        <span>{act.count} {t('accounts.trx')}{opts?.showWindow ? ` · ${t('accounts.days_30')}` : ''}</span>
         {act.inSum > 0 && <span className="num" style={{ color: 'var(--c-mint)' }}>+{formatCurrency(act.inSum)}</span>}
         {act.outSum > 0 && <span className="num" style={{ color: 'var(--c-coral)' }}>−{formatCurrency(act.outSum)}</span>}
       </span>
@@ -360,7 +362,7 @@ export default function AccountsPage() {
         />
         <div className="relative p-6 sm:p-9">
           <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Akun & Saldo
+            {t('accounts.hero_label')}
           </p>
           {!loading && accounts.length > 0 ? (
             <>
@@ -371,23 +373,23 @@ export default function AccountsPage() {
                 {formatCurrency(totalBalance)}
               </p>
               <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                Total saldo gabungan dari {accounts.length} akun · {today}
+                {t('accounts.total_balance_from')} {accounts.length} {t('accounts.accounts_word')} · {today}
               </p>
               {(totals30d.inSum > 0 || totals30d.outSum > 0) && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
                   <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(16,185,129,0.16)', color: '#6EE7B7' }}>
-                    <ArrowDownLeft className="size-3.5" /> Masuk <span className="num font-semibold">+{formatCurrency(totals30d.inSum)}</span>
+                    <ArrowDownLeft className="size-3.5" /> {t('accounts.in')} <span className="num font-semibold">+{formatCurrency(totals30d.inSum)}</span>
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(251,113,133,0.16)', color: '#FDA4AF' }}>
-                    <ArrowUpRight className="size-3.5" /> Keluar <span className="num font-semibold">−{formatCurrency(totals30d.outSum)}</span>
+                    <ArrowUpRight className="size-3.5" /> {t('accounts.out')} <span className="num font-semibold">−{formatCurrency(totals30d.outSum)}</span>
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.45)' }}>· 30 hari terakhir</span>
+                  <span style={{ color: 'rgba(255,255,255,0.45)' }}>· {t('accounts.last_30_days')}</span>
                 </div>
               )}
             </>
           ) : (
             <h1 className="font-bold mt-2" style={{ fontSize: 'clamp(28px, 4vw, 40px)', color: '#FFFFFF', letterSpacing: '-0.035em' }}>
-              Kelola Akun
+              {t('accounts.manage_title')}
             </h1>
           )}
         </div>
@@ -396,29 +398,29 @@ export default function AccountsPage() {
       {/* Toolbar: label + view toggle + add */}
       {!loading && accounts.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Daftar Akun</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('accounts.list_label')}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
-              <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title="Tampilan kartu" aria-label="Tampilan kartu"><LayoutGrid className="size-4" /></button>
-              <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title="Tampilan tabel" aria-label="Tampilan tabel"><List className="size-4" /></button>
+              <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('accounts.view_card')} aria-label={t('accounts.view_card')}><LayoutGrid className="size-4" /></button>
+              <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('accounts.view_table')} aria-label={t('accounts.view_table')}><List className="size-4" /></button>
             </div>
-            <Button onClick={openAddDialog}><Plus className="size-4" data-icon="inline-start" /> Tambah Akun</Button>
+            <Button onClick={openAddDialog}><Plus className="size-4" data-icon="inline-start" /> {t('accounts.add_account')}</Button>
           </div>
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12" style={{ color: 'var(--ink-muted)' }}>
-          <Loader2 className="size-5 animate-spin mr-2" /> Memuat...
+          <Loader2 className="size-5 animate-spin mr-2" /> {t('accounts.loading')}
         </div>
       ) : accounts.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed p-10 text-center" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
           <Wallet className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
-          <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--ink)' }}>Belum ada akun</h3>
+          <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.empty_title')}</h3>
           <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
-            Bikin akun pertama kamu (e.g. BCA Tahapan, Cash di dompet, GoPay). Akun ini dipakai untuk mencatat transaksi.
+            {t('accounts.empty_desc')}
           </p>
-          <Button onClick={openAddDialog} className="mt-5"><Plus className="size-4" data-icon="inline-start" /> Bikin Akun Pertama</Button>
+          <Button onClick={openAddDialog} className="mt-5"><Plus className="size-4" data-icon="inline-start" /> {t('accounts.create_first')}</Button>
         </div>
       ) : view === 'table' ? (
         /* ─── TABLE VIEW ─── */
@@ -426,11 +428,11 @@ export default function AccountsPage() {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium">Akun</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">Tipe</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">Nomor</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">Aktivitas · 30 hari</th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-medium">Saldo</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_account')}</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_type')}</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_number')}</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_activity_30')}</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium">{t('accounts.col_balance')}</th>
               </tr>
             </thead>
             <tbody>
@@ -443,7 +445,7 @@ export default function AccountsPage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <InstitutionLogo accountName={a.name} size={32} shape="circle" />
                         <p className="font-medium truncate inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
-                          {a.name?.trim() || 'Akun tanpa nama'}
+                          {a.name?.trim() || t('accounts.unnamed_account')}
                           {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
                         </p>
                       </div>
@@ -480,12 +482,12 @@ export default function AccountsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{a.name?.trim() || 'Akun tanpa nama'}</p>
+                        <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{a.name?.trim() || t('accounts.unnamed_account')}</p>
                         <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                           {typeLabel}
                           {masked && <span className="num"> · {masked}</span>}
                           {a.id === defaultAccountId && (
-                            <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px]" style={{ color: 'var(--info)' }}><Star className="size-2.5 fill-current" /> Default</span>
+                            <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px]" style={{ color: 'var(--info)' }}><Star className="size-2.5 fill-current" /> {t('accounts.default')}</span>
                           )}
                         </p>
                       </div>
@@ -498,7 +500,7 @@ export default function AccountsPage() {
                   <p className="num tabular text-xl font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_balance ?? 0)}</p>
                   {totalAllocated > 0 && (
                     <p className="text-[11px] mt-0.5" style={{ color: free < 0 ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
-                      Bebas {formatCurrency(free)} · Dialokasi {formatCurrency(totalAllocated)}
+                      {t('accounts.free')} {formatCurrency(free)} · {t('accounts.allocated')} {formatCurrency(totalAllocated)}
                     </p>
                   )}
                 </div>
@@ -531,12 +533,12 @@ export default function AccountsPage() {
 
       {!loading && accounts.length > 0 && (
         <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
-          Saldo auto-update tiap kamu input transaksi yang pakai akun ini.{' '}
-          <Link href="/dashboard/assets/liquid" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>Lihat analisis likuiditas &amp; yield →</Link>
+          {t('accounts.footer_note')}{' '}
+          <Link href="/dashboard/assets/liquid" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('accounts.footer_liquidity')}</Link>
           {' · '}
-          <Link href="/dashboard/transactions" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>Transaksi</Link>
+          <Link href="/dashboard/transactions" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('accounts.footer_transactions')}</Link>
           {' · '}
-          <Link href="/dashboard/credit-cards" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>Kartu Kredit</Link>
+          <Link href="/dashboard/credit-cards" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('accounts.footer_credit_cards')}</Link>
         </p>
       )}
 
@@ -547,11 +549,11 @@ export default function AccountsPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint)' }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? 'Edit Akun' : 'Tambah Akun'}</DialogTitle>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? t('accounts.dialog_edit_title') : t('accounts.dialog_add_title')}</DialogTitle>
                 <DialogDescription>
                   {editingId
-                    ? 'Ubah detail akun. Saldo Saat Ini akan disesuaikan jika kamu ubah Saldo Awal.'
-                    : 'Buat akun baru untuk mencatat transaksi.'}
+                    ? t('accounts.dialog_edit_desc')
+                    : t('accounts.dialog_add_desc')}
                 </DialogDescription>
               </div>
             </div>
@@ -559,21 +561,21 @@ export default function AccountsPage() {
 
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="acc-name">Nama Akun</Label>
+              <Label htmlFor="acc-name">{t('accounts.field_name')}</Label>
               <InstitutionSearch
                 value={form.name}
                 onTextChange={(text) => setForm({ ...form, name: text })}
                 onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
-                placeholder="contoh: BCA, Jenius, GoPay, Cash..."
+                placeholder={t('accounts.field_name_placeholder')}
               />
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Pilih dari daftar atau ketik nama custom (misal &ldquo;BCA Tahapan Utama&rdquo;)</p>
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
             </div>
 
             <div className="grid gap-1.5">
-              <Label>Tipe</Label>
+              <Label>{t('accounts.field_type')}</Label>
               <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih tipe">{(v) => ACCOUNT_TYPES[v as AccountType] ?? 'Pilih tipe'}</SelectValue>
+                  <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((t) => (<SelectItem key={t} value={t}>{ACCOUNT_TYPES[t]}</SelectItem>))}
@@ -583,14 +585,14 @@ export default function AccountsPage() {
 
             <div className="grid gap-1.5">
               <Label htmlFor="acc-number">
-                Nomor Rekening / HP
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>— opsional, ditampilkan ter-mask</span>
+                {t('accounts.field_number')}
+                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
               </Label>
               <Input
                 id="acc-number"
                 value={form.account_number}
                 onChange={(e) => setForm({ ...form, account_number: e.target.value })}
-                placeholder="contoh: 1234567890"
+                placeholder={t('accounts.field_number_placeholder')}
                 inputMode="numeric"
                 autoComplete="off"
               />
@@ -598,18 +600,18 @@ export default function AccountsPage() {
 
             <div className="grid gap-1.5">
               <Label htmlFor="acc-balance">
-                Saldo Awal (Rp)
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>— saldo saat akun ini mulai dicatat</span>
+                {t('accounts.field_starting_balance')}
+                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
               </Label>
               <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('accounts.cancel')}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              {editingId ? 'Simpan' : 'Tambah'}
+              {editingId ? t('accounts.save') : t('accounts.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -619,14 +621,14 @@ export default function AccountsPage() {
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Hapus Akun?</DialogTitle>
+            <DialogTitle>{t('accounts.delete_title')}</DialogTitle>
             <DialogDescription>
-              Aksi ini tidak bisa dibatalkan. Kalau akun ini masih terhubung dengan transaksi, hapus akan gagal — kamu harus hapus transaksinya dulu atau pindahkan ke akun lain.
+              {t('accounts.delete_desc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>Batal</Button>
-            <Button variant="destructive" onClick={handleDelete}>Hapus</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>{t('accounts.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{t('accounts.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

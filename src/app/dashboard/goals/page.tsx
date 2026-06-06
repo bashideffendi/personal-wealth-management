@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { EduTip } from '@/components/edu/edu-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
+import { useT } from '@/lib/i18n/context'
 import {
   computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
   categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString,
@@ -94,21 +95,22 @@ function goalStatus(
   g: Goal,
   pct: number,
   done: boolean,
-): { label: string; tone: 'ok' | 'risk' | 'done' } | null {
-  if (done) return { label: 'Tercapai', tone: 'done' }
+): { key: string; tone: 'ok' | 'risk' | 'done' } | null {
+  if (done) return { key: 'status_achieved', tone: 'done' }
   if (!g.deadline) return null
   const start = new Date(g.created_at).getTime()
   const end = new Date(g.deadline).getTime()
   const now = Date.now()
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null
-  if (now >= end) return { label: 'Lewat tenggat', tone: 'risk' }
+  if (now >= end) return { key: 'status_overdue', tone: 'risk' }
   const expectedPct = ((now - start) / (end - start)) * 100
   return pct + 0.5 >= expectedPct
-    ? { label: 'On track', tone: 'ok' }
-    : { label: 'Perlu dikebut', tone: 'risk' }
+    ? { key: 'status_on_track', tone: 'ok' }
+    : { key: 'status_behind', tone: 'risk' }
 }
 
 export default function GoalsPage() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [goals, setGoals] = useState<Goal[]>([])
@@ -194,7 +196,7 @@ export default function GoalsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Hapus goal ini?')) return
+    if (!confirm(t('goals.confirm_delete'))) return
     await supabase.from('goals').delete().eq('id', id)
     void load()
   }
@@ -272,23 +274,27 @@ export default function GoalsPage() {
   }, [derived, monthlyIncome])
 
   const iuranSub = stats.iuranVsIncome != null
-    ? `${stats.iuranVsIncome.toFixed(0)}% dari pemasukan`
-    : `${stats.deadlineCount} tujuan ber-deadline`
+    ? `${stats.iuranVsIncome.toFixed(0)}% ${t('goals.of_income')}`
+    : `${stats.deadlineCount} ${t('goals.goals_with_deadline')}`
   const iuranSubColor = stats.iuranVsIncome == null ? 'var(--ink-soft)'
     : stats.iuranVsIncome > 50 ? '#F43F5E'
     : stats.iuranVsIncome > 30 ? '#F59E0B'
     : 'var(--ink-soft)'
 
   const statCards = [
-    { label: 'Total Target', value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} tujuan`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
-    { label: 'Sudah Terkumpul', value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% dari target`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: '#10B981', chip: '#10B9811A' },
-    { label: 'Iuran Wajib / Bulan', value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: '#8B5CF6', chip: '#8B5CF61A' },
-    { label: 'Probabilitas Rata-rata', value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: 'rata-rata · asumsi diinvestasikan', subColor: 'var(--ink-soft)', icon: Sparkles, color: '#F59E0B', chip: '#F59E0B1A' },
+    { label: t('goals.stat_total_target'), value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
+    { label: t('goals.stat_collected'), value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: '#10B981', chip: '#10B9811A' },
+    { label: t('goals.stat_monthly_contribution'), value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: '#8B5CF6', chip: '#8B5CF61A' },
+    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: '#F59E0B', chip: '#F59E0B1A' },
   ]
 
   function scrollToPyramid() {
     document.getElementById('goal-pyramid')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
+
+  // Localized labels for category & strategy selects (keys stay stable, labels via t())
+  const categoryLabel = (key: string) => t(`goals.cat_${key}`)
+  const strategyLabel = (value: string) => t(`goals.strat_${value}`)
 
   return (
     <div className="space-y-6">
@@ -296,27 +302,27 @@ export default function GoalsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
-            {activeGoals.length} Tujuan Aktif{stats.tercapai > 0 && ` · ${stats.tercapai} Tercapai`}
+            {activeGoals.length} {t('goals.active_goals')}{stats.tercapai > 0 && ` · ${stats.tercapai} ${t('goals.achieved')}`}
           </p>
           <h1
             className="mt-1 text-3xl sm:text-4xl leading-tight"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}
           >
-            Tujuan Finansial
+            {t('goals.title')}
           </h1>
           <p className="text-sm mt-1.5 flex items-center gap-1.5 max-w-xl" style={{ color: 'var(--ink-muted)' }}>
-            Pantau progres tiap milestone. Probabilitas dari simulasi Monte Carlo, bukan tebakan.
+            {t('goals.subtitle')}
             <EduTip topic="mental-accounting" side="bottom" />
           </p>
         </div>
         <div className="flex items-center gap-2">
           {activeGoals.length > 0 && (
             <Button variant="outline" onClick={scrollToPyramid}>
-              <Target className="h-4 w-4" /> Goal Pyramid
+              <Target className="h-4 w-4" /> {t('goals.goal_pyramid')}
             </Button>
           )}
           <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-            <Plus className="h-4 w-4" /> Tujuan baru
+            <Plus className="h-4 w-4" /> {t('goals.new_goal')}
           </Button>
         </div>
       </div>
@@ -329,10 +335,10 @@ export default function GoalsPage() {
             <Target className="size-7" style={{ color: 'var(--c-primary)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
-            Belum ada tujuan
+            {t('goals.empty_title')}
           </h3>
           <p className="text-sm max-w-xs" style={{ color: 'var(--ink-muted)' }}>
-            Liburan? Beli rumah? Apapun, kita bantu sampai kesana.
+            {t('goals.empty_desc')}
           </p>
         </div>
       ) : (
@@ -381,7 +387,7 @@ export default function GoalsPage() {
                                 className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
                                 style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                               >
-                                Terdekat
+                                {t('goals.badge_nearest')}
                               </span>
                             )}
                             {status && (
@@ -392,14 +398,14 @@ export default function GoalsPage() {
                                   color: status.tone === 'risk' ? 'var(--c-amber)' : 'var(--c-mint)',
                                 }}
                               >
-                                {status.label}
+                                {t(`goals.${status.key}`)}
                               </span>
                             )}
                           </div>
                           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
                             {g.deadline
-                              ? `Target ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
-                              : (GOAL_CATEGORIES[g.category] ?? g.category)}
+                              ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
+                              : (categoryLabel(g.category) ?? g.category)}
                           </p>
                         </div>
                       </div>
@@ -423,7 +429,7 @@ export default function GoalsPage() {
                           <span className="font-normal" style={{ color: 'var(--ink-muted)' }}> / {formatCurrency(g.target_amount)}</span>
                         </p>
                         <p className="num text-[11px] mt-0.5" style={{ color: done ? '#10B981' : layerColor }}>
-                          {done ? 'Target tercapai' : `Sisa ${formatCurrency(remaining)}`}
+                          {done ? t('goals.target_reached') : `${t('goals.remaining')} ${formatCurrency(remaining)}`}
                         </p>
                       </div>
                     </div>
@@ -434,27 +440,27 @@ export default function GoalsPage() {
 
                     <div className="mt-4 flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Iuran / Bulan</p>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.monthly_label')}</p>
                         <p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
                           {perMonth != null ? formatCurrency(perMonth) : '—'}
                         </p>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Probabilitas</p>
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.probability_label')}</p>
                         <p className="num text-sm font-semibold mt-0.5" style={{ color: prob != null ? probColor(prob) : 'var(--ink-soft)' }}>
                           {prob != null ? `${prob.toFixed(0)}%` : '—'}
                         </p>
                       </div>
                       <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0) }}>
-                        Setor sekarang <ArrowRight className="h-3.5 w-3.5" />
+                        {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </div>
 
                     {d.assumption && !done && (
                       <p className="mt-2.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                        Asumsi {d.assumption.label.toLowerCase()} ~{Math.round(d.assumption.ret * 100)}%/th
+                        {t('goals.assume_prefix')} {d.assumption.label.toLowerCase()} ~{Math.round(d.assumption.ret * 100)}{t('goals.percent_per_year')}
                         {prob != null && prob < 70 && requiredFor90 != null && perMonth != null && requiredFor90 > perMonth && (
-                          <> · naikin ke <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}/bln</span> buat ~90%</>
+                          <> · {t('goals.bump_to')} <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}{t('goals.per_month_suffix')}</span> {t('goals.for_90')}</>
                         )}
                       </p>
                     )}
@@ -482,73 +488,73 @@ export default function GoalsPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Target className="size-5" style={{ color: '#10B981' }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Tujuan' : 'Tujuan Baru'}</DialogTitle>
-                <DialogDescription>Set target keuangan dengan deadline opsional.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('goals.dialog_edit_title') : t('goals.dialog_new_title')}</DialogTitle>
+                <DialogDescription>{t('goals.dialog_desc')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Nama Tujuan</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="DP Rumah, Liburan Bali..." />
+              <Label>{t('goals.field_name')}</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('goals.field_name_ph')} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Kategori</Label>
+              <Label>{t('goals.field_category')}</Label>
               <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih kategori">
-                    {(v) => GOAL_CATEGORIES[v] ?? v}
+                  <SelectValue placeholder={t('goals.field_category_ph')}>
+                    {(v) => categoryLabel(v) ?? v}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(GOAL_CATEGORIES).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  {Object.keys(GOAL_CATEGORIES).map((k) => (
+                    <SelectItem key={k} value={k}>{categoryLabel(k)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Target (Rp)</Label>
+                <Label>{t('goals.field_target')}</Label>
                 <NumberInput value={form.target_amount} onChange={(n) => setForm({ ...form, target_amount: n })} placeholder="0" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Terkumpul (Rp)</Label>
+                <Label>{t('goals.field_collected')}</Label>
                 <NumberInput value={form.current_amount} onChange={(n) => setForm({ ...form, current_amount: n })} placeholder="0" />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Deadline (opsional)</Label>
+              <Label>{t('goals.field_deadline')}</Label>
               <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Strategi dana</Label>
+              <Label>{t('goals.field_strategy')}</Label>
               <Select value={form.savings_strategy} onValueChange={(v) => v && setForm({ ...form, savings_strategy: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih strategi">
-                    {(v) => STRATEGY_OPTIONS.find((o) => o.value === v)?.label ?? v}
+                  <SelectValue placeholder={t('goals.field_strategy_ph')}>
+                    {(v) => strategyLabel(v) ?? v}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {STRATEGY_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>{strategyLabel(o.value)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                Nentuin asumsi return buat ngitung probabilitas. Pilih &ldquo;Tabungan&rdquo; kalau dana cuma disisihin, bukan diinvestasiin.
+                {t('goals.strategy_hint')}
               </p>
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
+              <Label>{t('goals.field_notes')}</Label>
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('goals.cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.name}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {form.id ? 'Simpan' : 'Tambah'}
+              {form.id ? t('goals.save') : t('goals.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -558,17 +564,17 @@ export default function GoalsPage() {
       <Dialog open={!!depositGoal} onOpenChange={(o) => { if (!o) { setDepositGoal(null); setDepositAmt(0) } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Setor ke {depositGoal?.name}</DialogTitle>
-            <DialogDescription>Tambah nominal yang baru kamu sisihkan — langsung nambah ke &ldquo;Terkumpul&rdquo;.</DialogDescription>
+            <DialogTitle>{t('goals.deposit_to')} {depositGoal?.name}</DialogTitle>
+            <DialogDescription>{t('goals.deposit_desc')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Nominal setoran (Rp)</Label>
+              <Label>{t('goals.deposit_amount')}</Label>
               <NumberInput value={depositAmt} onChange={setDepositAmt} placeholder="0" />
             </div>
             {depositGoal && (
               <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>
-                Terkumpul: <span className="num">{formatCurrency(depositGoal.current_amount)}</span>
+                {t('goals.collected_label')} <span className="num">{formatCurrency(depositGoal.current_amount)}</span>
                 {depositAmt > 0 && (
                   <> {' → '}<span className="num font-semibold" style={{ color: '#10B981' }}>{formatCurrency(depositGoal.current_amount + depositAmt)}</span></>
                 )}
@@ -576,10 +582,10 @@ export default function GoalsPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDepositGoal(null); setDepositAmt(0) }}>Batal</Button>
+            <Button variant="outline" onClick={() => { setDepositGoal(null); setDepositAmt(0) }}>{t('goals.cancel')}</Button>
             <Button onClick={doDeposit} disabled={depositing || depositAmt <= 0}>
               {depositing && <Loader2 className="h-4 w-4 animate-spin" />}
-              Setor
+              {t('goals.deposit_submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

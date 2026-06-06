@@ -22,16 +22,10 @@ import {
   Home, Zap, Film, Shield, TrendingUp, Repeat, Wallet, CalendarClock, type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useT } from '@/lib/i18n/context'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 type Freq = 'daily' | 'weekly' | 'monthly' | 'yearly'
-
-const TYPE_LABELS: Record<TxType, string> = {
-  income: 'Pemasukan', expense: 'Pengeluaran', saving: 'Tabungan', investment: 'Investasi',
-}
-const FREQ_LABELS: Record<Freq, string> = {
-  daily: 'Harian', weekly: 'Mingguan', monthly: 'Bulanan', yearly: 'Tahunan',
-}
 
 const CAT_META: Record<string, { color: string; icon: LucideIcon }> = {
   'Tempat Tinggal': { color: '#8B5CF6', icon: Home },
@@ -123,6 +117,15 @@ function occurrencesIn30(r: { frequency: string; day_of_period: number }): Date[
 const dmy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
 
 export default function RecurringPage() {
+  const t = useT()
+  const TYPE_LABELS: Record<TxType, string> = {
+    income: t('recurring.type_income'), expense: t('recurring.type_expense'),
+    saving: t('recurring.type_saving'), investment: t('recurring.type_investment'),
+  }
+  const FREQ_LABELS: Record<Freq, string> = {
+    daily: t('recurring.freq_daily'), weekly: t('recurring.freq_weekly'),
+    monthly: t('recurring.freq_monthly'), yearly: t('recurring.freq_yearly'),
+  }
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<RecurringTransaction[]>([])
@@ -169,7 +172,7 @@ export default function RecurringPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Hapus pembayaran berulang ini?')) return
+    if (!confirm(t('recurring.confirm_delete'))) return
     await supabase.from('recurring_transactions').delete().eq('id', id); void load()
   }
   async function toggleActive(r: RecurringTransaction) {
@@ -183,7 +186,7 @@ export default function RecurringPage() {
       type: r.type, category: r.category, description: `[Auto] ${r.name}`, amount: r.amount,
     })
     await supabase.from('recurring_transactions').update({ last_run_date: new Date().toISOString().split('T')[0] }).eq('id', r.id)
-    toast.success(`${r.name} dicatat ke transaksi`)
+    toast.success(`${r.name} ${t('recurring.toast_recorded_suffix')}`)
     void load()
   }
 
@@ -240,10 +243,10 @@ export default function RecurringPage() {
   const totalSetahun = perBulan * 12 + perMinggu * 52 + perTahun + perHari * 365
 
   const stats = [
-    { label: 'Per Bulan', value: formatCurrency(perBulan), sub: `${byFreq('monthly').length} item`, icon: Repeat, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
-    { label: 'Per Minggu', value: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} item`, icon: Repeat, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
-    { label: 'Per Tahun', value: formatCurrency(perTahun), sub: `${byFreq('yearly').length} item`, icon: Shield, color: MINT, tint: 'rgba(16,185,129,0.12)' },
-    { label: 'Total Setahun', value: formatCurrency(totalSetahun), sub: 'Estimasi', icon: CalendarClock, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
+    { label: t('recurring.stat_per_month'), value: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
+    { label: t('recurring.stat_per_week'), value: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
+    { label: t('recurring.stat_per_year'), value: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: 'rgba(16,185,129,0.12)' },
+    { label: t('recurring.stat_total_year'), value: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
   ]
 
   // Kalender 30 hari: amount per tanggal
@@ -279,11 +282,11 @@ export default function RecurringPage() {
   const suggestions = useMemo(() => {
     const out: { title: string; body: string }[] = []
     const subs = payments.filter((r) => r.category === 'Langganan' || r.category === 'Hiburan')
-    if (subs.length >= 2) out.push({ title: `${subs.length} langganan aktif`, body: `Total ${formatCurrency(sum(subs))}/bln. Cek yang jarang dipakai di halaman Subscription.` })
+    if (subs.length >= 2) out.push({ title: `${subs.length} ${t('recurring.sug_subs_title_suffix')}`, body: `${t('recurring.total')} ${formatCurrency(sum(subs))}${t('recurring.per_month_short')}. ${t('recurring.sug_subs_body')}` })
     const biggest = [...payments].sort((a, b) => monthlyEq(b) - monthlyEq(a))[0]
-    if (biggest) out.push({ title: `${biggest.name} komitmen terbesar`, body: `${formatCurrency(Math.round(monthlyEq(biggest)))}/bln (${(monthlyEq(biggest) / Math.max(1, breakdownTotal) * 100).toFixed(0)}% dari total berulang).` })
+    if (biggest) out.push({ title: `${biggest.name} ${t('recurring.sug_biggest_title_suffix')}`, body: `${formatCurrency(Math.round(monthlyEq(biggest)))}${t('recurring.per_month_short')} (${(monthlyEq(biggest) / Math.max(1, breakdownTotal) * 100).toFixed(0)}% ${t('recurring.sug_biggest_body_suffix')}).` })
     const yearlyBig = byFreq('yearly')[0]
-    if (yearlyBig) out.push({ title: `${yearlyBig.name} jatuh tempo tahunan`, body: `Sisihkan ${formatCurrency(Math.round(yearlyBig.amount / 12))}/bln biar gak kaget pas ${dmy(nextRunDate(yearlyBig))}.` })
+    if (yearlyBig) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(nextRunDate(yearlyBig))}.` })
     return out.slice(0, 3)
   }, [payments]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -294,13 +297,13 @@ export default function RecurringPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{active.length} berulang aktif</p>
-          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>Pembayaran Berulang</h1>
-          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>Tagihan tetap, langganan &amp; auto-debet di satu tempat. Klunting bisa deteksi otomatis dari riwayat transaksi.</p>
+          <p className="eyebrow mb-1.5">{active.length} {t('recurring.active_count_suffix')}</p>
+          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('recurring.title')}</h1>
+          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>{t('recurring.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button variant="outline" onClick={detectFromHistory}><Search className="h-4 w-4" /> Cek dari riwayat</Button>
-          <Button onClick={() => openAdd()}><Plus className="h-4 w-4" /> Tambah berulang</Button>
+          <Button variant="outline" onClick={detectFromHistory}><Search className="h-4 w-4" /> {t('recurring.check_history')}</Button>
+          <Button onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
         </div>
       </div>
 
@@ -328,8 +331,8 @@ export default function RecurringPage() {
           {payments.length > 0 && (
             <div className="s-card p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>30 Hari Ke Depan</p>
-                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Total {formatCurrency(calendar.reduce((s, d) => s + d.amount, 0))}</p>
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.next_30_days')}</p>
+                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('recurring.total')} {formatCurrency(calendar.reduce((s, d) => s + d.amount, 0))}</p>
               </div>
               <div className="flex gap-1.5 overflow-x-auto pb-1">
                 {calendar.map((d, i) => {
@@ -350,18 +353,18 @@ export default function RecurringPage() {
           {items.length === 0 ? (
             <div className="s-card p-12 text-center">
               <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}><Repeat className="size-6" style={{ color: 'var(--ink-soft)' }} /></div>
-              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Belum ada pembayaran berulang</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>Tambah manual, atau klik &ldquo;Cek dari riwayat&rdquo; biar Klunting deteksi otomatis.</p>
-              <Button className="mt-4" onClick={() => openAdd()}><Plus className="h-4 w-4" /> Tambah berulang</Button>
+              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
+              <Button className="mt-4" onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
             </div>
           ) : (
             <>
               {/* Tabel */}
               <div className="s-card overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Daftar Pembayaran Berulang</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.list_title')}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {([['all', 'Semua'], ['monthly', 'Bulanan'], ['weekly', 'Mingguan'], ['yearly', 'Tahunan']] as const).map(([f, lbl]) => (
+                    {([['all', t('recurring.filter_all')], ['monthly', t('recurring.freq_monthly')], ['weekly', t('recurring.freq_weekly')], ['yearly', t('recurring.freq_yearly')]] as const).map(([f, lbl]) => (
                       <button key={f} onClick={() => setFilter(f)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                         style={{ background: filter === f ? 'var(--ink)' : 'var(--surface-2)', color: filter === f ? 'var(--surface)' : 'var(--ink-muted)' }}>{lbl}</button>
                     ))}
@@ -371,12 +374,12 @@ export default function RecurringPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-                        <th className="text-left font-medium px-4 py-2.5">Nama</th>
-                        <th className="text-left font-medium px-3 py-2.5">Kategori</th>
-                        <th className="text-left font-medium px-3 py-2.5">Frekuensi</th>
-                        <th className="text-left font-medium px-3 py-2.5">Akun</th>
-                        <th className="text-right font-medium px-3 py-2.5">Jatuh Tempo</th>
-                        <th className="text-right font-medium px-4 py-2.5">Nominal</th>
+                        <th className="text-left font-medium px-4 py-2.5">{t('recurring.col_name')}</th>
+                        <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_category')}</th>
+                        <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_frequency')}</th>
+                        <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_account')}</th>
+                        <th className="text-right font-medium px-3 py-2.5">{t('recurring.col_due')}</th>
+                        <th className="text-right font-medium px-4 py-2.5">{t('recurring.col_amount')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -393,7 +396,7 @@ export default function RecurringPage() {
                               <div className="flex items-center gap-3 min-w-0">
                                 <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: `${meta.color}1A`, opacity: r.is_active ? 1 : 0.5 }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                                 <div className="min-w-0">
-                                  <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>jeda</span>}</p>
+                                  <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}</p>
                                   <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{TYPE_LABELS[r.type]}{r.notes ? ` · ${r.notes}` : ''}</p>
                                 </div>
                               </div>
@@ -403,13 +406,13 @@ export default function RecurringPage() {
                             <td className="px-3 py-3 text-[13px] truncate" style={{ color: 'var(--ink-muted)' }}>{acc?.name ?? '—'}</td>
                             <td className="px-3 py-3 text-right">
                               <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL : 'var(--ink)' }}>{dmy(next)}</p>
-                              <p className="num text-[10px]" style={{ color: urgent ? CORAL : 'var(--ink-soft)' }}>{r.is_active ? `${days} hari lagi` : 'dijeda'}</p>
+                              <p className="num text-[10px]" style={{ color: urgent ? CORAL : 'var(--ink-soft)' }}>{r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="num font-semibold tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(r.amount)}</span>
                               <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition mt-1">
-                                <Button variant="ghost" size="icon-sm" onClick={() => runNow(r)} title="Catat sekarang" disabled={!r.is_active}><Play className="h-3 w-3" /></Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => toggleActive(r)} title={r.is_active ? 'Jeda' : 'Lanjut'}><Pause className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => runNow(r)} title={t('recurring.action_record_now')} disabled={!r.is_active}><Play className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => toggleActive(r)} title={r.is_active ? t('recurring.action_pause') : t('recurring.action_resume')}><Pause className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon-sm" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon-sm" onClick={() => remove(r.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                               </div>
@@ -425,7 +428,7 @@ export default function RecurringPage() {
               {/* Breakdown + Saran */}
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="s-card p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Berdasarkan Kategori (per bulan)</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.by_category')}</p>
                   {breakdown.length > 0 ? (
                     <>
                       <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
@@ -436,25 +439,25 @@ export default function RecurringPage() {
                           <div key={b.cat} className="flex items-center justify-between text-sm">
                             <span className="flex items-center gap-2 min-w-0"><span className="size-2 rounded-full shrink-0" style={{ background: catMeta(b.cat).color }} /><span className="truncate" style={{ color: 'var(--ink-muted)' }}>{b.cat}</span></span>
                             <span className="flex items-center gap-3 shrink-0">
-                              <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{b.count} item</span>
+                              <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{b.count} {t('recurring.item')}</span>
                               <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(b.total))}</span>
                             </span>
                           </div>
                         ))}
                       </div>
                     </>
-                  ) : <p className="text-sm mt-3" style={{ color: 'var(--ink-soft)' }}>Belum ada pembayaran berulang aktif.</p>}
+                  ) : <p className="text-sm mt-3" style={{ color: 'var(--ink-soft)' }}>{t('recurring.no_active')}</p>}
                 </div>
 
                 <div className="s-card p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: VIOLET }}><Sparkles className="size-3.5" /> Saran Klunting</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: VIOLET }}><Sparkles className="size-3.5" /> {t('recurring.suggestions_title')}</p>
                   <div className="mt-3 space-y-2.5">
                     {suggestions.length > 0 ? suggestions.map((s, i) => (
                       <div key={i} className="rounded-xl p-3" style={{ background: 'var(--surface-2)' }}>
                         <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</p>
                         <p className="text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
                       </div>
-                    )) : <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Belum ada saran — tambah beberapa pembayaran berulang dulu.</p>}
+                    )) : <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('recurring.no_suggestions')}</p>}
                   </div>
                 </div>
               </div>
@@ -470,53 +473,53 @@ export default function RecurringPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(139,92,246,0.12)' }}><Repeat className="size-5" style={{ color: VIOLET }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? 'Edit Berulang' : 'Tambah Berulang'}</DialogTitle>
-                <DialogDescription>Auto-generate transaksi sesuai jadwal yang kamu set.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('recurring.dialog_edit_title') : t('recurring.dialog_add_title')}</DialogTitle>
+                <DialogDescription>{t('recurring.dialog_description')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
           <div className="grid gap-3 py-2">
-            <div className="grid gap-1.5"><Label>Nama</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Netflix, Cicilan KPR, Gaji…" /></div>
+            <div className="grid gap-1.5"><Label>{t('recurring.field_name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('recurring.field_name_placeholder')} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Tipe</Label>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_type')}</Label>
                 <Select value={form.type} onValueChange={(v) => v && setForm({ ...form, type: v as TxType, category: categoriesFor(v as TxType)[0] })}>
-                  <SelectTrigger><SelectValue>{(v) => TYPE_LABELS[v as TxType] ?? 'Pilih'}</SelectValue></SelectTrigger>
+                  <SelectTrigger><SelectValue>{(v) => TYPE_LABELS[v as TxType] ?? t('recurring.select_placeholder')}</SelectValue></SelectTrigger>
                   <SelectContent>{(Object.keys(TYPE_LABELS) as TxType[]).map((k) => <SelectItem key={k} value={k}>{TYPE_LABELS[k]}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-1.5"><Label>Kategori</Label>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_category')}</Label>
                 <Select value={form.category} onValueChange={(v) => v && setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue>{(v) => v || 'Pilih'}</SelectValue></SelectTrigger>
+                  <SelectTrigger><SelectValue>{(v) => v || t('recurring.select_placeholder')}</SelectValue></SelectTrigger>
                   <SelectContent>{categoriesFor(form.type).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Jumlah (Rp)</Label><NumberInput value={form.amount} onChange={(n) => setForm({ ...form, amount: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>Akun</Label>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_amount')}</Label><NumberInput value={form.amount} onChange={(n) => setForm({ ...form, amount: n })} placeholder="0" /></div>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_account')}</Label>
                 <Select value={form.account_id} onValueChange={(v) => setForm({ ...form, account_id: v ?? '' })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih akun">{(v) => accounts.find((a) => a.id === v)?.name || 'Pilih akun'}</SelectValue></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('recurring.select_account_placeholder')}>{(v) => accounts.find((a) => a.id === v)?.name || t('recurring.select_account_placeholder')}</SelectValue></SelectTrigger>
                   <SelectContent>{accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Frekuensi</Label>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_frequency')}</Label>
                 <Select value={form.frequency} onValueChange={(v) => v && setForm({ ...form, frequency: v as Freq })}>
-                  <SelectTrigger><SelectValue>{(v) => FREQ_LABELS[v as Freq] ?? 'Pilih'}</SelectValue></SelectTrigger>
+                  <SelectTrigger><SelectValue>{(v) => FREQ_LABELS[v as Freq] ?? t('recurring.select_placeholder')}</SelectValue></SelectTrigger>
                   <SelectContent>{(Object.keys(FREQ_LABELS) as Freq[]).map((k) => <SelectItem key={k} value={k}>{FREQ_LABELS[k]}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-1.5"><Label>Tanggal {form.frequency === 'monthly' ? '(1–31)' : ''}</Label><Input type="number" min={1} max={31} value={form.day_of_period} onChange={(e) => setForm({ ...form, day_of_period: Number(e.target.value) || 1 })} /></div>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_date')} {form.frequency === 'monthly' ? '(1–31)' : ''}</Label><Input type="number" min={1} max={31} value={form.day_of_period} onChange={(e) => setForm({ ...form, day_of_period: Number(e.target.value) || 1 })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5"><Label>Mulai</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
-              <div className="grid gap-1.5"><Label>Berakhir (opsional)</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_start')}</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_end')}</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
-            <Button onClick={save} disabled={saving || !form.name || !form.account_id}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Simpan</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('recurring.cancel')}</Button>
+            <Button onClick={save} disabled={saving || !form.name || !form.account_id}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('recurring.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -528,8 +531,8 @@ export default function RecurringPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(139,92,246,0.12)' }}><Search className="size-5" style={{ color: VIOLET }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>Deteksi dari Riwayat</DialogTitle>
-                <DialogDescription>Transaksi pengeluaran yang muncul berulang (≥2× dalam ~5 bulan) — kandidat buat dijadiin berulang.</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{t('recurring.detect_title')}</DialogTitle>
+                <DialogDescription>{t('recurring.detect_description')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -537,16 +540,16 @@ export default function RecurringPage() {
             {detecting ? (
               <div className="flex items-center justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
             ) : candidates.length === 0 ? (
-              <p className="text-sm py-6 text-center" style={{ color: 'var(--ink-soft)' }}>Belum nemu kandidat berulang dari riwayat transaksimu.</p>
+              <p className="text-sm py-6 text-center" style={{ color: 'var(--ink-soft)' }}>{t('recurring.detect_empty')}</p>
             ) : (
               <div className="space-y-2 max-h-[50vh] overflow-y-auto">
                 {candidates.map((c, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--border-soft)' }}>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{c.category} · muncul {c.count}× · ~{formatCurrency(c.amount)}</p>
+                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{c.category} · {t('recurring.appeared')} {c.count}× · ~{formatCurrency(c.amount)}</p>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => { setDetectOpen(false); openAdd({ name: c.name, amount: c.amount, category: c.category, type: 'expense' }) }}><Plus className="h-3.5 w-3.5" /> Tambah</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setDetectOpen(false); openAdd({ name: c.name, amount: c.amount, category: c.category, type: 'expense' }) }}><Plus className="h-3.5 w-3.5" /> {t('recurring.add')}</Button>
                   </div>
                 ))}
               </div>

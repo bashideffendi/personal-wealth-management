@@ -10,6 +10,7 @@ import {
 } from '@/components/reflective/reflective-spending-modal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useCategoryOptions } from '@/lib/use-category-options'
+import { useT } from '@/lib/i18n/context'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
@@ -78,6 +79,14 @@ const emptyForm = {
 export default function TransactionsPage() {
   const supabase = createClient()
   const { optionsForType } = useCategoryOptions()
+  const t = useT()
+
+  const TYPE_LABEL_KEYS: Record<TransactionType, string> = {
+    income: 'transactions.type_income',
+    expense: 'transactions.type_expense',
+    saving: 'transactions.type_saving',
+    investment: 'transactions.type_investment',
+  }
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -244,7 +253,7 @@ export default function TransactionsPage() {
       .eq('id', user.id)
     setSettingDefault(false)
     if (error) {
-      toast.error('Gagal set default', { description: error.message })
+      toast.error(t('transactions.toast_set_default_failed'), { description: error.message })
       return
     }
     setDefaultAccountId(form.account_id)
@@ -262,11 +271,11 @@ export default function TransactionsPage() {
 
   async function handleReceiptUpload(file: File) {
     if (!file.type.startsWith('image/')) {
-      setExtractError('File harus berupa gambar (JPG/PNG/WebP)')
+      setExtractError(t('transactions.error_not_image'))
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      setExtractError('File terlalu besar (maks 10MB)')
+      setExtractError(t('transactions.error_too_large'))
       return
     }
 
@@ -283,7 +292,7 @@ export default function TransactionsPage() {
       const res = await fetch('/api/extract-receipt', { method: 'POST', body: fd })
       const json = await res.json()
       if (!res.ok) {
-        setExtractError(json.error ?? `Gagal: ${res.status}`)
+        setExtractError(json.error ?? `${t('transactions.error_failed')}: ${res.status}`)
         return
       }
       const d = json.data as {
@@ -312,7 +321,7 @@ export default function TransactionsPage() {
       if (picked) setAccountSource(picked.source)
       setExtractConfidence(d.confidence)
     } catch (err) {
-      setExtractError(err instanceof Error ? err.message : 'Gagal memproses struk')
+      setExtractError(err instanceof Error ? err.message : t('transactions.error_process_receipt'))
     } finally {
       setExtracting(false)
       // Refresh badge — credits consumed (success) or refunded (server-side failure)
@@ -333,7 +342,7 @@ export default function TransactionsPage() {
 
   async function saveTransfer() {
     if (!transferForm.from_account_id || !transferForm.to_account_id || transferForm.amount <= 0) return
-    if (transferForm.from_account_id === transferForm.to_account_id) { toast.error('Akun asal & tujuan tidak boleh sama'); return }
+    if (transferForm.from_account_id === transferForm.to_account_id) { toast.error(t('transactions.toast_same_account')); return }
     setTransferSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setTransferSaving(false); return }
@@ -367,7 +376,7 @@ export default function TransactionsPage() {
   }
 
   function exportCSV(rows: Transaction[]) {
-    const header = ['Tanggal', 'Akun', 'Tipe', 'Kategori', 'Deskripsi', 'Jumlah']
+    const header = [t('transactions.col_date'), t('transactions.col_account'), t('transactions.col_type'), t('transactions.col_category'), t('transactions.col_description'), t('transactions.col_amount')]
     const csvRows = [
       header,
       ...rows.map((tx) => [
@@ -449,8 +458,8 @@ export default function TransactionsPage() {
 
   function openAddDialog() {
     if (accounts.length === 0 && creditCards.length === 0) {
-      toast.error('Belum ada akun', {
-        description: 'Bikin akun dulu di menu "Akun" sebelum mencatat transaksi.',
+      toast.error(t('transactions.toast_no_account_title'), {
+        description: t('transactions.toast_no_account_desc'),
       })
       return
     }
@@ -486,15 +495,15 @@ export default function TransactionsPage() {
   async function handleSave() {
     // Client-side validation with clear messages
     if (!form.account_id) {
-      toast.error('Pilih akun dulu sebelum simpan transaksi.')
+      toast.error(t('transactions.toast_pick_account'))
       return
     }
     if (!form.category) {
-      toast.error('Pilih kategori dulu sebelum simpan transaksi.')
+      toast.error(t('transactions.toast_pick_category'))
       return
     }
     if (!form.amount || form.amount <= 0) {
-      toast.error('Jumlah harus lebih dari 0.')
+      toast.error(t('transactions.toast_amount_positive'))
       return
     }
 
@@ -533,8 +542,8 @@ export default function TransactionsPage() {
         .from('receipts')
         .upload(path, receiptFile, { contentType: receiptFile.type, upsert: false })
       if (upErr) {
-        toast.warning('Foto struk gagal diupload', {
-          description: `Transaksi tetap disimpan tanpa foto. ${upErr.message}`,
+        toast.warning(t('transactions.toast_receipt_upload_failed'), {
+          description: `${t('transactions.toast_saved_without_photo')} ${upErr.message}`,
         })
       } else {
         receiptPath = path
@@ -575,7 +584,7 @@ export default function TransactionsPage() {
 
     if (saveErr) {
       setSaving(false)
-      toast.error('Gagal simpan transaksi', { description: saveErr.message })
+      toast.error(t('transactions.toast_save_failed'), { description: saveErr.message })
       return
     }
 
@@ -621,9 +630,9 @@ export default function TransactionsPage() {
   }, [accounts.length, creditCards.length])
 
   async function quickSubmit() {
-    if (!quickForm.account_id) { toast.error('Pilih akun dulu.'); return }
-    if (!quickForm.category) { toast.error('Pilih kategori dulu.'); return }
-    if (!quickForm.amount || quickForm.amount <= 0) { toast.error('Jumlah harus lebih dari 0.'); return }
+    if (!quickForm.account_id) { toast.error(t('transactions.toast_pick_account_short')); return }
+    if (!quickForm.category) { toast.error(t('transactions.toast_pick_category_short')); return }
+    if (!quickForm.amount || quickForm.amount <= 0) { toast.error(t('transactions.toast_amount_positive')); return }
     setQuickSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setQuickSaving(false); return }
@@ -645,8 +654,8 @@ export default function TransactionsPage() {
 
     const { error } = await supabase.from('transactions').insert(payload)
     setQuickSaving(false)
-    if (error) { toast.error('Gagal simpan', { description: error.message }); return }
-    toast.success('Tercatat.')
+    if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
+    toast.success(t('transactions.toast_recorded'))
 
     // Reset only amount + description; keep date/account/type/category
     // (most users add multiple similar transactions in a row)
@@ -701,12 +710,12 @@ export default function TransactionsPage() {
       {/* Light functional header (Hybrid pattern) — dark hero reserved for
           big-number summary pages. Primary action sits inline with title. */}
       <PageHeader
-        title="Transaksi"
-        subtitle="Semua aktivitas finansial — pemasukan, pengeluaran, tabungan, investasi."
+        title={t('transactions.page_title')}
+        subtitle={t('transactions.page_subtitle')}
         actions={
           <Button onClick={openAddDialog}>
             <Plus className="size-4" data-icon="inline-start" />
-            Tambah Transaksi
+            {t('transactions.add_transaction')}
           </Button>
         }
       />
@@ -717,10 +726,10 @@ export default function TransactionsPage() {
         const exp = filteredTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
         const cards = [
-          { label: 'Pemasukan', dot: '#10B981', Icon: ArrowDownLeft, val: formatCurrency(inc) },
-          { label: 'Pengeluaran', dot: '#F43F5E', Icon: ArrowUpRight, val: formatCurrency(exp) },
-          { label: 'Arus Kas Bersih', dot: '#8B5CF6', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}` },
-          { label: 'Total Transaksi', dot: '#8B5CF6', Icon: ScanLine, val: String(filteredTransactions.length) },
+          { label: t('transactions.summary_income'), dot: '#10B981', Icon: ArrowDownLeft, val: formatCurrency(inc) },
+          { label: t('transactions.summary_expense'), dot: '#F43F5E', Icon: ArrowUpRight, val: formatCurrency(exp) },
+          { label: t('transactions.summary_net_cashflow'), dot: '#8B5CF6', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}` },
+          { label: t('transactions.summary_total_count'), dot: '#8B5CF6', Icon: ScanLine, val: String(filteredTransactions.length) },
         ]
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -748,15 +757,15 @@ export default function TransactionsPage() {
         <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
           <Wallet className="size-5 text-amber-700 shrink-0 mt-0.5" />
           <div className="flex-1 text-sm">
-            <p className="font-medium text-amber-900">Belum ada akun terdaftar</p>
+            <p className="font-medium text-amber-900">{t('transactions.no_account_title')}</p>
             <p className="mt-1 text-amber-800">
-              Sebelum bisa nyatet transaksi, kamu harus bikin minimal 1 akun (e.g. BCA Tahapan, Cash di dompet, GoPay).
+              {t('transactions.no_account_desc')}
             </p>
             <Link
               href="/dashboard/accounts"
               className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-900 hover:underline"
             >
-              Bikin Akun Pertama →
+              {t('transactions.create_first_account')} →
             </Link>
           </div>
         </div>
@@ -766,17 +775,17 @@ export default function TransactionsPage() {
       <div className="flex flex-wrap justify-end gap-2">
         <Link href="/dashboard/transactions/import">
           <Button variant="outline" size="sm">
-            <Sparkles className="size-4" /> Import mutasi AI
+            <Sparkles className="size-4" /> {t('transactions.import_ai')}
           </Button>
         </Link>
         <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-          <Upload className="size-4" /> Import CSV
+          <Upload className="size-4" /> {t('transactions.import_csv')}
         </Button>
         <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
-          <Download className="size-4" /> Export CSV
+          <Download className="size-4" /> {t('transactions.export_csv')}
         </Button>
         <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
-          <ArrowLeftRight className="size-4" /> Transfer
+          <ArrowLeftRight className="size-4" /> {t('transactions.transfer')}
         </Button>
       </div>
 
@@ -787,30 +796,30 @@ export default function TransactionsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari merchant, nominal, atau catatan…"
+            placeholder={t('transactions.search_placeholder')}
             className="h-9 w-full pl-9 text-sm"
           />
         </div>
         <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Rentang</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Akun</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_account')}</label>
           <Select value={filterAccount} onValueChange={(v) => setFilterAccount(v ?? 'all')}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Semua Akun">
+              <SelectValue placeholder={t('transactions.all_accounts')}>
                 {(v) => v === 'all'
-                  ? 'Semua Akun'
+                  ? t('transactions.all_accounts')
                   : accounts.find((a) => a.id === v)?.name?.trim()
                     || creditCards.find((c) => c.id === v)?.name
-                    || 'Akun'}
+                    || t('transactions.account')}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Akun</SelectItem>
+              <SelectItem value="all">{t('transactions.all_accounts')}</SelectItem>
               {accounts.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
                   {a.name?.trim() || `Akun tanpa nama (${a.type})`}
@@ -818,7 +827,7 @@ export default function TransactionsPage() {
               ))}
               {creditCards.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  Kredit · {c.name}{c.last_four ? ` ••${c.last_four}` : ''}
+                  {t('transactions.credit_prefix')} · {c.name}{c.last_four ? ` ••${c.last_four}` : ''}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -827,31 +836,31 @@ export default function TransactionsPage() {
 
 
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Tipe</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_type')}</label>
           <Select value={filterType} onValueChange={(v) => { setFilterType(v ?? 'all'); setFilterCategory('all') }}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Semua Tipe">
-                {(v) => v === 'all' ? 'Semua Tipe' : (TYPE_LABELS[v as TransactionType] ?? v)}
+              <SelectValue placeholder={t('transactions.all_types')}>
+                {(v) => v === 'all' ? t('transactions.all_types') : (v in TYPE_LABEL_KEYS ? t(TYPE_LABEL_KEYS[v as TransactionType]) : v)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Tipe</SelectItem>
-              {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
-                <SelectItem key={t} value={t}>{TYPE_LABELS[t]}</SelectItem>
+              <SelectItem value="all">{t('transactions.all_types')}</SelectItem>
+              {(Object.keys(TYPE_LABELS) as TransactionType[]).map((ty) => (
+                <SelectItem key={ty} value={ty}>{t(TYPE_LABEL_KEYS[ty])}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Kategori</label>
+          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_category')}</label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? 'all')}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Semua Kategori">
-                {(v) => v === 'all' ? 'Semua Kategori' : v}
+              <SelectValue placeholder={t('transactions.all_categories')}>
+                {(v) => v === 'all' ? t('transactions.all_categories') : v}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Kategori</SelectItem>
+              <SelectItem value="all">{t('transactions.all_categories')}</SelectItem>
               {filterCategoryOptions.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
@@ -862,15 +871,15 @@ export default function TransactionsPage() {
         </div>
         {allTags.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="eyebrow" style={{ fontSize: '0.625rem' }}>Tag</label>
+            <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_tag')}</label>
             <Select value={filterTag} onValueChange={(v) => setFilterTag(v ?? 'all')}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Semua Tag">
-                  {(v) => (v === 'all' ? 'Semua Tag' : v)}
+                <SelectValue placeholder={t('transactions.all_tags')}>
+                  {(v) => (v === 'all' ? t('transactions.all_tags') : v)}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Tag</SelectItem>
+                <SelectItem value="all">{t('transactions.all_tags')}</SelectItem>
                 {allTags.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -890,10 +899,10 @@ export default function TransactionsPage() {
           <div className="flex items-center gap-2 mb-2 px-1">
             <Plus className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
-              Tambah Cepat
+              {t('transactions.quick_add')}
             </p>
             <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
-              · Tab antar field, Enter untuk simpan
+              · {t('transactions.quick_add_hint')}
             </span>
           </div>
           <form
@@ -913,25 +922,25 @@ export default function TransactionsPage() {
               onValueChange={(v) => setQuickForm({ ...quickForm, account_id: v ?? '' })}
             >
               <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
-                <SelectValue placeholder="Akun">
+                <SelectValue placeholder={t('transactions.account')}>
                   {(v) => {
                     const acc = accounts.find((a) => a.id === v)
-                    if (acc) return acc.name?.trim() || `Akun (${acc.type})`
+                    if (acc) return acc.name?.trim() || `${t('transactions.account')} (${acc.type})`
                     const cc = creditCards.find((c) => c.id === v)
-                    if (cc) return cc.name?.trim() || 'Kartu Kredit'
-                    return 'Akun'
+                    if (cc) return cc.name?.trim() || t('transactions.credit_card')
+                    return t('transactions.account')
                   }}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {accounts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.name?.trim() || `Akun tanpa nama (${a.type})`}
+                    {a.name?.trim() || `${t('transactions.unnamed_account')} (${a.type})`}
                   </SelectItem>
                 ))}
                 {creditCards.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    Kredit · {c.name}{c.last_four ? ` ••${c.last_four}` : ''}
+                    {t('transactions.credit_prefix')} · {c.name}{c.last_four ? ` ••${c.last_four}` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -942,13 +951,13 @@ export default function TransactionsPage() {
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
               <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
-                <SelectValue placeholder="Tipe">
-                  {(v) => TYPE_LABELS[v as TransactionType] ?? 'Tipe'}
+                <SelectValue placeholder={t('transactions.filter_type')}>
+                  {(v) => v in TYPE_LABEL_KEYS ? t(TYPE_LABEL_KEYS[v as TransactionType]) : t('transactions.filter_type')}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
-                  <SelectItem key={t} value={t}>{TYPE_LABELS[t]}</SelectItem>
+                {(Object.keys(TYPE_LABELS) as TransactionType[]).map((ty) => (
+                  <SelectItem key={ty} value={ty}>{t(TYPE_LABEL_KEYS[ty])}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -958,8 +967,8 @@ export default function TransactionsPage() {
               onValueChange={(v) => setQuickForm({ ...quickForm, category: v ?? '' })}
             >
               <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
-                <SelectValue placeholder="Kategori">
-                  {(v) => v || 'Kategori'}
+                <SelectValue placeholder={t('transactions.filter_category')}>
+                  {(v) => v || t('transactions.filter_category')}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -978,14 +987,14 @@ export default function TransactionsPage() {
             <Input
               value={quickForm.description}
               onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
-              placeholder="Deskripsi (opsional)"
+              placeholder={t('transactions.description_optional')}
               className="h-9 col-span-2 sm:col-span-2 min-w-0"
             />
             {/* Amount */}
             <NumberInput
               value={quickForm.amount}
               onChange={(n) => setQuickForm({ ...quickForm, amount: n })}
-              placeholder="Jumlah"
+              placeholder={t('transactions.amount')}
               className="h-9 w-full col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
             />
             {/* Submit */}
@@ -994,11 +1003,11 @@ export default function TransactionsPage() {
               disabled={quickSaving || !quickForm.account_id || !quickForm.category || quickForm.amount <= 0}
               className="h-9 w-full text-sm col-span-1 sm:col-span-1 min-w-0"
             >
-              {quickSaving ? <Loader2 className="size-3.5 animate-spin" /> : <><Plus className="size-3.5" />Simpan</>}
+              {quickSaving ? <Loader2 className="size-3.5 animate-spin" /> : <><Plus className="size-3.5" />{t('transactions.save')}</>}
             </Button>
           </form>
           <p className="text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
-            Tip: <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>⌘K</kbd> buat AI quick-add (&ldquo;indomaret 47rb&rdquo;), atau <strong>&quot;Tambah Transaksi&quot;</strong> di atas buat scan struk.
+            {t('transactions.quick_add_tip_prefix')} <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>⌘K</kbd> {t('transactions.quick_add_tip_suffix')}
           </p>
         </div>
       )}
@@ -1007,7 +1016,7 @@ export default function TransactionsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
-          <span className="ml-2" style={{ color: 'var(--ink-soft)' }}>Memuat data...</span>
+          <span className="ml-2" style={{ color: 'var(--ink-soft)' }}>{t('transactions.loading')}</span>
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
@@ -1019,10 +1028,10 @@ export default function TransactionsPage() {
             <Wallet className="size-7" style={{ color: 'var(--ink-muted)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
-            Belum ada transaksi
+            {t('transactions.empty_title')}
           </h3>
           <p className="text-sm max-w-xs" style={{ color: 'var(--ink-muted)' }}>
-            Tambah yang pertama — bisa lewat foto struk, biar AI yang isi.
+            {t('transactions.empty_desc')}
           </p>
         </div>
       ) : (
@@ -1040,12 +1049,12 @@ export default function TransactionsPage() {
               </colgroup>
               <TableHeader>
                 <TableRow className="bg-[var(--surface-3)] hover:bg-[var(--surface-3)]">
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Akun</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Tipe</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Kategori</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>Deskripsi</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Jumlah</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Aksi</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_account')}</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_type')}</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_category')}</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_description')}</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_amount')}</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_action')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1068,14 +1077,14 @@ export default function TransactionsPage() {
                             <span>
                               {formatDate(g.date)}
                               <span className="ml-2 font-normal" style={{ color: 'var(--ink-soft)' }}>
-                                · {g.items.length} transaksi
+                                · {g.items.length} {t('transactions.transactions_word')}
                               </span>
                             </span>
                             {(() => {
                               const net = g.items.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
                               return (
                                 <span className="tabular-nums" style={{ color: net >= 0 ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
-                                  Net {net >= 0 ? '+' : '−'}{formatCurrency(Math.abs(net))}
+                                  {t('transactions.net')} {net >= 0 ? '+' : '−'}{formatCurrency(Math.abs(net))}
                                 </span>
                               )
                             })()}
@@ -1095,7 +1104,7 @@ export default function TransactionsPage() {
                                 color: TYPE_BADGE_STYLES[tx.type].color,
                               }}
                             >
-                              {TYPE_LABELS[tx.type]}
+                              {t(TYPE_LABEL_KEYS[tx.type])}
                             </span>
                           </TableCell>
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
@@ -1148,7 +1157,7 @@ export default function TransactionsPage() {
               <TableFooter>
                 <TableRow className="hover:bg-transparent" style={{ background: 'var(--surface-2)' }}>
                   <TableCell colSpan={4} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
-                    Total · {filteredTransactions.length} transaksi
+                    {t('transactions.total')} · {filteredTransactions.length} {t('transactions.transactions_word')}
                   </TableCell>
                   <TableCell className="text-right text-[13px] font-bold tabular-nums">
                     {(() => {
@@ -1192,7 +1201,7 @@ export default function TransactionsPage() {
                             padding: '0 8px',
                           }}
                         >
-                          {TYPE_LABELS[tx.type]}
+                          {t(TYPE_LABEL_KEYS[tx.type])}
                         </span>
                         <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
                           {formatDate(tx.date)}
@@ -1215,7 +1224,7 @@ export default function TransactionsPage() {
                         className="text-[11px] mt-1 inline-flex items-center gap-0.5 font-medium"
                         style={{ color: 'var(--c-coral)' }}
                       >
-                        <Trash2 className="size-3" /> Hapus
+                        <Trash2 className="size-3" /> {t('transactions.delete')}
                       </button>
                     </div>
                   </div>
@@ -1233,8 +1242,8 @@ export default function TransactionsPage() {
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Wallet className="size-5" style={{ color: '#10B981' }} /></div>
               <div className="min-w-0">
-                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? 'Edit Transaksi' : 'Tambah Transaksi'}</DialogTitle>
-                <DialogDescription>{editingId ? 'Ubah detail transaksi di bawah ini.' : 'Isi detail transaksi baru di bawah ini.'}</DialogDescription>
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? t('transactions.dialog_edit_title') : t('transactions.dialog_add_title')}</DialogTitle>
+                <DialogDescription>{editingId ? t('transactions.dialog_edit_desc') : t('transactions.dialog_add_desc')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -1245,7 +1254,7 @@ export default function TransactionsPage() {
               <div className="grid gap-1.5">
                 <Label className="flex items-center gap-1.5">
                   <ScanLine className="size-4" />
-                  Upload Struk <span className="text-xs font-normal text-muted-foreground">(opsional, otomatis isi form)</span>
+                  {t('transactions.upload_receipt')} <span className="text-xs font-normal text-muted-foreground">{t('transactions.upload_receipt_hint')}</span>
                 </Label>
                 {!receiptPreviewUrl ? (
                   <label
@@ -1253,8 +1262,8 @@ export default function TransactionsPage() {
                     className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 px-4 py-6 text-center transition hover:border-muted-foreground/60 hover:bg-muted/40"
                   >
                     <Camera className="size-6 text-muted-foreground" />
-                    <span className="text-sm">Klik atau drop foto struk di sini</span>
-                    <span className="text-xs text-muted-foreground">JPG/PNG/WebP, maks 10MB</span>
+                    <span className="text-sm">{t('transactions.receipt_dropzone')}</span>
+                    <span className="text-xs text-muted-foreground">{t('transactions.receipt_formats')}</span>
                     <input
                       id="receipt-upload"
                       type="file"
@@ -1274,14 +1283,14 @@ export default function TransactionsPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={receiptPreviewUrl}
-                        alt="Preview struk"
+                        alt={t('transactions.receipt_preview_alt')}
                         className="h-20 w-20 rounded object-cover"
                       />
                       <div className="flex-1 text-xs">
                         {extracting && (
                           <div className="flex items-center gap-1.5 text-muted-foreground">
                             <Loader2 className="size-3 animate-spin" />
-                            Membaca struk...
+                            {t('transactions.reading_receipt')}
                           </div>
                         )}
                         {!extracting && extractError && (
@@ -1291,12 +1300,12 @@ export default function TransactionsPage() {
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1 text-[var(--c-mint)]">
                               <Sparkles className="size-3" />
-                              <span className="font-medium">Form terisi otomatis</span>
+                              <span className="font-medium">{t('transactions.form_autofilled')}</span>
                             </div>
                             <div className="text-muted-foreground">
-                              Akurasi: <span className="font-medium">{extractConfidence === 'high' ? 'Tinggi' : extractConfidence === 'medium' ? 'Sedang' : 'Rendah — cek ulang'}</span>
+                              {t('transactions.accuracy')}: <span className="font-medium">{extractConfidence === 'high' ? t('transactions.accuracy_high') : extractConfidence === 'medium' ? t('transactions.accuracy_medium') : t('transactions.accuracy_low')}</span>
                             </div>
-                            <div className="text-muted-foreground">Cek field di bawah, edit kalau perlu.</div>
+                            <div className="text-muted-foreground">{t('transactions.check_fields')}</div>
                           </div>
                         )}
                       </div>
@@ -1304,7 +1313,7 @@ export default function TransactionsPage() {
                         type="button"
                         onClick={resetReceipt}
                         className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        aria-label="Hapus struk"
+                        aria-label={t('transactions.remove_receipt')}
                       >
                         <X className="size-4" />
                       </button>
@@ -1316,7 +1325,7 @@ export default function TransactionsPage() {
 
             {/* Date */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-date">Tanggal</Label>
+              <Label htmlFor="tx-date">{t('transactions.label_date')}</Label>
               <Input
                 id="tx-date"
                 type="date"
@@ -1327,7 +1336,7 @@ export default function TransactionsPage() {
 
             {/* Account */}
             <div className="grid gap-1.5">
-              <Label>Akun</Label>
+              <Label>{t('transactions.label_account')}</Label>
               <Select
                 value={form.account_id}
                 onValueChange={(v) => {
@@ -1336,25 +1345,25 @@ export default function TransactionsPage() {
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih akun">
+                  <SelectValue placeholder={t('transactions.select_account')}>
                     {(v) => {
                       const acc = accounts.find((a) => a.id === v)
-                      if (acc) return acc.name?.trim() || `Akun tanpa nama (${acc.type})`
+                      if (acc) return acc.name?.trim() || `${t('transactions.unnamed_account')} (${acc.type})`
                       const cc = creditCards.find((c) => c.id === v)
-                      if (cc) return `Kredit · ${cc.name}${cc.last_four ? ` ••${cc.last_four}` : ''}`
-                      return 'Pilih akun'
+                      if (cc) return `${t('transactions.credit_prefix')} · ${cc.name}${cc.last_four ? ` ••${cc.last_four}` : ''}`
+                      return t('transactions.select_account')
                     }}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
-                      {a.name?.trim() || `Akun tanpa nama (${a.type})`}
+                      {a.name?.trim() || `${t('transactions.unnamed_account')} (${a.type})`}
                     </SelectItem>
                   ))}
                   {creditCards.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      Kredit · {c.name}{c.last_four ? ` ••${c.last_four}` : ''}
+                      {t('transactions.credit_prefix')} · {c.name}{c.last_four ? ` ••${c.last_four}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1368,7 +1377,7 @@ export default function TransactionsPage() {
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
                         style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}
                       >
-                        <Sparkles className="size-3" /> AI deteksi dari struk
+                        <Sparkles className="size-3" /> {t('transactions.source_ai')}
                       </span>
                     )}
                     {accountSource === 'default' && (
@@ -1376,7 +1385,7 @@ export default function TransactionsPage() {
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
                         style={{ background: 'var(--sky-50)', color: 'var(--sky-600)' }}
                       >
-                        <Star className="size-3" style={{ fill: 'var(--sky-600)' }} /> Akun default
+                        <Star className="size-3" style={{ fill: 'var(--sky-600)' }} /> {t('transactions.source_default')}
                       </span>
                     )}
                     {accountSource === 'last_used' && (
@@ -1384,7 +1393,7 @@ export default function TransactionsPage() {
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
                         style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                       >
-                        Terakhir dipakai
+                        {t('transactions.source_last_used')}
                       </span>
                     )}
                   </span>
@@ -1395,12 +1404,12 @@ export default function TransactionsPage() {
                       disabled={settingDefault}
                       className="text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
                     >
-                      {settingDefault ? 'Menyimpan...' : 'Jadikan akun default'}
+                      {settingDefault ? t('transactions.saving') : t('transactions.set_as_default')}
                     </button>
                   )}
                   {form.account_id === defaultAccountId && accountSource !== 'default' && (
                     <span className="text-muted-foreground inline-flex items-center gap-1">
-                      <Star className="size-3 fill-current" /> Default
+                      <Star className="size-3 fill-current" /> {t('transactions.default')}
                     </span>
                   )}
                 </div>
@@ -1409,22 +1418,22 @@ export default function TransactionsPage() {
 
             {/* Type — segmented colored chips */}
             <div className="grid gap-1.5">
-              <Label>Tipe</Label>
+              <Label>{t('transactions.label_type')}</Label>
               <div className="grid grid-cols-4 gap-1.5">
-                {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => {
-                  const active = form.type === t
-                  const c = TYPE_BADGE_STYLES[t]
+                {(Object.keys(TYPE_LABELS) as TransactionType[]).map((ty) => {
+                  const active = form.type === ty
+                  const c = TYPE_BADGE_STYLES[ty]
                   return (
                     <button
-                      key={t}
+                      key={ty}
                       type="button"
-                      onClick={() => setForm({ ...form, type: t, category: '' })}
+                      onClick={() => setForm({ ...form, type: ty, category: '' })}
                       className="rounded-lg border py-2 text-xs font-semibold transition-colors"
                       style={active
                         ? { background: c.bg, color: c.color, borderColor: c.color }
                         : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
                     >
-                      {TYPE_LABELS[t]}
+                      {t(TYPE_LABEL_KEYS[ty])}
                     </button>
                   )
                 })}
@@ -1433,14 +1442,14 @@ export default function TransactionsPage() {
 
             {/* Category */}
             <div className="grid gap-1.5">
-              <Label>Kategori</Label>
+              <Label>{t('transactions.label_category')}</Label>
               <Select
                 value={form.category}
                 onValueChange={(v) => setForm({ ...form, category: v ?? '' })}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih kategori">
-                    {(v) => v || 'Pilih kategori'}
+                  <SelectValue placeholder={t('transactions.select_category')}>
+                    {(v) => v || t('transactions.select_category')}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -1461,30 +1470,30 @@ export default function TransactionsPage() {
 
             {/* Description */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-desc">Deskripsi</Label>
+              <Label htmlFor="tx-desc">{t('transactions.label_description')}</Label>
               <Input
                 id="tx-desc"
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
-                placeholder="Tambah catatan (opsional)"
+                placeholder={t('transactions.description_placeholder')}
               />
             </div>
 
             {/* Tags (opsional) — label lintas-kategori (Lebaran, Liburan, Renovasi…) */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-tags">Tag <span className="font-normal" style={{ color: 'var(--ink-soft)' }}>(opsional)</span></Label>
+              <Label htmlFor="tx-tags">{t('transactions.label_tag')} <span className="font-normal" style={{ color: 'var(--ink-soft)' }}>{t('transactions.optional')}</span></Label>
               {form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {form.tags.map((t) => (
-                    <span key={t} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
-                      {t}
+                  {form.tags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
+                      {tag}
                       <button
                         type="button"
-                        onClick={() => setForm({ ...form, tags: form.tags.filter((x) => x !== t) })}
+                        onClick={() => setForm({ ...form, tags: form.tags.filter((x) => x !== tag) })}
                         className="opacity-70 hover:opacity-100"
-                        aria-label={`Hapus tag ${t}`}
+                        aria-label={`${t('transactions.remove_tag')} ${tag}`}
                       >
                         <X className="size-3" />
                       </button>
@@ -1499,18 +1508,18 @@ export default function TransactionsPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault()
-                    const t = tagDraft.trim().replace(/,+$/, '').trim()
-                    if (t && !form.tags.includes(t)) setForm({ ...form, tags: [...form.tags, t] })
+                    const tag = tagDraft.trim().replace(/,+$/, '').trim()
+                    if (tag && !form.tags.includes(tag)) setForm({ ...form, tags: [...form.tags, tag] })
                     setTagDraft('')
                   }
                 }}
-                placeholder="mis. Lebaran, Liburan Bali — Enter buat tambah"
+                placeholder={t('transactions.tag_placeholder')}
               />
             </div>
 
             {/* Amount — prominent */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-amount">Jumlah</Label>
+              <Label htmlFor="tx-amount">{t('transactions.label_amount')}</Label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</span>
                 <NumberInput
@@ -1526,7 +1535,7 @@ export default function TransactionsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Batal
+              {t('transactions.cancel')}
             </Button>
             <Button
               className=""
@@ -1534,7 +1543,7 @@ export default function TransactionsPage() {
               disabled={saving}
             >
               {saving && <Loader2 className="size-4 animate-spin mr-1" />}
-              {editingId ? 'Simpan' : 'Tambah'}
+              {editingId ? t('transactions.save') : t('transactions.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1554,9 +1563,9 @@ export default function TransactionsPage() {
       <Dialog open={importOpen} onOpenChange={(o) => { setImportOpen(o); if (!o) setImportRows([]) }}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Import CSV Mutasi Rekening</DialogTitle>
+            <DialogTitle>{t('transactions.csv_title')}</DialogTitle>
             <DialogDescription>
-              Upload file CSV dari m-banking. Kolom yang dikenali: <span className="num">date/Tanggal</span>, <span className="num">description/Keterangan</span>, <span className="num">amount/Jumlah</span>. Auto-categorize pakai rule yang sudah di-set.
+              {t('transactions.csv_desc_prefix')} <span className="num">date/Tanggal</span>, <span className="num">description/Keterangan</span>, <span className="num">amount/Jumlah</span>. {t('transactions.csv_desc_suffix')}
             </DialogDescription>
           </DialogHeader>
           {importRows.length === 0 ? (
@@ -1571,22 +1580,22 @@ export default function TransactionsPage() {
                 className="block w-full text-sm"
               />
               <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
-                <Sparkles className="h-3 w-3 inline" /> {rules.filter((r) => r.is_active).length} aturan aktif akan diterapkan saat import.
+                <Sparkles className="h-3 w-3 inline" /> {rules.filter((r) => r.is_active).length} {t('transactions.csv_rules_applied')}
               </p>
             </div>
           ) : (
             <div className="space-y-2 max-h-[55vh] overflow-y-auto">
               <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                Preview {importRows.length} baris. Uncheck yang nggak mau di-import.
+                {t('transactions.csv_preview_prefix')} {importRows.length} {t('transactions.csv_preview_suffix')}
               </p>
               <div className="text-xs">
                 <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 font-semibold border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}>
                   <div className="col-span-1">✓</div>
-                  <div className="col-span-2">Tanggal</div>
-                  <div className="col-span-4">Deskripsi</div>
-                  <div className="col-span-2">Tipe/Kategori</div>
-                  <div className="col-span-2">Akun</div>
-                  <div className="col-span-1 text-right">Jumlah</div>
+                  <div className="col-span-2">{t('transactions.col_date')}</div>
+                  <div className="col-span-4">{t('transactions.col_description')}</div>
+                  <div className="col-span-2">{t('transactions.col_type_category')}</div>
+                  <div className="col-span-2">{t('transactions.col_account')}</div>
+                  <div className="col-span-1 text-right">{t('transactions.col_amount')}</div>
                 </div>
                 {importRows.map((r, i) => (
                   <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center" style={{ borderColor: 'var(--border-soft)' }}>
@@ -1628,11 +1637,11 @@ export default function TransactionsPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setImportOpen(false); setImportRows([]) }}>Batal</Button>
+            <Button variant="outline" onClick={() => { setImportOpen(false); setImportRows([]) }}>{t('transactions.cancel')}</Button>
             {importRows.length > 0 && (
               <Button onClick={commitImport} disabled={importing || importRows.filter((r) => r.apply).length === 0}>
                 {importing && <Loader2 className="h-4 w-4 animate-spin" />}
-                Import {importRows.filter((r) => r.apply).length} transaksi
+                {t('transactions.import')} {importRows.filter((r) => r.apply).length} {t('transactions.transactions_word')}
               </Button>
             )}
           </DialogFooter>
@@ -1643,55 +1652,55 @@ export default function TransactionsPage() {
       <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Transfer Antar Akun</DialogTitle>
+            <DialogTitle>{t('transactions.transfer_title')}</DialogTitle>
             <DialogDescription>
-              Pindahkan dana antar rekening. Tercatat sebagai 2 transaksi berkategori &ldquo;Transfer&rdquo;.
+              {t('transactions.transfer_desc')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Dari Akun</Label>
+                <Label>{t('transactions.from_account')}</Label>
                 <Select value={transferForm.from_account_id} onValueChange={(v) => setTransferForm({ ...transferForm, from_account_id: v ?? '' })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('transactions.select')} /></SelectTrigger>
                   <SelectContent>
-                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `Akun tanpa nama (${a.type})`}</SelectItem>)}
+                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `${t('transactions.unnamed_account')} (${a.type})`}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Ke Akun</Label>
+                <Label>{t('transactions.to_account')}</Label>
                 <Select value={transferForm.to_account_id} onValueChange={(v) => setTransferForm({ ...transferForm, to_account_id: v ?? '' })}>
-                  <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('transactions.select')} /></SelectTrigger>
                   <SelectContent>
-                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `Akun tanpa nama (${a.type})`}</SelectItem>)}
+                    {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `${t('transactions.unnamed_account')} (${a.type})`}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Jumlah (Rp)</Label>
+                <Label>{t('transactions.amount_rp')}</Label>
                 <NumberInput value={transferForm.amount} onChange={(n) => setTransferForm({ ...transferForm, amount: n })} placeholder="0" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Tanggal</Label>
+                <Label>{t('transactions.label_date')}</Label>
                 <Input type="date" value={transferForm.date} onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
+              <Label>{t('transactions.notes')}</Label>
               <Input value={transferForm.notes} onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>{t('transactions.cancel')}</Button>
             <Button
               onClick={saveTransfer}
               disabled={transferSaving || !transferForm.from_account_id || !transferForm.to_account_id || transferForm.amount <= 0}
             >
               {transferSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Transfer
+              {t('transactions.transfer')}
             </Button>
           </DialogFooter>
         </DialogContent>

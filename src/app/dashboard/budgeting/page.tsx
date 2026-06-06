@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } fro
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
+import { useT } from '@/lib/i18n/context'
 import { EduTip } from '@/components/edu/edu-tip'
 import type { Budget } from '@/types'
 
@@ -116,6 +117,7 @@ function loadCollapsed(): CollapsedMap {
 export default function BudgetingPage() {
   const supabase = createClient()
   const { hidden: privacyHidden } = usePrivacy()
+  const t = useT()
 
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
@@ -461,7 +463,7 @@ export default function BudgetingPage() {
                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startFill(type, categoryKey, month) }}
                 className={`absolute bottom-0.5 right-0.5 cursor-crosshair rounded-[2px] transition-opacity duration-150 ${isSource ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}
                 style={{ width: 6, height: 6, background: accent, boxShadow: '0 0 0 1.5px var(--surface)' }}
-                title="Tarik buat isi nilai ini ke bulan lain"
+                title={t('budgeting.fill_handle_title')}
                 aria-hidden="true"
               />
             </td>
@@ -504,7 +506,7 @@ export default function BudgetingPage() {
     setNewCatInline('')
     if (!name) return
     if (tree[kind].some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-      toast.error(`Kategori "${name}" sudah ada`)
+      toast.error(`${t('budgeting.category_prefix')} "${name}" ${t('budgeting.category_exists_suffix')}`)
       return
     }
     handleTreeCommit({ ...tree, [kind]: [...tree[kind], { id: newId(), name, subs: [] }] })
@@ -552,7 +554,7 @@ export default function BudgetingPage() {
                 }
               }}
               onBlur={() => addCategoryInline(kind)}
-              placeholder="Nama kategori, lalu Enter…"
+              placeholder={t('budgeting.new_category_placeholder')}
               className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
               style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
             />
@@ -566,7 +568,7 @@ export default function BudgetingPage() {
               className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
               style={{ color: 'var(--ink-soft)' }}
             >
-              <Plus className="size-3" /> Tambah kategori
+              <Plus className="size-3" /> {t('budgeting.add_category')}
             </button>
           )}
         </td>
@@ -606,7 +608,7 @@ export default function BudgetingPage() {
     return (
       <tr className="bg-[color:var(--surface-2)]">
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap">
-          % dari Pendapatan
+          {t('budgeting.pct_of_income')}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
@@ -675,7 +677,7 @@ export default function BudgetingPage() {
             className="group flex w-full items-center gap-2 px-3 py-2 text-left transition-[filter] hover:brightness-[0.97]"
             style={{ color: color.textOnFirm }}
             aria-expanded={!isCollapsed}
-            title={isCollapsed ? `Tampilkan ${label}` : `Sembunyikan ${label}`}
+            title={isCollapsed ? `${t('budgeting.show')} ${label}` : `${t('budgeting.hide')} ${label}`}
           >
             <ChevronDown
               className="size-3.5 shrink-0 transition-transform duration-150"
@@ -712,12 +714,12 @@ export default function BudgetingPage() {
           <tbody>
             <tr style={{ background: 'var(--surface-2)' }}>
               <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 bg-inherit">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>Ringkasan Alokasi</span>
-                <span className="ml-2 text-[10px] normal-case tracking-normal" style={{ color: 'var(--ink-soft)' }}>Sisa = pemasukan − (pengeluaran + tabungan + investasi)</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
+                <span className="ml-2 text-[10px] normal-case tracking-normal" style={{ color: 'var(--ink-soft)' }}>{t('budgeting.allocation_formula')}</span>
               </td>
             </tr>
             <tr className="bg-[var(--surface)]">
-              <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title="Pengeluaran + Tabungan + Investasi bulan ini">Dialokasikan</td>
+              <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={t('budgeting.allocated_tooltip')}>{t('budgeting.allocated')}</td>
               {Array.from({ length: 12 }, (_, i) => {
                 const v = allocatedOf(i + 1)
                 return (
@@ -728,7 +730,7 @@ export default function BudgetingPage() {
               })}
             </tr>
             <tr className="bg-[color:var(--surface-2)]">
-              <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-bold bg-inherit whitespace-nowrap truncate" title="Pemasukan − Dialokasikan (0 = pas, + = masih ada sisa, − = over)">Sisa Dialokasikan</td>
+              <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-bold bg-inherit whitespace-nowrap truncate" title={t('budgeting.remaining_to_allocate_tooltip')}>{t('budgeting.remaining_to_allocate')}</td>
               {Array.from({ length: 12 }, (_, i) => {
                 const m = i + 1
                 const left = incomeOf(m) - allocatedOf(m)
@@ -747,20 +749,20 @@ export default function BudgetingPage() {
   }
 
   const sections = [
-    { label: 'Pendapatan', kind: 'income' as BudgetType, leaf: leafIncome, totalLabel: 'Total Pendapatan', oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
-    { label: 'Pengeluaran', kind: 'expense' as BudgetType, leaf: leafExpense, totalLabel: 'Total Pengeluaran', oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
-    { label: 'Tabungan', kind: 'saving' as BudgetType, leaf: leafSaving, totalLabel: 'Total Tabungan', oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: false },
-    { label: 'Investasi', kind: 'investment' as BudgetType, leaf: leafInvestment, totalLabel: 'Total Investasi', oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: false },
+    { label: t('budgeting.income'), kind: 'income' as BudgetType, leaf: leafIncome, totalLabel: t('budgeting.total_income'), oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
+    { label: t('budgeting.expense'), kind: 'expense' as BudgetType, leaf: leafExpense, totalLabel: t('budgeting.total_expense'), oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
+    { label: t('budgeting.saving'), kind: 'saving' as BudgetType, leaf: leafSaving, totalLabel: t('budgeting.total_saving'), oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: false },
+    { label: t('budgeting.investment'), kind: 'investment' as BudgetType, leaf: leafInvestment, totalLabel: t('budgeting.total_investment'), oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: false },
   ]
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow={`Perencanaan · ${year}`}
-        title="Anggaran"
+        eyebrow={`${t('budgeting.planning')} · ${year}`}
+        title={t('budgeting.title')}
         subtitle={
           <span className="inline-flex items-center gap-1.5">
-            Distribusi pendapatan, pengeluaran, tabungan, &amp; investasi sepanjang tahun.
+            {t('budgeting.subtitle')}
             <EduTip topic="budget-method" side="bottom" />
           </span>
         }
@@ -768,11 +770,11 @@ export default function BudgetingPage() {
           <>
             <Button onClick={() => setManagerOpen(true)}>
               <FolderTree className="h-4 w-4" />
-              Kelola Kategori
+              {t('budgeting.manage_categories')}
             </Button>
             <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
               <SelectTrigger className="w-[120px]" style={{ background: 'var(--surface)' }}>
-                <SelectValue placeholder="Tahun" />
+                <SelectValue placeholder={t('budgeting.year')} />
               </SelectTrigger>
               <SelectContent>
                 {YEAR_OPTIONS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
@@ -784,13 +786,13 @@ export default function BudgetingPage() {
 
       {/* Summary — annual totals (sum of all 12 months) */}
       <div className="space-y-2.5">
-        <p className="eyebrow">Total Setahun · {year}</p>
+        <p className="eyebrow">{t('budgeting.annual_total')} · {year}</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Pendapatan', value: totalIncomeYear, dot: '#10B981', Icon: ArrowDownLeft, sub: 'Setahun' },
-          { label: 'Total Pengeluaran', value: totalExpenseYear, dot: '#F43F5E', Icon: ArrowUpRight, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
-          { label: 'Total Tabungan', value: totalSavingYear, dot: '#F59E0B', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
-          { label: 'Total Investasi', value: totalInvestmentYear, dot: '#8B5CF6', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% dari pendapatan` },
+          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: '#10B981', Icon: ArrowDownLeft, sub: t('budgeting.annual') },
+          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: '#F43F5E', Icon: ArrowUpRight, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
         ].map((c) => (
           <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 10px 28px -14px rgba(16,24,40,0.12)' }}>
             <div className="flex items-start justify-between gap-2">
@@ -815,7 +817,7 @@ export default function BudgetingPage() {
       {loading || !treeLoaded ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
-          <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>Memuat anggaran...</span>
+          <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>{t('budgeting.loading')}</span>
         </div>
       ) : (
       <>
@@ -836,16 +838,16 @@ export default function BudgetingPage() {
         <div className="hidden md:block space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
             <div className="min-w-0">
-              <p className="eyebrow">{viewMode === 'year' ? 'Grid Anggaran 12 Bulan' : 'Anggaran Bulanan'}</p>
+              <p className="eyebrow">{viewMode === 'year' ? t('budgeting.grid_eyebrow_year') : t('budgeting.grid_eyebrow_month')}</p>
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                 {viewMode === 'year'
-                  ? 'Rencana anggaran per bulan — tersimpan otomatis.'
-                  : 'Rencana vs realisasi bulan ini — rencana tersimpan otomatis.'}
+                  ? t('budgeting.grid_desc_year')
+                  : t('budgeting.grid_desc_month')}
               </p>
             </div>
             {/* Toggle Bulan / Tahun */}
             <div className="flex gap-0.5 rounded-lg p-0.5 shrink-0" style={{ background: 'var(--surface-2)' }}>
-              {([['month', 'Bulan'], ['year', 'Tahun']] as const).map(([mode, label]) => {
+              {([['month', t('budgeting.tab_month')], ['year', t('budgeting.tab_year')]] as const).map(([mode, label]) => {
                 const active = viewMode === mode
                 return (
                   <button
@@ -871,13 +873,13 @@ export default function BudgetingPage() {
               style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', color: 'var(--ink-muted)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
             >
               {[
-                { Icon: CalendarDays, label: <>Klik bulan untuk rincian harian</> },
-                { Icon: Calculator, label: <>Hitung langsung di sel, mis. <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (×&nbsp;÷&nbsp;+&nbsp;−)</> },
-                { Icon: Copy, label: <>Tarik sudut sel untuk menyalin antar-bulan</> },
-              ].map((t, i) => (
+                { Icon: CalendarDays, label: <>{t('budgeting.tip_click_month')}</> },
+                { Icon: Calculator, label: <>{t('budgeting.tip_calc_prefix')} <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (×&nbsp;÷&nbsp;+&nbsp;−)</> },
+                { Icon: Copy, label: <>{t('budgeting.tip_drag')}</> },
+              ].map((tip, i) => (
                 <span key={i} className="inline-flex items-center gap-1.5">
-                  <t.Icon className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-                  {t.label}
+                  <tip.Icon className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
+                  {tip.label}
                 </span>
               ))}
             </div>
@@ -910,7 +912,7 @@ export default function BudgetingPage() {
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-20 px-3 py-2 text-left text-[11px] font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
-                        Kategori
+                        {t('budgeting.category')}
                       </th>
                       {SHORT_MONTHS.map((m, i) => {
                         const monthNum = i + 1
@@ -927,7 +929,7 @@ export default function BudgetingPage() {
                             onClick={() => openDrawer(monthNum)}
                             role="button"
                             tabIndex={0}
-                            title={`Klik untuk detail ${m}`}
+                            title={`${t('budgeting.click_for_detail')} ${m}`}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault()
