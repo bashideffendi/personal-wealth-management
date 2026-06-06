@@ -68,25 +68,22 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Shield className="size-3.5" style={{ color: '#34D399' }} /> Data kamu dienkripsi dan tidak dijual.
       </p>
 
-      {/* balanced halves: brand centered in the left half, card centered in the right */}
-      <div className="relative z-10 min-h-screen grid lg:grid-cols-2 items-center">
-        <div className="hidden lg:flex items-center justify-center px-12">
-          <div className="max-w-sm text-center">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Keuangan pribadi</p>
-            <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(38px, 3.4vw, 50px)', lineHeight: 1.14, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
-              Kelola keuanganmu dengan <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span>.
-            </h2>
-          </div>
+      {/* YNAB band: headline (left-aligned) + card in a centered band (~24% margins),
+          both vertically centered & aligned, sitting close together in the middle */}
+      <div className="relative z-10 mx-auto max-w-5xl px-6 min-h-screen grid lg:grid-cols-2 items-center gap-8">
+        <div className="hidden lg:block max-w-md">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Keuangan pribadi</p>
+          <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(32px, 2.8vw, 42px)', lineHeight: 1.16, letterSpacing: '-0.03em', color: '#FFFFFF' }}>
+            Kelola keuanganmu dengan <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span>.
+          </h2>
         </div>
 
-        <div className="flex items-center justify-center px-6 py-12 lg:py-16">
-          <div className="w-full max-w-md">
-            <div
-              className="rounded-3xl p-7 sm:p-8"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 30px 80px -24px rgba(0,0,0,0.6)' }}
-            >
-              {children}
-            </div>
+        <div className="w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end py-12 lg:py-0">
+          <div
+            className="rounded-3xl p-7 sm:p-8"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 30px 80px -24px rgba(0,0,0,0.6)' }}
+          >
+            {children}
           </div>
         </div>
       </div>
