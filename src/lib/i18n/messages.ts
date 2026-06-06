@@ -6,6 +6,11 @@
 
 export const messages = {
   id: {
+    playbook: {
+      title: "Panduan finansial terpandu",
+      subtitle: "Skenario keuangan umum di Indonesia, lengkap dengan langkah-langkahnya. Isi angka kamu, biar AI hitung target dan susun rencana yang bisa langsung dijalankan.",
+      steps_suffix: "langkah · rencana AI",
+    },
     crypto_search: {
       placeholder: "Cari coin (BTC, ethereum, sol, ...)",
       no_results: "Tidak ada di Binance — bisa langsung ketik ticker manual (mis.",
@@ -2848,6 +2853,11 @@ export const messages = {
     },
   },
   en: {
+    playbook: {
+      title: "Guided financial playbooks",
+      subtitle: "Common financial scenarios in Indonesia, with step-by-step guidance. Enter your numbers and let AI work out the target and build a plan you can act on.",
+      steps_suffix: "steps · AI plan",
+    },
     crypto_search: {
       placeholder: "Search coin (BTC, ethereum, sol, ...)",
       no_results: "Not on Binance — you can type a ticker manually (e.g.",

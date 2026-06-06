@@ -1,15 +1,13 @@
-import type { Metadata } from 'next'
+'use client'
+
 import Link from 'next/link'
 import { ChevronRight, Sparkles } from 'lucide-react'
 import { PLAYBOOKS } from '@/lib/playbooks'
 import { playbookIcon } from '@/components/playbook/icons'
-
-export const metadata: Metadata = {
-  title: 'Playbook',
-  description: 'Panduan finansial terpandu — dana darurat, lunasi paylater, DP rumah, haji & umrah, qurban.',
-}
+import { useT } from '@/lib/i18n/context'
 
 export default function PlaybookIndexPage() {
+  const t = useT()
   return (
     <div className="space-y-6">
       <header>
@@ -25,11 +23,10 @@ export default function PlaybookIndexPage() {
           </span>
         </div>
         <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
-          Panduan finansial terpandu
+          {t('playbook.title')}
         </h1>
         <p className="t-body mt-1.5 max-w-2xl" style={{ color: 'var(--ink-soft)' }}>
-          Skenario keuangan umum di Indonesia, lengkap dengan langkah-langkahnya. Isi angka kamu,
-          biar AI hitung target dan susun rencana yang bisa langsung dijalankan.
+          {t('playbook.subtitle')}
         </p>
       </header>
 
@@ -61,7 +58,7 @@ export default function PlaybookIndexPage() {
                 {p.tagline}
               </p>
               <p className="t-cap mt-3" style={{ color: 'var(--text-mute)' }}>
-                {p.steps.length} langkah · rencana AI
+                {p.steps.length} {t('playbook.steps_suffix')}
               </p>
             </Link>
           )
