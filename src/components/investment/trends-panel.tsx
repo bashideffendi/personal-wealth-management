@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import type { ChartFormat } from './metric-line-chart'
+import { useT } from '@/lib/i18n/context'
 
 // Defer recharts: the chunk is fetched only when a chart in the Tren tab first
 // mounts, not on the research page's initial hydration. Skeleton matches the
@@ -98,6 +99,7 @@ export function TrendsPanel({
 }: {
   metrics: Record<string, Record<string, number>>
 }) {
+  const t = useT()
   const [category, setCategory] = useState<Category>('growth')
 
   const active = CATEGORIES.find((c) => c.key === category)!
@@ -141,7 +143,7 @@ export function TrendsPanel({
                 <MetricLineChart data={data} format={m.format} height={140} />
               ) : (
                 <p className="py-8 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>
-                  Belum ada data
+                  {t('trends.noData')}
                 </p>
               )}
             </div>

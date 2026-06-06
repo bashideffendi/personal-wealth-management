@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import {
 import { Plus, Loader2 } from 'lucide-react'
 
 export function ResearchLogButton({ ticker, name }: { ticker: string; name: string }) {
+  const t = useT()
   const supabase = createClient()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -31,7 +33,7 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
 
   async function save() {
     if (shares <= 0 || price <= 0) {
-      toast.error('Isi jumlah lembar dan harga terlebih dahulu.')
+      toast.error(t('research_log.validation'))
       return
     }
     setSaving(true)
@@ -52,8 +54,8 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
       notes,
     })
     setSaving(false)
-    if (error) { toast.error('Gagal menyimpan transaksi.'); return }
-    toast.success(`Transaksi ${side === 'buy' ? 'beli' : 'jual'} ${ticker} tercatat.`)
+    if (error) { toast.error(t('research_log.saveError')); return }
+    toast.success(`${t('research_log.savedPrefix')} ${side === 'buy' ? t('research_log.sideBuyLower') : t('research_log.sideSellLower')} ${ticker} ${t('research_log.savedSuffix')}`)
     setOpen(false)
     setShares(0); setPrice(0); setFee(0); setNotes('')
   }
@@ -66,18 +68,18 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
         className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold transition hover:opacity-90"
         style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
       >
-        <Plus className="size-3.5" /> Catat Transaksi
+        <Plus className="size-3.5" /> {t('research_log.trigger')}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Catat Transaksi — {ticker}</DialogTitle>
+            <DialogTitle>{t('research_log.dialogTitlePrefix')} — {ticker}</DialogTitle>
             <DialogDescription>{name}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-1">
             <div className="grid gap-1.5">
-              <Label>Aksi</Label>
+              <Label>{t('research_log.labelAction')}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {(['buy', 'sell'] as const).map((s) => {
                   const active = side === s
@@ -92,7 +94,7 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
                         ? { background: s === 'buy' ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)', color: c, borderColor: c }
                         : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
                     >
-                      {s === 'buy' ? 'Beli' : 'Jual'}
+                      {s === 'buy' ? t('research_log.sideBuy') : t('research_log.sideSell')}
                     </button>
                   )
                 })}
@@ -100,7 +102,7 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Jumlah (lembar)</Label>
+                <Label>{t('research_log.labelShares')}</Label>
                 <Input
                   type="number"
                   value={shares || ''}
@@ -109,29 +111,29 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Harga / lembar</Label>
+                <Label>{t('research_log.labelPrice')}</Label>
                 <NumberInput value={price} onChange={setPrice} placeholder="0" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Biaya (fee)</Label>
+                <Label>{t('research_log.labelFee')}</Label>
                 <NumberInput value={fee} onChange={setFee} placeholder="0" />
               </div>
               <div className="grid gap-1.5">
-                <Label>Tanggal</Label>
+                <Label>{t('research_log.labelDate')}</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Catatan</Label>
-              <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opsional" />
+              <Label>{t('research_log.labelNotes')}</Label>
+              <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('research_log.notesPlaceholder')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t('research_log.cancel')}</Button>
             <Button onClick={save} disabled={saving}>
-              {saving && <Loader2 className="size-4 animate-spin mr-1" />}Simpan
+              {saving && <Loader2 className="size-4 animate-spin mr-1" />}{t('research_log.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

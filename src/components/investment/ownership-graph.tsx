@@ -37,6 +37,7 @@ import type {
   OwnershipNetwork,
   OwnershipNetworkNode,
 } from '@/lib/invest/ownership'
+import { useT } from '@/lib/i18n/context'
 
 // Palet di-hardcode (Sigma render ke canvas/WebGL — gak bisa baca CSS var).
 // Samain dengan token LIGHT theme di globals.css.
@@ -264,6 +265,7 @@ function GraphEvents({
 }
 
 export default function OwnershipGraph({ network, activeId }: GraphData) {
+  const t = useT()
   const [tooltip, setTooltip] = useState<{ info: EdgeInfo; x: number; y: number } | null>(null)
 
   // Host visibility gate: Sigma cuma di-mount pas panel beneran kelihatan & udah
@@ -319,7 +321,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
           color: 'var(--ink-soft)',
         }}
       >
-        Belum ada relasi kepemilikan buat di-gambar.
+        {t('ownership_graph.emptyState')}
       </div>
     )
   }
@@ -361,7 +363,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
             color: 'var(--ink-soft)',
           }}
         >
-          Menyiapkan graf…
+          {t('ownership_graph.preparing')}
         </div>
       )}
 
@@ -377,11 +379,11 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
       >
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-full" style={{ background: 'var(--c-mint)' }} />
-          Perusahaan
+          {t('ownership_graph.company')}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-full" style={{ background: C.investor }} />
-          Investor
+          {t('ownership_graph.investor')}
         </span>
       </div>
 

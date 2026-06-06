@@ -9,6 +9,7 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts'
+import { useT } from '@/lib/i18n/context'
 
 // Range buttons, in display order. Yahoo-form ticker handled server-side.
 const RANGES = ['1D', '1W', '1M', '3M', 'YTD', '1Y', '3Y', '5Y'] as const
@@ -52,6 +53,7 @@ function fmtPrice(value: number, currency: 'IDR' | 'USD'): string {
 }
 
 export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chartApi = 'stock', sourceLabel }: StockPriceChartProps) {
+  const t = useT()
   const [range, setRange] = useState<RangeKey>('1D')
   const [points, setPoints] = useState<ChartPoint[]>([])
   const [meta, setMeta] = useState<ChartMeta | null>(null)
@@ -174,7 +176,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
       {/* Header — last price + change (left), range tabs (right) */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="eyebrow">Harga</p>
+          <p className="eyebrow">{t('price_chart.price')}</p>
           <p
             className="num tabular text-3xl font-semibold leading-none mt-1.5"
             style={{ color: 'var(--ink)' }}
@@ -228,7 +230,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
             style={{ background: 'var(--surface-2)' }}
           >
             <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Memuat grafik…
+              {t('price_chart.loading')}
             </p>
           </div>
         ) : error || !hasData ? (
@@ -237,7 +239,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
             style={{ background: 'var(--surface-2)' }}
           >
             <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Data grafik belum tersedia
+              {t('price_chart.no_data')}
             </p>
           </div>
         ) : (
@@ -301,7 +303,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
       </div>
 
       <p className="text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
-        {sourceLabel ?? (chartApi === 'crypto' ? 'Data: Binance · realtime' : 'Data: Yahoo Finance · delayed')}
+        {sourceLabel ?? (chartApi === 'crypto' ? t('price_chart.source_crypto') : t('price_chart.source_stock'))}
       </p>
     </div>
   )

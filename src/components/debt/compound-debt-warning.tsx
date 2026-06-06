@@ -17,6 +17,7 @@ import { useMemo } from 'react'
 import { TrendingUp, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
+import { useT } from '@/lib/i18n/context'
 
 interface Props {
   /** Debt balance to project */
@@ -65,6 +66,7 @@ function simulate(initialBalance: number, annualRate: number, years: number): Pr
 }
 
 export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
+  const t = useT()
   const projection = useMemo(() => simulate(balance, annualRate, 10), [balance, annualRate])
 
   // Skip visualizing if balance is tiny or rate is unreasonably low
@@ -98,26 +100,26 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="eyebrow flex items-center gap-1.5">
-            Bunga Berbunga
+            {t('compound_warning.eyebrow')}
             <EduTip topic="compound-interest" side="bottom" />
           </p>
           <h3 className="text-base sm:text-lg font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-            Kalau cuma bayar minimum…
+            {t('compound_warning.heading')}
           </h3>
         </div>
       </div>
 
       {/* Headline scenario — what 1 month of interest looks like */}
       <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--ink)' }}>
-        {label ? <span className="font-semibold">{label}</span> : 'Utang ini'} dengan bunga{' '}
+        {label ? <span className="font-semibold">{label}</span> : t('compound_warning.this_debt')} {t('compound_warning.with_interest')}{' '}
         <span className="font-bold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--c-amber)' }}>
-          {annualRate.toFixed(1)}%/thn
+          {annualRate.toFixed(1)}{t('compound_warning.rate_suffix')}
         </span>
-        {' '}generate{' '}
+        {' '}{t('compound_warning.generates')}{' '}
         <span className="num font-semibold" style={{ color: 'var(--ink)' }}>
           {formatCurrency(monthlyInterest)}
         </span>
-        {' '}bunga setiap bulan.
+        {' '}{t('compound_warning.interest_per_month')}
       </p>
 
       {/* Projection table */}
@@ -126,20 +128,20 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
         style={{ background: 'var(--surface-2)' }}
       >
         <ProjectionStat
-          label="Sekarang"
+          label={t('compound_warning.stat_now')}
           balance={balance}
           highlight={false}
         />
         {after1y && (
           <ProjectionStat
-            label="1 Tahun"
+            label={t('compound_warning.stat_1y')}
             balance={after1y.balance}
             highlight={after1y.balance > balance}
           />
         )}
         {after5y && (
           <ProjectionStat
-            label="5 Tahun"
+            label={t('compound_warning.stat_5y')}
             balance={after5y.balance}
             interest={after5y.totalInterest}
             highlight={after5y.balance > 0}
@@ -149,11 +151,11 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
 
       {after5y && after5y.totalInterest > 0 && (
         <p className="text-[11px] leading-relaxed mt-3 pt-3 border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
-          Total bunga yang kamu bayar dalam 5 tahun:{' '}
+          {t('compound_warning.total_interest_5y')}{' '}
           <span className="num font-semibold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--ink)' }}>
             {formatCurrency(after5y.totalInterest)}
           </span>
-          . Bayar di atas minimum bisa potong total bunga drastis.
+          {t('compound_warning.pay_above_min_tip')}
         </p>
       )}
     </div>
@@ -168,6 +170,7 @@ function ProjectionStat({
   interest?: number
   highlight: boolean
 }) {
+  const t = useT()
   return (
     <div>
       <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>
@@ -181,7 +184,7 @@ function ProjectionStat({
       </p>
       {interest !== undefined && interest > 0 && (
         <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-          +{formatCurrency(interest)} bunga
+          +{formatCurrency(interest)} {t('compound_warning.interest_label')}
         </p>
       )}
     </div>

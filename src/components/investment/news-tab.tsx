@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2, Newspaper, ExternalLink } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 interface NewsItem {
   source: string
@@ -42,6 +43,7 @@ function relativeTimeID(pubDate: string): string {
 }
 
 export function NewsTab() {
+  const t = useT()
   const [items, setItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -76,7 +78,7 @@ export function NewsTab() {
     return (
       <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         <Loader2 className="size-5 mx-auto animate-spin mb-2" style={{ color: 'var(--c-mint)' }} />
-        Memuat berita…
+        {t('news.loading')}
       </div>
     )
   }
@@ -91,10 +93,10 @@ export function NewsTab() {
           <Newspaper className="size-6" style={{ color: 'var(--ink-muted)' }} />
         </div>
         <p className="mt-4 text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-          Berita lagi gak bisa dimuat
+          {t('news.errorTitle')}
         </p>
         <p className="mt-1 text-xs max-w-sm mx-auto" style={{ color: 'var(--ink-muted)' }}>
-          Sumber RSS lagi gak bisa diakses. Coba lagi beberapa saat lagi.
+          {t('news.errorDesc')}
         </p>
       </div>
     )
@@ -153,7 +155,7 @@ export function NewsTab() {
         </ul>
       </div>
       <p className="text-[11px] text-center px-2" style={{ color: 'var(--ink-soft)' }}>
-        Sumber: CNBC Indonesia · Detik · Bisnis · Kontan · IDX Channel — diperbarui tiap ~10 menit
+        {t('news.sourcesPrefix')} CNBC Indonesia · Detik · Bisnis · Kontan · IDX Channel {t('news.updatedEvery')}
       </p>
     </div>
   )

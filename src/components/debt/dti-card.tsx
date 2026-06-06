@@ -18,6 +18,7 @@
 import { TrendingDown, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
+import { useT } from '@/lib/i18n/context'
 
 interface Props {
   monthlyIncome: number
@@ -73,6 +74,7 @@ function getZone(ratio: number, hasNoDebt: boolean): Zone {
 }
 
 export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
+  const t = useT()
   const hasNoDebt = monthlyDebtPayment === 0
   const ratio = monthlyIncome > 0 ? monthlyDebtPayment / monthlyIncome : 0
   const zone = getZone(ratio, hasNoDebt)
@@ -97,7 +99,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
             <EduTip topic="dti-ratio" side="bottom" />
           </p>
           <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-            Beban Cicilan
+            {t('dti.title')}
           </h3>
         </div>
         <span
@@ -121,7 +123,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
         </p>
         {!hasNoDebt && monthlyIncome > 0 && (
           <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
-            dari income
+            {t('dti.ofIncome')}
           </p>
         )}
       </div>
@@ -164,13 +166,13 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
           style={{ borderColor: 'var(--border-soft)' }}
         >
           <div>
-            <p style={{ color: 'var(--ink-soft)' }}>Cicilan/bln</p>
+            <p style={{ color: 'var(--ink-soft)' }}>{t('dti.monthlyPayment')}</p>
             <p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
               {formatCurrency(monthlyDebtPayment)}
             </p>
           </div>
           <div>
-            <p style={{ color: 'var(--ink-soft)' }}>Income/bln</p>
+            <p style={{ color: 'var(--ink-soft)' }}>{t('dti.monthlyIncome')}</p>
             <p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
               {formatCurrency(monthlyIncome)}
             </p>

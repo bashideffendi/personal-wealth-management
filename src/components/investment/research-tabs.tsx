@@ -29,6 +29,7 @@ import {
   formatRatio,
   signColorVar,
 } from '@/lib/invest/format'
+import { useT } from '@/lib/i18n/context'
 import { FinancialStatements } from './financial-statements'
 import { KeyStatsGrid } from './keystats-grid'
 import { ValuationConsensus } from './valuation-consensus'
@@ -124,6 +125,7 @@ export interface ResearchTabsProps {
 }
 
 export function ResearchTabs(props: ResearchTabsProps) {
+  const t = useT()
   const {
     ticker, name, sector, price, valuationV2, latestYear, metrics5Y,
     stockMetrics, quarterly,
@@ -178,11 +180,11 @@ export function ResearchTabs(props: ResearchTabsProps) {
           </TabsTrigger>
           <TabsTrigger value="valuasi">
             <Calculator className="size-3.5 mr-1.5" />
-            Valuasi
+            {t('research_tabs.tab_valuation')}
           </TabsTrigger>
           <TabsTrigger value="laporan">
             <FileText className="size-3.5 mr-1.5" />
-            Laporan
+            {t('research_tabs.tab_statements')}
           </TabsTrigger>
           <TabsTrigger value="charts">
             <TrendingUp className="size-3.5 mr-1.5" />
@@ -190,7 +192,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
           </TabsTrigger>
           <TabsTrigger value="kepemilikan">
             <Network className="size-3.5 mr-1.5" />
-            Struktur Kepemilikan
+            {t('research_tabs.tab_ownership')}
           </TabsTrigger>
         </TabsList>
       </div>
@@ -203,7 +205,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
             <aside className="lg:col-span-1 space-y-4">
               {oneYear?.low != null && oneYear?.high != null && (
                 <div className="s-card p-4">
-                  <p className="eyebrow">Rentang 52 Minggu</p>
+                  <p className="eyebrow">{t('research_tabs.range_52w')}</p>
                   <p className="num tabular text-base font-bold mt-1" style={{ color: 'var(--ink)' }}>
                     Rp {formatPrice(oneYear.low)} – Rp {formatPrice(oneYear.high)}
                   </p>
@@ -214,7 +216,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
                         <div className="relative h-1.5 rounded-full mt-3" style={{ background: 'var(--surface-2)' }}>
                           <div className="absolute size-3 rounded-full -top-[3px] -translate-x-1/2" style={{ left: `${pct}%`, background: 'var(--c-primary)' }} />
                         </div>
-                        <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>Harga kini di {Math.round(pct)}% rentang</p>
+                        <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>{t('research_tabs.price_in_range_prefix')} {Math.round(pct)}{t('research_tabs.price_in_range_suffix')}</p>
                       </>
                     )
                   })()}
@@ -222,7 +224,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               )}
 
               <div className="s-card p-4">
-                <p className="eyebrow mb-3">Rasio Kunci</p>
+                <p className="eyebrow mb-3">{t('research_tabs.key_ratios')}</p>
                 <div className="space-y-2.5 text-sm">
                   {[
                     { k: 'PER', v: formatRatio(latestPER) },
@@ -241,7 +243,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
               </div>
 
               <div className="s-card p-4">
-                <p className="eyebrow mb-3">Fundamental</p>
+                <p className="eyebrow mb-3">{t('research_tabs.fundamental')}</p>
                 <div className="space-y-3 text-sm">
                   <div>
                     <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{latestYear ? `Revenue FY${latestYear}` : 'Revenue'}</p>
@@ -296,7 +298,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
             className="rounded-2xl border p-8 text-center text-sm"
             style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           >
-            Data fundamental emiten ini belum tersedia, jadi valuasi konsensus gak bisa dihitung.
+            {t('research_tabs.valuation_no_data')}
           </div>
         )}
 
@@ -321,16 +323,16 @@ export function ResearchTabs(props: ResearchTabsProps) {
                 <div className="px-5 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border-soft)' }}>
                   <Calendar className="size-4" style={{ color: 'var(--c-mint)' }} />
                   <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                    Dividen Mendatang
+                    {t('research_tabs.upcoming_dividends')}
                   </p>
                 </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Periode</TableHead>
+                      <TableHead>{t('research_tabs.col_period')}</TableHead>
                       <TableHead>Ex-Date</TableHead>
                       <TableHead>Pay Date</TableHead>
-                      <TableHead className="text-right">Per Lembar</TableHead>
+                      <TableHead className="text-right">{t('research_tabs.col_per_share')}</TableHead>
                       <TableHead className="text-right">Yield*</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -353,20 +355,20 @@ export function ResearchTabs(props: ResearchTabsProps) {
             <div className="px-5 py-3 flex items-center gap-2" style={{ borderTop: upcomingDividends.length > 0 ? '1px solid var(--border-soft)' : undefined, borderBottom: '1px solid var(--border-soft)' }}>
               <FileText className="size-4" style={{ color: 'var(--ink-muted)' }} />
               <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                Riwayat Dividen
+                {t('research_tabs.dividend_history')}
               </p>
               <span className="ml-auto text-xs" style={{ color: 'var(--ink-muted)' }}>
-                {pastDividends.length} pembayaran
+                {pastDividends.length} {t('research_tabs.payments_suffix')}
               </span>
             </div>
             <div className="overflow-x-auto max-h-[400px]">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Periode</TableHead>
+                    <TableHead>{t('research_tabs.col_period')}</TableHead>
                     <TableHead>Ex-Date</TableHead>
                     <TableHead>Pay Date</TableHead>
-                    <TableHead className="text-right">Per Lembar</TableHead>
+                    <TableHead className="text-right">{t('research_tabs.col_per_share')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -409,6 +411,7 @@ function ResearchView({
   ticker: string
   onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {
+  const t = useT()
   return (
     <div className="space-y-4">
       {/* Markdown body (header rekomendasi + fair value sekarang di strip atas) */}
@@ -418,7 +421,7 @@ function ResearchView({
       >
         {research.frontmatter.thesis && (
           <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Tesis Investasi</p>
+            <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('research_tabs.investment_thesis')}</p>
             <p
               className="mt-2 pl-4 border-l-2 italic leading-relaxed text-base sm:text-lg"
               style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
@@ -542,6 +545,7 @@ function GenerateResearchEmpty({
   sector: string | null
   onGenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {
+  const t = useT()
   const [generating, setGenerating] = useState(false)
 
   async function generate() {
@@ -550,7 +554,7 @@ function GenerateResearchEmpty({
       const res = await fetch(`/api/idx-research/${ticker}/generate`, { method: 'POST' })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.error ?? `Gagal generate: ${res.status}`)
+        toast.error(json.error ?? `${t('research_tabs.generate_failed_prefix')} ${res.status}`)
         return
       }
       // Strip frontmatter dari body (sudah disimpan terpisah)
@@ -559,8 +563,8 @@ function GenerateResearchEmpty({
         frontmatter: (json.frontmatter as ResearchFrontmatter) ?? {},
         body,
       })
-      toast.success('Research selesai di-generate.', {
-        description: json.cached ? 'Diambil dari cache (gratis).' : 'Tersimpan ke cache, user lain bisa baca tanpa bayar credits.',
+      toast.success(t('research_tabs.generate_success'), {
+        description: json.cached ? t('research_tabs.generate_from_cache') : t('research_tabs.generate_saved_to_cache'),
       })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Network error')
@@ -589,12 +593,11 @@ function GenerateResearchEmpty({
           <Sparkles className="size-6" />
         </div>
         <h3 className="mt-4 text-lg font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
-          Belum ada research untuk {ticker}
+          {t('research_tabs.empty_heading_prefix')} {ticker}
         </h3>
         <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
-          Generate research AI berdasarkan data laporan keuangan {name}
-          {sector ? ` (sektor ${sector})` : ''}. AI bakal kasih ringkasan
-          eksekutif, bull/bear case, katalis, dan risiko material.
+          {t('research_tabs.empty_desc_prefix')} {name}
+          {sector ? ` ${t('research_tabs.empty_desc_sector_prefix')} ${sector})` : ''}. {t('research_tabs.empty_desc_suffix')}
         </p>
 
         <div
@@ -602,7 +605,7 @@ function GenerateResearchEmpty({
           style={{ background: 'var(--amber-100)', color: 'var(--amber-700)' }}
         >
           <Zap className="size-3.5" />
-          {RESEARCH_CREDIT_COST} kredit AI · ~30 detik
+          {RESEARCH_CREDIT_COST} {t('research_tabs.credit_cost_suffix')}
         </div>
 
         <Button
@@ -614,19 +617,18 @@ function GenerateResearchEmpty({
           {generating ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              AI lagi nyusun research...
+              {t('research_tabs.generating_label')}
             </>
           ) : (
             <>
               <Sparkles className="size-4" />
-              Generate research
+              {t('research_tabs.generate_label')}
             </>
           )}
         </Button>
 
         <p className="mt-4 text-[11px] max-w-md mx-auto" style={{ color: 'var(--ink-soft)' }}>
-          Hasil generate disimpan di cache shared — user lain yang buka {ticker} bakal lihat
-          hasil yang sama tanpa bayar credit lagi (sampai kamu regenerate dengan data baru).
+          {t('research_tabs.cache_hint_prefix')} {ticker} {t('research_tabs.cache_hint_suffix')}
         </p>
       </div>
 
@@ -646,6 +648,7 @@ function RegenerateBar(_props: {
 }
 
 function DisclaimerBox() {
+  const t = useT()
   return (
     <div
       className="rounded-lg border p-3 text-[11px] flex items-start gap-2"
@@ -657,8 +660,7 @@ function DisclaimerBox() {
     >
       <AlertCircle className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--amber-700)' }} />
       <span>
-        Data snapshot dari kelolainvestasi (update kuartalan). Bukan rekomendasi
-        investasi — selalu lakukan due diligence sendiri sebelum keputusan finansial.
+        {t('research_tabs.disclaimer')}
       </span>
     </div>
   )

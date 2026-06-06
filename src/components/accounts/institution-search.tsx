@@ -18,6 +18,7 @@ import {
   type InstitutionType,
 } from '@/lib/indonesian-institutions'
 import { InstitutionLogo } from './institution-logo'
+import { useT } from '@/lib/i18n/context'
 
 interface Props {
   /** Current text in the input (account name or brand) */
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export function InstitutionSearch({ value, onTextChange, onPick, placeholder, restrictTypes }: Props) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -89,7 +91,7 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          placeholder={placeholder ?? 'Cari bank atau e-wallet (BCA, Jenius, GoPay, ...)'}
+          placeholder={placeholder ?? t('institution_search.placeholder')}
           className="w-full h-9 pl-8 pr-3 text-sm rounded-md border outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
           style={{
             background: 'var(--surface)',
@@ -161,10 +163,10 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  Pakai &ldquo;{value.trim()}&rdquo; sebagai nama custom
+                  {t('institution_search.use_prefix')}&ldquo;{value.trim()}&rdquo;{t('institution_search.use_suffix')}
                 </p>
                 <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                  Tidak ada di daftar — gunakan nama ini langsung
+                  {t('institution_search.custom_hint')}
                 </p>
               </div>
             </button>

@@ -14,6 +14,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Download, Share, X } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 const STORAGE_KEY = 'pwm-install-dismissed-at'
 const REMIND_AFTER_MS = 14 * 24 * 60 * 60 * 1000 // 14 days
@@ -55,6 +56,7 @@ function wasRecentlyDismissed(): boolean {
 }
 
 export function InstallPrompt() {
+  const t = useT()
   const [show, setShow] = useState(false)
   const [iosMode, setIosMode] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
@@ -108,7 +110,7 @@ export function InstallPrompt() {
     <div
       className="fixed bottom-20 md:bottom-6 inset-x-0 z-40 px-4 pointer-events-none animate-in slide-in-from-bottom duration-500"
       role="dialog"
-      aria-label="Pasang aplikasi Klunting"
+      aria-label={t('install_prompt.dialog_label')}
     >
       <div
         className="pointer-events-auto mx-auto max-w-sm rounded-2xl border shadow-2xl"
@@ -132,18 +134,19 @@ export function InstallPrompt() {
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-              Pasang Klunting di HP
+              {t('install_prompt.title')}
             </p>
             {iosMode ? (
               <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
-                Buka tab{' '}
+                {t('install_prompt.ios_step_open')}{' '}
                 <Share className="inline size-3.5 align-text-bottom mx-0.5" />{' '}
-                <strong>Bagikan</strong> di Safari, lalu pilih{' '}
-                <strong>“Tambah ke Layar Utama”</strong>.
+                <strong>{t('install_prompt.ios_share')}</strong>{' '}
+                {t('install_prompt.ios_step_safari')}{' '}
+                <strong>{t('install_prompt.ios_add_to_home')}</strong>.
               </p>
             ) : (
               <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
-                Akses cepat dari layar utama, fullscreen tanpa address bar.
+                {t('install_prompt.description')}
               </p>
             )}
 
@@ -158,7 +161,7 @@ export function InstallPrompt() {
                   boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
                 }}
               >
-                Pasang sekarang
+                {t('install_prompt.install_now')}
               </button>
             )}
           </div>
@@ -168,7 +171,7 @@ export function InstallPrompt() {
             onClick={handleDismiss}
             className="shrink-0 rounded-lg p-1.5 transition hover:opacity-70"
             style={{ color: 'var(--ink-soft)' }}
-            aria-label="Tutup"
+            aria-label={t('install_prompt.dismiss_label')}
           >
             <X className="size-4" />
           </button>

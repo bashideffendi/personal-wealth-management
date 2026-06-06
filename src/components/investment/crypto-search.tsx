@@ -19,6 +19,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Loader2 } from 'lucide-react'
 import { CryptoLogo } from './crypto-logo'
+import { useT } from '@/lib/i18n/context'
 
 interface CryptoSymbol {
   s: string  // symbol (BTC, ETH)
@@ -74,6 +75,7 @@ async function loadCatalog(): Promise<CryptoSymbol[]> {
 }
 
 export function CryptoSearch({ value, onSelect, placeholder }: Props) {
+  const t = useT()
   // Show whatever the user previously chose / typed (extract bare symbol if present)
   const initialDisplay = value
     ? value.split(/[-_]/)[0].replace(/USDT$|BUSD$|USDC$|USD$/i, '').toUpperCase()
@@ -144,7 +146,7 @@ export function CryptoSearch({ value, onSelect, placeholder }: Props) {
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          placeholder={placeholder ?? 'Cari coin (BTC, ethereum, sol, ...)'}
+          placeholder={placeholder ?? t('crypto_search.placeholder')}
           className="w-full h-9 pl-8 pr-3 text-sm rounded-md border outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
           style={{
             background: 'var(--surface)',
@@ -170,8 +172,8 @@ export function CryptoSearch({ value, onSelect, placeholder }: Props) {
           ) : results.length === 0 ? (
             <p className="px-3 py-4 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>
               {query
-                ? `Tidak ada di Binance — bisa langsung ketik ticker manual (mis. "${query}-USD")`
-                : 'Memuat katalog…'}
+                ? `${t('crypto_search.no_results')} "${query}-USD")`
+                : t('crypto_search.loading_catalog')}
             </p>
           ) : (
             results.map((c) => (
@@ -193,7 +195,7 @@ export function CryptoSearch({ value, onSelect, placeholder }: Props) {
                     </span>
                   </div>
                   <p className="text-xs truncate mt-0.5" style={{ color: 'var(--ink)' }}>
-                    {c.n ?? <span style={{ color: 'var(--ink-soft)' }}>(nama tidak tersedia)</span>}
+                    {c.n ?? <span style={{ color: 'var(--ink-soft)' }}>{t('crypto_search.no_name')}</span>}
                   </p>
                 </div>
               </button>
