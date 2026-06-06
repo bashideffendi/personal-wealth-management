@@ -2,13 +2,11 @@ import Link from 'next/link'
 import { Shield } from 'lucide-react'
 
 /**
- * Shared auth shell — matched to YNAB's measured sign-in composition:
- *  • Logo pinned to the TRUE top-left viewport edge (~48px).
- *  • Headline + form card sit in a CENTERED ~1024px band (max-w-5xl), so they
- *    have balanced ~450px side margins — NOT jammed to the edges. Headline left,
- *    card right (vertically centered).
- *  • One quiet trust line bottom-left viewport edge.
- * ONE unified dark canvas with subtle flowing curve art. No feature copy.
+ * Shared auth shell — YNAB composition, minimalist premium.
+ * Graphic = a precise graph-paper grid + one clean net-worth chart line (no
+ * glow blobs / swooshes — those read as AI-template). Logo at the true top-left
+ * viewport edge; headline + form card in a centered ~1024px band; one quiet
+ * trust line bottom-left. No feature copy.
  */
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
@@ -17,31 +15,45 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div
       className="relative min-h-screen overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #07070B 0%, #0E0E14 52%, #16161E 100%)', color: '#F5F5F7' }}
+      style={{ background: 'linear-gradient(165deg, #08080C 0%, #0D0D12 55%, #131319 100%)', color: '#F5F5F7' }}
     >
       <style>{`
-        @keyframes authGlow { 0%,100%{opacity:.45} 50%{opacity:.9} }
         @keyframes authDraw { to { stroke-dashoffset:0 } }
-        @media (prefers-reduced-motion: reduce){ .auth-anim{animation:none!important} }
+        @media (prefers-reduced-motion: reduce){ .auth-anim{animation:none!important; stroke-dashoffset:0!important} }
       `}</style>
 
-      {/* soft glows */}
-      <div className="auth-anim absolute pointer-events-none" style={{ top: '-10%', right: '6%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.16), transparent 64%)', animation: 'authGlow 8s ease-in-out infinite' }} />
-      <div className="auth-anim absolute pointer-events-none" style={{ bottom: '-14%', left: '-8%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,211,252,0.09), transparent 64%)', animation: 'authGlow 11s ease-in-out infinite 1.5s' }} />
-
-      {/* subtle flowing curve art */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      {/* graph-paper grid + one clean chart line (precise, intentional — no glow) */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
-          <linearGradient id="sweep" x1="0" x2="1" y1="1" y2="0"><stop offset="0%" stopColor="#34D399" stopOpacity="0" /><stop offset="55%" stopColor="#34D399" stopOpacity="0.45" /><stop offset="100%" stopColor="#6EE7B7" stopOpacity="0.7" /></linearGradient>
-          <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.07" /><stop offset="100%" stopColor="#10B981" stopOpacity="0" /></linearGradient>
+          <pattern id="auth-grid" width="54" height="54" patternUnits="userSpaceOnUse">
+            <path d="M54 0H0V54" fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
+          </pattern>
+          <linearGradient id="auth-fade" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#0A0A0F" stopOpacity="0.85" />
+            <stop offset="48%" stopColor="#0A0A0F" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="auth-area" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#10B981" stopOpacity="0.10" />
+            <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+          </linearGradient>
         </defs>
-        <path d="M0,706 C300,668 600,716 900,682 C1050,664 1150,682 1200,676 L1200,760 L0,760 Z" fill="url(#ground)" />
-        <path d="M-60,300 C300,250 600,344 950,256 C1110,216 1200,238 1260,222" stroke="rgba(255,255,255,0.045)" strokeWidth="1.5" fill="none" />
-        <path d="M-60,430 C260,386 540,452 840,360 C1020,304 1130,322 1260,288" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" fill="none" />
-        <path className="auth-anim" d="M-60,628 C260,556 470,592 720,452 C920,340 1080,356 1260,238" stroke="url(#sweep)" strokeWidth="2.25" fill="none" strokeLinecap="round" strokeDasharray="1700" strokeDashoffset="1700" style={{ animation: 'authDraw 2.6s ease-out 0.25s forwards' }} />
+        <rect width="1200" height="800" fill="url(#auth-grid)" />
+        {/* fade the grid out toward the top so it sits behind the headline quietly */}
+        <rect width="1200" height="800" fill="url(#auth-fade)" />
+        {/* net-worth chart — realistic, trending up; precise, no glow */}
+        <path d="M0,604 L130,576 L260,592 L390,520 L520,544 L650,470 L780,492 L910,406 L1040,350 L1200,300 L1200,800 L0,800 Z" fill="url(#auth-area)" />
+        <polyline
+          className="auth-anim"
+          points="0,604 130,576 260,592 390,520 520,544 650,470 780,492 910,406 1040,350 1200,300"
+          fill="none" stroke="rgba(52,211,153,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          strokeDasharray="2000" strokeDashoffset="2000" style={{ animation: 'authDraw 2.4s ease-out 0.3s forwards' }}
+        />
+        <circle cx="520" cy="544" r="3" fill="#34D399" />
+        <circle cx="780" cy="492" r="3" fill="#34D399" />
+        <circle cx="1040" cy="350" r="4" fill="#6EE7B7" />
       </svg>
 
-      {/* logo — true top-left viewport edge (~48px, YNAB) */}
+      {/* logo — true top-left viewport edge */}
       <Link
         href="/"
         aria-label="Klunting"
@@ -56,7 +68,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Shield className="size-3.5" style={{ color: '#34D399' }} /> Data kamu dienkripsi dan tidak dijual.
       </p>
 
-      {/* centered content band (~1024px ≈ YNAB 1006): headline left + card right */}
+      {/* centered content band: headline left + card right */}
       <div className="relative z-10 mx-auto max-w-5xl px-6 min-h-screen grid lg:grid-cols-2 items-center gap-10 lg:gap-12">
         <div className="hidden lg:block max-w-md">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Keuangan pribadi</p>
