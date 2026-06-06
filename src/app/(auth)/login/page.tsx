@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Eye, EyeOff, Shield, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
 
@@ -90,10 +90,6 @@ export default function LoginPage() {
           <Button type="submit" disabled={loading} className="mt-1 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
             {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Masuk'}
           </Button>
-
-          <p className="flex items-center justify-center gap-1.5 text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
-            <Shield className="size-3.5" style={{ color: 'var(--c-mint)' }} /> Datamu dienkripsi, password di-hash. Aman.
-          </p>
         </form>
 
       <p className="mt-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
