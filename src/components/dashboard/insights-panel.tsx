@@ -2,6 +2,7 @@
 
 import { formatCurrency } from '@/lib/utils'
 import { rootCategory } from '@/lib/budget-categories'
+import { useT } from '@/lib/i18n/context'
 import type { Transaction, CreditCard, Contract } from '@/types'
 
 interface Budget {
@@ -26,6 +27,7 @@ interface InsightsPanelProps {
 export function InsightsPanel({
   monthTransactions, yearTransactions, monthBudgets, creditCards, contracts, savingRate, netCashflow,
 }: InsightsPanelProps) {
+  const t = useT()
   const alerts: Array<{ level: 'critical' | 'warn' | 'good'; text: string }> = []
   const today = new Date()
 
@@ -154,13 +156,13 @@ export function InsightsPanel({
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Alerts */}
       <div className="s-card s-card-pad-lg lg:col-span-2">
-        <p className="eyebrow">Insights & Alerts</p>
+        <p className="eyebrow">{t('insights_panel.alerts_eyebrow')}</p>
         <h3 className="font-bold mt-1" style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-          Perlu Perhatian
+          {t('insights_panel.alerts_title')}
         </h3>
         {alerts.length === 0 ? (
           <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
-            Semua terkendali. Keep it up.
+            {t('insights_panel.alerts_empty')}
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
@@ -197,24 +199,24 @@ export function InsightsPanel({
 
       {/* Cashflow forecast 3 bulan */}
       <div className="s-card s-card-pad-lg">
-        <p className="eyebrow">Proyeksi 3 Bulan</p>
+        <p className="eyebrow">{t('insights_panel.forecast_eyebrow')}</p>
         <h3 className="font-bold mt-1" style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-          Forecast Arus Kas
+          {t('insights_panel.forecast_title')}
         </h3>
         {avg3mo ? (
           <div className="mt-4 space-y-2 text-sm">
-            <Row2 label="Pemasukan /bln" value={avg3mo.inc} />
-            <Row2 label="Pengeluaran /bln" value={avg3mo.exp} />
+            <Row2 label={t('insights_panel.row_income')} value={avg3mo.inc} />
+            <Row2 label={t('insights_panel.row_expense')} value={avg3mo.exp} />
             <div className="pt-2 border-t" style={{ borderColor: 'var(--border-soft)' }}>
               <Row2
-                label="Net /bln"
+                label={t('insights_panel.row_net')}
                 value={avg3mo.net}
                 accent={avg3mo.net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'}
                 bold
               />
             </div>
             <div className="pt-2 mt-2 border-t text-[11px]" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
-              Estimasi saldo bersih 3 bulan ke depan:
+              {t('insights_panel.forecast_estimate_label')}
               <span className="num font-semibold ml-1" style={{ color: avg3mo.net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>
                 {formatCurrency(avg3mo.net * 3)}
               </span>
@@ -222,7 +224,7 @@ export function InsightsPanel({
           </div>
         ) : (
           <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
-            Belum cukup data. Butuh minimal 1 bulan riwayat.
+            {t('insights_panel.forecast_empty')}
           </p>
         )}
         {/* silence unused variable — reserved for future cash-flow visualization */}

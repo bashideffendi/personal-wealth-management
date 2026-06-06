@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import type { Playbook } from '@/lib/playbooks'
 import { playbookIcon } from '@/components/playbook/icons'
+import { useT } from '@/lib/i18n/context'
 
 interface PlanResult {
   ringkasan: string
@@ -32,6 +33,7 @@ function formatRp(n: number): string {
 }
 
 export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
+  const t = useT()
   const Icon = playbookIcon(playbook.iconKey)
 
   const [values, setValues] = useState<Record<string, string>>(() => {
@@ -133,13 +135,13 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
       })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.error ?? 'Gagal membuat rencana')
+        toast.error(json.error ?? t('playbook_detail.toast_failed'))
         return
       }
       setPlan(json.data as PlanResult)
-      toast.success('Rencana kamu siap')
+      toast.success(t('playbook_detail.toast_ready'))
     } catch {
-      toast.error('Gagal terhubung ke AI. Coba lagi.')
+      toast.error(t('playbook_detail.toast_connect_failed'))
     } finally {
       setLoadingPlan(false)
     }
@@ -153,7 +155,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
         style={{ color: 'var(--ink-soft)' }}
       >
         <ArrowLeft className="size-4" />
-        Semua Playbook
+        {t('playbook_detail.all_playbooks')}
       </Link>
 
       {/* Header */}
@@ -178,7 +180,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
         {/* Langkah-langkah */}
         <section className="s-card p-5 sm:p-6">
           <h2 className="t-title font-semibold mb-4" style={{ color: 'var(--ink)' }}>
-            Langkah-langkah
+            {t('playbook_detail.steps_title')}
           </h2>
           <ol className="space-y-4">
             {playbook.steps.map((s, i) => (
@@ -209,11 +211,10 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
         {/* Form rencana */}
         <section className="s-card p-5 sm:p-6 h-fit">
           <h2 className="t-title font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-            Hitung rencana kamu
+            {t('playbook_detail.form_title')}
           </h2>
           <p className="t-sm mb-4" style={{ color: 'var(--text-mute)' }}>
-            Isi angka kamu — sebagian sudah kami coba isi dari datamu. AI akan menghitung target,
-            setoran bulanan, dan milestone.
+            {t('playbook_detail.form_desc')}
           </p>
 
           <div className="space-y-3">
@@ -271,10 +272,14 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
             className="btn-primary w-full mt-5 inline-flex items-center justify-center gap-2"
           >
             {loadingPlan ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            {loadingPlan ? 'Menyusun rencana…' : plan ? 'Buat ulang rencana' : 'Buat rencana dengan AI'}
+            {loadingPlan
+              ? t('playbook_detail.btn_generating')
+              : plan
+                ? t('playbook_detail.btn_regenerate')
+                : t('playbook_detail.btn_generate')}
           </button>
           <p className="t-cap text-center mt-2" style={{ color: 'var(--text-mute)' }}>
-            8 kredit AI per rencana
+            {t('playbook_detail.credits_note')}
           </p>
         </section>
       </div>
@@ -285,7 +290,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="size-4" style={{ color: playbook.accent }} />
             <h2 className="t-title font-semibold" style={{ color: 'var(--ink)' }}>
-              Rencana kamu
+              {t('playbook_detail.plan_title')}
             </h2>
           </div>
 
@@ -295,16 +300,16 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
 
           {/* Stat tiles */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-            <Stat label="Target total" value={formatRp(plan.targetTotal)} accent={playbook.accent} />
-            <Stat label="Setoran / bulan" value={formatRp(plan.setoranBulanan)} accent={playbook.accent} />
-            <Stat label="Estimasi selesai" value={plan.estimasiSelesai} accent={playbook.accent} isText />
+            <Stat label={t('playbook_detail.stat_target_total')} value={formatRp(plan.targetTotal)} accent={playbook.accent} />
+            <Stat label={t('playbook_detail.stat_monthly')} value={formatRp(plan.setoranBulanan)} accent={playbook.accent} />
+            <Stat label={t('playbook_detail.stat_estimate')} value={plan.estimasiSelesai} accent={playbook.accent} isText />
           </div>
 
           {/* Milestones */}
           {plan.milestones?.length > 0 && (
             <div className="mb-5">
               <p className="eyebrow mb-2.5" style={{ color: 'var(--text-mute)' }}>
-                Milestone
+                {t('playbook_detail.milestone_label')}
               </p>
               <div className="space-y-2.5">
                 {plan.milestones.map((m, i) => (
@@ -337,7 +342,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           {plan.tips?.length > 0 && (
             <div className="mb-5">
               <p className="eyebrow mb-2.5" style={{ color: 'var(--text-mute)' }}>
-                Tips
+                {t('playbook_detail.tips_label')}
               </p>
               <ul className="space-y-2">
                 {plan.tips.map((t, i) => (
@@ -372,8 +377,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           )}
 
           <p className="t-cap mt-4" style={{ color: 'var(--text-mute)' }}>
-            Rencana dibuat AI sebagai estimasi & edukasi — bukan nasihat investasi terjamin. Untuk
-            angka resmi (biaya haji, pajak, suku bunga), cek sumber terbaru.
+            {t('playbook_detail.disclaimer')}
           </p>
         </section>
       )}
@@ -395,7 +399,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
               {playbook.related.label}
             </p>
             <p className="t-cap" style={{ color: 'var(--text-mute)' }}>
-              Lanjutkan di fitur terkait
+              {t('playbook_detail.related_caption')}
             </p>
           </div>
         </Link>

@@ -20,6 +20,7 @@ import {
 } from 'date-fns'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useT } from '@/lib/i18n/context'
 
 export type DateRange = { from: Date; to: Date } | null
 
@@ -114,6 +115,7 @@ export function RangePicker({
   value: DateRange
   onChange: (r: DateRange) => void
 }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<Date>(() => startOfMonth(value?.to ?? new Date()))
   const [sel, setSel] = useState<{ from: Date | null; to: Date | null }>({
@@ -122,7 +124,7 @@ export function RangePicker({
   })
 
   const label = !value
-    ? 'Semua waktu'
+    ? t('range_picker.all_time')
     : isSameDay(value.from, value.to)
       ? fmt(value.from)
       : `${fmt(value.from)} – ${fmt(value.to)}`
@@ -212,7 +214,7 @@ export function RangePicker({
                     onClick={() => setView(subMonths(view, 1))}
                     className="grid size-7 place-items-center rounded-md border hover:bg-[var(--surface-2)]"
                     style={{ borderColor: 'var(--border-soft)' }}
-                    aria-label="Bulan sebelumnya"
+                    aria-label={t('range_picker.prev_month')}
                   >
                     <ChevronLeft className="size-4" />
                   </button>
@@ -221,7 +223,7 @@ export function RangePicker({
                     onClick={() => setView(addMonths(view, 1))}
                     className="grid size-7 place-items-center rounded-md border hover:bg-[var(--surface-2)]"
                     style={{ borderColor: 'var(--border-soft)' }}
-                    aria-label="Bulan berikutnya"
+                    aria-label={t('range_picker.next_month')}
                   >
                     <ChevronRight className="size-4" />
                   </button>
@@ -235,10 +237,10 @@ export function RangePicker({
 
             <div className="mt-3 flex items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border-soft)' }}>
               <span className="mr-auto text-xs" style={{ color: 'var(--ink-muted)' }}>
-                {sel.from ? (sel.to ? `${fmt(sel.from)} – ${fmt(sel.to)}` : `${fmt(sel.from)} – …`) : 'Pilih tanggal mulai & akhir'}
+                {sel.from ? (sel.to ? `${fmt(sel.from)} – ${fmt(sel.to)}` : `${fmt(sel.from)} – …`) : t('range_picker.pick_start_end')}
               </span>
-              <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Batal</Button>
-              <Button size="sm" onClick={apply} disabled={!sel.from}>Terapkan</Button>
+              <Button variant="outline" size="sm" onClick={() => setOpen(false)}>{t('range_picker.cancel')}</Button>
+              <Button size="sm" onClick={apply} disabled={!sel.from}>{t('range_picker.apply')}</Button>
             </div>
           </Popover.Popup>
         </Popover.Positioner>

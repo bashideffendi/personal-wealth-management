@@ -12,19 +12,20 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Receipt, Plus, Wallet, UserCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
 
 interface TabItem {
   href: string
-  label: string
+  labelKey: string
   icon: React.ComponentType<{ className?: string }>
 }
 
 const TABS: TabItem[] = [
-  { href: '/dashboard',                 label: 'Beranda',   icon: Home },
-  { href: '/dashboard/transactions',    label: 'Transaksi', icon: Receipt },
+  { href: '/dashboard',                 labelKey: 'bottom_tab.home',         icon: Home },
+  { href: '/dashboard/transactions',    labelKey: 'bottom_tab.transactions', icon: Receipt },
   // Center FAB is rendered separately
-  { href: '/dashboard/budgeting',       label: 'Anggaran',  icon: Wallet },
-  { href: '/dashboard/profile',         label: 'Profil',    icon: UserCircle },
+  { href: '/dashboard/budgeting',       labelKey: 'bottom_tab.budget',       icon: Wallet },
+  { href: '/dashboard/profile',         labelKey: 'bottom_tab.profile',      icon: UserCircle },
 ]
 
 function isActive(pathname: string, href: string): boolean {
@@ -39,6 +40,7 @@ function openQuickAdd() {
 
 export function BottomTabBar() {
   const pathname = usePathname()
+  const t = useT()
 
   return (
     <nav
@@ -49,7 +51,7 @@ export function BottomTabBar() {
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
-      aria-label="Navigasi utama"
+      aria-label={t('bottom_tab.nav_label')}
     >
       <div className="grid grid-cols-5 items-end h-16 max-w-md mx-auto px-2">
         {/* Left side: Beranda + Transaksi */}
@@ -68,7 +70,7 @@ export function BottomTabBar() {
               color: 'var(--c-primary-foreground)',
               boxShadow: '0 8px 20px -4px rgba(16, 24, 40, 0.12)',
             }}
-            aria-label="Tambah transaksi"
+            aria-label={t('bottom_tab.add_transaction')}
           >
             <Plus className="size-6 stroke-[2.5]" />
           </button>
@@ -85,6 +87,7 @@ export function BottomTabBar() {
 
 function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
   const Icon = tab.icon
+  const t = useT()
   return (
     <Link
       href={tab.href}
@@ -95,7 +98,7 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
     >
       <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
       <span className={cn('text-[10px] leading-tight', active && 'font-semibold')}>
-        {tab.label}
+        {t(tab.labelKey)}
       </span>
       {active && (
         <span

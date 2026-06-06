@@ -18,6 +18,7 @@ import { Calendar, Loader2, Star, ArrowUpRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { formatPrice, formatIDXDate, parseIDXShortDate } from '@/lib/invest/format'
+import { useT } from '@/lib/i18n/context'
 
 interface DividendEvent {
   ticker: string
@@ -28,6 +29,7 @@ interface DividendEvent {
 }
 
 export function StockDividendCalendar() {
+  const t = useT()
   const supabase = createClient()
   const [upcoming, setUpcoming] = useState<DividendEvent[]>([])
   const [watchlistTickers, setWatchlistTickers] = useState<Set<string>>(new Set())
@@ -68,7 +70,7 @@ export function StockDividendCalendar() {
     return (
       <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         <Loader2 className="size-5 mx-auto animate-spin mb-2" />
-        Memuat kalender dividen…
+        {t('dividend_calendar.loading')}
       </div>
     )
   }
@@ -79,11 +81,11 @@ export function StockDividendCalendar() {
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="upcoming">
             <Calendar className="size-3.5 mr-1.5" />
-            Mendatang ({upcoming.length})
+            {t('dividend_calendar.tab_upcoming')} ({upcoming.length})
           </TabsTrigger>
           <TabsTrigger value="watchlist">
             <Star className="size-3.5 mr-1.5" />
-            Watchlist ({watchlistDividends.length})
+            {t('dividend_calendar.tab_watchlist')} ({watchlistDividends.length})
           </TabsTrigger>
         </TabsList>
 
@@ -91,7 +93,7 @@ export function StockDividendCalendar() {
           <DividendList events={upcoming.slice(0, 100)} />
           {upcoming.length > 100 && (
             <p className="text-xs text-center mt-3" style={{ color: 'var(--ink-soft)' }}>
-              Menampilkan 100 dari {upcoming.length} event mendatang
+              {t('dividend_calendar.showing_limit_prefix')} {upcoming.length} {t('dividend_calendar.showing_limit_suffix')}
             </p>
           )}
         </TabsContent>
@@ -103,10 +105,10 @@ export function StockDividendCalendar() {
               style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
             >
               <p className="text-sm" style={{ color: 'var(--ink)' }}>
-                Belum ada dividen mendatang dari saham di watchlist kamu.
+                {t('dividend_calendar.empty_watchlist_title')}
               </p>
               <p className="mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                Tambah saham ke watchlist dulu — ex-date upcoming bakal otomatis muncul di sini.
+                {t('dividend_calendar.empty_watchlist_hint')}
               </p>
             </div>
           ) : (
@@ -125,8 +127,7 @@ export function StockDividendCalendar() {
       >
         <Calendar className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
         <span>
-          Data dari kelolainvestasi (~3000 event). Ex-date = tanggal terakhir
-          kamu harus pegang saham buat dapet dividen. Pay date = transfer cash ke RDN.
+          {t('dividend_calendar.footer_note')}
         </span>
       </div>
     </div>
@@ -134,6 +135,7 @@ export function StockDividendCalendar() {
 }
 
 function DividendList({ events }: { events: DividendEvent[] }) {
+  const t = useT()
   return (
     <div
       className="rounded-2xl border overflow-hidden"
@@ -146,11 +148,11 @@ function DividendList({ events }: { events: DividendEvent[] }) {
               className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
               style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
             >
-              <th className="px-3 py-2.5">Ex-Date</th>
-              <th className="px-3 py-2.5">Ticker</th>
-              <th className="px-3 py-2.5 text-right">Per Lembar</th>
-              <th className="px-3 py-2.5">Pay Date</th>
-              <th className="px-3 py-2.5">Periode</th>
+              <th className="px-3 py-2.5">{t('dividend_calendar.col_ex_date')}</th>
+              <th className="px-3 py-2.5">{t('dividend_calendar.col_ticker')}</th>
+              <th className="px-3 py-2.5 text-right">{t('dividend_calendar.col_per_share')}</th>
+              <th className="px-3 py-2.5">{t('dividend_calendar.col_pay_date')}</th>
+              <th className="px-3 py-2.5">{t('dividend_calendar.col_period')}</th>
               <th className="px-3 py-2.5 w-10"></th>
             </tr>
           </thead>
@@ -189,7 +191,7 @@ function DividendList({ events }: { events: DividendEvent[] }) {
                             : 'var(--ink-soft)',
                         }}
                       >
-                        {daysUntil === 0 ? 'hari ini' : daysUntil === 1 ? 'besok' : `${daysUntil} hari lagi`}
+                        {daysUntil === 0 ? t('dividend_calendar.due_today') : daysUntil === 1 ? t('dividend_calendar.due_tomorrow') : `${daysUntil} ${t('dividend_calendar.due_days_suffix')}`}
                       </div>
                     )}
                   </td>

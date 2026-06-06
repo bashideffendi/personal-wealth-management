@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
+import { useT } from '@/lib/i18n/context'
 
 export interface ReportBlock {
   id: string
@@ -72,6 +73,7 @@ export function ReportHiddenStyle() {
 
 /** Tombol + panel — mount di control bar layar (bukan di PDF). */
 export function ReportCustomizer() {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [hidden, setHidden] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
@@ -121,7 +123,7 @@ export function ReportCustomizer() {
         style={{ padding: '7px 12px', fontSize: 13 }}
       >
         <Settings2 className="size-4" />
-        Atur isi
+        {t('report_customizer.button')}
         {hiddenCount > 0 && <span className="num" style={{ color: 'var(--text-mute)' }}>· −{hiddenCount}</span>}
       </button>
 
@@ -138,16 +140,15 @@ export function ReportCustomizer() {
           >
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
-                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>Atur Laporan</p>
-                <h2 className="t-h2" style={{ color: 'var(--ink)' }}>Section yang ditampilkan</h2>
+                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>{t('report_customizer.eyebrow')}</p>
+                <h2 className="t-h2" style={{ color: 'var(--ink)' }}>{t('report_customizer.title')}</h2>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Tutup">
+              <button type="button" onClick={() => setOpen(false)} aria-label={t('report_customizer.close')}>
                 <X className="size-5" style={{ color: 'var(--text-mute)' }} />
               </button>
             </div>
             <p className="t-sm mb-4" style={{ color: 'var(--ink-soft)' }}>
-              Pilih section yang muncul di laporan — berlaku di layar &amp; PDF. KPI &amp; Ringkasan
-              Eksekutif selalu tampil. Tersimpan di perangkat ini.
+              {t('report_customizer.description')}
             </p>
             <div className="space-y-1.5">
               {REPORT_BLOCKS.map((b) => {
@@ -180,7 +181,7 @@ export function ReportCustomizer() {
                 className="mt-4 inline-flex items-center gap-1.5 t-sm font-medium"
                 style={{ color: 'var(--c-primary)' }}
               >
-                <RotateCcw className="size-3.5" /> Tampilkan semua
+                <RotateCcw className="size-3.5" /> {t('report_customizer.show_all')}
               </button>
             )}
           </div>

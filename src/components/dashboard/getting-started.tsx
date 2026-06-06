@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Check, ChevronRight, Sparkles, X, Loader2 } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 interface MissionState {
   hasAccount: boolean
@@ -23,6 +24,7 @@ interface MissionState {
  * resets data).
  */
 export function GettingStarted() {
+  const t = useT()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [hidden, setHidden] = useState(false)
@@ -95,25 +97,25 @@ export function GettingStarted() {
   }> = [
     {
       key: 'hasAccount',
-      title: 'Buat akun pertama',
-      desc: 'Tambah akun bank, dompet digital, atau cash buat mulai mencatat.',
-      cta: 'Tambah Akun',
+      title: t('getting_started.step_account_title'),
+      desc: t('getting_started.step_account_desc'),
+      cta: t('getting_started.step_account_cta'),
       href: '/dashboard/accounts',
       done: state.hasAccount,
     },
     {
       key: 'hasTransaction',
-      title: 'Catat transaksi pertama',
-      desc: 'Coba scan struk dengan AI atau input manual — yang mana lebih cepat.',
-      cta: 'Catat Transaksi',
+      title: t('getting_started.step_transaction_title'),
+      desc: t('getting_started.step_transaction_desc'),
+      cta: t('getting_started.step_transaction_cta'),
       href: '/dashboard/transactions',
       done: state.hasTransaction,
     },
     {
       key: 'hasBudget',
-      title: 'Atur anggaran bulanan',
-      desc: 'Set limit per kategori biar pengeluaran ga lepas kontrol.',
-      cta: 'Buat Anggaran',
+      title: t('getting_started.step_budget_title'),
+      desc: t('getting_started.step_budget_desc'),
+      cta: t('getting_started.step_budget_cta'),
       href: '/dashboard/budgeting',
       done: state.hasBudget,
     },
@@ -134,10 +136,10 @@ export function GettingStarted() {
           </div>
           <div>
             <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>
-              Selangkah Lagi
+              {t('getting_started.eyebrow')}
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-mute)' }}>
-              {completedCount} dari 3 langkah selesai ·{' '}
+              {completedCount} {t('getting_started.steps_progress')} ·{' '}
               <span className="num tabular font-semibold">{Math.round(progressPct)}%</span>
             </p>
           </div>
@@ -150,7 +152,7 @@ export function GettingStarted() {
           style={{ color: 'var(--text-mute)' }}
         >
           {dismissing ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
-          Sembunyikan
+          {t('getting_started.dismiss')}
         </button>
       </div>
 

@@ -22,6 +22,7 @@ import {
   signColorVar,
   verdictStyle,
 } from '@/lib/invest/format'
+import { useT } from '@/lib/i18n/context'
 
 interface ResearchRow {
   ticker: string
@@ -38,6 +39,7 @@ interface ResearchRow {
 type SortKey = 'mos-desc' | 'mos-asc' | 'ticker' | 'price-desc'
 
 export function StockResearchTab() {
+  const t = useT()
   const [rows, setRows] = useState<ResearchRow[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -109,7 +111,7 @@ export function StockResearchTab() {
     return (
       <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         <Loader2 className="size-5 mx-auto animate-spin mb-2" />
-        Memuat data riset…
+        {t('stock_research.loading_research')}
       </div>
     )
   }
@@ -128,7 +130,7 @@ export function StockResearchTab() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cari ticker atau nama emiten…"
+            placeholder={t('stock_research.search_placeholder')}
             className="pl-9 h-9 text-sm"
           />
         </div>
@@ -138,7 +140,7 @@ export function StockResearchTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Semua verdict</SelectItem>
+            <SelectItem value="all">{t('stock_research.verdict_all')}</SelectItem>
             <SelectItem value="undervalued">Undervalued</SelectItem>
             <SelectItem value="fair">Fair Value</SelectItem>
             <SelectItem value="overvalued">Overvalued</SelectItem>
@@ -150,7 +152,7 @@ export function StockResearchTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Semua sektor</SelectItem>
+            <SelectItem value="all">{t('stock_research.sector_all')}</SelectItem>
             {sectors.map((s) => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
@@ -162,17 +164,16 @@ export function StockResearchTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="mos-desc">MoS terbesar</SelectItem>
-            <SelectItem value="mos-asc">MoS terkecil</SelectItem>
-            <SelectItem value="ticker">Alfabetis</SelectItem>
-            <SelectItem value="price-desc">Harga termahal</SelectItem>
+            <SelectItem value="mos-desc">{t('stock_research.sort_mos_desc')}</SelectItem>
+            <SelectItem value="mos-asc">{t('stock_research.sort_mos_asc')}</SelectItem>
+            <SelectItem value="ticker">{t('stock_research.sort_ticker')}</SelectItem>
+            <SelectItem value="price-desc">{t('stock_research.sort_price_desc')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-        {sorted.length} dari {rows.length} emiten · data snapshot dari
-        kelolainvestasi (quarterly update)
+        {sorted.length} {t('stock_research.count_of')} {rows.length} {t('stock_research.count_emiten_suffix')}
       </p>
 
       <div
@@ -186,13 +187,13 @@ export function StockResearchTab() {
                 className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
                 style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
               >
-                <th className="px-3 py-2.5">Ticker</th>
-                <th className="px-3 py-2.5">Nama</th>
-                <th className="px-3 py-2.5">Sektor</th>
-                <th className="px-3 py-2.5 text-right">Harga</th>
-                <th className="px-3 py-2.5 text-right">Fair Value</th>
-                <th className="px-3 py-2.5 text-right">MoS</th>
-                <th className="px-3 py-2.5">Verdict</th>
+                <th className="px-3 py-2.5">{t('stock_research.col_ticker')}</th>
+                <th className="px-3 py-2.5">{t('stock_research.col_name')}</th>
+                <th className="px-3 py-2.5">{t('stock_research.col_sector')}</th>
+                <th className="px-3 py-2.5 text-right">{t('stock_research.col_price')}</th>
+                <th className="px-3 py-2.5 text-right">{t('stock_research.col_fair_value')}</th>
+                <th className="px-3 py-2.5 text-right">{t('stock_research.col_mos')}</th>
+                <th className="px-3 py-2.5">{t('stock_research.col_verdict')}</th>
                 <th className="px-3 py-2.5 w-10"></th>
               </tr>
             </thead>
@@ -242,7 +243,7 @@ export function StockResearchTab() {
                       <Link
                         href={`/dashboard/assets/investment/stock/research/${r.ticker}`}
                         className="inline-flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--c-mint)] transition"
-                        aria-label={`Buka research ${r.ticker}`}
+                        aria-label={`${t('stock_research.aria_open_research')} ${r.ticker}`}
                       >
                         <ArrowUpRight className="size-4" />
                       </Link>
@@ -252,12 +253,12 @@ export function StockResearchTab() {
               })}
               {loading && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>Memuat data emiten…</td>
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>{t('stock_research.loading_emiten')}</td>
                 </tr>
               )}
               {!loading && sorted.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>Nggak ada emiten yang cocok sama filter kamu.</td>
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>{t('stock_research.empty_filter')}</td>
                 </tr>
               )}
             </tbody>
@@ -266,7 +267,7 @@ export function StockResearchTab() {
 
         {sorted.length > 200 && (
           <p className="px-4 py-3 text-xs text-center border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
-            +{sorted.length - 200} emiten lain — filter lebih spesifik buat narrow down
+            +{sorted.length - 200} {t('stock_research.overflow_more')}
           </p>
         )}
       </div>
@@ -281,9 +282,7 @@ export function StockResearchTab() {
       >
         <Sparkles className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
         <span>
-          MoS = Margin of Safety. Positif berarti fair value di atas harga pasar
-          (undervalued). Data dihitung dari 8 metode valuasi (DCF, Graham, EPV,
-          RelPER, RelPBV, DDM, NAV, EV/EBIT). Bukan rekomendasi investasi.
+          {t('stock_research.footer_disclaimer')}
         </span>
       </div>
     </div>

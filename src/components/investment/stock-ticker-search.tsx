@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Loader2 } from 'lucide-react'
 import { StockLogo } from './stock-logo'
+import { useT } from '@/lib/i18n/context'
 
 interface IdxSymbol {
   t: string  // ticker
@@ -51,6 +52,7 @@ async function loadCatalog(): Promise<IdxSymbol[]> {
 }
 
 export function StockTickerSearch({ value, onSelect, placeholder }: Props) {
+  const t = useT()
   const [query, setQuery] = useState(value ?? '')
   const [open, setOpen] = useState(false)
   const [catalog, setCatalog] = useState<IdxSymbol[] | null>(null)
@@ -120,7 +122,7 @@ export function StockTickerSearch({ value, onSelect, placeholder }: Props) {
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          placeholder={placeholder ?? 'Cari ticker / nama (BBCA, telkom, ...)'}
+          placeholder={placeholder ?? t('ticker_search.placeholder')}
           className="w-full h-9 pl-8 pr-3 text-sm rounded-md border outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
           style={{
             background: 'var(--surface)',
@@ -145,7 +147,7 @@ export function StockTickerSearch({ value, onSelect, placeholder }: Props) {
             </div>
           ) : results.length === 0 ? (
             <p className="px-3 py-4 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>
-              {query ? `Tidak ada hasil untuk "${query}"` : 'Memuat katalog...'}
+              {query ? `${t('ticker_search.no_results_prefix')} "${query}"` : t('ticker_search.loading_catalog')}
             </p>
           ) : (
             results.map((s) => (

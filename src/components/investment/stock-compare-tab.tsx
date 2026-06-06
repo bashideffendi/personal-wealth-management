@@ -23,6 +23,7 @@ import {
   signColorVar,
   verdictStyle,
 } from '@/lib/invest/format'
+import { useT } from '@/lib/i18n/context'
 
 interface ResearchRow {
   ticker: string
@@ -38,6 +39,7 @@ interface ResearchRow {
 const MAX_COMPARE = 4
 
 export function StockCompareTab() {
+  const t = useT()
   const [allRows, setAllRows] = useState<ResearchRow[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTickers, setSelectedTickers] = useState<string[]>([])
@@ -87,7 +89,7 @@ export function StockCompareTab() {
     return (
       <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         <Loader2 className="size-5 mx-auto animate-spin mb-2" />
-        Memuat data…
+        {t('stock_compare.loading')}
       </div>
     )
   }
@@ -109,14 +111,14 @@ export function StockCompareTab() {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          Bandingin sampai {MAX_COMPARE} saham IDX — metrics: harga, fair value, MoS, sektor, verdict.
+          {t('stock_compare.intro_prefix')} {MAX_COMPARE} {t('stock_compare.intro_suffix')}
         </p>
         <Button
           onClick={() => setPickerOpen(true)}
           disabled={selected.length >= MAX_COMPARE}
           size="sm"
         >
-          <Plus className="size-3.5" /> Tambah saham
+          <Plus className="size-3.5" /> {t('stock_compare.add_stock')}
         </Button>
       </div>
 
@@ -126,10 +128,10 @@ export function StockCompareTab() {
           style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-            Pilih saham buat dibandingin.
+            {t('stock_compare.empty_title')}
           </p>
           <p className="mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-            Mulai dengan tap &ldquo;Tambah saham&rdquo; di atas.
+            {t('stock_compare.empty_hint')}
           </p>
         </div>
       ) : (
@@ -144,7 +146,7 @@ export function StockCompareTab() {
                   className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
                   style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
                 >
-                  <th className="px-3 py-3 sticky left-0 bg-[var(--surface)] z-10">Metrik</th>
+                  <th className="px-3 py-3 sticky left-0 bg-[var(--surface)] z-10">{t('stock_compare.col_metric')}</th>
                   {selected.map((s) => (
                     <th key={s.ticker} className="px-3 py-3 min-w-[160px]">
                       <div className="flex items-center justify-between gap-2">
@@ -173,11 +175,11 @@ export function StockCompareTab() {
               </thead>
               <tbody>
                 <CompareRow
-                  label="Sektor"
+                  label={t('stock_compare.row_sector')}
                   values={selected.map((s) => ({ ticker: s.ticker, raw: s.sector ?? '—' }))}
                 />
                 <CompareRow
-                  label="Harga"
+                  label={t('stock_compare.row_price')}
                   values={selected.map((s) => ({
                     ticker: s.ticker,
                     raw: formatPrice(s.price),
@@ -185,14 +187,14 @@ export function StockCompareTab() {
                   }))}
                 />
                 <CompareRow
-                  label="Fair Value (median)"
+                  label={t('stock_compare.row_fair_value')}
                   values={selected.map((s) => ({
                     ticker: s.ticker,
                     raw: formatIDRCompact(s.medianFairValue ?? s.avgFairValue),
                   }))}
                 />
                 <CompareRow
-                  label="MoS"
+                  label={t('stock_compare.row_mos')}
                   values={selected.map((s) => ({
                     ticker: s.ticker,
                     raw: formatPercentValue(s.avgMoS),
@@ -201,7 +203,7 @@ export function StockCompareTab() {
                   }))}
                 />
                 <CompareRow
-                  label="Verdict"
+                  label={t('stock_compare.row_verdict')}
                   values={selected.map((s) => {
                     const verdict = verdictStyle(s.verdict)
                     return {
@@ -225,7 +227,7 @@ export function StockCompareTab() {
 
       {selected.length >= 2 && (
         <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
-          <CheckCircle2 className="size-3 shrink-0" style={{ color: 'var(--c-mint)' }} /> = unggul untuk metrik tersebut. Harga termurah & MoS terbesar dihighlight emerald.
+          <CheckCircle2 className="size-3 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('stock_compare.legend')}
         </p>
       )}
 
@@ -286,6 +288,7 @@ function PickerDialog({
   selected: Set<string>
   onPick: (ticker: string) => void
 }) {
+  const t = useT()
   const [query, setQuery] = useState('')
 
   const matches = useMemo(() => {
@@ -313,9 +316,9 @@ function PickerDialog({
     >
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-2">
-          <DialogTitle>Tambah saham buat dibandingin</DialogTitle>
+          <DialogTitle>{t('stock_compare.picker_title')}</DialogTitle>
           <DialogDescription>
-            Cuma emiten yang punya data valuasi di sini.
+            {t('stock_compare.picker_desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="px-5 pb-2">
@@ -328,7 +331,7 @@ function PickerDialog({
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="BBCA / Bank Central Asia"
+              placeholder={t('stock_compare.search_placeholder')}
               className="pl-9"
             />
           </div>
@@ -336,7 +339,7 @@ function PickerDialog({
         <div className="max-h-[50vh] overflow-y-auto px-2 pb-3">
           {matches.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-              Gak ada hasil.
+              {t('stock_compare.no_results')}
             </p>
           ) : (
             <ul>
