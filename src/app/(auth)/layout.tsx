@@ -2,11 +2,13 @@ import Link from 'next/link'
 import { Shield } from 'lucide-react'
 
 /**
- * Shared auth shell — YNAB composition, minimalist premium.
- * ONE unified dark canvas with subtle flowing curve art. Full-bleed (NOT a
- * centered narrow container): logo pinned to the true top-left viewport edge,
- * one brand line vertically centered on the left (aligned under the logo), the
- * form card on the right, one quiet trust line bottom-left. No feature copy.
+ * Shared auth shell — matched to YNAB's measured sign-in composition:
+ *  • Logo pinned to the TRUE top-left viewport edge (~48px).
+ *  • Headline + form card sit in a CENTERED ~1024px band (max-w-5xl), so they
+ *    have balanced ~450px side margins — NOT jammed to the edges. Headline left,
+ *    card right (vertically centered).
+ *  • One quiet trust line bottom-left viewport edge.
+ * ONE unified dark canvas with subtle flowing curve art. No feature copy.
  */
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
@@ -27,7 +29,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="auth-anim absolute pointer-events-none" style={{ top: '-10%', right: '6%', width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.16), transparent 64%)', animation: 'authGlow 8s ease-in-out infinite' }} />
       <div className="auth-anim absolute pointer-events-none" style={{ bottom: '-14%', left: '-8%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,211,252,0.09), transparent 64%)', animation: 'authGlow 11s ease-in-out infinite 1.5s' }} />
 
-      {/* subtle flowing curve art — minimal, no dots */}
+      {/* subtle flowing curve art */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
           <linearGradient id="sweep" x1="0" x2="1" y1="1" y2="0"><stop offset="0%" stopColor="#34D399" stopOpacity="0" /><stop offset="55%" stopColor="#34D399" stopOpacity="0.45" /><stop offset="100%" stopColor="#6EE7B7" stopOpacity="0.7" /></linearGradient>
@@ -39,26 +41,26 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <path className="auth-anim" d="M-60,628 C260,556 470,592 720,452 C920,340 1080,356 1260,238" stroke="url(#sweep)" strokeWidth="2.25" fill="none" strokeLinecap="round" strokeDasharray="1700" strokeDashoffset="1700" style={{ animation: 'authDraw 2.6s ease-out 0.25s forwards' }} />
       </svg>
 
-      {/* logo — pinned to the true top-left viewport edge (YNAB) */}
+      {/* logo — true top-left viewport edge (~48px, YNAB) */}
       <Link
         href="/"
         aria-label="Klunting"
-        className="absolute z-20 top-8 left-8 sm:top-10 sm:left-12 lg:left-16 inline-flex items-center gap-2.5"
+        className="absolute z-20 top-8 left-8 sm:top-12 sm:left-12 inline-flex items-center gap-2.5"
       >
         <span className="grid place-items-center" style={{ width: 34, height: 34, borderRadius: 10, background: '#FFFFFF', color: '#0A0A0F', fontWeight: 800, fontSize: 17, letterSpacing: '-0.04em' }}>K</span>
         <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em' }}>Klunting</span>
       </Link>
 
       {/* trust — bottom-left viewport edge (desktop) */}
-      <p className="hidden lg:inline-flex absolute z-20 bottom-9 left-16 items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+      <p className="hidden lg:inline-flex absolute z-20 bottom-12 left-12 items-center gap-2 text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
         <Shield className="size-3.5" style={{ color: '#34D399' }} /> Datamu dienkripsi, gak dijual.
       </p>
 
-      {/* content — full-bleed grid, edge padding aligns headline under the logo */}
-      <div className="relative z-10 min-h-screen grid lg:grid-cols-2 items-center px-8 sm:px-12 lg:px-16 gap-8 lg:gap-12">
-        <div className="hidden lg:block max-w-lg">
+      {/* centered content band (~1024px ≈ YNAB 1006): headline left + card right */}
+      <div className="relative z-10 mx-auto max-w-5xl px-6 min-h-screen grid lg:grid-cols-2 items-center gap-10 lg:gap-12">
+        <div className="hidden lg:block max-w-md">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Atur uang tanpa drama</p>
-          <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(40px, 4.4vw, 58px)', lineHeight: 1.08, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
+          <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(38px, 3.6vw, 52px)', lineHeight: 1.1, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
             Akhirnya, <span style={{ ...SERIF, color: '#6EE7B7', fontWeight: 400 }}>tenang</span> soal uang.
           </h2>
         </div>
