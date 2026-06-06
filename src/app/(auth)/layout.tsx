@@ -55,7 +55,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </p>
 
       {/* content — full-bleed grid, edge padding aligns headline under the logo */}
-      <div className="relative z-10 min-h-screen grid lg:grid-cols-2 items-center px-8 sm:px-12 lg:px-16 xl:px-24 gap-8 lg:gap-12">
+      <div className="relative z-10 min-h-screen grid lg:grid-cols-2 items-center px-8 sm:px-12 lg:px-16 gap-8 lg:gap-12">
         <div className="hidden lg:block max-w-lg">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#A1A1AA' }}>Atur uang tanpa drama</p>
           <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(40px, 4.4vw, 58px)', lineHeight: 1.08, letterSpacing: '-0.035em', color: '#FFFFFF' }}>
