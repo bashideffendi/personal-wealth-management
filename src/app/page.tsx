@@ -214,6 +214,36 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ─── HIGHLIGHT: arus kas / Sankey (fitur favorit) ─── */}
+      <section className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--bg-2)' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[0.82fr_1.18fr] gap-10 lg:gap-14 items-center max-w-6xl mx-auto">
+          <div>
+            <p className="eyebrow">Arus kas</p>
+            <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(26px, 3.4vw, 40px)', lineHeight: 1.1, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
+              Lihat persis ke mana uangmu mengalir.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              Setiap rupiah — dari tiap sumber pemasukan sampai ke kategori pengeluaran, tabungan, dan
+              investasi — dalam satu diagram aliran. Langsung kelihatan apa yang menyerap uangmu, dan
+              berapa yang tersisa.
+            </p>
+            <Link href="/features/anggaran" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint)' }}>
+              Pelajari anggaran &amp; arus kas <ArrowRight className="size-4" />
+            </Link>
+          </div>
+          <div className="rounded-2xl overflow-hidden border p-3 sm:p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)', boxShadow: '0 30px 70px -32px rgba(16,24,40,0.40)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/features/sankey.webp"
+              alt="Diagram aliran uang Klunting: dari Gaji & Side Hustle ke total pemasukan, lalu mengalir ke Tempat Tinggal, Makanan, Saham, dan kategori lain"
+              width={1600}
+              height={557}
+              className="w-full h-auto block rounded-lg"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ─── HARGA ─── */}
       <PricingSection />
 

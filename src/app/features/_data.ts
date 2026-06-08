@@ -65,8 +65,8 @@ export const FEATURES: Feature[] = [
     name: 'Anggaran & arus kas',
     tagline: 'Anggaran bulanan maupun tahunan yang terasa seperti spreadsheet yang kamu kuasai.',
     icon: Wallet,
-    shot: '/features/dashboard.webp',
-    shotAlt: 'Dashboard Klunting menampilkan ringkasan anggaran dan peringatan kategori yang melebihi batas',
+    shot: '/features/sankey.webp',
+    shotAlt: 'Diagram aliran uang (Sankey) Klunting: dari Gaji & Side Hustle ke Total Pemasukan, lalu ke Tempat Tinggal, Makanan, Saham, dan kategori lain',
     intro:
       'Anggaran seharusnya fleksibel, bukan formulir kaku. Klunting memberi kontrol penuh sambil tetap menjaga gambaran besarnya.',
     sections: [
@@ -85,7 +85,8 @@ export const FEATURES: Feature[] = [
     name: 'Pencatatan berbantuan AI',
     tagline: 'Catat transaksi dengan friksi sekecil mungkin supaya kamu konsisten.',
     icon: Sparkles,
-    shot: null,
+    shot: '/features/transactions.webp',
+    shotAlt: 'Daftar transaksi Klunting dengan ringkasan pemasukan, pengeluaran, arus kas bersih, dan filter',
     intro:
       'Frekuensi mencatat adalah indikator retensi nomor satu. Karena itu Klunting membuat pencatatan secepat dan semudah mungkin — dan gratis tanpa batas.',
     sections: [
@@ -104,7 +105,8 @@ export const FEATURES: Feature[] = [
     name: 'Manajemen utang',
     tagline: 'Lihat seluruh kewajiban dan jalur tercepat untuk bebas darinya.',
     icon: CreditCard,
-    shot: null,
+    shot: '/features/debts.webp',
+    shotAlt: 'Halaman utang Klunting: total utang, cicilan bulanan, rasio DTI, daftar utang, dan strategi snowball vs avalanche',
     intro:
       'Utang yang tersebar bikin sulit melihat ujungnya. Klunting menyatukannya dan menunjukkan strategi pelunasan paling efisien.',
     sections: [
