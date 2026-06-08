@@ -13,7 +13,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Sparkles, RefreshCw, Loader2, AlertCircle, PenLine, Camera, Command as CommandIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
+import { monthShort, relativeTime } from '@/lib/i18n/dates'
 import { rootCategory } from '@/lib/budget-categories'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import type { Transaction } from '@/types'
@@ -80,6 +81,7 @@ export function AIInsightsCard({
   goals,
 }: Props) {
   const t = useT()
+  const { locale } = useI18n()
   const supabase = createClient()
   const [insights, setInsights] = useState<Insight[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -143,7 +145,7 @@ export function AIInsightsCard({
       }))
 
     return {
-      period_label: `${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][selectedMonth - 1]} ${selectedYear}`,
+      period_label: `${monthShort(selectedMonth - 1, locale)} ${selectedYear}`,
       income, expense, saving, investment,
       net: income - expense - saving - investment,
       saving_rate: income > 0 ? ((saving + investment) / income) * 100 : 0,
@@ -158,7 +160,7 @@ export function AIInsightsCard({
       })),
       today: new Date().toISOString().split('T')[0],
     }
-  }, [monthTransactions, yearTransactions, selectedYear, selectedMonth, goals])
+  }, [monthTransactions, yearTransactions, selectedYear, selectedMonth, goals, locale])
 
   // Detect if there's enough data to call AI (current month OR last month)
   const hasAnyData = useMemo(() => {
@@ -256,7 +258,7 @@ export function AIInsightsCard({
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               {generatedAt
-                ? `${t('ai_insights.updated_prefix')} ${formatRelative(generatedAt, t)} ${t('ai_insights.cache_suffix')}`
+                ? `${t('ai_insights.updated_prefix')} ${relativeTime(generatedAt, locale)} ${t('ai_insights.cache_suffix')}`
                 : loading
                   ? t('ai_insights.analyzing')
                   : t('ai_insights.click_refresh')}
@@ -366,17 +368,6 @@ export function AIInsightsCard({
       </div>
     </div>
   )
-}
-
-function formatRelative(iso: string, t: (path: string) => string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const minutes = Math.floor(diff / (1000 * 60))
-  if (minutes < 1) return t('ai_insights.relative_just_now')
-  if (minutes < 60) return t('ai_insights.relative_minutes').replace('{n}', String(minutes))
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return t('ai_insights.relative_hours').replace('{n}', String(hours))
-  const days = Math.floor(hours / 24)
-  return t('ai_insights.relative_days').replace('{n}', String(days))
 }
 
 // ─── Welcome card for users with zero data ───────────────────────

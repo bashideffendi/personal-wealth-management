@@ -22,17 +22,8 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
 import { formatCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
-
-const MONTH_KEYS = [
-  'month_jan', 'month_feb', 'month_mar', 'month_apr', 'month_may', 'month_jun',
-  'month_jul', 'month_aug', 'month_sep', 'month_oct', 'month_nov', 'month_dec',
-] as const
-
-/** Localized full month name for a 1-12 month. */
-function monthName(t: (path: string) => string, month: number): string {
-  return t(`anggaran_drawer.${MONTH_KEYS[month - 1]}`)
-}
+import { useT, useI18n } from '@/lib/i18n/context'
+import { monthLong } from '@/lib/i18n/dates'
 
 interface AnggaranDrawerProps {
   open: boolean
@@ -59,6 +50,7 @@ export function AnggaranMonthDrawer({
   onPrevMonth, onNextMonth,
 }: AnggaranDrawerProps) {
   const t = useT()
+  const { locale } = useI18n()
   // Compute totals for the month
   const totals = useMemo(() => {
     const income = visibleIncome.reduce((s, c) => s + getValue('income', c, month), 0)
@@ -155,7 +147,7 @@ export function AnggaranMonthDrawer({
                 <p className="eyebrow">{t('anggaran_drawer.eyebrow')} · {year}</p>
                 {/* Visually-rich title; sr-only SheetTitle for a11y */}
                 <SheetTitle className="sr-only">
-                  {t('anggaran_drawer.eyebrow')} {monthName(t, month)} {year}
+                  {t('anggaran_drawer.eyebrow')} {monthLong(month - 1, locale)} {year}
                 </SheetTitle>
                 <h2
                   className="display"
@@ -166,7 +158,7 @@ export function AnggaranMonthDrawer({
                   }}
                   aria-hidden="true"
                 >
-                  {monthName(t, month)}
+                  {monthLong(month - 1, locale)}
                   {isCurrentMonth && (
                     <span
                       className="chip ml-2"
@@ -438,7 +430,7 @@ export function AnggaranMonthDrawer({
                 {formatCurrency(projection.projectedExpense)}
               </p>
               <p className="text-xs mt-1.5" style={{ color: 'var(--text-2)' }}>
-                {t('anggaran_drawer.projection_desc').replace('{month}', monthName(t, month))}
+                {t('anggaran_drawer.projection_desc').replace('{month}', monthLong(month - 1, locale))}
               </p>
             </div>
           )}

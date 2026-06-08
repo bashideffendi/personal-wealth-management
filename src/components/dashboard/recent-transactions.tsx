@@ -7,7 +7,8 @@ import {
   TrendingUp, Wallet, Heart, Gamepad2, BanknoteArrowDown, Receipt,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
+import { relativeDate } from '@/lib/i18n/dates'
 import type { Transaction } from '@/types'
 
 /**
@@ -36,18 +37,8 @@ function categoryStyle(
   return { Icon: Receipt, tone: 'primary' }
 }
 
-function relativeTime(dateStr: string, t: (path: string) => string): string {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000)
-  if (diffDays === 0) return t('recent_tx.today')
-  if (diffDays === 1) return t('recent_tx.yesterday')
-  if (diffDays < 7) return `${diffDays} ${t('recent_tx.days_ago')}`
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-}
-
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const recent = useMemo(
     () => [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
     [transactions],
@@ -107,7 +98,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                     className="truncate"
                     style={{ fontSize: 11.5, color: 'var(--text-mute)' }}
                   >
-                    {tx.category} · {relativeTime(tx.date, t)}
+                    {tx.category} · {relativeDate(tx.date, locale)}
                   </p>
                 </div>
                 <p

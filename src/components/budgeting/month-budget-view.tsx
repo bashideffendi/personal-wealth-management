@@ -11,12 +11,12 @@
  */
 
 import { ChevronLeft, ChevronRight, Sparkles, Copy, Target } from 'lucide-react'
-import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
 import { computeTargetAmount, type CatTarget } from '@/lib/budget-categories'
 import { toast } from 'sonner'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
+import { monthLong } from '@/lib/i18n/dates'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -56,7 +56,7 @@ export function MonthBudgetView({
   targets,
   onCellChange,
 }: MonthBudgetViewProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const visibleByType: Record<BudgetType, string[]> = {
     income: visibleIncome,
     expense: visibleExpense,
@@ -144,8 +144,8 @@ export function MonthBudgetView({
     }
     toast.success(
       filled > 0
-        ? `${t('month_budget.toast_copied_pre')} ${filled} ${t('month_budget.toast_copied_mid')} ${MONTHS[prevM - 1]}`
-        : `${t('month_budget.toast_no_copy_pre')} ${MONTHS[prevM - 1]} ${t('month_budget.toast_no_copy_post')}`,
+        ? `${t('month_budget.toast_copied_pre')} ${filled} ${t('month_budget.toast_copied_mid')} ${monthLong(prevM - 1, locale)}`
+        : `${t('month_budget.toast_no_copy_pre')} ${monthLong(prevM - 1, locale)} ${t('month_budget.toast_no_copy_post')}`,
     )
   }
 
@@ -200,7 +200,7 @@ export function MonthBudgetView({
             <ChevronLeft className="size-4" />
           </button>
           <p className="t-title min-w-[130px] text-center" style={{ color: 'var(--ink)' }}>
-            {MONTHS[month - 1]} {year}
+            {monthLong(month - 1, locale)} {year}
           </p>
           <button
             type="button"

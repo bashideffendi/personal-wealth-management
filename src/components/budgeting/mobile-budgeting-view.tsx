@@ -22,10 +22,10 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
+import { monthLong } from '@/lib/i18n/dates'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -55,7 +55,7 @@ export function MobileBudgetingView({
   getValue,
   onCellChange,
 }: MobileBudgetingViewProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const today = new Date()
   const initialMonth =
     today.getFullYear() === year ? today.getMonth() + 1 : 1
@@ -105,7 +105,7 @@ export function MobileBudgetingView({
             {t('mobile_budget.month')}
           </p>
           <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-            {MONTHS[month - 1]} {year}
+            {monthLong(month - 1, locale)} {year}
           </p>
         </div>
 

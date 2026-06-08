@@ -4,7 +4,8 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import { FileText, CreditCard as CreditCardIcon, Repeat, Target } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
+import { monthShort } from '@/lib/i18n/dates'
 import type { Contract, CreditCard } from '@/types'
 
 interface BillItem {
@@ -24,10 +25,9 @@ interface UpcomingBillsProps {
   recurring: Array<{ id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number }>
 }
 
-const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-
 export function UpcomingBills({ contracts, debts, creditCards, recurring }: UpcomingBillsProps) {
   const t = useT()
+  const { locale } = useI18n()
   const bills = useMemo<BillItem[]>(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -108,7 +108,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
         {bills.slice(0, 6).map((b, i) => {
           const urgent = b.daysUntil <= 3
           const day = b.dueDate.getDate()
-          const monthLabel = MONTH_SHORT_ID[b.dueDate.getMonth()]
+          const monthLabel = monthShort(b.dueDate.getMonth(), locale)
           return (
             <Link
               key={`${b.source}-${i}`}

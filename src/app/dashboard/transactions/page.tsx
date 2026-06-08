@@ -8,9 +8,10 @@ import {
   ReflectiveSpendingModal,
   shouldTriggerReflection,
 } from '@/components/reflective/reflective-spending-modal'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { useCategoryOptions } from '@/lib/use-category-options'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
+import { formatDateShort } from '@/lib/i18n/dates'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
@@ -80,6 +81,7 @@ export default function TransactionsPage() {
   const supabase = createClient()
   const { optionsForType } = useCategoryOptions()
   const t = useT()
+  const { locale } = useI18n()
 
   const TYPE_LABEL_KEYS: Record<TransactionType, string> = {
     income: 'transactions.type_income',
@@ -1075,7 +1077,7 @@ export default function TransactionsPage() {
                         >
                           <div className="flex items-center justify-between gap-3">
                             <span>
-                              {formatDate(g.date)}
+                              {formatDateShort(g.date, locale)}
                               <span className="ml-2 font-normal" style={{ color: 'var(--ink-soft)' }}>
                                 · {g.items.length} {t('transactions.transactions_word')}
                               </span>
@@ -1204,7 +1206,7 @@ export default function TransactionsPage() {
                           {t(TYPE_LABEL_KEYS[tx.type])}
                         </span>
                         <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                          {formatDate(tx.date)}
+                          {formatDateShort(tx.date, locale)}
                         </span>
                       </div>
                       <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>

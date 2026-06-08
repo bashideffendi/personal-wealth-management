@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } fro
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
+import { monthsShort } from '@/lib/i18n/dates'
 import { EduTip } from '@/components/edu/edu-tip'
 import type { Budget } from '@/types'
 
@@ -44,11 +45,6 @@ import {
 } from '@/lib/budget-categories'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { toast } from 'sonner'
-
-const SHORT_MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-]
 
 const YEAR_OPTIONS = ['2024', '2025', '2026']
 
@@ -118,6 +114,8 @@ export default function BudgetingPage() {
   const supabase = createClient()
   const { hidden: privacyHidden } = usePrivacy()
   const t = useT()
+  const { locale } = useI18n()
+  const shortMonths = monthsShort(locale)
 
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
@@ -709,7 +707,7 @@ export default function BudgetingPage() {
         <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '160px' }} />
-            {SHORT_MONTHS.map((m) => <col key={m} />)}
+            {shortMonths.map((m) => <col key={m} />)}
           </colgroup>
           <tbody>
             <tr style={{ background: 'var(--surface-2)' }}>
@@ -907,14 +905,14 @@ export default function BudgetingPage() {
                 <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '160px' }} />
-                    {SHORT_MONTHS.map((m) => <col key={m} />)}
+                    {shortMonths.map((m) => <col key={m} />)}
                   </colgroup>
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-20 px-3 py-2 text-left text-[11px] font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
                         {t('budgeting.category')}
                       </th>
-                      {SHORT_MONTHS.map((m, i) => {
+                      {shortMonths.map((m, i) => {
                         const monthNum = i + 1
                         const isCurrent = isCurrentYearActive && monthNum === currentMonth
                         return (
@@ -958,7 +956,7 @@ export default function BudgetingPage() {
                   <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
                       <col style={{ width: '160px' }} />
-                      {SHORT_MONTHS.map((m) => <col key={m} />)}
+                      {shortMonths.map((m) => <col key={m} />)}
                     </colgroup>
                     <tbody>
                       {renderSectionHeader(sec.label, sec.kind, sectionTotal(sec.leaf, sec.kind))}

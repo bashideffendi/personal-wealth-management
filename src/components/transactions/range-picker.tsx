@@ -20,22 +20,14 @@ import {
 } from 'date-fns'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
+import type { Locale } from '@/lib/i18n/messages'
+import { monthLong, weekdaysShort, formatDateShort } from '@/lib/i18n/dates'
 
 export type DateRange = { from: Date; to: Date } | null
 
-const MONTHS_ID = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-]
-const MONTHS_SHORT_ID = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-]
-const WEEKDAYS_ID = ['Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb', 'Mg']
-
-function fmt(d: Date) {
-  return `${d.getDate()} ${MONTHS_SHORT_ID[d.getMonth()]} ${d.getFullYear()}`
+function fmt(d: Date, locale: Locale) {
+  return formatDateShort(d, locale, true)
 }
 
 const PRESETS: { key: string; label: string; get: () => DateRange }[] = [
@@ -54,22 +46,27 @@ function MonthGrid({
   month,
   sel,
   onPick,
+  locale,
 }: {
   month: Date
   sel: { from: Date | null; to: Date | null }
   onPick: (d: Date) => void
+  locale: Locale
 }) {
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
     end: endOfWeek(endOfMonth(month), { weekStartsOn: 1 }),
   })
+  // weekdaysShort is Sunday-first (0=Sun); calendar is Monday-first → rotate Sun to the end
+  const weekdays = weekdaysShort(locale)
+  const weekdaysMonFirst = [...weekdays.slice(1), weekdays[0]]
   return (
     <div>
       <div className="mb-2 text-center text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-        {MONTHS_ID[month.getMonth()]} {month.getFullYear()}
+        {monthLong(month.getMonth(), locale)} {month.getFullYear()}
       </div>
       <div className="grid grid-cols-7 gap-y-1">
-        {WEEKDAYS_ID.map((w) => (
+        {weekdaysMonFirst.map((w) => (
           <div key={w} className="text-center text-[10px] font-semibold" style={{ color: 'var(--ink-soft)' }}>
             {w}
           </div>
@@ -116,6 +113,7 @@ export function RangePicker({
   onChange: (r: DateRange) => void
 }) {
   const t = useT()
+  const { locale } = useI18n()
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<Date>(() => startOfMonth(value?.to ?? new Date()))
   const [sel, setSel] = useState<{ from: Date | null; to: Date | null }>({
@@ -126,8 +124,8 @@ export function RangePicker({
   const label = !value
     ? t('range_picker.all_time')
     : isSameDay(value.from, value.to)
-      ? fmt(value.from)
-      : `${fmt(value.from)} – ${fmt(value.to)}`
+      ? fmt(value.from, locale)
+      : `${fmt(value.from, locale)} – ${fmt(value.to, locale)}`
 
   function pick(d: Date) {
     if (!sel.from || (sel.from && sel.to)) {
@@ -229,15 +227,15 @@ export function RangePicker({
                   </button>
                 </div>
                 <div className="grid gap-6 sm:grid-cols-2">
-                  <MonthGrid month={view} sel={sel} onPick={pick} />
-                  <MonthGrid month={addMonths(view, 1)} sel={sel} onPick={pick} />
+                  <MonthGrid month={view} sel={sel} onPick={pick} locale={locale} />
+                  <MonthGrid month={addMonths(view, 1)} sel={sel} onPick={pick} locale={locale} />
                 </div>
               </div>
             </div>
 
             <div className="mt-3 flex items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border-soft)' }}>
               <span className="mr-auto text-xs" style={{ color: 'var(--ink-muted)' }}>
-                {sel.from ? (sel.to ? `${fmt(sel.from)} – ${fmt(sel.to)}` : `${fmt(sel.from)} – …`) : t('range_picker.pick_start_end')}
+                {sel.from ? (sel.to ? `${fmt(sel.from, locale)} – ${fmt(sel.to, locale)}` : `${fmt(sel.from, locale)} – …`) : t('range_picker.pick_start_end')}
               </span>
               <Button variant="outline" size="sm" onClick={() => setOpen(false)}>{t('range_picker.cancel')}</Button>
               <Button size="sm" onClick={apply} disabled={!sel.from}>{t('range_picker.apply')}</Button>
