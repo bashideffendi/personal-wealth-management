@@ -23,7 +23,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
-import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
+import { loadUiPrefs, saveUiPref, DASHBOARD_LAYOUT_VERSION } from '@/lib/ui-prefs'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
@@ -181,7 +181,7 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const prefs = await loadUiPrefs(supabase, user.id)
-      if (prefs && Array.isArray(prefs.dashboardOrder) && !orderTouched.current) {
+      if (prefs && Array.isArray(prefs.dashboardOrder) && prefs.dashboardLayoutVersion === DASHBOARD_LAYOUT_VERSION && !orderTouched.current) {
         const next = reconcileBlockOrder(prefs.dashboardOrder)
         setBlockOrder(next)
         try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
@@ -216,7 +216,7 @@ export default function DashboardPage() {
     try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next })
+      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
     })()
   }
 

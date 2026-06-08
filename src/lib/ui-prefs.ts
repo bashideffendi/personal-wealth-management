@@ -10,10 +10,20 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Bump tiap kali layout default dashboard berubah drastis (kartu ditambah/
+ * dihapus/diatur ulang). Saved order/hidden dengan versi != ini dianggap BASI
+ * → diabaikan, jatuh ke default kode. Ini yang bikin default baru otomatis
+ * kebawa ke akun lama (mis. akun Bashid) tanpa perlu sentuh DB manual.
+ */
+export const DASHBOARD_LAYOUT_VERSION = 7
+
 export interface UiPrefs {
   dashboardHidden: string[]
   reportHidden: string[]
   dashboardOrder: string[]
+  /** Versi layout saat order/hidden ini disimpan. */
+  dashboardLayoutVersion: number
 }
 
 export async function loadUiPrefs(

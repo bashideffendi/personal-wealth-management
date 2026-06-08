@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
+import { loadUiPrefs, saveUiPref, DASHBOARD_LAYOUT_VERSION } from '@/lib/ui-prefs'
 import { useT } from '@/lib/i18n/context'
 
 export interface DashBlock {
@@ -79,7 +79,7 @@ export function DashboardCustomizer() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const prefs = await loadUiPrefs(supabase, user.id)
-      if (prefs && Array.isArray(prefs.dashboardHidden) && !touchedRef.current) {
+      if (prefs && Array.isArray(prefs.dashboardHidden) && prefs.dashboardLayoutVersion === DASHBOARD_LAYOUT_VERSION && !touchedRef.current) {
         setHidden(prefs.dashboardHidden)
         try { localStorage.setItem(LS_KEY, JSON.stringify(prefs.dashboardHidden)) } catch { /* ignore */ }
       }
@@ -97,7 +97,7 @@ export function DashboardCustomizer() {
     void (async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) await saveUiPref(supabase, user.id, { dashboardHidden: next })
+      if (user) await saveUiPref(supabase, user.id, { dashboardHidden: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
     })()
   }
   function toggle(id: string) {
