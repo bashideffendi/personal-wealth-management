@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import {
   ArrowRight, Menu, Check, Shield, Lock, Database, EyeOff,
-  Receipt, TrendingUp, LineChart, Users, Sparkles, Wallet, CreditCard, ChevronDown,
+  Receipt, TrendingUp, LineChart, ChevronDown,
 } from 'lucide-react'
 import { PricingSection } from '@/components/landing/pricing-section'
 
@@ -32,13 +32,33 @@ export default async function LandingPage() {
     { href: '/about', label: 'Tentang' },
   ]
 
-  const FEATURES = [
-    { icon: TrendingUp, title: 'Investasi & riset saham IDX', body: 'Pantau saham, crypto, reksa dana, emas, SBN, dan deposito dalam satu portofolio. Plus riset 1.000+ emiten IDX: fair value dari 8 metode valuasi, rasio kunci, dan struktur kepemilikan.' },
-    { icon: LineChart, title: 'Net worth otomatis', body: 'Seluruh aset dikurangi seluruh utang menjadi satu angka net worth yang diperbarui tiap hari, lengkap dengan riwayat dan komposisinya.' },
-    { icon: Wallet, title: 'Anggaran & arus kas', body: 'Anggaran bulanan maupun tahunan bergaya spreadsheet (drag-fill antar bulan, rumus di sel), laporan arus kas, dan diagram alur pemasukan ke pengeluaran.' },
-    { icon: Sparkles, title: 'Pencatatan berbantuan AI', body: 'Foto struk untuk dibaca otomatis, catat dengan bahasa biasa, insight bulanan, dan rencana finansial yang disusun AI berdasar datamu.' },
-    { icon: CreditCard, title: 'Manajemen utang', body: 'KPR, KTA, dan kartu kredit dalam satu tempat. Lihat sisa, jadwal bayar, strategi pelunasan tercepat, dan estimasi tanggal lunas.' },
-    { icon: Users, title: 'Berbagi dengan keluarga', body: 'Kelola keuangan bersama pasangan atau keluarga hingga 5 anggota: tujuan, anggaran, dan dompet bersama, dengan rincian per anggota.' },
+  // Outcome-led clusters — each a verb, then terse capabilities. Deep detail
+  // lives on /features; this section is meant to be scanned, not read.
+  const CLUSTERS = [
+    { icon: LineChart, title: 'Lihat gambaran utuh', points: [
+      'Net worth otomatis, diperbarui tiap hari',
+      'Semua rekening, e-wallet, dan kartu di satu tempat',
+      'Portofolio saham, crypto, reksa dana, emas, SBN',
+      'Aset non-likuid seperti properti & kendaraan',
+    ] },
+    { icon: Receipt, title: 'Pahami ke mana uang pergi', points: [
+      'Anggaran bulanan & tahunan bergaya spreadsheet',
+      'Laporan arus kas dan diagram alur',
+      'Foto struk atau catat dengan bahasa biasa',
+      'Insight pengeluaran bulanan dari AI',
+    ] },
+    { icon: TrendingUp, title: 'Ambil keputusan dengan data', points: [
+      'Riset 1.000+ emiten IDX dengan 8 metode valuasi',
+      'Rasio kunci, struktur kepemilikan, kalender dividen',
+      'Manajemen utang & strategi pelunasan tercepat',
+      'Playbook finansial yang disusun AI',
+    ] },
+    { icon: Shield, title: 'Tenang dan terkendali', points: [
+      'Berbagi keluarga hingga 5 anggota',
+      'Multi-mata uang (IDR, USD, SGD, EUR)',
+      'Enkripsi, 2FA, dan Calm Mode',
+      'Ekspor CSV & hapus akun kapan saja',
+    ] },
   ]
 
   return (
@@ -191,32 +211,38 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ─── FITUR (ringkas → /features) ─── */}
+      {/* ─── FITUR (outcome clusters → /features) ─── */}
       <section id="fitur" className="px-6 sm:px-12 py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-2xl mb-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="max-w-2xl mb-12">
             <p className="eyebrow">Fitur</p>
             <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.12, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
               Satu tempat untuk gambaran utuh keuanganmu.
             </h2>
-            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
-              Mencatat, memantau, dan memahami seluruh keuangan pribadi — dari transaksi harian sampai portofolio investasi.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="s-card p-5">
-                <div className="size-10 rounded-xl flex items-center justify-center mb-3" style={{ background: 'var(--surface-2)' }}>
-                  <f.icon className="size-5" style={{ color: 'var(--ink)' }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-12">
+            {CLUSTERS.map((c) => (
+              <div key={c.title}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="size-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+                    <c.icon className="size-5" style={{ color: 'var(--ink)' }} />
+                  </div>
+                  <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>{c.title}</h3>
                 </div>
-                <h3 className="t-title mb-1.5" style={{ color: 'var(--ink)' }}>{f.title}</h3>
-                <p className="t-body" style={{ color: 'var(--ink-muted)' }}>{f.body}</p>
+                <ul className="space-y-2.5">
+                  {c.points.map((p) => (
+                    <li key={p} className="flex items-start gap-2.5 text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                      <span className="size-1.5 rounded-full mt-2 shrink-0" style={{ background: 'var(--c-mint)' }} />
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
 
-          <div className="mt-8">
+          <div className="mt-12">
             <Link href="/features" className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint)' }}>
               Lihat semua fitur secara detail <ArrowRight className="size-4" />
             </Link>
