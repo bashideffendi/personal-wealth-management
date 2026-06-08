@@ -5,7 +5,7 @@
  * killer · savings-first pricing · methodology-as-philosophy · honest proof) wearing
  * Klunting's brand (ink quiet-luxury + emerald accent + .dark-card anchor + Instrument
  * Serif italic moments-only). NOL social proof palsu — trust = verifiable facts +
- * marked placeholders. Copy aku/kamu, nominal penuh, trial 14 hari konsisten.
+ * marked placeholders. Copy aku/kamu, nominal penuh, trial 21 hari konsisten.
  */
 
 import Link from 'next/link'
@@ -14,8 +14,9 @@ import { redirect } from 'next/navigation'
 import {
   ArrowRight, Menu, Check, Shield, Lock, Database, EyeOff,
   Wallet, Receipt, LineChart, Sparkles, CreditCard, MessageCircle,
-  TrendingUp, PiggyBank, Users, Crown, ChevronDown,
+  TrendingUp, PiggyBank, Users, ChevronDown,
 } from 'lucide-react'
+import { PricingSection } from '@/components/landing/pricing-section'
 
 // Instrument Serif italic — moments-only accent (var wired in root layout).
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
@@ -116,14 +117,14 @@ export default async function LandingPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3 items-center">
               <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
-                Coba gratis 14 hari <ArrowRight className="size-4" />
+                Coba gratis 21 hari <ArrowRight className="size-4" />
               </Link>
               <a href="#cara-kerja" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium border transition hover:bg-[var(--surface-2)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
                 Lihat cara kerjanya
               </a>
             </div>
             <div className="mt-6 flex items-center gap-4 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
-              {['Akses penuh 14 hari', 'Tanpa kartu kredit', 'Datamu dienkripsi, gak dijual'].map((t) => (
+              {['Akses penuh 21 hari', 'Tanpa kartu kredit', 'Datamu dienkripsi, gak dijual'].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5">
                   <Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}
                 </span>
@@ -281,11 +282,13 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: TrendingUp, color: 'var(--c-mint)', bg: 'var(--c-mint-soft)', title: 'Net worth semua aset', body: 'Saham IDX, reksa dana, crypto, emas, SBN, P2P, deposito — kejumlah otomatis tiap hari. Kamu selalu tau angka kekayaanmu yang sebenarnya, bukan kira-kira.' },
-              { icon: Receipt, color: 'var(--c-mint)', bg: 'var(--c-mint-soft)', title: 'Catat secepat ngomong', body: 'Ketik "indomaret 47.500 cash" pakai bahasa sehari-hari — AI baca total & kategori, kamu tinggal cek.' },
-              { icon: Sparkles, color: 'var(--c-violet)', bg: 'var(--c-violet-soft)', title: 'AI Insight tiap bulan', body: 'Awal bulan dapet insight jujur: "Kopi naik 60% dari biasanya", "Forecast saldo tipis tanggal 24, kurang Rp 200.000". Kayak temen yang merhatiin.' },
-              { icon: CreditCard, color: 'var(--c-coral)', bg: 'var(--c-coral-soft)', title: 'Utang yang kelihatan jalan keluarnya', body: 'KPR, KTA, kartu kredit. Lihat sisa, jadwal bayar, dan jalur pelunasan tercepat. Lega pas tau kapan lunas.' },
-              { icon: Shield, color: 'var(--info)', bg: 'var(--info-bg)', title: 'Privasi & Calm Mode', body: 'Blur semua angka pas lagi di tempat umum, atau sembunyiin angka rugi yang bikin panik. Sekali tap.' },
+              { icon: TrendingUp, color: 'var(--c-mint)', bg: 'var(--c-mint-soft)', title: 'Investasi + riset saham IDX', body: 'Pantau saham IDX, crypto, reksa dana, emas, SBN, deposito — plus riset 1.000+ emiten: 8 metode valuasi, fair value, struktur kepemilikan. Bukan cuma nyatet, tapi ngerti.' },
+              { icon: LineChart, color: 'var(--c-mint)', bg: 'var(--c-mint-soft)', title: 'Net worth otomatis', body: 'Semua aset dikurangi semua utang jadi satu angka net worth yang update tiap hari. Akhirnya tau kekayaanmu yang sebenarnya, bukan kira-kira.' },
+              { icon: Users, color: 'var(--c-violet)', bg: 'var(--c-violet-soft)', title: 'Kelola bareng keluarga', body: 'Satu akun buat sekeluarga — goal, anggaran, & wallet bersama sampai 5 anggota. Atur uang bareng pasangan, nol drama.' },
+              { icon: Sparkles, color: 'var(--c-violet)', bg: 'var(--c-violet-soft)', title: 'AI yang ngerti keuanganmu', body: 'Foto struk → transaksi otomatis. Catat pakai bahasa sehari-hari. Insight bulanan jujur. AI Playbook yang nyusun rencana finansial buatmu.' },
+              { icon: Wallet, color: 'var(--c-amber)', bg: 'var(--c-amber-soft)', title: 'Anggaran & arus kas', body: 'Anggaran bulanan/tahunan gaya spreadsheet (drag-fill antar bulan + rumus di sel) + laporan arus kas + Sankey ke mana uangmu ngalir.' },
+              { icon: CreditCard, color: 'var(--c-coral)', bg: 'var(--c-coral-soft)', title: 'Utang yang kelihatan ujungnya', body: 'KPR, KTA, kartu kredit. Lihat sisa, jadwal bayar, jalur pelunasan tercepat, dan tanggal lunas yang jelas. Lega pas tau kapan kelar.' },
+              { icon: Shield, color: 'var(--info)', bg: 'var(--info-bg)', title: 'Privasi & keamanan', body: 'Enkripsi, 2FA, Calm Mode (blur angka di tempat umum), no auto-renew, export & hapus data kapan aja. Datamu, kendalimu.' },
               { icon: MessageCircle, color: 'var(--c-amber)', bg: 'var(--c-amber-soft)', title: 'Catat lewat WhatsApp', body: 'Nanti: forward struk atau kirim "kopi 35rb" ke WhatsApp Klunting, langsung kecatat.', badge: true },
             ].map((f) => (
               <div key={f.title} className="s-card p-5 relative transition-all hover:shadow-lg hover:-translate-y-0.5">
@@ -303,7 +306,7 @@ export default async function LandingPage() {
 
           <div className="mt-10 flex flex-col items-center gap-2">
             <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
-              Coba semua gratis 14 hari <ArrowRight className="size-4" />
+              Coba semua gratis 21 hari <ArrowRight className="size-4" />
             </Link>
             <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>Tanpa kartu kredit</span>
           </div>
@@ -382,99 +385,14 @@ export default async function LandingPage() {
           <div className="mt-8 text-center">
             <p className="text-base" style={{ color: 'var(--ink-muted)' }}>Mau jadi salah satu cerita pertama?</p>
             <Link href="/register" className="inline-flex items-center gap-2 mt-3 px-6 py-3 rounded-xl text-sm font-semibold transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
-              Coba gratis 14 hari <ArrowRight className="size-4" />
+              Coba gratis 21 hari <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ─── PRICING (savings-first) ────────────────────────────── */}
-      <section id="harga" className="px-6 sm:px-12 py-16 sm:py-20">
-        <div className="max-w-5xl mx-auto">
-          <div className="max-w-2xl mb-10">
-            <p className="eyebrow">Harga</p>
-            <h2 className="display mt-3" style={{ fontSize: 'clamp(28px, 4vw, 46px)', lineHeight: 1.1 }}>
-              Sadar ke mana uangmu pergi bisa balikin jutaan setahun.
-            </h2>
-            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
-              Coba dulu 14 hari, gratis, tanpa kartu kredit. Kalau cocok, harganya lebih murah dari sekali nongkrong.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Pro */}
-            <div className="rounded-2xl p-7 border-2 relative" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', letterSpacing: '0.08em' }}>
-                Paling pas
-              </span>
-              <div className="flex items-center gap-2 mb-3">
-                <Crown className="size-5" style={{ color: 'var(--ink)' }} />
-                <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Pro</h3>
-              </div>
-              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Buat kamu yang serius atur keuangan & investasi.</p>
-              <div className="mt-5 mb-0.5 flex items-baseline gap-2">
-                <span className="num text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>Rp 149.000</span>
-                <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>/tahun</span>
-              </div>
-              <p className="text-xs font-medium" style={{ color: 'var(--c-mint)' }}>Cuma sekitar Rp 408/hari — lebih murah dari parkir.</p>
-              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                ≈ Rp 12.417/bulan · <span style={{ textDecoration: 'line-through' }}>Rp 249.000</span> · hemat 40%
-              </p>
-              <Link href="/register" className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold btn-primary">Coba gratis 14 hari</Link>
-              <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-                {[
-                  'Catat & anggaran unlimited',
-                  'Dashboard net worth + KPI',
-                  'Portfolio: saham IDX, crypto, reksadana, emas, properti',
-                  'AI Advisor — tanya apa aja soal keuanganmu',
-                  'Scan struk (AI Vision) → transaksi otomatis',
-                  'AI insights & laporan bulanan',
-                  'Goal setting + forecast probabilitas',
-                  'Import mutasi rekening (CSV/PDF)',
-                  '100 kredit AI / bulan',
-                ].map((f) => (
-                  <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink)' }} />{f}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Max */}
-            <div className="rounded-2xl p-7 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="size-5" style={{ color: 'var(--ink-muted)' }} />
-                <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Max</h3>
-              </div>
-              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Buat keluarga — kelola keuangan bareng pasangan & anggota.</p>
-              <div className="mt-5 mb-0.5 flex items-baseline gap-2">
-                <span className="num text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>Rp 299.000</span>
-                <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>/tahun</span>
-              </div>
-              <p className="text-xs font-medium" style={{ color: 'var(--c-mint)' }}>Sekitar Rp 819/hari buat sekeluarga.</p>
-              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                ≈ Rp 24.917/bulan · <span style={{ textDecoration: 'line-through' }}>Rp 499.000</span> · hemat 40%
-              </p>
-              <Link href="/register" className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>Coba gratis 14 hari</Link>
-              <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-                {[
-                  'Semua fitur Pro',
-                  'Household sharing sampai 5 anggota',
-                  'Wallet & budget bersama keluarga',
-                  'Tracking per-anggota (siapa belanja apa)',
-                  'Insight pengeluaran keluarga',
-                  '300 kredit AI / bulan',
-                ].map((f) => (
-                  <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink)' }} />{f}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <p className="mt-6 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>
-            Gak ada auto-renew — kamu gak akan kepotong diam-diam. Cancel kapan aja, datamu tetap bisa di-export.
-            Belum ada paket gratis permanen, tapi trial 14 hari akses penuh tanpa kartu.
-          </p>
-        </div>
-      </section>
+      {/* ─── PRICING (toggle bulanan/tahunan — client island) ─── */}
+      <PricingSection />
 
       {/* ─── FAQ ───────────────────────────────────────────────── */}
       <section id="faq" className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
@@ -504,7 +422,7 @@ export default async function LandingPage() {
               },
               {
                 q: 'Kalau aku cancel, data ku gimana?',
-                a: 'Trial 14 hari bisa cancel kapan saja, tidak ada potongan. Setelah cancel, akun kamu tetap aktif di mode read-only sampai akhir periode billing. Kalau ingin hapus akun permanen, kamu bisa export semua data ke CSV dulu, lalu hapus akun dari Profil. Setelah dihapus, data disimpan 30 hari sebelum dihapus permanen — jaga-jaga kalau berubah pikiran.',
+                a: 'Trial 21 hari bisa cancel kapan saja, tidak ada potongan. Setelah cancel, akun kamu tetap aktif di mode read-only sampai akhir periode billing. Kalau ingin hapus akun permanen, kamu bisa export semua data ke CSV dulu, lalu hapus akun dari Profil. Setelah dihapus, data disimpan 30 hari sebelum dihapus permanen — jaga-jaga kalau berubah pikiran.',
               },
               {
                 q: 'Bisa export semua transaksi saya?',
@@ -520,7 +438,7 @@ export default async function LandingPage() {
               },
               {
                 q: 'Ada free tier?',
-                a: 'Belum. Sekarang fokusnya trial 14 hari akses penuh — bisa coba semua tanpa kartu dulu, lalu pilih Pro Rp 149.000 atau Max Rp 299.000 per tahun. Paket gratis permanen masih dievaluasi, belum ada tanggal pasti — pengen pastikan dulu unit economics sustainable.',
+                a: 'Belum. Sekarang fokusnya trial 21 hari akses penuh — bisa coba semua tanpa kartu dulu, lalu pilih paket: Pro Rp 149.000/tahun (atau Rp 19.000/bulan) dan Max Rp 299.000/tahun (atau Rp 35.000/bulan). Paket gratis permanen masih dievaluasi, belum ada tanggal pasti — pengen pastikan dulu unit economics sustainable.',
               },
               {
                 q: 'Bisa pakai bareng pasangan / keluarga?',
@@ -559,9 +477,9 @@ export default async function LandingPage() {
               udah mulai hari ini.
             </h2>
             <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold mt-7 transition hover:opacity-90" style={{ background: '#FFFFFF', color: '#0A0A0F', boxShadow: '0 10px 28px -10px rgba(255,255,255,0.30)' }}>
-              Coba gratis 14 hari <ArrowRight className="size-4" />
+              Coba gratis 21 hari <ArrowRight className="size-4" />
             </Link>
-            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Akses penuh 14 hari · Tanpa kartu kredit · Cancel kapan aja</p>
+            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Akses penuh 21 hari · Tanpa kartu kredit · Cancel kapan aja</p>
             <p className="mt-2 text-xs num" style={{ color: 'rgba(255,255,255,0.55)' }}>Setelahnya cuma sekitar Rp 408/hari — itu pun kalau kamu mau lanjut.</p>
           </div>
         </div>
