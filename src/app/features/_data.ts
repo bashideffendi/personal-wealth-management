@@ -124,7 +124,8 @@ export const FEATURES: Feature[] = [
     name: 'Berbagi dengan keluarga',
     tagline: 'Kelola keuangan bersama pasangan atau keluarga tanpa kehilangan privasi.',
     icon: Users,
-    shot: null,
+    shot: '/features/keluarga.webp',
+    shotAlt: 'Halaman keluarga Klunting: ajak pasangan/keluarga sampai 4 anggota, dengan alur Buat keluarga → Undang anggota → Kelola bareng',
     intro:
       'Keuangan rumah tangga sering melibatkan lebih dari satu orang. Paket Max memungkinkan berbagi tanpa harus saling membuka semua hal.',
     sections: [
@@ -141,7 +142,8 @@ export const FEATURES: Feature[] = [
     name: 'Keamanan & privasi',
     tagline: 'Data finansial adalah data sensitif. Kami memperlakukannya seperti itu.',
     icon: Shield,
-    shot: null,
+    shot: '/features/keamanan.webp',
+    shotAlt: 'Pengaturan keamanan Klunting: ganti password, autentikasi dua faktor (2FA), aktivitas keamanan, dan PIN Lock',
     intro:
       'Privasi bukan fitur tambahan, tapi fondasi. Model bisnis Klunting adalah langganan — bukan datamu.',
     sections: [

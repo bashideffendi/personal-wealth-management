@@ -3,7 +3,7 @@
  * All tables are keyed by table name and all rows share the same DEMO_USER_ID.
  */
 
-export const DEMO_USER_ID = 'demo-user-0000-0000-000000000000'
+export const DEMO_USER_ID = '00000000-0000-4000-8000-000000000000'
 
 export const DEMO_USER = {
   id: DEMO_USER_ID,
