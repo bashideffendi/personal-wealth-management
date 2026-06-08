@@ -287,7 +287,7 @@ const ihsg_snapshots = (() => {
 
 // Profiles
 const profiles = [
-  { id: DEMO_USER_ID, full_name: 'Bashid Demo', currency: 'IDR', created_at: '2026-01-01' },
+  { id: DEMO_USER_ID, full_name: 'Bashid Demo', currency: 'IDR', onboarding_focus: ['networth', 'budget'], welcomed_at: '2026-01-02', created_at: '2026-01-01' },
 ]
 
 // Transfers

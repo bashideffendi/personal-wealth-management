@@ -106,87 +106,52 @@ export default async function LandingPage() {
       </header>
 
       {/* ─── HERO ─── */}
-      <section className="px-6 sm:px-12 py-16 sm:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-6" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border)' }}>
-              <span className="size-1.5 rounded-full" style={{ background: 'var(--c-mint)' }} />
-              <span className="text-xs font-semibold tracking-tight">Manajemen keuangan pribadi</span>
-            </div>
-
-            <h1 className="tracking-tight" style={{ fontSize: 'clamp(36px, 5vw, 56px)', lineHeight: 1.08, letterSpacing: '-0.03em', fontWeight: 700, color: 'var(--ink)' }}>
-              Seluruh keuanganmu, dalam satu tampilan yang jelas.
-            </h1>
-            <p className="mt-6 text-lg leading-relaxed max-w-lg" style={{ color: 'var(--ink-muted)' }}>
-              Klunting menyatukan rekening, investasi, dan utang menjadi satu angka net worth yang
-              diperbarui tiap hari. Lengkap dengan anggaran, riset saham IDX, dan pencatatan transaksi
-              berbantuan AI.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3 items-center">
-              <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
-                Coba gratis 21 hari <ArrowRight className="size-4" />
-              </Link>
-              <Link href="/features" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium border transition hover:bg-[var(--surface-2)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
-                Lihat fitur
-              </Link>
-            </div>
-            <div className="mt-6 flex items-center gap-4 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
-              {['Akses penuh 21 hari', 'Tanpa kartu kredit', 'Data dienkripsi, tidak dijual'].map((t) => (
-                <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
-              ))}
-            </div>
+      <section className="px-6 sm:px-12 pt-16 sm:pt-24 pb-8 sm:pb-12">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-6" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border)' }}>
+            <span className="size-1.5 rounded-full" style={{ background: 'var(--c-mint)' }} />
+            <span className="text-xs font-semibold tracking-tight">Manajemen keuangan pribadi</span>
           </div>
 
-          {/* Net-worth card mockup */}
-          <div className="relative">
-            <div className="dark-card p-7 relative" style={{ boxShadow: '0 24px 60px -16px rgba(0,0,0,0.30)' }}>
-              <div className="flex items-start justify-between gap-3 mb-5">
-                <div>
-                  <p className="text-[10px] uppercase font-semibold" style={{ color: 'var(--on-black-mut)', letterSpacing: '0.16em' }}>Net Worth · Hari ini</p>
-                  <p className="num tabular font-bold mt-2 leading-none" style={{ color: 'var(--on-black)', fontSize: 44, letterSpacing: '-0.03em' }}>Rp 72.480.000</p>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold mt-3" style={{ background: 'rgba(16,185,129,0.18)', color: '#6EE7B7' }}>↑ Rp 1.240.000 bulan ini</span>
-                </div>
-                <div className="flex gap-1.5">
-                  <span className="size-2 rounded-full" style={{ background: '#FB7185' }} />
-                  <span className="size-2 rounded-full" style={{ background: '#FBBF24' }} />
-                  <span className="size-2 rounded-full" style={{ background: '#34D399' }} />
-                </div>
-              </div>
+          <h1 className="tracking-tight mx-auto" style={{ fontSize: 'clamp(36px, 5.5vw, 60px)', lineHeight: 1.06, letterSpacing: '-0.03em', fontWeight: 700, color: 'var(--ink)', maxWidth: '17ch' }}>
+            Seluruh keuanganmu, dalam satu tampilan yang jelas.
+          </h1>
+          <p className="mt-6 text-lg leading-relaxed max-w-xl mx-auto" style={{ color: 'var(--ink-muted)' }}>
+            Klunting menyatukan rekening, investasi, dan utang menjadi satu angka net worth yang
+            diperbarui tiap hari — lengkap dengan anggaran, riset saham IDX, dan pencatatan berbantuan AI.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3 items-center justify-center">
+            <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
+              Coba gratis 21 hari <ArrowRight className="size-4" />
+            </Link>
+            <Link href="/features" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium border transition hover:bg-[var(--surface-2)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
+              Lihat fitur
+            </Link>
+          </div>
+          <div className="mt-6 flex items-center gap-4 flex-wrap justify-center text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+            {['Akses penuh 21 hari', 'Tanpa kartu kredit', 'Data dienkripsi, tidak dijual'].map((t) => (
+              <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
+            ))}
+          </div>
+        </div>
 
-              <svg viewBox="0 0 320 80" className="w-full" style={{ height: 80 }} aria-hidden="true">
-                <defs>
-                  <linearGradient id="hg-landing" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.40" />
-                    <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M0,60 L40,55 L80,58 L120,40 L160,45 L200,30 L240,28 L280,18 L320,12 L320,80 L0,80 Z" fill="url(#hg-landing)" />
-                <path d="M0,60 L40,55 L80,58 L120,40 L160,45 L200,30 L240,28 L280,18 L320,12" stroke="#34D399" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-
-              <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                {[
-                  { label: 'Aset Cair', value: 'Rp 24.310.000', color: '#34D399' },
-                  { label: 'Investasi', value: 'Rp 51.310.000', color: '#7DD3FC' },
-                  { label: 'Utang', value: 'Rp 3.140.000', color: '#FB7185' },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <p className="text-[10px] font-semibold uppercase" style={{ color: 'var(--on-black-mut)', letterSpacing: '0.10em' }}>{s.label}</p>
-                    <p className="num text-base font-semibold mt-1" style={{ color: s.color }}>{s.value}</p>
-                  </div>
-                ))}
-              </div>
+        {/* Product screenshot — the real app, populated with demo data */}
+        <div className="mt-14 sm:mt-16 max-w-6xl mx-auto">
+          <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: '0 40px 90px -36px rgba(16,24,40,0.45)', background: 'var(--surface)' }}>
+            <div className="flex items-center gap-2 px-4 h-10 border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
+              <span className="size-3 rounded-full" style={{ background: '#FB7185' }} />
+              <span className="size-3 rounded-full" style={{ background: '#FBBF24' }} />
+              <span className="size-3 rounded-full" style={{ background: '#34D399' }} />
+              <div className="ml-3 hidden sm:flex items-center rounded-md px-3 py-1 text-[11px] font-medium" style={{ background: 'var(--bg)', color: 'var(--ink-soft)' }}>klunting.com/dashboard</div>
             </div>
-
-            <div className="hidden sm:flex absolute -bottom-6 -left-6 rounded-2xl px-4 py-3 gap-3 items-center border max-w-[280px]" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 12px 32px -8px rgba(0,0,0,0.22)' }}>
-              <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
-                <Receipt className="size-4" />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Indomaret · Rp 47.500</p>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>Diketik singkat, tercatat rapi.</p>
-              </div>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hero-dashboard.png"
+              alt="Tampilan dashboard Klunting: net worth, grafik pertumbuhan, dan ringkasan harian"
+              width={1800}
+              height={792}
+              className="w-full h-auto block"
+            />
           </div>
         </div>
       </section>
