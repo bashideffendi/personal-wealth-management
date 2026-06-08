@@ -285,6 +285,11 @@ export const messages = {
       growth: "Pertumbuhan",
       empty_chart: "Catat transaksi untuk lihat trend",
     },
+    accounts_card: {
+      title: "Akun & Saldo",
+      view_all: "Lihat semua",
+      empty: "Belum ada akun. Tambah rekening dulu.",
+    },
     recent_tx: {
       today: "Hari ini",
       yesterday: "Kemarin",
@@ -1022,6 +1027,7 @@ export const messages = {
     dashboard_customizer: {
       block_ai_insights: "Insight AI",
       block_aliran: "Aliran Uang (Sankey)",
+      block_akun: "Akun & Saldo",
       block_transaksi: "Transaksi Terbaru",
       block_tagihan: "Tagihan & Jatuh Tempo",
       block_tujuan: "Tujuan Keuangan",
@@ -3322,6 +3328,11 @@ export const messages = {
       growth: "Growth",
       empty_chart: "Record transactions to see the trend",
     },
+    accounts_card: {
+      title: "Accounts & Balances",
+      view_all: "View all",
+      empty: "No accounts yet. Add one first.",
+    },
     recent_tx: {
       today: "Today",
       yesterday: "Yesterday",
@@ -4059,6 +4070,7 @@ export const messages = {
     dashboard_customizer: {
       block_ai_insights: "AI Insights",
       block_aliran: "Money Flow (Sankey)",
+      block_akun: "Accounts & Balances",
       block_transaksi: "Recent Transactions",
       block_tagihan: "Bills & Due Dates",
       block_tujuan: "Financial Goals",

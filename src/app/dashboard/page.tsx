@@ -35,6 +35,7 @@ import { DayOfWeekChart } from '@/components/dashboard/day-of-week-chart'
 import { SavingRateRing } from '@/components/dashboard/saving-rate-ring'
 import { UpcomingBills } from '@/components/dashboard/upcoming-bills'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
+import { AccountsCard } from '@/components/dashboard/accounts-card'
 import { GoalsWidget } from '@/components/dashboard/goals-widget'
 import { InsightsPanel } from '@/components/dashboard/insights-panel'
 import { NetWorthHero } from '@/components/dashboard/net-worth-hero'
@@ -42,7 +43,7 @@ import { computeFinancialHealth } from '@/lib/financial-health'
 import { type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { CryptoLogo } from '@/components/investment/crypto-logo'
-import type { Transaction, Investment, CreditCard, Contract } from '@/types'
+import type { Transaction, Investment, CreditCard, Contract, Account } from '@/types'
 
 import {
   Select,
@@ -109,7 +110,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v5'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v6'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -143,6 +144,7 @@ export default function DashboardPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [liquidTotal, setLiquidTotal] = useState(0)
+  const [accounts, setAccounts] = useState<Account[]>([])
   const [nonLiquidTotal, setNonLiquidTotal] = useState(0)
   const [debtTotal, setDebtTotal] = useState(0)
   const [activeGoals, setActiveGoals] = useState<Array<{
@@ -235,7 +237,7 @@ export default function DashboardPage() {
     const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
     const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
 
-    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes] = await Promise.all([
+    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes, accRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('*')
@@ -287,8 +289,14 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .eq('is_active', true),
       loadTree(supabase, user.id),
+      supabase
+        .from('accounts')
+        .select('*')
+        .eq('user_id', user.id),
     ])
     setLiquidTotal(sumLiquid(liquidEntries))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setAccounts(((accRes as any)?.data ?? []) as Account[])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setNonLiquidTotal(((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -708,6 +716,11 @@ export default function DashboardPage() {
           data-block. items-stretch + h-full → card ngisi penuh selnya. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[132px] lg:[grid-auto-flow:row_dense] items-stretch">
 
+      {/* Akun & Saldo — "di mana duitku" (widget #1 ala Monarch) */}
+      <SortableSection id="akun" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
+        <AccountsCard accounts={accounts} />
+      </SortableSection>
+
       {/* Phase 2.3 — AI-generated personalized insights */}
       <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
         <AIInsightsCard
@@ -794,7 +807,7 @@ export default function DashboardPage() {
           recurring={recurringItems}
         />
       </SortableSection>
-      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
+      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
         <GoalsWidget goals={activeGoals} />
       </SortableSection>
 

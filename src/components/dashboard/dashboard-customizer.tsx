@@ -37,13 +37,14 @@ const DEFAULT_HIDDEN = ['saving-ring', 'top-kategori', 'hari-aktif', 'proyeksi']
 export const DASHBOARD_BLOCKS: DashBlock[] = [
   { id: 'aliran', labelKey: 'block_aliran' },
   { id: 'kalender', labelKey: 'block_kalender' },
+  { id: 'akun', labelKey: 'block_akun' },
+  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
+  { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'transaksi', labelKey: 'block_transaksi' },
   { id: 'tagihan', labelKey: 'block_tagihan' },
   { id: 'tujuan', labelKey: 'block_tujuan' },
-  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
-  { id: 'portofolio', labelKey: 'block_portofolio' },
-  { id: 'anggaran', labelKey: 'block_anggaran' },
   { id: 'insights', labelKey: 'block_insights' },
+  { id: 'anggaran', labelKey: 'block_anggaran' },
   { id: 'kesehatan', labelKey: 'block_kesehatan' },
   { id: 'ai-insights', labelKey: 'block_ai_insights' },
   // Default-hidden (DEFAULT_HIDDEN) — muncul di panel Atur buat diaktifin manual.
