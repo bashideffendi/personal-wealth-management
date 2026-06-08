@@ -7,8 +7,13 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Transaction } from '@/types'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import dynamic from 'next/dynamic'
 import { useT } from '@/lib/i18n/context'
+
+const CategoryBarChart = dynamic(
+  () => import('./category-chart').then((m) => m.CategoryBarChart),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 200, background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
 
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
 
@@ -162,18 +167,7 @@ export default function CategoryDrilldownPage() {
           <div className="s-card p-5">
             <p className="eyebrow">{t('category_detail.chart_eyebrow_12mo')}</p>
             <h3 className="t-h2 mt-0.5">{t('category_detail.chart_title_monthly')}</h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-                <XAxis dataKey="month" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-                <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(1)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  formatter={(v: unknown) => formatCurrency(Number(v) || 0)}
-                  contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 8, fontSize: 12 }}
-                />
-                <Bar dataKey="value" fill="#0A0A0A" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <CategoryBarChart data={monthlyData} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
