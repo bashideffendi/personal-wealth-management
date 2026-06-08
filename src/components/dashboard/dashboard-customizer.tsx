@@ -41,6 +41,8 @@ export const DASHBOARD_BLOCKS: DashBlock[] = [
   { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'transaksi', labelKey: 'block_transaksi' },
   { id: 'tagihan', labelKey: 'block_tagihan' },
+  { id: 'langganan', labelKey: 'block_langganan' },
+  { id: 'sisa-aman', labelKey: 'block_sisa_aman' },
   { id: 'tujuan', labelKey: 'block_tujuan' },
   { id: 'insights', labelKey: 'block_insights' },
   { id: 'anggaran', labelKey: 'block_anggaran' },

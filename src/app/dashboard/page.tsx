@@ -34,6 +34,8 @@ import { AssetAllocationCard } from '@/components/dashboard/asset-allocation-car
 import { UpcomingBills } from '@/components/dashboard/upcoming-bills'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { AccountsCard } from '@/components/dashboard/accounts-card'
+import { SafeToSpendCard } from '@/components/dashboard/safe-to-spend-card'
+import { SubscriptionsCard } from '@/components/dashboard/subscriptions-card'
 import { GoalsWidget } from '@/components/dashboard/goals-widget'
 import { InsightsPanel } from '@/components/dashboard/insights-panel'
 import { NetWorthHero } from '@/components/dashboard/net-worth-hero'
@@ -108,7 +110,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v7'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v8'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -585,6 +587,15 @@ export default function DashboardPage() {
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i)
   const currentMonthYear = `${getMonthName(selectedMonth)} ${selectedYear}`
+  // Tagihan rutin (expense bulanan) yg BELUM jatuh tempo bulan ini — buat Sisa Aman.
+  const upcomingRecurring = (() => {
+    const isCurrent = selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
+    if (!isCurrent) return 0
+    const day = now.getDate()
+    return recurringItems
+      .filter((r) => r.type === 'expense' && r.frequency === 'monthly' && r.day_of_period >= day)
+      .reduce((s, r) => s + r.amount, 0)
+  })()
 
   // Prior-3-months transactions for the "Apa yang berubah" strip. Slices
   // yearTransactions to months [selectedMonth-3, selectedMonth-1] within
@@ -717,6 +728,16 @@ export default function DashboardPage() {
       {/* Akun & Saldo — "di mana duitku" (widget #1 ala Monarch) */}
       <SortableSection id="akun" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
         <AccountsCard accounts={accounts} />
+      </SortableSection>
+
+      {/* Sisa Aman bulan ini — safe-to-spend (actionable) */}
+      <SortableSection id="sisa-aman" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+        <SafeToSpendCard income={totals.income} spent={totals.expense} upcoming={upcomingRecurring} />
+      </SortableSection>
+
+      {/* Langganan & Rutin — total komitmen rutin/bulan */}
+      <SortableSection id="langganan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
+        <SubscriptionsCard recurring={recurringItems} />
       </SortableSection>
 
       {/* Phase 2.3 — AI-generated personalized insights */}

@@ -299,6 +299,28 @@ export function AIInsightsCard({
         )
       })()}
 
+      {/* Empty/error state (mis. kredit habis) — kasih pointer ke fitur lain biar
+          kartu tetap berguna & gak kosong nunggu AI. */}
+      {error && !insights && !loading && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          {[
+            { label: 'Anggaran', desc: 'Cek pos mana yang over', href: '/dashboard/budgeting' },
+            { label: 'Transaksi', desc: 'Telusuri pengeluaranmu', href: '/dashboard/transactions' },
+            { label: 'Kekayaan', desc: 'Lihat tren net worth', href: '/dashboard/net-worth' },
+          ].map((p) => (
+            <a
+              key={p.href}
+              href={p.href}
+              className="rounded-lg border p-3 transition hover:shadow-sm"
+              style={{ borderColor: 'var(--border-soft)', background: 'rgba(255,255,255,0.55)' }}
+            >
+              <p className="text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>{p.label}</p>
+              <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--ink-muted)' }}>{p.desc}</p>
+            </a>
+          ))}
+        </div>
+      )}
+
       {!error && loading && !insights && (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
