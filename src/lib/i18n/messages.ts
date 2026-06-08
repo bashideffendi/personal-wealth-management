@@ -1363,6 +1363,11 @@ export const messages = {
       toast_reset_done_desc: "Akan reload halaman.",
     },
     pricing: {
+      hero_subtitle2: "Tanpa auto-renew, batal kapan saja. Coba 21 hari gratis dulu, tanpa kartu kredit.",
+      bill_annual: "Tahunan",
+      bill_monthly: "Bulanan",
+      per_month_only: "/bulan",
+      billed_monthly_note: "Ditagih tiap bulan, batal kapan saja.",
       upgrade_alert_prefix: "Pembayaran via Xendit/Midtrans akan segera hadir. Untuk early access ke",
       upgrade_alert_suffix: "hubungi support@klunting.com.",
       trial_badge: "Trial 21 hari · Tanpa kartu kredit",
@@ -4388,6 +4393,11 @@ export const messages = {
       toast_reset_done_desc: "The page will reload.",
     },
     pricing: {
+      hero_subtitle2: "No auto-renew, cancel anytime. Try free for 21 days first, no credit card.",
+      bill_annual: "Annual",
+      bill_monthly: "Monthly",
+      per_month_only: "/month",
+      billed_monthly_note: "Billed monthly, cancel anytime.",
       upgrade_alert_prefix: "Payment via Xendit/Midtrans is coming soon. For early access to",
       upgrade_alert_suffix: "contact support@klunting.com.",
       trial_badge: "21-day trial · No credit card",

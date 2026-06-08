@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ interface Plan {
   icon: React.ReactNode
   popular: boolean
   price_idr: number
+  monthly_idr: number
   original_price_idr: number
   seats: number
   ai_credits_monthly: number
@@ -31,6 +33,7 @@ const PLANS: Plan[] = [
     icon: <Crown className="size-5" />,
     popular: true,
     price_idr: 149000,
+    monthly_idr: 19000,
     original_price_idr: 249000,
     seats: 1,
     ai_credits_monthly: 100,
@@ -54,6 +57,7 @@ const PLANS: Plan[] = [
     icon: <Users className="size-5" />,
     popular: false,
     price_idr: 299000,
+    monthly_idr: 35000,
     original_price_idr: 499000,
     seats: 5,
     ai_credits_monthly: 300,
@@ -92,6 +96,7 @@ function perMonth(annual: number) {
 
 export default function PricingPage() {
   const t = useT()
+  const [billing, setBilling] = useState<'annual' | 'monthly'>('annual')
 
   function handleUpgrade(planId: string) {
     alert(
@@ -119,8 +124,29 @@ export default function PricingPage() {
           {t('pricing.hero_title_after')}
         </h1>
         <p className="text-base mt-4 max-w-xl mx-auto" style={{ color: 'var(--ink-muted)' }}>
-          {t('pricing.hero_subtitle_before')} <strong>{t('pricing.hero_subtitle_strong')}</strong>{t('pricing.hero_subtitle_after')}
+          {t('pricing.hero_subtitle2')}
         </p>
+      </div>
+
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center">
+        <div className="inline-flex items-center rounded-xl p-1" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+          {([['annual', t('pricing.bill_annual')], ['monthly', t('pricing.bill_monthly')]] as const).map(([key, label]) => {
+            const on = billing === key
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setBilling(key as 'annual' | 'monthly')}
+                className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                style={{ background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-soft)', boxShadow: on ? '0 1px 3px rgba(16,24,40,0.10)' : undefined }}
+              >
+                {label}
+                {key === 'annual' && <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>{t('pricing.save_badge')}</span>}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* 2-tier cards */}
@@ -146,17 +172,29 @@ export default function PricingPage() {
               <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
 
               <div className="mt-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm text-muted-foreground line-through">{formatCurrency(plan.original_price_idr)}</span>
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">-{discountPct}%</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{formatCurrency(plan.price_idr)}</span>
-                  <span className="text-sm text-muted-foreground">{t('pricing.per_year')}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ≈ {formatCurrency(perMonth(plan.price_idr))}{t('pricing.per_month_suffix')}
-                </p>
+                {billing === 'annual' ? (
+                  <>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm text-muted-foreground line-through">{formatCurrency(plan.original_price_idr)}</span>
+                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">-{discountPct}%</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{formatCurrency(plan.price_idr)}</span>
+                      <span className="text-sm text-muted-foreground">{t('pricing.per_year')}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ≈ {formatCurrency(perMonth(plan.price_idr))}{t('pricing.per_month_suffix')}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{formatCurrency(plan.monthly_idr)}</span>
+                      <span className="text-sm text-muted-foreground">{t('pricing.per_month_only')}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{t('pricing.billed_monthly_note')}</p>
+                  </>
+                )}
               </div>
 
               <button
