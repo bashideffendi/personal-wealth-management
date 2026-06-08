@@ -21,7 +21,7 @@ import { ResearchTabs, type ResearchTabsProps } from '@/components/investment/re
 import { ResearchLogButton } from '@/components/investment/research-log-button'
 import { ResearchStockSearch } from '@/components/investment/research-stock-search'
 import { StockLogo } from '@/components/investment/stock-logo'
-import { StockPriceChart } from '@/components/investment/stock-price-chart'
+import { StockPriceChart } from '@/components/investment/stock-price-chart-lazy'
 
 // yahoo-finance2 needs the Node runtime (not Edge) for the live-price fetch.
 export const runtime = 'nodejs'

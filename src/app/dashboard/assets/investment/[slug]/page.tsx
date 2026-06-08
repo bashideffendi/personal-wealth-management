@@ -30,7 +30,7 @@ import {
 import { NumberInput } from '@/components/ui/number-input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StockLogPanel } from '@/components/investment/stock-log-panel'
-import { DividendsPanel } from '@/components/investment/dividends-panel'
+import { DividendsPanel } from '@/components/investment/dividends-panel-lazy'
 import { StockWatchlistTab } from '@/components/investment/stock-watchlist-tab'
 import { StockResearchTab } from '@/components/investment/stock-research-tab'
 import { StockCompareTab } from '@/components/investment/stock-compare-tab'
