@@ -37,7 +37,7 @@ import { GoalsWidget } from '@/components/dashboard/goals-widget'
 import { InsightsPanel } from '@/components/dashboard/insights-panel'
 import { NetWorthHero } from '@/components/dashboard/net-worth-hero'
 import { computeFinancialHealth } from '@/lib/financial-health'
-import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
+import { type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { CryptoLogo } from '@/components/investment/crypto-logo'
 import type { Transaction, Investment, CreditCard, Contract } from '@/types'
@@ -50,19 +50,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from 'recharts'
+import dynamic from 'next/dynamic'
 
 // Chart palette per design handoff tokens.css — emerald led, then sky,
 // amber, coral, violet for categorical variety. Replaces the older
@@ -77,6 +65,24 @@ const CHART_PALETTE = [
   '#7DD3FC', // sky-300 — secondary blue
   '#FCD34D', // amber-300 — secondary yellow
 ]
+
+// Charts deferred out of the initial dashboard JS — recharts loads only when a
+// chart mounts. Skeletons match each chart's footprint to avoid layout shift.
+const skel = (h: number, w?: number) => (
+  <div className="animate-pulse rounded-lg" style={{ height: h, width: w, background: 'var(--surface-2)' }} aria-hidden="true" />
+)
+const MoneyFlowSankey = dynamic(
+  () => import('@/components/dashboard/money-flow-sankey').then((m) => m.MoneyFlowSankey),
+  { ssr: false, loading: () => skel(300) },
+)
+const MonthlyFlowChart = dynamic(
+  () => import('@/components/dashboard/dashboard-charts').then((m) => m.MonthlyFlowChart),
+  { ssr: false, loading: () => skel(260) },
+)
+const InvestmentPie = dynamic(
+  () => import('@/components/dashboard/dashboard-charts').then((m) => m.InvestmentPie),
+  { ssr: false, loading: () => skel(120, 120) },
+)
 
 const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
   stock: 'Saham',
@@ -552,8 +558,6 @@ export default function DashboardPage() {
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i)
   const currentMonthYear = `${getMonthName(selectedMonth)} ${selectedYear}`
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const formatTooltipValue = (value: any) => formatCurrency(Number(value) || 0)
 
   // Prior-3-months transactions for the "Apa yang berubah" strip. Slices
   // yearTransactions to months [selectedMonth-3, selectedMonth-1] within
@@ -1004,41 +1008,7 @@ export default function DashboardPage() {
               )
             })()}
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={monthlyData} barGap={4} barCategoryGap="20%">
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                fontSize={11}
-                tick={{ fill: 'var(--ink-muted)' }}
-                axisLine={{ stroke: 'var(--border-soft)' }}
-                tickLine={false}
-              />
-              <YAxis
-                fontSize={11}
-                tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`}
-                tick={{ fill: 'var(--ink-muted)' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                formatter={formatTooltipValue}
-                contentStyle={{
-                  backgroundColor: 'var(--black)',
-                  border: '1px solid var(--black-line)',
-                  borderRadius: '8px',
-                  fontSize: 12,
-                  color: 'var(--on-black)',
-                }}
-                labelStyle={{ color: 'var(--on-black-mut)' }}
-                cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-              {/* Emerald + coral matching mockup palette (line 181-182) */}
-              <Bar dataKey="income" name={t('dashboard.kpi_income')} fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
-              <Bar dataKey="expense" name={t('dashboard.kpi_expense')} fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={24} />
-            </BarChart>
-          </ResponsiveContainer>
+          <MonthlyFlowChart data={monthlyData} />
         </div>
 
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
@@ -1120,24 +1090,7 @@ export default function DashboardPage() {
               {/* Compact donut + category legend side-by-side */}
               <div className="mt-3 flex items-center gap-3">
                 <div className="shrink-0">
-                  <ResponsiveContainer width={120} height={120}>
-                    <PieChart>
-                      <Pie data={investmentPieData} cx="50%" cy="50%" innerRadius={36} outerRadius={56} paddingAngle={2} dataKey="value" stroke="var(--surface)" strokeWidth={2}>
-                        {investmentPieData.map((_, i) => (
-                          <Cell key={i} fill={CHART_PALETTE[i % CHART_PALETTE.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={formatTooltipValue}
-                        contentStyle={{
-                          backgroundColor: 'var(--surface)',
-                          border: '1px solid var(--border-soft)',
-                          borderRadius: '8px',
-                          fontSize: 12,
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <InvestmentPie data={investmentPieData} palette={CHART_PALETTE} />
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   {investmentPieData.slice(0, 5).map((row, i) => {
