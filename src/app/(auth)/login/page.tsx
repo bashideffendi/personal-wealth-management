@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
 
@@ -55,6 +56,13 @@ export default function LoginPage() {
           Selamat datang <span style={SERIF}>kembali.</span>
         </h1>
         <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masuk untuk melanjutkan.</p>
+      </div>
+
+      <GoogleSignInButton label="Lanjut dengan Google" />
+      <div className="my-4 flex items-center gap-3">
+        <span className="h-px flex-1" style={{ background: 'var(--border)' }} />
+        <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>atau</span>
+        <span className="h-px flex-1" style={{ background: 'var(--border)' }} />
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-3.5">

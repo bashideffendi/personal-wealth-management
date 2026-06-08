@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Check, Loader2 } from 'lucide-react'
+import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 
 function humanError(msg: string): string {
   const m = msg.toLowerCase()
@@ -89,6 +90,13 @@ export default function RegisterPage() {
             </button>
           </div>
         ) : (
+          <>
+          <GoogleSignInButton label="Daftar dengan Google" />
+          <div className="my-4 flex items-center gap-3">
+            <span className="h-px flex-1" style={{ background: 'var(--border)' }} />
+            <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>atau</span>
+            <span className="h-px flex-1" style={{ background: 'var(--border)' }} />
+          </div>
           <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
             {error && (
               <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral)' }}>
@@ -127,6 +135,7 @@ export default function RegisterPage() {
               <Link href="/privacy" className="underline">Kebijakan Privasi</Link>.
             </p>
           </form>
+          </>
         )}
 
       {!success && (
