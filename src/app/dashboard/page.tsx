@@ -13,12 +13,14 @@ import { DashboardCustomizer, DASHBOARD_BLOCKS } from '@/components/dashboard/da
 import { SortableSection } from '@/components/dashboard/sortable-section'
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
@@ -49,7 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
+import { Loader2, ArrowRight, TrendingUp, GripVertical } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // Chart palette per design handoff tokens.css — emerald led, then sky,
@@ -107,7 +109,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v2'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v3'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -157,6 +159,10 @@ export default function DashboardPage() {
   // ---- Custom dashboard: urutan section (drag-drop in-place, Monarch-style) ----
   const [blockOrder, setBlockOrder] = useState<string[]>(readBlockOrder)
   const orderTouched = useRef(false)
+  // Drag overlay — visual yg gerak pas drag (bukan kartu in-place). dragSize =
+  // footprint kartu sumber biar preview-nya seukuran aslinya.
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [dragSize, setDragSize] = useState<{ w: number; h: number } | null>(null)
   const dragSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -183,7 +189,14 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  function handleBlockDragStart(e: DragStartEvent) {
+    setActiveId(e.active.id as string)
+    const r = e.active.rect.current.initial
+    if (r) setDragSize({ w: r.width, h: r.height })
+  }
   function handleBlockDragEnd(e: DragEndEvent) {
+    setActiveId(null)
+    setDragSize(null)
     const { active, over } = e
     if (!over || active.id === over.id) return
     const oldI = blockOrder.indexOf(active.id as string)
@@ -685,15 +698,17 @@ export default function DashboardPage() {
         {t('dashboard.period')}: <span className="font-semibold" style={{ color: 'var(--ink-muted)' }}>{currentMonthYear}</span>
       </p>
 
-      <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
+      <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragStart={handleBlockDragStart} onDragEnd={handleBlockDragEnd} onDragCancel={() => { setActiveId(null); setDragSize(null) }}>
       <SortableContext items={blockOrder} strategy={rectSortingStrategy}>
-      {/* Movable zone — grid 3 kolom, drag per-card + hide. Lebar tiap card
-          dipatok desain (lg:col-span-N); urutan & visibility lewat CSS order +
-          data-block. Card span-3 isi 1 baris penuh; span-2 + span-1 = 1 baris. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 items-start">
+      {/* Movable zone — BENTO grid: 3 kolom × baris 132px, auto-flow dense.
+          Tiap card punya lebar (col-span 1/2/3) + tinggi (row-span 1/2/3) dipatok
+          desain. dense bikin card kecil ngisi celah di sebelah card tinggi (mis.
+          3 card kecil numpuk di kanan kalender). Urutan/visibility via CSS order +
+          data-block. items-stretch + h-full → card ngisi penuh selnya. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[206px] lg:[grid-auto-flow:row_dense] items-stretch">
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder} className="lg:col-span-3">
+      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-1">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -704,8 +719,9 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <SortableSection id="aliran" order={blockOrder} className="lg:col-span-3 s-card p-4 sm:p-6">
-        <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
+      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-2">
+        <div className="s-card p-4 sm:p-6">
+        <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3 shrink-0">
           <div>
             <p className="eyebrow">{t('dashboard.money_flow')}</p>
             <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--ink-soft)' }}>
@@ -735,11 +751,11 @@ export default function DashboardPage() {
 
         {/* Two renders so we can tune layout per breakpoint without media queries
             inside the chart itself. Tailwind hides the inactive one. */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex md:flex-1 md:min-h-0 md:flex-col">
           <MoneyFlowSankey
             income={sankeyData.income}
             outflow={sankeyData.outflow}
-            height={Math.max(360, Math.min(480, 90 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 36))}
+            height="100%"
             emptyMessage={t('dashboard.sankey_empty')}
           />
         </div>
@@ -752,13 +768,14 @@ export default function DashboardPage() {
             emptyMessage={t('dashboard.sankey_empty')}
           />
         </div>
+        </div>
       </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
-      <SortableSection id="transaksi" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-1">
         <RecentTransactions transactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="tagihan" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-1">
         <UpcomingBills
           contracts={contracts}
           debts={activeDebts}
@@ -766,15 +783,15 @@ export default function DashboardPage() {
           recurring={recurringItems}
         />
       </SortableSection>
-      <SortableSection id="tujuan" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
         <GoalsWidget goals={activeGoals} />
       </SortableSection>
 
       {/* Activity calendar (per-card, span 2) */}
-      <SortableSection id="kalender" order={blockOrder} className="lg:col-span-2">
+      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-2">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
         <div className="s-card p-5 sm:p-6 h-full">
-          <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
+          <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
             <div>
               <p className="eyebrow">{t('dashboard.activity_this_month')}</p>
               <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -818,7 +835,7 @@ export default function DashboardPage() {
             return (
               <>
                 {/* Day-of-week header */}
-                <div className="grid grid-cols-7 gap-1 mb-1.5">
+                <div className="grid grid-cols-7 gap-1 mb-1.5 shrink-0">
                   {dayLabels.map((d) => (
                     <div
                       key={d}
@@ -834,9 +851,9 @@ export default function DashboardPage() {
                     On mobile, cells are ~45px wide so we use a TIGHT format
                     (no "Rp" prefix, e.g. "+12,5jt" / "−500rb") and a tiny
                     font so amounts fit inside. */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-1 flex-1 auto-rows-fr min-h-0">
                   {days.map((d, i) => {
-                    if (d.day === null) return <div key={`pad-${i}`} className="aspect-square min-h-[56px]" />
+                    if (d.day === null) return <div key={`pad-${i}`} className="min-h-[38px]" />
                     const isToday = isCurrentMonth && d.day === todayDay
                     const hasIncome = d.income > 0
                     const hasExpense = d.expense > 0
@@ -869,7 +886,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={d.day}
-                        className="aspect-square min-h-[56px] rounded-md relative flex flex-col items-start justify-between p-1 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
+                        className="min-h-[38px] rounded-md relative flex flex-col items-start justify-between p-1 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
                         style={{
                           background: bg || 'var(--surface-2)',
                           border: isToday ? '2px solid var(--c-mint)' : '1px solid var(--border-soft)',
@@ -917,7 +934,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Budget Progress (per-card, span 1) */}
-      <SortableSection id="anggaran" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
         <div className="s-card p-6 h-full">
           <div className="mb-4">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
@@ -963,18 +980,18 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Charts (per-card): Top Categories · Day of Week · Saving Ring */}
-      <SortableSection id="top-kategori" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="top-kategori" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
         <TopCategoriesBar monthTransactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="hari-aktif" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="hari-aktif" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
         <DayOfWeekChart monthTransactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="saving-ring" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="saving-ring" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
       </SortableSection>
 
       {/* Insights & Alerts */}
-      <SortableSection id="insights" order={blockOrder} className="lg:col-span-3">
+      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-2">
         <InsightsPanel
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -987,9 +1004,9 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
-      <SortableSection id="arus-tahunan" order={blockOrder} className="lg:col-span-2">
+      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-2">
         <div className="s-card p-6 h-full">
-          <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
+          <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
             <div>
               <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
               <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -1015,12 +1032,12 @@ export default function DashboardPage() {
               )
             })()}
           </div>
-          <MonthlyFlowChart data={monthlyData} />
+          <div className="flex-1 min-h-0"><MonthlyFlowChart data={monthlyData} fill /></div>
         </div>
       </SortableSection>
 
       {/* Investment allocation donut (per-card, span 1) */}
-      <SortableSection id="portofolio" order={blockOrder} className="lg:col-span-1">
+      <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
         <div className="s-card p-5 sm:p-6 flex flex-col h-full">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1209,6 +1226,23 @@ export default function DashboardPage() {
 
       </div>
       </SortableContext>
+      {/* DragOverlay — preview bersih yg ngambang di atas (portal ke body, gak
+          ke-clip). Seukuran footprint kartu sumber; sumbernya jadi placeholder
+          dashed redup. Cuma silhouette berjudul (bukan remount chart) biar mulus. */}
+      <DragOverlay adjustScale={false} dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2,0,0,1)' }}>
+        {activeId ? (
+          <div
+            className="s-card p-5 flex flex-col gap-2 pointer-events-none shadow-2xl rotate-[1.5deg]"
+            style={{ width: dragSize?.w, height: dragSize?.h, background: 'var(--surface)', border: '1px solid var(--line)' }}
+          >
+            <div className="flex items-center gap-2">
+              <GripVertical className="size-4" style={{ color: 'var(--text-mute)' }} />
+              <p className="eyebrow">{(() => { const b = DASHBOARD_BLOCKS.find((x) => x.id === activeId); return b ? t(`dashboard_customizer.${b.labelKey}`) : activeId })()}</p>
+            </div>
+            <div className="flex-1 rounded-xl" style={{ background: 'var(--surface-2)' }} />
+          </div>
+        ) : null}
+      </DragOverlay>
       </DndContext>
 
     </div>

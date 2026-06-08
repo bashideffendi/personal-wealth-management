@@ -50,7 +50,7 @@ interface MoneyFlowSankeyProps {
   middleLabel?: string          // default "Total Pemasukan"
   surplusLabel?: string         // label for the balancing pseudo-outflow
   deficitLabel?: string         // label for the balancing pseudo-income
-  height?: number
+  height?: number | string
   emptyMessage?: string
   /** When true, render a more compact layout suited to <600px viewports. */
   compact?: boolean

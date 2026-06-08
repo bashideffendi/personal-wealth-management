@@ -18,10 +18,10 @@ import { useT } from '@/lib/i18n/context'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatTooltipValue = (value: any) => formatCurrency(Number(value) || 0)
 
-export function MonthlyFlowChart({ data }: { data: Array<{ month: string; income: number; expense: number }> }) {
+export function MonthlyFlowChart({ data, fill }: { data: Array<{ month: string; income: number; expense: number }>; fill?: boolean }) {
   const t = useT()
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={fill ? '100%' : 260}>
       <BarChart data={data} barGap={4} barCategoryGap="20%">
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
         <XAxis

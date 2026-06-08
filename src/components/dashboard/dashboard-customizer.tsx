@@ -26,19 +26,22 @@ export interface DashBlock {
 const LS_KEY = 'pwm.dashboard.hidden'
 
 /** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
+// Urutan = default visual order yg dipilih supaya bento-grid (dense) pack rapi
+// tanpa celah: Sankey & kalender di atas, lalu kartu kecil numpuk di channel
+// sebelah kalender + sebelah grafik tahunan. Lihat page.tsx packing.
 export const DASHBOARD_BLOCKS: DashBlock[] = [
-  { id: 'ai-insights', labelKey: 'block_ai_insights' },
   { id: 'aliran', labelKey: 'block_aliran' },
-  { id: 'transaksi', labelKey: 'block_transaksi' },
-  { id: 'tagihan', labelKey: 'block_tagihan' },
-  { id: 'tujuan', labelKey: 'block_tujuan' },
-  { id: 'top-kategori', labelKey: 'block_top_kategori' },
-  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
-  { id: 'saving-ring', labelKey: 'block_saving_ring' },
-  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
-  { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'kalender', labelKey: 'block_kalender' },
+  { id: 'transaksi', labelKey: 'block_transaksi' },
+  { id: 'tujuan', labelKey: 'block_tujuan' },
+  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
+  { id: 'saving-ring', labelKey: 'block_saving_ring' },
+  { id: 'top-kategori', labelKey: 'block_top_kategori' },
+  { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'anggaran', labelKey: 'block_anggaran' },
+  { id: 'tagihan', labelKey: 'block_tagihan' },
+  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
+  { id: 'ai-insights', labelKey: 'block_ai_insights' },
   { id: 'insights', labelKey: 'block_insights' },
 ]
 
