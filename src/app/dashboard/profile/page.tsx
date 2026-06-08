@@ -28,6 +28,7 @@ import {
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useLock } from '@/components/security/lock-provider'
+import { MfaSetup } from '@/components/security/mfa-setup'
 import { ExportDataButton } from '@/components/export-data-button'
 import { DeleteAccountButton } from '@/components/delete-account-button'
 import { useT } from '@/lib/i18n/context'
@@ -609,6 +610,8 @@ export default function ProfilePage() {
               {t('profile.update_password_btn')}
             </Button>
           </section>
+
+          <MfaSetup />
 
           <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-center gap-2">

@@ -6,6 +6,26 @@
 
 export const messages = {
   id: {
+    mfa: {
+      title: "Autentikasi Dua Faktor (2FA)",
+      desc: "Lapisan keamanan ekstra — kode dari app authenticator tiap kali login.",
+      active: "Aktif",
+      active_desc: "Akunmu dilindungi kode authenticator. Login butuh password + kode.",
+      enable: "Aktifkan 2FA",
+      disable: "Matikan 2FA",
+      scan_title: "Scan QR ini di app authenticator",
+      scan_desc: "Google Authenticator, Authy, 1Password, dll. Atau masukin kode rahasia ini manual:",
+      code_label: "Masukin 6 digit dari app:",
+      verify: "Verifikasi & aktifkan",
+      cancel: "Batal",
+      enroll_failed: "Gagal mulai 2FA. Coba lagi.",
+      verify_failed: "Gagal verifikasi. Coba lagi.",
+      code_wrong: "Kode salah atau kedaluwarsa. Coba kode terbaru.",
+      enabled: "2FA aktif. Akunmu lebih aman.",
+      disabled: "2FA dimatikan.",
+      disable_confirm: "Matikan 2FA? Akun jadi cuma terlindungi password.",
+      disable_failed: "Gagal matikan 2FA.",
+    },
     watchlist: {
       notLoggedIn: "Belum login",
       addedToWatchlist: "ditambah ke watchlist",
@@ -3002,6 +3022,26 @@ export const messages = {
     },
   },
   en: {
+    mfa: {
+      title: "Two-Factor Authentication (2FA)",
+      desc: "An extra layer of security — a code from your authenticator app at each login.",
+      active: "On",
+      active_desc: "Your account is protected by an authenticator code. Login needs password + code.",
+      enable: "Enable 2FA",
+      disable: "Disable 2FA",
+      scan_title: "Scan this QR in your authenticator app",
+      scan_desc: "Google Authenticator, Authy, 1Password, etc. Or enter this secret key manually:",
+      code_label: "Enter the 6-digit code from the app:",
+      verify: "Verify & enable",
+      cancel: "Cancel",
+      enroll_failed: "Couldn't start 2FA. Please try again.",
+      verify_failed: "Verification failed. Please try again.",
+      code_wrong: "Wrong or expired code. Try the latest one.",
+      enabled: "2FA enabled. Your account is safer.",
+      disabled: "2FA disabled.",
+      disable_confirm: "Disable 2FA? Your account will only be protected by your password.",
+      disable_failed: "Couldn't disable 2FA.",
+    },
     watchlist: {
       notLoggedIn: "Not logged in",
       addedToWatchlist: "added to watchlist",

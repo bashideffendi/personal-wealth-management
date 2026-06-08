@@ -32,6 +32,8 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [mfa, setMfa] = useState<{ factorId: string; challengeId: string } | null>(null)
+  const [mfaCode, setMfaCode] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,12 +43,78 @@ export default function LoginPage() {
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError(humanError(error.message)); return }
+      // 2FA step-up — if a verified authenticator factor exists, require the code.
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aal && aal.nextLevel === 'aal2' && aal.nextLevel !== aal.currentLevel) {
+        const { data: factors } = await supabase.auth.mfa.listFactors()
+        const totp = factors?.totp?.find((f: { id: string; status: string }) => f.status === 'verified')
+        if (totp) {
+          const { data: ch, error: ce } = await supabase.auth.mfa.challenge({ factorId: totp.id })
+          if (ce || !ch) { setError('Gagal mulai verifikasi 2FA. Coba lagi.'); return }
+          setMfaCode('')
+          setMfa({ factorId: totp.id, challengeId: ch.id })
+          return
+        }
+      }
       router.push('/dashboard')
     } catch {
       setError('Ada masalah. Coba lagi sebentar.')
     } finally {
       setLoading(false)
     }
+  }
+
+  async function verifyMfa(e: React.FormEvent) {
+    e.preventDefault()
+    if (!mfa) return
+    setError(null)
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.mfa.verify({ factorId: mfa.factorId, challengeId: mfa.challengeId, code: mfaCode.replace(/\D/g, '') })
+      if (error) { setError('Kode salah atau kedaluwarsa. Coba kode terbaru.'); return }
+      router.push('/dashboard')
+    } catch {
+      setError('Ada masalah. Coba lagi sebentar.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ── 2FA step (shown after password when an authenticator factor is enrolled) ──
+  if (mfa) {
+    return (
+      <>
+        <div className="text-center mb-8">
+          <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
+            Verifikasi <span style={SERIF}>2 langkah.</span>
+          </h1>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masukin kode 6 digit dari app authenticator kamu.</p>
+        </div>
+        <form onSubmit={verifyMfa} className="flex flex-col gap-3.5">
+          {error && (
+            <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral)' }}>
+              {error}
+            </div>
+          )}
+          <Input
+            value={mfaCode}
+            onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            placeholder="000000"
+            className="h-12 text-center tracking-[0.4em] font-mono text-xl"
+          />
+          <Button type="submit" disabled={loading || mfaCode.length < 6} className="mt-1 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
+            {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Verifikasi'}
+          </Button>
+        </form>
+        <p className="mt-6 text-center text-sm">
+          <button type="button" onClick={() => { setMfa(null); setMfaCode(''); setError(null) }} className="font-medium hover:underline" style={{ color: 'var(--ink-muted)' }}>← Kembali</button>
+        </p>
+      </>
+    )
   }
 
   return (
