@@ -51,13 +51,16 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Public routes that anonymous users can access without redirect:
-  //   - /                 → landing/marketing page
-  //   - /login            → login form
-  //   - /register         → register form
-  //   - /forgot-password  → password reset request
-  //   - /terms, /privacy  → legal pages
-  //   - /auth/*           → OAuth callback handler
-  //   - /api/*            → public API routes (have their own auth gates)
+  //   - /                                   → landing
+  //   - /login /register /forgot-password   → auth forms
+  //   - /features /about /contact           → marketing pages
+  //   - /terms /privacy /refund             → legal pages
+  //   - /auth/*                             → OAuth callback handler
+  //   - /api/*                              → public API routes (own auth gates)
+  //   - static files at root (sw.js, manifest.json, offline.html, robots.txt,
+  //     sitemap.xml, …) — the matcher only excludes _next + images, so these
+  //     .js/.json/.html/.txt/.xml files would otherwise be gated and break the
+  //     PWA/SEO. Matched by extension so new public assets don't need adding.
   // Any other path under an unauthenticated session → redirect to /login.
   const path = request.nextUrl.pathname
   const isPublicRoute =
@@ -65,10 +68,15 @@ export async function updateSession(request: NextRequest) {
     path.startsWith('/login') ||
     path.startsWith('/register') ||
     path.startsWith('/forgot-password') ||
+    path.startsWith('/features') ||
+    path.startsWith('/about') ||
+    path.startsWith('/contact') ||
     path.startsWith('/terms') ||
     path.startsWith('/privacy') ||
+    path.startsWith('/refund') ||
     path.startsWith('/auth') ||
-    path.startsWith('/api')
+    path.startsWith('/api') ||
+    /\.(?:js|json|html|txt|xml|webmanifest|ico)$/.test(path)
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
