@@ -145,13 +145,17 @@ export default async function LandingPage() {
               <div className="ml-3 hidden sm:flex items-center rounded-md px-3 py-1 text-[11px] font-medium" style={{ background: 'var(--bg)', color: 'var(--ink-soft)' }}>klunting.com/dashboard</div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/hero-dashboard.png"
-              alt="Tampilan dashboard Klunting: net worth, grafik pertumbuhan, dan ringkasan harian"
-              width={1800}
-              height={792}
-              className="w-full h-auto block"
-            />
+            <picture>
+              <source srcSet="/hero-dashboard.webp" type="image/webp" />
+              <img
+                src="/hero-dashboard.png"
+                alt="Tampilan dashboard Klunting: net worth, grafik pertumbuhan, dan ringkasan harian"
+                width={1800}
+                height={792}
+                fetchPriority="high"
+                className="w-full h-auto block"
+              />
+            </picture>
           </div>
         </div>
       </section>

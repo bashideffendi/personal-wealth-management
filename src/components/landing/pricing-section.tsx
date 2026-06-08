@@ -40,10 +40,10 @@ export function PricingSection() {
         <div className="max-w-2xl mb-8">
           <p className="eyebrow">Harga</p>
           <h2 className="display mt-3" style={{ fontSize: 'clamp(28px, 4vw, 46px)', lineHeight: 1.1 }}>
-            Sadar ke mana uangmu pergi bisa balikin jutaan setahun.
+            Satu langganan, seluruh fitur. Tanpa biaya tersembunyi.
           </h2>
           <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
-            Coba dulu 21 hari, gratis, tanpa kartu kredit. Kalau cocok, harganya lebih murah dari sekali nongkrong.
+            Coba 21 hari gratis, tanpa kartu kredit. Batalkan kapan saja sebelum trial berakhir, tanpa potongan.
           </p>
         </div>
 
@@ -74,13 +74,13 @@ export function PricingSection() {
           {/* Pro */}
           <div className="rounded-2xl p-7 border-2 relative" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
             <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', letterSpacing: '0.08em' }}>
-              Paling pas
+              Paling populer
             </span>
             <div className="flex items-center gap-2 mb-3">
               <Crown className="size-5" style={{ color: 'var(--ink)' }} />
               <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Pro</h3>
             </div>
-            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Buat kamu yang serius atur keuangan & investasi.</p>
+            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Untuk kamu yang serius mengatur keuangan dan investasi.</p>
             <div className="mt-5 mb-0.5 flex items-baseline gap-2">
               <span className="num text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>{fmt(annual ? 149000 : 19000)}</span>
               <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>{annual ? '/tahun' : '/bulan'}</span>
@@ -91,7 +91,7 @@ export function PricingSection() {
                 <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}><span style={{ textDecoration: 'line-through' }}>Rp 249.000</span> · harga promo peluncuran</p>
               </>
             ) : (
-              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>Tagih tiap bulan · batal kapan aja</p>
+              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>Ditagih tiap bulan · batal kapan saja</p>
             )}
             <Link href="/register" className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold btn-primary">Coba gratis 21 hari</Link>
             <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
@@ -107,7 +107,7 @@ export function PricingSection() {
               <Users className="size-5" style={{ color: 'var(--ink-muted)' }} />
               <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Max</h3>
             </div>
-            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Buat keluarga — kelola keuangan bareng pasangan & anggota.</p>
+            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Untuk keluarga — kelola keuangan bersama pasangan dan anggota lain.</p>
             <div className="mt-5 mb-0.5 flex items-baseline gap-2">
               <span className="num text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>{fmt(annual ? 299000 : 35000)}</span>
               <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>{annual ? '/tahun' : '/bulan'}</span>
@@ -118,7 +118,7 @@ export function PricingSection() {
                 <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}><span style={{ textDecoration: 'line-through' }}>Rp 499.000</span> · harga promo peluncuran</p>
               </>
             ) : (
-              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>Tagih tiap bulan · buat sekeluarga</p>
+              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>Ditagih tiap bulan · untuk sekeluarga</p>
             )}
             <Link href="/register" className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>Coba gratis 21 hari</Link>
             <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
@@ -130,8 +130,8 @@ export function PricingSection() {
         </div>
 
         <p className="mt-6 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>
-          Tanpa auto-renew — kamu gak akan kepotong diam-diam. Trial 21 hari akses penuh tanpa kartu.
-          Belum ada paket gratis permanen.
+          Tanpa auto-renew — langganan tidak diperpanjang otomatis. Trial 21 hari akses penuh tanpa
+          kartu kredit. Belum ada paket gratis permanen.
         </p>
       </div>
     </section>

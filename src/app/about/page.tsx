@@ -47,8 +47,8 @@ export default function AboutPage() {
             <p>
               Keuangan kebanyakan orang tersebar di banyak tempat: rekening di beberapa bank, saldo
               e-wallet, portofolio investasi, cicilan, dan catatan pengeluaran yang jarang lengkap.
-              Akibatnya sulit menjawab satu pertanyaan sederhana — sebenarnya, posisi keuanganku
-              seperti apa?
+              Akibatnya, satu pertanyaan sederhana jadi sulit dijawab: sebenarnya, seperti apa
+              posisi keuanganku saat ini?
             </p>
             <p>
               Klunting dibuat untuk menjawab itu. Satu tempat untuk melihat seluruh aset dan utang
