@@ -1,0 +1,80 @@
+'use client'
+
+/**
+ * Lazy boundary for the investment overview charts (equity area + allocation
+ * donut + dividend bar) — keeps recharts out of the route's initial JS. JSX
+ * copied verbatim; data + the up/down flag passed as props.
+ */
+
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, AreaChart, Area,
+} from 'recharts'
+import { formatCurrency } from '@/lib/utils'
+import { useT } from '@/lib/i18n/context'
+
+export function EquityArea({ data, up }: { data: Array<{ value: number }>; up: boolean }) {
+  const t = useT()
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+        <defs>
+          <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Tooltip
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.value')]}
+          contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
+        />
+        <Area type="monotone" dataKey="value" stroke={up ? '#10B981' : '#F43F5E'} strokeWidth={2} fill="url(#equityFill)" />
+      </AreaChart>
+    </ResponsiveContainer>
+  )
+}
+
+export function AllocationDonut({ data }: { data: Array<{ value: number; color: string }> }) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="transparent">
+          {data.map((entry, i) => (
+            <Cell key={i} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(v: any) => formatCurrency(Number(v) || 0)}
+          contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  )
+}
+
+export function DividendBar({ data }: { data: Array<{ label: string; total: number }> }) {
+  const t = useT()
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+        <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
+        <Tooltip
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.dividend')]}
+          cursor={{ fill: 'var(--surface-2)' }}
+          contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
+        />
+        <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+          {(() => {
+            const max = Math.max(...data.map((x) => x.total), 1)
+            return data.map((m, i) => (
+              <Cell key={i} fill={m.total >= max && m.total > 0 ? '#10B981' : 'rgba(16,185,129,0.28)'} />
+            ))
+          })()}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}

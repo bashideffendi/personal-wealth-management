@@ -2,18 +2,25 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
 import { projectNetWorth } from '@/lib/net-worth-projection'
 import type { PayoffDebt } from '@/lib/debt-payoff'
-import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine,
-} from 'recharts'
+import dynamic from 'next/dynamic'
 import { Loader2, TrendingUp, TrendingDown, Camera, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useT } from '@/lib/i18n/context'
+
+// Defer recharts out of the net-worth route's initial JS (loads on chart mount).
+const ProjectionChart = dynamic(
+  () => import('./net-worth-charts').then((m) => m.ProjectionChart),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: '100%', background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
+const HistoryChart = dynamic(
+  () => import('./net-worth-charts').then((m) => m.HistoryChart),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 300, background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
 
 interface NetWorthData {
   cashAndEquivalent: number
@@ -240,16 +247,7 @@ export default function NetWorthPage() {
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
               <div className="mt-4" style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={projChartData} margin={{ top: 6, right: 10, bottom: 0, left: -8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} interval="preserveStartEnd" minTickGap={28} tickLine={false} axisLine={false} />
-                    <YAxis tickFormatter={(v) => formatCompactCurrency(Number(v))} tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} width={62} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(v) => formatCurrency(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }} />
-                    <ReferenceLine y={0} stroke="var(--border)" />
-                    <Line type="monotone" dataKey="netWorth" name={t('networth.net_worth')} stroke={projAccent} strokeWidth={2} dot={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <ProjectionChart data={projChartData} accent={projAccent} />
               </div>
               <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
             </>
@@ -470,33 +468,7 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
         </div>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={chartData} margin={{ top: 10, right: 8, bottom: 0, left: 8 }}>
-              <defs>
-                <linearGradient id="g-assets" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity={0.85} /><stop offset="100%" stopColor="#10B981" stopOpacity={0.55} /></linearGradient>
-                <linearGradient id="g-debts" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#F43F5E" stopOpacity={0.85} /><stop offset="100%" stopColor="#F43F5E" stopOpacity={0.55} /></linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-              <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
-              <XAxis dataKey="date" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
-              <YAxis fontSize={11} tickFormatter={(v: number) => formatCompactCurrency(v)} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} width={70} />
-              <Tooltip content={({ active, payload }) => {
-                if (!active || !payload?.length) return null
-                const p = payload[0].payload as { rawDate: string; assets: number; debts: number; net: number }
-                return (
-                  <div className="rounded-md border px-3 py-2 text-xs shadow-md" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
-                    <p className="font-semibold mb-1.5">{new Date(p.rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    <p className="num tabular flex justify-between gap-3"><span style={{ color: '#10B981' }}>● {t('networth.assets')}</span><span>{formatCurrency(p.assets)}</span></p>
-                    <p className="num tabular flex justify-between gap-3"><span style={{ color: '#F43F5E' }}>● {t('networth.debt')}</span><span>{formatCurrency(Math.abs(p.debts))}</span></p>
-                    <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}><span style={{ color: '#8B5CF6' }}>● {t('networth.net_worth')}</span><span>{formatCurrency(p.net)}</span></p>
-                  </div>
-                )
-              }} />
-              <Bar dataKey="assets" name={t('networth.assets')} fill="url(#g-assets)" stackId="a" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="debts" name={t('networth.debt')} fill="url(#g-debts)" stackId="a" radius={[0, 0, 4, 4]} />
-              <Line type="monotone" dataKey="net" name={t('networth.net_worth')} stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 3, fill: '#8B5CF6', stroke: 'var(--surface)', strokeWidth: 2 }} activeDot={{ r: 5 }} />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <HistoryChart data={chartData} />
           {stats && (
             <div className="mt-5 pt-4 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
               <ChangeStat label={t('networth.vs_last_month')} change={stats.vs1mo} />

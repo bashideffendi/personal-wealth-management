@@ -8,13 +8,18 @@ import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, AreaChart, Area } from 'recharts'
+import dynamic from 'next/dynamic'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
 import { useT } from '@/lib/i18n/context'
+
+// Defer recharts out of the investment route's initial JS (loads on chart mount).
+const EquityArea = dynamic(() => import('./investment-charts').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const AllocationDonut = dynamic(() => import('./investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const DividendBar = dynamic(() => import('./investment-charts').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
@@ -410,22 +415,7 @@ export default function InvestmentOverviewPage() {
               </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0.22} />
-                    <stop offset="100%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Tooltip
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.value')]}
-                  contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
-                />
-                <Area type="monotone" dataKey="value" stroke={up ? '#10B981' : '#F43F5E'} strokeWidth={2} fill="url(#equityFill)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <EquityArea data={chartData} up={up} />
           )}
         </div>
 
@@ -618,35 +608,7 @@ export default function InvestmentOverviewPage() {
           ) : (
             <>
               <div className="relative" style={{ height: 180 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={donut}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={80}
-                      paddingAngle={3}
-                      dataKey="value"
-                      stroke="transparent"
-                    >
-                      {donut.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      formatter={(v: any) => formatCurrency(Number(v) || 0)}
-                      contentStyle={{
-                        background: 'var(--black)',
-                        color: 'var(--on-black)',
-                        border: '1px solid var(--black-line)',
-                        borderRadius: 10,
-                        fontSize: 12,
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <AllocationDonut data={donut} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                     {donut.length} {t('investment.classes')}
@@ -836,25 +798,7 @@ export default function InvestmentOverviewPage() {
             </div>
           ) : (
             <div style={{ height: 160 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dividen6} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
-                  <Tooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.dividend')]}
-                    cursor={{ fill: 'var(--surface-2)' }}
-                    contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
-                  />
-                  <Bar dataKey="total" radius={[6, 6, 0, 0]}>
-                    {(() => {
-                      const max = Math.max(...dividen6.map((x) => x.total), 1)
-                      return dividen6.map((m, i) => (
-                        <Cell key={i} fill={m.total >= max && m.total > 0 ? '#10B981' : 'rgba(16,185,129,0.28)'} />
-                      ))
-                    })()}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <DividendBar data={dividen6} />
             </div>
           )}
         </div>

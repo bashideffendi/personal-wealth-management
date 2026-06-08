@@ -7,9 +7,17 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Printer, ChevronLeft, ChevronRight } from 'lucide-react'
-import { MonthlyReportBody } from '@/components/report/monthly-report-body'
+import dynamic from 'next/dynamic'
 import { ReportCustomizer } from '@/components/report/report-customizer'
 import { useT } from '@/lib/i18n/context'
+
+// Defer the report body (recharts bar + sankey) out of the screen route's
+// initial JS. The /print route keeps its static import so PDF rendering is
+// unaffected.
+const MonthlyReportBody = dynamic(
+  () => import('@/components/report/monthly-report-body').then((m) => m.MonthlyReportBody),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-xl" style={{ height: 420, background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
 
 export default function MonthlyReportPage() {
   const t = useT()

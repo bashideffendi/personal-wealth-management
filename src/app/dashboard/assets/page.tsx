@@ -9,10 +9,17 @@ import { useT } from '@/lib/i18n/context'
 import type { AssetNonLiquid, Investment } from '@/types'
 
 import { Loader2, ArrowUpRight } from 'lucide-react'
-import {
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-} from 'recharts'
+import dynamic from 'next/dynamic'
+
+// Defer recharts out of the assets route's initial JS (loads on chart mount).
+const AllocationPie = dynamic(
+  () => import('./assets-charts').then((m) => m.AllocationPie),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 220, background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
+const NonLiquidBar = dynamic(
+  () => import('./assets-charts').then((m) => m.NonLiquidBar),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 260, background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
 
 const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
   stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
@@ -170,20 +177,7 @@ export default function AssetsOverviewPage() {
             </div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={allocation} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" stroke="transparent">
-                    {allocation.map((_, i) => (
-                      <Cell key={i} fill={['#10B981','#0EA5E9','#F59E0B','#F43F5E','#8B5CF6','#34D399','#7DD3FC','#737373'][i % 8]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(v: any) => formatCurrency(Number(v) || 0)}
-                    contentStyle={{ background: '#fff', border: '1px solid var(--border-soft)', borderRadius: 10, fontSize: 12 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <AllocationPie data={allocation} />
               <div className="mt-3 space-y-1.5">
                 {allocation.map((row, i) => {
                   const color = ['#10B981','#0EA5E9','#F59E0B','#F43F5E','#8B5CF6','#34D399','#7DD3FC','#737373'][i % 8]
@@ -211,25 +205,7 @@ export default function AssetsOverviewPage() {
               {t('assets.no_non_liquid_assets')}
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={Object.entries(nonLiquidByCategory).map(([k, v]) => ({ name: ({ property: 'Properti', vehicle: 'Kendaraan', personal_item: 'Barang Pribadi' } as Record<string, string>)[k] ?? k, value: v, color: categoryColors[k] ?? '#10B981' }))}>
-                <defs>
-                  <linearGradient id="bar-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#047857" stopOpacity={0.85} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-                <XAxis dataKey="name" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-                <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(v: any) => formatCurrency(Number(v) || 0)}
-                  contentStyle={{ background: '#fff', border: '1px solid var(--border-soft)', borderRadius: 10, fontSize: 12 }}
-                />
-                <Bar dataKey="value" fill="url(#bar-grad)" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <NonLiquidBar data={nonLiquidByCategory} categoryColors={categoryColors} />
           )}
         </div>
       </div>
