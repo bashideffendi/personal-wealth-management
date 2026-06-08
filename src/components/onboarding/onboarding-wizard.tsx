@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   Wallet,
@@ -54,12 +55,16 @@ const NEXT_ACTION: Record<FocusKey, { label: string; href: string; icon: LucideI
 
 const ACCOUNT_TYPE_ENTRIES = Object.entries(ACCOUNT_TYPES) as [keyof typeof ACCOUNT_TYPES, string][]
 const TOTAL_STEPS = 4
+// UU PDP consent version — bump when the privacy/terms materially change so we
+// can prompt existing users to re-consent later.
+const CONSENT_VERSION = 'pdp-2026-06'
 
 export function OnboardingWizard({ firstName }: { firstName: string }) {
   const router = useRouter()
   const t = useT()
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [consent, setConsent] = useState(false)
 
   // Step 0 — fokus
   const [focus, setFocus] = useState<FocusKey[]>([])
@@ -108,6 +113,12 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
 
   async function complete(dest = '/dashboard') {
     if (submitting) return
+    // UU PDP: explicit consent required before we finish setup / process data.
+    if (!consent) {
+      setStep(TOTAL_STEPS - 1)
+      toast.error(t('onboarding.consent_required'))
+      return
+    }
     setSubmitting(true)
     const supabase = createClient()
     const {
@@ -130,6 +141,19 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
       if (error || !data?.length) console.warn('[onboarding] simpan fokus gagal:', error?.message)
     } catch (e) {
       console.warn('[onboarding] simpan fokus error:', e)
+    }
+
+    // 1b) Catat consent UU PDP — upsert terpisah & best-effort, supaya kalau
+    // kolom belum ada (migration 046 belum di-apply) onboarding tetap jalan.
+    try {
+      await supabase
+        .from('profiles')
+        .upsert(
+          { id: user.id, consent_at: new Date().toISOString(), consent_version: CONSENT_VERSION },
+          { onConflict: 'id' },
+        )
+    } catch {
+      /* migration 046 belum di-apply — jangan blokir onboarding */
     }
 
     // 2) Buat akun pertama kalau diisi.
@@ -414,6 +438,26 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                   ? t('onboarding.done_desc_focused')
                   : t('onboarding.done_desc_default')}
               </p>
+
+              {/* UU PDP consent — wajib dicentang sebelum selesai */}
+              <label
+                className="flex items-start gap-2.5 mb-4 cursor-pointer rounded-xl p-3"
+                style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 size-4 shrink-0"
+                  style={{ accentColor: 'var(--c-primary)' }}
+                />
+                <span className="t-sm" style={{ color: 'var(--ink-soft)' }}>
+                  {t('onboarding.consent_text')}{' '}
+                  <Link href="/privacy" target="_blank" className="underline" style={{ color: 'var(--ink)' }}>{t('onboarding.consent_privacy')}</Link>
+                  {' '}{t('onboarding.consent_and')}{' '}
+                  <Link href="/terms" target="_blank" className="underline" style={{ color: 'var(--ink)' }}>{t('onboarding.consent_terms')}</Link>.
+                </span>
+              </label>
 
               <div className="space-y-2 mb-2">
                 {(focus.length > 0 ? focus : (['budget', 'networth'] as FocusKey[])).map((k) => {

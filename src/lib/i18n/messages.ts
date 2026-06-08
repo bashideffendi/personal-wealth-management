@@ -774,6 +774,11 @@ export const messages = {
       save: "Simpan",
     },
     onboarding: {
+      consent_required: "Centang persetujuan dulu untuk lanjut.",
+      consent_text: "Aku setuju Klunting memproses data keuanganku sesuai",
+      consent_privacy: "Kebijakan Privasi",
+      consent_and: "dan",
+      consent_terms: "Syarat & Ketentuan",
       account_save_failed: "Akun gagal disimpan",
       toast_ready: "Siap",
       toast_welcome: "Selamat datang di Klunting.",
@@ -3765,6 +3770,11 @@ export const messages = {
       save: "Save",
     },
     onboarding: {
+      consent_required: "Please agree to the terms to continue.",
+      consent_text: "I agree that Klunting may process my financial data per the",
+      consent_privacy: "Privacy Policy",
+      consent_and: "and",
+      consent_terms: "Terms of Service",
       account_save_failed: "Failed to save account",
       toast_ready: "All set",
       toast_welcome: "Welcome to Klunting.",
