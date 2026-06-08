@@ -30,7 +30,7 @@ export default function RefundPage() {
 
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>1. Coba dulu, baru bayar</h2>
-            <p>Setiap pengguna baru dapat <strong>uji coba (trial) 14 hari akses penuh tanpa kartu kredit</strong>. Manfaatkan masa trial untuk memastikan Klunting cocok sebelum melakukan pembayaran. Kamu tidak akan ditagih apa pun selama atau setelah trial kecuali kamu memilih berlangganan secara aktif.</p>
+            <p>Setiap pengguna baru dapat <strong>uji coba (trial) 21 hari akses penuh tanpa kartu kredit</strong>. Manfaatkan masa trial untuk memastikan Klunting cocok sebelum melakukan pembayaran. Kamu tidak akan ditagih apa pun selama atau setelah trial kecuali kamu memilih berlangganan secara aktif.</p>
           </section>
 
           <section>

@@ -7,7 +7,7 @@ import type { Metadata } from 'next'
 // unchanged — the (auth) group layout already provides the wrapper.
 export const metadata: Metadata = {
   title: 'Bikin Akun',
-  description: 'Bikin akun Klunting — coba 14 hari gratis, tanpa kartu kredit.',
+  description: 'Bikin akun Klunting — coba 21 hari gratis, tanpa kartu kredit.',
 }
 
 export default function RegisterLayout({

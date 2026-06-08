@@ -75,7 +75,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>4. Trial, langganan & pembayaran</h2>
             <ul className="space-y-1.5 list-disc pl-5">
-              <li>Pengguna baru mendapat <strong>uji coba (trial) 14 hari</strong> akses penuh, tanpa kartu kredit.</li>
+              <li>Pengguna baru mendapat <strong>uji coba (trial) 21 hari</strong> akses penuh, tanpa kartu kredit.</li>
               <li>Setelah trial, kamu memilih paket berbayar (<strong>Pro</strong> atau <strong>Max</strong>) dengan <strong>penagihan tahunan</strong>.</li>
               <li><strong>Tanpa perpanjangan otomatis (no auto-renew).</strong> Kami mengirim notifikasi sebelum masa langganan habis, dan kamu yang memutuskan untuk memperpanjang secara manual.</li>
               <li>Harga dapat berubah; perubahan hanya berlaku untuk periode langganan berikutnya, bukan yang sedang berjalan.</li>
@@ -94,7 +94,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>6. Pengembalian dana</h2>
             <p>
-              Karena ada trial 14 hari gratis untuk mencoba sebelum membayar, biaya langganan tahunan pada umumnya tidak
+              Karena ada trial 21 hari gratis untuk mencoba sebelum membayar, biaya langganan tahunan pada umumnya tidak
               dapat dikembalikan setelah pembayaran. Bila ada kendala, hubungi kami dan akan kami tinjau secara wajar.
             </p>
           </section>

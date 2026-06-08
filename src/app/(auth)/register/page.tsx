@@ -59,7 +59,7 @@ export default function RegisterPage() {
           <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
             Buat akun Klunting.
           </h1>
-          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 14 hari gratis, tanpa kartu kredit.</p>
+          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 21 hari gratis, tanpa kartu kredit.</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
             {['Akses penuh', 'Tanpa kartu kredit', 'Batal kapan saja'].map((t) => (
               <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
@@ -126,7 +126,7 @@ export default function RegisterPage() {
             </div>
 
             <Button type="submit" disabled={loading} className="mt-2 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
-              {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Coba gratis 14 hari'}
+              {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Coba gratis 21 hari'}
             </Button>
 
             <p className="text-center text-[11px] leading-relaxed mt-1" style={{ color: 'var(--ink-soft)' }}>
