@@ -50,3 +50,8 @@ next-env.d.ts
 # Claude Code local config (per-developer)
 .claude/
 
+
+# Local agent skills (installed via `npx skills`, used in-editor only)
+.agents/
+.claude/skills/
+skills-lock.json
