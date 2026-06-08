@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 import { rateLimit } from '@/lib/rate-limit'
 import {
   EXPENSE_CATEGORIES,
@@ -66,11 +65,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Charge 1 credit before parsing
-  const credit = await consumeAICredits(supabase, user.id, 'nl_parse')
-  if (!credit.ok) {
-    return NextResponse.json({ error: credit.error }, { status: credit.status })
-  }
+  // Logging a transaction (NL/voice quick-add) is UNLIMITED & free — frequency
+  // of logging is the #1 retention signal, so we never charge credits for it.
+  // The per-user burst guard above is the only throttle.
 
   let body: { text?: string }
   try {
@@ -142,8 +139,6 @@ export async function POST(request: NextRequest) {
 
     const block = response.content.find((b) => b.type === 'tool_use')
     if (!block || block.type !== 'tool_use') {
-      // Refund — Claude responded but didn't actually parse
-      await refundAICredits(supabase, user.id, 'nl_parse')
       return NextResponse.json(
         { error: 'Claude tidak memanggil parser' },
         { status: 502 },
@@ -158,8 +153,6 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (err) {
-    // Refund credits — user shouldn't pay for a failed call
-    await refundAICredits(supabase, user.id, 'nl_parse')
     if (err instanceof Anthropic.APIError) {
       return NextResponse.json(
         { error: `Anthropic API error: ${err.message}` },
