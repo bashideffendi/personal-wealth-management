@@ -30,9 +30,7 @@ import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
 import { MonthChangeStrip } from '@/components/dashboard/month-change-strip'
 import { TodayStrip } from '@/components/dashboard/today-strip'
 import { KpiCard } from '@/components/dashboard/kpi-card'
-import { TopCategoriesBar } from '@/components/dashboard/top-categories-bar'
-import { DayOfWeekChart } from '@/components/dashboard/day-of-week-chart'
-import { SavingRateRing } from '@/components/dashboard/saving-rate-ring'
+import { AssetAllocationCard } from '@/components/dashboard/asset-allocation-card'
 import { UpcomingBills } from '@/components/dashboard/upcoming-bills'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { AccountsCard } from '@/components/dashboard/accounts-card'
@@ -110,7 +108,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v6'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v7'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -722,7 +720,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
+      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -732,13 +730,33 @@ export default function DashboardPage() {
         />
       </SortableSection>
 
-      {/* Skor Kesehatan Finansial — dipindah dari fixed band ke grid (advisory)
-          biar fixed band ramping & Sankey naik lebih ke atas. */}
+      {/* Skor Kesehatan Finansial — skor + breakdown 7-indikator (2 kolom) */}
       <SortableSection id="kesehatan" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
         <FinancialHealthCard
+          part="score"
           result={fhsResult}
           liquidBalance={liquidTotal}
           monthlyExpense={fhsResult._monthlyExpense}
+        />
+      </SortableSection>
+
+      {/* Cash Coverage — runway likuiditas (kartu terpisah, 1 kolom) */}
+      <SortableSection id="cash-coverage" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
+        <FinancialHealthCard
+          part="coverage"
+          result={fhsResult}
+          liquidBalance={liquidTotal}
+          monthlyExpense={fhsResult._monthlyExpense}
+        />
+      </SortableSection>
+
+      {/* Alokasi Kekayaan — komposisi aset (kas / investasi / aset lain) */}
+      <SortableSection id="alokasi" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
+        <AssetAllocationCard
+          liquid={liquidTotal}
+          nonLiquid={nonLiquidTotal}
+          investment={investments.reduce((s, i) => s + (i.total_value || 0), 0)}
+          debt={debtTotal}
         />
       </SortableSection>
 
@@ -1003,17 +1021,6 @@ export default function DashboardPage() {
         </div>
       </SortableSection>
 
-      {/* Charts (per-card): Top Categories · Day of Week · Saving Ring */}
-      <SortableSection id="top-kategori" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
-        <TopCategoriesBar monthTransactions={monthTransactions} />
-      </SortableSection>
-      <SortableSection id="hari-aktif" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
-        <DayOfWeekChart monthTransactions={monthTransactions} />
-      </SortableSection>
-      <SortableSection id="saving-ring" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
-        <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
-      </SortableSection>
-
       {/* Insights & Alerts */}
       <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
         <InsightsPanel
@@ -1027,19 +1034,6 @@ export default function DashboardPage() {
           netCashflow={totals.net}
         />
       </SortableSection>
-      <SortableSection id="proyeksi" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
-        <InsightsPanel
-          part="forecast"
-          monthTransactions={monthTransactions}
-          yearTransactions={yearTransactions}
-          monthBudgets={monthBudgets}
-          creditCards={creditCards}
-          contracts={contracts}
-          savingRate={totals.savingRate}
-          netCashflow={totals.net}
-        />
-      </SortableSection>
-
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
       <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
         <div className="s-card p-6 h-full">

@@ -25,10 +25,9 @@ export interface DashBlock {
 
 const LS_KEY = 'pwm.dashboard.hidden.v2'
 
-/** Default-hidden di dashboard baru (declutter ala Monarch) — tetap bisa diaktifin
- *  lewat panel Atur. saving-rate udah muncul di KPI+health; top-kategori subset
- *  Sankey; hari-aktif nice-to-have; proyeksi duplikat CashFlowForecast. */
-const DEFAULT_HIDDEN = ['saving-ring', 'top-kategori', 'hari-aktif', 'proyeksi']
+/** Tidak ada yang default-hidden lagi — kartu low-value (saving-ring, top-kategori,
+ *  hari-aktif, proyeksi) sudah DIHAPUS dari dashboard, bukan sekadar disembunyiin. */
+const DEFAULT_HIDDEN: string[] = []
 
 /** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
 // Urutan = default visual order yg dipilih supaya bento-grid (dense) pack rapi
@@ -46,12 +45,9 @@ export const DASHBOARD_BLOCKS: DashBlock[] = [
   { id: 'insights', labelKey: 'block_insights' },
   { id: 'anggaran', labelKey: 'block_anggaran' },
   { id: 'kesehatan', labelKey: 'block_kesehatan' },
+  { id: 'cash-coverage', labelKey: 'block_cash_coverage' },
   { id: 'ai-insights', labelKey: 'block_ai_insights' },
-  // Default-hidden (DEFAULT_HIDDEN) — muncul di panel Atur buat diaktifin manual.
-  { id: 'saving-ring', labelKey: 'block_saving_ring' },
-  { id: 'top-kategori', labelKey: 'block_top_kategori' },
-  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
-  { id: 'proyeksi', labelKey: 'block_proyeksi' },
+  { id: 'alokasi', labelKey: 'block_alokasi' },
 ]
 
 function readHidden(): string[] {
