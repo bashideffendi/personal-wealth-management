@@ -20,7 +20,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
+import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 import { loadUiPrefs, saveUiPref } from '@/lib/ui-prefs'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
@@ -107,7 +107,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v2'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -631,9 +631,31 @@ export default function DashboardPage() {
         monthlyTrend={monthlyData}
       />
 
+      {/* FIXED summary band — NetWorth + 4 KPI + Cashflow selalu di atas
+          (period-scoped sama picker kanan-atas). Sengaja gak bisa di-drag/hide:
+          ini ringkasan utama yang harus selalu kebaca. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  deltaPct={kpiDelta(totals.income, prevTotals?.income ?? 0)}   kind="income" />
+        <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} deltaPct={kpiDelta(totals.expense, prevTotals?.expense ?? 0)} kind="expense" />
+        <KpiCard
+          label={t('dashboard.kpi_saving_investment')}
+          value={totals.saving + totals.investment}
+          note={`${t('dashboard.saving_rate')} ${totals.savingRate.toFixed(1)}%`}
+          deltaPct={kpiDelta(totals.saving + totals.investment, (prevTotals?.saving ?? 0) + (prevTotals?.investment ?? 0))}
+          kind="saving"
+        />
+        <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} deltaPct={kpiDelta(totals.net, prevTotals?.net ?? 0)} kind="net" />
+      </div>
+
+      {/* Cash-flow forecast — compact reminder of upcoming events. */}
+      <CashFlowForecast
+        liquidBalance={liquidTotal}
+        recurringItems={recurringItems}
+        contracts={contracts}
+      />
+
       {/* "Hari ini" — today's quick stats + budget warning. Self-hides
-          if no transactions yet today. Sits above month-change strip because
-          it's higher salience: actionable about NOW, not retrospective. */}
+          if no transactions yet today. */}
       <TodayStrip
         monthTransactions={monthTransactions}
         monthBudgets={monthBudgets}
@@ -647,21 +669,11 @@ export default function DashboardPage() {
         priorMonthCount={3}
       />
 
-      {/* Financial Health Score — 3-column inline layout: score + bars + burn
-          rate. All visible without click. Burn rate (cash coverage in months)
-          sits next to score because it's the most actionable safety metric. */}
+      {/* Financial Health Score — 3-column inline layout: score + bars + burn rate. */}
       <FinancialHealthCard
         result={fhsResult}
         liquidBalance={liquidTotal}
         monthlyExpense={fhsResult._monthlyExpense}
-      />
-
-      {/* Cash-flow forecast — compact reminder of upcoming events.
-          Less of a hero, more of a "heads-up" bar. */}
-      <CashFlowForecast
-        liquidBalance={liquidTotal}
-        recurringItems={recurringItems}
-        contracts={contracts}
       />
 
       {/* Onboarding mission card — auto-hides when user completes setup */}
@@ -674,24 +686,14 @@ export default function DashboardPage() {
       </p>
 
       <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
-      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
-
-      {/* KPI Cards — color-tinted by kind for visual variety */}
-      <SortableSection id="kpi" order={blockOrder} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label={t('dashboard.kpi_income')}  value={totals.income}  deltaPct={kpiDelta(totals.income, prevTotals?.income ?? 0)}   kind="income" />
-        <KpiCard label={t('dashboard.kpi_expense')} value={totals.expense} deltaPct={kpiDelta(totals.expense, prevTotals?.expense ?? 0)} kind="expense" />
-        <KpiCard
-          label={t('dashboard.kpi_saving_investment')}
-          value={totals.saving + totals.investment}
-          note={`${t('dashboard.saving_rate')} ${totals.savingRate.toFixed(1)}%`}
-          deltaPct={kpiDelta(totals.saving + totals.investment, (prevTotals?.saving ?? 0) + (prevTotals?.investment ?? 0))}
-          kind="saving"
-        />
-        <KpiCard label={t('dashboard.kpi_net_cashflow')} value={totals.net} deltaPct={kpiDelta(totals.net, prevTotals?.net ?? 0)} kind="net" />
-      </SortableSection>
+      <SortableContext items={blockOrder} strategy={rectSortingStrategy}>
+      {/* Movable zone — grid 3 kolom, drag per-card + hide. Lebar tiap card
+          dipatok desain (lg:col-span-N); urutan & visibility lewat CSS order +
+          data-block. Card span-3 isi 1 baris penuh; span-2 + span-1 = 1 baris. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 items-start">
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder}>
+      <SortableSection id="ai-insights" order={blockOrder} className="lg:col-span-3">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -702,7 +704,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <SortableSection id="aliran" order={blockOrder} className="s-card p-4 sm:p-6">
+      <SortableSection id="aliran" order={blockOrder} className="lg:col-span-3 s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="eyebrow">{t('dashboard.money_flow')}</p>
@@ -752,22 +754,26 @@ export default function DashboardPage() {
         </div>
       </SortableSection>
 
-      {/* Phase 2.1 + 3.1 — Recent Transactions + Upcoming Bills + Goals row */}
-      <SortableSection id="aktivitas" order={blockOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
+      <SortableSection id="transaksi" order={blockOrder} className="lg:col-span-1">
         <RecentTransactions transactions={monthTransactions} />
+      </SortableSection>
+      <SortableSection id="tagihan" order={blockOrder} className="lg:col-span-1">
         <UpcomingBills
           contracts={contracts}
           debts={activeDebts}
           creditCards={creditCards}
           recurring={recurringItems}
         />
+      </SortableSection>
+      <SortableSection id="tujuan" order={blockOrder} className="lg:col-span-1">
         <GoalsWidget goals={activeGoals} />
       </SortableSection>
 
-      {/* Calendar + Budget Progress */}
-      <SortableSection id="kalender" order={blockOrder} className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      {/* Activity calendar (per-card, span 2) */}
+      <SortableSection id="kalender" order={blockOrder} className="lg:col-span-2">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
-        <div className="s-card p-5 sm:p-6 lg:col-span-3">
+        <div className="s-card p-5 sm:p-6 h-full">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="eyebrow">{t('dashboard.activity_this_month')}</p>
@@ -908,8 +914,11 @@ export default function DashboardPage() {
           })()}
         </div>
 
-        {/* Budget Progress */}
-        <div className="s-card p-6 lg:col-span-2">
+      </SortableSection>
+
+      {/* Budget Progress (per-card, span 1) */}
+      <SortableSection id="anggaran" order={blockOrder} className="lg:col-span-1">
+        <div className="s-card p-6 h-full">
           <div className="mb-4">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
             <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -953,15 +962,19 @@ export default function DashboardPage() {
         </div>
       </SortableSection>
 
-      {/* Charts Row: Top Categories + Day of Week + Saving Ring */}
-      <SortableSection id="grafik" order={blockOrder} className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Charts (per-card): Top Categories · Day of Week · Saving Ring */}
+      <SortableSection id="top-kategori" order={blockOrder} className="lg:col-span-1">
         <TopCategoriesBar monthTransactions={monthTransactions} />
+      </SortableSection>
+      <SortableSection id="hari-aktif" order={blockOrder} className="lg:col-span-1">
         <DayOfWeekChart monthTransactions={monthTransactions} />
+      </SortableSection>
+      <SortableSection id="saving-ring" order={blockOrder} className="lg:col-span-1">
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
       </SortableSection>
 
       {/* Insights & Alerts */}
-      <SortableSection id="insights" order={blockOrder}>
+      <SortableSection id="insights" order={blockOrder} className="lg:col-span-3">
         <InsightsPanel
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -973,11 +986,9 @@ export default function DashboardPage() {
         />
       </SortableSection>
 
-      {/* Row: Monthly Bar Chart (income vs expense) + Investment Donut.
-          Per dashboard-refine.jsx — twin bars per month (emerald + coral)
-          show clearer comparison than overlapping area chart. */}
-      <SortableSection id="investasi" order={blockOrder} className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="s-card p-6 lg:col-span-3">
+      {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
+      <SortableSection id="arus-tahunan" order={blockOrder} className="lg:col-span-2">
+        <div className="s-card p-6 h-full">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3">
             <div>
               <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
@@ -1006,8 +1017,11 @@ export default function DashboardPage() {
           </div>
           <MonthlyFlowChart data={monthlyData} />
         </div>
+      </SortableSection>
 
-        <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
+      {/* Investment allocation donut (per-card, span 1) */}
+      <SortableSection id="portofolio" order={blockOrder} className="lg:col-span-1">
+        <div className="s-card p-5 sm:p-6 flex flex-col h-full">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="eyebrow">{t('dashboard.portfolio')}</p>
@@ -1193,6 +1207,7 @@ export default function DashboardPage() {
         </div>
       </SortableSection>
 
+      </div>
       </SortableContext>
       </DndContext>
 

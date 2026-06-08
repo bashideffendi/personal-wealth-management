@@ -27,14 +27,19 @@ const LS_KEY = 'pwm.dashboard.hidden'
 
 /** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
 export const DASHBOARD_BLOCKS: DashBlock[] = [
-  { id: 'kpi', labelKey: 'block_kpi' },
   { id: 'ai-insights', labelKey: 'block_ai_insights' },
   { id: 'aliran', labelKey: 'block_aliran' },
-  { id: 'aktivitas', labelKey: 'block_aktivitas' },
+  { id: 'transaksi', labelKey: 'block_transaksi' },
+  { id: 'tagihan', labelKey: 'block_tagihan' },
+  { id: 'tujuan', labelKey: 'block_tujuan' },
+  { id: 'top-kategori', labelKey: 'block_top_kategori' },
+  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
+  { id: 'saving-ring', labelKey: 'block_saving_ring' },
+  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
+  { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'kalender', labelKey: 'block_kalender' },
-  { id: 'grafik', labelKey: 'block_grafik' },
+  { id: 'anggaran', labelKey: 'block_anggaran' },
   { id: 'insights', labelKey: 'block_insights' },
-  { id: 'investasi', labelKey: 'block_investasi' },
 ]
 
 function readHidden(): string[] {
