@@ -629,7 +629,8 @@ export default function NonLiquidAssetsPage() {
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <div className="grid gap-1.5">
                     <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_price')}</Label>
-                    <RpField value={form.purchase_value} onChange={(n) => setForm({ ...form, purchase_value: n })} />
+                    {/* Auto-mirror current←purchase until the user edits "current" — no typing the same big number twice. */}
+                    <RpField value={form.purchase_value} onChange={(n) => setForm((f) => ({ ...f, purchase_value: n, current_value: (f.current_value === 0 || f.current_value === f.purchase_value) ? n : f.current_value }))} />
                   </div>
                   <div className="grid gap-1.5">
                     <Label className="text-[11px] flex items-center justify-between gap-2" style={{ color: 'var(--ink-muted)' }}>

@@ -29,6 +29,7 @@ import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useLock } from '@/components/security/lock-provider'
 import { ExportDataButton } from '@/components/export-data-button'
+import { DeleteAccountButton } from '@/components/delete-account-button'
 import { useT } from '@/lib/i18n/context'
 
 interface Profile {
@@ -795,6 +796,11 @@ export default function ProfilePage() {
                   <Trash2 className="size-4" data-icon="inline-start" />
                   {t('profile.reset_all_btn')}
                 </Button>
+
+                <div className="mt-4 pt-4 border-t" style={{ borderColor: 'color-mix(in srgb, var(--c-coral) 20%, transparent)' }}>
+                  <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('profile.delete_account_desc')}</p>
+                  <div className="mt-3"><DeleteAccountButton /></div>
+                </div>
               </div>
             </div>
           </section>
