@@ -593,13 +593,33 @@ export default function DashboardPage() {
           DashboardCustomizer buat reorder section (data-block) tanpa ngerombak DOM.
           Section fixed (hero/health/forecast/period) gak punya order → tetap di atas. */}
       {/* Greeting + tombol Atur Dashboard (custom show/hide section) */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         {userFirstName ? (
           <h1 className="t-h1" style={{ color: 'var(--ink)' }}>Hi, {userFirstName}</h1>
         ) : (
           <span />
         )}
-        <DashboardCustomizer />
+        {/* Period selector — top-right (konvensi). Surface bg + border supaya
+            kebaca sebagai kontrol, bukan nyatu sama kanvas. Scope: widget bulanan. */}
+        <div className="flex items-center gap-2">
+          <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
+            <SelectTrigger className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 1px 2px rgba(43,37,27,0.06)' }}>
+              <SelectValue placeholder={t('dashboard.month_placeholder')}>{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
+            <SelectTrigger className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 1px 2px rgba(43,37,27,0.06)' }}>
+              <SelectValue placeholder={t('dashboard.year_placeholder')}>{(v) => v}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <DashboardCustomizer />
+        </div>
       </div>
 
       {/* Hero — Net Worth + period-filtered growth chart */}
@@ -647,35 +667,11 @@ export default function DashboardPage() {
       {/* Onboarding mission card — auto-hides when user completes setup */}
       <GettingStarted />
 
-      {/* Period selector for the monthly widgets below (KPI cards, AI insights,
-          cashflow chart, sankey, recent tx, etc all read selectedMonth/Year).
-          Removed from the hero per mockup; lives here as a compact pill row. */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="eyebrow">{t('dashboard.period')}</p>
-          <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-            {currentMonthYear}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-            <SelectTrigger className="w-[130px] h-9 text-sm">
-              <SelectValue placeholder={t('dashboard.month_placeholder')}>{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-            <SelectTrigger className="w-[100px] h-9 text-sm">
-              <SelectValue placeholder={t('dashboard.year_placeholder')}>{(v) => v}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Period context — pemilih ada di kanan-atas; baris tipis ini cuma
+          ngingetin widget di bawah lagi nampilin bulan apa. */}
+      <p className="t-sm -mt-2" style={{ color: 'var(--ink-soft)' }}>
+        {t('dashboard.period')}: <span className="font-semibold" style={{ color: 'var(--ink-muted)' }}>{currentMonthYear}</span>
+      </p>
 
       <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
       <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
