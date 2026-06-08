@@ -21,6 +21,8 @@ export async function GET(request: Request) {
           data: { user },
         } = await supabase.auth.getUser()
         if (user?.email) {
+          // Audit: record the sign-in (covers Google OAuth + magic link).
+          await supabase.from('security_events').insert({ user_id: user.id, event: 'login' })
           const { data: profile } = await supabase
             .from('profiles')
             .select('welcomed_at, full_name')

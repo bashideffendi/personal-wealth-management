@@ -6,6 +6,15 @@
 
 export const messages = {
   id: {
+    security_events: {
+      title: "Aktivitas Keamanan",
+      desc: "Aktivitas akun terbaru — login, ubah password, 2FA.",
+      empty: "Belum ada aktivitas tercatat.",
+      evt_login: "Login",
+      evt_password_changed: "Password diubah",
+      evt_mfa_enabled: "2FA diaktifkan",
+      evt_mfa_disabled: "2FA dimatikan",
+    },
     mfa: {
       title: "Autentikasi Dua Faktor (2FA)",
       desc: "Lapisan keamanan ekstra — kode dari app authenticator tiap kali login.",
@@ -3022,6 +3031,15 @@ export const messages = {
     },
   },
   en: {
+    security_events: {
+      title: "Security Activity",
+      desc: "Recent account activity — sign-ins, password changes, 2FA.",
+      empty: "No activity recorded yet.",
+      evt_login: "Signed in",
+      evt_password_changed: "Password changed",
+      evt_mfa_enabled: "2FA enabled",
+      evt_mfa_disabled: "2FA disabled",
+    },
     mfa: {
       title: "Two-Factor Authentication (2FA)",
       desc: "An extra layer of security — a code from your authenticator app at each login.",

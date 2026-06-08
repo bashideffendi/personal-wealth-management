@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { GoogleSignInButton } from '@/components/auth/google-signin-button'
+import { logSecurityEvent } from '@/lib/security-events'
 
 const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
 
@@ -77,6 +78,7 @@ export default function LoginPage() {
           return
         }
       }
+      await logSecurityEvent(supabase, 'login')
       router.push('/dashboard')
     } catch {
       setError('Ada masalah. Coba lagi sebentar.')
@@ -94,6 +96,7 @@ export default function LoginPage() {
       const supabase = createClient()
       const { error } = await supabase.auth.mfa.verify({ factorId: mfa.factorId, challengeId: mfa.challengeId, code: mfaCode.replace(/\D/g, '') })
       if (error) { setError('Kode salah atau kedaluwarsa. Coba kode terbaru.'); return }
+      await logSecurityEvent(supabase, 'login')
       router.push('/dashboard')
     } catch {
       setError('Ada masalah. Coba lagi sebentar.')

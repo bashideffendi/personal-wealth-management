@@ -29,6 +29,8 @@ import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useLock } from '@/components/security/lock-provider'
 import { MfaSetup } from '@/components/security/mfa-setup'
+import { SecurityActivity } from '@/components/security/security-activity'
+import { logSecurityEvent } from '@/lib/security-events'
 import { ExportDataButton } from '@/components/export-data-button'
 import { DeleteAccountButton } from '@/components/delete-account-button'
 import { useT } from '@/lib/i18n/context'
@@ -274,6 +276,7 @@ export default function ProfilePage() {
     setSavingPassword(false)
     if (error) { toast.error(t('profile.toast_password_failed'), { description: error.message }); return }
     setNewPassword(''); setConfirmPassword('')
+    void logSecurityEvent(supabase, 'password_changed')
     toast.success(t('profile.toast_password_updated'))
   }
 
@@ -612,6 +615,8 @@ export default function ProfilePage() {
           </section>
 
           <MfaSetup />
+
+          <SecurityActivity />
 
           <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
             <div className="flex items-center gap-2">

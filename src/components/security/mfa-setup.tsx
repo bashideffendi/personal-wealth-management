@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { ShieldCheck, Loader2, Trash2, Smartphone } from 'lucide-react'
 import { toast } from 'sonner'
 import { useT } from '@/lib/i18n/context'
+import { logSecurityEvent } from '@/lib/security-events'
 
 type Status = 'loading' | 'idle' | 'enrolling' | 'enrolled'
 
@@ -65,6 +66,7 @@ export function MfaSetup() {
       const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: ch.id, code: code.replace(/\D/g, '') })
       if (error) { toast.error(t('mfa.code_wrong')); return }
       toast.success(t('mfa.enabled'))
+      void logSecurityEvent(supabase, 'mfa_enabled')
       setQr(null); setSecret(null); setCode('')
       setStatus('enrolled')
     } catch {
@@ -80,6 +82,7 @@ export function MfaSetup() {
       const { error } = await supabase.auth.mfa.unenroll({ factorId })
       if (error) { toast.error(t('mfa.disable_failed')); return }
       toast.success(t('mfa.disabled'))
+      void logSecurityEvent(supabase, 'mfa_disabled')
       setFactorId(null); setStatus('idle')
     } catch {
       toast.error(t('mfa.disable_failed'))
