@@ -25,6 +25,21 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/login')
 
+  // 2FA enforcement — if the user enrolled an authenticator but this session is
+  // still AAL1 (password only, code not entered), force completing 2FA before
+  // ANY dashboard access (closes the "type the URL directly" bypass).
+  // Fail-open: never lock anyone out on a lookup error — only redirect on a
+  // confirmed aal1-needs-aal2 state. redirect() must stay OUTSIDE the try
+  // (it signals via a thrown NEXT_REDIRECT that a catch would swallow).
+  let needs2fa = false
+  try {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    needs2fa = !!aal && aal.nextLevel === 'aal2' && aal.currentLevel === 'aal1'
+  } catch {
+    needs2fa = false
+  }
+  if (needs2fa) redirect('/login')
+
   // Onboarding gate — user benar-benar baru diarahin ke /onboarding.
   // Pakai jumlah TRANSAKSI (bukan akun): trigger DB auto-seed akun "Cash" tiap
   // signup, jadi count akun selalu >=1 → gate pakai akun gak pernah jalan.

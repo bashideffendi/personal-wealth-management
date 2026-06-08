@@ -5,7 +5,7 @@
  * Brand promise (serif moment) + honest security line, not a bare form.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -34,6 +34,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [mfa, setMfa] = useState<{ factorId: string; challengeId: string } | null>(null)
   const [mfaCode, setMfaCode] = useState('')
+
+  // If we land here already authenticated at AAL1 with MFA enrolled (e.g. the
+  // dashboard bounced us back to finish 2FA), surface the code step right away.
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const supabase = createClient()
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (!active || !aal || aal.nextLevel !== 'aal2' || aal.currentLevel !== 'aal1') return
+        const { data: factors } = await supabase.auth.mfa.listFactors()
+        const totp = factors?.totp?.find((f: { id: string; status: string }) => f.status === 'verified')
+        if (!totp) return
+        const { data: ch } = await supabase.auth.mfa.challenge({ factorId: totp.id })
+        if (active && ch) { setMfaCode(''); setMfa({ factorId: totp.id, challengeId: ch.id }) }
+      } catch {
+        /* ignore — fall back to the normal login form */
+      }
+    })()
+    return () => { active = false }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,7 +132,7 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-6 text-center text-sm">
-          <button type="button" onClick={() => { setMfa(null); setMfaCode(''); setError(null) }} className="font-medium hover:underline" style={{ color: 'var(--ink-muted)' }}>← Kembali</button>
+          <button type="button" onClick={async () => { try { await createClient().auth.signOut() } catch { /* ignore */ } setMfa(null); setMfaCode(''); setError(null) }} className="font-medium hover:underline" style={{ color: 'var(--ink-muted)' }}>← Keluar &amp; kembali</button>
         </p>
       </>
     )
