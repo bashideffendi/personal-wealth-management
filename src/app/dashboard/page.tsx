@@ -109,7 +109,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v4'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v5'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -690,13 +690,6 @@ export default function DashboardPage() {
         priorMonthCount={3}
       />
 
-      {/* Financial Health Score — 3-column inline layout: score + bars + burn rate. */}
-      <FinancialHealthCard
-        result={fhsResult}
-        liquidBalance={liquidTotal}
-        monthlyExpense={fhsResult._monthlyExpense}
-      />
-
       {/* Onboarding mission card — auto-hides when user completes setup */}
       <GettingStarted />
 
@@ -713,16 +706,26 @@ export default function DashboardPage() {
           desain. dense bikin card kecil ngisi celah di sebelah card tinggi (mis.
           3 card kecil numpuk di kanan kalender). Urutan/visibility via CSS order +
           data-block. items-stretch + h-full → card ngisi penuh selnya. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[120px] lg:[grid-auto-flow:row_dense] items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[132px] lg:[grid-auto-flow:row_dense] items-stretch">
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-2">
+      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
           selectedYear={selectedYear}
           selectedMonth={selectedMonth}
           goals={activeGoals}
+        />
+      </SortableSection>
+
+      {/* Skor Kesehatan Finansial — dipindah dari fixed band ke grid (advisory)
+          biar fixed band ramping & Sankey naik lebih ke atas. */}
+      <SortableSection id="kesehatan" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+        <FinancialHealthCard
+          result={fhsResult}
+          liquidBalance={liquidTotal}
+          monthlyExpense={fhsResult._monthlyExpense}
         />
       </SortableSection>
 
@@ -780,10 +783,10 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
-      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
+      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
         <RecentTransactions transactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
+      <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
         <UpcomingBills
           contracts={contracts}
           debts={activeDebts}
@@ -999,7 +1002,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Insights & Alerts */}
-      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-4">
+      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
         <InsightsPanel
           part="alerts"
           monthTransactions={monthTransactions}
@@ -1058,7 +1061,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Investment allocation donut (per-card, span 1) */}
-      <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
+      <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
         <div className="s-card p-5 sm:p-6 flex flex-col h-full">
           <div className="flex items-start justify-between gap-3">
             <div>

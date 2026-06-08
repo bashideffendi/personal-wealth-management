@@ -23,7 +23,12 @@ export interface DashBlock {
   labelKey: string
 }
 
-const LS_KEY = 'pwm.dashboard.hidden'
+const LS_KEY = 'pwm.dashboard.hidden.v2'
+
+/** Default-hidden di dashboard baru (declutter ala Monarch) — tetap bisa diaktifin
+ *  lewat panel Atur. saving-rate udah muncul di KPI+health; top-kategori subset
+ *  Sankey; hari-aktif nice-to-have; proyeksi duplikat CashFlowForecast. */
+const DEFAULT_HIDDEN = ['saving-ring', 'top-kategori', 'hari-aktif', 'proyeksi']
 
 /** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
 // Urutan = default visual order yg dipilih supaya bento-grid (dense) pack rapi
@@ -34,25 +39,28 @@ export const DASHBOARD_BLOCKS: DashBlock[] = [
   { id: 'kalender', labelKey: 'block_kalender' },
   { id: 'transaksi', labelKey: 'block_transaksi' },
   { id: 'tagihan', labelKey: 'block_tagihan' },
-  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
   { id: 'tujuan', labelKey: 'block_tujuan' },
-  { id: 'saving-ring', labelKey: 'block_saving_ring' },
-  { id: 'insights', labelKey: 'block_insights' },
-  { id: 'top-kategori', labelKey: 'block_top_kategori' },
-  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
+  { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
   { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'anggaran', labelKey: 'block_anggaran' },
-  { id: 'proyeksi', labelKey: 'block_proyeksi' },
+  { id: 'insights', labelKey: 'block_insights' },
+  { id: 'kesehatan', labelKey: 'block_kesehatan' },
   { id: 'ai-insights', labelKey: 'block_ai_insights' },
+  // Default-hidden (DEFAULT_HIDDEN) — muncul di panel Atur buat diaktifin manual.
+  { id: 'saving-ring', labelKey: 'block_saving_ring' },
+  { id: 'top-kategori', labelKey: 'block_top_kategori' },
+  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
+  { id: 'proyeksi', labelKey: 'block_proyeksi' },
 ]
 
 function readHidden(): string[] {
   try {
     const raw = localStorage.getItem(LS_KEY)
-    const arr = raw ? JSON.parse(raw) : []
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : []
+    if (raw == null) return [...DEFAULT_HIDDEN]
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [...DEFAULT_HIDDEN]
   } catch {
-    return []
+    return [...DEFAULT_HIDDEN]
   }
 }
 
@@ -60,7 +68,7 @@ export function DashboardCustomizer() {
   const t = useT()
   const [open, setOpen] = useState(false)
   const [hidden, setHidden] = useState<string[]>(() =>
-    typeof window === 'undefined' ? [] : readHidden(),
+    typeof window === 'undefined' ? [...DEFAULT_HIDDEN] : readHidden(),
   )
   const [ready, setReady] = useState(false)
   const touchedRef = useRef(false)
