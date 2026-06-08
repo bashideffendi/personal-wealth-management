@@ -713,7 +713,7 @@ export default function DashboardPage() {
           desain. dense bikin card kecil ngisi celah di sebelah card tinggi (mis.
           3 card kecil numpuk di kanan kalender). Urutan/visibility via CSS order +
           data-block. items-stretch + h-full → card ngisi penuh selnya. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[90px] lg:[grid-auto-flow:row_dense] items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[120px] lg:[grid-auto-flow:row_dense] items-stretch">
 
       {/* Phase 2.3 — AI-generated personalized insights */}
       <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-2">
@@ -727,7 +727,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-5">
+      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-4">
         <div className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3 shrink-0">
           <div>
