@@ -144,11 +144,15 @@
   --radius-hero:  22px;      /* card hero / featured */
   --radius-cta:   28px;      /* CTA section */
 
-  /* ── Editorial shadow scale ───────────────────── */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow:    0 4px 16px -4px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 24px 48px -16px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05);
-  --shadow-card: 0 1px 0 rgba(15, 23, 42, 0.04), 0 12px 24px -12px rgba(15, 23, 42, 0.08);
+  /* ── Editorial shadow scale ─────────────────────
+     Shadow tint is WARM (rgba 43,37,27 ≈ warm brown-black), not cool slate —
+     so depth stays coherent with the warm cream canvas + warm borders. One
+     shadow color across the scale; was previously a mix of cool 15,23,42 /
+     0,0,0 / 16,24,40. Opacities nudged ~+1% since warm tones read lighter. */
+  --shadow-sm: 0 1px 2px rgba(43, 37, 27, 0.05);
+  --shadow:    0 4px 16px -4px rgba(43, 37, 27, 0.07), 0 1px 3px rgba(43, 37, 27, 0.05);
+  --shadow-lg: 0 24px 48px -16px rgba(43, 37, 27, 0.14), 0 4px 12px rgba(43, 37, 27, 0.06);
+  --shadow-card: 0 1px 0 rgba(43, 37, 27, 0.05), 0 12px 24px -12px rgba(43, 37, 27, 0.10);
 
   /* ── LEGACY alias map — keeps existing components working ── */
   /* Old butter/lime → emerald (the new signature) */
@@ -396,6 +400,16 @@
     color: var(--ink);
     font-family: var(--font-sans);
   }
+  /* Keyboard focus — a visible emerald ring on any interactive element that
+     doesn't define its own. shadcn's focus-visible:ring/outline-none utilities
+     sit in a later layer and still win where present, so no double ring; this
+     just backstops plain links, <summary>, and role=button that were relying
+     on the browser default. Mouse clicks don't trigger :focus-visible. */
+  :focus-visible {
+    outline: 2px solid var(--c-mint);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
   h1, h2, h3, h4 {
     font-family: var(--font-sans);
     letter-spacing: -0.025em;
@@ -450,7 +464,7 @@
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  box-shadow: 0 1px 0 rgba(43, 37, 27, 0.04);
 }
 .s-card-pad     { padding: 20px; }
 .s-card-pad-lg  { padding: 24px; }
@@ -471,7 +485,7 @@
 }
 .stat-tile:hover {
   border-color: var(--line-strong);
-  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px -4px rgba(43, 37, 27, 0.10);
 }
 
 /* Delta chip — small inline ±% indicator */
