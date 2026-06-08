@@ -33,16 +33,17 @@ export const DASHBOARD_BLOCKS: DashBlock[] = [
   { id: 'aliran', labelKey: 'block_aliran' },
   { id: 'kalender', labelKey: 'block_kalender' },
   { id: 'transaksi', labelKey: 'block_transaksi' },
-  { id: 'tujuan', labelKey: 'block_tujuan' },
+  { id: 'tagihan', labelKey: 'block_tagihan' },
   { id: 'arus-tahunan', labelKey: 'block_arus_tahunan' },
+  { id: 'tujuan', labelKey: 'block_tujuan' },
   { id: 'saving-ring', labelKey: 'block_saving_ring' },
+  { id: 'insights', labelKey: 'block_insights' },
   { id: 'top-kategori', labelKey: 'block_top_kategori' },
+  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
   { id: 'portofolio', labelKey: 'block_portofolio' },
   { id: 'anggaran', labelKey: 'block_anggaran' },
-  { id: 'tagihan', labelKey: 'block_tagihan' },
-  { id: 'hari-aktif', labelKey: 'block_hari_aktif' },
+  { id: 'proyeksi', labelKey: 'block_proyeksi' },
   { id: 'ai-insights', labelKey: 'block_ai_insights' },
-  { id: 'insights', labelKey: 'block_insights' },
 ]
 
 function readHidden(): string[] {

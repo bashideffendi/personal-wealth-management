@@ -22,10 +22,12 @@ interface InsightsPanelProps {
   contracts: Contract[]
   savingRate: number
   netCashflow: number
+  /** Render only one sub-card so alerts & forecast can be separate bento cards. */
+  part?: 'alerts' | 'forecast'
 }
 
 export function InsightsPanel({
-  monthTransactions, yearTransactions, monthBudgets, creditCards, contracts, savingRate, netCashflow,
+  monthTransactions, yearTransactions, monthBudgets, creditCards, contracts, savingRate, netCashflow, part,
 }: InsightsPanelProps) {
   const t = useT()
   const alerts: Array<{ level: 'critical' | 'warn' | 'good'; text: string }> = []
@@ -150,12 +152,8 @@ export function InsightsPanel({
     return months > 0 ? { inc: inc / months, exp: exp / months, net: (inc - exp) / months } : null
   })()
 
-  if (alerts.length === 0 && !avg3mo) return null
-
-  return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      {/* Alerts */}
-      <div className="s-card s-card-pad-lg lg:col-span-2">
+  const alertsCard = (
+    <div className="s-card s-card-pad-lg h-full flex flex-col">
         <p className="eyebrow">{t('insights_panel.alerts_eyebrow')}</p>
         <h3 className="font-bold mt-1" style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.015em' }}>
           {t('insights_panel.alerts_title')}
@@ -165,7 +163,7 @@ export function InsightsPanel({
             {t('insights_panel.alerts_empty')}
           </p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 space-y-2 flex-1 min-h-0 overflow-y-auto">
             {alerts.slice(0, 6).map((a, i) => (
               <li
                 key={i}
@@ -195,10 +193,11 @@ export function InsightsPanel({
             ))}
           </ul>
         )}
-      </div>
+    </div>
+  )
 
-      {/* Cashflow forecast 3 bulan */}
-      <div className="s-card s-card-pad-lg">
+  const forecastCard = (
+    <div className="s-card s-card-pad-lg h-full">
         <p className="eyebrow">{t('insights_panel.forecast_eyebrow')}</p>
         <h3 className="font-bold mt-1" style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.015em' }}>
           {t('insights_panel.forecast_title')}
@@ -229,7 +228,16 @@ export function InsightsPanel({
         )}
         {/* silence unused variable — reserved for future cash-flow visualization */}
         <span className="hidden">{netCashflow}</span>
-      </div>
+    </div>
+  )
+
+  if (part === 'alerts') return alertsCard
+  if (part === 'forecast') return forecastCard
+  if (alerts.length === 0 && !avg3mo) return null
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="lg:col-span-2">{alertsCard}</div>
+      {forecastCard}
     </div>
   )
 }

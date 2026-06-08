@@ -14,7 +14,7 @@ import { SortableSection } from '@/components/dashboard/sortable-section'
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
+  closestCorners,
   PointerSensor,
   KeyboardSensor,
   useSensor,
@@ -51,7 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, ArrowRight, TrendingUp, GripVertical } from 'lucide-react'
+import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // Chart palette per design handoff tokens.css — emerald led, then sky,
@@ -109,7 +109,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v3'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v4'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -163,6 +163,7 @@ export default function DashboardPage() {
   // footprint kartu sumber biar preview-nya seukuran aslinya.
   const [activeId, setActiveId] = useState<string | null>(null)
   const [dragSize, setDragSize] = useState<{ w: number; h: number } | null>(null)
+  const [dragHtml, setDragHtml] = useState<string>('')
   const dragSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -190,13 +191,20 @@ export default function DashboardPage() {
   }, [])
 
   function handleBlockDragStart(e: DragStartEvent) {
-    setActiveId(e.active.id as string)
+    const id = e.active.id as string
+    setActiveId(id)
+    // Snapshot the source card's DOM so the overlay is a faithful frozen copy
+    // (no chart remount, no janky tilted placeholder).
+    const el = document.querySelector(`[data-block="${id}"]`)
+    const card = el?.firstElementChild as HTMLElement | null
+    setDragHtml(card ? card.outerHTML : '')
     const r = e.active.rect.current.initial
     if (r) setDragSize({ w: r.width, h: r.height })
   }
   function handleBlockDragEnd(e: DragEndEvent) {
     setActiveId(null)
     setDragSize(null)
+    setDragHtml('')
     const { active, over } = e
     if (!over || active.id === over.id) return
     const oldI = blockOrder.indexOf(active.id as string)
@@ -698,17 +706,17 @@ export default function DashboardPage() {
         {t('dashboard.period')}: <span className="font-semibold" style={{ color: 'var(--ink-muted)' }}>{currentMonthYear}</span>
       </p>
 
-      <DndContext sensors={dragSensors} collisionDetection={closestCenter} onDragStart={handleBlockDragStart} onDragEnd={handleBlockDragEnd} onDragCancel={() => { setActiveId(null); setDragSize(null) }}>
+      <DndContext sensors={dragSensors} collisionDetection={closestCorners} onDragStart={handleBlockDragStart} onDragEnd={handleBlockDragEnd} onDragCancel={() => { setActiveId(null); setDragSize(null); setDragHtml('') }}>
       <SortableContext items={blockOrder} strategy={rectSortingStrategy}>
       {/* Movable zone — BENTO grid: 3 kolom × baris 132px, auto-flow dense.
           Tiap card punya lebar (col-span 1/2/3) + tinggi (row-span 1/2/3) dipatok
           desain. dense bikin card kecil ngisi celah di sebelah card tinggi (mis.
           3 card kecil numpuk di kanan kalender). Urutan/visibility via CSS order +
           data-block. items-stretch + h-full → card ngisi penuh selnya. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[206px] lg:[grid-auto-flow:row_dense] items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[90px] lg:[grid-auto-flow:row_dense] items-stretch">
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-1">
+      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-2">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -719,7 +727,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-2">
+      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-5">
         <div className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3 shrink-0">
           <div>
@@ -772,10 +780,10 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
-      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-1">
+      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
         <RecentTransactions transactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-1">
+      <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
         <UpcomingBills
           contracts={contracts}
           debts={activeDebts}
@@ -783,12 +791,12 @@ export default function DashboardPage() {
           recurring={recurringItems}
         />
       </SortableSection>
-      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
+      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
         <GoalsWidget goals={activeGoals} />
       </SortableSection>
 
       {/* Activity calendar (per-card, span 2) */}
-      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-2">
+      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
         <div className="s-card p-5 sm:p-6 h-full">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
@@ -934,7 +942,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Budget Progress (per-card, span 1) */}
-      <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
+      <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
         <div className="s-card p-6 h-full">
           <div className="mb-4">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
@@ -980,19 +988,32 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Charts (per-card): Top Categories · Day of Week · Saving Ring */}
-      <SortableSection id="top-kategori" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
+      <SortableSection id="top-kategori" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
         <TopCategoriesBar monthTransactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="hari-aktif" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
+      <SortableSection id="hari-aktif" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
         <DayOfWeekChart monthTransactions={monthTransactions} />
       </SortableSection>
-      <SortableSection id="saving-ring" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-1">
+      <SortableSection id="saving-ring" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
         <SavingRateRing savingRate={totals.savingRate} income={totals.income} savings={totals.saving + totals.investment} />
       </SortableSection>
 
       {/* Insights & Alerts */}
-      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-3 lg:row-span-2">
+      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-4">
         <InsightsPanel
+          part="alerts"
+          monthTransactions={monthTransactions}
+          yearTransactions={yearTransactions}
+          monthBudgets={monthBudgets}
+          creditCards={creditCards}
+          contracts={contracts}
+          savingRate={totals.savingRate}
+          netCashflow={totals.net}
+        />
+      </SortableSection>
+      <SortableSection id="proyeksi" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
+        <InsightsPanel
+          part="forecast"
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
           monthBudgets={monthBudgets}
@@ -1004,7 +1025,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
-      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-2">
+      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
         <div className="s-card p-6 h-full">
           <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
             <div>
@@ -1037,7 +1058,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Investment allocation donut (per-card, span 1) */}
-      <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-2">
+      <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
         <div className="s-card p-5 sm:p-6 flex flex-col h-full">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1230,17 +1251,12 @@ export default function DashboardPage() {
           ke-clip). Seukuran footprint kartu sumber; sumbernya jadi placeholder
           dashed redup. Cuma silhouette berjudul (bukan remount chart) biar mulus. */}
       <DragOverlay adjustScale={false} dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2,0,0,1)' }}>
-        {activeId ? (
+        {activeId && dragHtml ? (
           <div
-            className="s-card p-5 flex flex-col gap-2 pointer-events-none shadow-2xl rotate-[1.5deg]"
-            style={{ width: dragSize?.w, height: dragSize?.h, background: 'var(--surface)', border: '1px solid var(--line)' }}
-          >
-            <div className="flex items-center gap-2">
-              <GripVertical className="size-4" style={{ color: 'var(--text-mute)' }} />
-              <p className="eyebrow">{(() => { const b = DASHBOARD_BLOCKS.find((x) => x.id === activeId); return b ? t(`dashboard_customizer.${b.labelKey}`) : activeId })()}</p>
-            </div>
-            <div className="flex-1 rounded-xl" style={{ background: 'var(--surface-2)' }} />
-          </div>
+            className="overflow-hidden shadow-2xl pointer-events-none cursor-grabbing"
+            style={{ width: dragSize?.w, height: dragSize?.h, borderRadius: 18, outline: '2px solid var(--c-mint)', outlineOffset: -1 }}
+            dangerouslySetInnerHTML={{ __html: dragHtml }}
+          />
         ) : null}
       </DragOverlay>
       </DndContext>

@@ -33,13 +33,13 @@ export function DayOfWeekChart({ monthTransactions }: { monthTransactions: Trans
                   className="w-full rounded-t transition-all"
                   style={{
                     height: `${Math.max(h, 2)}%`,
-                    background: isPeak ? 'var(--ink)' : 'var(--c-primary)',
+                    background: isPeak ? 'var(--c-coral)' : 'color-mix(in srgb, var(--c-coral) 32%, var(--surface))',
                     minHeight: sums[i] > 0 ? 4 : 0,
                   }}
                   title={privacyHidden ? lbl : `${lbl}: ${formatCurrency(sums[i])} total, ${formatCurrency(averages[i])} rata-rata`}
                 />
               </div>
-              <span className="text-[10px] font-semibold" style={{ color: isPeak ? 'var(--ink)' : 'var(--ink-muted)' }}>
+              <span className="text-[10px] font-semibold" style={{ color: isPeak ? 'var(--c-coral)' : 'var(--ink-muted)' }}>
                 {lbl}
               </span>
             </div>
