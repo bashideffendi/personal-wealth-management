@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, CalendarDays, Calculator, Copy, Plus } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, Plus, Info } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
@@ -131,6 +131,8 @@ export default function BudgetingPage() {
   const [actuals, setActuals] = useState<Record<string, number>>({})
   const [addingTo, setAddingTo] = useState<BudgetType | null>(null)
   const [newCatInline, setNewCatInline] = useState('')
+  const [addingSubTo, setAddingSubTo] = useState<{ kind: BudgetType; parent: string } | null>(null)
+  const [newSubInline, setNewSubInline] = useState('')
   const [managerOpen, setManagerOpen] = useState(false)
   const userIdRef = useRef<string | null>(null)
 
@@ -404,14 +406,14 @@ export default function BudgetingPage() {
     const ownerNode = tree[type].find((c) => c.name === (isSub ? rootCategory(categoryKey) : categoryKey))
     const dotColor = ownerNode?.color ?? accent
     return (
-      <tr key={`${type}-${categoryKey}`} className={bgClass}>
+      <tr key={`${type}-${categoryKey}`} className={`group ${bgClass}`}>
         <td
           className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
           style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
           title={label}
         >
           {isSub ? (
-            <span className="mr-1.5 inline-block size-1.5 rounded-full align-middle" style={{ background: dotColor, opacity: 0.65 }} />
+            <span className="mr-1" style={{ color: dotColor, opacity: 0.5 }}>└</span>
           ) : (
             <span
               className="mr-1.5 inline-grid size-4 place-items-center align-middle"
@@ -425,6 +427,17 @@ export default function BudgetingPage() {
             </span>
           )}
           {label}
+          {!isSub && (
+            <button
+              type="button"
+              onClick={() => { setNewSubInline(''); setAddingSubTo({ kind: type, parent: categoryKey }) }}
+              className="ml-1.5 inline-grid size-4 place-items-center rounded align-middle opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[var(--surface-3)]"
+              style={{ color: 'var(--ink-soft)' }}
+              title={t('budgeting.add_subcategory')}
+            >
+              <Plus className="size-3" />
+            </button>
+          )}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
@@ -474,7 +487,7 @@ export default function BudgetingPage() {
   function renderRollupRow(type: BudgetType, node: CatNode) {
     const keys = node.subs.map((s) => subKey(node.name, s.name))
     return (
-      <tr key={`${type}-rollup-${node.id}`} className="bg-[color:var(--surface-2)]">
+      <tr key={`${type}-rollup-${node.id}`} className="group bg-[color:var(--surface-2)]">
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={node.name} style={{ color: 'var(--ink)' }}>
           <span className="mr-1.5 inline-grid size-4 place-items-center align-middle" style={{ color: node.color ?? KIND_COLOR[type].hex }}>
             {node.icon ? (
@@ -484,6 +497,15 @@ export default function BudgetingPage() {
             )}
           </span>
           {node.name}
+          <button
+            type="button"
+            onClick={() => { setNewSubInline(''); setAddingSubTo({ kind: type, parent: node.name }) }}
+            className="ml-1.5 inline-grid size-4 place-items-center rounded align-middle opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[var(--surface-3)]"
+            style={{ color: 'var(--ink-soft)' }}
+            title={t('budgeting.add_subcategory')}
+          >
+            <Plus className="size-3" />
+          </button>
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const v = sectionMonthTotal(keys, type, i + 1)
@@ -516,6 +538,64 @@ export default function BudgetingPage() {
     handleTreeCommit({ ...tree, [kind]: [...tree[kind], { id: newId(), name, subs: [] }] })
   }
 
+  // Tambah subkategori langsung dari tabel (hover baris → tombol +). Kalau induk
+  // tadinya "polos" (tanpa sub), nilai anggaran lamanya OTOMATIS dipindah ke sub
+  // pertama (semua tahun) biar nggak ke-orphan dari total.
+  async function addSubInline(kind: BudgetType, parentName: string) {
+    const subName = newSubInline.trim()
+    setAddingSubTo(null)
+    setNewSubInline('')
+    if (!subName) return
+    const parent = tree[kind].find((c) => c.name === parentName)
+    if (!parent) return
+    if (parent.subs.some((s) => s.name.toLowerCase() === subName.toLowerCase())) {
+      toast.error(`${t('budgeting.category_prefix')} "${subName}" ${t('budgeting.category_exists_suffix')}`)
+      return
+    }
+    const wasLeaf = parent.subs.length === 0
+    const nextTree = {
+      ...tree,
+      [kind]: tree[kind].map((c) =>
+        c.name === parentName ? { ...c, subs: [...c.subs, { id: newId(), name: subName }] } : c,
+      ),
+    }
+    await handleTreeCommit(nextTree)
+
+    // Migrasi nilai: induk-yg-tadinya-leaf → sub pertama (preserve total, semua tahun)
+    if (wasLeaf) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: oldRows } = await supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', kind)
+          .eq('category', parentName)
+        const rows = (oldRows ?? []) as Budget[]
+        if (rows.length) {
+          const newSubK = subKey(parentName, subName)
+          await supabase.from('budgets').upsert(
+            rows.map((r) => ({ user_id: user.id, year: r.year, month: r.month, type: kind, category: newSubK, amount: r.amount })),
+            { onConflict: 'user_id,year,month,type,category' },
+          )
+          await supabase.from('budgets').delete().eq('user_id', user.id).eq('type', kind).eq('category', parentName)
+          setBudgets((prev) => {
+            const next = { ...prev }
+            for (let m = 1; m <= 12; m++) {
+              const oldK = budgetKey(kind, parentName, m)
+              if (next[oldK] != null) {
+                next[budgetKey(kind, newSubK, m)] = next[oldK]
+                delete next[oldK]
+              }
+            }
+            return next
+          })
+          toast.success(t('budgeting.sub_added_migrated'))
+        }
+      }
+    }
+  }
+
   // Render a section body from the tree. SEMUA kategori induk (punya sub atau
   // nggak) pakai band abu + label bold biar seragam; subkategori indent + zebra.
   function renderSectionBody(kind: BudgetType) {
@@ -534,6 +614,27 @@ export default function BudgetingPage() {
         // semua kategori induk seragam, bukan keliatan kayak subkategori.
         rows.push(
           renderCategoryRow(kind, node.name, node.name, 'bg-[color:var(--surface-2)]', 'category'),
+        )
+      }
+      if (addingSubTo && addingSubTo.kind === kind && addingSubTo.parent === node.name) {
+        rows.push(
+          <tr key={`${kind}-addsub-${node.id}`} className="bg-[var(--surface)]">
+            <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] pl-7 pr-2 py-1.5 bg-inherit">
+              <input
+                autoFocus
+                value={newSubInline}
+                onChange={(e) => setNewSubInline(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); void addSubInline(kind, node.name) }
+                  else if (e.key === 'Escape') { setAddingSubTo(null); setNewSubInline('') }
+                }}
+                onBlur={() => void addSubInline(kind, node.name)}
+                placeholder={t('budgeting.new_subcategory_placeholder')}
+                className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
+                style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+              />
+            </td>
+          </tr>,
         )
       }
     }
@@ -717,7 +818,9 @@ export default function BudgetingPage() {
             <tr style={{ background: 'var(--surface-2)' }}>
               <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 bg-inherit">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
-                <span className="ml-2 text-[10px] normal-case tracking-normal" style={{ color: 'var(--ink-soft)' }}>{t('budgeting.allocation_formula')}</span>
+                <span className="ml-1.5 inline-flex cursor-help align-middle" title={t('budgeting.allocation_formula')}>
+                  <Info className="inline size-3" style={{ color: 'var(--ink-soft)' }} />
+                </span>
               </td>
             </tr>
             <tr className="bg-[var(--surface)]">
@@ -825,13 +928,16 @@ export default function BudgetingPage() {
         {/* Desktop: title + month-header strip + per-section standalone cards */}
         <div className="hidden md:block space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-            <div className="min-w-0">
+            <div className="min-w-0 flex items-center gap-1.5">
               <p className="eyebrow">{viewMode === 'year' ? t('budgeting.grid_eyebrow_year') : t('budgeting.grid_eyebrow_month')}</p>
-              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                {viewMode === 'year'
-                  ? t('budgeting.grid_desc_year')
-                  : t('budgeting.grid_desc_month')}
-              </p>
+              {viewMode === 'year' && (
+                <span
+                  className="inline-flex cursor-help"
+                  title={`${t('budgeting.tip_click_month')}\n${t('budgeting.tip_calc_prefix')} 12*250000 (× ÷ + −)\n${t('budgeting.tip_drag')}\n${t('budgeting.tip_saved')}`}
+                >
+                  <Info className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
+                </span>
+              )}
             </div>
             {/* Toggle Bulan / Tahun */}
             <div className="flex gap-0.5 rounded-lg p-0.5 shrink-0" style={{ background: 'var(--surface-2)' }}>
@@ -855,21 +961,6 @@ export default function BudgetingPage() {
               })}
             </div>
           </div>
-          {viewMode === 'year' && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              {[
-                { Icon: CalendarDays, label: <>{t('budgeting.tip_click_month')}</> },
-                { Icon: Calculator, label: <>{t('budgeting.tip_calc_prefix')} <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (×&nbsp;÷&nbsp;+&nbsp;−)</> },
-                { Icon: Copy, label: <>{t('budgeting.tip_drag')}</> },
-              ].map((tip, i) => (
-                <span key={i} className="inline-flex items-center gap-1.5">
-                  <tip.Icon className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-                  {tip.label}
-                </span>
-              ))}
-            </div>
-          )}
-
           {viewMode === 'month' ? (
             <MonthBudgetView
               year={Number(year)}
