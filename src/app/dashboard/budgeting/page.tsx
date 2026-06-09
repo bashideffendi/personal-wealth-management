@@ -78,8 +78,9 @@ function parseCell(input: string): number {
   // Mini-kalkulator: kalau ada operator (× ÷ + atau − antar angka) atau diawali
   // "=", hitung sebagai rumus. Selain itu, angka biasa (toleran titik ribuan).
   const hasOp = /[+*/]/.test(body) || /\d\s*-\s*\d/.test(body)
-  if (s.startsWith('=') || hasOp) return evalFormula(body)
-  return Number(body.replace(/[^0-9-]/g, '')) || 0
+  // Anggaran nggak boleh negatif → clamp ke 0.
+  if (s.startsWith('=') || hasOp) return Math.max(0, evalFormula(body))
+  return Math.max(0, Number(body.replace(/[^0-9-]/g, '')) || 0)
 }
 
 type FillSource = { type: BudgetType; category: string; month: number; value: number }
@@ -283,8 +284,8 @@ export default function BudgetingPage() {
   }
 
   // ---- Drag-fill (tarik) ----
-  function startFill(type: BudgetType, category: string, month: number) {
-    const src: FillSource = { type, category, month, value: getValue(type, category, month) }
+  function startFill(type: BudgetType, category: string, month: number, liveValue?: number) {
+    const src: FillSource = { type, category, month, value: liveValue ?? getValue(type, category, month) }
     fillSourceRef.current = src
     fillOverRef.current = month
     setFillSource(src)
@@ -470,7 +471,7 @@ export default function BudgetingPage() {
                 style={{ color: 'var(--ink)' }}
               />
               <span
-                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startFill(type, categoryKey, month) }}
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); const inp = (e.currentTarget.parentElement as HTMLElement | null)?.querySelector('input'); startFill(type, categoryKey, month, inp ? parseCell(inp.value) : undefined) }}
                 className={`absolute bottom-0.5 right-0.5 cursor-crosshair rounded-[2px] transition-opacity duration-150 ${isSource ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}
                 style={{ width: 6, height: 6, background: accent, boxShadow: '0 0 0 1.5px var(--surface)' }}
                 title={t('budgeting.fill_handle_title')}
@@ -516,7 +517,7 @@ export default function BudgetingPage() {
               style={{ color: 'var(--ink-muted)' }}
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
-              {v ? formatCurrency(v) : '—'}
+              {privacyHidden ? '••••••' : v ? formatCurrency(v) : '—'}
             </td>
           )
         })}
@@ -561,8 +562,27 @@ export default function BudgetingPage() {
     }
     await handleTreeCommit(nextTree)
 
-    // Migrasi nilai: induk-yg-tadinya-leaf → sub pertama (preserve total, semua tahun)
+    // Migrasi nilai: induk-yg-tadinya-leaf → sub pertama (preserve total).
     if (wasLeaf) {
+      const newSubK = subKey(parentName, subName)
+      let hadValues = false
+      for (let m = 1; m <= 12; m++) {
+        if ((budgets[budgetKey(kind, parentName, m)] ?? 0) !== 0) hadValues = true
+      }
+      // Re-key the in-memory map (current year) ALWAYS — also covers offline,
+      // so the new rollup keeps summing the migrated values instead of orphaning them.
+      setBudgets((prev) => {
+        const next = { ...prev }
+        for (let m = 1; m <= 12; m++) {
+          const oldK = budgetKey(kind, parentName, m)
+          if (next[oldK] != null) {
+            next[budgetKey(kind, newSubK, m)] = next[oldK]
+            delete next[oldK]
+          }
+        }
+        return next
+      })
+      // Persist across ALL years when logged in.
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: oldRows } = await supabase
@@ -573,26 +593,14 @@ export default function BudgetingPage() {
           .eq('category', parentName)
         const rows = (oldRows ?? []) as Budget[]
         if (rows.length) {
-          const newSubK = subKey(parentName, subName)
           await supabase.from('budgets').upsert(
             rows.map((r) => ({ user_id: user.id, year: r.year, month: r.month, type: kind, category: newSubK, amount: r.amount })),
             { onConflict: 'user_id,year,month,type,category' },
           )
           await supabase.from('budgets').delete().eq('user_id', user.id).eq('type', kind).eq('category', parentName)
-          setBudgets((prev) => {
-            const next = { ...prev }
-            for (let m = 1; m <= 12; m++) {
-              const oldK = budgetKey(kind, parentName, m)
-              if (next[oldK] != null) {
-                next[budgetKey(kind, newSubK, m)] = next[oldK]
-                delete next[oldK]
-              }
-            }
-            return next
-          })
-          toast.success(t('budgeting.sub_added_migrated'))
         }
       }
+      if (hadValues) toast.success(t('budgeting.sub_added_migrated'))
     }
   }
 
@@ -699,7 +707,7 @@ export default function BudgetingPage() {
               className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
-              {formatCurrency(v)}
+              {privacyHidden ? '••••••' : formatCurrency(v)}
             </td>
           )
         })}
@@ -834,7 +842,7 @@ export default function BudgetingPage() {
                 const v = allocatedOf(i + 1)
                 return (
                   <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular" style={{ color: 'var(--ink-muted)' }} title={privacyHidden ? '••••••' : formatCurrency(v)}>
-                    {v ? formatCurrency(v) : '—'}
+                    {privacyHidden ? '••••••' : v ? formatCurrency(v) : '—'}
                   </td>
                 )
               })}
@@ -847,7 +855,7 @@ export default function BudgetingPage() {
                 const color = Math.abs(left) < 1 ? '#059669' : left > 0 ? '#B45309' : '#E11D48'
                 return (
                   <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular" style={{ color }} title={privacyHidden ? '••••••' : formatCurrency(left)}>
-                    {formatCurrency(left)}
+                    {privacyHidden ? '••••••' : formatCurrency(left)}
                   </td>
                 )
               })}
