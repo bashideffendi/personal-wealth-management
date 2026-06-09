@@ -118,6 +118,8 @@ export function CommandPalette() {
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [recentHrefs, setRecentHrefs] = useState<string[]>([])
   const [aiState, setAiState] = useState<AIState>({ kind: 'idle' })
+  const [isMac, setIsMac] = useState(false)
+  useEffect(() => { setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) }, [])
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -568,7 +570,7 @@ export function CommandPalette() {
             </span>
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>⌘</Kbd>
+            <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
             <Kbd>K</Kbd>
           </span>
         </div>

@@ -96,9 +96,9 @@ export function ReflectiveSpendingModal({
           <div className="flex items-center gap-2 mb-2">
             <div
               className="size-9 rounded-lg flex items-center justify-center"
-              style={{ background: 'rgba(245,158,11,0.10)' }}
+              style={{ background: 'var(--c-amber-soft)' }}
             >
-              <Pause className="size-4" style={{ color: '#F59E0B' }} />
+              <Pause className="size-4" style={{ color: 'var(--c-amber)' }} />
             </div>
             <div>
               <p className="eyebrow">Kakeibo Reflection</p>

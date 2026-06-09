@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Fragment } from 'react'
+import { useEffect, useState, useMemo, useDeferredValue, Fragment } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash } from 'lucide-react'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -367,7 +367,7 @@ export default function TransactionsPage() {
       ? `Transfer: ${transferForm.notes}`
       : `Transfer antar akun`
     // Create paired transactions with special category "Transfer"
-    await supabase.from('transactions').insert([
+    const { error: transferErr } = await supabase.from('transactions').insert([
       {
         user_id: user.id, date: transferForm.date,
         account_id: transferForm.from_account_id,
@@ -384,6 +384,11 @@ export default function TransactionsPage() {
       },
     ])
     setTransferSaving(false)
+    if (transferErr) {
+      toast.error(t('transactions.toast_save_failed'), { description: transferErr.message })
+      return
+    }
+    toast.success(t('transactions.toast_transfer_recorded'))
     setTransferDialogOpen(false)
     setTransferForm({
       date: new Date().toISOString().split('T')[0],
@@ -394,6 +399,13 @@ export default function TransactionsPage() {
 
   function exportCSV(rows: Transaction[]) {
     const header = [t('transactions.col_date'), t('transactions.col_account'), t('transactions.col_type'), t('transactions.col_category'), t('transactions.col_description'), t('transactions.col_amount')]
+    // Quote + escape EVERY cell (account/category are free-text too) and neutralize
+    // spreadsheet formula injection (cells starting with =,+,-,@) with a leading quote.
+    const cell = (v: unknown) => {
+      let s = String(v ?? '')
+      if (/^[=+\-@]/.test(s)) s = `'${s}`
+      return `"${s.replace(/"/g, '""')}"`
+    }
     const csvRows = [
       header,
       ...rows.map((tx) => [
@@ -401,11 +413,11 @@ export default function TransactionsPage() {
         getAccountName(tx.account_id),
         tx.type,
         tx.category,
-        (tx.description ?? '').replace(/"/g, '""'),
+        tx.description ?? '',
         String(tx.amount),
       ]),
     ]
-    const csv = csvRows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
+    const csv = csvRows.map((r) => r.map(cell).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -436,6 +448,12 @@ export default function TransactionsPage() {
   useEffect(() => {
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ⌘ on Mac, Ctrl elsewhere — the command palette binds metaKey || ctrlKey.
+  const [isMac, setIsMac] = useState(false)
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent))
   }, [])
 
   async function fetchData() {
@@ -773,23 +791,27 @@ export default function TransactionsPage() {
     return '-'
   }
 
-  // Filter logic
-  const filteredTransactions = transactions.filter((tx) => {
+  // Filter logic — memoized + deferred search so typing stays smooth on big lists
+  // (was re-filtering every row AND rebuilding an Intl currency string per row on
+  // every keystroke). Dates parsed as LOCAL midnight to match the picker's bounds.
+  const deferredSearch = useDeferredValue(search)
+  const filteredTransactions = useMemo(() => transactions.filter((tx) => {
     if (dateRange) {
-      const d = new Date(tx.date)
+      const [yy, mm, dd] = tx.date.split('-').map(Number)
+      const d = new Date(yy, (mm || 1) - 1, dd || 1)
       if (d < dateRange.from || d > dateRange.to) return false
     }
     if (filterAccount !== 'all' && tx.account_id !== filterAccount) return false
     if (filterType !== 'all' && tx.type !== filterType) return false
     if (filterCategory !== 'all' && tx.category !== filterCategory) return false
     if (filterTag !== 'all' && !(tx.tags ?? []).includes(filterTag)) return false
-    if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      const hay = `${tx.description ?? ''} ${tx.category} ${tx.amount} ${formatCurrency(tx.amount)}`.toLowerCase()
+    const q = deferredSearch.trim().toLowerCase()
+    if (q) {
+      const hay = `${tx.description ?? ''} ${tx.category} ${tx.amount}`.toLowerCase()
       if (!hay.includes(q)) return false
     }
     return true
-  })
+  }), [transactions, dateRange, filterAccount, filterType, filterCategory, filterTag, deferredSearch])
 
   // Daftar kategori filter — diturunkan dari tree user (induk + subkategori).
   const allTags = Array.from(new Set(transactions.flatMap((t) => t.tags ?? []))).sort((a, b) =>
@@ -879,20 +901,22 @@ export default function TransactionsPage() {
         const exp = filteredTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
         const stats = [
-          { label: t('transactions.summary_income'), dot: '#10B981', val: formatCurrency(inc), color: 'var(--ink)' },
-          { label: t('transactions.summary_expense'), dot: '#F43F5E', val: formatCurrency(exp), color: 'var(--ink)' },
-          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? '#10B981' : '#F43F5E', val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' },
-          { label: t('transactions.summary_total_count'), dot: '#8B5CF6', val: String(filteredTransactions.length), color: 'var(--ink)' },
+          { label: t('transactions.summary_income'), dot: '#10B981', Icon: ArrowDownToLine, val: formatCurrency(inc), color: 'var(--ink)' },
+          { label: t('transactions.summary_expense'), dot: '#F43F5E', Icon: ArrowUpFromLine, val: formatCurrency(exp), color: 'var(--ink)' },
+          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? '#10B981' : '#F43F5E', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
+          { label: t('transactions.summary_total_count'), dot: '#8B5CF6', Icon: Hash, val: String(filteredTransactions.length), color: 'var(--ink)' },
         ]
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {stats.map((s) => (
               <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
-                <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: s.dot }} />
-                  {s.label}
-                </span>
-                <p className="num tabular font-semibold mt-1.5" style={{ fontSize: 20, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
+                <div className="flex items-center gap-2.5">
+                  <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
+                    <s.Icon className="size-4" />
+                  </span>
+                  <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+                </div>
+                <p className="num tabular font-semibold mt-2" style={{ fontSize: 20, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
               </div>
             ))}
           </div>
@@ -900,16 +924,17 @@ export default function TransactionsPage() {
       })()}
 
       {!loading && accounts.length === 0 && creditCards.length === 0 && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
-          <Wallet className="size-5 text-amber-700 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-lg border p-4" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 35%, transparent)' }}>
+          <Wallet className="size-5 shrink-0 mt-0.5" style={{ color: 'var(--c-amber-ink)' }} />
           <div className="flex-1 text-sm">
-            <p className="font-medium text-amber-900">{t('transactions.no_account_title')}</p>
-            <p className="mt-1 text-amber-800">
+            <p className="font-medium" style={{ color: 'var(--ink)' }}>{t('transactions.no_account_title')}</p>
+            <p className="mt-1" style={{ color: 'var(--ink-muted)' }}>
               {t('transactions.no_account_desc')}
             </p>
             <Link
               href="/dashboard/accounts"
-              className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-900 hover:underline"
+              className="mt-2 inline-flex items-center gap-1 font-semibold hover:underline"
+              style={{ color: 'var(--c-amber-ink)' }}
             >
               {t('transactions.create_first_account')} →
             </Link>
@@ -1165,14 +1190,14 @@ export default function TransactionsPage() {
             </Button>
           </form>
           <p className="text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
-            {t('transactions.quick_add_tip_prefix')} <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>⌘K</kbd> {t('transactions.quick_add_tip_suffix')}
+            {t('transactions.quick_add_tip_prefix')} <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>{isMac ? '⌘K' : 'Ctrl K'}</kbd> {t('transactions.quick_add_tip_suffix')}
           </p>
         </div>
       )}
 
       {/* Bulk-action bar — appears when rows are selected (desktop) */}
       {selectedIds.size > 0 && (
-        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ background: 'var(--c-primary-soft)', borderColor: 'var(--c-primary)' }}>
+        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
           <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
             {selectedIds.size} {t('transactions.selected_count')}
           </span>
@@ -1238,6 +1263,9 @@ export default function TransactionsPage() {
         <>
           {/* Desktop: per-day grouped table, in a card */}
           <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
+            {/* Contained scroll so the column header can stick without colliding with
+                the page-level sticky TopNav. */}
+            <div className="tx-scroll">
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: '4%' }} />
@@ -1318,7 +1346,7 @@ export default function TransactionsPage() {
                           </TableCell>
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             <Popover.Root open={inlineCatId === tx.id} onOpenChange={(o) => setInlineCatId(o ? tx.id : null)}>
-                              <Popover.Trigger className="flex items-center gap-2 -ml-1 rounded-md px-1 py-0.5 transition-colors hover:bg-[var(--surface-3)]" title={t('transactions.edit_category_inline')}>
+                              <Popover.Trigger className="flex items-center gap-2 -ml-1 rounded-md px-1 py-0.5 transition-colors hover:bg-[var(--surface-3)]" title={t('transactions.edit_category_inline')} aria-label={`${tx.category} — ${t('transactions.edit_category_inline')}`}>
                                 <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: TYPE_BADGE_STYLES[tx.type].bg, color: TYPE_BADGE_STYLES[tx.type].color }}>
                                   <CategoryIcon category={tx.category} className="size-3.5" />
                                 </span>
@@ -1347,11 +1375,16 @@ export default function TransactionsPage() {
                             {tx.description}
                             {tx.tags && tx.tags.length > 0 && (
                               <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
-                                {tx.tags.map((t) => (
-                                  <span key={t} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
-                                    {t}
+                                {tx.tags.slice(0, 2).map((tg) => (
+                                  <span key={tg} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                                    {tg}
                                   </span>
                                 ))}
+                                {tx.tags.length > 2 && (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
+                                    +{tx.tags.length - 2}
+                                  </span>
+                                )}
                               </span>
                             )}
                           </TableCell>
@@ -1368,10 +1401,10 @@ export default function TransactionsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(tx)}>
+                              <Button variant="ghost" size="icon-sm" aria-label={`${t('transactions.edit_transaction')}: ${tx.description || tx.category}`} onClick={() => openEditDialog(tx)}>
                                 <Pencil className="size-4" style={{ color: 'var(--ink-soft)' }} />
                               </Button>
-                              <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(tx.id)}>
+                              <Button variant="ghost" size="icon-sm" aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`} onClick={() => handleDelete(tx.id)}>
                                 <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
                               </Button>
                             </div>
@@ -1398,6 +1431,7 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableFooter>
             </Table>
+            </div>
           </div>
 
           {/* Mobile: stacked card list */}
@@ -1413,9 +1447,8 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  className="rounded-xl border bg-[var(--surface)] p-3 active:bg-[var(--surface-2)] transition"
+                  className="rounded-xl border bg-[var(--surface)] p-3"
                   style={{ borderColor: 'var(--border)' }}
-                  onClick={() => openEditDialog(tx)}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -1447,14 +1480,24 @@ export default function TransactionsPage() {
                       <p className="num text-sm font-bold tabular-nums" style={{ color: amountColor }}>
                         {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
                       </p>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
-                        className="text-[11px] mt-1 inline-flex items-center gap-0.5 font-medium"
-                        style={{ color: 'var(--c-coral)' }}
-                      >
-                        <Trash2 className="size-3" /> {t('transactions.delete')}
-                      </button>
+                      <div className="mt-1 flex items-center justify-end gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => openEditDialog(tx)}
+                          className="text-[11px] inline-flex items-center gap-0.5 font-medium"
+                          style={{ color: 'var(--ink-muted)' }}
+                        >
+                          <Pencil className="size-3" /> {t('transactions.edit')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(tx.id)}
+                          className="text-[11px] inline-flex items-center gap-0.5 font-medium"
+                          style={{ color: 'var(--c-coral)' }}
+                        >
+                          <Trash2 className="size-3" /> {t('transactions.delete')}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1469,7 +1512,7 @@ export default function TransactionsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Wallet className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: TYPE_BADGE_STYLES[form.type].bg }}><Wallet className="size-5" style={{ color: TYPE_BADGE_STYLES[form.type].color }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? t('transactions.dialog_edit_title') : t('transactions.dialog_add_title')}</DialogTitle>
                 <DialogDescription>{editingId ? t('transactions.dialog_edit_desc') : t('transactions.dialog_add_desc')}</DialogDescription>
@@ -1567,7 +1610,7 @@ export default function TransactionsPage() {
 
             {/* Account */}
             <div className="grid gap-1.5">
-              <Label>{t('transactions.label_account')}</Label>
+              <Label id="tx-account-label">{t('transactions.label_account')}</Label>
               <Select
                 value={form.account_id}
                 onValueChange={(v) => {
@@ -1575,7 +1618,7 @@ export default function TransactionsPage() {
                   setAccountSource(null) // user manually picked
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" aria-labelledby="tx-account-label">
                   <SelectValue placeholder={t('transactions.select_account')}>
                     {(v) => {
                       const acc = accounts.find((a) => a.id === v)
@@ -1614,9 +1657,9 @@ export default function TransactionsPage() {
                     {accountSource === 'default' && (
                       <span
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                        style={{ background: 'var(--sky-50)', color: 'var(--sky-600)' }}
+                        style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber-ink)' }}
                       >
-                        <Star className="size-3" style={{ fill: 'var(--sky-600)' }} /> {t('transactions.source_default')}
+                        <Star className="size-3" style={{ fill: 'var(--c-amber-ink)' }} /> {t('transactions.source_default')}
                       </span>
                     )}
                     {accountSource === 'last_used' && (
@@ -1649,8 +1692,8 @@ export default function TransactionsPage() {
 
             {/* Type — segmented colored chips */}
             <div className="grid gap-1.5">
-              <Label>{t('transactions.label_type')}</Label>
-              <div className="grid grid-cols-4 gap-1.5">
+              <Label id="tx-type-label">{t('transactions.label_type')}</Label>
+              <div className="grid grid-cols-4 gap-1.5" role="group" aria-labelledby="tx-type-label">
                 {(Object.keys(TYPE_LABELS) as TransactionType[]).map((ty) => {
                   const active = form.type === ty
                   const c = TYPE_BADGE_STYLES[ty]
@@ -1658,6 +1701,7 @@ export default function TransactionsPage() {
                     <button
                       key={ty}
                       type="button"
+                      aria-pressed={active}
                       onClick={() => setForm({ ...form, type: ty, category: '' })}
                       className="rounded-lg border py-2 text-xs font-semibold transition-colors"
                       style={active
@@ -1673,12 +1717,12 @@ export default function TransactionsPage() {
 
             {/* Category */}
             <div className="grid gap-1.5">
-              <Label>{t('transactions.label_category')}</Label>
+              <Label id="tx-category-label">{t('transactions.label_category')}</Label>
               <Select
                 value={form.category}
                 onValueChange={(v) => setForm({ ...form, category: v ?? '' })}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" aria-labelledby="tx-category-label">
                   <SelectValue placeholder={t('transactions.select_category')}>
                     {(v) => v || t('transactions.select_category')}
                   </SelectValue>
@@ -1718,7 +1762,7 @@ export default function TransactionsPage() {
               {form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {form.tags.map((tag) => (
-                    <span key={tag} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}>
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                       {tag}
                       <button
                         type="button"
@@ -1804,6 +1848,7 @@ export default function TransactionsPage() {
               <input
                 type="file"
                 accept=".csv"
+                aria-label={t('transactions.csv_title')}
                 onChange={(e) => {
                   const f = e.target.files?.[0]
                   if (f) handleCsvUpload(f)
@@ -1834,6 +1879,7 @@ export default function TransactionsPage() {
                       <input
                         type="checkbox"
                         checked={r.apply}
+                        aria-label={r.description || r.date}
                         onChange={(e) => {
                           const next = [...importRows]
                           next[i] = { ...r, apply: e.target.checked }
@@ -1895,7 +1941,7 @@ export default function TransactionsPage() {
               <div className="grid gap-1.5">
                 <Label>{t('transactions.from_account')}</Label>
                 <Select value={transferForm.from_account_id} onValueChange={(v) => setTransferForm({ ...transferForm, from_account_id: v ?? '' })}>
-                  <SelectTrigger><SelectValue placeholder={t('transactions.select')} /></SelectTrigger>
+                  <SelectTrigger aria-label={t('transactions.from_account')}><SelectValue placeholder={t('transactions.select')} /></SelectTrigger>
                   <SelectContent>
                     {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `${t('transactions.unnamed_account')} (${a.type})`}</SelectItem>)}
                   </SelectContent>
@@ -1904,7 +1950,7 @@ export default function TransactionsPage() {
               <div className="grid gap-1.5">
                 <Label>{t('transactions.to_account')}</Label>
                 <Select value={transferForm.to_account_id} onValueChange={(v) => setTransferForm({ ...transferForm, to_account_id: v ?? '' })}>
-                  <SelectTrigger><SelectValue placeholder={t('transactions.select')} /></SelectTrigger>
+                  <SelectTrigger aria-label={t('transactions.to_account')}><SelectValue placeholder={t('transactions.select')} /></SelectTrigger>
                   <SelectContent>
                     {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name?.trim() || `${t('transactions.unnamed_account')} (${a.type})`}</SelectItem>)}
                   </SelectContent>

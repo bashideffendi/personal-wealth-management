@@ -156,6 +156,8 @@ export function TopNav({ user }: TopNavProps) {
   const navLabel = (it: NavItem) => (it.titleKey ? t(it.titleKey) : it.label)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isMac, setIsMac] = useState(false)
+  useEffect(() => { setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) }, [])
 
   useEffect(() => {
     function onScroll() {
@@ -285,7 +287,7 @@ export function TopNav({ user }: TopNavProps) {
                 className="text-[10px] px-1.5 py-px rounded"
                 style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-faint)', border: '1px solid var(--line)' }}
               >
-                ⌘K
+                {isMac ? '⌘K' : 'Ctrl K'}
               </kbd>
             </button>
 

@@ -560,6 +560,13 @@
 .tx-row { transition: background-color 0.12s ease; }
 .tx-row:hover { background-color: color-mix(in srgb, var(--c-mint) 8%, var(--surface)); }
 
+/* Transactions table — contained vertical scroll with a sticky column header, so
+   the Akun/Jenis/Kategori/Jumlah labels stay put on long lists (a page-level
+   sticky header would slide under the sticky TopNav). Each th needs its own bg to
+   occlude rows scrolling beneath it. */
+.tx-scroll { max-height: 68vh; overflow-y: auto; }
+.tx-scroll thead th { position: sticky; top: 0; z-index: 20; background: var(--surface-3); }
+
 /* Budget grid — faint vertical column gridlines + a stronger separator after the
    sticky Category column, so the 12 month columns are easy to track left-to-right. */
 .budget-grid td, .budget-grid th { border-right: 1px solid var(--border-soft); }
