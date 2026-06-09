@@ -415,6 +415,11 @@ export default function TransactionsPage() {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   // Overflow menu (import/export/transfer) — controlled so item clicks close it.
   const [overflowOpen, setOverflowOpen] = useState(false)
+  // Bulk edit + inline category (desktop table power features)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [inlineCatId, setInlineCatId] = useState<string | null>(null)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkCatOpen, setBulkCatOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -615,6 +620,47 @@ export default function TransactionsPage() {
     fetchData()
   }
 
+  // ─── Bulk edit + inline category ────────────────────────────
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function bulkDelete() {
+    if (selectedIds.size === 0) return
+    setBulkBusy(true)
+    const ids = [...selectedIds]
+    const { error } = await supabase.from('transactions').delete().in('id', ids)
+    setBulkBusy(false)
+    if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
+    toast.success(`${ids.length} ${t('transactions.bulk_deleted')}`)
+    setSelectedIds(new Set())
+    fetchData()
+  }
+
+  async function bulkSetCategory(category: string) {
+    if (selectedIds.size === 0 || !category) return
+    setBulkBusy(true)
+    const ids = [...selectedIds]
+    const { error } = await supabase.from('transactions').update({ category }).in('id', ids)
+    setBulkBusy(false)
+    if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
+    toast.success(t('transactions.bulk_recategorized'))
+    setSelectedIds(new Set())
+    fetchData()
+  }
+
+  async function inlineSetCategory(id: string, category: string) {
+    setInlineCatId(null)
+    const { error } = await supabase.from('transactions').update({ category }).eq('id', id)
+    if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
+    fetchData()
+  }
+
   // ─── Quick-add (inline row) ─────────────────────────────────
   // Faster than opening the modal — Tab between fields, Enter to submit.
   const [quickForm, setQuickForm] = useState({
@@ -716,6 +762,19 @@ export default function TransactionsPage() {
     setFilterCategory('all')
     setFilterTag('all')
   }
+
+  const allVisibleSelected =
+    filteredTransactions.length > 0 && filteredTransactions.every((tx) => selectedIds.has(tx.id))
+  function toggleSelectAll() {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(filteredTransactions.map((tx) => tx.id)))
+  }
+  const allCategoryOptions: string[] = [
+    ...new Set(
+      (['income', 'expense', 'saving', 'investment'] as TransactionType[]).flatMap((ty) =>
+        optionsForType(ty).map((o) => o.value),
+      ),
+    ),
+  ]
 
   const filterCategoryOptions: string[] =
     filterType !== 'all'
@@ -1082,6 +1141,48 @@ export default function TransactionsPage() {
         </div>
       )}
 
+      {/* Bulk-action bar — appears when rows are selected (desktop) */}
+      {selectedIds.size > 0 && (
+        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ background: 'var(--c-primary-soft)', borderColor: 'var(--c-primary)' }}>
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+            {selectedIds.size} {t('transactions.selected_count')}
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Popover.Root open={bulkCatOpen} onOpenChange={setBulkCatOpen}>
+              <Popover.Trigger
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] transition-colors hover:bg-[var(--surface-2)]"
+                style={{ borderColor: 'var(--border)', color: 'var(--ink)', background: 'var(--surface)' }}
+              >
+                <Pencil className="size-3.5" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.bulk_recategorize')}
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Positioner side="bottom" align="end" sideOffset={6} className="z-50">
+                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
+                    {allCategoryOptions.map((c) => (
+                      <button key={c} type="button" onClick={() => { setBulkCatOpen(false); void bulkSetCategory(c) }} className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}>
+                        {c}
+                      </button>
+                    ))}
+                  </Popover.Popup>
+                </Popover.Positioner>
+              </Popover.Portal>
+            </Popover.Root>
+            <button
+              type="button"
+              onClick={() => void bulkDelete()}
+              disabled={bulkBusy}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50"
+              style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral)', background: 'var(--surface)' }}
+            >
+              {bulkBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />} {t('transactions.bulk_delete')}
+            </button>
+            <button type="button" onClick={() => setSelectedIds(new Set())} className="px-2 text-[13px] font-medium" style={{ color: 'var(--ink-muted)' }}>
+              {t('transactions.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Transactions list — table on md+, cards on mobile */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -1110,15 +1211,19 @@ export default function TransactionsPage() {
           <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: '16%' }} />
+                <col style={{ width: '4%' }} />
+                <col style={{ width: '14%' }} />
                 <col style={{ width: '12%' }} />
                 <col style={{ width: '18%' }} />
-                <col style={{ width: '30%' }} />
+                <col style={{ width: '28%' }} />
                 <col style={{ width: '16%' }} />
                 <col style={{ width: '8%' }} />
               </colgroup>
               <TableHeader>
                 <TableRow className="bg-[var(--surface-3)] hover:bg-[var(--surface-3)]">
+                  <TableHead className="pl-3 pr-0">
+                    <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label={t('transactions.select_all')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
+                  </TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_account')}</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_type')}</TableHead>
                   <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_category')}</TableHead>
@@ -1139,7 +1244,7 @@ export default function TransactionsPage() {
                     <Fragment key={g.date}>
                       <TableRow className="hover:bg-transparent border-[color:var(--border-soft)]">
                         <TableCell
-                          colSpan={6}
+                          colSpan={7}
                           className="px-3 py-2 text-[12px] font-semibold"
                           style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                         >
@@ -1161,8 +1266,13 @@ export default function TransactionsPage() {
                           </div>
                         </TableCell>
                       </TableRow>
-                      {g.items.map((tx) => (
-                        <TableRow key={tx.id} className="border-[color:var(--border-soft)] hover:bg-[var(--surface-2)]">
+                      {g.items.map((tx) => {
+                        const selected = selectedIds.has(tx.id)
+                        return (
+                        <TableRow key={tx.id} className="border-[color:var(--border-soft)] hover:bg-[var(--surface-2)]" style={selected ? { background: 'var(--c-primary-soft)' } : undefined}>
+                          <TableCell className="pl-3 pr-0">
+                            <input type="checkbox" checked={selected} onChange={() => toggleSelect(tx.id)} aria-label={t('transactions.select_row')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
+                          </TableCell>
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             {getAccountName(tx.account_id)}
                           </TableCell>
@@ -1178,12 +1288,31 @@ export default function TransactionsPage() {
                             </span>
                           </TableCell>
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
-                            <span className="flex items-center gap-2">
-                              <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: TYPE_BADGE_STYLES[tx.type].bg, color: TYPE_BADGE_STYLES[tx.type].color }}>
-                                <CategoryIcon category={tx.category} className="size-3.5" />
-                              </span>
-                              {tx.category}
-                            </span>
+                            <Popover.Root open={inlineCatId === tx.id} onOpenChange={(o) => setInlineCatId(o ? tx.id : null)}>
+                              <Popover.Trigger className="flex items-center gap-2 -ml-1 rounded-md px-1 py-0.5 transition-colors hover:bg-[var(--surface-3)]" title={t('transactions.edit_category_inline')}>
+                                <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: TYPE_BADGE_STYLES[tx.type].bg, color: TYPE_BADGE_STYLES[tx.type].color }}>
+                                  <CategoryIcon category={tx.category} className="size-3.5" />
+                                </span>
+                                {tx.category}
+                              </Popover.Trigger>
+                              <Popover.Portal>
+                                <Popover.Positioner side="bottom" align="start" sideOffset={6} className="z-50">
+                                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
+                                    {optionsForType(tx.type).map((o) => (
+                                      <button
+                                        key={o.value}
+                                        type="button"
+                                        onClick={() => inlineSetCategory(tx.id, o.value)}
+                                        className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]"
+                                        style={{ color: o.value === tx.category ? 'var(--ink)' : 'var(--ink-muted)', fontWeight: o.value === tx.category ? 600 : 400, paddingLeft: o.depth > 0 ? 22 : 10 }}
+                                      >
+                                        {o.depth > 0 ? `↳ ${o.label}` : o.label}
+                                      </button>
+                                    ))}
+                                  </Popover.Popup>
+                                </Popover.Positioner>
+                              </Popover.Portal>
+                            </Popover.Root>
                           </TableCell>
                           <TableCell className="text-[13px]" style={{ color: 'var(--ink)' }}>
                             {tx.description}
@@ -1219,14 +1348,15 @@ export default function TransactionsPage() {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        )
+                      })}
                     </Fragment>
                   ))
                 })()}
               </TableBody>
               <TableFooter>
                 <TableRow className="hover:bg-transparent" style={{ background: 'var(--surface-2)' }}>
-                  <TableCell colSpan={4} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                  <TableCell colSpan={5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
                     {t('transactions.total')} · {filteredTransactions.length} {t('transactions.transactions_word')}
                   </TableCell>
                   <TableCell className="text-right text-[13px] font-bold tabular-nums">
