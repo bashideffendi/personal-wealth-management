@@ -829,19 +829,18 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('transactions.search_placeholder')}
-          className="h-9 w-full pl-9 text-sm"
-        />
-      </div>
-
-      {/* Filters — kept visible below the search bar */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
+      {/* Search + filters — satu card: search di atas, filter di bawahnya */}
+      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
+        <div className="relative">
+          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('transactions.search_placeholder')}
+            className="h-9 w-full pl-9 text-sm"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-5 mt-3">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
@@ -930,17 +929,18 @@ export default function TransactionsPage() {
             </Select>
           </div>
         )}
+        </div>
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium"
+            style={{ color: 'var(--c-primary)' }}
+          >
+            <X className="size-3.5" /> {t('transactions.reset_filters')}
+          </button>
+        )}
       </div>
-      {activeFilterCount > 0 && (
-        <button
-          type="button"
-          onClick={resetFilters}
-          className="-mt-1 inline-flex items-center gap-1.5 self-start text-xs font-medium"
-          style={{ color: 'var(--c-primary)' }}
-        >
-          <X className="size-3.5" /> {t('transactions.reset_filters')}
-        </button>
-      )}
 
       {/* Quick-add inline row — toggled by the toolbar "+ Tambah" (hidden by default).
           Fast path: Tab between fields, Enter to submit. Full modal (struk OCR + tags)
