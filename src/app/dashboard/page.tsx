@@ -110,7 +110,7 @@ interface Budget {
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
 }
 
-const DASH_ORDER_LS = 'pwm.dashboard.order.v8'
+const DASH_ORDER_LS = 'pwm.dashboard.order.v9'
 const DEFAULT_BLOCK_ORDER = DASHBOARD_BLOCKS.map((b) => b.id)
 function reconcileBlockOrder(saved: string[]): string[] {
   const valid = saved.filter((id) => DEFAULT_BLOCK_ORDER.includes(id))
@@ -731,7 +731,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Sisa Aman bulan ini — safe-to-spend (actionable) */}
-      <SortableSection id="sisa-aman" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-2">
+      <SortableSection id="sisa-aman" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
         <SafeToSpendCard income={totals.income} spent={totals.expense} upcoming={upcomingRecurring} />
       </SortableSection>
 
@@ -835,7 +835,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
-      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
+      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-2 lg:row-span-3">
         <RecentTransactions transactions={monthTransactions} />
       </SortableSection>
       <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
@@ -846,7 +846,7 @@ export default function DashboardPage() {
           recurring={recurringItems}
         />
       </SortableSection>
-      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
+      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
         <GoalsWidget goals={activeGoals} />
       </SortableSection>
 

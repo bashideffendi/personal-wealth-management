@@ -16,7 +16,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * → diabaikan, jatuh ke default kode. Ini yang bikin default baru otomatis
  * kebawa ke akun lama (mis. akun Bashid) tanpa perlu sentuh DB manual.
  */
-export const DASHBOARD_LAYOUT_VERSION = 8
+export const DASHBOARD_LAYOUT_VERSION = 9
 
 export interface UiPrefs {
   dashboardHidden: string[]
