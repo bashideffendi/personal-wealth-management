@@ -94,8 +94,10 @@ function NavDropdown({
         style={{
           fontWeight: active ? 600 : 500,
           color: active || open ? 'var(--ink)' : 'var(--text-mute)',
-          background: active || open ? 'var(--surface-2)' : 'transparent',
+          background: 'transparent',
         }}
+        onMouseEnter={(e) => { if (!active && !open) e.currentTarget.style.color = 'var(--ink)' }}
+        onMouseLeave={(e) => { if (!active && !open) e.currentTarget.style.color = 'var(--text-mute)' }}
       >
         {label}
         <ChevronDown
@@ -236,8 +238,10 @@ export function TopNav({ user }: TopNavProps) {
                   style={{
                     fontWeight: active ? 600 : 500,
                     color: active ? 'var(--ink)' : 'var(--text-mute)',
-                    background: active ? 'var(--surface-2)' : 'transparent',
+                    background: 'transparent',
                   }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = 'var(--ink)' }}
+                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = 'var(--text-mute)' }}
                 >
                   {navLabel(it)}
                   {active && (

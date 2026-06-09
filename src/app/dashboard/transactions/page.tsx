@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, SlidersHorizontal, MoreHorizontal } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -797,12 +797,14 @@ export default function TransactionsPage() {
           { label: t('transactions.summary_total_count'), dot: '#8B5CF6', val: String(filteredTransactions.length), color: 'var(--ink)' },
         ]
         return (
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border px-4 py-2.5" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {stats.map((s) => (
-              <div key={s.label} className="flex items-center gap-2 min-w-0">
-                <span className="inline-block h-1.5 w-1.5 rounded-full shrink-0" style={{ background: s.dot }} />
-                <span className="text-[11px] shrink-0" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
-                <span className="num tabular font-semibold text-[13px] truncate" style={{ color: s.color }}>{s.val}</span>
+              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+                <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>
+                  <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: s.dot }} />
+                  {s.label}
+                </span>
+                <p className="num tabular font-semibold mt-1.5" style={{ fontSize: 20, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
               </div>
             ))}
           </div>
@@ -827,38 +829,19 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Search + filter toolbar — search leads (review screen); the filter set
-          collapses into a popover (Monarch "consolidated filter menu"). */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 min-w-0">
-          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('transactions.search_placeholder')}
-            className="h-9 w-full pl-9 text-sm"
-          />
-        </div>
-        <Popover.Root>
-          <Popover.Trigger
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors hover:bg-[var(--surface-2)]"
-            style={{ borderColor: 'var(--border)', color: 'var(--ink)' }}
-          >
-            <SlidersHorizontal className="size-4" style={{ color: 'var(--ink-soft)' }} />
-            <span className="hidden sm:inline">{t('transactions.filter_button')}</span>
-            {activeFilterCount > 0 && (
-              <span className="grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold" style={{ background: 'var(--c-primary)', color: '#fff' }}>
-                {activeFilterCount}
-              </span>
-            )}
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
-              <Popover.Popup
-                className="rounded-xl border p-3 outline-none"
-                style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 'min(320px, calc(100vw - 2rem))', boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30), 0 2px 8px rgba(16,24,40,0.06)' }}
-              >
-                <div className="flex flex-col gap-3">
+      {/* Search */}
+      <div className="relative">
+        <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('transactions.search_placeholder')}
+          className="h-9 w-full pl-9 text-sm"
+        />
+      </div>
+
+      {/* Filters — kept visible below the search bar */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
@@ -947,22 +930,17 @@ export default function TransactionsPage() {
             </Select>
           </div>
         )}
-                  {activeFilterCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={resetFilters}
-                      className="mt-1 inline-flex items-center gap-1.5 self-start text-xs font-medium"
-                      style={{ color: 'var(--c-primary)' }}
-                    >
-                      <X className="size-3.5" /> {t('transactions.reset_filters')}
-                    </button>
-                  )}
-                </div>
-              </Popover.Popup>
-            </Popover.Positioner>
-          </Popover.Portal>
-        </Popover.Root>
       </div>
+      {activeFilterCount > 0 && (
+        <button
+          type="button"
+          onClick={resetFilters}
+          className="-mt-1 inline-flex items-center gap-1.5 self-start text-xs font-medium"
+          style={{ color: 'var(--c-primary)' }}
+        >
+          <X className="size-3.5" /> {t('transactions.reset_filters')}
+        </button>
+      )}
 
       {/* Quick-add inline row — toggled by the toolbar "+ Tambah" (hidden by default).
           Fast path: Tab between fields, Enter to submit. Full modal (struk OCR + tags)

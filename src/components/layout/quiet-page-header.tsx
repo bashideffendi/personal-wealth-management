@@ -46,7 +46,7 @@ export function QuietPageHeader({
       <div className="flex items-center gap-1.5 min-w-0">
         <h1
           className="font-semibold tracking-tight truncate"
-          style={{ fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.01em' }}
+          style={{ fontSize: 19, color: 'var(--ink)', letterSpacing: '-0.02em' }}
         >
           {title}
         </h1>
