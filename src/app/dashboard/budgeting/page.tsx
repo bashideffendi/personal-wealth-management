@@ -938,7 +938,7 @@ export default function BudgetingPage() {
               {viewMode === 'year' && (
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
                   <span className="inline-flex items-center gap-1"><CalendarDays className="size-3.5 shrink-0" /> {t('budgeting.tip_click_month')}</span>
-                  <span className="inline-flex items-center gap-1"><Calculator className="size-3.5 shrink-0" /> {t('budgeting.tip_calc_prefix')} <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (× ÷ + −)</span>
+                  <span className="inline-flex items-center gap-1"><Calculator className="size-3.5 shrink-0" /> {t('budgeting.tip_calc_prefix')} (× ÷ + −)</span>
                   <span className="inline-flex items-center gap-1"><Copy className="size-3.5 shrink-0" /> {t('budgeting.tip_drag')}</span>
                   <span className="inline-flex items-center gap-1"><Check className="size-3.5 shrink-0" /> {t('budgeting.tip_saved')}</span>
                 </div>
