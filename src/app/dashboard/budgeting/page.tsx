@@ -917,6 +917,27 @@ export default function BudgetingPage() {
         ))}
       </div>
 
+      {/* Zero-based nudge — promote the annual remaining-to-allocate into a headline */}
+      {!loading && treeLoaded && totalIncomeYear > 0 && (() => {
+        const remaining = totalIncomeYear - totalExpenseYear - totalSavingYear - totalInvestmentYear
+        const ok = Math.abs(remaining) < 1
+        const over = remaining < 0
+        const hex = ok ? '#10B981' : over ? '#F43F5E' : '#F59E0B'
+        const amt = privacyHidden ? '••••••' : formatCurrency(Math.abs(remaining))
+        return (
+          <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
+            {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
+            <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+              {ok ? (
+                t('budgeting.alloc_banner_done')
+              ) : (
+                <><span className="num tabular font-semibold" style={{ color: hex }}>{amt}</span> {over ? t('budgeting.alloc_banner_over') : t('budgeting.alloc_banner_left')}</>
+              )}
+            </p>
+          </div>
+        )
+      })()}
+
       {/* Budget Grid */}
       {loading || !treeLoaded ? (
         <div className="flex items-center justify-center py-20">
