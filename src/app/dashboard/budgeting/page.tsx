@@ -467,7 +467,7 @@ export default function BudgetingPage() {
                   handleCellBlur(type, categoryKey, month, parsed)
                   e.target.value = parsed ? idFormatter.format(parsed) : ''
                 }}
-                className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-[var(--surface)] px-1 tabular"
+                className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-[var(--surface)] focus:ring-1 focus:ring-inset focus:ring-[var(--c-primary)] px-1 tabular"
                 style={{ color: 'var(--ink)' }}
               />
               <span
@@ -989,6 +989,10 @@ export default function BudgetingPage() {
               onCellChange={handleCellBlur}
             />
           ) : (
+          <>
+          {isCurrentYearActive && (
+            <style dangerouslySetInnerHTML={{ __html: `.budget-grid td:nth-child(${currentMonth + 1}){background-color:color-mix(in srgb, var(--c-primary) 5%, transparent)!important}` }} />
+          )}
           <div className="overflow-x-auto pb-2">
             <div className="space-y-3 min-w-[1040px]">
               {/* Month-label header strip */}
@@ -1064,6 +1068,7 @@ export default function BudgetingPage() {
               ))}
             </div>
           </div>
+          </>
           )}
         </div>
       </>
