@@ -76,6 +76,12 @@
   --c-amber-soft:   #FFFBEB;
   --c-violet:       #8B5CF6;
   --c-violet-soft:  #F5F3FF;
+  /* AA-contrast foreground variants — readable on the soft tints AND on near-white
+     surfaces (the full-saturation hues above fail WCAG AA as small text). */
+  --c-mint-ink:     #047857;
+  --c-coral-ink:    #BE123C;
+  --c-amber-ink:    #B45309;
+  --c-violet-ink:   #6D28D9;
   --c-ink:          #0A0A0F;
 
   /* ── Dark inverse (sidebar, hero cards in light mode) ── */
@@ -353,6 +359,11 @@
   --c-amber-soft:   rgba(251, 191, 36, 0.13);
   --c-violet:       #A78BFA;
   --c-violet-soft:  rgba(167, 139, 250, 0.14);
+  /* Lighter on dark — readable on dark soft tints + dark surfaces. */
+  --c-mint-ink:     #6EE7B7;
+  --c-coral-ink:    #FDA4AF;
+  --c-amber-ink:    #FCD34D;
+  --c-violet-ink:   #C4B5FD;
   --c-ink:          #F5F5F7;
 
   /* Legacy emerald tokens — boost untuk dark */

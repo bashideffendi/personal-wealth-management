@@ -59,13 +59,14 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   investment: 'Investasi',
 }
 
-// Editorial semantic chips per design handoff (mint=income, coral=expense,
-// amber=saving/streak, primary indigo=investment/akumulasi).
+// Semantic chips: mint=income, coral=expense, amber=saving, violet=investment.
+// Foreground uses the -ink (AA-contrast) variants — the full-saturation hues fail
+// WCAG AA on their own soft tints (amber worst, ~2:1).
 const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string }> = {
-  income:     { bg: 'var(--c-mint-soft)',    color: 'var(--c-mint)' },
-  expense:    { bg: 'var(--c-coral-soft)',   color: 'var(--c-coral)' },
-  saving:     { bg: 'var(--c-amber-soft)',   color: 'var(--c-amber)' },
-  investment: { bg: 'var(--c-violet-soft)', color: 'var(--c-violet)' },
+  income:     { bg: 'var(--c-mint-soft)',    color: 'var(--c-mint-ink)' },
+  expense:    { bg: 'var(--c-coral-soft)',   color: 'var(--c-coral-ink)' },
+  saving:     { bg: 'var(--c-amber-soft)',   color: 'var(--c-amber-ink)' },
+  investment: { bg: 'var(--c-violet-soft)',  color: 'var(--c-violet-ink)' },
 }
 
 const emptyForm = {
@@ -127,7 +128,8 @@ export default function TransactionsPage() {
           const desc = (row.description ?? row.Deskripsi ?? row.Description ?? row.Keterangan ?? row.keterangan ?? '').trim()
           const dateRaw = row.date ?? row.Tanggal ?? row.Date ?? row.tanggal ?? ''
           const amountRaw = row.amount ?? row.Jumlah ?? row.Amount ?? row.Nominal ?? '0'
-          const amount = Math.abs(Number(String(amountRaw).replace(/[^0-9.-]/g, '')) || 0)
+          const amountSigned = Number(String(amountRaw).replace(/[^0-9.-]/g, '')) || 0
+          const amount = Math.abs(amountSigned)
           // Parse date — try yyyy-mm-dd or dd/mm/yyyy
           let date = new Date().toISOString().split('T')[0]
           if (dateRaw) {
@@ -140,15 +142,17 @@ export default function TransactionsPage() {
           }
           // Auto-categorize from rules
           const matched = applyRules(desc)
-          // Default: if amount is negative or desc has "debit/keluar", expense
-          const isExpense = /debit|keluar|withdraw|out/i.test(String(amountRaw) + desc) || matched?.type === 'expense'
+          // Expense if: a rule says so, OR the raw amount is negative, OR the
+          // description has a whole-word debit cue. Anchored \b so "Checkout",
+          // "Takeout", "payout" don't get misread as expenses.
+          const isExpense = matched?.type === 'expense' || amountSigned < 0 || /\b(debit|keluar|withdraw|dr)\b/i.test(desc)
           return {
             date,
             description: desc,
             amount,
             type: (matched?.type ?? (isExpense ? 'expense' : 'income')) as 'income' | 'expense' | 'saving' | 'investment',
             category: matched?.category ?? (isExpense ? 'Lainnya' : 'Gaji'),
-            account_id: accounts[0]?.id ?? '',
+            account_id: accounts[0]?.id ?? creditCards[0]?.id ?? '',
             apply: true,
           }
         }).filter((r) => r.amount > 0)
@@ -172,8 +176,18 @@ export default function TransactionsPage() {
         description: r.description,
         amount: r.amount,
       }))
-    if (toInsert.length > 0) await supabase.from('transactions').insert(toInsert)
+    if (toInsert.length === 0) {
+      setImporting(false)
+      toast.warning(t('transactions.toast_no_eligible_rows'))
+      return
+    }
+    const { error } = await supabase.from('transactions').insert(toInsert)
     setImporting(false)
+    if (error) {
+      toast.error(t('transactions.toast_import_failed'), { description: error.message })
+      return
+    }
+    toast.success(`${toInsert.length} ${t('transactions.toast_imported')}`)
     setImportOpen(false)
     setImportRows([])
     fetchData()
@@ -598,14 +612,24 @@ export default function TransactionsPage() {
       return
     }
 
-    // If account is a credit card and it's an expense, add to the card's outstanding.
-    // (If income/saving/investment on a CC account, the CC semantic is odd; skip auto-adjust.)
-    const usedCard = creditCards.find((c) => c.id === form.account_id)
-    if (usedCard && !editingId && form.type === 'expense' && form.amount > 0) {
-      await supabase
-        .from('credit_cards')
-        .update({ current_balance: usedCard.current_balance + form.amount })
-        .eq('id', usedCard.id)
+    // Keep credit-card outstanding in sync — SYMMETRICALLY. A CC expense adds to
+    // the card; editing or moving it must subtract the OLD contribution and add the
+    // new one, else the balance only ever grows (it was add-on-create-only before).
+    // Net per-card delta avoids a double-read race when one card is on both sides.
+    const ccContribution = (txType: TransactionType, accountId: string, amount: number) =>
+      txType === 'expense' && amount > 0 && creditCards.some((c) => c.id === accountId) ? amount : 0
+    const prevTx = editingId ? transactions.find((tx) => tx.id === editingId) : null
+    const cardDeltas: Record<string, number> = {}
+    if (prevTx) {
+      const old = ccContribution(prevTx.type, prevTx.account_id, prevTx.amount)
+      if (old) cardDeltas[prevTx.account_id] = (cardDeltas[prevTx.account_id] ?? 0) - old
+    }
+    const nu = ccContribution(form.type, form.account_id, form.amount)
+    if (nu) cardDeltas[form.account_id] = (cardDeltas[form.account_id] ?? 0) + nu
+    for (const [cardId, delta] of Object.entries(cardDeltas)) {
+      if (delta === 0) continue
+      const card = creditCards.find((c) => c.id === cardId)
+      if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
     }
 
     setSaving(false)
@@ -614,7 +638,16 @@ export default function TransactionsPage() {
   }
 
   async function handleDelete(id: string) {
-    await supabase.from('transactions').delete().eq('id', id)
+    if (!confirm(t('transactions.confirm_delete_tx'))) return
+    const tx = transactions.find((x) => x.id === id)
+    const { error } = await supabase.from('transactions').delete().eq('id', id)
+    if (error) { toast.error(t('transactions.toast_delete_failed'), { description: error.message }); return }
+    // Reverse the CC outstanding this expense had added.
+    if (tx && tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
+      const card = creditCards.find((c) => c.id === tx.account_id)
+      if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance - tx.amount }).eq('id', card.id)
+    }
+    toast.success(t('transactions.toast_deleted'))
     fetchData()
   }
 
@@ -630,11 +663,28 @@ export default function TransactionsPage() {
 
   async function bulkDelete() {
     if (selectedIds.size === 0) return
+    // Only act on rows still VISIBLE under the current filter — selection persists
+    // across filter changes, so without this a narrowed filter would still delete
+    // the now-hidden rows the user can no longer see.
+    const ids = [...selectedIds].filter((id) => filteredTransactions.some((tx) => tx.id === id))
+    if (ids.length === 0) { setSelectedIds(new Set()); return }
+    if (!confirm(t('transactions.bulk_delete_confirm'))) return
     setBulkBusy(true)
-    const ids = [...selectedIds]
+    const removed = transactions.filter((tx) => ids.includes(tx.id))
     const { error } = await supabase.from('transactions').delete().in('id', ids)
     setBulkBusy(false)
-    if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
+    if (error) { toast.error(t('transactions.toast_delete_failed'), { description: error.message }); return }
+    // Reverse CC outstanding for every deleted expense (net per card).
+    const cardDeltas: Record<string, number> = {}
+    for (const tx of removed) {
+      if (tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
+        cardDeltas[tx.account_id] = (cardDeltas[tx.account_id] ?? 0) - tx.amount
+      }
+    }
+    for (const [cardId, delta] of Object.entries(cardDeltas)) {
+      const card = creditCards.find((c) => c.id === cardId)
+      if (card && delta !== 0) await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
+    }
     toast.success(`${ids.length} ${t('transactions.bulk_deleted')}`)
     setSelectedIds(new Set())
     fetchData()
@@ -642,8 +692,9 @@ export default function TransactionsPage() {
 
   async function bulkSetCategory(category: string) {
     if (selectedIds.size === 0 || !category) return
+    const ids = [...selectedIds].filter((id) => filteredTransactions.some((tx) => tx.id === id))
+    if (ids.length === 0) { setSelectedIds(new Set()); return }
     setBulkBusy(true)
-    const ids = [...selectedIds]
     const { error } = await supabase.from('transactions').update({ category }).in('id', ids)
     setBulkBusy(false)
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
@@ -824,8 +875,8 @@ export default function TransactionsPage() {
 
       {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
       {!loading && filteredTransactions.length > 0 && (() => {
-        const inc = filteredTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-        const exp = filteredTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+        const inc = filteredTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
+        const exp = filteredTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
         const stats = [
           { label: t('transactions.summary_income'), dot: '#10B981', val: formatCurrency(inc), color: 'var(--ink)' },
@@ -1236,7 +1287,7 @@ export default function TransactionsPage() {
                             {(() => {
                               const net = g.items.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
                               return (
-                                <span className="tabular-nums" style={{ color: net >= 0 ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
+                                <span className="num tabular-nums" style={{ color: net >= 0 ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
                                   {t('transactions.net')} {net >= 0 ? '+' : '−'}{formatCurrency(Math.abs(net))}
                                 </span>
                               )
@@ -1305,11 +1356,11 @@ export default function TransactionsPage() {
                             )}
                           </TableCell>
                           <TableCell
-                            className={`text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
+                            className={`num text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
                               tx.type === 'income'
-                                ? 'text-[var(--c-mint)]'
+                                ? 'text-[var(--c-mint-ink)]'
                                 : tx.type === 'expense'
-                                  ? 'text-[var(--c-coral)]'
+                                  ? 'text-[var(--c-coral-ink)]'
                                   : 'text-[var(--ink)]'
                             }`}
                           >
@@ -1337,10 +1388,10 @@ export default function TransactionsPage() {
                   <TableCell colSpan={5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
                     {t('transactions.total')} · {filteredTransactions.length} {t('transactions.transactions_word')}
                   </TableCell>
-                  <TableCell className="text-right text-[13px] font-bold tabular-nums">
+                  <TableCell className="num text-right text-[13px] font-bold tabular-nums">
                     {(() => {
                       const n = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
-                      return <span style={{ color: n >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{n >= 0 ? '+' : '−'}{formatCurrency(Math.abs(n))}</span>
+                      return <span style={{ color: n >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>{n >= 0 ? '+' : '−'}{formatCurrency(Math.abs(n))}</span>
                     })()}
                   </TableCell>
                   <TableCell />
@@ -1352,13 +1403,13 @@ export default function TransactionsPage() {
           {/* Mobile: stacked card list */}
           <div className="md:hidden space-y-2">
             {filteredTransactions.map((tx) => {
+              // AA-contrast ink variants; saving/investment stay neutral (the chip
+              // already carries the color) — matches desktop, no more amber/sky split.
               const amountColor = tx.type === 'income'
-                ? 'var(--c-mint)'
+                ? 'var(--c-mint-ink)'
                 : tx.type === 'expense'
-                  ? 'var(--c-coral)'
-                  : tx.type === 'saving'
-                    ? 'var(--amber-600)'
-                    : 'var(--sky-600)'
+                  ? 'var(--c-coral-ink)'
+                  : 'var(--ink)'
               return (
                 <div
                   key={tx.id}
@@ -1393,7 +1444,7 @@ export default function TransactionsPage() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold tabular-nums" style={{ color: amountColor }}>
+                      <p className="num text-sm font-bold tabular-nums" style={{ color: amountColor }}>
                         {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
                       </p>
                       <button
@@ -1426,7 +1477,9 @@ export default function TransactionsPage() {
             </div>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2">
+          {/* Scrollable body so the pinned footer (Save) never escapes the viewport
+              on short laptops / mobile + keyboard. dvh tracks the mobile keyboard. */}
+          <div className="grid gap-4 py-2 px-0.5 max-h-[70dvh] overflow-y-auto">
             {/* Receipt Upload (only for new transactions) */}
             {!editingId && (
               <div className="grid gap-1.5">
@@ -1804,8 +1857,10 @@ export default function TransactionsPage() {
                           setImportRows(next)
                         }}
                         className="text-xs w-full bg-transparent"
+                        aria-label={`${t('transactions.col_account')}: ${r.description}`}
                       >
                         {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        {creditCards.map((c) => <option key={c.id} value={c.id}>{t('transactions.credit_prefix')} · {c.name}</option>)}
                       </select>
                     </div>
                     <div className="col-span-1 text-right num tabular">{formatCurrency(r.amount)}</div>
