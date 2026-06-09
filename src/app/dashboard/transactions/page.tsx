@@ -899,7 +899,7 @@ export default function TransactionsPage() {
             className="h-9 w-full pl-9 text-sm"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-5 mt-3">
+        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 mt-3">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
