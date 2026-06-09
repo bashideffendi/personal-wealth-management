@@ -411,7 +411,7 @@ export default function BudgetingPage() {
           title={label}
         >
           {isSub ? (
-            <span className="mr-1" style={{ color: dotColor, opacity: 0.5 }}>└</span>
+            <span className="mr-1.5 inline-block size-1.5 rounded-full align-middle" style={{ background: dotColor, opacity: 0.65 }} />
           ) : (
             <span
               className="mr-1.5 inline-grid size-4 place-items-center align-middle"
@@ -476,6 +476,13 @@ export default function BudgetingPage() {
     return (
       <tr key={`${type}-rollup-${node.id}`} className="bg-[color:var(--surface-2)]">
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={node.name} style={{ color: 'var(--ink)' }}>
+          <span className="mr-1.5 inline-grid size-4 place-items-center align-middle" style={{ color: node.color ?? KIND_COLOR[type].hex }}>
+            {node.icon ? (
+              <CategoryIcon category={node.name} iconKey={node.icon} className="size-3.5" />
+            ) : (
+              <span className="inline-block size-2 rounded-full" style={{ background: node.color ?? KIND_COLOR[type].hex }} />
+            )}
+          </span>
           {node.name}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
@@ -511,18 +518,16 @@ export default function BudgetingPage() {
 
   // Render a section body from the tree. SEMUA kategori induk (punya sub atau
   // nggak) pakai band abu + label bold biar seragam; subkategori indent + zebra.
-  function renderSectionBody(kind: BudgetType, oddBg: string) {
+  function renderSectionBody(kind: BudgetType) {
     const rows: ReactNode[] = []
-    let zebra = 0
     for (const node of tree[kind]) {
       if (!isEnabled(node)) continue // kategori nonaktif: gak ditampilkan di tabel
       if (node.subs.length) {
         rows.push(renderRollupRow(kind, node))
         for (const sub of node.subs) {
           rows.push(
-            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, zebra % 2 === 0 ? 'bg-[var(--surface)]' : oddBg, 'sub'),
+            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, 'bg-[var(--surface)]', 'sub'),
           )
-          zebra++
         }
       } else {
         // Kategori induk tanpa sub: band abu + bold, sama kayak rollup — biar
@@ -663,7 +668,7 @@ export default function BudgetingPage() {
     const color = KIND_COLOR[kind]
     const isCollapsed = collapsed[kind]
     return (
-      <tr style={{ background: color.bgFirm }}>
+      <tr style={{ background: color.bgSoft }}>
         <td
           colSpan={13}
           className="sticky left-0 z-10 border-b border-[color:var(--border)] p-0 bg-inherit"
@@ -944,7 +949,7 @@ export default function BudgetingPage() {
                       {renderSectionHeader(sec.label, sec.kind, sectionTotal(sec.leaf, sec.kind))}
                       {!collapsed[sec.kind] && (
                         <>
-                          {renderSectionBody(sec.kind, sec.oddBg)}
+                          {renderSectionBody(sec.kind)}
                           {renderTotalRow(sec.totalLabel, sec.leaf, sec.kind, sec.totalBg)}
                           {sec.percent && renderPercentRow()}
                         </>
