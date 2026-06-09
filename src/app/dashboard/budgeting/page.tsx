@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, Plus, Info } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, Plus, Info, CalendarDays, Calculator, Copy, Check } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
@@ -391,7 +391,7 @@ export default function BudgetingPage() {
     type: BudgetType,
     categoryKey: string,
     label: string,
-    bgClass: string,
+    bg: string,
     level: 'category' | 'sub',
   ) {
     const isSub = level === 'sub'
@@ -406,7 +406,7 @@ export default function BudgetingPage() {
     const ownerNode = tree[type].find((c) => c.name === (isSub ? rootCategory(categoryKey) : categoryKey))
     const dotColor = ownerNode?.color ?? accent
     return (
-      <tr key={`${type}-${categoryKey}`} className={`group ${bgClass}`}>
+      <tr key={`${type}-${categoryKey}`} className="group" style={{ background: bg }}>
         <td
           className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
           style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
@@ -487,7 +487,7 @@ export default function BudgetingPage() {
   function renderRollupRow(type: BudgetType, node: CatNode) {
     const keys = node.subs.map((s) => subKey(node.name, s.name))
     return (
-      <tr key={`${type}-rollup-${node.id}`} className="group bg-[color:var(--surface-2)]">
+      <tr key={`${type}-rollup-${node.id}`} className="group" style={{ background: tint(type, 8) }}>
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={node.name} style={{ color: 'var(--ink)' }}>
           <span className="mr-1.5 inline-grid size-4 place-items-center align-middle" style={{ color: node.color ?? KIND_COLOR[type].hex }}>
             {node.icon ? (
@@ -606,14 +606,14 @@ export default function BudgetingPage() {
         rows.push(renderRollupRow(kind, node))
         for (const sub of node.subs) {
           rows.push(
-            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, 'bg-[var(--surface)]', 'sub'),
+            renderCategoryRow(kind, subKey(node.name, sub.name), sub.name, tint(kind, 3), 'sub'),
           )
         }
       } else {
         // Kategori induk tanpa sub: band abu + bold, sama kayak rollup — biar
         // semua kategori induk seragam, bukan keliatan kayak subkategori.
         rows.push(
-          renderCategoryRow(kind, node.name, node.name, 'bg-[color:var(--surface-2)]', 'category'),
+          renderCategoryRow(kind, node.name, node.name, tint(kind, 8), 'category'),
         )
       }
       if (addingSubTo && addingSubTo.kind === kind && addingSubTo.parent === node.name) {
@@ -760,6 +760,11 @@ export default function BudgetingPage() {
     },
   }
 
+  // Semantic row tint — each section carries its hue at varying intensity
+  // (header strong → parent medium → sub faint), so green=income, coral=expense, etc.
+  const tint = (kind: BudgetType, pct: number) =>
+    `color-mix(in srgb, ${KIND_COLOR[kind].hex} ${pct}%, var(--surface))`
+
   // Current month index (1-12) for highlighting current column
   const currentMonth = new Date().getMonth() + 1
   const currentYear = new Date().getFullYear()
@@ -769,7 +774,7 @@ export default function BudgetingPage() {
     const color = KIND_COLOR[kind]
     const isCollapsed = collapsed[kind]
     return (
-      <tr style={{ background: color.bgSoft }}>
+      <tr style={{ background: tint(kind, 14) }}>
         <td
           colSpan={13}
           className="sticky left-0 z-10 border-b border-[color:var(--border)] p-0 bg-inherit"
@@ -809,7 +814,7 @@ export default function BudgetingPage() {
     const incomeOf = (m: number) => sectionMonthTotal(leafIncome, 'income', m)
     return (
       <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-        <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
+        <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '160px' }} />
             {shortMonths.map((m) => <col key={m} />)}
@@ -928,15 +933,15 @@ export default function BudgetingPage() {
         {/* Desktop: title + month-header strip + per-section standalone cards */}
         <div className="hidden md:block space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-            <div className="min-w-0 flex items-center gap-1.5">
+            <div className="min-w-0">
               <p className="eyebrow">{viewMode === 'year' ? t('budgeting.grid_eyebrow_year') : t('budgeting.grid_eyebrow_month')}</p>
               {viewMode === 'year' && (
-                <span
-                  className="inline-flex cursor-help"
-                  title={`${t('budgeting.tip_click_month')}\n${t('budgeting.tip_calc_prefix')} 12*250000 (× ÷ + −)\n${t('budgeting.tip_drag')}\n${t('budgeting.tip_saved')}`}
-                >
-                  <Info className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
-                </span>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                  <span className="inline-flex items-center gap-1"><CalendarDays className="size-3.5 shrink-0" /> {t('budgeting.tip_click_month')}</span>
+                  <span className="inline-flex items-center gap-1"><Calculator className="size-3.5 shrink-0" /> {t('budgeting.tip_calc_prefix')} <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (× ÷ + −)</span>
+                  <span className="inline-flex items-center gap-1"><Copy className="size-3.5 shrink-0" /> {t('budgeting.tip_drag')}</span>
+                  <span className="inline-flex items-center gap-1"><Check className="size-3.5 shrink-0" /> {t('budgeting.tip_saved')}</span>
+                </div>
               )}
             </div>
             {/* Toggle Bulan / Tahun */}
@@ -980,7 +985,7 @@ export default function BudgetingPage() {
             <div className="space-y-3 min-w-[1040px]">
               {/* Month-label header strip */}
               <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-                <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
+                <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '160px' }} />
                     {shortMonths.map((m) => <col key={m} />)}
@@ -1031,7 +1036,7 @@ export default function BudgetingPage() {
               {/* Each section = its own standalone rounded card, dipisah krem */}
               {sections.map((sec) => (
                 <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
-                  <table className="w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
+                  <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
                       <col style={{ width: '160px' }} />
                       {shortMonths.map((m) => <col key={m} />)}

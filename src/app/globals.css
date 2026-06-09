@@ -548,6 +548,12 @@
    hovered row clearly stands out instead of blending into the header colour. */
 .tx-row { transition: background-color 0.12s ease; }
 .tx-row:hover { background-color: color-mix(in srgb, var(--c-mint) 8%, var(--surface)); }
+
+/* Budget grid — faint vertical column gridlines + a stronger separator after the
+   sticky Category column, so the 12 month columns are easy to track left-to-right. */
+.budget-grid td, .budget-grid th { border-right: 1px solid var(--border-soft); }
+.budget-grid td:first-child, .budget-grid th:first-child { border-right: 1px solid var(--border); }
+.budget-grid td:last-child, .budget-grid th:last-child { border-right: 0; }
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
