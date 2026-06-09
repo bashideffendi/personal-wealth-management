@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, Plus, Info, CalendarDays, Calculator, Copy, Check } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, Plus, Info, CalendarDays, Calculator, Copy, Check, ArrowDownToLine, ArrowUpFromLine, PiggyBank, TrendingUp } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
@@ -941,21 +941,25 @@ export default function BudgetingPage() {
         }
       />
 
-      {/* Summary — annual totals (sum of all 12 months), minimalist cards */}
+      {/* Summary — annual totals (sum of all 12 months). Neutral surface card +
+          contained color accent (soft-tint icon box) so it stays selaras with the
+          rest of the page; color lives in the chip, not the whole card. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[
-          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: '#10B981', sub: t('budgeting.annual') },
-          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: '#F43F5E', sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
-          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
-          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: '#10B981', Icon: ArrowDownToLine, sub: t('budgeting.annual') },
+          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: '#F43F5E', Icon: ArrowUpFromLine, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
         ].map((c) => (
-          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: `color-mix(in srgb, ${c.dot} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${c.dot} 28%, transparent)` }}>
-            <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>
-              <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: c.dot }} />
-              {c.label}
-            </span>
-            <p className="num tabular font-semibold mt-1.5" style={{ color: 'var(--ink)', fontSize: 20, letterSpacing: '-0.02em' }}>
-              {formatCurrency(c.value)}
+          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+            <div className="flex items-center gap-2.5">
+              <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${c.dot} 15%, var(--surface))`, color: c.dot }}>
+                <c.Icon className="size-4" />
+              </span>
+              <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{c.label}</span>
+            </div>
+            <p className="num tabular font-semibold mt-2" style={{ color: 'var(--ink)', fontSize: 20, letterSpacing: '-0.02em' }}>
+              {privacyHidden ? '••••••' : formatCurrency(c.value)}
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
           </div>
