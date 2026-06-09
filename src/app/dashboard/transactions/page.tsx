@@ -18,7 +18,8 @@ import { RangePicker, type DateRange } from '@/components/transactions/range-pic
 import { CategoryIcon } from '@/components/transactions/category-icon'
 
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/layout/page-header'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { Popover } from '@base-ui/react/popover'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -46,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, SlidersHorizontal, MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -410,6 +411,10 @@ export default function TransactionsPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterTag, setFilterTag] = useState<string>('all')
   const [search, setSearch] = useState<string>('')
+  // Quick-add inline row is hidden by default; the toolbar "+ Tambah" toggles it.
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+  // Overflow menu (import/export/transfer) — controlled so item clicks close it.
+  const [overflowOpen, setOverflowOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -696,6 +701,22 @@ export default function TransactionsPage() {
     a.localeCompare(b, 'id'),
   )
 
+  const activeFilterCount = [
+    dateRange !== null,
+    filterAccount !== 'all',
+    filterType !== 'all',
+    filterCategory !== 'all',
+    filterTag !== 'all',
+  ].filter(Boolean).length
+
+  function resetFilters() {
+    setDateRange(null)
+    setFilterAccount('all')
+    setFilterType('all')
+    setFilterCategory('all')
+    setFilterTag('all')
+  }
+
   const filterCategoryOptions: string[] =
     filterType !== 'all'
       ? optionsForType(filterType as TransactionType).map((o) => o.value)
@@ -707,48 +728,81 @@ export default function TransactionsPage() {
           ),
         ]
 
+  const menuRow =
+    'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-left transition-colors hover:bg-[var(--surface-2)] disabled:opacity-40 disabled:hover:bg-transparent'
+
   return (
-    <div className="space-y-6">
-      {/* Light functional header (Hybrid pattern) — dark hero reserved for
-          big-number summary pages. Primary action sits inline with title. */}
-      <PageHeader
+    <div className="space-y-4">
+      {/* Quiet header (Monarch/YNAB minimal-chrome) — compact label + ⓘ tooltip,
+          primary action + overflow on the right. Orientation via top-nav. */}
+      <QuietPageHeader
         title={t('transactions.page_title')}
-        subtitle={t('transactions.page_subtitle')}
+        info={t('transactions.page_subtitle')}
         actions={
-          <Button onClick={openAddDialog}>
-            <Plus className="size-4" data-icon="inline-start" />
-            {t('transactions.add_transaction')}
-          </Button>
+          <>
+            {/* Overflow — import / export / transfer (secondary, low-frequency) */}
+            <Popover.Root open={overflowOpen} onOpenChange={setOverflowOpen}>
+              <Popover.Trigger
+                className="grid h-9 w-9 place-items-center rounded-lg border transition-colors hover:bg-[var(--surface-2)]"
+                style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
+                aria-label={t('transactions.more_actions')}
+              >
+                <MoreHorizontal className="size-4" />
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
+                  <Popover.Popup
+                    className="rounded-xl border p-1.5 outline-none"
+                    style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 224, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30), 0 2px 8px rgba(16,24,40,0.06)' }}
+                  >
+                    <Link href="/dashboard/transactions/import" onClick={() => setOverflowOpen(false)} className={menuRow} style={{ color: 'var(--ink)' }}>
+                      <Sparkles className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.import_ai')}
+                    </Link>
+                    <button type="button" className={menuRow} style={{ color: 'var(--ink)' }} onClick={() => { setOverflowOpen(false); setImportOpen(true) }}>
+                      <Upload className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.import_csv')}
+                    </button>
+                    <button type="button" className={menuRow} style={{ color: 'var(--ink)' }} disabled={filteredTransactions.length === 0} onClick={() => { setOverflowOpen(false); exportCSV(filteredTransactions) }}>
+                      <Download className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.export_csv')}
+                    </button>
+                    <div className="my-1 h-px" style={{ background: 'var(--border-soft)' }} />
+                    <button type="button" className={menuRow} style={{ color: 'var(--ink)' }} onClick={() => { setOverflowOpen(false); setTransferDialogOpen(true) }}>
+                      <ArrowLeftRight className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.transfer')}
+                    </button>
+                  </Popover.Popup>
+                </Popover.Positioner>
+              </Popover.Portal>
+            </Popover.Root>
+
+            {/* Primary — toggles the inline quick-add row above the table */}
+            <Button variant={showQuickAdd ? 'outline' : 'default'} onClick={() => setShowQuickAdd((v) => !v)}>
+              {showQuickAdd ? (
+                <><X className="size-4" data-icon="inline-start" />{t('transactions.close')}</>
+              ) : (
+                <><Plus className="size-4" data-icon="inline-start" />{t('transactions.add_transaction')}</>
+              )}
+            </Button>
+          </>
         }
       />
 
-      {/* Ikhtisar — dari transaksi yang sedang tampil */}
+      {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
       {!loading && filteredTransactions.length > 0 && (() => {
         const inc = filteredTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
         const exp = filteredTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
-        const cards = [
-          { label: t('transactions.summary_income'), dot: '#10B981', Icon: ArrowDownLeft, val: formatCurrency(inc) },
-          { label: t('transactions.summary_expense'), dot: '#F43F5E', Icon: ArrowUpRight, val: formatCurrency(exp) },
-          { label: t('transactions.summary_net_cashflow'), dot: '#8B5CF6', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}` },
-          { label: t('transactions.summary_total_count'), dot: '#8B5CF6', Icon: ScanLine, val: String(filteredTransactions.length) },
+        const stats = [
+          { label: t('transactions.summary_income'), dot: '#10B981', val: formatCurrency(inc), color: 'var(--ink)' },
+          { label: t('transactions.summary_expense'), dot: '#F43F5E', val: formatCurrency(exp), color: 'var(--ink)' },
+          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? '#10B981' : '#F43F5E', val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' },
+          { label: t('transactions.summary_total_count'), dot: '#8B5CF6', val: String(filteredTransactions.length), color: 'var(--ink)' },
         ]
         return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {cards.map((c) => (
-              <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
-                <div className="flex items-start justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-                    <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
-                    {c.label}
-                  </span>
-                  <span className="grid place-items-center shrink-0 rounded-[10px]" style={{ width: 32, height: 32, background: `color-mix(in srgb, ${c.dot} 14%, transparent)`, color: c.dot }}>
-                    <c.Icon className="size-4" />
-                  </span>
-                </div>
-                <p className="num tabular font-bold mt-2" style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 2.2vw, 24px)', letterSpacing: '-0.02em' }}>
-                  {c.val}
-                </p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border px-4 py-2.5" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-center gap-2 min-w-0">
+                <span className="inline-block h-1.5 w-1.5 rounded-full shrink-0" style={{ background: s.dot }} />
+                <span className="text-[11px] shrink-0" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+                <span className="num tabular font-semibold text-[13px] truncate" style={{ color: s.color }}>{s.val}</span>
               </div>
             ))}
           </div>
@@ -773,27 +827,10 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Utility actions — quieter row, secondary to the primary "Tambah" in header */}
-      <div className="flex flex-wrap justify-end gap-2">
-        <Link href="/dashboard/transactions/import">
-          <Button variant="outline" size="sm">
-            <Sparkles className="size-4" /> {t('transactions.import_ai')}
-          </Button>
-        </Link>
-        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-          <Upload className="size-4" /> {t('transactions.import_csv')}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
-          <Download className="size-4" /> {t('transactions.export_csv')}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
-          <ArrowLeftRight className="size-4" /> {t('transactions.transfer')}
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
-        <div className="relative w-full">
+      {/* Search + filter toolbar — search leads (review screen); the filter set
+          collapses into a popover (Monarch "consolidated filter menu"). */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
           <Input
             value={search}
@@ -802,7 +839,26 @@ export default function TransactionsPage() {
             className="h-9 w-full pl-9 text-sm"
           />
         </div>
-        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+        <Popover.Root>
+          <Popover.Trigger
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors hover:bg-[var(--surface-2)]"
+            style={{ borderColor: 'var(--border)', color: 'var(--ink)' }}
+          >
+            <SlidersHorizontal className="size-4" style={{ color: 'var(--ink-soft)' }} />
+            <span className="hidden sm:inline">{t('transactions.filter_button')}</span>
+            {activeFilterCount > 0 && (
+              <span className="grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold" style={{ background: 'var(--c-primary)', color: '#fff' }}>
+                {activeFilterCount}
+              </span>
+            )}
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
+              <Popover.Popup
+                className="rounded-xl border p-3 outline-none"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 'min(320px, calc(100vw - 2rem))', boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30), 0 2px 8px rgba(16,24,40,0.06)' }}
+              >
+                <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
@@ -891,21 +947,55 @@ export default function TransactionsPage() {
             </Select>
           </div>
         )}
-        </div>
+                  {activeFilterCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="mt-1 inline-flex items-center gap-1.5 self-start text-xs font-medium"
+                      style={{ color: 'var(--c-primary)' }}
+                    >
+                      <X className="size-3.5" /> {t('transactions.reset_filters')}
+                    </button>
+                  )}
+                </div>
+              </Popover.Popup>
+            </Popover.Positioner>
+          </Popover.Portal>
+        </Popover.Root>
       </div>
 
-      {/* Quick-add inline bar — fastest way to log a transaction without opening modal.
-          Tab between fields, Enter to submit. Modal still available for receipt OCR + edit. */}
-      {!loading && accounts.length + creditCards.length > 0 && (
-        <div className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--border)' }}>
+      {/* Quick-add inline row — toggled by the toolbar "+ Tambah" (hidden by default).
+          Fast path: Tab between fields, Enter to submit. Full modal (struk OCR + tags)
+          via the "Detail" button. */}
+      {showQuickAdd && !loading && accounts.length + creditCards.length > 0 && (
+        <div className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--c-primary)' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
             <Plus className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
               {t('transactions.quick_add')}
             </p>
-            <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+            <span className="text-[10px] hidden sm:inline" style={{ color: 'var(--ink-soft)' }}>
               · {t('transactions.quick_add_hint')}
             </span>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={openAddDialog}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+                style={{ color: 'var(--ink-muted)' }}
+              >
+                <ScanLine className="size-3.5" /> {t('transactions.add_detail')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQuickAdd(false)}
+                className="grid size-6 place-items-center rounded-md transition-colors hover:bg-[var(--surface-2)]"
+                style={{ color: 'var(--ink-soft)' }}
+                aria-label={t('transactions.close')}
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
           </div>
           <form
             onSubmit={(e) => { e.preventDefault(); void quickSubmit() }}
