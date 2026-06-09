@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useEffect } from 'react'
-import { Info } from 'lucide-react'
+import { InfoTip } from '@/components/ui/info-tip'
 
 /**
  * QuietPageHeader — minimal, density-first header for WORK pages
@@ -50,20 +50,7 @@ export function QuietPageHeader({
         >
           {title}
         </h1>
-        {info && (
-          <span className="group relative inline-flex shrink-0">
-            <button type="button" className="inline-flex" aria-label={info}>
-              <Info className="size-3.5 cursor-help" style={{ color: 'var(--ink-soft)' }} />
-            </button>
-            <span
-              role="tooltip"
-              className="pointer-events-none absolute left-0 top-full z-50 mt-1.5 hidden w-max max-w-[280px] rounded-lg px-2.5 py-1.5 text-[11px] leading-snug shadow-lg group-hover:block group-focus-within:block"
-              style={{ background: 'var(--ink)', color: 'var(--surface)' }}
-            >
-              {info}
-            </span>
-          </span>
-        )}
+        {info && <span className="shrink-0"><InfoTip text={info} /></span>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

@@ -10,6 +10,7 @@ import type { Budget } from '@/types'
 
 import { Button } from '@/components/ui/button'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { InfoTip } from '@/components/ui/info-tip'
 import {
   Select,
   SelectContent,
@@ -130,6 +131,7 @@ export default function BudgetingPage() {
   const [viewMode, setViewMode] = useState<'year' | 'month'>('year')
   const [focusMonth, setFocusMonth] = useState(() => new Date().getMonth() + 1)
   const [actuals, setActuals] = useState<Record<string, number>>({})
+  const [gridMode, setGridMode] = useState<'plan' | 'actual'>('plan')
   const [addingTo, setAddingTo] = useState<BudgetType | null>(null)
   const [newCatInline, setNewCatInline] = useState('')
   const [addingSubTo, setAddingSubTo] = useState<{ kind: BudgetType; parent: string } | null>(null)
@@ -337,13 +339,36 @@ export default function BudgetingPage() {
     return budgets[budgetKey(type, category, month)] ?? 0
   }
 
+  // Year-grid "Rencana / Realisasi" toggle. In Realisasi mode the grid — and every
+  // total/percent that flows through sectionMonthTotal — reads monthly actuals (from
+  // transaksi) instead of the planned budget. The month view has its own plan-vs-
+  // actual variance, so the switch only applies in year view.
+  const effectiveActual = viewMode === 'year' && gridMode === 'actual'
+  function readCell(type: string, category: string, month: number) {
+    if (effectiveActual) return actuals[`${type}::${category}::${month}`] ?? 0
+    return getValue(type, category, month)
+  }
+  // Keyboard cell nav: ↑ / ↓ / Enter move focus between editable cells in the same
+  // month column, in document (visual) order across the section tables.
+  function moveCell(current: HTMLInputElement, month: number, dir: -1 | 1) {
+    const all = Array.from(
+      document.querySelectorAll<HTMLInputElement>(`.budget-grid input[data-col="${month}"]`),
+    )
+    const idx = all.indexOf(current)
+    const next = all[idx + dir]
+    if (next) {
+      next.focus()
+      next.select()
+    }
+  }
+
   function sectionMonthTotal(
     categories: readonly string[],
     type: string,
     month: number,
   ) {
     let sum = 0
-    for (const c of categories) sum += getValue(type, c, month)
+    for (const c of categories) sum += readCell(type, c, month)
     return sum
   }
 
@@ -408,8 +433,9 @@ export default function BudgetingPage() {
     const dotColor = ownerNode?.color ?? accent
     return (
       <tr key={`${type}-${categoryKey}`} className="group" style={{ background: bg }}>
-        <td
-          className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
+        <th
+          scope="row"
+          className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs text-left bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
           style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
           title={label}
         >
@@ -439,9 +465,22 @@ export default function BudgetingPage() {
               <Plus className="size-3" />
             </button>
           )}
-        </td>
+        </th>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
+          if (effectiveActual) {
+            const a = actuals[`${type}::${categoryKey}::${month}`] ?? 0
+            return (
+              <td key={month} className="border-b border-[color:var(--border)] px-1 py-0 text-right">
+                <span
+                  className="num block h-7 px-1 text-[11px] tabular"
+                  style={{ lineHeight: '1.75rem', color: a ? 'var(--ink)' : 'var(--ink-soft)' }}
+                >
+                  {privacyHidden ? '••••' : a ? idFormatter.format(a) : '—'}
+                </span>
+              </td>
+            )
+          }
           const val = getValue(type, categoryKey, month)
           const inRange = fillSrcMonth !== -1 && month >= fillLo && month <= fillHi
           const isSource = month === fillSrcMonth
@@ -456,11 +495,17 @@ export default function BudgetingPage() {
                 key={`${type}|${categoryKey}|${month}|${val}`}
                 type="text"
                 inputMode="numeric"
+                data-col={month}
+                aria-label={`${label}, ${shortMonths[i]}`}
                 defaultValue={val ? idFormatter.format(val) : ''}
                 onFocus={(e) => {
                   const raw = Number(e.target.value.replace(/[^0-9-]/g, '')) || 0
                   e.target.value = raw ? String(raw) : ''
                   e.target.select()
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); moveCell(e.currentTarget, month, 1) }
+                  else if (e.key === 'ArrowUp') { e.preventDefault(); moveCell(e.currentTarget, month, -1) }
                 }}
                 onBlur={(e) => {
                   const parsed = parseCell(e.target.value)
@@ -816,28 +861,27 @@ export default function BudgetingPage() {
   // Ringkasan alokasi (zero-based budgeting): per bulan, berapa pemasukan yang
   // udah "dikasih tugas" (Pengeluaran+Tabungan+Investasi) & berapa yang nganggur.
   function renderAllocationSummary() {
+    if (effectiveActual) return null // zero-based allocation is a planning tool, not for realisasi
     const allocatedOf = (m: number) =>
       sectionMonthTotal(leafExpense, 'expense', m) +
       sectionMonthTotal(leafSaving, 'saving', m) +
       sectionMonthTotal(leafInvestment, 'investment', m)
     const incomeOf = (m: number) => sectionMonthTotal(leafIncome, 'income', m)
     return (
-      <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+      <div className="overflow-hidden rounded-xl border" style={{ background: 'color-mix(in srgb, var(--ink) 4%, var(--surface))', borderColor: 'var(--border)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
         <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '160px' }} />
             {shortMonths.map((m) => <col key={m} />)}
           </colgroup>
           <tbody>
-            <tr style={{ background: 'color-mix(in srgb, var(--ink) 5%, var(--surface))' }}>
+            <tr style={{ background: 'color-mix(in srgb, var(--ink) 11%, var(--surface))' }}>
               <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 bg-inherit">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
-                <span className="ml-1.5 inline-flex cursor-help align-middle" title={t('budgeting.allocation_formula')}>
-                  <Info className="inline size-3" style={{ color: 'var(--ink-soft)' }} />
-                </span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
+                <span className="ml-1.5 inline-flex align-middle"><InfoTip text={t('budgeting.allocation_formula')} /></span>
               </td>
             </tr>
-            <tr className="bg-[var(--surface)]">
+            <tr style={{ background: 'color-mix(in srgb, var(--ink) 4%, var(--surface))' }}>
               <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={t('budgeting.allocated_tooltip')}>{t('budgeting.allocated')}</td>
               {Array.from({ length: 12 }, (_, i) => {
                 const v = allocatedOf(i + 1)
@@ -848,7 +892,7 @@ export default function BudgetingPage() {
                 )
               })}
             </tr>
-            <tr className="bg-[color:var(--surface-2)]">
+            <tr style={{ background: 'color-mix(in srgb, var(--ink) 8%, var(--surface))' }}>
               <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-bold bg-inherit whitespace-nowrap truncate" title={t('budgeting.remaining_to_allocate_tooltip')}>{t('budgeting.remaining_to_allocate')}</td>
               {Array.from({ length: 12 }, (_, i) => {
                 const m = i + 1
@@ -920,7 +964,7 @@ export default function BudgetingPage() {
 
       {/* Zero-based nudge — remaining-to-allocate for the CURRENT (or focused) month.
           People budget monthly (salary is monthly), so this is per-month, not annual. */}
-      {!loading && treeLoaded && (() => {
+      {!loading && treeLoaded && !effectiveActual && (() => {
         const bMonth = viewMode === 'month' ? focusMonth : (isCurrentYearActive ? currentMonth : 1)
         const inc = sectionMonthTotal(leafIncome, 'income', bMonth)
         if (inc <= 0) return null
@@ -975,33 +1019,66 @@ export default function BudgetingPage() {
               <p className="eyebrow">{viewMode === 'year' ? t('budgeting.grid_eyebrow_year') : t('budgeting.grid_eyebrow_month')}</p>
               {viewMode === 'year' && (
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                  <span className="inline-flex items-center gap-1"><CalendarDays className="size-3.5 shrink-0" /> {t('budgeting.tip_click_month')}</span>
-                  <span className="inline-flex items-center gap-1"><Calculator className="size-3.5 shrink-0" /> {t('budgeting.tip_calc_prefix')} (× ÷ + −)</span>
-                  <span className="inline-flex items-center gap-1"><Copy className="size-3.5 shrink-0" /> {t('budgeting.tip_drag')}</span>
-                  <span className="inline-flex items-center gap-1"><Check className="size-3.5 shrink-0" /> {t('budgeting.tip_saved')}</span>
+                  {gridMode === 'plan' ? (
+                    <>
+                      <span className="inline-flex items-center gap-1"><CalendarDays className="size-3.5 shrink-0" /> {t('budgeting.tip_click_month')}</span>
+                      <span className="inline-flex items-center gap-1"><Calculator className="size-3.5 shrink-0" /> {t('budgeting.tip_calc_prefix')} (× ÷ + −)</span>
+                      <span className="inline-flex items-center gap-1"><Copy className="size-3.5 shrink-0" /> {t('budgeting.tip_drag')}</span>
+                      <span className="inline-flex items-center gap-1"><Check className="size-3.5 shrink-0" /> {t('budgeting.tip_saved')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-flex items-center gap-1"><CalendarDays className="size-3.5 shrink-0" /> {t('budgeting.tip_click_month')}</span>
+                      <span className="inline-flex items-center gap-1"><Info className="size-3.5 shrink-0" /> {t('budgeting.tip_actual')}</span>
+                    </>
+                  )}
                 </div>
               )}
             </div>
-            {/* Toggle Bulan / Tahun */}
-            <div className="flex gap-0.5 rounded-lg p-0.5 shrink-0" style={{ background: 'var(--surface-2)' }}>
-              {([['month', t('budgeting.tab_month')], ['year', t('budgeting.tab_year')]] as const).map(([mode, label]) => {
-                const active = viewMode === mode
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setViewMode(mode)}
-                    className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
-                    style={{
-                      background: active ? 'var(--surface)' : 'transparent',
-                      color: active ? 'var(--ink)' : 'var(--ink-soft)',
-                      boxShadow: active ? '0 1px 2px rgba(16,24,40,0.10)' : undefined,
-                    }}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
+            {/* Toggles: Rencana/Realisasi (year only) + Bulan/Tahun */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {viewMode === 'year' && (
+                <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
+                  {([['plan', t('budgeting.mode_plan')], ['actual', t('budgeting.mode_actual')]] as const).map(([mode, label]) => {
+                    const active = gridMode === mode
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setGridMode(mode)}
+                        className="rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors"
+                        style={{
+                          background: active ? 'var(--surface)' : 'transparent',
+                          color: active ? 'var(--ink)' : 'var(--ink-soft)',
+                          boxShadow: active ? '0 1px 2px rgba(16,24,40,0.10)' : undefined,
+                        }}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <div className="flex gap-0.5 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
+                {([['month', t('budgeting.tab_month')], ['year', t('budgeting.tab_year')]] as const).map(([mode, label]) => {
+                  const active = viewMode === mode
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setViewMode(mode)}
+                      className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
+                      style={{
+                        background: active ? 'var(--surface)' : 'transparent',
+                        color: active ? 'var(--ink)' : 'var(--ink-soft)',
+                        boxShadow: active ? '0 1px 2px rgba(16,24,40,0.10)' : undefined,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
           {viewMode === 'month' ? (
@@ -1034,7 +1111,7 @@ export default function BudgetingPage() {
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className="sticky left-0 z-20 px-3 py-2 text-left text-[11px] font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
+                      <th scope="col" className="sticky left-0 z-20 px-3 py-2 text-left text-[11px] font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
                         {t('budgeting.category')}
                       </th>
                       {shortMonths.map((m, i) => {
@@ -1043,6 +1120,7 @@ export default function BudgetingPage() {
                         return (
                           <th
                             key={m}
+                            scope="col"
                             className="px-1 py-2 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
                             style={{
                               background: isCurrent ? 'color-mix(in srgb, var(--c-primary) 9%, transparent)' : undefined,
