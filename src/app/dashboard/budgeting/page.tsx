@@ -715,21 +715,22 @@ export default function BudgetingPage() {
     )
   }
 
-  function renderPercentRow() {
+  function renderPercentRow(kind: BudgetType, leaf: readonly string[]) {
     return (
       <tr className="bg-[color:var(--surface-2)]">
-        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap">
+        <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
           {t('budgeting.pct_of_income')}
         </td>
         {Array.from({ length: 12 }, (_, i) => {
           const month = i + 1
           const inc = sectionMonthTotal(leafIncome, 'income', month)
-          const exp = sectionMonthTotal(leafExpense, 'expense', month)
-          const pct = inc > 0 ? ((exp / inc) * 100).toFixed(1) : '0.0'
+          const val = sectionMonthTotal(leaf, kind, month)
+          const pct = inc > 0 ? ((val / inc) * 100).toFixed(1) : '0.0'
           return (
             <td
               key={month}
               className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
+              style={{ color: 'var(--ink-muted)' }}
             >
               {pct}%
             </td>
@@ -828,7 +829,7 @@ export default function BudgetingPage() {
             {shortMonths.map((m) => <col key={m} />)}
           </colgroup>
           <tbody>
-            <tr style={{ background: 'var(--surface-2)' }}>
+            <tr style={{ background: 'color-mix(in srgb, var(--ink) 5%, var(--surface))' }}>
               <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 bg-inherit">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
                 <span className="ml-1.5 inline-flex cursor-help align-middle" title={t('budgeting.allocation_formula')}>
@@ -869,8 +870,8 @@ export default function BudgetingPage() {
   const sections = [
     { label: t('budgeting.income'), kind: 'income' as BudgetType, leaf: leafIncome, totalLabel: t('budgeting.total_income'), oddBg: 'bg-[rgba(16,185,129,0.04)]', totalBg: 'bg-[rgba(16,185,129,0.12)]', percent: false },
     { label: t('budgeting.expense'), kind: 'expense' as BudgetType, leaf: leafExpense, totalLabel: t('budgeting.total_expense'), oddBg: 'bg-[rgba(251,113,133,0.04)]', totalBg: 'bg-[rgba(251,113,133,0.14)]', percent: true },
-    { label: t('budgeting.saving'), kind: 'saving' as BudgetType, leaf: leafSaving, totalLabel: t('budgeting.total_saving'), oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: false },
-    { label: t('budgeting.investment'), kind: 'investment' as BudgetType, leaf: leafInvestment, totalLabel: t('budgeting.total_investment'), oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: false },
+    { label: t('budgeting.saving'), kind: 'saving' as BudgetType, leaf: leafSaving, totalLabel: t('budgeting.total_saving'), oddBg: 'bg-[rgba(245,158,11,0.05)]', totalBg: 'bg-[rgba(245,158,11,0.16)]', percent: true },
+    { label: t('budgeting.investment'), kind: 'investment' as BudgetType, leaf: leafInvestment, totalLabel: t('budgeting.total_investment'), oddBg: 'bg-[rgba(139,92,246,0.04)]', totalBg: 'bg-[rgba(139,92,246,0.14)]', percent: true },
   ]
 
   return (
@@ -904,7 +905,7 @@ export default function BudgetingPage() {
           { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
           { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
         ].map((c) => (
-          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: `color-mix(in srgb, ${c.dot} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${c.dot} 28%, transparent)` }}>
             <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>
               <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: c.dot }} />
               {c.label}
@@ -917,9 +918,16 @@ export default function BudgetingPage() {
         ))}
       </div>
 
-      {/* Zero-based nudge — promote the annual remaining-to-allocate into a headline */}
-      {!loading && treeLoaded && totalIncomeYear > 0 && (() => {
-        const remaining = totalIncomeYear - totalExpenseYear - totalSavingYear - totalInvestmentYear
+      {/* Zero-based nudge — remaining-to-allocate for the CURRENT (or focused) month.
+          People budget monthly (salary is monthly), so this is per-month, not annual. */}
+      {!loading && treeLoaded && (() => {
+        const bMonth = viewMode === 'month' ? focusMonth : (isCurrentYearActive ? currentMonth : 1)
+        const inc = sectionMonthTotal(leafIncome, 'income', bMonth)
+        if (inc <= 0) return null
+        const remaining = inc
+          - sectionMonthTotal(leafExpense, 'expense', bMonth)
+          - sectionMonthTotal(leafSaving, 'saving', bMonth)
+          - sectionMonthTotal(leafInvestment, 'investment', bMonth)
         const ok = Math.abs(remaining) < 1
         const over = remaining < 0
         const hex = ok ? '#10B981' : over ? '#F43F5E' : '#F59E0B'
@@ -928,6 +936,7 @@ export default function BudgetingPage() {
           <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
             {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
             <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+              <span className="font-semibold">{shortMonths[bMonth - 1]}</span>{' — '}
               {ok ? (
                 t('budgeting.alloc_banner_done')
               ) : (
@@ -1080,7 +1089,7 @@ export default function BudgetingPage() {
                         <>
                           {renderSectionBody(sec.kind)}
                           {renderTotalRow(sec.totalLabel, sec.leaf, sec.kind, sec.totalBg)}
-                          {sec.percent && renderPercentRow()}
+                          {sec.percent && renderPercentRow(sec.kind, sec.leaf)}
                         </>
                       )}
                     </tbody>
