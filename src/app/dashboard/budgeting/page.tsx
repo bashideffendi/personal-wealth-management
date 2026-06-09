@@ -6,11 +6,10 @@ import { formatCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { monthsShort } from '@/lib/i18n/dates'
-import { EduTip } from '@/components/edu/edu-tip'
 import type { Budget } from '@/types'
 
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/layout/page-header'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import {
   Select,
   SelectContent,
@@ -18,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, CalendarDays, Calculator, Copy, Plus } from 'lucide-react'
+import { Loader2, FolderTree, ChevronDown, CalendarDays, Calculator, Copy, Plus } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
@@ -755,19 +754,13 @@ export default function BudgetingPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow={`${t('budgeting.planning')} · ${year}`}
+      <QuietPageHeader
         title={t('budgeting.title')}
-        subtitle={
-          <span className="inline-flex items-center gap-1.5">
-            {t('budgeting.subtitle')}
-            <EduTip topic="budget-method" side="bottom" />
-          </span>
-        }
+        info={t('budgeting.subtitle')}
         actions={
           <>
             <Button onClick={() => setManagerOpen(true)}>
-              <FolderTree className="h-4 w-4" />
+              <FolderTree className="h-4 w-4" data-icon="inline-start" />
               {t('budgeting.manage_categories')}
             </Button>
             <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
@@ -782,33 +775,25 @@ export default function BudgetingPage() {
         }
       />
 
-      {/* Summary — annual totals (sum of all 12 months) */}
-      <div className="space-y-2.5">
-        <p className="eyebrow">{t('budgeting.annual_total')} · {year}</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Summary — annual totals (sum of all 12 months), minimalist cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[
-          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: '#10B981', Icon: ArrowDownLeft, sub: t('budgeting.annual') },
-          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: '#F43F5E', Icon: ArrowUpRight, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
-          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
-          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: '#10B981', sub: t('budgeting.annual') },
+          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: '#F43F5E', sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
         ].map((c) => (
-          <div key={c.label} className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 2px -1px rgba(16,24,40,0.06), 0 10px 28px -14px rgba(16,24,40,0.12)' }}>
-            <div className="flex items-start justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: c.dot }} />
-                {c.label}
-              </span>
-              <span className="grid place-items-center shrink-0 rounded-[10px]" style={{ width: 32, height: 32, background: `color-mix(in srgb, ${c.dot} 14%, transparent)`, color: c.dot }}>
-                <c.Icon className="size-4" />
-              </span>
-            </div>
-            <p className="num tabular font-bold mt-2" style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 2.2vw, 24px)', letterSpacing: '-0.02em' }}>
+          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+            <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>
+              <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: c.dot }} />
+              {c.label}
+            </span>
+            <p className="num tabular font-semibold mt-1.5" style={{ color: 'var(--ink)', fontSize: 20, letterSpacing: '-0.02em' }}>
               {formatCurrency(c.value)}
             </p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
           </div>
         ))}
-        </div>
       </div>
 
       {/* Budget Grid */}
@@ -866,10 +851,7 @@ export default function BudgetingPage() {
             </div>
           </div>
           {viewMode === 'year' && (
-            <div
-              className="rounded-xl border px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', color: 'var(--ink-muted)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
-            >
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
               {[
                 { Icon: CalendarDays, label: <>{t('budgeting.tip_click_month')}</> },
                 { Icon: Calculator, label: <>{t('budgeting.tip_calc_prefix')} <code className="num" style={{ color: 'var(--ink)' }}>12*250000</code> (×&nbsp;÷&nbsp;+&nbsp;−)</> },
