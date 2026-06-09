@@ -21,7 +21,10 @@ interface RouteContext {
 
 const MAX_OUTPUT_TOKENS = 4096
 
-export async function POST(_request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
+  // ?force=1 → bypass the shared cache and regenerate fresh (e.g. after newer
+  // financial statements land). Costs credits like a first generation.
+  const force = request.nextUrl.searchParams.get('force') === '1'
   const supabase = await createClient()
   const {
     data: { user },
@@ -65,7 +68,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     .eq('ticker', ticker)
     .maybeSingle()
 
-  if (cached) {
+  if (cached && !force) {
     return NextResponse.json({
       ticker,
       content: cached.content,

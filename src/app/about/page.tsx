@@ -84,7 +84,7 @@ export default function AboutPage() {
           <p className="t-body" style={{ color: 'var(--ink-muted)' }}>
             Klunting adalah <strong>alat bantu pencatatan dan pemantauan keuangan</strong>, bukan
             lembaga jasa keuangan atau penasihat investasi berlisensi. Riset dan angka yang
-            ditampilkan bersifat informatif, bukan rekomendasi. Selalu lakukan pertimbangan sendiri
+            ditampilkan bersifat informatif, bukan nasihat investasi. Selalu lakukan pertimbangan sendiri
             sebelum mengambil keputusan finansial.
           </p>
         </div>

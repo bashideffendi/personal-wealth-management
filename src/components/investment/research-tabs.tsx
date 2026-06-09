@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table'
 import {
   BookOpen, BarChart3, Calculator, FileText, TrendingUp,
-  Calendar, Sparkles, AlertCircle, Loader2, Zap, Network,
+  Calendar, Sparkles, AlertCircle, Loader2, Zap, Network, RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -137,6 +137,10 @@ export function ResearchTabs(props: ResearchTabsProps) {
   // Research bisa di-generate ulang di client (lokal state). Initial value
   // dari server (bundled markdown OR cached AI generation).
   const [research, setResearch] = useState(initialResearch)
+
+  // Basis laporan keuangan riset (tahun fiskal terbaru yang dipakai valuasi) —
+  // ditampilkan di bar regenerate biar user tahu data riset dari periode mana.
+  const dataPeriod = latestYear ? `FY${latestYear}` : null
 
   // Latest annual values
   const latestRevenue = metrics5Y.revenue.at(-1)?.value ?? null
@@ -265,7 +269,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
 
             {/* Narasi */}
             <div className="lg:col-span-3 min-w-0">
-              <ResearchView research={research} ticker={ticker} onRegenerated={setResearch} />
+              <ResearchView research={research} ticker={ticker} dataPeriod={dataPeriod} onRegenerated={setResearch} />
             </div>
           </div>
         ) : (
@@ -405,10 +409,12 @@ export function ResearchTabs(props: ResearchTabsProps) {
 function ResearchView({
   research,
   ticker,
+  dataPeriod,
   onRegenerated,
 }: {
   research: { frontmatter: ResearchFrontmatter; body: string }
   ticker: string
+  dataPeriod: string | null
   onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {
   const t = useT()
@@ -435,7 +441,7 @@ function ResearchView({
         </div>
       </article>
 
-      <RegenerateBar ticker={ticker} onRegenerated={onRegenerated} />
+      <RegenerateBar ticker={ticker} dataPeriod={dataPeriod} generated={research.frontmatter.generated} onRegenerated={onRegenerated} />
 
       <DisclaimerBox />
 
@@ -637,14 +643,61 @@ function GenerateResearchEmpty({
   )
 }
 
-function RegenerateBar(_props: {
+function RegenerateBar({
+  ticker,
+  dataPeriod,
+  generated,
+  onRegenerated,
+}: {
   ticker: string
+  dataPeriod: string | null
+  generated?: string
   onRegenerated: (next: { frontmatter: ResearchFrontmatter; body: string }) => void
 }) {
-  // Note: regenerate behavior bypasses cache (server logic akan dipindah)
-  // For now, this just hints to user — actual regenerate butuh delete cache + call API
-  // Disable for now untuk simplicity; tinggal kirim pesan kalau mau update content
-  return null
+  const t = useT()
+  const [busy, setBusy] = useState(false)
+
+  async function regenerate() {
+    setBusy(true)
+    try {
+      // ?force=1 bypasses the shared cache → fresh generation (charges credits).
+      const res = await fetch(`/api/idx-research/${ticker}/generate?force=1`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) {
+        toast.error(json.error ?? `${t('research_tabs.generate_failed_prefix')} ${res.status}`)
+        return
+      }
+      const body = String(json.content ?? '').replace(/^---\n[\s\S]*?\n---\n?/, '').trim()
+      onRegenerated({ frontmatter: (json.frontmatter as ResearchFrontmatter) ?? {}, body })
+      toast.success(t('research_tabs.regenerate_success'))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+      style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
+    >
+      <span className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+        {dataPeriod ? `${t('research_tabs.based_on')} ${dataPeriod}` : ''}
+        {generated ? `${dataPeriod ? ' · ' : ''}${t('research_tabs.generated_on')} ${generated}` : ''}
+      </span>
+      <button
+        type="button"
+        onClick={regenerate}
+        disabled={busy}
+        className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[var(--surface)] disabled:opacity-50"
+        style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+      >
+        {busy ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+        {t('research_tabs.regenerate_label')} · {RESEARCH_CREDIT_COST} {t('research_tabs.credit_cost_suffix')}
+      </button>
+    </div>
+  )
 }
 
 function DisclaimerBox() {

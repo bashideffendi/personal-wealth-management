@@ -56,7 +56,7 @@ export const FEATURES: Feature[] = [
       { title: 'Struktur kepemilikan & dividen', body: 'Pemegang saham, anak usaha, dan kalender dividen untuk 1.000+ emiten — konteks yang jarang ada di aplikasi keuangan pribadi.' },
     ],
     faq: [
-      { q: 'Datanya dari mana?', a: 'Fundamental dan struktur kepemilikan dari data publik IDX, harga harian via Yahoo Finance. Angka valuasi bersifat informatif, bukan rekomendasi beli/jual.' },
+      { q: 'Datanya dari mana?', a: 'Fundamental dan struktur kepemilikan dari laporan keuangan publik emiten IDX; harga pasar dari data publik. Angka valuasi bersifat informatif, bukan nasihat atau anjuran beli/jual.' },
       { q: 'Apakah ini saran investasi?', a: 'Bukan. Klunting alat bantu riset dan pemantauan, bukan penasihat berlisensi. Selalu lakukan pertimbangan sendiri sebelum mengambil keputusan.' },
     ],
   },
