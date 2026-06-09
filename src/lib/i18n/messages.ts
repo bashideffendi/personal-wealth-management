@@ -1914,6 +1914,8 @@ export const messages = {
     investment: {
       title: "Investasi",
       subtitle: "Ringkasan nilai portofolio, alokasi, dan holding kamu.",
+      disclaimer_banner: "Informasi & edukasi, bukan nasihat investasi. Angka valuasi dan ringkasan AI dihitung dari data publik yang bisa tertunda atau keliru — selalu verifikasi & lakukan riset sendiri (DYOR) sebelum keputusan finansial.",
+      data_as_of: "Data per",
       eyebrow_portfolio: "Portofolio",
       institutions: "institusi",
       dividend_history: "Riwayat dividen",
@@ -5020,6 +5022,8 @@ export const messages = {
     investment: {
       title: "Investments",
       subtitle: "An overview of your portfolio value, allocation, and holdings.",
+      disclaimer_banner: "For information & education only — not investment advice. Valuation figures and AI summaries are computed from public data that may be delayed or wrong — always verify and do your own research (DYOR) before any financial decision.",
+      data_as_of: "Data as of",
       eyebrow_portfolio: "Portfolio",
       institutions: "institutions",
       dividend_history: "Dividend history",

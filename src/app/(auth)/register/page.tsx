@@ -30,9 +30,11 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [agreed, setAgreed] = useState(false)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!agreed) { setError('Centang persetujuan Syarat & Kebijakan Privasi dulu ya.'); return }
     setError(null)
     setSuccess(false)
     setLoading(true)
@@ -125,15 +127,24 @@ export default function RegisterPage() {
               <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Minimal 8 karakter, kombinasi huruf dan angka.</p>
             </div>
 
-            <Button type="submit" disabled={loading} className="mt-2 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
+            <label className="flex items-start gap-2 text-[11px] leading-relaxed mt-1 cursor-pointer" style={{ color: 'var(--ink-soft)' }}>
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 size-4 shrink-0 cursor-pointer"
+                style={{ accentColor: 'var(--c-primary)' }}
+              />
+              <span>
+                Aku setuju dengan{' '}
+                <Link href="/terms" className="underline" style={{ color: 'var(--ink-muted)' }}>Syarat &amp; Ketentuan</Link> dan{' '}
+                <Link href="/privacy" className="underline" style={{ color: 'var(--ink-muted)' }}>Kebijakan Privasi</Link>, termasuk pemrosesan data finansialku sesuai UU PDP.
+              </span>
+            </label>
+
+            <Button type="submit" disabled={loading || !agreed} className="mt-2 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
               {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Coba gratis 21 hari'}
             </Button>
-
-            <p className="text-center text-[11px] leading-relaxed mt-1" style={{ color: 'var(--ink-soft)' }}>
-              Dengan daftar, kamu setuju dengan{' '}
-              <Link href="/terms" className="underline">Syarat & Ketentuan</Link> dan{' '}
-              <Link href="/privacy" className="underline">Kebijakan Privasi</Link>.
-            </p>
           </form>
           </>
         )}

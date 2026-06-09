@@ -22,6 +22,7 @@ import { ResearchLogButton } from '@/components/investment/research-log-button'
 import { ResearchStockSearch } from '@/components/investment/research-stock-search'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { StockPriceChart } from '@/components/investment/stock-price-chart-lazy'
+import { InvestmentDisclaimer } from '@/components/investment/investment-disclaimer'
 
 // yahoo-finance2 needs the Node runtime (not Edge) for the live-price fetch.
 export const runtime = 'nodejs'
@@ -254,7 +255,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
             className="p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r"
             style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
           >
-          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Rekomendasi · Equity Research</p>
+          <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>Ringkasan AI · Equity Research</p>
           <p className="text-3xl font-bold mt-1 leading-none" style={{ color: 'var(--c-mint)' }}>
             {fm.recommendation ? String(fm.recommendation).toUpperCase() : '—'}
           </p>
@@ -290,6 +291,8 @@ export default async function StockResearchPage({ params }: RouteProps) {
         </div>
         </div>
       </header>
+
+      <InvestmentDisclaimer className="mt-1" />
 
       <ResearchTabs {...tabsProps} />
     </div>

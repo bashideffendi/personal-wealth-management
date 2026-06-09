@@ -13,6 +13,7 @@ import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
+import { InvestmentDisclaimer } from '@/components/investment/investment-disclaimer'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
 import { useT } from '@/lib/i18n/context'
 
@@ -354,6 +355,8 @@ export default function InvestmentOverviewPage() {
           </Link>
         </div>
       </header>
+
+      <InvestmentDisclaimer />
 
       {/* Portfolio hero — light card, value-first */}
       <section className="s-card p-6 sm:p-8">
