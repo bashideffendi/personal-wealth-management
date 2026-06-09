@@ -731,7 +731,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Sisa Aman bulan ini — safe-to-spend (actionable) */}
-      <SortableSection id="sisa-aman" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="sisa-aman" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-2">
         <SafeToSpendCard income={totals.income} spent={totals.expense} upcoming={upcomingRecurring} />
       </SortableSection>
 
@@ -846,7 +846,7 @@ export default function DashboardPage() {
           recurring={recurringItems}
         />
       </SortableSection>
-      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
+      <SortableSection id="tujuan" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-2">
         <GoalsWidget goals={activeGoals} />
       </SortableSection>
 
