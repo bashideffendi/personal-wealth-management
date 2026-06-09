@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, MoreHorizontal } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -413,8 +413,6 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState<string>('')
   // Quick-add inline row is hidden by default; the toolbar "+ Tambah" toggles it.
   const [showQuickAdd, setShowQuickAdd] = useState(false)
-  // Overflow menu (import/export/transfer) — controlled so item clicks close it.
-  const [overflowOpen, setOverflowOpen] = useState(false)
   // Bulk edit + inline category (desktop table power features)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [inlineCatId, setInlineCatId] = useState<string | null>(null)
@@ -787,9 +785,6 @@ export default function TransactionsPage() {
           ),
         ]
 
-  const menuRow =
-    'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-left transition-colors hover:bg-[var(--surface-2)] disabled:opacity-40 disabled:hover:bg-transparent'
-
   return (
     <div className="space-y-4">
       {/* Quiet header (Monarch/YNAB minimal-chrome) — compact label + ⓘ tooltip,
@@ -799,38 +794,21 @@ export default function TransactionsPage() {
         info={t('transactions.page_subtitle')}
         actions={
           <>
-            {/* Overflow — import / export / transfer (secondary, low-frequency) */}
-            <Popover.Root open={overflowOpen} onOpenChange={setOverflowOpen}>
-              <Popover.Trigger
-                className="grid h-9 w-9 place-items-center rounded-lg border transition-colors hover:bg-[var(--surface-2)]"
-                style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
-                aria-label={t('transactions.more_actions')}
-              >
-                <MoreHorizontal className="size-4" />
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
-                  <Popover.Popup
-                    className="rounded-xl border p-1.5 outline-none"
-                    style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 224, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30), 0 2px 8px rgba(16,24,40,0.06)' }}
-                  >
-                    <Link href="/dashboard/transactions/import" onClick={() => setOverflowOpen(false)} className={menuRow} style={{ color: 'var(--ink)' }}>
-                      <Sparkles className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.import_ai')}
-                    </Link>
-                    <button type="button" className={menuRow} style={{ color: 'var(--ink)' }} onClick={() => { setOverflowOpen(false); setImportOpen(true) }}>
-                      <Upload className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.import_csv')}
-                    </button>
-                    <button type="button" className={menuRow} style={{ color: 'var(--ink)' }} disabled={filteredTransactions.length === 0} onClick={() => { setOverflowOpen(false); exportCSV(filteredTransactions) }}>
-                      <Download className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.export_csv')}
-                    </button>
-                    <div className="my-1 h-px" style={{ background: 'var(--border-soft)' }} />
-                    <button type="button" className={menuRow} style={{ color: 'var(--ink)' }} onClick={() => { setOverflowOpen(false); setTransferDialogOpen(true) }}>
-                      <ArrowLeftRight className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.transfer')}
-                    </button>
-                  </Popover.Popup>
-                </Popover.Positioner>
-              </Popover.Portal>
-            </Popover.Root>
+            {/* Quick actions — visible buttons (no overflow), incl. frequently-used Transfer */}
+            <Link href="/dashboard/transactions/import">
+              <Button variant="outline" size="sm">
+                <Sparkles className="size-4" data-icon="inline-start" /> {t('transactions.import_ai')}
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <Upload className="size-4" data-icon="inline-start" /> {t('transactions.import_csv')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
+              <Download className="size-4" data-icon="inline-start" /> {t('transactions.export_csv')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
+              <ArrowLeftRight className="size-4" data-icon="inline-start" /> {t('transactions.transfer')}
+            </Button>
 
             {/* Primary — toggles the inline quick-add row above the table */}
             <Button variant={showQuickAdd ? 'outline' : 'default'} onClick={() => setShowQuickAdd((v) => !v)}>

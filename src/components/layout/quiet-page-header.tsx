@@ -42,7 +42,7 @@ export function QuietPageHeader({
   }, [title, docTitle])
 
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <div className="flex items-center gap-1.5 min-w-0">
         <h1
           className="font-semibold tracking-tight truncate"
@@ -65,7 +65,7 @@ export function QuietPageHeader({
           </span>
         )}
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   )
 }
