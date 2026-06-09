@@ -542,6 +542,12 @@
 }
 .btn-primary:hover { opacity: 0.92; }
 .btn-primary:active { transform: scale(0.97); }
+
+/* Transaction table row hover — a distinct faint mint, NOT the warm cream
+   (var(--surface-2)) used by the table header + date-group separators, so a
+   hovered row clearly stands out instead of blending into the header colour. */
+.tx-row { transition: background-color 0.12s ease; }
+.tx-row:hover { background-color: color-mix(in srgb, var(--c-mint) 8%, var(--surface)); }
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;

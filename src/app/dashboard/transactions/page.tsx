@@ -1269,7 +1269,7 @@ export default function TransactionsPage() {
                       {g.items.map((tx) => {
                         const selected = selectedIds.has(tx.id)
                         return (
-                        <TableRow key={tx.id} className="border-[color:var(--border-soft)] hover:bg-[var(--surface-2)]" style={selected ? { background: 'var(--c-primary-soft)' } : undefined}>
+                        <TableRow key={tx.id} className="tx-row border-[color:var(--border-soft)]" style={selected ? { background: 'color-mix(in srgb, var(--c-mint) 16%, var(--surface))' } : undefined}>
                           <TableCell className="pl-3 pr-0">
                             <input type="checkbox" checked={selected} onChange={() => toggleSelect(tx.id)} aria-label={t('transactions.select_row')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                           </TableCell>
