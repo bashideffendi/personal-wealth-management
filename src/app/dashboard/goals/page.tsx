@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import { useT } from '@/lib/i18n/context'
 import {
@@ -433,6 +434,11 @@ export default function GoalsPage() {
               const { g, pct, remaining, perMonth, planned, contribution, done, layerColor, layerInk, prob, requiredFor90 } = d
               const Icon = CATEGORY_ICON[g.category] ?? Target
               const status = goalStatus(g, pct, done)
+              // Detail asumsi → tooltip ⓘ di label Probabilitas. Footnote lama
+              // ngulang angka iuran yang udah tampil dua baris di atasnya.
+              const assumption = d.profileKey && !done
+                ? `${t('goals.assume_prefix')} ${t(`goals.profile_${d.profileKey}`)} ~${Math.round((d.profileRet ?? 0) * 100)}${t('goals.percent_per_year')}, ${t('goals.assume_contrib')} ${formatCurrency(contribution)}${t('goals.per_month_suffix')}${planned == null ? ` (${t('goals.assume_default_plan')})` : ''}${prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution ? ` · ${t('goals.bump_to')} ${formatCurrency(requiredFor90)}${t('goals.per_month_suffix')} ${t('goals.for_90')}` : ''}`
+                : null
               return (
                 <div
                   key={g.id}
@@ -447,11 +453,9 @@ export default function GoalsPage() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                            {/* Teks polos, bukan pill — satu pill (status) cukup di baris judul. */}
                             {i === 0 && g.deadline && !done && (
-                              <span
-                                className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
-                                style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-                              >
+                              <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
                                 {t('goals.badge_nearest')}
                               </span>
                             )}
@@ -483,7 +487,8 @@ export default function GoalsPage() {
                     </div>
 
                     <div className="mt-4 flex items-end gap-3">
-                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: layerInk }}>
+                      {/* Tinta — warna tier cukup di icon chip + bar (2 titik per card). */}
+                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: 'var(--ink)' }}>
                         {pct.toFixed(0)}%
                       </p>
                       <div className="pb-1 min-w-0">
@@ -491,7 +496,7 @@ export default function GoalsPage() {
                           {formatCurrency(g.current_amount)}
                           <span className="font-normal" style={{ color: 'var(--ink-muted)' }}> / {formatCurrency(g.target_amount)}</span>
                         </p>
-                        <p className="num text-[11px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
+                        <p className="num text-[11px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink-soft)' }}>
                           {done ? t('goals.target_reached') : `${t('goals.remaining')} ${formatCurrency(remaining)}`}
                         </p>
                       </div>
@@ -509,8 +514,13 @@ export default function GoalsPage() {
                         </p>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.probability_label')}</p>
-                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob != null ? probInk(prob) : 'var(--ink-soft)' }}>
+                        <p className="text-[10px] uppercase tracking-wide inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+                          {t('goals.probability_label')}
+                          {assumption && <InfoTip text={assumption} />}
+                        </p>
+                        {/* Diwarnai cuma kalau user set rencana sendiri — angka
+                            default (iuran wajib) itu hipotesis, tampil tinta. */}
+                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob == null ? 'var(--ink-soft)' : planned != null ? probInk(prob) : 'var(--ink)' }}>
                           {prob != null ? `${prob.toFixed(0)}%` : '—'}
                         </p>
                       </div>
@@ -525,16 +535,6 @@ export default function GoalsPage() {
                       )}
                     </div>
 
-                    {d.profileKey && !done && (
-                      <p className="mt-2.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                        {t('goals.assume_prefix')} {t(`goals.profile_${d.profileKey}`)} ~{Math.round((d.profileRet ?? 0) * 100)}{t('goals.percent_per_year')}
-                        {' · '}{t('goals.assume_contrib')} <span className="num">{formatCurrency(contribution)}{t('goals.per_month_suffix')}</span>
-                        {planned == null && <span> ({t('goals.assume_default_plan')})</span>}
-                        {prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution && (
-                          <> · {t('goals.bump_to')} <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}{t('goals.per_month_suffix')}</span> {t('goals.for_90')}</>
-                        )}
-                      </p>
-                    )}
                   </div>
                 </div>
               )

@@ -153,12 +153,15 @@ export function GoalPyramid({ goals, onSetor }: Props) {
           const isFocus = focus === key
           return (
             <div key={key} className="flex justify-center">
+              {/* Kotak netral — warna cukup di label + % (border cuma pas fokus).
+                  Tint bg + border + teks berwarna sekaligus = 4 lapis encoding
+                  buat satu informasi. */}
               <div
                 className="rounded-lg border px-3 py-2.5 transition-all"
                 style={{
                   width: widthFor[key],
-                  background: tint(meta.color, 6),
-                  borderColor: isFocus ? meta.color : tint(meta.color, 20),
+                  background: 'var(--surface)',
+                  borderColor: isFocus ? meta.color : 'var(--border-soft)',
                   boxShadow: isFocus ? `0 0 0 1px ${meta.color}` : 'none',
                 }}
               >
