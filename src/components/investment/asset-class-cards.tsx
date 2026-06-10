@@ -12,7 +12,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, Plus } from 'lucide-react'
+import { ArrowUpRight, Eye, EyeOff } from 'lucide-react'
 import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import { ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
@@ -61,7 +61,22 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
     <div>
       <div className="flex items-center justify-between gap-2 mb-3">
         <h2 className="eyebrow">{t('investment.asset_classes')}</h2>
-        <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
+        {/* Toggle kelas kosong di header — bukan kartu dashed ber-icon "+"
+            yang labelnya "sembunyikan" (kontradiksi). */}
+        {hiddenCount > 0 || showAllClasses ? (
+          <button
+            type="button"
+            onClick={() => setShowAllClasses((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium transition hover:opacity-70"
+            style={{ color: 'var(--ink-soft)' }}
+          >
+            {showAllClasses
+              ? <><EyeOff className="size-3.5" /> {t('investment.show_less_classes')}</>
+              : <><Eye className="size-3.5" /> {t('investment.show_all_classes')} ({hiddenCount})</>}
+          </button>
+        ) : (
+          <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
+        )}
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {visibleCards.map((c) => {
@@ -117,19 +132,6 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
             </Link>
           )
         })}
-        {(hiddenCount > 0 || showAllClasses) && (
-          <button
-            type="button"
-            onClick={() => setShowAllClasses((v) => !v)}
-            className="rounded-xl border border-dashed p-4 flex flex-col items-center justify-center gap-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)] min-h-[120px]"
-            style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
-          >
-            <Plus className="size-4" />
-            {showAllClasses
-              ? t('investment.show_less_classes')
-              : `${t('investment.show_all_classes')} (${hiddenCount})`}
-          </button>
-        )}
       </div>
     </div>
   )

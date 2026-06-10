@@ -10,9 +10,8 @@
  * cached 5 min in price_snapshots.
  */
 
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { useT } from '@/lib/i18n/context'
 
@@ -43,9 +42,6 @@ function formatRate(price: number): string {
 
 export function CurrencyRates() {
   const t = useT()
-  // Compact by default: USD is the rate that actually matters for holdings
-  // (US stocks, crypto, gold) — the other five hide behind an expander.
-  const [expanded, setExpanded] = useState(false)
   // react-query: cached 5 min (mirrors the server price cache) — re-mounting
   // the investment page no longer re-fetches six FX tickers every visit.
   const fx = useQuery({
@@ -110,7 +106,9 @@ export function CurrencyRates() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
-          {(expanded ? PAIRS : PAIRS.slice(0, 1)).map((pair) => {
+          {/* Semua kurs tampil — dashboard buat LIHAT info, bukan nyembunyiin
+              di balik expander (feedback user). */}
+          {PAIRS.map((pair) => {
             const q = quotes[pair.ticker]
             const change = q?.changePct ?? null
             const changeColor =
@@ -159,15 +157,6 @@ export function CurrencyRates() {
               </div>
             )
           })}
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="rounded-xl border border-dashed p-3 flex items-center justify-center gap-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
-            style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
-          >
-            {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-            {expanded ? t('investment.fx_less') : '+' + (PAIRS.length - 1) + ' ' + t('investment.fx_more')}
-          </button>
         </div>
       )}
     </div>
