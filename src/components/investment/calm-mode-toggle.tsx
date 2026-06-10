@@ -16,12 +16,13 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
       <button
         type="button"
         onClick={toggle}
+        aria-pressed={calm}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition"
         style={{
-          background: calm ? 'rgba(236,72,153,0.10)' : 'var(--surface-2)',
-          color: calm ? '#EC4899' : 'var(--ink-muted)',
+          background: calm ? 'var(--c-mint-soft)' : 'var(--surface-2)',
+          color: calm ? 'var(--c-mint-ink)' : 'var(--ink-muted)',
         }}
-        title={calm ? 'Calm Mode aktif — P/L harian disamarkan' : 'Aktifkan Calm Mode — kurangi panic from market noise'}
+        title={calm ? 'Calm Mode aktif — angka loss disamarkan' : 'Aktifkan Calm Mode — biar nggak panik pas market berisik'}
       >
         {calm ? <HeartPulse className="size-3" /> : <Heart className="size-3" />}
         Calm Mode
@@ -33,15 +34,16 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
     <button
       type="button"
       onClick={toggle}
+      aria-pressed={calm}
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition border"
       style={{
-        background: calm ? 'rgba(236,72,153,0.08)' : 'var(--surface)',
-        borderColor: calm ? 'rgba(236,72,153,0.30)' : 'var(--border)',
-        color: calm ? '#EC4899' : 'var(--ink-muted)',
+        background: calm ? 'var(--c-mint-soft)' : 'var(--surface)',
+        borderColor: calm ? 'color-mix(in srgb, var(--c-mint) 30%, transparent)' : 'var(--border)',
+        color: calm ? 'var(--c-mint-ink)' : 'var(--ink-muted)',
       }}
       title={
         calm
-          ? 'Calm Mode aktif — angka loss disamarkan untuk kurangi panic selling'
+          ? 'Calm Mode aktif — angka loss disamarkan biar nggak memicu panic selling'
           : 'Aktifkan Calm Mode — bagus saat market sedang volatil'
       }
     >

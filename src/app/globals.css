@@ -856,3 +856,15 @@ body[data-calm="true"] [style*="--danger"]:hover,
 body[data-calm="true"] [style*="--coral"]:hover {
   filter: blur(0) !important;
 }
+
+/* Explicit Calm Mode hook — the style-substring selectors above can't match
+   token usage like var(--c-coral) ("--coral" isn't a substring of "--c-coral"),
+   so loss elements opt in with data-loss="true" set conditionally when the
+   value is negative. Scoped + intentional: no blast radius on error banners. */
+body[data-calm="true"] [data-loss] {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease;
+}
+body[data-calm="true"] [data-loss]:hover {
+  filter: blur(0) !important;
+}

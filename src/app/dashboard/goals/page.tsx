@@ -42,7 +42,7 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 
 // Strategi dana = asumsi return buat probabilitas. 'auto' = ikut rekomendasi.
 const STRATEGY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'auto', label: 'Otomatis (rekomendasi)' },
+  { value: 'auto', label: 'Otomatis (disarankan)' },
   { value: 'tabungan', label: 'Tabungan biasa (~2,5%)' },
   { value: 'conservative', label: 'Konservatif (~5%)' },
   { value: 'moderate', label: 'Moderat (~8%)' },

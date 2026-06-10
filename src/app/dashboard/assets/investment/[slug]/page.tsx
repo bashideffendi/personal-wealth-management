@@ -39,6 +39,7 @@ import { NewsTab } from '@/components/investment/news-tab'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { getCategoryFormConfig } from '@/lib/investment-forms'
+import { enrichHolding } from '@/lib/invest/enrich'
 import { useT } from '@/lib/i18n/context'
 
 // Yahoo IDX pakai suffix .JK. Helper lokal — emitten.ts `server-only`, gak bisa di client.
@@ -122,9 +123,20 @@ export default function InvestmentCategoryPage() {
   }
   const [quotes, setQuotes] = useState<Record<string, Quote>>({})
   const [quotesUpdatedAt, setQuotesUpdatedAt] = useState<Date | null>(null)
+  const [usdIdr, setUsdIdr] = useState<number>(FX_FALLBACK_USDIDR)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
+
+  // Deep-link target tab (?tab=dividen etc) — hub links relied on this but
+  // the page never read it. Applied post-mount from location.search via a
+  // controlled Tabs, so SSR/hydration stay consistent without Suspense.
+  const [activeTab, setActiveTab] = useState('holdings')
+  useEffect(() => {
+    const VALID = ['holdings', 'watchlist', 'research', 'compare', 'dividen-pro', 'log', 'dividen', 'berita']
+    const tb = new URLSearchParams(window.location.search).get('tab')
+    if (tb && VALID.includes(tb)) setActiveTab(tb)
+  }, [])
 
   // Declared as useCallback before the useEffect that triggers it so the
   // hook deps lint rule is happy without disabling it. Both `load` and
@@ -155,12 +167,13 @@ export default function InvestmentCategoryPage() {
         }
         // Default fallback rate if Yahoo FX endpoint fails — better to show a
         // ballpark IDR value than a 13000× wrong one. Updated periodically.
-        let usdIdr = FX_FALLBACK_USDIDR
+        let fxRate = FX_FALLBACK_USDIDR
         if (fxRes.ok) {
           const fxJson = (await fxRes.json()) as { quotes?: Array<{ ticker: string; price: number }> }
           const fx = fxJson.quotes?.find((q) => q.ticker === 'USDIDR=X')
-          if (fx && fx.price > 0) usdIdr = fx.price
+          if (fx && fx.price > 0) fxRate = fx.price
         }
+        setUsdIdr(fxRate)
         const map: Record<string, Quote> = {}
         for (const t of priceJson.tickers) {
           // Map Binance symbol back to user's stored ticker (BTCUSDT → BTC-USD)
@@ -169,7 +182,7 @@ export default function InvestmentCategoryPage() {
             ticker: userTicker,
             // Convert USD → IDR so downstream math (invested vs market) is
             // apples-to-apples with avg_cost which user enters in IDR.
-            price: t.lastPrice * usdIdr,
+            price: t.lastPrice * fxRate,
             currency: 'IDR',
             changePct: t.priceChangePercent,
             marketState: null,
@@ -179,12 +192,18 @@ export default function InvestmentCategoryPage() {
         return
       }
 
-      // Stocks / etc: Yahoo Finance via existing /api/quotes
-      const res = await fetch(`/api/quotes?tickers=${encodeURIComponent(tickers.join(','))}`)
+      // Stocks / etc via /api/quotes. USDIDR=X rides along so USD-priced
+      // holdings (US stocks) convert to IDR — without it their market value
+      // was in raw USD units against an IDR cost basis.
+      const withFx = Array.from(new Set([...tickers.map((tk) => tk.toUpperCase()), 'USDIDR=X']))
+      const res = await fetch(`/api/quotes?tickers=${encodeURIComponent(withFx.join(','))}`)
       if (!res.ok) return
       const json = (await res.json()) as { quotes: Quote[] }
       const map: Record<string, Quote> = {}
-      for (const q of json.quotes) map[q.ticker] = q
+      for (const q of json.quotes) {
+        if (q.ticker === 'USDIDR=X' && q.price > 0) setUsdIdr(q.price)
+        map[q.ticker] = q
+      }
       setQuotes(map)
     } finally {
       setRefreshing(false)
@@ -274,18 +293,15 @@ export default function InvestmentCategoryPage() {
     void load()
   }
 
+  // Shared enrich (same math as the hub): USD quotes × usdIdr, fallback ke
+  // current_price manual. Crypto quotes udah pre-converted IDR di atas.
   const enriched = useMemo(() => {
     return items.map((i) => {
       const q = i.ticker ? quotes[i.ticker.toUpperCase()] : undefined
-      const live = q?.price ?? i.current_price ?? i.avg_cost ?? 0
-      const shares = i.quantity || 0
-      const invested = shares * (i.avg_cost || 0)
-      const market = shares * live
-      const pl = market - invested
-      const plPct = invested > 0 ? (pl / invested) * 100 : 0
-      return { i, q, live, shares, invested, market, pl, plPct }
+      const e = enrichHolding(i, q, usdIdr)
+      return { ...e, q, shares: i.quantity || 0 }
     })
-  }, [items, quotes])
+  }, [items, quotes, usdIdr])
 
   const totals = useMemo(() => {
     const invested = enriched.reduce((s, x) => s + x.invested, 0)
@@ -424,7 +440,7 @@ export default function InvestmentCategoryPage() {
         </div>
       </section>
 
-      <Tabs defaultValue="holdings" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as string)} className="w-full">
         {category === 'stock' && (
           <div className="overflow-x-auto -mx-1 px-1 pb-1">
             <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
