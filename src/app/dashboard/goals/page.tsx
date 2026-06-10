@@ -521,22 +521,27 @@ export default function GoalsPage() {
                     </div>
                   </div>
 
-                  {/* Footer 3 kolom — dipisah hairline (per mockup) */}
+                  {/* Footer 3 kolom — anchor kiri · tengah · kanan, label dijepit
+                      h-4 biar tombol ⓘ gak ngedorong kolomnya turun. */}
                   <div className="px-5 py-3.5 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
                     <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>{t('goals.monthly_label')}</p>
+                      <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center h-4" style={{ color: 'var(--ink-soft)' }}>
+                        {t('goals.monthly_label')}
+                      </p>
                       <p className="num text-[13px] font-semibold mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
                         {perMonth != null ? formatCurrency(perMonth) : '—'}
                       </p>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>{t('goals.footer_remaining')}</p>
+                    <div className="min-w-0 text-center">
+                      <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center justify-center h-4" style={{ color: 'var(--ink-soft)' }}>
+                        {t('goals.footer_remaining')}
+                      </p>
                       <p className="num text-[13px] font-semibold mt-0.5 truncate" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink)' }}>
                         {done ? t('goals.target_reached') : formatCurrency(remaining)}
                       </p>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+                    <div className="min-w-0 text-right">
+                      <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center justify-end gap-1 h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.probability_label')}
                         {assumption && <InfoTip text={assumption} />}
                       </p>
