@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -48,14 +49,14 @@ function etaDate(months: number): string {
 interface TxnForm { date: string; location: string; total: number; note: string }
 const EMPTY_TXN: TxnForm = { date: todayISO(), location: '', total: 0, note: '' }
 
+type Account = { id: string; name: string; type: string; current_balance: number }
+type AccAlloc = { id: string; account_id: string; amount: number; accounts: { name: string; current_balance: number } | null }
+
 export default function EmergencyFundPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
+  const qc = useQueryClient()
   const [saving, setSaving] = useState(false)
-  const [fund, setFund] = useState<EmergencyFund | null>(null)
-  const [locations, setLocations] = useState<EmergencyFundLocation[]>([])
-  const [transactions, setTransactions] = useState<EmergencyFundTransaction[]>([])
 
   const [jobStability, setJobStability] = useState<JobStability>('stabil')
   const [dependents, setDependents] = useState(0)
@@ -70,13 +71,58 @@ export default function EmergencyFundPage() {
   const [txnForm, setTxnForm] = useState<TxnForm>(EMPTY_TXN)
   const [txnOther, setTxnOther] = useState(false)
 
-  type Account = { id: string; name: string; type: string; current_balance: number }
-  type AccAlloc = { id: string; account_id: string; amount: number; accounts: { name: string; current_balance: number } | null }
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [accountAllocations, setAccountAllocations] = useState<AccAlloc[]>([])
-  const allocatedFromAccounts = accountAllocations.reduce((s, a) => s + a.amount, 0)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const [linkForm, setLinkForm] = useState({ id: '', accountId: '', amount: 0 })
+
+  // react-query — back-nav dilayani cache (5 query gak diulang tiap visit),
+  // gagal fetch dapet error state + retry (dulu: halaman kosong diam-diam).
+  const pageQuery = useQuery({
+    queryKey: ['emergency-fund'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [fundRes, locRes, allocRes, txnRes, accRes] = await Promise.all([
+        supabase.from('emergency_funds').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('emergency_fund_locations').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id),
+        supabase.from('account_allocations').select('id, account_id, amount, accounts!inner(name, current_balance)').eq('user_id', user.id).eq('purpose_kind', 'emergency_fund')
+          .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
+        // Best-effort: tabel transaksi mungkin belum ada (migration 034 belum di-apply).
+        supabase.from('emergency_fund_transactions').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id).order('date', { ascending: true })
+          .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
+        supabase.from('accounts').select('id, name, type, current_balance').eq('user_id', user.id),
+      ])
+      if (fundRes.error) throw fundRes.error
+      if (locRes.error) throw locRes.error
+      if (accRes.error) throw accRes.error
+      return {
+        fund: (fundRes.data ?? null) as EmergencyFund | null,
+        locations: (locRes.data ?? []) as EmergencyFundLocation[],
+        allocations: (allocRes.data ?? []) as AccAlloc[],
+        transactions: (txnRes.data ?? []) as EmergencyFundTransaction[],
+        accounts: (accRes.data ?? []) as Account[],
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const fund = pageQuery.data?.fund ?? null
+  const locations = pageQuery.data?.locations ?? []
+  const transactions = pageQuery.data?.transactions ?? []
+  const accounts = pageQuery.data?.accounts ?? []
+  const accountAllocations = pageQuery.data?.allocations ?? []
+  const allocatedFromAccounts = accountAllocations.reduce((s, a) => s + a.amount, 0)
+  const refresh = () => qc.invalidateQueries({ queryKey: ['emergency-fund'] })
+
+  // Seed form kalkulator dari fund tersimpan (hidrasi sekali per perubahan data).
+  useEffect(() => {
+    const f = pageQuery.data?.fund
+    if (f) {
+      setJobStability(f.job_stability as JobStability)
+      setDependents(f.dependents)
+      setMonthlyExpenses(f.monthly_expenses)
+      setTargetAmount(f.target_amount)
+    }
+  }, [pageQuery.data?.fund])
 
   const multiplier = calculateMultiplier(jobStability, dependents)
   const recommendation = monthlyExpenses * multiplier
@@ -88,34 +134,6 @@ export default function EmergencyFundPage() {
 
   useEffect(() => { if (!fund) setTargetAmount(recommendation) }, [recommendation, fund])
 
-  async function fetchData() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const [fundRes, locRes, allocRes, txnRes, accRes] = await Promise.all([
-      supabase.from('emergency_funds').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('emergency_fund_locations').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id),
-      supabase.from('account_allocations').select('id, account_id, amount, accounts!inner(name, current_balance)').eq('user_id', user.id).eq('purpose_kind', 'emergency_fund')
-        .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
-      // Best-effort: tabel transaksi mungkin belum ada (migration 034 belum di-apply).
-      supabase.from('emergency_fund_transactions').select('*, emergency_funds!inner(user_id)').eq('emergency_funds.user_id', user.id).order('date', { ascending: true })
-        .then((r: { data: unknown; error: unknown }) => r, () => ({ data: [] as unknown[], error: null as unknown })),
-      supabase.from('accounts').select('id, name, type, current_balance').eq('user_id', user.id),
-    ])
-    if (fundRes.data) {
-      const f = fundRes.data as EmergencyFund
-      setFund(f); setJobStability(f.job_stability as JobStability); setDependents(f.dependents)
-      setMonthlyExpenses(f.monthly_expenses); setTargetAmount(f.target_amount)
-    }
-    if (locRes.data) setLocations(locRes.data as EmergencyFundLocation[])
-    setAccountAllocations((allocRes.data ?? []) as AccAlloc[])
-    setTransactions((txnRes.data ?? []) as EmergencyFundTransaction[])
-    setAccounts((accRes.data ?? []) as Account[])
-    setLoading(false)
-  }
-
-  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   async function ensureFund(): Promise<string | null> {
     if (fund?.id) return fund.id
     const { data: { user } } = await supabase.auth.getUser()
@@ -124,7 +142,6 @@ export default function EmergencyFundPage() {
       user_id: user.id, job_stability: jobStability, dependents, monthly_expenses: monthlyExpenses, target_amount: targetAmount, current_amount: accumulatedFund,
     }).select('*').single()
     if (error) { toast.error(t('common.mutation_failed')); return null }
-    if (created) setFund(created as EmergencyFund)
     return (created as { id: string } | null)?.id ?? null
   }
 
@@ -141,7 +158,7 @@ export default function EmergencyFundPage() {
       : await supabase.from('emergency_funds').insert(payload)
     setSaving(false)
     if (error) { toast.error(t('common.mutation_failed')); return }
-    void fetchData()
+    refresh()
   }
 
   // ── Lokasi (di mana dana disimpan) ──
@@ -156,12 +173,12 @@ export default function EmergencyFundPage() {
       : await supabase.from('emergency_fund_locations').insert(payload)
     setSaving(false)
     if (error) { toast.error(t('common.mutation_failed')); return }
-    setLocationDialogOpen(false); void fetchData()
+    setLocationDialogOpen(false); refresh()
   }
   async function handleDeleteLocation(id: string) {
     const { error } = await supabase.from('emergency_fund_locations').delete().eq('id', id)
     if (error) { toast.error(t('common.delete_failed')); return }
-    void fetchData()
+    refresh()
   }
 
   // ── Hubungkan akun (account_allocations — saldo sinkron dari Aset Likuid) ──
@@ -180,13 +197,13 @@ export default function EmergencyFundPage() {
       : await supabase.from('account_allocations').insert({ user_id: user.id, account_id: linkForm.accountId, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: linkForm.amount })
     setSaving(false)
     if (error) { toast.error(t('common.mutation_failed')); return }
-    setLinkDialogOpen(false); void fetchData()
+    setLinkDialogOpen(false); refresh()
   }
   async function handleUnlink(id: string) {
     if (!confirm(t('emergency_fund.confirm_unlink'))) return
     const { error } = await supabase.from('account_allocations').delete().eq('id', id)
     if (error) { toast.error(t('common.delete_failed')); return }
-    void fetchData()
+    refresh()
   }
 
   // ── Pembentukan (catat setoran / penarikan) ──
@@ -228,11 +245,11 @@ export default function EmergencyFundPage() {
       const { error: logErr } = await supabase.from('emergency_fund_transactions').insert({
         fund_id: fundId, date: txnForm.date, kind: delta > 0 ? 'setor' : 'tarik', amount: Math.abs(delta), location: dest, note: txnForm.note.trim(),
       })
-      if (logErr) { setSaving(false); toast.error(t('common.mutation_failed')); void fetchData(); return }
+      if (logErr) { setSaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
     }
     // 3) Sinkron current_amount fund.
     await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund + delta) }).eq('id', fundId)
-    setSaving(false); setTxnDialogOpen(false); void fetchData()
+    setSaving(false); setTxnDialogOpen(false); refresh()
   }
   async function handleDeleteTxn(tx: EmergencyFundTransaction) {
     if (!confirm(t('emergency_fund.confirm_delete_txn'))) return
@@ -258,7 +275,7 @@ export default function EmergencyFundPage() {
     }
     // Sinkron total fund juga (saveTxn sinkron, delete dulunya nggak — drift).
     if (fund) await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund - signed) }).eq('id', fund.id)
-    void fetchData()
+    refresh()
   }
 
   // Rencana setoran — KAMU yang nentuin berapa sanggup nyisihin/bln (bukan "ritme
@@ -288,6 +305,14 @@ export default function EmergencyFundPage() {
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin" /></div>
+  }
+  if (pageQuery.isError) {
+    return (
+      <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+        <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+      </div>
+    )
   }
 
   return (

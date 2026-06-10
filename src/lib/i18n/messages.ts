@@ -2841,6 +2841,8 @@ export const messages = {
     common: {
       save: 'Simpan',
       mutation_failed: 'Gagal menyimpan. Coba lagi.',
+      load_failed: 'Gagal memuat data.',
+      retry: 'Coba lagi',
       delete_failed: 'Gagal menghapus. Coba lagi.',
       cancel: 'Batal',
       add: 'Tambah',
@@ -6019,6 +6021,8 @@ export const messages = {
     common: {
       save: 'Save',
       mutation_failed: 'Failed to save. Try again.',
+      load_failed: 'Failed to load data.',
+      retry: 'Retry',
       delete_failed: 'Failed to delete. Try again.',
       cancel: 'Cancel',
       add: 'Add',
