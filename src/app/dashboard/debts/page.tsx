@@ -107,7 +107,6 @@ export default function DebtsOverviewPage() {
   const [extraPayment, setExtraPayment] = useState(0)
   const [triedSave, setTriedSave] = useState(false)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -135,6 +134,8 @@ export default function DebtsOverviewPage() {
     setTotalAssets(sumLiquid(liqEntries) + nlq + inv)
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)

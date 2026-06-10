@@ -108,8 +108,9 @@ export default function NonLiquidAssetsPage() {
   const [view, setView] = useState<'card' | 'table'>('card')
   const [sortKey, setSortKey] = useState<'value' | 'gain' | 'date'>('value')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  // Snapshot waktu render-stabil — Date.now() langsung di render dilarang purity rule.
+  const [nowMs] = useState(() => Date.now())
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem('pwm.nonliquid.view') : null
     if (v === 'table' || v === 'card') setView(v)
@@ -144,6 +145,8 @@ export default function NonLiquidAssetsPage() {
     setLoading(false)
     for (const w of writeback) void supabase.from('assets_non_liquid').update({ current_value: w.current_value }).eq('id', w.id)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)
@@ -460,7 +463,7 @@ export default function NonLiquidAssetsPage() {
                     const pct = a.purchase_value > 0 ? (delta / a.purchase_value) * 100 : 0
                     const up = delta >= 0
                     const tipe = a.type || '—'
-                    const ageYears = a.purchase_date ? (Date.now() - new Date(a.purchase_date).getTime()) / (365.25 * 86400000) : 0
+                    const ageYears = a.purchase_date ? (nowMs - new Date(a.purchase_date).getTime()) / (365.25 * 86400000) : 0
                     const statusLabel = cat === 'property' ? t('assets_nonliquid.status_appreciation') : dd?.metode ? METODE_LABEL[dd.metode] : up ? t('assets_nonliquid.status_no_depreciation') : t('assets_nonliquid.status_depreciation')
                     return (
                       <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>

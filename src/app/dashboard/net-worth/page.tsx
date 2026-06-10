@@ -62,14 +62,13 @@ export default function NetWorthPage() {
   const [payoffDebts, setPayoffDebts] = useState<PayoffDebt[]>([])
   const [nwStrategy, setNwStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
 
-  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchData() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
-    const [liquidEntries, nonLiquidRes, investmentRes, debtRes, ccRes, snapshotRes, txRes] = await Promise.all([
+    const [liquidEntries, nonLiquidRes, investmentRes, debtRes, ccRes, _snapshotRes, txRes] = await Promise.all([
       fetchLiquidEntries(supabase, user.id),
       supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
       supabase.from('investments').select('total_value').eq('user_id', user.id),
@@ -125,6 +124,8 @@ export default function NetWorthPage() {
     setSnapshots((refreshed.data ?? []) as NetWorthSnapshot[])
     setLoading(false)
   }
+
+  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function takeManualSnapshot() { setSnapshotting(true); await fetchData(); setSnapshotting(false) }
 

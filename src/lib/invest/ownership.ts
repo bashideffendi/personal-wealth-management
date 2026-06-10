@@ -1,5 +1,6 @@
 import 'server-only'
-import ownershipRaw from '@/data/invest/ownership.json'
+import fs from 'node:fs'
+import path from 'node:path'
 
 /**
  * Ownership data per emiten — sumber dari Stockbit scrape (shareholding).
@@ -71,15 +72,25 @@ export interface Ownership {
   network: OwnershipNetwork
 }
 
-const RAW = ownershipRaw as Record<string, Ownership>
+// Lazy load — ownership.json ~6,9 MB, file data terbesar yang dulunya
+// di-parse di module load (cold start). Sekarang dibaca pas pertama diminta,
+// cache module-level buat instance warm. Wajib terdaftar di
+// outputFileTracingIncludes (next.config.ts) karena fs-read dinamis.
+let RAW: Record<string, Ownership> | undefined
+function load(): Record<string, Ownership> {
+  RAW ??= JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), 'src', 'data', 'invest', 'ownership.json'), 'utf-8'),
+  ) as Record<string, Ownership>
+  return RAW
+}
 
 /** Ambil data ownership satu emiten. null kalau belum di-scrape. */
 export function getOwnership(ticker: string): Ownership | null {
   const upper = ticker.toUpperCase()
-  return RAW[upper] ?? null
+  return load()[upper] ?? null
 }
 
 /** Daftar ticker yang punya data ownership (sorted). */
 export function listOwnershipTickers(): string[] {
-  return Object.keys(RAW).sort()
+  return Object.keys(load()).sort()
 }

@@ -7,14 +7,26 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['recharts', 'date-fns', 'lucide-react'],
   },
-  // getStock() fs-reads per-ticker JSON from src/data/invest/stocks/{TICKER}.json
-  // (split out of the 30 MB stocks.json so cold-start doesn't parse the whole
-  // universe). Next's tracer can't see those dynamic-path reads, so include the
-  // folder explicitly for the only two routes that call getStock — otherwise the
-  // files wouldn't ship and the read would ENOENT (degrading to emiten-only).
+  // Data investasi dibaca via fs (lazy) — bukan static import — supaya cold
+  // start gak nge-parse ~11 MB JSON yang belum tentu diminta. Tracer Next gak
+  // bisa lihat fs-read dinamis, jadi tiap route konsumen lib stocks/ownership/
+  // emitten harus daftar di sini — kalau nggak, file gak kebawa bundle dan
+  // read-nya ENOENT diam-diam. stocks/** (split per-ticker) cuma buat dua
+  // route yang manggil getStock().
   outputFileTracingIncludes: {
-    '/dashboard/assets/investment/stock/research/[ticker]': ['./src/data/invest/stocks/**'],
-    '/api/idx-research/[ticker]/generate': ['./src/data/invest/stocks/**'],
+    '/dashboard/assets/investment/stock/research/[ticker]': [
+      './src/data/invest/*.json',
+      './src/data/invest/stocks/**',
+      './src/data/invest/research/**',
+    ],
+    '/api/idx-research/[ticker]/generate': [
+      './src/data/invest/*.json',
+      './src/data/invest/stocks/**',
+    ],
+    '/api/idx-research/[ticker]': ['./src/data/invest/*.json', './src/data/invest/research/**'],
+    '/api/idx-research': ['./src/data/invest/*.json'],
+    '/api/idx-dividends': ['./src/data/invest/*.json'],
+    '/api/idx-emiten': ['./src/data/invest/*.json'],
   },
   images: {
     // External logo sources used by CryptoLogo + future avatar fetchers.

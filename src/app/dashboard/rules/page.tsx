@@ -40,7 +40,6 @@ export default function RulesPage() {
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -54,6 +53,8 @@ export default function RulesPage() {
     setRules((data ?? []) as CategorizationRule[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)

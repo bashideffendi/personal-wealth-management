@@ -5,7 +5,7 @@ import type { Investment } from '@/types'
 // Holding minimal — cuma field yang dibaca enrich.
 function inv(partial: Partial<Investment>): Investment {
   return {
-    id: 'x', user_id: 'u', name: 'Test', category: 'stock_idx',
+    id: 'x', user_id: 'u', name: 'Test', category: 'stock',
     ticker: null, quantity: 0, avg_cost: 0, current_price: 0,
     ...partial,
   } as Investment
@@ -16,7 +16,7 @@ const USD_IDR = 16_000
 describe('enrichHolding', () => {
   it('converts USD quotes to IDR (US stock)', () => {
     const e = enrichHolding(
-      inv({ category: 'stock_us', ticker: 'AAPL', quantity: 10, avg_cost: 2_000_000 }),
+      inv({ category: 'stock', ticker: 'AAPL', quantity: 10, avg_cost: 2_000_000 }),
       { price: 150, currency: 'USD', changePct: 1 },
       USD_IDR,
     )

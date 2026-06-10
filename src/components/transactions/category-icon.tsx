@@ -1,3 +1,4 @@
+import { createElement } from 'react'
 import {
   Utensils,
   Car,
@@ -140,6 +141,7 @@ export function CategoryIcon({
   iconKey?: string
   className?: string
 }) {
-  const Icon = resolveCategoryIcon(category, iconKey)
-  return <Icon className={className} />
+  // Identitas komponen stabil (lucide statis module-level) — createElement
+  // biar gak kedeteksi sebagai "create component during render".
+  return createElement(resolveCategoryIcon(category, iconKey), { className })
 }

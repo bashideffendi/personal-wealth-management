@@ -25,7 +25,6 @@ export default function CategoryDrilldownPage() {
   const [loading, setLoading] = useState(true)
   const [txs, setTxs] = useState<Transaction[]>([])
 
-  useEffect(() => { void load() }, [category]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -40,6 +39,8 @@ export default function CategoryDrilldownPage() {
     setTxs((data ?? []) as Transaction[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, [category]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = useMemo(() => {
     const total = txs.reduce((s, t) => s + t.amount, 0)

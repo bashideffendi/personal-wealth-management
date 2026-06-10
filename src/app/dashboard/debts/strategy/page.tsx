@@ -19,7 +19,6 @@ export default function DebtStrategyPage() {
   const [strategy, setStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
   const [extraPayment, setExtraPayment] = useState(0)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -29,6 +28,8 @@ export default function DebtStrategyPage() {
     setDebts((data ?? []) as Debt[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const active = useMemo(() => debts.filter((d) => d.is_active && d.remaining > 0), [debts])
   const ordered = useMemo(() =>

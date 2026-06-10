@@ -46,6 +46,11 @@ import {
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { toast } from 'sonner'
 
+// DOM mutation di luar komponen — dipanggil dari mouse handler, bukan render.
+function setBodyUserSelect(v: string) {
+  if (typeof document !== 'undefined') document.body.style.userSelect = v
+}
+
 const YEAR_OPTIONS = ['2024', '2025', '2026']
 
 interface BudgetMap {
@@ -292,10 +297,10 @@ export default function BudgetingPage() {
     fillOverRef.current = month
     setFillSource(src)
     setFillOverMonth(month)
-    if (typeof document !== 'undefined') document.body.style.userSelect = 'none'
+    setBodyUserSelect('none')
     const onUp = () => {
       document.removeEventListener('mouseup', onUp)
-      document.body.style.userSelect = ''
+      setBodyUserSelect('')
       const s = fillSourceRef.current
       const over = fillOverRef.current
       fillSourceRef.current = null

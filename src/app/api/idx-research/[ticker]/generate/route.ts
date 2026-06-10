@@ -119,6 +119,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
       )
     }
 
+    // Output kepotong = riset rusak. Jangan lanjut — cache-nya SHARED antar
+    // user, sekali kesimpen semua orang dapet research buntung.
+    if (response.stop_reason === 'max_tokens') {
+      await refundAICredits(supabase, user.id, 'stock_research')
+      return NextResponse.json(
+        { error: 'Output research kepotong (kepanjangan). Coba generate ulang.' },
+        { status: 502 },
+      )
+    }
+
     // Concat all text blocks
     for (const block of response.content) {
       if (block.type === 'text') markdown += block.text

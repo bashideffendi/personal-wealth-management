@@ -73,6 +73,8 @@ const EMPTY: FormState = {
 }
 
 const DAY = 86_400_000
+// Helper module-level: dipanggil dari event handler (bukan render).
+const isoDaysAgo = (days: number) => new Date(Date.now() - days * DAY).toISOString().slice(0, 10)
 function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d }
 function clampDay(year: number, month: number, day: number) {
   const last = new Date(year, month + 1, 0).getDate()
@@ -140,7 +142,6 @@ export default function RecurringPage() {
   const [candidates, setCandidates] = useState<{ name: string; amount: number; category: string; count: number }[]>([])
   const [detecting, setDetecting] = useState(false)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -154,6 +155,8 @@ export default function RecurringPage() {
     setAccounts((aR.data ?? []) as Account[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)
@@ -208,7 +211,7 @@ export default function RecurringPage() {
     setDetecting(true); setDetectOpen(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setDetecting(false); return }
-    const cutoff = new Date(Date.now() - 150 * DAY).toISOString().slice(0, 10)
+    const cutoff = isoDaysAgo(150)
     const { data } = await supabase.from('transactions')
       .select('description, amount, category, type, date')
       .eq('user_id', user.id).neq('type', 'income').gte('date', cutoff)
@@ -263,7 +266,7 @@ export default function RecurringPage() {
     }
     return days
   }, [payments]) // eslint-disable-line react-hooks/exhaustive-deps
-  const calMax = Math.max(1, ...calendar.map((d) => d.amount))
+  const _calMax = Math.max(1, ...calendar.map((d) => d.amount))
 
   // Breakdown per kategori (per bulan equivalent)
   const monthlyEq = (r: RecurringTransaction) => r.frequency === 'monthly' ? r.amount : r.frequency === 'weekly' ? r.amount * 52 / 12 : r.frequency === 'yearly' ? r.amount / 12 : r.amount * 365 / 12

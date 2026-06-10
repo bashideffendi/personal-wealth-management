@@ -126,7 +126,6 @@ export default function CreditCardsPage() {
   const [payForm, setPayForm] = useState<PayFormState>(EMPTY_PAY)
   const [paySaving, setPaySaving] = useState(false)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -142,6 +141,8 @@ export default function CreditCardsPage() {
     setAccounts((aR.data ?? []) as Account[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveCard() {
     setCardSaving(true)

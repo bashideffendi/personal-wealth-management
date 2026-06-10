@@ -101,7 +101,9 @@ export function LockProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
 
   // Activity timestamp lives in ref so updating it doesn't re-render.
-  const lastActiveRef = useRef<number>(Date.now())
+  // Init 0 (bukan Date.now() — impure di render); hydrate effect di bawah
+  // langsung ngisi nilai beneran sebelum timer idle mana pun jalan.
+  const lastActiveRef = useRef<number>(0)
   const lastWriteRef = useRef<number>(0)
 
   // ─── Hydrate from localStorage on mount ───────────────────────

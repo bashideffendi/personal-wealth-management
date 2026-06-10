@@ -25,9 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Lint (non-blocking signal)
+      - name: Lint (blocking — errors fail CI; set-state-in-effect tetap warning)
         run: npm run lint
-        continue-on-error: true
 
       - name: Unit tests (money math, Monte Carlo)
         run: npm test

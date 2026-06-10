@@ -89,7 +89,6 @@ export default function ContractsPage() {
   const [query, setQuery] = useState('')
   const today = useMemo(() => new Date(), [])
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -99,6 +98,8 @@ export default function ContractsPage() {
     setItems((data ?? []) as Contract[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)

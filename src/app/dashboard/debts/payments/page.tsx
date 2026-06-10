@@ -40,7 +40,6 @@ export default function DebtPaymentsPage() {
   const [saving, setSaving] = useState(false)
   const t = useT()
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
@@ -54,6 +53,8 @@ export default function DebtPaymentsPage() {
     setPayments((pR.data ?? []) as DebtPayment[])
     setLoading(false)
   }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)

@@ -82,7 +82,6 @@ export default function EmergencyFundPage() {
   const coverageMonths = monthlyExpenses > 0 ? accumulatedFund / monthlyExpenses : 0
   const targetMonths = monthlyExpenses > 0 ? targetAmount / monthlyExpenses : multiplier
 
-  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!fund) setTargetAmount(recommendation) }, [recommendation, fund])
 
   async function fetchData() {
@@ -110,6 +109,8 @@ export default function EmergencyFundPage() {
     setAccounts((accRes.data ?? []) as Account[])
     setLoading(false)
   }
+
+  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function ensureFund(): Promise<string | null> {
     if (fund?.id) return fund.id

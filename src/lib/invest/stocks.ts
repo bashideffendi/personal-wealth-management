@@ -1,13 +1,7 @@
 import 'server-only'
 import fs from 'node:fs'
 import path from 'node:path'
-import valuationsRaw from '@/data/invest/valuations.json'
-import valuationDetailsRaw from '@/data/invest/valuation-details.json'
-import dividendEventsRaw from '@/data/invest/dividend-events.json'
-import emittenStatsRaw from '@/data/invest/emitten-stats.json'
 import sectorMediansRaw from '@/data/invest/sector-medians.json'
-import quarterlyFinancialsRaw from '@/data/invest/quarterly-financials.json'
-import pricePerformanceRaw from '@/data/invest/price-performance.json'
 import type { SectorMedians } from './valuation'
 
 /**
@@ -16,6 +10,25 @@ import type { SectorMedians } from './valuation'
  *
  * NOTE: harga di file ini snapshot — gunakan /api/quotes untuk harga live.
  */
+
+const DATA_DIR = path.join(process.cwd(), 'src', 'data', 'invest')
+
+/**
+ * Lazy JSON loader — file dibaca + di-parse PAS PERTAMA diminta, bukan saat
+ * module load. Top-level import dulunya bikin tiap cold start route /api/idx-*
+ * nge-parse ~10 MB JSON walau request-nya cuma butuh satu dataset. Cache
+ * module-level: instance warm cuma baca sekali. Konsekuensi: file-file ini
+ * harus terdaftar di outputFileTracingIncludes (next.config.ts) karena
+ * fs-read dinamis gak kelihatan sama tracer Next. sector-medians (1,6 KB)
+ * sengaja tetap static import — terlalu kecil buat di-lazy-kan.
+ */
+function lazyJson<T>(filename: string): () => T {
+  let cache: T | undefined
+  return () => {
+    cache ??= JSON.parse(fs.readFileSync(path.join(DATA_DIR, filename), 'utf-8')) as T
+    return cache
+  }
+}
 
 export interface Valuation {
   ticker: string
@@ -63,10 +76,10 @@ export interface EmittenStat {
   marketCapStr: string | null
 }
 
-const VALUATIONS = valuationsRaw as Valuation[]
-const VALUATION_DETAILS = valuationDetailsRaw as unknown as ValuationDetail[]
-const DIVIDEND_EVENTS = dividendEventsRaw as DividendEvent[]
-const STATS = emittenStatsRaw as Record<string, EmittenStat>
+const loadValuations = lazyJson<Valuation[]>('valuations.json')
+const loadValuationDetails = lazyJson<ValuationDetail[]>('valuation-details.json')
+const loadDividendEvents = lazyJson<DividendEvent[]>('dividend-events.json')
+const loadStats = lazyJson<Record<string, EmittenStat>>('emitten-stats.json')
 
 // ─── Full stock metrics (5Y historical) ─────────────────────────
 
@@ -88,7 +101,7 @@ export interface Stock {
 // in the module at cold-start (which OOM'd the build + slowed every SSR). A
 // module-level cache keeps re-reads of the same ticker cheap within a warm
 // (Fluid Compute) instance.
-const STOCK_DIR = path.join(process.cwd(), 'src', 'data', 'invest', 'stocks')
+const STOCK_DIR = path.join(DATA_DIR, 'stocks')
 const stockCache = new Map<string, Stock | null>()
 
 export function getStock(ticker: string): Stock | undefined {
@@ -155,10 +168,10 @@ export type QuarterlyFinancials = Record<string, Record<string, number>>
 // Inner key: "2025-Q2", "2024-Q4", etc.
 // Value: numeric value (cumulative within year)
 
-const QUARTERLY = quarterlyFinancialsRaw as Record<string, QuarterlyFinancials>
+const loadQuarterly = lazyJson<Record<string, QuarterlyFinancials>>('quarterly-financials.json')
 
 export function getQuarterlyFinancialsFor(ticker: string): QuarterlyFinancials {
-  return QUARTERLY[ticker.toUpperCase()] ?? {}
+  return loadQuarterly()[ticker.toUpperCase()] ?? {}
 }
 
 // ─── Price performance ────────────────────────────────────────
@@ -178,10 +191,10 @@ export interface PricePerformance {
   '5Y'?: PricePerformancePeriod
 }
 
-const PRICE_PERF = pricePerformanceRaw as Record<string, PricePerformance>
+const loadPricePerf = lazyJson<Record<string, PricePerformance>>('price-performance.json')
 
 export function getPricePerformanceFor(ticker: string): PricePerformance | undefined {
-  return PRICE_PERF[ticker.toUpperCase()]
+  return loadPricePerf()[ticker.toUpperCase()]
 }
 
 // ─── Research markdown ────────────────────────────────────────
@@ -221,32 +234,32 @@ export function getResearchMarkdown(ticker: string): ResearchDoc | null {
 }
 
 export function getValuations(): Valuation[] {
-  return VALUATIONS
+  return loadValuations()
 }
 
 export function getValuation(ticker: string): Valuation | undefined {
   const t = ticker.toUpperCase()
-  return VALUATIONS.find((v) => v.ticker === t)
+  return loadValuations().find((v) => v.ticker === t)
 }
 
 export function getValuationDetail(ticker: string): ValuationDetail | undefined {
   const t = ticker.toUpperCase()
-  return VALUATION_DETAILS.find((v) => v.ticker === t)
+  return loadValuationDetails().find((v) => v.ticker === t)
 }
 
 export function getEmittenStat(ticker: string): EmittenStat | undefined {
-  return STATS[ticker.toUpperCase()]
+  return loadStats()[ticker.toUpperCase()]
 }
 
 /** All dividend events. ~3000+ rows. */
 export function getDividendEvents(): DividendEvent[] {
-  return DIVIDEND_EVENTS
+  return loadDividendEvents()
 }
 
 /** Dividend events for a specific ticker, sorted by exDate desc. */
 export function getDividendsForTicker(ticker: string): DividendEvent[] {
   const t = ticker.toUpperCase()
-  return DIVIDEND_EVENTS.filter((d) => d.ticker === t).sort((a, b) => {
+  return loadDividendEvents().filter((d) => d.ticker === t).sort((a, b) => {
     if (!a.exDate || !b.exDate) return 0
     return b.exDate.localeCompare(a.exDate)
   })
@@ -257,7 +270,7 @@ export function getUpcomingDividends(): DividendEvent[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const out: Array<DividendEvent & { _exDate: Date }> = []
-  for (const ev of DIVIDEND_EVENTS) {
+  for (const ev of loadDividendEvents()) {
     if (!ev.exDate) continue
     const d = parseShortDate(ev.exDate)
     if (!d) continue

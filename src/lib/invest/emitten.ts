@@ -1,5 +1,6 @@
 import 'server-only'
-import emittenInfoRaw from '@/data/invest/emitten-info.json'
+import fs from 'node:fs'
+import path from 'node:path'
 
 /**
  * IDX emiten registry — sumber data dari kelolainvestasi (Stockbit scrape).
@@ -36,7 +37,15 @@ export interface EmittenInfo {
   averageVolume: number
 }
 
-const RAW = emittenInfoRaw as Record<string, RawEmittenInfo>
+// Lazy load (pola sama stocks.ts/ownership.ts) — dibaca pas pertama diminta,
+// bukan saat module load. Terdaftar di outputFileTracingIncludes.
+let RAW: Record<string, RawEmittenInfo> | undefined
+function load(): Record<string, RawEmittenInfo> {
+  RAW ??= JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), 'src', 'data', 'invest', 'emitten-info.json'), 'utf-8'),
+  ) as Record<string, RawEmittenInfo>
+  return RAW
+}
 
 let _cached: EmittenInfo[] | null = null
 
@@ -44,7 +53,7 @@ let _cached: EmittenInfo[] | null = null
 export function listEmiten(): EmittenInfo[] {
   if (_cached) return _cached
   const out: EmittenInfo[] = []
-  for (const [ticker, info] of Object.entries(RAW)) {
+  for (const [ticker, info] of Object.entries(load())) {
     if (info.status !== 'STATUS_ACTIVE') continue
     if (info.tradeable !== 1) continue
     out.push({
