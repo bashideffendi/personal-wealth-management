@@ -444,8 +444,11 @@ export default function GoalsPage() {
                   key={g.id}
                   className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
                 >
+                  {/* Layout per mockup user: header (nama + meta + CTA kanan) →
+                      angka terkumpul SERIF besar "dari target" kecil → bar + %
+                      → hairline → footer 3 kolom small-caps. */}
                   <div className="p-5">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
                         <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
                           <Icon className="size-4" style={{ color: layerInk }} />
@@ -453,88 +456,95 @@ export default function GoalsPage() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                            {/* Teks polos, bukan pill — satu pill (status) cukup di baris judul. */}
                             {i === 0 && g.deadline && !done && (
                               <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
                                 {t('goals.badge_nearest')}
                               </span>
                             )}
-                            {status && (
-                              <span
-                                className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
-                                style={{ background: STATUS_TONE[status.tone].bg, color: STATUS_TONE[status.tone].ink }}
-                              >
-                                {t(`goals.${status.key}`)}
-                              </span>
-                            )}
                           </div>
-                          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                          {/* Status = teks berwarna di meta (per mockup), bukan pill. */}
+                          <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                             {g.deadline
                               ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
                               : (categoryLabel(g.category) ?? g.category)}
+                            {status && (
+                              <>
+                                {' · '}
+                                <span className="font-semibold" style={{ color: STATUS_TONE[status.tone].ink }}>
+                                  {t(`goals.${status.key}`)}
+                                </span>
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
-                      {/* Selalu kelihatan di touch; hover-reveal cuma di pointer device */}
-                      <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
-                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.edit_aria')} onClick={() => openEdit(g)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
-                          <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
-                        </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Edit/hapus: hover-reveal di pointer, selalu tampak di touch */}
+                        <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition">
+                          <Button variant="ghost" size="icon-sm" aria-label={t('goals.edit_aria')} onClick={() => openEdit(g)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
+                            <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                          </Button>
+                        </div>
+                        {done ? (
+                          <Button variant="outline" size="sm" className="rounded-full text-[11px]" onClick={() => setActive(g.id, false)}>
+                            <Archive className="h-3.5 w-3.5" /> {t('goals.archive')}
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="rounded-full text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
+                            {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-end gap-3">
-                      {/* Tinta — warna tier cukup di icon chip + bar (2 titik per card). */}
-                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: 'var(--ink)' }}>
+                    {/* Angka sebagai perhiasan: terkumpul serif besar, target kecil
+                        di baseline yang sama — satu baris, gak boleh patah aneh. */}
+                    <p className="mt-5 leading-none truncate">
+                      <span className="num" style={{ fontFamily: 'var(--font-display)', fontSize: '2.1rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+                        {formatCurrency(g.current_amount)}
+                      </span>
+                      <span className="num text-[12.5px] ml-2" style={{ color: 'var(--ink-soft)' }}>
+                        {t('goals.amount_of')} {formatCurrency(g.target_amount)}
+                      </span>
+                    </p>
+
+                    <div className="mt-3.5 flex items-center gap-3">
+                      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? 'var(--c-mint)' : layerColor }} />
+                      </div>
+                      <span className="num text-[12px] font-semibold shrink-0" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
                         {pct.toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Footer 3 kolom — dipisah hairline (per mockup) */}
+                  <div className="px-5 py-3.5 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>{t('goals.monthly_label')}</p>
+                      <p className="num text-[13px] font-semibold mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
+                        {perMonth != null ? formatCurrency(perMonth) : '—'}
                       </p>
-                      <div className="pb-1 min-w-0">
-                        <p className="num text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                          {formatCurrency(g.current_amount)}
-                          <span className="font-normal" style={{ color: 'var(--ink-muted)' }}> / {formatCurrency(g.target_amount)}</span>
-                        </p>
-                        <p className="num text-[11px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink-soft)' }}>
-                          {done ? t('goals.target_reached') : `${t('goals.remaining')} ${formatCurrency(remaining)}`}
-                        </p>
-                      </div>
                     </div>
-
-                    <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? 'var(--c-mint)' : layerColor }} />
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>{t('goals.footer_remaining')}</p>
+                      <p className="num text-[13px] font-semibold mt-0.5 truncate" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink)' }}>
+                        {done ? t('goals.target_reached') : formatCurrency(remaining)}
+                      </p>
                     </div>
-
-                    <div className="mt-4 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.monthly_label')}</p>
-                        <p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
-                          {perMonth != null ? formatCurrency(perMonth) : '—'}
-                        </p>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
-                          {t('goals.probability_label')}
-                          {assumption && <InfoTip text={assumption} />}
-                        </p>
-                        {/* Diwarnai cuma kalau user set rencana sendiri — angka
-                            default (iuran wajib) itu hipotesis, tampil tinta. */}
-                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob == null ? 'var(--ink-soft)' : planned != null ? probInk(prob) : 'var(--ink)' }}>
-                          {prob != null ? `${prob.toFixed(0)}%` : '—'}
-                        </p>
-                      </div>
-                      {done ? (
-                        <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => setActive(g.id, false)}>
-                          <Archive className="h-3.5 w-3.5" /> {t('goals.archive')}
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
-                          {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wide inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+                        {t('goals.probability_label')}
+                        {assumption && <InfoTip text={assumption} />}
+                      </p>
+                      {/* Berwarna cuma kalau user set rencana sendiri (default = hipotesis). */}
+                      <p className="num text-[13px] font-semibold mt-0.5" style={{ color: prob == null ? 'var(--ink-soft)' : planned != null ? probInk(prob) : 'var(--ink)' }}>
+                        {prob != null ? `${prob.toFixed(0)}%` : '—'}
+                      </p>
                     </div>
-
                   </div>
                 </div>
               )
