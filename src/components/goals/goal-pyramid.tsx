@@ -86,6 +86,23 @@ export function GoalPyramid({ goals, onSetor }: Props) {
     tone = 'done'
   }
 
+  // ── Piramida SVG — segitiga BENERAN (diagram laporan tahunan), bukan tiga
+  // kotak bertumpuk. Tiga strata exploded; tiap strata terisi kiri→kanan
+  // sesuai progres tier-nya. Fokus = tinta pekat; tier kosong = outline dashed.
+  const APEX_Y = 8
+  const BASE_Y = 150
+  const CX = 100
+  const HALF = 92
+  const H = BASE_Y - APEX_Y
+  const halfAt = (y: number) => (HALF * (y - APEX_Y)) / H
+  const yCuts = [APEX_Y + H / 3, APEX_Y + (2 * H) / 3]
+  // top→bottom: mimpi (puncak) → pelindung (fondasi)
+  const SLICES: Array<{ key: PyramidLayer; pts: Array<[number, number]>; dy: number }> = [
+    { key: 'mimpi', dy: -6, pts: [[CX, APEX_Y], [CX + halfAt(yCuts[0]), yCuts[0]], [CX - halfAt(yCuts[0]), yCuts[0]]] },
+    { key: 'pertumbuhan', dy: 0, pts: [[CX + halfAt(yCuts[0]), yCuts[0]], [CX + halfAt(yCuts[1]), yCuts[1]], [CX - halfAt(yCuts[1]), yCuts[1]], [CX - halfAt(yCuts[0]), yCuts[0]]] },
+    { key: 'pelindung', dy: 6, pts: [[CX + halfAt(yCuts[1]), yCuts[1]], [CX + HALF, BASE_Y], [CX - HALF, BASE_Y], [CX - halfAt(yCuts[1]), yCuts[1]]] },
+  ]
+
   return (
     <div className="px-5 sm:px-7 pt-5 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
       <p
@@ -96,72 +113,96 @@ export function GoalPyramid({ goals, onSetor }: Props) {
         <EduTip topic="goal-based-investing" side="bottom" />
       </p>
 
-      {/* Direktif = momen personality: serif italic GEDE, kebaca sekali lirik.
-          Bukan paragraf kecil di dalam kotak krem. */}
-      <p
-        className="mt-1.5 leading-snug"
-        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(20px, 2.1vw, 25px)', color: 'var(--ink)' }}
-      >
-        {tone === 'warn' && (
-          <span aria-hidden className="inline-block size-2 rounded-full mr-2.5 align-middle" style={{ background: 'var(--c-amber)' }} />
-        )}
-        {tone === 'done' && (
-          <span aria-hidden className="inline-block size-2 rounded-full mr-2.5 align-middle" style={{ background: 'var(--c-mint)' }} />
-        )}
-        {insightText}
-        {tone === 'focus' && focusGoalId && onSetor && (
-          <button
-            type="button"
-            onClick={() => onSetor(focusGoalId)}
-            className="ml-3 align-middle inline-flex items-center gap-1 text-[13px] font-semibold not-italic underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition"
-            style={{ fontFamily: 'var(--font-sans, inherit)', color: 'var(--ink)' }}
-          >
-            {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3.5" />
-          </button>
-        )}
-      </p>
-
-      {/* Tiga tier selebar band — gauge memenuhi tiap kolom, sejajar jadi satu
-          garis spine (bahasa visual sama dengan baris goal: trace + solid +
-          jarum). Fokus = ink pekat, sisanya tinta lembut. */}
-      <div className="mt-5 grid grid-cols-3 gap-5 sm:gap-10">
-        {ORDER.map((key) => {
-          const a = agg[key]
-          const isFocus = focus === key
-          const hasGoals = grouped[key].length > 0
-          const mainColor = isFocus ? 'var(--ink)' : 'var(--ink-soft)'
-          const w = Math.min(a.pct, 100)
-          return (
-            <div key={key} className="min-w-0">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="text-[10px] font-semibold tracking-[0.14em] uppercase truncate" style={{ color: mainColor }}>
-                  {layerLabel(key)}
-                  {isFocus && <span className="ml-1 normal-case tracking-normal font-medium">· {t('goal_pyramid.focus_here')}</span>}
-                </p>
-                <p className="num text-[12px] font-semibold shrink-0" style={{ color: mainColor }}>
-                  {hasGoals ? `${a.pct.toFixed(0)}%` : '—'}
-                </p>
-              </div>
-              <div className="mt-2 relative h-[12px]" aria-hidden>
-                <div
-                  className="absolute inset-x-0 bottom-[2px] h-[6px]"
-                  style={{ background: 'repeating-linear-gradient(90deg, var(--border) 0 2px, transparent 2px 7px)' }}
-                />
-                {hasGoals && (
-                  <>
-                    <div className="absolute left-0 bottom-[2px] h-[6px]" style={{ width: `${w}%`, background: mainColor }} />
-                    <div className="absolute bottom-0 h-[12px] w-[2px]" style={{ left: `calc(${w}% - 1px)`, background: mainColor }} />
-                  </>
+      <div className="mt-3 grid md:grid-cols-[200px_minmax(0,1fr)] gap-x-10 gap-y-4 items-center">
+        {/* Piramida — anchor fokal halaman */}
+        <svg viewBox="0 0 200 162" className="w-[168px] md:w-full max-w-[200px] mx-auto md:mx-0" aria-hidden>
+          {SLICES.map(({ key, pts, dy }) => {
+            const isFocus = focus === key
+            const hasGoals = grouped[key].length > 0
+            const pct = Math.min(agg[key].pct, 100)
+            const xs = pts.map((p) => p[0])
+            const ys = pts.map((p) => p[1])
+            const minX = Math.min(...xs)
+            const minY = Math.min(...ys)
+            const fillW = (Math.max(...xs) - minX) * (pct / 100)
+            const poly = pts.map((p) => p.join(',')).join(' ')
+            const tone = isFocus ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 32%, transparent)'
+            return (
+              <g key={key} transform={`translate(0 ${dy})`}>
+                <clipPath id={`gp-${key}`}><polygon points={poly} /></clipPath>
+                {hasGoals && fillW > 0 && (
+                  <rect
+                    x={minX} y={minY} width={fillW} height={Math.max(...ys) - minY}
+                    clipPath={`url(#gp-${key})`} fill={tone}
+                  />
                 )}
-              </div>
-              <p className="num text-[12px] mt-2 truncate" style={{ color: hasGoals ? 'var(--ink-muted)' : 'var(--ink-soft)' }}>
-                {hasGoals
-                  ? <><span className="font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(a.current)}</span> / {formatCompactCurrency(a.target)}</>
-                  : t('goal_pyramid.empty_tier')}
-              </p>
-            </div>
-          )
-        })}
+                <polygon
+                  points={poly}
+                  fill="none"
+                  stroke={isFocus ? 'var(--ink)' : 'var(--ink-soft)'}
+                  strokeWidth={isFocus ? 1.75 : 1}
+                  strokeDasharray={hasGoals ? undefined : '3 4'}
+                  strokeLinejoin="round"
+                />
+              </g>
+            )
+          })}
+        </svg>
+
+        {/* Direktif + tabel tier — figur duduk di samping bentuknya */}
+        <div className="min-w-0">
+          <p
+            className="leading-snug"
+            style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(21px, 2.2vw, 27px)', color: 'var(--ink)' }}
+          >
+            {tone === 'warn' && (
+              <span aria-hidden className="inline-block size-2 rounded-full mr-2.5 align-middle" style={{ background: 'var(--c-amber)' }} />
+            )}
+            {tone === 'done' && (
+              <span aria-hidden className="inline-block size-2 rounded-full mr-2.5 align-middle" style={{ background: 'var(--c-mint)' }} />
+            )}
+            {insightText}
+            {tone === 'focus' && focusGoalId && onSetor && (
+              <button
+                type="button"
+                onClick={() => onSetor(focusGoalId)}
+                className="ml-3 align-middle inline-flex items-center gap-1 text-[13px] font-semibold not-italic underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition"
+                style={{ color: 'var(--ink)' }}
+              >
+                {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3.5" />
+              </button>
+            )}
+          </p>
+
+          <div className="mt-3.5 max-w-md">
+            {SLICES.map(({ key }) => {
+              const a = agg[key]
+              const isFocus = focus === key
+              const hasGoals = grouped[key].length > 0
+              const mainColor = isFocus ? 'var(--ink)' : 'var(--ink-soft)'
+              return (
+                <div
+                  key={key}
+                  className="flex items-baseline gap-3 py-[5px] border-t first:border-t-0"
+                  style={{ borderColor: 'var(--border-soft)' }}
+                >
+                  {/* Fokus ditandai bobot tinta + piramida — gak butuh teks tambahan. */}
+                  <p className="w-[110px] shrink-0 text-[10px] font-semibold tracking-[0.14em] uppercase truncate" style={{ color: mainColor }}>
+                    {layerLabel(key)}
+                  </p>
+                  <p className="num text-[12.5px] flex-1 truncate" style={{ color: hasGoals ? 'var(--ink-muted)' : 'var(--ink-soft)' }}>
+                    {hasGoals
+                      ? <><span className="font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(a.current)}</span> / {formatCompactCurrency(a.target)}</>
+                      : t('goal_pyramid.empty_tier')}
+                  </p>
+                  <p className="num text-[12.5px] font-semibold shrink-0 text-right w-10" style={{ color: mainColor }}>
+                    {hasGoals ? `${a.pct.toFixed(0)}%` : '—'}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )
