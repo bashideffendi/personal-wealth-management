@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { EmergencyFund, EmergencyFundLocation, EmergencyFundTransaction } from '@/types'
@@ -116,9 +117,10 @@ export default function EmergencyFundPage() {
     if (fund?.id) return fund.id
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
-    const { data: created } = await supabase.from('emergency_funds').insert({
+    const { data: created, error } = await supabase.from('emergency_funds').insert({
       user_id: user.id, job_stability: jobStability, dependents, monthly_expenses: monthlyExpenses, target_amount: targetAmount, current_amount: accumulatedFund,
     }).select('*').single()
+    if (error) { toast.error(t('common.mutation_failed')); return null }
     if (created) setFund(created as EmergencyFund)
     return (created as { id: string } | null)?.id ?? null
   }
@@ -131,9 +133,12 @@ export default function EmergencyFundPage() {
       user_id: user.id, job_stability: jobStability, dependents,
       monthly_expenses: monthlyExpenses, target_amount: targetAmount, current_amount: accumulatedFund,
     }
-    if (fund) await supabase.from('emergency_funds').update(payload).eq('id', fund.id)
-    else await supabase.from('emergency_funds').insert(payload)
-    setSaving(false); void fetchData()
+    const { error } = fund
+      ? await supabase.from('emergency_funds').update(payload).eq('id', fund.id)
+      : await supabase.from('emergency_funds').insert(payload)
+    setSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    void fetchData()
   }
 
   // ── Lokasi (di mana dana disimpan) ──
@@ -143,12 +148,17 @@ export default function EmergencyFundPage() {
     if (!fundId) return
     setSaving(true)
     const payload = { fund_id: fundId, account_name: locationForm.account_name, amount: locationForm.amount }
-    if (editingLocationId) await supabase.from('emergency_fund_locations').update(payload).eq('id', editingLocationId)
-    else await supabase.from('emergency_fund_locations').insert(payload)
-    setSaving(false); setLocationDialogOpen(false); void fetchData()
+    const { error } = editingLocationId
+      ? await supabase.from('emergency_fund_locations').update(payload).eq('id', editingLocationId)
+      : await supabase.from('emergency_fund_locations').insert(payload)
+    setSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    setLocationDialogOpen(false); void fetchData()
   }
   async function handleDeleteLocation(id: string) {
-    await supabase.from('emergency_fund_locations').delete().eq('id', id); void fetchData()
+    const { error } = await supabase.from('emergency_fund_locations').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    void fetchData()
   }
 
   // ── Hubungkan akun (account_allocations — saldo sinkron dari Aset Likuid) ──
@@ -162,13 +172,18 @@ export default function EmergencyFundPage() {
     if (!fundId || !user || !linkForm.accountId) return
     setSaving(true)
     const existingId = linkForm.id || accountAllocations.find((a) => a.account_id === linkForm.accountId)?.id
-    if (existingId) await supabase.from('account_allocations').update({ amount: linkForm.amount }).eq('id', existingId)
-    else await supabase.from('account_allocations').insert({ user_id: user.id, account_id: linkForm.accountId, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: linkForm.amount })
-    setSaving(false); setLinkDialogOpen(false); void fetchData()
+    const { error } = existingId
+      ? await supabase.from('account_allocations').update({ amount: linkForm.amount }).eq('id', existingId)
+      : await supabase.from('account_allocations').insert({ user_id: user.id, account_id: linkForm.accountId, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: linkForm.amount })
+    setSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    setLinkDialogOpen(false); void fetchData()
   }
   async function handleUnlink(id: string) {
     if (!confirm(t('emergency_fund.confirm_unlink'))) return
-    await supabase.from('account_allocations').delete().eq('id', id); void fetchData()
+    const { error } = await supabase.from('account_allocations').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    void fetchData()
   }
 
   // ── Pembentukan (catat setoran / penarikan) ──
@@ -189,21 +204,28 @@ export default function EmergencyFundPage() {
     const current = currentAmountFor(dest)
     const delta = total - current
     // 1) SET nilai (total), BUKAN mindahin uang — saldo rekening asli gak disentuh.
+    // Tiga langkah berurutan: berhenti + toast di langkah yang gagal, biar
+    // gak ada state sobek (lokasi keupdate tapi log/total nggak).
     const acct = accounts.find((a) => a.name.toLowerCase() === dest.toLowerCase())
+    let stepErr: unknown = null
     if (acct) {
       const alloc = accountAllocations.find((a) => a.account_id === acct.id)
-      if (alloc) await supabase.from('account_allocations').update({ amount: total }).eq('id', alloc.id)
-      else await supabase.from('account_allocations').insert({ user_id: user.id, account_id: acct.id, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: total })
+      ;({ error: stepErr } = alloc
+        ? await supabase.from('account_allocations').update({ amount: total }).eq('id', alloc.id)
+        : await supabase.from('account_allocations').insert({ user_id: user.id, account_id: acct.id, purpose_kind: 'emergency_fund', emergency_fund_id: fundId, amount: total }))
     } else {
       const loc = locations.find((l) => l.account_name.toLowerCase() === dest.toLowerCase())
-      if (loc) await supabase.from('emergency_fund_locations').update({ amount: total }).eq('id', loc.id)
-      else await supabase.from('emergency_fund_locations').insert({ fund_id: fundId, account_name: dest, amount: total })
+      ;({ error: stepErr } = loc
+        ? await supabase.from('emergency_fund_locations').update({ amount: total }).eq('id', loc.id)
+        : await supabase.from('emergency_fund_locations').insert({ fund_id: fundId, account_name: dest, amount: total }))
     }
+    if (stepErr) { setSaving(false); toast.error(t('common.mutation_failed')); return }
     // 2) Log SELISIH (buat chart perjalanan) kalau berubah.
     if (delta !== 0) {
-      await supabase.from('emergency_fund_transactions').insert({
+      const { error: logErr } = await supabase.from('emergency_fund_transactions').insert({
         fund_id: fundId, date: txnForm.date, kind: delta > 0 ? 'setor' : 'tarik', amount: Math.abs(delta), location: dest, note: txnForm.note.trim(),
       })
+      if (logErr) { setSaving(false); toast.error(t('common.mutation_failed')); void fetchData(); return }
     }
     // 3) Sinkron current_amount fund.
     await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund + delta) }).eq('id', fundId)
@@ -212,9 +234,27 @@ export default function EmergencyFundPage() {
   async function handleDeleteTxn(tx: EmergencyFundTransaction) {
     if (!confirm(t('emergency_fund.confirm_delete_txn'))) return
     const signed = tx.kind === 'setor' ? tx.amount : -tx.amount
-    await supabase.from('emergency_fund_transactions').delete().eq('id', tx.id)
-    const loc = locations.find((l) => l.account_name.toLowerCase() === tx.location.toLowerCase())
-    if (loc) await supabase.from('emergency_fund_locations').update({ amount: Math.max(0, loc.amount - signed) }).eq('id', loc.id)
+    const { error } = await supabase.from('emergency_fund_transactions').delete().eq('id', tx.id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    // Reverse nominal DI TEMPATNYA — akun ter-link ATAU lokasi manual. Dulu
+    // cuma lokasi manual yang di-reverse: hapus log transaksi akun bikin
+    // total drift permanen.
+    const acct = accounts.find((a) => a.name.toLowerCase() === tx.location.toLowerCase())
+    if (acct) {
+      const alloc = accountAllocations.find((a) => a.account_id === acct.id)
+      if (alloc) {
+        const { error: e2 } = await supabase.from('account_allocations').update({ amount: Math.max(0, alloc.amount - signed) }).eq('id', alloc.id)
+        if (e2) toast.error(t('common.mutation_failed'))
+      }
+    } else {
+      const loc = locations.find((l) => l.account_name.toLowerCase() === tx.location.toLowerCase())
+      if (loc) {
+        const { error: e2 } = await supabase.from('emergency_fund_locations').update({ amount: Math.max(0, loc.amount - signed) }).eq('id', loc.id)
+        if (e2) toast.error(t('common.mutation_failed'))
+      }
+    }
+    // Sinkron total fund juga (saveTxn sinkron, delete dulunya nggak — drift).
+    if (fund) await supabase.from('emergency_funds').update({ current_amount: Math.max(0, accumulatedFund - signed) }).eq('id', fund.id)
     void fetchData()
   }
 
@@ -294,7 +334,8 @@ export default function EmergencyFundPage() {
           {targetAmount > 0 ? (
             <>
               <div className="mt-5 grid grid-cols-3 gap-4">
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_coverage')}</p><p className="num font-bold mt-1" style={{ color: MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</p></div>
+                {/* Mint cuma kalau coverage udah nyampe target — 0 bulan jangan hijau. */}
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_coverage')}</p><p className="num font-bold mt-1" style={{ color: coverageMonths >= targetMonths && targetAmount > 0 ? 'var(--c-mint-ink)' : 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_target')}</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} {t('emergency_fund.months_unit')}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_deficit')}</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? '#F43F5E' : MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : t('emergency_fund.metric_achieved')}</p></div>
               </div>
@@ -422,7 +463,16 @@ export default function EmergencyFundPage() {
           <div>
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.journey_title')}</p>
             <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-              {journey.length >= 2 ? <>{t('emergency_fund.journey_last_deposit')} {journey[journey.length - 1].label} · {t('emergency_fund.journey_est_reached')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>{etaDate(deficit > 0 ? deficit / Math.max(1, Math.ceil(deficit / 6)) : 0)}</span></> : t('emergency_fund.journey_empty_subtitle')}
+              {/* ETA dari pace RENCANA user (monthlySaving) — rumus lama
+                  deficit/ceil(deficit/6) selalu ±6 bulan, angka karangan. */}
+              {journey.length >= 2 ? (
+                <>
+                  {t('emergency_fund.journey_last_deposit')} {journey[journey.length - 1].label}
+                  {deficit > 0 && monthsToGoal > 0 && (
+                    <> · {t('emergency_fund.journey_est_reached')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>{etaDate(monthsToGoal)}</span></>
+                  )}
+                </>
+              ) : t('emergency_fund.journey_empty_subtitle')}
             </p>
           </div>
           {targetAmount > 0 && <span className="text-[11px] num" style={{ color: MINT }}>● {t('emergency_fund.metric_target')} {formatCurrency(targetAmount)}</span>}
@@ -481,7 +531,7 @@ export default function EmergencyFundPage() {
                   </span>
                 </span>
                 <span className="flex items-center gap-1 shrink-0">
-                  <span className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                  <span className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition">
                     {l.kind === 'account'
                       ? <>
                           <Button variant="ghost" size="icon-sm" onClick={() => openLink({ id: l.allocId, account_id: l.accountId!, amount: l.amount })}><Pencil className="h-3 w-3" /></Button>
@@ -537,7 +587,7 @@ export default function EmergencyFundPage() {
                         </td>
                         <td className="px-3 py-2.5 text-right num font-semibold whitespace-nowrap" style={{ color: setor ? MINT : '#F43F5E' }}>{setor ? '+' : '−'}{formatCurrency(tx.amount)}</td>
                         <td className="px-5 py-2.5 text-right">
-                          <Button variant="ghost" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition" onClick={() => handleDeleteTxn(tx)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                          <Button variant="ghost" size="icon-sm" className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition" onClick={() => handleDeleteTxn(tx)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                         </td>
                       </tr>
                     )
