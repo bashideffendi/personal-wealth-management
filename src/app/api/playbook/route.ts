@@ -6,7 +6,7 @@ import { rateLimit } from '@/lib/rate-limit'
 import { getPlaybook } from '@/lib/playbooks'
 
 export const runtime = 'nodejs'
-export const maxDuration = 30
+export const maxDuration = 120
 
 const SYSTEM_PROMPT = `Kamu adalah Personal Finance Advisor untuk app Klunting Indonesia. User memilih sebuah "playbook" (skenario keuangan) dan mengisi angka-angka mereka. Tugasmu: susun RENCANA konkret yang bisa langsung dijalankan.
 

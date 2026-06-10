@@ -11,7 +11,7 @@ import {
 } from '@/lib/constants'
 
 export const runtime = 'nodejs'
-export const maxDuration = 30
+export const maxDuration = 60
 
 const ALL_CATEGORIES = [
   ...EXPENSE_CATEGORIES,

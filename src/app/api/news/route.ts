@@ -18,8 +18,10 @@ export async function GET() {
   try {
     const { items } = await getAllNews()
     return NextResponse.json({ items })
-  } catch {
+  } catch (err) {
     // Graceful: never break the tab — return empty + error flag, status 200.
+    // Log so a persistently-broken feed (e.g. missing key) is visible, not silent.
+    console.error('[news] getAllNews failed:', err instanceof Error ? err.message : err)
     return NextResponse.json({ items: [], error: true })
   }
 }

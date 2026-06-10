@@ -7,7 +7,7 @@ import {
 } from '@/lib/email'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 /**
  * Daily cron → trial-ending + renewal reminders. Klunting has auto-renew OFF,

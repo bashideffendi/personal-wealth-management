@@ -11,7 +11,7 @@ import {
 } from '@/lib/constants'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 /**
  * Bulk import dari mutasi rekening — PDF atau text yang user paste.

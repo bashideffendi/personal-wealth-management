@@ -5,7 +5,7 @@ import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 import { rateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
-export const maxDuration = 30
+export const maxDuration = 120
 
 const SYSTEM_PROMPT = `Kamu adalah Personal Finance Advisor untuk app Klunting Indonesia. User mengirim ringkasan keuangan mereka, kamu balas dengan 2-3 insight personal yang ACTIONABLE.
 

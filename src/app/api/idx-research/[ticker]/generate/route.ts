@@ -13,7 +13,7 @@ import {
 import { SYSTEM_PROMPT, buildResearchPrompt } from '@/lib/invest/research-prompt'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 interface RouteContext {
   params: Promise<{ ticker: string }>

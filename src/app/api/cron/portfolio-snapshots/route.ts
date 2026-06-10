@@ -7,7 +7,7 @@ import { FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment } from '@/types'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 /**
  * Daily cron → portfolio_snapshots for EVERY user, priced server-side.
@@ -122,7 +122,11 @@ export async function GET(request: Request) {
           changePct: Number(tk.priceChangePercent),
         }
       }
-    } catch { /* crypto best-effort — stored prices cover the gap */ }
+    } catch (err) {
+      // Crypto best-effort — stored prices cover the gap. Log so a Binance
+      // outage during the nightly run leaves a trace.
+      console.error('[cron/portfolio-snapshots] crypto 24h tickers failed:', err instanceof Error ? err.message : err)
+    }
   }
 
   // One snapshot per user, dated in Asia/Jakarta (the product's home market).

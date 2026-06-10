@@ -9,6 +9,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const QUOTE_TIMEOUT_MS = 5000 // cap a slow/hanging Yahoo call so it can't eat the function budget
 
 interface QuoteResult {
   ticker: string
@@ -37,7 +38,12 @@ interface YahooQuoteShape {
 }
 
 async function fetchLive(ticker: string): Promise<QuoteResult> {
-  const raw = (await yahooFinance.quote(ticker)) as YahooQuoteShape
+  const raw = (await Promise.race([
+    yahooFinance.quote(ticker),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('yahoo-timeout')), QUOTE_TIMEOUT_MS),
+    ),
+  ])) as YahooQuoteShape
   const price =
     raw.regularMarketPrice ??
     raw.postMarketPrice ??
@@ -126,12 +132,27 @@ export async function GET(request: Request) {
   if (toRefresh.length > 0) {
     const settled = await Promise.allSettled(toRefresh.map(fetchLive))
     const successes: QuoteResult[] = []
-    for (const r of settled) {
+    settled.forEach((r, idx) => {
       if (r.status === 'fulfilled') {
         successes.push(r.value)
         results.push(r.value)
+      } else {
+        // Refresh failed (timeout / upstream) — serve the stale cached price
+        // if we have one rather than dropping the ticker entirely.
+        const stale = cachedMap.get(toRefresh[idx])
+        if (stale) {
+          results.push({
+            ticker: stale.ticker,
+            price: Number(stale.price),
+            currency: stale.currency,
+            changePct: stale.change_pct !== null ? Number(stale.change_pct) : null,
+            marketState: stale.market_state,
+            fetchedAt: stale.fetched_at,
+            source: 'cache',
+          })
+        }
       }
-    }
+    })
     if (successes.length > 0) {
       await supabase.from('price_snapshots').upsert(
         successes.map((q) => ({

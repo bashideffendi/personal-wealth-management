@@ -46,8 +46,10 @@ export async function GET(req: NextRequest) {
       points,
       meta: { currency: 'USD', previousClose: prev, regularMarketPrice: last },
     })
-  } catch {
+  } catch (err) {
     // Symbol not on Binance (e.g. exotic alt) or transient error — empty, no 500.
+    // Log so a real Binance outage leaves a trace instead of looking like "no data".
+    console.error('[crypto-chart] klines failed:', symbol, err instanceof Error ? err.message : err)
     return NextResponse.json({ points: [], meta: null }, { status: 200 })
   }
 }
