@@ -14,7 +14,7 @@
 
 import { useMemo } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency } from '@/lib/utils'
 import {
   categoryToPyramidLayer,
   monthsUntil,
@@ -71,14 +71,15 @@ export function GoalPyramid({ goals, onSetor }: Props) {
 
   const hasAman = grouped.pelindung.length > 0
 
-  // Insight actionable — 1 kalimat yang ngarahin keputusan.
+  // Direktif pendek (≤6 kata) — angka SENGAJA gak ada di kalimat: kolom tier
+  // di bawah udah nunjukin nominal + %, kalimat gak boleh kerja dobel.
   let insightText: string
   let tone: 'focus' | 'warn' | 'done'
   if (!hasAman) {
     insightText = t('goal_pyramid.insight_no_safe')
     tone = 'warn'
   } else if (focus) {
-    insightText = `${t('goal_pyramid.insight_secure_prefix')} ${layerLabel(focus)} ${t('goal_pyramid.insight_secure_mid')} ${agg[focus].pct.toFixed(0)}% ${t('goal_pyramid.insight_secure_collected')} (${formatCurrency(agg[focus].current)} ${t('goal_pyramid.insight_of')} ${formatCurrency(agg[focus].target)}). ${t('goal_pyramid.insight_prioritize')}`
+    insightText = `${t('goal_pyramid.insight_focus_pre')} ${layerLabel(focus)} ${t('goal_pyramid.insight_focus_post')}`
     tone = 'focus'
   } else {
     insightText = t('goal_pyramid.insight_all_full')
@@ -86,7 +87,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
   }
 
   return (
-    <div className="px-5 sm:px-7 py-5" style={{ background: 'var(--surface-2)' }}>
+    <div className="px-5 sm:px-7 pt-5 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
       <p
         className="text-[10px] font-semibold tracking-[0.22em] uppercase flex items-center gap-1.5"
         style={{ color: 'var(--ink-soft)' }}
@@ -95,56 +96,69 @@ export function GoalPyramid({ goals, onSetor }: Props) {
         <EduTip topic="goal-based-investing" side="bottom" />
       </p>
 
-      {/* Rekomendasi — kalimat, bukan kotak warna. Tone cuma di titik kecil. */}
-      <div className="mt-2 flex items-start gap-2">
-        <span
-          aria-hidden
-          className="size-[7px] rounded-full mt-[5px] shrink-0"
-          style={{
-            background:
-              tone === 'warn' ? 'var(--c-amber)' : tone === 'done' ? 'var(--c-mint)' : 'var(--ink)',
-          }}
-        />
-        <p className="text-[13px] leading-snug max-w-2xl" style={{ color: 'var(--ink)' }}>
-          {insightText}
-          {tone === 'focus' && focusGoalId && onSetor && (
-            <button
-              type="button"
-              onClick={() => onSetor(focusGoalId)}
-              className="ml-2 inline-flex items-center gap-1 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition"
-              style={{ color: 'var(--ink)' }}
-            >
-              {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3" />
-            </button>
-          )}
-        </p>
-      </div>
+      {/* Direktif = momen personality: serif italic GEDE, kebaca sekali lirik.
+          Bukan paragraf kecil di dalam kotak krem. */}
+      <p
+        className="mt-1.5 leading-snug"
+        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(20px, 2.1vw, 25px)', color: 'var(--ink)' }}
+      >
+        {tone === 'warn' && (
+          <span aria-hidden className="inline-block size-2 rounded-full mr-2.5 align-middle" style={{ background: 'var(--c-amber)' }} />
+        )}
+        {tone === 'done' && (
+          <span aria-hidden className="inline-block size-2 rounded-full mr-2.5 align-middle" style={{ background: 'var(--c-mint)' }} />
+        )}
+        {insightText}
+        {tone === 'focus' && focusGoalId && onSetor && (
+          <button
+            type="button"
+            onClick={() => onSetor(focusGoalId)}
+            className="ml-3 align-middle inline-flex items-center gap-1 text-[13px] font-semibold not-italic underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition"
+            style={{ fontFamily: 'var(--font-sans, inherit)', color: 'var(--ink)' }}
+          >
+            {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3.5" />
+          </button>
+        )}
+      </p>
 
-      {/* Tiga tier — kolom tipografis dengan hairline gauge. Fokus = ink pekat. */}
-      <div className="mt-4 grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl">
+      {/* Tiga tier selebar band — gauge memenuhi tiap kolom, sejajar jadi satu
+          garis spine (bahasa visual sama dengan baris goal: trace + solid +
+          jarum). Fokus = ink pekat, sisanya tinta lembut. */}
+      <div className="mt-5 grid grid-cols-3 gap-5 sm:gap-10">
         {ORDER.map((key) => {
           const a = agg[key]
           const isFocus = focus === key
           const hasGoals = grouped[key].length > 0
           const mainColor = isFocus ? 'var(--ink)' : 'var(--ink-soft)'
+          const w = Math.min(a.pct, 100)
           return (
             <div key={key} className="min-w-0">
-              <p className="text-[10px] font-semibold tracking-[0.14em] uppercase truncate" style={{ color: mainColor }}>
-                {layerLabel(key)}
-                {isFocus && <span className="ml-1 normal-case tracking-normal font-medium">· {t('goal_pyramid.focus_here')}</span>}
-              </p>
-              <p className="num text-[13px] mt-1 truncate" style={{ color: hasGoals ? 'var(--ink)' : 'var(--ink-soft)', fontWeight: isFocus ? 600 : 400 }}>
-                {hasGoals ? formatCurrency(a.current) : '—'}
-                {hasGoals && <span className="text-[11px] font-normal" style={{ color: 'var(--ink-soft)' }}> · {a.pct.toFixed(0)}%</span>}
-              </p>
-              <div className="mt-1.5 h-px w-full relative" style={{ background: 'var(--border)' }}>
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[10px] font-semibold tracking-[0.14em] uppercase truncate" style={{ color: mainColor }}>
+                  {layerLabel(key)}
+                  {isFocus && <span className="ml-1 normal-case tracking-normal font-medium">· {t('goal_pyramid.focus_here')}</span>}
+                </p>
+                <p className="num text-[12px] font-semibold shrink-0" style={{ color: mainColor }}>
+                  {hasGoals ? `${a.pct.toFixed(0)}%` : '—'}
+                </p>
+              </div>
+              <div className="mt-2 relative h-[12px]" aria-hidden>
+                <div
+                  className="absolute inset-x-0 bottom-[2px] h-[6px]"
+                  style={{ background: 'repeating-linear-gradient(90deg, var(--border) 0 2px, transparent 2px 7px)' }}
+                />
                 {hasGoals && (
-                  <div
-                    className="absolute left-0 top-[-1px] h-[3px]"
-                    style={{ width: `${Math.min(a.pct, 100)}%`, background: mainColor }}
-                  />
+                  <>
+                    <div className="absolute left-0 bottom-[2px] h-[6px]" style={{ width: `${w}%`, background: mainColor }} />
+                    <div className="absolute bottom-0 h-[12px] w-[2px]" style={{ left: `calc(${w}% - 1px)`, background: mainColor }} />
+                  </>
                 )}
               </div>
+              <p className="num text-[12px] mt-2 truncate" style={{ color: hasGoals ? 'var(--ink-muted)' : 'var(--ink-soft)' }}>
+                {hasGoals
+                  ? <><span className="font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(a.current)}</span> / {formatCompactCurrency(a.target)}</>
+                  : t('goal_pyramid.empty_tier')}
+              </p>
             </div>
           )
         })}
