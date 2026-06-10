@@ -2,10 +2,14 @@
 
 /**
  * Lazy boundary for the investment overview charts (equity area + allocation
- * donut + dividend bar) — keeps recharts out of the route's initial JS. JSX
- * copied verbatim; data + the up/down flag passed as props.
+ * donut + dividend bar) — keeps recharts out of the route's initial JS.
+ *
+ * All three are React.memo'd: their props are referentially stable memos from
+ * the page, so interactions elsewhere (holding-table tab, class expander)
+ * never re-render a recharts tree.
  */
 
+import { memo } from 'react'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, AreaChart, Area,
@@ -13,7 +17,7 @@ import {
 import { formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
-export function EquityArea({ data, up }: { data: Array<{ value: number }>; up: boolean }) {
+export const EquityArea = memo(function EquityArea({ data, up }: { data: Array<{ value: number }>; up: boolean }) {
   const t = useT()
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -33,9 +37,9 @@ export function EquityArea({ data, up }: { data: Array<{ value: number }>; up: b
       </AreaChart>
     </ResponsiveContainer>
   )
-}
+})
 
-export function AllocationDonut({ data }: { data: Array<{ value: number; color: string }> }) {
+export const AllocationDonut = memo(function AllocationDonut({ data }: { data: Array<{ value: number; color: string }> }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
@@ -52,9 +56,9 @@ export function AllocationDonut({ data }: { data: Array<{ value: number; color: 
       </PieChart>
     </ResponsiveContainer>
   )
-}
+})
 
-export function DividendBar({ data }: { data: Array<{ label: string; total: number }> }) {
+export const DividendBar = memo(function DividendBar({ data }: { data: Array<{ label: string; total: number }> }) {
   const t = useT()
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -77,4 +81,4 @@ export function DividendBar({ data }: { data: Array<{ label: string; total: numb
       </BarChart>
     </ResponsiveContainer>
   )
-}
+})

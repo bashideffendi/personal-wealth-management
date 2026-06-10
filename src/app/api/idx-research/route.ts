@@ -11,11 +11,17 @@ import { listEmiten } from '@/lib/invest/emitten'
  */
 export const runtime = 'nodejs'
 
-export async function GET() {
+export async function GET(request: Request) {
+  // ?tickers=BBCA,TLKM → only those rows (hub holdings wedge); absent → all.
+  const tickersParam = new URL(request.url).searchParams.get('tickers')
+  const wanted = tickersParam
+    ? new Set(tickersParam.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean))
+    : null
+
   const valuations = getValuations()
   const emitenMap = new Map(listEmiten().map((e) => [e.ticker, e]))
 
-  const rows = valuations.map((v) => {
+  const rows = (wanted ? valuations.filter((v) => wanted.has(v.ticker.toUpperCase())) : valuations).map((v) => {
     const meta = emitenMap.get(v.ticker)
     return {
       ticker: v.ticker,

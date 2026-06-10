@@ -10,7 +10,7 @@
  * cached 5 min in price_snapshots.
  */
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Loader2, RefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { useT } from '@/lib/i18n/context'
@@ -42,15 +42,12 @@ function formatRate(price: number): string {
 
 export function CurrencyRates() {
   const t = useT()
-  const [quotes, setQuotes] = useState<Record<string, FxQuote>>({})
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
-
-  async function load() {
-    setError(null)
-    try {
+  // react-query: cached 5 min (mirrors the server price cache) — re-mounting
+  // the investment page no longer re-fetches six FX tickers every visit.
+  const fx = useQuery({
+    queryKey: ['fx-rates'],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
       const tickers = PAIRS.map((p) => p.ticker).join(',')
       const res = await fetch(`/api/quotes?tickers=${encodeURIComponent(tickers)}`)
       if (!res.ok) throw new Error('fx')
@@ -59,23 +56,17 @@ export function CurrencyRates() {
       ;(json.quotes ?? []).forEach((q) => {
         map[q.ticker] = q
       })
-      setQuotes(map)
-      setUpdatedAt(new Date())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'fx')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    load()
-  }, [])
+      return { map, at: new Date() }
+    },
+  })
+  const quotes = fx.data?.map ?? {}
+  const updatedAt = fx.data?.at ?? null
+  const loading = fx.isLoading
+  const refreshing = fx.isRefetching
+  const error = fx.isError ? 'fx' : null
 
   function handleRefresh() {
-    setRefreshing(true)
-    load()
+    void fx.refetch()
   }
 
   return (

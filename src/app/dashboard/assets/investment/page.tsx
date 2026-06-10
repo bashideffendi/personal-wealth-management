@@ -1,38 +1,31 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
-import { INVESTMENT_SUBCATS } from '@/lib/constants'
-import { getInvestmentVisual } from '@/lib/investment-visual'
 import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
-import dynamic from 'next/dynamic'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
-import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
+import { PortfolioHero } from '@/components/investment/portfolio-hero'
+import { AssetClassCards } from '@/components/investment/asset-class-cards'
+import { HoldingTable } from '@/components/investment/holding-table'
+import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
 import { FX_FALLBACK_USDIDR } from '@/lib/constants'
 import { useT } from '@/lib/i18n/context'
 
-// Defer recharts out of the investment route's initial JS (loads on chart mount).
-const EquityArea = dynamic(() => import('./investment-charts').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
-const AllocationDonut = dynamic(() => import('./investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
-const DividendBar = dynamic(() => import('./investment-charts').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+// Defer recharts out of the route's initial JS (loads on chart mount).
+const AllocationDonut = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const DividendBar = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-
-const CHART_RANGES = [
-  { key: '1B', label: '1B', days: 30 },
-  { key: '3B', label: '3B', days: 90 },
-  { key: '1T', label: '1T', days: 365 },
-  { key: 'all', label: 'Sejak', days: Infinity },
-] as const
-type ChartRangeKey = (typeof CHART_RANGES)[number]['key']
 
 interface RdnAccount {
   id: string
@@ -40,123 +33,123 @@ interface RdnAccount {
   current_balance: number
 }
 
+interface OverviewData {
+  items: Investment[]
+  rdnAccounts: RdnAccount[]
+  dividends: { amount: number; pay_date: string }[]
+  snapshots: { snapshot_date: string; market_value: number }[]
+}
+
+// Stable empty fallbacks — fresh [] per render would invalidate every memo.
+const NO_ITEMS: Investment[] = []
+const NO_RDN: RdnAccount[] = []
+const NO_DIVIDENDS: { amount: number; pay_date: string }[] = []
+const NO_SNAPSHOTS: { snapshot_date: string; market_value: number }[] = []
+const NO_QUOTES: Record<string, LiveQuote> = {}
+
 export default function InvestmentOverviewPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  const [items, setItems] = useState<Investment[]>([])
-  const [rdnAccounts, setRdnAccounts] = useState<RdnAccount[]>([])
-  const [dividends, setDividends] = useState<{ amount: number; pay_date: string }[]>([])
-  const [quotes, setQuotes] = useState<Record<string, LiveQuote>>({})
-  const [usdIdr, setUsdIdr] = useState<number>(FX_FALLBACK_USDIDR)
-  const [tab, setTab] = useState<'all' | AssetClassKey>('all')
-  const [snapshots, setSnapshots] = useState<{ snapshot_date: string; market_value: number }[]>([])
-  const [chartRange, setChartRange] = useState<ChartRangeKey>('all')
-  // Kelas Aset: default hanya kelas berisi posisi; ghost card membuka semuanya.
-  const [showAllClasses, setShowAllClasses] = useState(false)
 
-  // useCallback so the function is stable and can be a useEffect dep
-  // without re-running every render. Same pattern as [slug]/page.tsx.
-  const load = useCallback(async () => {
-    setLoading(true)
-    setLoadError(false)
-    const { data: { user } } = await supabase.auth.getUser()
-    // Session expired/gone: stop the spinner instead of hanging forever —
-    // middleware will bounce the next navigation to /login.
-    if (!user) { setLoading(false); return }
-    const [invRes, rdnRes, divRes, snapRes] = await Promise.all([
-      supabase.from('investments').select('*').eq('user_id', user.id),
-      supabase
-        .from('accounts')
-        .select('id, name, current_balance')
-        .eq('user_id', user.id)
-        .eq('type', 'rdn'),
-      supabase
-        .from('dividends')
-        .select('amount, pay_date')
-        .eq('user_id', user.id),
-      // portfolio_snapshots may not exist yet (migration 030) — error is
-      // swallowed by `?? []`, page still works, chart shows placeholder.
-      supabase
-        .from('portfolio_snapshots')
-        .select('snapshot_date, market_value')
-        .eq('user_id', user.id)
-        .order('snapshot_date', { ascending: true }),
-    ])
-    // A failed core query must NOT render as a believable "Rp 0" portfolio —
-    // surface an error card with retry instead. snapshots stay tolerated.
-    if (invRes.error || rdnRes.error || divRes.error) {
-      setLoadError(true)
-      setLoading(false)
-      return
-    }
-    setItems((invRes.data ?? []) as Investment[])
-    setRdnAccounts((rdnRes.data ?? []) as RdnAccount[])
-    setDividends((divRes.data ?? []) as { amount: number; pay_date: string }[])
-    setSnapshots((snapRes.data ?? []) as { snapshot_date: string; market_value: number }[])
-    setLoading(false)
-  }, [supabase])
-
-  // The set-state-in-effect rule is overly strict for legitimate data-
-  // fetching effects (load → setState). The fetch is gated by auth + an
-  // unmount guard inside `load` would just add ceremony.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { void load() }, [load])
+  // Server data via react-query: back-nav from a class page now renders
+  // instantly from cache (staleTime 60s) instead of re-running getUser +
+  // four queries behind a full-page spinner.
+  const overview = useQuery<OverviewData>({
+    queryKey: ['investment-overview'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      // Session expired/gone: render empty —  middleware bounces the next
+      // navigation to /login.
+      if (!user) return { items: [], rdnAccounts: [], dividends: [], snapshots: [] }
+      const [invRes, rdnRes, divRes, snapRes] = await Promise.all([
+        supabase.from('investments').select('*').eq('user_id', user.id),
+        supabase
+          .from('accounts')
+          .select('id, name, current_balance')
+          .eq('user_id', user.id)
+          .eq('type', 'rdn'),
+        supabase
+          .from('dividends')
+          .select('amount, pay_date')
+          .eq('user_id', user.id),
+        // portfolio_snapshots may not exist yet (migration 030) — tolerated.
+        supabase
+          .from('portfolio_snapshots')
+          .select('snapshot_date, market_value')
+          .eq('user_id', user.id)
+          .order('snapshot_date', { ascending: true }),
+      ])
+      // A failed core query must NOT render as a believable "Rp 0" portfolio.
+      if (invRes.error || rdnRes.error || divRes.error) {
+        throw new Error(invRes.error?.message ?? rdnRes.error?.message ?? divRes.error?.message)
+      }
+      return {
+        items: (invRes.data ?? []) as Investment[],
+        rdnAccounts: (rdnRes.data ?? []) as RdnAccount[],
+        dividends: (divRes.data ?? []) as { amount: number; pay_date: string }[],
+        snapshots: (snapRes.data ?? []) as { snapshot_date: string; market_value: number }[],
+      }
+    },
+  })
+  const items = overview.data?.items ?? NO_ITEMS
+  const rdnAccounts = overview.data?.rdnAccounts ?? NO_RDN
+  const dividends = overview.data?.dividends ?? NO_DIVIDENDS
+  const snapshots = overview.data?.snapshots ?? NO_SNAPSHOTS
 
   // Live quotes (price + currency + day change) for tickered holdings.
-  // Split by venue: crypto goes to Binance via /api/crypto-price (the public
-  // quote endpoint is geoblocked from many Indonesian ISPs), everything else
-  // to /api/quotes; forex tickers are normalized to FX form (USDIDR=X) so a
-  // bare "USD" doesn't resolve to a real US ETF. USDIDR=X rides along for
-  // converting USD-priced assets to IDR.
-  useEffect(() => {
-    if (items.length === 0) return
+  // Split by venue: crypto via /api/crypto-price (Binance; the public quote
+  // endpoint is geoblocked from many ID ISPs), everything else via
+  // /api/quotes; forex normalized to FX form (USDIDR=X) so a bare "USD"
+  // doesn't resolve to a real US ETF. USDIDR=X rides along for conversion.
+  const quoteSymbols = useMemo(() => {
     const cryptoSyms = Array.from(new Set(
       items.filter((i) => i.category === 'crypto' && quoteKey(i.ticker))
         .map((i) => quoteKey(i.ticker).replace(/-USD$/, 'USDT')),
-    ))
+    )).sort()
     const stockSyms = Array.from(new Set(
       items.filter((i) => i.category !== 'crypto')
         .map((i) => tickerToQuoteSymbol(i))
         .filter(Boolean) as string[],
-    ))
-    if (cryptoSyms.length === 0 && stockSyms.length === 0) return
-    const quoteSyms = Array.from(new Set([...stockSyms, 'USDIDR=X']))
-    let cancelled = false
-    ;(async () => {
-      try {
-        const [qRes, cRes] = await Promise.all([
-          fetch(`/api/quotes?tickers=${encodeURIComponent(quoteSyms.join(','))}`),
-          cryptoSyms.length
-            ? fetch(`/api/crypto-price?symbols=${encodeURIComponent(cryptoSyms.join(','))}`)
-            : Promise.resolve(null),
-        ])
-        if (cancelled) return
-        const map: Record<string, LiveQuote> = {}
-        let fx = FX_FALLBACK_USDIDR
-        if (qRes.ok) {
-          const d = (await qRes.json()) as { quotes?: { ticker: string; price: number; currency: string; changePct: number | null }[] }
-          for (const q of d.quotes ?? []) {
-            const key = quoteKey(q.ticker)
-            if (key === 'USDIDR=X' && Number(q.price) > 0) fx = Number(q.price)
-            map[key] = { price: Number(q.price) || 0, currency: q.currency ?? 'USD', changePct: q.changePct }
-          }
-        }
-        if (cRes && cRes.ok) {
-          const d = (await cRes.json()) as { tickers?: { symbol: string; lastPrice: number; priceChangePercent: number }[] }
-          for (const tk of d.tickers ?? []) {
-            // Map Binance symbol back to the user's stored ticker (BTCUSDT → BTC-USD),
-            // pre-converted to IDR so downstream math never double-converts.
-            const userTicker = tk.symbol.replace(/USDT$/, '-USD')
-            map[userTicker] = { price: (Number(tk.lastPrice) || 0) * fx, currency: 'IDR', changePct: Number(tk.priceChangePercent) }
-          }
-        }
-        if (!cancelled) { setQuotes(map); setUsdIdr(fx) }
-      } catch { /* quotes are best-effort; stored prices keep the page honest */ }
-    })()
-    return () => { cancelled = true }
+    )).sort()
+    return { cryptoSyms, stockSyms }
   }, [items])
+
+  const quotesQuery = useQuery({
+    queryKey: ['invest-quotes', quoteSymbols.stockSyms.join(','), quoteSymbols.cryptoSyms.join(',')],
+    enabled: quoteSymbols.stockSyms.length > 0 || quoteSymbols.cryptoSyms.length > 0,
+    staleTime: 5 * 60 * 1000, // mirrors the server-side price cache TTL
+    queryFn: async () => {
+      const quoteSyms = Array.from(new Set([...quoteSymbols.stockSyms, 'USDIDR=X']))
+      const [qRes, cRes] = await Promise.all([
+        fetch(`/api/quotes?tickers=${encodeURIComponent(quoteSyms.join(','))}`),
+        quoteSymbols.cryptoSyms.length
+          ? fetch(`/api/crypto-price?symbols=${encodeURIComponent(quoteSymbols.cryptoSyms.join(','))}`)
+          : Promise.resolve(null),
+      ])
+      const map: Record<string, LiveQuote> = {}
+      let fx = FX_FALLBACK_USDIDR
+      if (qRes.ok) {
+        const d = (await qRes.json()) as { quotes?: { ticker: string; price: number; currency: string; changePct: number | null }[] }
+        for (const q of d.quotes ?? []) {
+          const key = quoteKey(q.ticker)
+          if (key === 'USDIDR=X' && Number(q.price) > 0) fx = Number(q.price)
+          map[key] = { price: Number(q.price) || 0, currency: q.currency ?? 'USD', changePct: q.changePct }
+        }
+      }
+      if (cRes && cRes.ok) {
+        const d = (await cRes.json()) as { tickers?: { symbol: string; lastPrice: number; priceChangePercent: number }[] }
+        for (const tk of d.tickers ?? []) {
+          // Binance symbol → user's stored ticker (BTCUSDT → BTC-USD),
+          // pre-converted to IDR so downstream math never double-converts.
+          const userTicker = tk.symbol.replace(/USDT$/, '-USD')
+          map[userTicker] = { price: (Number(tk.lastPrice) || 0) * fx, currency: 'IDR', changePct: Number(tk.priceChangePercent) }
+        }
+      }
+      return { map, fx }
+    },
+  })
+  const quotes = quotesQuery.data?.map ?? NO_QUOTES
+  const usdIdr = quotesQuery.data?.fx ?? FX_FALLBACK_USDIDR
 
   const rdnTotal = rdnAccounts.reduce((s, a) => s + (a.current_balance ?? 0), 0)
 
@@ -235,9 +228,8 @@ export default function InvestmentOverviewPage() {
   }, [byClass])
 
   // Today's P/L estimate, only from quoted holdings. `market` is the price
-  // NOW (already moved by cp), so today's change = market − market/(1+cp/100)
-  // = market × cp/(100+cp). Null when no holding has a live quote — render
-  // '—' instead of a confident-looking "+Rp 0".
+  // NOW (already moved by cp), so today's change = market × cp/(100+cp).
+  // Null when no holding has a live quote — render '—', not a fake "+Rp 0".
   const todayPL = useMemo(() => {
     let any = false
     const v = enriched.reduce((s, e) => {
@@ -249,37 +241,6 @@ export default function InvestmentOverviewPage() {
     }, 0)
     return any ? v : null
   }, [enriched, quotes])
-
-  // Holding-table tabs: Semua + each class that actually has positions.
-  const holdingTabs = useMemo(() => {
-    const present = ASSET_CLASS_ORDER.filter((k) => (byClass[k]?.count ?? 0) > 0)
-    return [
-      { key: 'all' as const, label: t('investment.tab_all') },
-      ...present.map((k) => ({ key: k as 'all' | AssetClassKey, label: ASSET_CLASS_META[k].label })),
-    ]
-  }, [byClass, t])
-
-  const holdingRows = useMemo(() => {
-    return enriched
-      .filter((e) => tab === 'all' || assetClassKey(e.i) === tab)
-      .map((e) => {
-        const ck = assetClassKey(e.i)
-        const sym = tickerToQuoteSymbol(e.i)
-        return {
-          id: e.i.id,
-          name: e.i.name,
-          sym: (e.i.ticker ?? '').replace(/\.JK$/i, '').toUpperCase(),
-          classLabel: ASSET_CLASS_META[ck].label,
-          classColor: ASSET_CLASS_META[ck].color,
-          qty: e.i.quantity,
-          price: e.live,
-          market: e.market,
-          plPct: e.invested > 0 ? (e.pl / e.invested) * 100 : null,
-          changePct: sym ? (quotes[sym]?.changePct ?? null) : null,
-        }
-      })
-      .sort((a, b) => b.market - a.market)
-  }, [enriched, tab, quotes])
 
   // Today's movers — quoted holdings sorted by |Δ%|. `covered` counts BEFORE
   // the slice so the card can be honest about how many positions have a live
@@ -336,36 +297,7 @@ export default function InvestmentOverviewPage() {
     return prev > 0 ? ((dividen6Total - prev) / prev) * 100 : null
   }, [dividends, dividen6Total])
 
-  // Equity curve: stored daily snapshots + always-included live "today" point.
-  // 'sv' locale = YYYY-MM-DD in LOCAL time — toISOString() is UTC and made a
-  // 00:00–07:00 WIB visit overwrite YESTERDAY's snapshot.
-  const chartData = useMemo(() => {
-    const today = new Date().toLocaleDateString('sv')
-    const map = new Map<string, number>()
-    for (const s of snapshots) map.set(s.snapshot_date, Number(s.market_value) || 0)
-    map.set(today, totals.market)
-    const range = CHART_RANGES.find((r) => r.key === chartRange) ?? CHART_RANGES[3]
-    let pts = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-    if (range.days !== Infinity) {
-      const cutoff = new Date()
-      cutoff.setDate(cutoff.getDate() - range.days)
-      const cutStr = cutoff.toISOString().slice(0, 10)
-      pts = pts.filter(([d]) => d >= cutStr)
-    }
-    return pts.map(([date, value]) => ({
-      label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-      value,
-    }))
-  }, [snapshots, totals.market, chartRange])
-
-  // Snapshot recording moved server-side: /api/cron/portfolio-snapshots writes
-  // one consistent, live-priced row per user daily (Asia/Jakarta date). The old
-  // on-page-open upsert recorded attendance, not the portfolio.
-
-  // Equity curve only earns its slot once there's real history to draw.
-  const hasHistory = snapshots.length >= 8
-
-  if (loading) {
+  if (overview.isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink)' }} />
@@ -373,14 +305,14 @@ export default function InvestmentOverviewPage() {
     )
   }
 
-  if (loadError) {
+  if (overview.isError) {
     return (
       <div className="s-card p-10 flex flex-col items-center text-center">
         <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{t('investment.load_error_title')}</p>
         <p className="text-xs mt-1 max-w-sm" style={{ color: 'var(--ink-muted)' }}>{t('investment.load_error_desc')}</p>
         <button
           type="button"
-          onClick={() => void load()}
+          onClick={() => void overview.refetch()}
           className="mt-4 inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold transition hover:opacity-90"
           style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}
         >
@@ -389,8 +321,6 @@ export default function InvestmentOverviewPage() {
       </div>
     )
   }
-
-  const up = totals.pl >= 0
 
   return (
     <div className="space-y-6">
@@ -419,138 +349,13 @@ export default function InvestmentOverviewPage() {
         }
       />
 
-      {/* Portfolio hero — light card, value-first */}
-      <section className="s-card p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="eyebrow">
-              {t('investment.total_value')}
-              {institutionCount > 0 ? ` · ${institutionCount} ${t('investment.institutions')}` : ''}
-            </p>
-            <div className="mt-2 flex flex-wrap items-end gap-3">
-              <p
-                className="num tabular font-bold leading-none whitespace-nowrap"
-                style={{ color: 'var(--ink)', fontSize: 'clamp(34px, 5vw, 54px)', letterSpacing: '-0.035em' }}
-              >
-                {formatCurrency(totals.market)}
-              </p>
-              <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
-                data-loss={up ? undefined : 'true'}
-                style={{
-                  background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
-                  color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {up ? '+' : ''}{totals.plPct.toFixed(2)}%
-              </span>
-            </div>
-            <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
-              {up ? t('investment.total_gain') : t('investment.total_loss')}{' '}
-              <span className="num tabular font-semibold" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                {up ? '+' : ''}{formatCurrency(totals.pl)}
-              </span>{' '}
-              {t('investment.since_inception')}
-            </p>
-          </div>
-          {hasHistory && (
-            <div className="flex gap-0.5 shrink-0 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
-              {CHART_RANGES.map((r) => {
-                const active = chartRange === r.key
-                return (
-                  <button
-                    key={r.key}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setChartRange(r.key)}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
-                    style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(16,24,40,0.08)' } : { color: 'var(--ink-soft)' }}
-                  >
-                    {r.key === 'all' ? t('investment.range_all') : r.label}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Equity curve — demoted until ≥8 stored snapshots exist (a 2-point
-            "curve" reads worse than no curve). Until then the slot earns its
-            keep with Modal vs Nilai Sekarang, computable from day one.
-            data-loss saat turun: Calm Mode ikut menyamarkan kurva merah. */}
-        <div className="mt-4" data-loss={up ? undefined : 'true'} style={{ height: 150 }}>
-          {!hasHistory ? (
-            <div className="h-full rounded-xl px-5 flex flex-col justify-center gap-3" style={{ background: 'var(--surface-2)' }}>
-              {(() => {
-                const maxV = Math.max(totals.invested, totals.market, 1)
-                return (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
-                        {t('investment.stat_invested')}
-                      </span>
-                      <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
-                        <div className="h-full rounded-md" style={{ width: `${(totals.invested / maxV) * 100}%`, background: 'var(--border)' }} />
-                      </div>
-                      <span className="num tabular text-xs font-semibold w-32 text-right shrink-0" style={{ color: 'var(--ink-muted)' }}>
-                        {formatCurrency(totals.invested)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
-                        {t('investment.chart_interim_now')}
-                      </span>
-                      <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
-                        <div className="h-full rounded-md" data-loss={up ? undefined : 'true'} style={{ width: `${(totals.market / maxV) * 100}%`, background: up ? 'var(--c-mint)' : 'var(--c-coral)' }} />
-                      </div>
-                      <span className="num tabular text-xs font-semibold w-32 text-right shrink-0" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                        {formatCurrency(totals.market)}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-center" style={{ color: 'var(--ink-soft)' }}>
-                      {t('investment.chart_collecting_desc')}
-                    </p>
-                  </>
-                )
-              })()}
-            </div>
-          ) : chartData.length < 2 ? (
-            <div className="h-full rounded-xl flex items-center justify-center" style={{ background: 'var(--surface-2)' }}>
-              <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{t('investment.chart_range_empty')}</p>
-            </div>
-          ) : (
-            <EquityArea data={chartData} up={up} />
-          )}
-        </div>
-
-        {/* Sub-stats — modal & P/L primary, dividen supporting */}
-        <div
-          className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl overflow-hidden border"
-          style={{ background: 'var(--border-soft)', borderColor: 'var(--border-soft)' }}
-        >
-          <HeroStat label={t('investment.stat_invested')} value={formatCurrency(totals.invested)} />
-          <HeroStat
-            label={t('investment.stat_pl')}
-            value={`${up ? '+' : ''}${formatCurrency(totals.pl)}`}
-            accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
-            loss={!up}
-          />
-          <HeroStat
-            label={t('investment.stat_today')}
-            value={todayPL == null ? '—' : `${todayPL >= 0 ? '+' : '−'}${formatCurrency(Math.abs(todayPL))}`}
-            accent={todayPL == null ? 'var(--ink-soft)' : todayPL >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
-            loss={todayPL != null && todayPL < 0}
-          />
-          <HeroStat label={t('investment.stat_dividend_ytd')} value={formatCurrency(dividenYtd)} />
-        </div>
-      </section>
-
-      {/* Currency rates strip — moved here from the bottom (was after categories).
-          Sits between the dark hero and the RDN card so users see FX context
-          first, before drilling into the breakdown. */}
-      <CurrencyRates />
+      <PortfolioHero
+        totals={totals}
+        todayPL={todayPL}
+        dividenYtd={dividenYtd}
+        institutionCount={institutionCount}
+        snapshots={snapshots}
+      />
 
       {/* Kas di RDN / RDI — kartu PUTIH, chip krem + logo bank, tombol "+" selalu ada */}
       <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -606,117 +411,11 @@ export default function InvestmentOverviewPage() {
         </Link>
       </div>
 
-      {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug).
-          Kartu NETRAL (surface + border-soft) dengan warna terkurung di icon
-          box — satu palet kanonik dari ASSET_CLASS_META, sama persis dengan
-          donut/chip/movers. Default cuma kelas berisi posisi; ghost card
-          membuka sisanya (user 2 kelas gak perlu scroll 10 kartu kosong). */}
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <h2 className="eyebrow">{t('investment.asset_classes')}</h2>
-          <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {(() => {
-            const allCards = INVESTMENT_SUBCATS.flatMap((sc) => {
-              // Saham dipecah jadi 2 kartu (IDX & US) -> nge-link ke halaman terpisah.
-              const Icon = getInvestmentVisual(sc.slug).icon
-              return sc.slug === 'stock'
-                ? [
-                    { key: 'stock-idx', classKey: 'stock_idx' as AssetClassKey, label: t('investment.stock_idx'), href: '/dashboard/assets/investment/stock-idx', d: byClass.stock_idx, Icon },
-                    { key: 'stock-us', classKey: 'stock_us' as AssetClassKey, label: t('investment.stock_us'), href: '/dashboard/assets/investment/stock-us', d: byClass.stock_us, Icon },
-                  ]
-                : [{
-                    key: sc.slug,
-                    classKey: sc.slug.replace(/-/g, '_') as AssetClassKey,
-                    label: sc.label,
-                    href: `/dashboard/assets/investment/${sc.slug}`,
-                    d: byCategory[sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug],
-                    Icon,
-                  }]
-            })
-            const hasAny = allCards.some((c) => (c.d?.count ?? 0) > 0)
-            // Pengguna tanpa posisi tetap lihat kelas starter buat onboarding.
-            const STARTERS = ['stock-idx', 'mutual-fund', 'crypto', 'gold', 'sbn', 'time-deposit']
-            const visibleCards = showAllClasses
-              ? allCards
-              : hasAny
-                ? allCards.filter((c) => (c.d?.count ?? 0) > 0)
-                : allCards.filter((c) => STARTERS.includes(c.key))
-            const hiddenCount = allCards.length - visibleCards.length
-            return (
-              <>
-                {visibleCards.map((c) => {
-                  const data = c.d ?? { invested: 0, market: 0, count: 0 }
-                  const pl = data.market - data.invested
-                  const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
-                  const plUp = pl >= 0
-                  const hasPosition = data.count > 0
-                  const color = ASSET_CLASS_META[c.classKey].color
-                  const CardIcon = c.Icon
-                  return (
-                    <Link
-                      key={c.key}
-                      href={c.href}
-                      className="group rounded-xl border p-4 transition-all hover:shadow-md hover:-translate-y-0.5"
-                      style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div
-                          className="grid place-items-center shrink-0"
-                          style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${color} 15%, var(--surface))`, color }}
-                        >
-                          <CardIcon className="size-4" strokeWidth={2} />
-                        </div>
-                        <ArrowUpRight
-                          className="size-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0 mt-1"
-                          style={{ color: 'var(--ink-soft)' }}
-                        />
-                      </div>
-                      <p className="font-semibold text-sm mt-3 tracking-tight" style={{ color: 'var(--ink)' }}>
-                        {c.label}
-                      </p>
-                      <p className="num text-lg mt-1 tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                        {formatCurrency(data.market)}
-                      </p>
-                      <div className="mt-1.5 flex items-center justify-between text-[11px]">
-                        <span style={{ color: 'var(--ink-soft)' }}>
-                          {hasPosition ? `${data.count} ${t('investment.positions')}` : t('investment.no_position')}
-                        </span>
-                        {data.invested > 0 && (
-                          <span
-                            className="num font-semibold tabular px-1.5 py-0.5 rounded"
-                            data-loss={plUp ? undefined : 'true'}
-                            style={{
-                              color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
-                              background: plUp ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
-                            }}
-                          >
-                            {plUp ? '+' : ''}{pct.toFixed(2)}%
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  )
-                })}
-                {(hiddenCount > 0 || showAllClasses) && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllClasses((v) => !v)}
-                    className="rounded-xl border border-dashed p-4 flex flex-col items-center justify-center gap-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)] min-h-[120px]"
-                    style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
-                  >
-                    <Plus className="size-4" />
-                    {showAllClasses
-                      ? t('investment.show_less_classes')
-                      : `${t('investment.show_all_classes')} (${hiddenCount})`}
-                  </button>
-                )}
-              </>
-            )
-          })()}
-        </div>
-      </div>
+      <AssetClassCards byClass={byClass} byCategory={byCategory} />
+
+      {/* Currency rates — konteks FX, diturunkan dari slot #2: duit user dulu,
+          kurs belakangan. */}
+      <CurrencyRates />
 
       {/* Alokasi donut + Kinerja per kelas */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -832,81 +531,7 @@ export default function InvestmentOverviewPage() {
         </div>
       </div>
 
-      {/* Daftar Holding — semua posisi, filter per kelas */}
-      {enriched.length > 0 && (
-        <div className="s-card overflow-hidden">
-          <div className="p-5 sm:p-6 pb-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow">{t('investment.holding')}</p>
-              <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.holding_list')}</h2>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {holdingTabs.map((tabItem) => {
-                const active = tab === tabItem.key
-                return (
-                  <button
-                    key={tabItem.key}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setTab(tabItem.key)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
-                    style={active
-                      ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
-                      : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-                  >
-                    {tabItem.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse" style={{ minWidth: 640 }}>
-              <thead>
-                <tr style={{ background: 'var(--surface-3)' }}>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_sym')}</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_name')}</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_lot_unit')}</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_value')}</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_pl')}</th>
-                  <th className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_day_change')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holdingRows.map((r) => {
-                  const plUp = (r.plPct ?? 0) >= 0
-                  const dUp = (r.changePct ?? 0) >= 0
-                  return (
-                    <tr key={r.id} className="border-b transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
-                          {r.sym || '—'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 max-w-[260px]">
-                        <p className="truncate font-medium" style={{ color: 'var(--ink)' }}>{r.name}</p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{r.classLabel}</p>
-                      </td>
-                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
-                        {r.qty.toLocaleString('id-ID')}
-                      </td>
-                      <td className="px-3 py-2.5 text-right num tabular font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>
-                        {formatCurrency(r.market)}
-                      </td>
-                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.plPct != null && !plUp ? 'true' : undefined} style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                        {r.plPct == null ? '—' : `${plUp ? '+' : ''}${r.plPct.toFixed(1)}%`}
-                      </td>
-                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.changePct != null && !dUp ? 'true' : undefined} style={{ color: r.changePct == null ? 'var(--ink-soft)' : dUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                        {r.changePct == null ? '—' : `${dUp ? '+' : ''}${r.changePct.toFixed(2)}%`}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <HoldingTable enriched={enriched} quotes={quotes} />
 
       {/* Bottom row: Dividen 6 bulan + Pergerakan hari ini */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
@@ -981,17 +606,6 @@ export default function InvestmentOverviewPage() {
         )}
       </div>
 
-    </div>
-  )
-}
-
-function HeroStat({ label, value, accent, loss }: { label: string; value: string; accent?: string; loss?: boolean }) {
-  return (
-    <div className="p-3.5" style={{ background: 'var(--surface)' }}>
-      <p className="eyebrow">{label}</p>
-      <p className="num tabular text-lg font-bold mt-1" data-loss={loss ? 'true' : undefined} style={{ color: accent ?? 'var(--ink)' }}>
-        {value}
-      </p>
     </div>
   )
 }
