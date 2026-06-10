@@ -355,22 +355,12 @@ export default function InvestmentOverviewPage() {
     }))
   }, [snapshots, totals.market, chartRange])
 
-  // Record today's portfolio value (one row/day). No-op if table 030 isn't
-  // applied yet — the error is ignored.
-  useEffect(() => {
-    if (loading || items.length === 0) return
-    let cancelled = false
-    ;(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-      const today = new Date().toLocaleDateString('sv') // local YYYY-MM-DD, not UTC
-      await supabase.from('portfolio_snapshots').upsert(
-        { user_id: user.id, snapshot_date: today, market_value: totals.market, invested: totals.invested },
-        { onConflict: 'user_id,snapshot_date' },
-      )
-    })()
-    return () => { cancelled = true }
-  }, [loading, items, totals, supabase])
+  // Snapshot recording moved server-side: /api/cron/portfolio-snapshots writes
+  // one consistent, live-priced row per user daily (Asia/Jakarta date). The old
+  // on-page-open upsert recorded attendance, not the portfolio.
+
+  // Equity curve only earns its slot once there's real history to draw.
+  const hasHistory = snapshots.length >= 8
 
   if (loading) {
     return (
@@ -466,34 +456,70 @@ export default function InvestmentOverviewPage() {
               {t('investment.since_inception')}
             </p>
           </div>
-          <div className="flex gap-0.5 shrink-0 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
-            {CHART_RANGES.map((r) => {
-              const active = chartRange === r.key
-              return (
-                <button
-                  key={r.key}
-                  type="button"
-                  onClick={() => setChartRange(r.key)}
-                  className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
-                  style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(16,24,40,0.08)' } : { color: 'var(--ink-soft)' }}
-                >
-                  {r.key === 'all' ? t('investment.range_all') : r.label}
-                </button>
-              )
-            })}
-          </div>
+          {hasHistory && (
+            <div className="flex gap-0.5 shrink-0 rounded-lg p-0.5" style={{ background: 'var(--surface-2)' }}>
+              {CHART_RANGES.map((r) => {
+                const active = chartRange === r.key
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setChartRange(r.key)}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+                    style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(16,24,40,0.08)' } : { color: 'var(--ink-soft)' }}
+                  >
+                    {r.key === 'all' ? t('investment.range_all') : r.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Equity curve — real, from daily snapshots. data-loss saat turun:
-            Calm Mode ikut menyamarkan kurva merah (SVG stroke gak bisa kena
-            selector style-attribute). */}
+        {/* Equity curve — demoted until ≥8 stored snapshots exist (a 2-point
+            "curve" reads worse than no curve). Until then the slot earns its
+            keep with Modal vs Nilai Sekarang, computable from day one.
+            data-loss saat turun: Calm Mode ikut menyamarkan kurva merah. */}
         <div className="mt-4" data-loss={up ? undefined : 'true'} style={{ height: 150 }}>
-          {chartData.length < 2 ? (
-            <div className="h-full rounded-xl flex flex-col items-center justify-center text-center px-6" style={{ background: 'var(--surface-2)' }}>
-              <p className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>{t('investment.chart_collecting_title')}</p>
-              <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                {t('investment.chart_collecting_desc')}
-              </p>
+          {!hasHistory ? (
+            <div className="h-full rounded-xl px-5 flex flex-col justify-center gap-3" style={{ background: 'var(--surface-2)' }}>
+              {(() => {
+                const maxV = Math.max(totals.invested, totals.market, 1)
+                return (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <span className="w-28 shrink-0 text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
+                        {t('investment.stat_invested')}
+                      </span>
+                      <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                        <div className="h-full rounded-md" style={{ width: `${(totals.invested / maxV) * 100}%`, background: 'var(--border)' }} />
+                      </div>
+                      <span className="num tabular text-xs font-semibold w-32 text-right shrink-0" style={{ color: 'var(--ink-muted)' }}>
+                        {formatCurrency(totals.invested)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="w-28 shrink-0 text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
+                        {t('investment.chart_interim_now')}
+                      </span>
+                      <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
+                        <div className="h-full rounded-md" data-loss={up ? undefined : 'true'} style={{ width: `${(totals.market / maxV) * 100}%`, background: up ? 'var(--c-mint)' : 'var(--c-coral)' }} />
+                      </div>
+                      <span className="num tabular text-xs font-semibold w-32 text-right shrink-0" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                        {formatCurrency(totals.market)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-center" style={{ color: 'var(--ink-soft)' }}>
+                      {t('investment.chart_collecting_desc')}
+                    </p>
+                  </>
+                )
+              })()}
+            </div>
+          ) : chartData.length < 2 ? (
+            <div className="h-full rounded-xl flex items-center justify-center" style={{ background: 'var(--surface-2)' }}>
+              <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{t('investment.chart_range_empty')}</p>
             </div>
           ) : (
             <EquityArea data={chartData} up={up} />
