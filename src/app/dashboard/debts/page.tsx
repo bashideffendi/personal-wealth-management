@@ -1,5 +1,7 @@
 'use client'
 
+import { toast } from 'sonner'
+
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -147,13 +149,17 @@ export default function DebtsOverviewPage() {
       interest_rate: form.interest_rate, monthly_payment: form.monthly_payment,
       due_date: form.due_date, is_active: form.is_active,
     }
-    if (form.id) await supabase.from('debts').update(payload).eq('id', form.id)
-    else await supabase.from('debts').insert(payload)
+    const { error } = form.id
+      ? await supabase.from('debts').update(payload).eq('id', form.id)
+      : await supabase.from('debts').insert(payload)
+    if (error) { setSaving(false); toast.error(t('common.mutation_failed')); return }
     setSaving(false); setDialogOpen(false); void load()
   }
   async function remove(id: string) {
     if (!confirm(t('debts.confirm_delete'))) return
-    await supabase.from('debts').delete().eq('id', id); void load()
+    const { error: delErr } = await supabase.from('debts').delete().eq('id', id)
+    if (delErr) { toast.error(t('common.delete_failed')); return }
+    void load()
   }
   function openEdit(d: Debt) {
     setForm({ id: d.id, name: d.name, category: d.category, type: d.type,

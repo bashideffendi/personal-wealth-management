@@ -1,5 +1,7 @@
 'use client'
 
+import { toast } from 'sonner'
+
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -168,9 +170,11 @@ export default function NonLiquidAssetsPage() {
     }
     let id = form.id
     if (form.id) {
-      await supabase.from('assets_non_liquid').update(payload).eq('id', form.id)
+      const { error: updErr } = await supabase.from('assets_non_liquid').update(payload).eq('id', form.id)
+      if (updErr) { setSaving(false); toast.error(t('common.mutation_failed')); return }
     } else {
-      const { data: ins } = await supabase.from('assets_non_liquid').insert(payload).select('id').single()
+      const { data: ins, error: insErr } = await supabase.from('assets_non_liquid').insert(payload).select('id').single()
+      if (insErr) { setSaving(false); toast.error(t('common.mutation_failed')); return }
       id = (ins as { id: string } | null)?.id ?? null
     }
     // Detail per-kategori → JSONB `details`. Best-effort: kalau kolom belum ada
@@ -191,7 +195,8 @@ export default function NonLiquidAssetsPage() {
 
   async function remove(id: string) {
     if (!confirm(t('assets_nonliquid.confirm_delete'))) return
-    await supabase.from('assets_non_liquid').delete().eq('id', id)
+    const { error: delErr } = await supabase.from('assets_non_liquid').delete().eq('id', id)
+    if (delErr) { toast.error(t('common.delete_failed')); return }
     void load()
   }
 
@@ -225,7 +230,8 @@ export default function NonLiquidAssetsPage() {
       const patch = d?.metode && d.metode !== 'none'
         ? { current_value: revalValues[a.id], details: { ...d, deprOverride: true } }
         : { current_value: revalValues[a.id] }
-      await supabase.from('assets_non_liquid').update(patch).eq('id', a.id)
+      const { error: revalErr } = await supabase.from('assets_non_liquid').update(patch).eq('id', a.id)
+      if (revalErr) { toast.error(t('common.mutation_failed')); break }
     }
     setRevalSaving(false); setRevalOpen(false); void load()
   }

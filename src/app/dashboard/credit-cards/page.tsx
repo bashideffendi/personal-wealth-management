@@ -1,5 +1,7 @@
 'use client'
 
+import { toast } from 'sonner'
+
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -169,7 +171,9 @@ export default function CreditCardsPage() {
 
   async function removeCard(id: string) {
     if (!confirm(t('credit_cards.confirm_delete'))) return
-    await supabase.from('credit_cards').delete().eq('id', id); void load()
+    const { error } = await supabase.from('credit_cards').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    void load()
   }
 
   function openEditCard(c: CreditCardType) {
@@ -193,10 +197,11 @@ export default function CreditCardsPage() {
     setPaySaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setPaySaving(false); return }
-    await supabase.from('credit_card_payments').insert({
+    const { error: payErr } = await supabase.from('credit_card_payments').insert({
       user_id: user.id, card_id: payForm.card_id, amount: payForm.amount,
       from_account_id: payForm.from_account_id || null, date: payForm.date, notes: payForm.notes,
     })
+    if (payErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); return }
     const card = cards.find((x) => x.id === payForm.card_id)
     if (card) {
       await supabase.from('credit_cards')
@@ -349,7 +354,7 @@ export default function CreditCardsPage() {
                       <InstitutionLogo accountName={c.issuer} size={26} shape="rounded" />
                     </div>
                     {/* Hover actions */}
-                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                    <div className="absolute top-3 right-3 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition">
                       <button onClick={() => openEditCard(c)} aria-label={t('credit_cards.aria_edit')} className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Pencil className="h-3 w-3" /></button>
                       <button onClick={() => removeCard(c.id)} aria-label={t('credit_cards.aria_delete')} className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
                     </div>

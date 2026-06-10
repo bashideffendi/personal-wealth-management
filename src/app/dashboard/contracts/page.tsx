@@ -1,5 +1,7 @@
 'use client'
 
+import { toast } from 'sonner'
+
 import { useEffect, useMemo, useState } from 'react'
 import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
@@ -117,14 +119,19 @@ export default function ContractsPage() {
       : supabase.from('contracts').insert(p)
     let { error } = await write(withCov)
     if (error && /coverage/i.test(error.message || '')) ({ error } = await write(base)) // migration 037 belum jalan
+    if (error) { setSaving(false); toast.error(t('common.mutation_failed')); return }
     setSaving(false); setDialogOpen(false); void load()
   }
   async function remove(id: string) {
     if (!confirm(t('contracts.confirm_delete'))) return
-    await supabase.from('contracts').delete().eq('id', id); void load()
+    const { error } = await supabase.from('contracts').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    void load()
   }
   async function toggleArchive(c: Contract) {
-    await supabase.from('contracts').update({ is_archived: !c.is_archived }).eq('id', c.id); void load()
+    const { error } = await supabase.from('contracts').update({ is_archived: !c.is_archived }).eq('id', c.id)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    void load()
   }
   function openEdit(c: Contract) {
     setForm({
@@ -245,7 +252,7 @@ export default function ContractsPage() {
                           {c.cost ? <><p className="num text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
                         </div>
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: `${badge.c}1A`, color: badge.c }}>{badge.t}</span>
-                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
+                        <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
                           <Button variant="ghost" size="icon-sm" onClick={() => openEdit(c)}><Pencil className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon-sm" onClick={() => toggleArchive(c)} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
                           <Button variant="ghost" size="icon-sm" onClick={() => remove(c.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
