@@ -361,8 +361,8 @@ export const messages = {
       remaining: "Sisa",
     },
     goal_pyramid: {
-      title: "Goal Pyramid",
-      subtitle: "Fondasi (bawah) dulu, ambisi (atas) belakangan. Selesaikan tier bawah sebelum naik.",
+      title: "Prioritas",
+      subtitle: "Amankan fondasi dulu, ambisi belakangan.",
       insight_no_safe: "Belum ada tujuan tier Aman (dana darurat / proteksi). Bangun fondasi ini dulu sebelum kejar tier atas.",
       insight_secure_prefix: "Amankan tier",
       insight_secure_mid: "dulu — baru",
@@ -3536,8 +3536,8 @@ export const messages = {
       remaining: "Remaining",
     },
     goal_pyramid: {
-      title: "Goal Pyramid",
-      subtitle: "Foundation first (bottom), ambitions later (top). Complete lower tiers before moving up.",
+      title: "Priority",
+      subtitle: "Secure the foundation first, ambitions later.",
       insight_no_safe: "No Safe-tier goals yet (emergency fund / protection). Build this foundation first before chasing higher tiers.",
       insight_secure_prefix: "Secure the",
       insight_secure_mid: "tier first — only",
