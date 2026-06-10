@@ -29,6 +29,9 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      - name: Unit tests (money math, Monte Carlo)
+        run: npm test
+
       - name: Build (TypeScript type-check + compile)
         run: npm run build
         env:

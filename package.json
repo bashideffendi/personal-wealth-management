@@ -12,7 +12,8 @@
     "lint": "eslint",
     "split-stocks": "node scripts/split-stocks.mjs",
     "email:dev": "email dev --dir src/emails --port 3030",
-    "email:export": "email export --dir src/emails --outDir email-previews --pretty"
+    "email:export": "email export --dir src/emails --outDir email-previews --pretty",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
@@ -63,6 +64,7 @@
     "eslint-config-next": "16.2.6",
     "react-email": "^6.5.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }
