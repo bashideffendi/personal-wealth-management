@@ -7,8 +7,10 @@
 
 import { Heart, HeartPulse } from 'lucide-react'
 import { useCalmMode } from '@/components/privacy/calm-mode-provider'
+import { useT } from '@/lib/i18n/context'
 
 export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
+  const t = useT()
   const { calm, toggle } = useCalmMode()
 
   if (compact) {
@@ -22,7 +24,7 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
           background: calm ? 'var(--c-mint-soft)' : 'var(--surface-2)',
           color: calm ? 'var(--c-mint-ink)' : 'var(--ink-muted)',
         }}
-        title={calm ? 'Calm Mode aktif — angka loss disamarkan' : 'Aktifkan Calm Mode — biar nggak panik pas market berisik'}
+        title={calm ? t('investment.calm_on_hint') : t('investment.calm_off_hint')}
       >
         {calm ? <HeartPulse className="size-3" /> : <Heart className="size-3" />}
         Calm Mode
@@ -41,11 +43,7 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
         borderColor: calm ? 'color-mix(in srgb, var(--c-mint) 30%, transparent)' : 'var(--border)',
         color: calm ? 'var(--c-mint-ink)' : 'var(--ink-muted)',
       }}
-      title={
-        calm
-          ? 'Calm Mode aktif — angka loss disamarkan biar nggak memicu panic selling'
-          : 'Aktifkan Calm Mode — bagus saat market sedang volatil'
-      }
+      title={calm ? t('investment.calm_on_hint_long') : t('investment.calm_off_hint_long')}
     >
       {calm ? <HeartPulse className="size-3.5" /> : <Heart className="size-3.5" />}
       <span>{calm ? 'Calm Mode ON' : 'Calm Mode'}</span>

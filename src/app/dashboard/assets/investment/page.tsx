@@ -13,6 +13,7 @@ import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
 import { CalmModeToggle } from '@/components/investment/calm-mode-toggle'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
 import { FX_FALLBACK_USDIDR } from '@/lib/constants'
@@ -52,6 +53,8 @@ export default function InvestmentOverviewPage() {
   const [tab, setTab] = useState<'all' | AssetClassKey>('all')
   const [snapshots, setSnapshots] = useState<{ snapshot_date: string; market_value: number }[]>([])
   const [chartRange, setChartRange] = useState<ChartRangeKey>('all')
+  // Kelas Aset: default hanya kelas berisi posisi; ghost card membuka semuanya.
+  const [showAllClasses, setShowAllClasses] = useState(false)
 
   // useCallback so the function is stable and can be a useEffect dep
   // without re-running every render. Same pattern as [slug]/page.tsx.
@@ -365,7 +368,7 @@ export default function InvestmentOverviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink)' }} />
       </div>
     )
   }
@@ -391,43 +394,39 @@ export default function InvestmentOverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">
-            {t('investment.eyebrow_portfolio')}{institutionCount > 0 ? ` · ${institutionCount} ${t('investment.institutions')}` : ''}
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight mt-1" style={{ color: 'var(--ink)' }}>
-            {t('investment.title')}
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-            {t('investment.subtitle')}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <CalmModeToggle />
-          <Link
-            href="/dashboard/assets/investment/stock?tab=dividen"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
-          >
-            <History className="size-3.5" /> {t('investment.dividend_history')}
-          </Link>
-          <Link
-            href="/dashboard/assets/investment/stock"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
-            style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
-          >
-            <Plus className="size-3.5" /> {t('investment.add_holding')}
-          </Link>
-        </div>
-      </header>
+      {/* Quiet header — selaras Transaksi/Anggaran; identitas angka tetap di hero */}
+      <QuietPageHeader
+        title={t('investment.title')}
+        info={t('investment.subtitle')}
+        actions={
+          <>
+            <CalmModeToggle />
+            <Link
+              href="/dashboard/assets/investment/stock?tab=dividen"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+            >
+              <History className="size-3.5" /> {t('investment.dividend_history')}
+            </Link>
+            <Link
+              href="/dashboard/assets/investment/stock"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
+              style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
+            >
+              <Plus className="size-3.5" /> {t('investment.add_holding')}
+            </Link>
+          </>
+        }
+      />
 
       {/* Portfolio hero — light card, value-first */}
       <section className="s-card p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="eyebrow">{t('investment.total_value')}</p>
+            <p className="eyebrow">
+              {t('investment.total_value')}
+              {institutionCount > 0 ? ` · ${institutionCount} ${t('investment.institutions')}` : ''}
+            </p>
             <div className="mt-2 flex flex-wrap items-end gap-3">
               <p
                 className="num tabular font-bold leading-none whitespace-nowrap"
@@ -439,8 +438,8 @@ export default function InvestmentOverviewPage() {
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
                 data-loss={up ? undefined : 'true'}
                 style={{
-                  background: up ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
-                  color: up ? 'var(--c-mint)' : 'var(--c-coral)',
+                  background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+                  color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
@@ -450,7 +449,7 @@ export default function InvestmentOverviewPage() {
             </div>
             <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
               {up ? t('investment.total_gain') : t('investment.total_loss')}{' '}
-              <span className="num tabular font-semibold" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+              <span className="num tabular font-semibold" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                 {up ? '+' : ''}{formatCurrency(totals.pl)}
               </span>{' '}
               {t('investment.since_inception')}
@@ -535,13 +534,13 @@ export default function InvestmentOverviewPage() {
           <HeroStat
             label={t('investment.stat_pl')}
             value={`${up ? '+' : ''}${formatCurrency(totals.pl)}`}
-            accent={up ? 'var(--c-mint)' : 'var(--c-coral)'}
+            accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
             loss={!up}
           />
           <HeroStat
             label={t('investment.stat_today')}
             value={todayPL == null ? '—' : `${todayPL >= 0 ? '+' : '−'}${formatCurrency(Math.abs(todayPL))}`}
-            accent={todayPL == null ? 'var(--ink-soft)' : todayPL >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'}
+            accent={todayPL == null ? 'var(--ink-soft)' : todayPL >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
             loss={todayPL != null && todayPL < 0}
           />
           <HeroStat label={t('investment.stat_dividend_ytd')} value={formatCurrency(dividenYtd)} />
@@ -558,9 +557,9 @@ export default function InvestmentOverviewPage() {
         <div className="flex items-center gap-3 shrink-0">
           <div
             className="size-11 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(20,184,166,0.12)' }}
+            style={{ background: 'var(--c-mint-soft)' }}
           >
-            <Wallet className="size-5" style={{ color: '#0D9488' }} />
+            <Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
           </div>
           <div>
             <p className="eyebrow">{t('investment.rdn_cash')}</p>
@@ -590,6 +589,7 @@ export default function InvestmentOverviewPage() {
           <Link
             href="/dashboard/accounts"
             title={t('investment.add_rdn_account')}
+            aria-label={t('investment.add_rdn_account')}
             className="inline-flex items-center gap-1 rounded-full border border-dashed px-3 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
             style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
           >
@@ -600,94 +600,121 @@ export default function InvestmentOverviewPage() {
         <Link
           href="/dashboard/accounts"
           className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
-          style={{ color: '#0D9488' }}
+          style={{ color: 'var(--c-mint-ink)' }}
         >
           {t('investment.manage')} <ArrowUpRight className="size-3.5" />
         </Link>
       </div>
 
-      {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug) */}
+      {/* Kelas Aset — drill-down cards per kategori (klik → detail per slug).
+          Kartu NETRAL (surface + border-soft) dengan warna terkurung di icon
+          box — satu palet kanonik dari ASSET_CLASS_META, sama persis dengan
+          donut/chip/movers. Default cuma kelas berisi posisi; ghost card
+          membuka sisanya (user 2 kelas gak perlu scroll 10 kartu kosong). */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
-          <p className="eyebrow">{t('investment.asset_classes')}</p>
+          <h2 className="eyebrow">{t('investment.asset_classes')}</h2>
           <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {INVESTMENT_SUBCATS.flatMap((sc) => {
-            // Saham dipecah jadi 2 kartu (IDX & US) -> nge-link ke halaman terpisah.
-            const cards = sc.slug === 'stock'
-              ? [
-                  { key: 'stock-idx', label: t('investment.stock_idx'), href: '/dashboard/assets/investment/stock-idx', d: byClass.stock_idx },
-                  { key: 'stock-us', label: t('investment.stock_us'), href: '/dashboard/assets/investment/stock-us', d: byClass.stock_us },
-                ]
-              : [{
-                  key: sc.slug,
-                  label: sc.label,
-                  href: `/dashboard/assets/investment/${sc.slug}`,
-                  d: byCategory[sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug],
-                }]
-            const visual = getInvestmentVisual(sc.slug)
-            const Icon = visual.icon
-            return cards.map((c) => {
-              const data = c.d ?? { invested: 0, market: 0, count: 0 }
-              const pl = data.market - data.invested
-              const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
-              const plUp = pl >= 0
-              const hasPosition = data.count > 0
-              return (
-                <Link
-                  key={c.key}
-                  href={c.href}
-                className="group relative rounded-xl p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
-                style={{
-                  background: visual.bgTint,
-                  border: `1px solid ${visual.borderTint}`,
-                }}
-              >
-                <div
-                  className="absolute -top-6 -right-6 size-20 rounded-full pointer-events-none transition-opacity group-hover:opacity-100"
-                  style={{ background: visual.gradient, opacity: 0.10, filter: 'blur(8px)' }}
-                  aria-hidden="true"
-                />
-                <div className="relative flex items-start justify-between gap-2">
-                  <div
-                    className="size-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                    style={{ background: visual.gradient, color: '#FFFFFF' }}
-                  >
-                    <Icon className="size-5" strokeWidth={2} />
-                  </div>
-                  <ArrowUpRight
-                    className="size-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0 mt-1.5"
-                    style={{ color: visual.fg }}
-                  />
-                </div>
-                <p className="font-semibold text-sm mt-3 tracking-tight" style={{ color: 'var(--ink)' }}>
-                  {c.label}
-                </p>
-                <p className="num text-lg mt-1 tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                  {formatCurrency(data.market)}
-                </p>
-                <div className="mt-1.5 flex items-center justify-between text-[11px]">
-                  <span style={{ color: 'var(--ink-soft)' }}>
-                    {hasPosition ? `${data.count} ${t('investment.positions')}` : t('investment.no_position')}
-                  </span>
-                  {data.invested > 0 && (
-                    <span
-                      className="num font-semibold tabular px-1.5 py-0.5 rounded"
-                      data-loss={plUp ? undefined : 'true'}
-                      style={{
-                        color: plUp ? 'var(--c-mint)' : 'var(--c-coral)',
-                        background: plUp ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)',
-                      }}
-                    >
-                      {plUp ? '+' : ''}{pct.toFixed(2)}%
-                    </span>
-                  )}
-                </div>
-              </Link>
-              )
+          {(() => {
+            const allCards = INVESTMENT_SUBCATS.flatMap((sc) => {
+              // Saham dipecah jadi 2 kartu (IDX & US) -> nge-link ke halaman terpisah.
+              const Icon = getInvestmentVisual(sc.slug).icon
+              return sc.slug === 'stock'
+                ? [
+                    { key: 'stock-idx', classKey: 'stock_idx' as AssetClassKey, label: t('investment.stock_idx'), href: '/dashboard/assets/investment/stock-idx', d: byClass.stock_idx, Icon },
+                    { key: 'stock-us', classKey: 'stock_us' as AssetClassKey, label: t('investment.stock_us'), href: '/dashboard/assets/investment/stock-us', d: byClass.stock_us, Icon },
+                  ]
+                : [{
+                    key: sc.slug,
+                    classKey: sc.slug.replace(/-/g, '_') as AssetClassKey,
+                    label: sc.label,
+                    href: `/dashboard/assets/investment/${sc.slug}`,
+                    d: byCategory[sc.slug === 'mutual-fund' ? 'mutual_fund' : sc.slug === 'time-deposit' ? 'time_deposit' : sc.slug],
+                    Icon,
+                  }]
             })
-          })}
+            const hasAny = allCards.some((c) => (c.d?.count ?? 0) > 0)
+            // Pengguna tanpa posisi tetap lihat kelas starter buat onboarding.
+            const STARTERS = ['stock-idx', 'mutual-fund', 'crypto', 'gold', 'sbn', 'time-deposit']
+            const visibleCards = showAllClasses
+              ? allCards
+              : hasAny
+                ? allCards.filter((c) => (c.d?.count ?? 0) > 0)
+                : allCards.filter((c) => STARTERS.includes(c.key))
+            const hiddenCount = allCards.length - visibleCards.length
+            return (
+              <>
+                {visibleCards.map((c) => {
+                  const data = c.d ?? { invested: 0, market: 0, count: 0 }
+                  const pl = data.market - data.invested
+                  const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
+                  const plUp = pl >= 0
+                  const hasPosition = data.count > 0
+                  const color = ASSET_CLASS_META[c.classKey].color
+                  const CardIcon = c.Icon
+                  return (
+                    <Link
+                      key={c.key}
+                      href={c.href}
+                      className="group rounded-xl border p-4 transition-all hover:shadow-md hover:-translate-y-0.5"
+                      style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div
+                          className="grid place-items-center shrink-0"
+                          style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${color} 15%, var(--surface))`, color }}
+                        >
+                          <CardIcon className="size-4" strokeWidth={2} />
+                        </div>
+                        <ArrowUpRight
+                          className="size-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0 mt-1"
+                          style={{ color: 'var(--ink-soft)' }}
+                        />
+                      </div>
+                      <p className="font-semibold text-sm mt-3 tracking-tight" style={{ color: 'var(--ink)' }}>
+                        {c.label}
+                      </p>
+                      <p className="num text-lg mt-1 tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                        {formatCurrency(data.market)}
+                      </p>
+                      <div className="mt-1.5 flex items-center justify-between text-[11px]">
+                        <span style={{ color: 'var(--ink-soft)' }}>
+                          {hasPosition ? `${data.count} ${t('investment.positions')}` : t('investment.no_position')}
+                        </span>
+                        {data.invested > 0 && (
+                          <span
+                            className="num font-semibold tabular px-1.5 py-0.5 rounded"
+                            data-loss={plUp ? undefined : 'true'}
+                            style={{
+                              color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
+                              background: plUp ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+                            }}
+                          >
+                            {plUp ? '+' : ''}{pct.toFixed(2)}%
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  )
+                })}
+                {(hiddenCount > 0 || showAllClasses) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllClasses((v) => !v)}
+                    className="rounded-xl border border-dashed p-4 flex flex-col items-center justify-center gap-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)] min-h-[120px]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}
+                  >
+                    <Plus className="size-4" />
+                    {showAllClasses
+                      ? t('investment.show_less_classes')
+                      : `${t('investment.show_all_classes')} (${hiddenCount})`}
+                  </button>
+                )}
+              </>
+            )
+          })()}
         </div>
       </div>
 
@@ -696,17 +723,17 @@ export default function InvestmentOverviewPage() {
         <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
           <div className="mb-4">
             <p className="eyebrow">{t('investment.allocation')}</p>
-            <h3 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+            <h2 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
               {t('investment.portfolio_composition')}
               <EduTip topic="diversification" side="bottom" />
-            </h3>
+            </h2>
           </div>
 
           {donut.length === 0 ? (
             <div className="flex-1 min-h-[240px] flex flex-col items-center justify-center text-center px-4">
               <div
                 className="size-12 rounded-2xl flex items-center justify-center mb-3"
-                style={{ background: 'rgba(14, 165, 233, 0.12)' }}
+                style={{ background: 'var(--info-bg)' }}
               >
                 <TrendingUp className="size-6" style={{ color: 'var(--info)' }} />
               </div>
@@ -755,7 +782,7 @@ export default function InvestmentOverviewPage() {
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>
               <p className="eyebrow">{t('investment.performance')}</p>
-              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.return_per_class')}</h3>
+              <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.return_per_class')}</h2>
             </div>
             <span className="text-[11px] shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
           </div>
@@ -792,7 +819,7 @@ export default function InvestmentOverviewPage() {
                       <span
                         className="num tabular text-xs font-semibold w-16 text-right shrink-0"
                         data-loss={positive ? undefined : 'true'}
-                        style={{ color: positive ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                        style={{ color: positive ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                       >
                         {positive ? '+' : ''}{row.returnPct.toFixed(1)}%
                       </span>
@@ -811,7 +838,7 @@ export default function InvestmentOverviewPage() {
           <div className="p-5 sm:p-6 pb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="eyebrow">{t('investment.holding')}</p>
-              <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.holding_list')}</h3>
+              <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.holding_list')}</h2>
             </div>
             <div className="flex flex-wrap gap-1">
               {holdingTabs.map((tabItem) => {
@@ -820,6 +847,7 @@ export default function InvestmentOverviewPage() {
                   <button
                     key={tabItem.key}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => setTab(tabItem.key)}
                     className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
                     style={active
@@ -851,7 +879,7 @@ export default function InvestmentOverviewPage() {
                   return (
                     <tr key={r.id} className="border-b transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${r.classColor}1A`, color: r.classColor }}>
+                        <span className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
                           {r.sym || '—'}
                         </span>
                       </td>
@@ -865,10 +893,10 @@ export default function InvestmentOverviewPage() {
                       <td className="px-3 py-2.5 text-right num tabular font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                         {formatCurrency(r.market)}
                       </td>
-                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.plPct != null && !plUp ? 'true' : undefined} style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.plPct != null && !plUp ? 'true' : undefined} style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                         {r.plPct == null ? '—' : `${plUp ? '+' : ''}${r.plPct.toFixed(1)}%`}
                       </td>
-                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.changePct != null && !dUp ? 'true' : undefined} style={{ color: r.changePct == null ? 'var(--ink-soft)' : dUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                      <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.changePct != null && !dUp ? 'true' : undefined} style={{ color: r.changePct == null ? 'var(--ink-soft)' : dUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                         {r.changePct == null ? '—' : `${dUp ? '+' : ''}${r.changePct.toFixed(2)}%`}
                       </td>
                     </tr>
@@ -893,8 +921,8 @@ export default function InvestmentOverviewPage() {
               <span
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
                 style={{
-                  background: dividen6DeltaPct >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)',
-                  color: dividen6DeltaPct >= 0 ? 'var(--c-mint)' : 'var(--c-coral)',
+                  background: dividen6DeltaPct >= 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+                  color: dividen6DeltaPct >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
                 }}
               >
                 {dividen6DeltaPct >= 0 ? '+' : ''}{dividen6DeltaPct.toFixed(0)}% {t('investment.vs_prev_6mo')}
@@ -904,7 +932,7 @@ export default function InvestmentOverviewPage() {
           {dividen6Total === 0 ? (
             <div className="h-[160px] flex flex-col items-center justify-center text-center">
               <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('investment.dividend_empty')}</p>
-              <Link href="/dashboard/assets/investment/stock?tab=dividen" className="text-xs mt-1 hover:underline" style={{ color: '#0D9488' }}>
+              <Link href="/dashboard/assets/investment/stock?tab=dividen" className="text-xs mt-1 hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
                 {t('investment.record_dividend')} →
               </Link>
             </div>
@@ -919,7 +947,7 @@ export default function InvestmentOverviewPage() {
         {movers.list.length > 0 && (
           <div className="s-card p-5 sm:p-6">
             <p className="eyebrow">{t('investment.today')}</p>
-            <h3 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.movers_today')}</h3>
+            <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.movers_today')}</h2>
             {movers.covered < movers.total && (
               <p className="text-[11px] mt-0.5 mb-3" style={{ color: 'var(--ink-soft)' }}>
                 {movers.covered}/{movers.total} {t('investment.movers_coverage')}
@@ -932,17 +960,17 @@ export default function InvestmentOverviewPage() {
                 return (
                   <div key={m.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: `${m.color}1A`, color: m.color }}>
+                      <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: `${m.color}1A`, color: `color-mix(in srgb, ${m.color} 60%, var(--ink))` }}>
                         {m.sym.slice(0, 4) || '—'}
                       </span>
                       <span className="truncate text-sm" style={{ color: 'var(--ink)' }}>{m.name}</span>
                     </div>
                     <div className="text-right shrink-0" data-loss={pos ? undefined : 'true'}>
-                      <p className="num tabular text-sm font-semibold" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+                      <p className="num tabular text-sm font-semibold" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                         {pos ? '+' : '−'}{formatCurrency(Math.abs(m.changeRp))}
                       </p>
-                      <p className="num tabular text-[11px]" style={{ color: pos ? 'var(--c-mint)' : 'var(--c-coral)' }}>
-                        {pos ? '▲' : '▼'} {Math.abs(m.changePct).toFixed(2)}%
+                      <p className="num tabular text-[11px] inline-flex items-center justify-end gap-0.5 w-full" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                        {pos ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />} {Math.abs(m.changePct).toFixed(2)}%
                       </p>
                     </div>
                   </div>

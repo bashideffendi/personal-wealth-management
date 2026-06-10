@@ -121,9 +121,13 @@ function terminalResult(state: BuilderState): { data: Row[] | Row | null; error:
     const arr = Array.isArray(state.mode.payload)
       ? state.mode.payload
       : [state.mode.payload]
-    const key = state.mode.onConflict ?? 'id'
+    // onConflict can be COMPOSITE ("user_id,snapshot_date") — match every key.
+    // The old single-key lookup made r[key] === p[key] compare undefined ===
+    // undefined and silently overwrite the FIRST row on every composite upsert.
+    const keys = (state.mode.onConflict ?? 'id').split(',').map((k) => k.trim())
     for (const p of arr) {
-      const idx = rows.findIndex((r) => r[key] === p[key])
+      const hasAny = keys.some((k) => p[k] !== undefined)
+      const idx = hasAny ? rows.findIndex((r) => keys.every((k) => r[k] === p[k])) : -1
       if (idx >= 0) Object.assign(rows[idx], p)
       else rows.push({ id: p.id ?? nextId(), ...p })
     }

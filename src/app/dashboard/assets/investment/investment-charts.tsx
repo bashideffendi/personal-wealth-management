@@ -20,8 +20,8 @@ export function EquityArea({ data, up }: { data: Array<{ value: number }>; up: b
       <AreaChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
         <defs>
           <linearGradient id="equityFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0.22} />
-            <stop offset="100%" stopColor={up ? '#10B981' : '#F43F5E'} stopOpacity={0} />
+            <stop offset="0%" stopColor={up ? 'var(--c-mint)' : 'var(--c-coral)'} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={up ? 'var(--c-mint)' : 'var(--c-coral)'} stopOpacity={0} />
           </linearGradient>
         </defs>
         <Tooltip
@@ -29,7 +29,7 @@ export function EquityArea({ data, up }: { data: Array<{ value: number }>; up: b
           formatter={(v: any) => [formatCurrency(Number(v) || 0), t('investment.value')]}
           contentStyle={{ background: 'var(--black)', color: 'var(--on-black)', border: '1px solid var(--black-line)', borderRadius: 10, fontSize: 12 }}
         />
-        <Area type="monotone" dataKey="value" stroke={up ? '#10B981' : '#F43F5E'} strokeWidth={2} fill="url(#equityFill)" />
+        <Area type="monotone" dataKey="value" stroke={up ? 'var(--c-mint)' : 'var(--c-coral)'} strokeWidth={2} fill="url(#equityFill)" />
       </AreaChart>
     </ResponsiveContainer>
   )
@@ -70,7 +70,7 @@ export function DividendBar({ data }: { data: Array<{ label: string; total: numb
           {(() => {
             const max = Math.max(...data.map((x) => x.total), 1)
             return data.map((m, i) => (
-              <Cell key={i} fill={m.total >= max && m.total > 0 ? '#10B981' : 'rgba(16,185,129,0.28)'} />
+              <Cell key={i} fill={m.total >= max && m.total > 0 ? 'var(--c-mint)' : 'color-mix(in srgb, var(--c-mint) 28%, transparent)'} />
             ))
           })()}
         </Bar>

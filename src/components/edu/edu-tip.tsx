@@ -48,8 +48,15 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
       if (!containerRef.current) return
       if (!containerRef.current.contains(e.target as Node)) setOpen(false)
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
     document.addEventListener('pointerdown', onPointer)
-    return () => document.removeEventListener('pointerdown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
   }, [open])
 
   if (!tip) {
@@ -77,7 +84,7 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
-        className="inline-flex items-center justify-center rounded-full opacity-60 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+        className="inline-flex items-center justify-center rounded-full opacity-60 hover:opacity-100 transition-opacity"
         style={{ color: 'var(--ink-muted)' }}
         aria-label={`Pelajari: ${tip.title}`}
         aria-expanded={open}
@@ -95,7 +102,8 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
             // Counter the parent's text-align if any
             color: 'var(--ink)',
           }}
-          role="tooltip"
+          role="dialog"
+          aria-label={tip.title}
           // Stop propagation so clicks inside the popover don't bubble
           // out and trigger the click-outside handler.
           onClick={(e) => e.stopPropagation()}
@@ -133,7 +141,7 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
               className="text-[12px] leading-relaxed mt-2 pt-2 border-t"
               style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
             >
-              <span className="font-semibold" style={{ color: 'var(--c-mint)' }}>
+              <span className="font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                 Di Klunting:{' '}
               </span>
               {tip.applied}
