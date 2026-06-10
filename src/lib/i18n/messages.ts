@@ -361,8 +361,8 @@ export const messages = {
       remaining: "Sisa",
     },
     goal_pyramid: {
-      title: "Prioritas",
-      subtitle: "Amankan fondasi dulu, ambisi belakangan.",
+      title: "Goal Pyramid",
+      subtitle: "Fondasi (bawah) dulu, ambisi (atas) belakangan. Selesaikan tier bawah sebelum naik.",
       insight_no_safe: "Belum ada dana darurat — bangun tier Aman dulu.",
       insight_focus_pre: "Amankan tier",
       insight_focus_post: "dulu.",      insight_all_full: "Semua tier penuh. Jaga konsistensi setoran.",
@@ -3535,8 +3535,8 @@ export const messages = {
       remaining: "Remaining",
     },
     goal_pyramid: {
-      title: "Priority",
-      subtitle: "Secure the foundation first, ambitions later.",
+      title: "Goal Pyramid",
+      subtitle: "Foundation first (bottom), ambitions later (top). Complete lower tiers before moving up.",
       insight_no_safe: "No emergency fund yet — build the Safe tier first.",
       insight_focus_pre: "Secure the",
       insight_focus_post: "tier first.",      insight_all_full: "All tiers funded. Keep contributions consistent.",

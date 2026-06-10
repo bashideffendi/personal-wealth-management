@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import type { Goal } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,13 +17,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus, Pencil, Trash2, Loader2, ArrowRight, Target, TrendingUp, Repeat, Trophy,
+  Plus, Pencil, Trash2, Loader2, ArrowRight, Target, TrendingUp, Repeat, Sparkles,
   Home, Car, Plane, GraduationCap, Smartphone, Heart, ShieldCheck, PiggyBank, Briefcase,
   Archive, RotateCcw,
   type LucideIcon,
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
-import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import { useT } from '@/lib/i18n/context'
 import {
@@ -115,33 +114,14 @@ function goalStatus(
     : { key: 'status_behind', tone: 'risk' }
 }
 
-// Warna titik status — satu-satunya warna di baris meta (disiplin ink-first).
-const STATUS_DOT: Record<'ok' | 'risk' | 'overdue' | 'done', string> = {
-  ok: 'var(--c-mint)',
-  done: 'var(--c-mint)',
-  risk: 'var(--c-amber)',
-  overdue: 'var(--c-coral)',
+const STATUS_TONE: Record<'ok' | 'risk' | 'overdue' | 'done', { bg: string; ink: string }> = {
+  ok: { bg: 'var(--c-mint-soft)', ink: 'var(--c-mint-ink)' },
+  done: { bg: 'var(--c-mint-soft)', ink: 'var(--c-mint-ink)' },
+  risk: { bg: 'var(--c-amber-soft)', ink: 'var(--c-amber-ink)' },
+  overdue: { bg: 'var(--c-coral-soft)', ink: 'var(--c-coral-ink)' },
 }
 
-/**
- * TickGauge — isi solid tipis + jarum penanda di ujung, berjalan di atas
- * jejak tick samar (skala cetak). Versi tick-penuh sebelumnya kebaca kayak
- * barcode di lebar besar — solid jauh lebih tenang, jarum kasih presisi.
- * Ink-first: warna cuma saat tercapai (mint) / lewat deadline (coral).
- */
-function TickGauge({ pct, tone }: { pct: number; tone: string }) {
-  const w = Math.min(pct, 100)
-  return (
-    <div className="relative h-[14px] w-full" aria-hidden>
-      <div
-        className="absolute inset-x-0 bottom-[3px] h-[7px]"
-        style={{ background: 'repeating-linear-gradient(90deg, var(--border) 0 2px, transparent 2px 7px)' }}
-      />
-      <div className="absolute left-0 bottom-[3px] h-[7px]" style={{ width: `${w}%`, background: tone }} />
-      <div className="absolute bottom-0 h-[14px] w-[2px]" style={{ left: `calc(${w}% - 1px)`, background: tone }} />
-    </div>
-  )
-}
+const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
 
 export default function GoalsPage() {
   const t = useT()
@@ -364,10 +344,24 @@ export default function GoalsPage() {
     return { totalTarget, totalCurrent, pct, iuranBulan, deadlineCount, avgProb, tercapai, iuranVsIncome }
   }, [derived, monthlyIncome])
 
-  const iuranWarnColor = stats.iuranVsIncome == null ? 'var(--ink-soft)'
+  const iuranSub = stats.iuranVsIncome != null
+    ? `${stats.iuranVsIncome.toFixed(0)}% ${t('goals.of_income')}`
+    : `${stats.deadlineCount} ${t('goals.goals_with_deadline')}`
+  const iuranSubColor = stats.iuranVsIncome == null ? 'var(--ink-soft)'
     : stats.iuranVsIncome > 50 ? 'var(--c-coral-ink)'
     : stats.iuranVsIncome > 30 ? 'var(--c-amber-ink)'
     : 'var(--ink-soft)'
+
+  const statCards = [
+    { label: t('goals.stat_total_target'), value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
+    { label: t('goals.stat_collected'), value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
+    { label: t('goals.stat_monthly_contribution'), value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
+    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
+  ]
+
+  function scrollToPyramid() {
+    document.getElementById('goal-pyramid')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   // Localized labels for category & strategy selects (keys stay stable, labels via t())
   const categoryLabel = (key: string) => t(`goals.cat_${key}`)
@@ -382,6 +376,11 @@ export default function GoalsPage() {
         info={t('goals.subtitle')}
         actions={
           <>
+            {activeGoals.length > 0 && (
+              <Button variant="outline" onClick={scrollToPyramid}>
+                <Target className="h-4 w-4" /> {t('goals.goal_pyramid')}
+              </Button>
+            )}
             <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
               <Plus className="h-4 w-4" /> {t('goals.new_goal')}
             </Button>
@@ -410,17 +409,9 @@ export default function GoalsPage() {
         </div>
       ) : (
         <>
-          {/* Baris stat — pola KPI tile app-wide (selaras Transaksi/Anggaran/
-              Investasi): card netral + icon chip soft-tint. Kartu ke-4 =
-              Tercapai (nyata & memotivasi), bukan probabilitas rata-rata
-              sirkular yang dulu nangkring di situ. */}
+          {/* 4 stat cards */}
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: t('goals.stat_total_target'), value: formatCompactCurrency(stats.totalTarget), sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
-              { label: t('goals.stat_collected'), value: formatCompactCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
-              { label: t('goals.stat_monthly_contribution'), value: formatCompactCurrency(stats.iuranBulan), sub: stats.iuranVsIncome != null ? `${stats.iuranVsIncome.toFixed(0)}% ${t('goals.of_income')}` : `${stats.deadlineCount} ${t('goals.goals_with_deadline')}`, subColor: iuranWarnColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
-              { label: t('goals.stat_achieved'), value: `${stats.tercapai} / ${activeGoals.length}`, sub: activeGoals[0]?.deadline ? `${t('goals.stat_nearest')} ${new Date(activeGoals[0].deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}` : '—', subColor: 'var(--ink-soft)', icon: Trophy, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
-            ].map((c) => (
+            {statCards.map((c) => (
               <div key={c.label} className="s-card p-5">
                 <div className="flex items-start justify-between">
                   <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{c.label}</p>
@@ -436,121 +427,52 @@ export default function GoalsPage() {
             ))}
           </div>
 
-          {/* Lembar tujuan — direktif prioritas + baris passbook */}
-          <div className="s-card p-0 overflow-hidden">
-            <GoalPyramid
-              goals={activeGoals}
-              onSetor={(id) => {
-                const g = activeGoals.find((x) => x.id === id)
-                if (g) { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }
-              }}
-            />
+          {/* Goal cards + pyramid sebagai cell terakhir */}
+          <div className="grid gap-3 sm:grid-cols-2">
             {derived.map((d, i) => {
-              const { g, pct, remaining, perMonth, planned, contribution, done, prob, requiredFor90 } = d
+              const { g, pct, remaining, perMonth, planned, contribution, done, layerColor, layerInk, prob, requiredFor90 } = d
               const Icon = CATEGORY_ICON[g.category] ?? Target
               const status = goalStatus(g, pct, done)
-              const gaugeTone = done ? 'var(--c-mint)' : status?.tone === 'overdue' ? 'var(--c-coral)' : 'var(--ink)'
-              // Detail asumsi pindah ke tooltip ⓘ — baris harus kebaca sekali
-              // lirik, bukan paragraf metadata.
-              const assumption = d.profileKey && !done
-                ? `${t('goals.assume_prefix')} ${t(`goals.profile_${d.profileKey}`)} ~${Math.round((d.profileRet ?? 0) * 100)}${t('goals.percent_per_year')}, ${t('goals.assume_contrib')} ${formatCurrency(contribution)}${t('goals.per_month_suffix')}${planned == null ? ` (${t('goals.assume_default_plan')})` : ''}${prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution ? ` · ${t('goals.bump_to')} ${formatCurrency(requiredFor90)}${t('goals.per_month_suffix')} ${t('goals.for_90')}` : ''}`
-                : null
               return (
                 <div
                   key={g.id}
-                  className="group px-5 sm:px-7 py-4 border-t transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_45%,transparent)]"
-                  style={{ borderColor: 'var(--border)' }}
+                  className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
                 >
-                  {/* Satu napas per goal: nama+meta | angka | gauge | % | aksi.
-                      Kolom konsisten antar baris biar mata bisa scan vertikal. */}
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 md:grid md:grid-cols-[minmax(0,1fr)_205px_150px_92px_auto] md:gap-x-7">
-                    <div className="min-w-0 flex items-start gap-3 w-full md:w-auto">
-                      <span className="num text-[10px] pt-[5px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Icon className="size-[15px] shrink-0" strokeWidth={1.75} style={{ color: 'var(--ink-soft)' }} />
-                          <h3 className="text-[17px] leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-                            {g.name}
-                          </h3>
-                          {i === 0 && g.deadline && !done && (
-                            <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>
-                              {t('goals.badge_nearest')}
-                            </span>
-                          )}
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
+                          <Icon className="size-4" style={{ color: layerInk }} />
                         </div>
-                        <p className="text-[11px] mt-0.5 flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--ink-soft)' }}>
-                          {g.deadline
-                            ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
-                            : categoryLabel(g.category)}
-                          {status && (
-                            <>
-                              <span aria-hidden>·</span>
-                              <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[9.5px]" style={{ color: 'var(--ink-muted)' }}>
-                                <span aria-hidden className="size-[5px] rounded-full" style={{ background: STATUS_DOT[status.tone] }} />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                            {i === 0 && g.deadline && !done && (
+                              <span
+                                className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
+                                style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                              >
+                                {t('goals.badge_nearest')}
+                              </span>
+                            )}
+                            {status && (
+                              <span
+                                className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
+                                style={{ background: STATUS_TONE[status.tone].bg, color: STATUS_TONE[status.tone].ink }}
+                              >
                                 {t(`goals.${status.key}`)}
                               </span>
-                            </>
-                          )}
-                          {assumption && <InfoTip text={assumption} />}
-                        </p>
+                            )}
+                          </div>
+                          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                            {g.deadline
+                              ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
+                              : (categoryLabel(g.category) ?? g.category)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="md:text-right">
-                      <p className="num text-[13px]" style={{ color: 'var(--ink)' }}>
-                        <span className="font-semibold">{formatCompactCurrency(g.current_amount)}</span>
-                        <span style={{ color: 'var(--ink-soft)' }}> / {formatCompactCurrency(g.target_amount)}</span>
-                      </p>
-                      <p className="num text-[10.5px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink-soft)' }}>
-                        {done
-                          ? t('goals.target_reached')
-                          : perMonth != null
-                            ? `${t('goals.meta_monthly')} ${formatCompactCurrency(perMonth)}${t('goals.per_month_suffix')}`
-                            : `${t('goals.remaining')} ${formatCompactCurrency(remaining)}`}
-                      </p>
-                    </div>
-
-                    <div className="w-full md:w-auto">
-                      <TickGauge pct={pct} tone={gaugeTone} />
-                    </div>
-
-                    <div className="md:text-right">
-                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.9rem', color: 'var(--ink)' }}>
-                        {pct.toFixed(0)}<span style={{ fontSize: '1rem' }}>%</span>
-                      </p>
-                      {prob != null && !done && (
-                        // Peluang diwarnai cuma kalau user set rencana sendiri —
-                        // angka default (iuran wajib) itu hipotesis, tampil tinta.
-                        <p className="text-[10px] mt-1" style={{ color: planned != null ? probInk(prob) : 'var(--ink-soft)' }}>
-                          {t('goals.probability_label').toLowerCase()} <span className="num font-semibold">{prob.toFixed(0)}%</span>
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex md:flex-col items-center md:items-end gap-x-4 gap-y-1.5 ml-auto md:ml-0">
-                      {done ? (
-                        <button
-                          type="button"
-                          onClick={() => setActive(g.id, false)}
-                          className="inline-flex items-center gap-1.5 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition whitespace-nowrap"
-                          style={{ color: 'var(--ink)' }}
-                        >
-                          <Archive className="size-3.5" /> {t('goals.archive')}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}
-                          className="inline-flex items-center gap-1 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition whitespace-nowrap"
-                          style={{ color: 'var(--ink)' }}
-                        >
-                          {t('goals.deposit_now')} <ArrowRight className="size-3.5" />
-                        </button>
-                      )}
-                      {/* Selalu kelihatan di touch; hover-reveal di pointer device */}
-                      <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition">
+                      {/* Selalu kelihatan di touch; hover-reveal cuma di pointer device */}
+                      <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
                         <Button variant="ghost" size="icon-sm" aria-label={t('goals.edit_aria')} onClick={() => openEdit(g)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
@@ -559,10 +481,74 @@ export default function GoalsPage() {
                         </Button>
                       </div>
                     </div>
+
+                    <div className="mt-4 flex items-end gap-3">
+                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: layerInk }}>
+                        {pct.toFixed(0)}%
+                      </p>
+                      <div className="pb-1 min-w-0">
+                        <p className="num text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                          {formatCurrency(g.current_amount)}
+                          <span className="font-normal" style={{ color: 'var(--ink-muted)' }}> / {formatCurrency(g.target_amount)}</span>
+                        </p>
+                        <p className="num text-[11px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
+                          {done ? t('goals.target_reached') : `${t('goals.remaining')} ${formatCurrency(remaining)}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? 'var(--c-mint)' : layerColor }} />
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.monthly_label')}</p>
+                        <p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
+                          {perMonth != null ? formatCurrency(perMonth) : '—'}
+                        </p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.probability_label')}</p>
+                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob != null ? probInk(prob) : 'var(--ink-soft)' }}>
+                          {prob != null ? `${prob.toFixed(0)}%` : '—'}
+                        </p>
+                      </div>
+                      {done ? (
+                        <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => setActive(g.id, false)}>
+                          <Archive className="h-3.5 w-3.5" /> {t('goals.archive')}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
+                          {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {d.profileKey && !done && (
+                      <p className="mt-2.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                        {t('goals.assume_prefix')} {t(`goals.profile_${d.profileKey}`)} ~{Math.round((d.profileRet ?? 0) * 100)}{t('goals.percent_per_year')}
+                        {' · '}{t('goals.assume_contrib')} <span className="num">{formatCurrency(contribution)}{t('goals.per_month_suffix')}</span>
+                        {planned == null && <span> ({t('goals.assume_default_plan')})</span>}
+                        {prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution && (
+                          <> · {t('goals.bump_to')} <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}{t('goals.per_month_suffix')}</span> {t('goals.for_90')}</>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
               )
             })}
+
+            <div id="goal-pyramid" className="scroll-mt-24">
+              <GoalPyramid
+                goals={activeGoals}
+                onSetor={(id) => {
+                  const g = activeGoals.find((x) => x.id === id)
+                  if (g) { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }
+                }}
+              />
+            </div>
           </div>
 
           {/* Arsip — goal tercapai/disimpan, collapsed biar gak makan tempat */}
