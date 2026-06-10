@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
-import { Loader2, ArrowUpRight, TrendingUp, TrendingDown, Wallet, Plus, History } from 'lucide-react'
+import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History } from 'lucide-react'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
@@ -16,6 +16,8 @@ import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { PortfolioHero } from '@/components/investment/portfolio-hero'
 import { AssetClassCards } from '@/components/investment/asset-class-cards'
 import { HoldingTable } from '@/components/investment/holding-table'
+import { UpcomingDividends } from '@/components/investment/upcoming-dividends'
+import { WatchlistTargetChip } from '@/components/investment/watchlist-target-chip'
 import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
 import { FX_FALLBACK_USDIDR } from '@/lib/constants'
@@ -33,17 +35,24 @@ interface RdnAccount {
   current_balance: number
 }
 
+interface UserDividend {
+  amount: number
+  pay_date: string
+  ticker: string | null
+  investment_id: string | null
+}
+
 interface OverviewData {
   items: Investment[]
   rdnAccounts: RdnAccount[]
-  dividends: { amount: number; pay_date: string }[]
+  dividends: UserDividend[]
   snapshots: { snapshot_date: string; market_value: number }[]
 }
 
 // Stable empty fallbacks — fresh [] per render would invalidate every memo.
 const NO_ITEMS: Investment[] = []
 const NO_RDN: RdnAccount[] = []
-const NO_DIVIDENDS: { amount: number; pay_date: string }[] = []
+const NO_DIVIDENDS: UserDividend[] = []
 const NO_SNAPSHOTS: { snapshot_date: string; market_value: number }[] = []
 const NO_QUOTES: Record<string, LiveQuote> = {}
 
@@ -70,7 +79,7 @@ export default function InvestmentOverviewPage() {
           .eq('type', 'rdn'),
         supabase
           .from('dividends')
-          .select('amount, pay_date')
+          .select('amount, pay_date, ticker, investment_id')
           .eq('user_id', user.id),
         // portfolio_snapshots may not exist yet (migration 030) — tolerated.
         supabase
@@ -86,7 +95,7 @@ export default function InvestmentOverviewPage() {
       return {
         items: (invRes.data ?? []) as Investment[],
         rdnAccounts: (rdnRes.data ?? []) as RdnAccount[],
-        dividends: (divRes.data ?? []) as { amount: number; pay_date: string }[],
+        dividends: (divRes.data ?? []) as UserDividend[],
         snapshots: (snapRes.data ?? []) as { snapshot_date: string; market_value: number }[],
       }
     },
@@ -242,30 +251,6 @@ export default function InvestmentOverviewPage() {
     return any ? v : null
   }, [enriched, quotes])
 
-  // Today's movers — quoted holdings sorted by |Δ%|. `covered` counts BEFORE
-  // the slice so the card can be honest about how many positions have a live
-  // quote at all (gold/deposito/non-quoted are invisible here by nature).
-  const movers = useMemo(() => {
-    const all = enriched
-      .map((e) => {
-        const sym = tickerToQuoteSymbol(e.i)
-        const cp = sym ? (quotes[sym]?.changePct ?? null) : null
-        if (cp == null) return null
-        const ck = assetClassKey(e.i)
-        return {
-          id: e.i.id,
-          name: e.i.name,
-          sym: (e.i.ticker ?? '').replace(/\.JK$/i, '').toUpperCase(),
-          changePct: cp,
-          changeRp: e.market * (cp / (100 + cp)),
-          color: ASSET_CLASS_META[ck].color,
-        }
-      })
-      .filter((m): m is NonNullable<typeof m> => m !== null)
-      .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
-    return { list: all.slice(0, 6), covered: all.length, total: enriched.length }
-  }, [enriched, quotes])
-
   // Dividen per bulan, 6 bulan terakhir (real dari tabel dividends).
   const dividen6 = useMemo(() => {
     const now = new Date()
@@ -296,6 +281,29 @@ export default function InvestmentOverviewPage() {
     }
     return prev > 0 ? ((dividen6Total - prev) / prev) * 100 : null
   }, [dividends, dividen6Total])
+
+  // Yield on cost ≈ trailing-12-month dividends ÷ cost basis of the holdings
+  // that actually PAY them (matched by investment_id or bare ticker) — NOT
+  // totals.invested, which would dilute the yield with crypto/gold/etc.
+  const yieldOnCost = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setFullYear(cutoff.getFullYear() - 1)
+    let trailing = 0
+    const payerIds = new Set<string>()
+    const payerTickers = new Set<string>()
+    for (const dv of dividends) {
+      if (dv.investment_id) payerIds.add(dv.investment_id)
+      if (dv.ticker) payerTickers.add(dv.ticker.replace(/.JK$/i, '').trim().toUpperCase())
+      if (dv.pay_date && new Date(dv.pay_date) >= cutoff) trailing += dv.amount || 0
+    }
+    if (trailing <= 0) return null
+    const basis = enriched.reduce((sum, e) => {
+      const bare = (e.i.ticker ?? '').replace(/.JK$/i, '').trim().toUpperCase()
+      const isPayer = payerIds.has(e.i.id) || (bare !== '' && payerTickers.has(bare))
+      return isPayer ? sum + e.invested : sum
+    }, 0)
+    return basis > 0 ? (trailing / basis) * 100 : null
+  }, [dividends, enriched])
 
   if (overview.isLoading) {
     return (
@@ -531,16 +539,25 @@ export default function InvestmentOverviewPage() {
         </div>
       </div>
 
+      <WatchlistTargetChip />
+
       <HoldingTable enriched={enriched} quotes={quotes} />
 
-      {/* Bottom row: Dividen 6 bulan + Pergerakan hari ini */}
+      {/* Bottom row: Dividen 6 bulan + Dividen Terdekat (forward-looking —
+          mengganti "Pergerakan Hari Ini" yang merender data day-change yang
+          sama untuk ketiga kalinya di satu halaman). */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
         {/* Dividen 6 bulan — real dari tabel dividends */}
-        <div className={`s-card p-5 sm:p-6 ${movers.list.length === 0 ? 'lg:col-span-2' : ''}`}>
+        <div className="s-card p-5 sm:p-6">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
               <p className="eyebrow">{t('investment.dividend_6mo')}</p>
               <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>{formatCurrency(dividen6Total)}</p>
+              {yieldOnCost != null && (
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                  {t('investment.yoc_label')} ~{yieldOnCost.toFixed(1).replace('.', ',')}% {t('investment.yoc_suffix')}
+                </p>
+              )}
             </div>
             {dividen6DeltaPct != null && (
               <span
@@ -568,42 +585,7 @@ export default function InvestmentOverviewPage() {
           )}
         </div>
 
-        {/* Pergerakan hari ini */}
-        {movers.list.length > 0 && (
-          <div className="s-card p-5 sm:p-6">
-            <p className="eyebrow">{t('investment.today')}</p>
-            <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.movers_today')}</h2>
-            {movers.covered < movers.total && (
-              <p className="text-[11px] mt-0.5 mb-3" style={{ color: 'var(--ink-soft)' }}>
-                {movers.covered}/{movers.total} {t('investment.movers_coverage')}
-              </p>
-            )}
-            {movers.covered >= movers.total && <div className="mb-3" />}
-            <div>
-              {movers.list.map((m) => {
-                const pos = m.changePct >= 0
-                return (
-                  <div key={m.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: `${m.color}1A`, color: `color-mix(in srgb, ${m.color} 60%, var(--ink))` }}>
-                        {m.sym.slice(0, 4) || '—'}
-                      </span>
-                      <span className="truncate text-sm" style={{ color: 'var(--ink)' }}>{m.name}</span>
-                    </div>
-                    <div className="text-right shrink-0" data-loss={pos ? undefined : 'true'}>
-                      <p className="num tabular text-sm font-semibold" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                        {pos ? '+' : '−'}{formatCurrency(Math.abs(m.changeRp))}
-                      </p>
-                      <p className="num tabular text-[11px] inline-flex items-center justify-end gap-0.5 w-full" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                        {pos ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />} {Math.abs(m.changePct).toFixed(2)}%
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        <UpcomingDividends enriched={enriched} />
       </div>
 
     </div>
