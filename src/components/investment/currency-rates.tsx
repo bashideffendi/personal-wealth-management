@@ -118,42 +118,40 @@ export function CurrencyRates() {
                   ? 'var(--c-mint-ink)'
                   : 'var(--c-coral-ink)'
             return (
+              // Baris kurs ala money changer: bendera + kode + nama di kiri,
+              // angka + perubahan rata KANAN — lebar tile kepakai penuh,
+              // gak ada tengah yang mati.
               <div
                 key={pair.ticker}
-                className="rounded-xl border p-3"
+                className="rounded-xl border p-3 flex items-center gap-2.5"
                 style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {/* Flag bumped from 20px → 32px per user feedback —
-                        feels more "country card" less microbadge */}
-                    <Image
-                      src={`/flag-logos/${pair.iso}.svg`}
-                      alt={`${t('investment.fx_flag_alt')} ${pair.name}`}
-                      width={32}
-                      height={32}
-                      className="shrink-0 rounded-full ring-1 ring-black/10 shadow-sm"
-                      unoptimized
-                    />
-                    <span className="text-sm font-bold" style={{ color: 'var(--ink)' }}>
-                      {pair.code}
-                    </span>
-                  </div>
+                <Image
+                  src={`/flag-logos/${pair.iso}.svg`}
+                  alt={`${t('investment.fx_flag_alt')} ${pair.name}`}
+                  width={32}
+                  height={32}
+                  className="shrink-0 rounded-full ring-1 ring-black/10 shadow-sm"
+                  unoptimized
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+                    {pair.code}
+                  </p>
+                  <p className="text-[10.5px] leading-tight truncate" style={{ color: 'var(--ink-soft)' }}>
+                    {pair.name}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="num tabular text-[15px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+                    {q ? `Rp ${formatRate(q.price)}` : '—'}
+                  </p>
                   {change !== null && (
-                    <span
-                      className="text-[10px] num tabular font-semibold shrink-0 px-1.5 py-0.5 rounded"
-                      style={{
-                        color: changeColor,
-                        background: change >= 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
-                      }}
-                    >
+                    <p className="num tabular text-[10.5px] font-semibold leading-tight mt-0.5" style={{ color: changeColor }}>
                       {change >= 0 ? '+' : ''}{change.toFixed(2)}%
-                    </span>
+                    </p>
                   )}
                 </div>
-                <p className="num tabular text-base font-bold mt-2" style={{ color: 'var(--ink)' }}>
-                  {q ? `Rp ${formatRate(q.price)}` : '—'}
-                </p>
               </div>
             )
           })}
