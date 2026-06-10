@@ -233,6 +233,20 @@ function findRequiredContribution(
 }
 
 /**
+ * Months until a deadline, day-aware. The old calendar-month diff made a
+ * deadline on the 30th of the current month read as 0 months left (killing
+ * the iuran + probability) even with weeks to go. Ceil of remaining days /
+ * average month length keeps partial months alive; 0 = passed/today.
+ */
+export function monthsUntil(deadline: string | null): number | null {
+  if (!deadline) return null
+  const end = new Date(deadline).getTime()
+  if (!Number.isFinite(end)) return null
+  const days = (end - Date.now()) / 86_400_000
+  return days <= 0 ? 0 : Math.ceil(days / 30.44)
+}
+
+/**
  * Map a goal category to a suggested risk tier (BPT layer).
  * Used for the Multi-Goal Pyramid view & probability defaults.
  */
@@ -258,30 +272,41 @@ export function suggestedRiskProfile(category: string, monthsLeft: number): Risk
  */
 export type PyramidLayer = 'pelindung' | 'pertumbuhan' | 'mimpi'
 
-export const PYRAMID_LAYERS: Record<PyramidLayer, { label: string; description: string; color: string; emoji: string }> = {
+// color = fills/borders/accents (full saturation); ink = TEXT on light/soft
+// backgrounds (AA-contrast tokens). Alpha tints via color-mix, never hex+suffix.
+export const PYRAMID_LAYERS: Record<PyramidLayer, { label: string; description: string; color: string; ink: string }> = {
   pelindung: {
     label: 'Aman',
     description: 'Dasar piramida — dana darurat, kebutuhan dekat, proteksi. Amankan ini dulu.',
-    color: '#10B981', // mint — fondasi/positif
-    emoji: '🛡️',
+    color: 'var(--c-mint)',
+    ink: 'var(--c-mint-ink)',
   },
   pertumbuhan: {
     label: 'Bertumbuh',
     description: 'Tengah — DP rumah, dana pendidikan, pensiun, nikah.',
-    color: '#8B5CF6', // violet
-    emoji: '📈',
+    color: 'var(--c-violet)',
+    ink: 'var(--c-violet-ink)',
   },
   mimpi: {
     label: 'Ambisi',
     description: 'Puncak — bisnis, liburan impian, gadget. Kejar setelah fondasi aman.',
-    color: '#F59E0B', // amber
-    emoji: '🚀',
+    color: 'var(--c-amber)',
+    ink: 'var(--c-amber-ink)',
   },
 }
 
-export function categoryToPyramidLayer(category: string): PyramidLayer {
-  if (['emergency', 'education', 'other'].includes(category)) return 'pelindung'
-  if (['property', 'vehicle', 'retirement', 'wedding'].includes(category)) return 'pertumbuhan'
-  // travel, gadget, business → mimpi
-  return 'mimpi'
+/**
+ * Category × horizon → BPT layer. The old category-only mapping put a
+ * 15-year education fund in the SAFE foundation tier, which made the pyramid
+ * tell users to prioritize it over a goal due next year. Rules:
+ *  - emergency fund is always the foundation;
+ *  - wants (travel, gadget, business) are always aspirational;
+ *  - core needs are horizon-driven: due ≤24 months → must be safe (pelindung),
+ *    longer → growth tier.
+ */
+export function categoryToPyramidLayer(category: string, monthsLeft?: number | null): PyramidLayer {
+  if (category === 'emergency') return 'pelindung'
+  if (['travel', 'gadget', 'business'].includes(category)) return 'mimpi'
+  if (monthsLeft != null && monthsLeft <= 24) return 'pelindung'
+  return 'pertumbuhan'
 }

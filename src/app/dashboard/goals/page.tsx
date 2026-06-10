@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { Goal } from '@/types'
@@ -17,22 +19,23 @@ import {
 import {
   Plus, Pencil, Trash2, Loader2, ArrowRight, Target, TrendingUp, Repeat, Sparkles,
   Home, Car, Plane, GraduationCap, Smartphone, Heart, ShieldCheck, PiggyBank, Briefcase,
+  Archive, RotateCcw,
   type LucideIcon,
 } from 'lucide-react'
-import { EduTip } from '@/components/edu/edu-tip'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import { useT } from '@/lib/i18n/context'
 import {
   computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
-  categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString,
+  categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString, monthsUntil,
   type RiskProfile,
 } from '@/lib/goal-probability'
 
-const GOAL_CATEGORIES: Record<string, string> = {
-  property: 'Properti', vehicle: 'Kendaraan', travel: 'Liburan', education: 'Pendidikan',
-  gadget: 'Gadget', wedding: 'Pernikahan', emergency: 'Darurat', retirement: 'Pensiun',
-  business: 'Bisnis', other: 'Lainnya',
-}
+// Labels render via t(`goals.cat_${key}`) / t(`goals.strat_${value}`) — keys only here.
+const GOAL_CATEGORY_KEYS = [
+  'property', 'vehicle', 'travel', 'education', 'gadget',
+  'wedding', 'emergency', 'retirement', 'business', 'other',
+] as const
 
 const CATEGORY_ICON: Record<string, LucideIcon> = {
   property: Home, vehicle: Car, travel: Plane, education: GraduationCap,
@@ -41,14 +44,9 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 }
 
 // Strategi dana = asumsi return buat probabilitas. 'auto' = ikut rekomendasi.
-const STRATEGY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'auto', label: 'Otomatis (disarankan)' },
-  { value: 'tabungan', label: 'Tabungan biasa (~2,5%)' },
-  { value: 'conservative', label: 'Konservatif (~5%)' },
-  { value: 'moderate', label: 'Moderat (~8%)' },
-  { value: 'aggressive', label: 'Agresif (~11%)' },
-]
+const STRATEGY_VALUES = ['auto', 'tabungan', 'conservative', 'moderate', 'aggressive'] as const
 const STRAT_LS_PREFIX = 'pwm.goal.strat.'
+const PLAN_LS_PREFIX = 'pwm.goal.plan.'
 
 /** Baca strategi tersimpan: kolom DB → localStorage → 'auto'. Defensif kalau
  *  kolom savings_strategy belum ada (migration 032 belum di-apply). */
@@ -62,16 +60,21 @@ function readStoredStrategy(g: Goal): string {
   return 'auto'
 }
 
-/** Warna probabilitas — sama persis sama meter lama (mint≥70 / amber≥40 / coral). */
-function probColor(p: number): string {
-  return p >= 70 ? '#10B981' : p >= 40 ? '#F59E0B' : '#F43F5E'
+/** Setoran rencana/bln: kolom DB (migration 048) → localStorage → null.
+ *  null = pakai iuran wajib sebagai asumsi setoran. */
+function readStoredPlan(g: Goal): number | null {
+  const col = (g as { planned_monthly?: number | null }).planned_monthly
+  if (col != null && Number(col) > 0) return Number(col)
+  if (typeof window !== 'undefined') {
+    const ls = Number(localStorage.getItem(PLAN_LS_PREFIX + g.id))
+    if (Number.isFinite(ls) && ls > 0) return ls
+  }
+  return null
 }
 
-function monthsUntil(deadline: string | null): number | null {
-  if (!deadline) return null
-  const d = new Date(deadline)
-  const now = new Date()
-  return (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth())
+/** Warna TEKS probabilitas — varian -ink (AA), bukan full-saturation. */
+function probInk(p: number): string {
+  return p >= 70 ? 'var(--c-mint-ink)' : p >= 40 ? 'var(--c-amber-ink)' : 'var(--c-coral-ink)'
 }
 
 interface FormState {
@@ -83,10 +86,12 @@ interface FormState {
   deadline: string
   notes: string
   savings_strategy: string
+  planned_monthly: number
 }
 const EMPTY: FormState = {
   id: null, name: '', category: 'other',
-  target_amount: 0, current_amount: 0, deadline: '', notes: '', savings_strategy: 'auto',
+  target_amount: 0, current_amount: 0, deadline: '', notes: '',
+  savings_strategy: 'auto', planned_monthly: 0,
 }
 
 // Status pace ala Monarch: bandingin progres aktual vs progres "seharusnya" by
@@ -95,70 +100,107 @@ function goalStatus(
   g: Goal,
   pct: number,
   done: boolean,
-): { key: string; tone: 'ok' | 'risk' | 'done' } | null {
+): { key: string; tone: 'ok' | 'risk' | 'overdue' | 'done' } | null {
   if (done) return { key: 'status_achieved', tone: 'done' }
   if (!g.deadline) return null
   const start = new Date(g.created_at).getTime()
   const end = new Date(g.deadline).getTime()
   const now = Date.now()
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null
-  if (now >= end) return { key: 'status_overdue', tone: 'risk' }
+  if (now >= end) return { key: 'status_overdue', tone: 'overdue' }
   const expectedPct = ((now - start) / (end - start)) * 100
   return pct + 0.5 >= expectedPct
     ? { key: 'status_on_track', tone: 'ok' }
     : { key: 'status_behind', tone: 'risk' }
 }
 
+const STATUS_TONE: Record<'ok' | 'risk' | 'overdue' | 'done', { bg: string; ink: string }> = {
+  ok: { bg: 'var(--c-mint-soft)', ink: 'var(--c-mint-ink)' },
+  done: { bg: 'var(--c-mint-soft)', ink: 'var(--c-mint-ink)' },
+  risk: { bg: 'var(--c-amber-soft)', ink: 'var(--c-amber-ink)' },
+  overdue: { bg: 'var(--c-coral-soft)', ink: 'var(--c-coral-ink)' },
+}
+
+const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
+
 export default function GoalsPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [goals, setGoals] = useState<Goal[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
   const [depositGoal, setDepositGoal] = useState<Goal | null>(null)
   const [depositAmt, setDepositAmt] = useState(0)
+  const [depositLogTx, setDepositLogTx] = useState(false)
   const [depositing, setDepositing] = useState(false)
+  const [archivedOpen, setArchivedOpen] = useState(false)
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const pageQuery = useQuery({
+    queryKey: ['goals-page'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const { data, error } = await supabase
+        .from('goals').select('*').eq('user_id', user.id)
+        .order('deadline', { ascending: true })
+      if (error) throw error
+      // Exclude tujuan bersama (household_id set) — itu tampil di halaman
+      // Keluarga, biar gak kehitung dobel. Pre-migration: undefined → tampil.
+      const goals = ((data ?? []) as (Goal & { household_id?: string | null })[])
+        .filter((g) => !g.household_id)
 
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase.from('goals').select('*').eq('user_id', user.id).order('deadline', { ascending: true })
-    // Exclude tujuan bersama (household_id set) — itu tampil di halaman Keluarga,
-    // biar gak kehitung dobel. Pre-migration: household_id undefined → tetap tampil.
-    setGoals(((data ?? []) as (Goal & { household_id?: string | null })[]).filter((g) => !g.household_id))
+      // Pemasukan rata-rata/bln dari 3 bln terakhir — buat ngukur "iuran wajib"
+      // vs cashflow REAL (bukan ngarang). Mirror cara dashboard hitung income.
+      const since = new Date()
+      since.setMonth(since.getMonth() - 3)
+      const { data: inc } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .eq('type', 'income')
+        .gte('date', since.toISOString().slice(0, 10))
+      const totalInc = ((inc ?? []) as { amount: number }[]).reduce((s, r) => s + (r.amount ?? 0), 0)
+      return { goals, monthlyIncome: totalInc / 3 }
+    },
+  })
 
-    // Pemasukan rata-rata/bln dari 3 bln terakhir — buat ngukur "iuran wajib"
-    // vs cashflow REAL (bukan ngarang). Mirror cara dashboard hitung income.
-    const since = new Date()
-    since.setMonth(since.getMonth() - 3)
-    const { data: inc } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('user_id', user.id)
-      .eq('type', 'income')
-      .gte('date', since.toISOString().slice(0, 10))
-    const incRows = (inc ?? []) as { amount: number }[]
-    const totalInc = incRows.reduce((s, t) => s + (t.amount ?? 0), 0)
-    setMonthlyIncome(totalInc / 3)
-
-    setLoading(false)
-  }
+  const loading = pageQuery.isLoading
+  const goals = useMemo(() => pageQuery.data?.goals ?? [], [pageQuery.data])
+  const monthlyIncome = pageQuery.data?.monthlyIncome ?? 0
+  const refresh = () => qc.invalidateQueries({ queryKey: ['goals-page'] })
 
   async function doDeposit() {
     if (!depositGoal || depositAmt <= 0) return
     setDepositing(true)
     const newCurrent = depositGoal.current_amount + depositAmt
-    await supabase.from('goals').update({ current_amount: newCurrent }).eq('id', depositGoal.id)
+    const { error } = await supabase.from('goals').update({ current_amount: newCurrent }).eq('id', depositGoal.id)
+    if (error) {
+      setDepositing(false)
+      toast.error(t('goals.deposit_error'))
+      return
+    }
+    if (depositLogTx) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { error: txErr } = await supabase.from('transactions').insert({
+          user_id: user.id,
+          date: new Date().toISOString().slice(0, 10),
+          type: 'saving',
+          category: 'Sinking Fund',
+          description: `${t('goals.deposit_tx_desc')} ${depositGoal.name}`,
+          amount: depositAmt,
+        })
+        if (txErr) toast.error(t('goals.deposit_tx_error'))
+      }
+    }
     setDepositing(false)
     setDepositGoal(null)
     setDepositAmt(0)
-    void load()
+    setDepositLogTx(false)
+    toast.success(t('goals.deposit_success'))
+    refresh()
   }
 
   async function save() {
@@ -167,7 +209,7 @@ export default function GoalsPage() {
     if (!user) { setSaving(false); return }
     const payload = {
       user_id: user.id,
-      name: form.name,
+      name: form.name.trim(),
       category: form.category,
       target_amount: form.target_amount,
       current_amount: form.current_amount,
@@ -177,28 +219,44 @@ export default function GoalsPage() {
     }
     let goalId = form.id
     if (form.id) {
-      await supabase.from('goals').update(payload).eq('id', form.id)
+      const { error } = await supabase.from('goals').update(payload).eq('id', form.id)
+      if (error) { setSaving(false); toast.error(t('goals.save_error')); return }
     } else {
-      const { data: inserted } = await supabase.from('goals').insert(payload).select('id').single()
+      const { data: inserted, error } = await supabase.from('goals').insert(payload).select('id').single()
+      if (error) { setSaving(false); toast.error(t('goals.save_error')); return }
       goalId = (inserted as { id: string } | null)?.id ?? null
     }
-    if (goalId) await persistStrategy(goalId, form.savings_strategy)
+    if (goalId) await persistExtras(goalId, form.savings_strategy, form.planned_monthly)
     setSaving(false)
     setDialogOpen(false)
-    void load()
+    refresh()
   }
 
-  /** Simpan strategi dana: localStorage (selalu jalan) + DB best-effort —
-   *  kalau kolom savings_strategy belum ada (migration 032), error diabaikan. */
-  async function persistStrategy(goalId: string, strat: string) {
-    try { localStorage.setItem(STRAT_LS_PREFIX + goalId, strat) } catch { /* ignore */ }
+  /** Simpan strategi + setoran rencana: localStorage (selalu jalan) + DB
+   *  best-effort — kalau kolomnya belum ada (migration 032/048), error
+   *  diabaikan dan localStorage jadi sumbernya. */
+  async function persistExtras(goalId: string, strat: string, plan: number) {
+    try {
+      localStorage.setItem(STRAT_LS_PREFIX + goalId, strat)
+      if (plan > 0) localStorage.setItem(PLAN_LS_PREFIX + goalId, String(plan))
+      else localStorage.removeItem(PLAN_LS_PREFIX + goalId)
+    } catch { /* ignore */ }
     await supabase.from('goals').update({ savings_strategy: strat }).eq('id', goalId)
+    await supabase.from('goals').update({ planned_monthly: plan > 0 ? plan : null }).eq('id', goalId)
   }
 
   async function remove(id: string) {
     if (!confirm(t('goals.confirm_delete'))) return
-    await supabase.from('goals').delete().eq('id', id)
-    void load()
+    const { error } = await supabase.from('goals').delete().eq('id', id)
+    if (error) { toast.error(t('goals.delete_error')); return }
+    refresh()
+  }
+
+  async function setActive(id: string, active: boolean) {
+    const { error } = await supabase.from('goals').update({ is_active: active }).eq('id', id)
+    if (error) { toast.error(t('goals.save_error')); return }
+    toast.success(active ? t('goals.unarchived_toast') : t('goals.archived_toast'))
+    refresh()
   }
 
   function openEdit(g: Goal) {
@@ -207,6 +265,7 @@ export default function GoalsPage() {
       target_amount: g.target_amount, current_amount: g.current_amount,
       deadline: g.deadline ?? '', notes: g.notes,
       savings_strategy: readStoredStrategy(g),
+      planned_monthly: readStoredPlan(g) ?? 0,
     })
     setDialogOpen(true)
   }
@@ -223,7 +282,12 @@ export default function GoalsPage() {
       })
   }, [goals])
 
-  // Hitung sekali: per-goal derived + Monte Carlo (dipakai card + stat rata-rata)
+  const archivedGoals = useMemo(() => goals.filter((g) => !g.is_active), [goals])
+
+  // Hitung sekali: per-goal derived + Monte Carlo (dipakai card + stat rata-rata).
+  // Setoran yang diasumsikan = rencana user (planned_monthly) kalau ada, kalau
+  // nggak iuran wajib — dan asumsinya SELALU ditulis di card, biar probabilitas
+  // kebaca sebagai "peluang KALAU nyetor segini", bukan ramalan gratis.
   const derived = useMemo(() => {
     return activeGoals.map((g) => {
       const pct = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0
@@ -231,31 +295,38 @@ export default function GoalsPage() {
       const months = monthsUntil(g.deadline)
       const perMonth = months && months > 0 ? Math.ceil(remaining / months) : null
       const done = pct >= 100
-      const layer = categoryToPyramidLayer(g.category)
+      const planned = readStoredPlan(g)
+      const contribution = planned ?? perMonth ?? 0
+      const layer = categoryToPyramidLayer(g.category, months)
       const layerColor = PYRAMID_LAYERS[layer].color
+      const layerInk = PYRAMID_LAYERS[layer].ink
 
       let prob: number | null = null
       let requiredFor90: number | null = null
-      let assumption: { label: string; ret: number } | null = null
+      let profileKey: RiskProfile | null = null
+      let profileRet: number | null = null
       if (done) {
         prob = 100
+      } else if (g.deadline && months === 0) {
+        prob = 0 // deadline lewat, belum tercapai
       } else if (g.deadline && months && months > 0) {
         const stored = readStoredStrategy(g)
         const profile: RiskProfile = stored !== 'auto' ? (stored as RiskProfile) : suggestedRiskProfile(g.category, months)
         const a = RISK_PROFILES[profile]
-        assumption = { label: a.label, ret: a.annualReturn }
+        profileKey = profile
+        profileRet = a.annualReturn
         const r = computeGoalProbability({
           current: g.current_amount, target: g.target_amount, monthsLeft: months,
-          monthlyContribution: perMonth ?? 0,
+          monthlyContribution: contribution,
           assumptions: { annualReturn: a.annualReturn, annualStdev: a.annualStdev },
           simulations: 2000,
           // Seed deterministik per state goal → angka gak goyang antar-reload.
-          rng: mulberry32(seedFromString(`${g.id}:${g.current_amount}:${g.target_amount}:${g.deadline}`)),
+          rng: mulberry32(seedFromString(`${g.id}:${g.current_amount}:${g.target_amount}:${g.deadline}:${contribution}`)),
         })
         prob = r.probability
         requiredFor90 = r.requiredMonthlyFor90
       }
-      return { g, pct, remaining, months, perMonth, done, layer, layerColor, prob, requiredFor90, assumption }
+      return { g, pct, remaining, months, perMonth, planned, contribution, done, layer, layerColor, layerInk, prob, requiredFor90, profileKey, profileRet }
     })
   }, [activeGoals])
 
@@ -277,15 +348,15 @@ export default function GoalsPage() {
     ? `${stats.iuranVsIncome.toFixed(0)}% ${t('goals.of_income')}`
     : `${stats.deadlineCount} ${t('goals.goals_with_deadline')}`
   const iuranSubColor = stats.iuranVsIncome == null ? 'var(--ink-soft)'
-    : stats.iuranVsIncome > 50 ? '#F43F5E'
-    : stats.iuranVsIncome > 30 ? '#F59E0B'
+    : stats.iuranVsIncome > 50 ? 'var(--c-coral-ink)'
+    : stats.iuranVsIncome > 30 ? 'var(--c-amber-ink)'
     : 'var(--ink-soft)'
 
   const statCards = [
     { label: t('goals.stat_total_target'), value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
-    { label: t('goals.stat_collected'), value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: '#10B981', chip: '#10B9811A' },
-    { label: t('goals.stat_monthly_contribution'), value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: '#8B5CF6', chip: '#8B5CF61A' },
-    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: '#F59E0B', chip: '#F59E0B1A' },
+    { label: t('goals.stat_collected'), value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
+    { label: t('goals.stat_monthly_contribution'), value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
+    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
   ]
 
   function scrollToPyramid() {
@@ -296,39 +367,34 @@ export default function GoalsPage() {
   const categoryLabel = (key: string) => t(`goals.cat_${key}`)
   const strategyLabel = (value: string) => t(`goals.strat_${value}`)
 
+  const today = new Date().toISOString().slice(0, 10)
+
   return (
     <div className="space-y-6">
-      {/* Header — light, serif title (personality moment) */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
-            {activeGoals.length} {t('goals.active_goals')}{stats.tercapai > 0 && ` · ${stats.tercapai} ${t('goals.achieved')}`}
-          </p>
-          <h1
-            className="mt-1 text-3xl sm:text-4xl leading-tight"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}
-          >
-            {t('goals.title')}
-          </h1>
-          <p className="text-sm mt-1.5 flex items-center gap-1.5 max-w-xl" style={{ color: 'var(--ink-muted)' }}>
-            {t('goals.subtitle')}
-            <EduTip topic="mental-accounting" side="bottom" />
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {activeGoals.length > 0 && (
-            <Button variant="outline" onClick={scrollToPyramid}>
-              <Target className="h-4 w-4" /> {t('goals.goal_pyramid')}
+      <QuietPageHeader
+        title={t('goals.title')}
+        info={t('goals.subtitle')}
+        actions={
+          <>
+            {activeGoals.length > 0 && (
+              <Button variant="outline" onClick={scrollToPyramid}>
+                <Target className="h-4 w-4" /> {t('goals.goal_pyramid')}
+              </Button>
+            )}
+            <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+              <Plus className="h-4 w-4" /> {t('goals.new_goal')}
             </Button>
-          )}
-          <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
-            <Plus className="h-4 w-4" /> {t('goals.new_goal')}
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('goals.load_error')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('goals.retry')}</Button>
+        </div>
       ) : activeGoals.length === 0 ? (
         <div className="s-card flex flex-col items-center text-center py-16 px-8">
           <div className="size-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-primary-soft)' }}>
@@ -364,7 +430,7 @@ export default function GoalsPage() {
           {/* Goal cards + pyramid sebagai cell terakhir */}
           <div className="grid gap-3 sm:grid-cols-2">
             {derived.map((d, i) => {
-              const { g, pct, remaining, perMonth, done, layerColor, prob, requiredFor90 } = d
+              const { g, pct, remaining, perMonth, planned, contribution, done, layerColor, layerInk, prob, requiredFor90 } = d
               const Icon = CATEGORY_ICON[g.category] ?? Target
               const status = goalStatus(g, pct, done)
               return (
@@ -376,8 +442,8 @@ export default function GoalsPage() {
                   <div className="p-5 pl-6">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${layerColor}1A` }}>
-                          <Icon className="size-4" style={{ color: layerColor }} />
+                        <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
+                          <Icon className="size-4" style={{ color: layerInk }} />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
@@ -393,10 +459,7 @@ export default function GoalsPage() {
                             {status && (
                               <span
                                 className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide"
-                                style={{
-                                  background: status.tone === 'risk' ? 'var(--c-amber-soft)' : 'var(--c-mint-soft)',
-                                  color: status.tone === 'risk' ? 'var(--c-amber)' : 'var(--c-mint)',
-                                }}
+                                style={{ background: STATUS_TONE[status.tone].bg, color: STATUS_TONE[status.tone].ink }}
                               >
                                 {t(`goals.${status.key}`)}
                               </span>
@@ -409,18 +472,19 @@ export default function GoalsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
-                        <Button variant="ghost" size="icon-sm" onClick={() => openEdit(g)}>
+                      {/* Selalu kelihatan di touch; hover-reveal cuma di pointer device */}
+                      <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
+                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.edit_aria')} onClick={() => openEdit(g)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon-sm" onClick={() => remove(g.id)}>
+                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
                           <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                         </Button>
                       </div>
                     </div>
 
                     <div className="mt-4 flex items-end gap-3">
-                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: layerColor }}>
+                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: layerInk }}>
                         {pct.toFixed(0)}%
                       </p>
                       <div className="pb-1 min-w-0">
@@ -428,14 +492,14 @@ export default function GoalsPage() {
                           {formatCurrency(g.current_amount)}
                           <span className="font-normal" style={{ color: 'var(--ink-muted)' }}> / {formatCurrency(g.target_amount)}</span>
                         </p>
-                        <p className="num text-[11px] mt-0.5" style={{ color: done ? '#10B981' : layerColor }}>
+                        <p className="num text-[11px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
                           {done ? t('goals.target_reached') : `${t('goals.remaining')} ${formatCurrency(remaining)}`}
                         </p>
                       </div>
                     </div>
 
                     <div className="mt-3 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? '#10B981' : layerColor }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? 'var(--c-mint)' : layerColor }} />
                     </div>
 
                     <div className="mt-4 flex items-center justify-between gap-2">
@@ -447,19 +511,27 @@ export default function GoalsPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('goals.probability_label')}</p>
-                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob != null ? probColor(prob) : 'var(--ink-soft)' }}>
+                        <p className="num text-sm font-semibold mt-0.5" style={{ color: prob != null ? probInk(prob) : 'var(--ink-soft)' }}>
                           {prob != null ? `${prob.toFixed(0)}%` : '—'}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0) }}>
-                        {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
+                      {done ? (
+                        <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => setActive(g.id, false)}>
+                          <Archive className="h-3.5 w-3.5" /> {t('goals.archive')}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="shrink-0 text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
+                          {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
 
-                    {d.assumption && !done && (
+                    {d.profileKey && !done && (
                       <p className="mt-2.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                        {t('goals.assume_prefix')} {d.assumption.label.toLowerCase()} ~{Math.round(d.assumption.ret * 100)}{t('goals.percent_per_year')}
-                        {prob != null && prob < 70 && requiredFor90 != null && perMonth != null && requiredFor90 > perMonth && (
+                        {t('goals.assume_prefix')} {t(`goals.profile_${d.profileKey}`)} ~{Math.round((d.profileRet ?? 0) * 100)}{t('goals.percent_per_year')}
+                        {' · '}{t('goals.assume_contrib')} <span className="num">{formatCurrency(contribution)}{t('goals.per_month_suffix')}</span>
+                        {planned == null && <span> ({t('goals.assume_default_plan')})</span>}
+                        {prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution && (
                           <> · {t('goals.bump_to')} <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}{t('goals.per_month_suffix')}</span> {t('goals.for_90')}</>
                         )}
                       </p>
@@ -474,11 +546,49 @@ export default function GoalsPage() {
                 goals={activeGoals}
                 onSetor={(id) => {
                   const g = activeGoals.find((x) => x.id === id)
-                  if (g) { setDepositGoal(g); setDepositAmt(0) }
+                  if (g) { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }
                 }}
               />
             </div>
           </div>
+
+          {/* Arsip — goal tercapai/disimpan, collapsed biar gak makan tempat */}
+          {archivedGoals.length > 0 && (
+            <div className="s-card p-5">
+              <button
+                type="button"
+                className="w-full flex items-center justify-between gap-2 text-left"
+                onClick={() => setArchivedOpen((v) => !v)}
+              >
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>
+                  {t('goals.archived_title')} ({archivedGoals.length})
+                </p>
+                <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{archivedOpen ? '−' : '+'}</span>
+              </button>
+              {archivedOpen && (
+                <div className="mt-3">
+                  {archivedGoals.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                        <p className="num text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                          {formatCurrency(g.current_amount)} / {formatCurrency(g.target_amount)}
+                        </p>
+                      </div>
+                      <div className="flex gap-0.5 shrink-0">
+                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.unarchive')} onClick={() => setActive(g.id, true)}>
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
+                          <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -486,7 +596,7 @@ export default function GoalsPage() {
         <DialogContent>
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Target className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Target className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('goals.dialog_edit_title') : t('goals.dialog_new_title')}</DialogTitle>
                 <DialogDescription>{t('goals.dialog_desc')}</DialogDescription>
@@ -507,7 +617,7 @@ export default function GoalsPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(GOAL_CATEGORIES).map((k) => (
+                  {GOAL_CATEGORY_KEYS.map((k) => (
                     <SelectItem key={k} value={k}>{categoryLabel(k)}</SelectItem>
                   ))}
                 </SelectContent>
@@ -523,10 +633,19 @@ export default function GoalsPage() {
                 <NumberInput value={form.current_amount} onChange={(n) => setForm({ ...form, current_amount: n })} placeholder="0" />
               </div>
             </div>
-            <div className="grid gap-1.5">
-              <Label>{t('goals.field_deadline')}</Label>
-              <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>{t('goals.field_deadline')}</Label>
+                <Input type="date" min={form.id ? undefined : today} value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>{t('goals.field_plan')}</Label>
+                <NumberInput value={form.planned_monthly} onChange={(n) => setForm({ ...form, planned_monthly: n })} placeholder="0" />
+              </div>
             </div>
+            <p className="text-[11px] -mt-1" style={{ color: 'var(--ink-soft)' }}>
+              {t('goals.field_plan_hint')}
+            </p>
             <div className="grid gap-1.5">
               <Label>{t('goals.field_strategy')}</Label>
               <Select value={form.savings_strategy} onValueChange={(v) => v && setForm({ ...form, savings_strategy: v })}>
@@ -536,8 +655,8 @@ export default function GoalsPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {STRATEGY_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{strategyLabel(o.value)}</SelectItem>
+                  {STRATEGY_VALUES.map((v) => (
+                    <SelectItem key={v} value={v}>{strategyLabel(v)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -552,7 +671,7 @@ export default function GoalsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('goals.cancel')}</Button>
-            <Button onClick={save} disabled={saving || !form.name}>
+            <Button onClick={save} disabled={saving || !form.name.trim()}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {form.id ? t('goals.save') : t('goals.add')}
             </Button>
@@ -561,7 +680,7 @@ export default function GoalsPage() {
       </Dialog>
 
       {/* Setor — nambah nominal ke Terkumpul (aksi beneran, bukan buka form edit) */}
-      <Dialog open={!!depositGoal} onOpenChange={(o) => { if (!o) { setDepositGoal(null); setDepositAmt(0) } }}>
+      <Dialog open={!!depositGoal} onOpenChange={(o) => { if (!o) { setDepositGoal(null); setDepositAmt(0); setDepositLogTx(false) } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('goals.deposit_to')} {depositGoal?.name}</DialogTitle>
@@ -576,13 +695,22 @@ export default function GoalsPage() {
               <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>
                 {t('goals.collected_label')} <span className="num">{formatCurrency(depositGoal.current_amount)}</span>
                 {depositAmt > 0 && (
-                  <> {' → '}<span className="num font-semibold" style={{ color: '#10B981' }}>{formatCurrency(depositGoal.current_amount + depositAmt)}</span></>
+                  <> {' → '}<span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(depositGoal.current_amount + depositAmt)}</span></>
                 )}
               </p>
             )}
+            <label className="flex items-center gap-2 text-[12px] cursor-pointer select-none" style={{ color: 'var(--ink-muted)' }}>
+              <input
+                type="checkbox"
+                checked={depositLogTx}
+                onChange={(e) => setDepositLogTx(e.target.checked)}
+                className="size-3.5 accent-[var(--c-mint)]"
+              />
+              {t('goals.deposit_log_tx')}
+            </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDepositGoal(null); setDepositAmt(0) }}>{t('goals.cancel')}</Button>
+            <Button variant="outline" onClick={() => { setDepositGoal(null); setDepositAmt(0); setDepositLogTx(false) }}>{t('goals.cancel')}</Button>
             <Button onClick={doDeposit} disabled={depositing || depositAmt <= 0}>
               {depositing && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('goals.deposit_submit')}

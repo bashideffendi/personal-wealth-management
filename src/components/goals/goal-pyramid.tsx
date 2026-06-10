@@ -6,8 +6,8 @@
  * Ambisi (puncak). Bukan pajangan: ngitung tier mana yang harus diamankan dulu
  * (tier terbawah yang belum 100%) dan kasih 1 rekomendasi konkret.
  *
- * Penempatan tier dari categoryToPyramidLayer() (logika app), BUKAN manual —
- * jadi konsisten + bener (dana darurat/pendidikan = Aman, liburan = Ambisi).
+ * Penempatan tier dari categoryToPyramidLayer() (kategori × horizon), BUKAN
+ * manual — dana darurat & kebutuhan dekat = Aman, keinginan = Ambisi.
  */
 
 import { useMemo } from 'react'
@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/utils'
 import {
   PYRAMID_LAYERS,
   categoryToPyramidLayer,
+  monthsUntil,
   type PyramidLayer,
 } from '@/lib/goal-probability'
 import { EduTip } from '@/components/edu/edu-tip'
@@ -41,11 +42,15 @@ const BOTTOM_UP: PyramidLayer[] = ['pelindung', 'pertumbuhan', 'mimpi']
 
 const goalPct = (g: Goal) => (g.target_amount > 0 ? g.current_amount / g.target_amount : 1)
 
+const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
+
 export function GoalPyramid({ goals, onSetor }: Props) {
   const t = useT()
+  const layerLabel = (key: PyramidLayer) => t(`goal_pyramid.layer_${key}`)
+
   const { grouped, agg, focus, focusGoalId } = useMemo(() => {
     const grouped: Record<PyramidLayer, Goal[]> = { pelindung: [], pertumbuhan: [], mimpi: [] }
-    for (const g of goals) grouped[categoryToPyramidLayer(g.category)].push(g)
+    for (const g of goals) grouped[categoryToPyramidLayer(g.category, monthsUntil(g.deadline))].push(g)
 
     const agg = {} as Record<PyramidLayer, { current: number; target: number; pct: number }>
     for (const key of BOTTOM_UP) {
@@ -68,25 +73,28 @@ export function GoalPyramid({ goals, onSetor }: Props) {
   const hasAman = grouped.pelindung.length > 0
 
   // Insight actionable — 1 kalimat yang ngarahin keputusan.
-  let insight: { text: string; tone: 'focus' | 'warn' | 'done'; color: string }
+  let insight: { text: string; tone: 'focus' | 'warn' | 'done'; color: string; ink: string }
   if (!hasAman) {
     insight = {
       text: t('goal_pyramid.insight_no_safe'),
       tone: 'warn',
-      color: '#F59E0B',
+      color: 'var(--c-amber)',
+      ink: 'var(--c-amber-ink)',
     }
   } else if (focus) {
     const meta = PYRAMID_LAYERS[focus]
     insight = {
-      text: `${t('goal_pyramid.insight_secure_prefix')} ${meta.label} ${t('goal_pyramid.insight_secure_mid')} ${agg[focus].pct.toFixed(0)}% ${t('goal_pyramid.insight_secure_collected')} (${formatCurrency(agg[focus].current)} ${t('goal_pyramid.insight_of')} ${formatCurrency(agg[focus].target)}). ${t('goal_pyramid.insight_prioritize')}`,
+      text: `${t('goal_pyramid.insight_secure_prefix')} ${layerLabel(focus)} ${t('goal_pyramid.insight_secure_mid')} ${agg[focus].pct.toFixed(0)}% ${t('goal_pyramid.insight_secure_collected')} (${formatCurrency(agg[focus].current)} ${t('goal_pyramid.insight_of')} ${formatCurrency(agg[focus].target)}). ${t('goal_pyramid.insight_prioritize')}`,
       tone: 'focus',
       color: meta.color,
+      ink: meta.ink,
     }
   } else {
     insight = {
       text: t('goal_pyramid.insight_all_full'),
       tone: 'done',
-      color: '#10B981',
+      color: 'var(--c-mint)',
+      ink: 'var(--c-mint-ink)',
     }
   }
 
@@ -115,9 +123,9 @@ export function GoalPyramid({ goals, onSetor }: Props) {
       </div>
 
       {/* Insight actionable */}
-      <div className="mt-3 rounded-lg px-3 py-2.5" style={{ background: `${insight.color}14` }}>
+      <div className="mt-3 rounded-lg px-3 py-2.5" style={{ background: tint(insight.color, 9) }}>
         <div className="flex items-start gap-2.5">
-          <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: insight.color }} />
+          <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: insight.ink }} />
           <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
             {insight.text}
           </p>
@@ -127,7 +135,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
             type="button"
             onClick={() => onSetor(focusGoalId)}
             className="mt-2.5 ml-[26px] inline-flex items-center gap-1 text-[12px] font-semibold hover:underline"
-            style={{ color: insight.color }}
+            style={{ color: insight.ink }}
           >
             {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3.5" />
           </button>
@@ -147,23 +155,23 @@ export function GoalPyramid({ goals, onSetor }: Props) {
                 className="rounded-lg border px-3 py-2.5 transition-all"
                 style={{
                   width: widthFor[key],
-                  background: `${meta.color}0F`,
-                  borderColor: isFocus ? meta.color : `${meta.color}33`,
+                  background: tint(meta.color, 6),
+                  borderColor: isFocus ? meta.color : tint(meta.color, 20),
                   boxShadow: isFocus ? `0 0 0 1px ${meta.color}` : 'none',
                 }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: meta.color }}>
-                    {meta.label}
-                    {isFocus && <span className="ml-1.5 font-medium normal-case opacity-80">· fokus di sini</span>}
+                  <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: meta.ink }}>
+                    {layerLabel(key)}
+                    {isFocus && <span className="ml-1.5 font-medium normal-case opacity-80">· {t('goal_pyramid.focus_here')}</span>}
                   </span>
-                  <span className="num text-[11px] font-semibold shrink-0" style={{ color: meta.color }}>
+                  <span className="num text-[11px] font-semibold shrink-0" style={{ color: meta.ink }}>
                     {items.length > 0 ? `${a.pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 {items.length === 0 ? (
                   <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
-                    Belum ada tujuan.
+                    {t('goal_pyramid.empty_tier')}
                   </p>
                 ) : (
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
@@ -174,7 +182,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
                     ))}
                     {items.length > 4 && (
                       <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                        +{items.length - 4} lain
+                        +{items.length - 4} {t('goal_pyramid.more_suffix')}
                       </span>
                     )}
                   </div>
@@ -193,30 +201,15 @@ export function GoalPyramid({ goals, onSetor }: Props) {
         {BOTTOM_UP.map((key) => {
           const meta = PYRAMID_LAYERS[key]
           return (
-            <div key={key} className="flex items-center gap-1.5 text-[11px]">
-              <ArrowRight className="size-3 shrink-0" style={{ color: meta.color }} />
-              <span className="num font-semibold truncate" style={{ color: 'var(--ink)' }}>
+            <div key={key} className="min-w-0 text-[11px]">
+              <p className="uppercase tracking-wide truncate" style={{ color: meta.ink }}>{layerLabel(key)}</p>
+              <p className="num font-semibold truncate mt-0.5" style={{ color: 'var(--ink)' }}>
                 {formatCurrency(agg[key].current)}
-              </span>
+              </p>
             </div>
           )
         })}
       </div>
     </div>
-  )
-}
-
-/** Mini badge — di mana satu goal duduk di piramida. */
-export function GoalLayerBadge({ category }: { category: string }) {
-  const layer = categoryToPyramidLayer(category)
-  const meta = PYRAMID_LAYERS[layer]
-  return (
-    <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-      style={{ background: `${meta.color}1A`, color: meta.color }}
-      title={meta.description}
-    >
-      {meta.label}
-    </span>
   )
 }
