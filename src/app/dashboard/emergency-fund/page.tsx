@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
-import { Plus, Minus, Pencil, Trash2, Loader2, Check, Info, ChevronDown, ShieldCheck, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { Plus, Minus, Pencil, Trash2, Loader2, Check, ChevronDown, ShieldCheck, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { useT } from '@/lib/i18n/context'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
@@ -26,12 +27,14 @@ function calculateMultiplier(stability: JobStability, dependents: number): numbe
   return dependents === 0 ? 9 : dependents <= 2 ? 10 : 12
 }
 
-const AMBER = '#F59E0B'
-const MINT = '#10B981'
+const AMBER = 'var(--c-amber)'
+const AMBER_INK = 'var(--c-amber-ink)'
+const MINT = 'var(--c-mint)'
+const MINT_INK = 'var(--c-mint-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 // Preset lokasi/instrumen (ikut sheet user) — tetap bisa ketik bebas.
 const LOCATION_PRESETS = ['Tabungan', 'Deposito', 'Reksa Dana Pasar Uang', 'Emas', 'Saham', 'P2P Lending', 'Lainnya']
 
-const monthYearNow = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
 const dmy = (d: string) => (d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : '—')
 const todayISO = () => new Date().toISOString().split('T')[0]
 function etaDate(months: number): string {
@@ -264,19 +267,13 @@ export default function EmergencyFundPage() {
   useEffect(() => { setMonthlySaving((v) => (v > 0 || deficit <= 0 ? v : Math.ceil(deficit / 12))) }, [deficit])
   const monthsToGoal = monthlySaving > 0 ? Math.ceil(deficit / monthlySaving) : 0
 
-  const scenarios = monthlyExpenses > 0 ? [
-    { label: t('emergency_fund.scenario_essential_label'), note: t('emergency_fund.scenario_essential_note'), exp: monthlyExpenses * 0.78 },
-    { label: t('emergency_fund.scenario_current_label'), note: t('emergency_fund.scenario_current_note'), exp: monthlyExpenses },
-    { label: t('emergency_fund.scenario_full_label'), note: t('emergency_fund.scenario_full_note'), exp: monthlyExpenses * 1.35 },
-  ].map((s) => ({ ...s, months: s.exp > 0 ? accumulatedFund / s.exp : 0 })) : []
-
   // Komposisi lokasi (bar) — akun riil (sinkron Aset Likuid) + lokasi non-akun.
   const allLocations = useMemo(() => [
     ...accountAllocations.map((a) => ({ key: `acc-${a.id}`, kind: 'account' as const, name: a.accounts?.name ?? 'Akun', amount: a.amount, balance: a.accounts?.current_balance ?? 0, allocId: a.id, accountId: a.account_id })),
     ...locations.map((l) => ({ key: `loc-${l.id}`, kind: 'manual' as const, name: l.account_name, amount: l.amount, balance: null as number | null, allocId: l.id, accountId: null as string | null })),
   ].filter((l) => l.amount > 0).sort((a, b) => b.amount - a.amount), [accountAllocations, locations])
   const linkedAccountIds = new Set(accountAllocations.map((a) => a.account_id))
-  const locPalette = [AMBER, '#8B5CF6', MINT, '#6366F1', '#0EA5E9', '#F43F5E', '#64748B']
+  const locPalette = [AMBER, 'var(--c-violet)', MINT, 'var(--ink)', 'var(--c-coral)', 'var(--ink-soft)']
 
   // Perjalanan membangun dana — kumulatif dari log. Baseline = saldo sebelum transaksi tercatat.
   const journey = useMemo(() => {
@@ -298,26 +295,24 @@ export default function EmergencyFundPage() {
       <datalist id="ef-dest">
         {[...new Set([...accounts.map((a) => a.name), ...locations.map((l) => l.account_name), ...LOCATION_PRESETS])].map((p) => <option key={p} value={p} />)}
       </datalist>
-      {/* Header — DI LUAR card (di background halaman), ikut mock */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="max-w-xl">
-          <p className="text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.header_eyebrow')} · {monthYearNow}</p>
-          <h1 className="mt-0.5 text-2xl sm:text-3xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>{t('emergency_fund.page_title')}</h1>
-          <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.page_subtitle')}</p>
-        </div>
-        <Button onClick={openTxn}><Plus className="h-4 w-4" /> {t('emergency_fund.set_fund_button')}</Button>
-      </div>
+      {/* Header quiet (konsisten work pages) — subtitle + edukasi + tips
+          ngumpul di satu ⓘ, gak jadi kartu statis yang makan halaman. */}
+      <QuietPageHeader
+        title={t('emergency_fund.page_title')}
+        info={`${t('emergency_fund.page_subtitle')} ${t('emergency_fund.info_benchmark')} ${t('emergency_fund.tip_1')} ${t('emergency_fund.tip_2')}`}
+        actions={<Button onClick={openTxn}><Plus className="h-4 w-4" /> {t('emergency_fund.set_fund_button')}</Button>}
+      />
 
       {/* Card — cuma ring (kiri, amber-tint) + metrik (kanan, surface). Tanpa judul di dalam. */}
-      <div className="grid sm:grid-cols-[auto_1fr] rounded-2xl border overflow-hidden" style={{ borderColor: `${AMBER}33` }}>
-        <div className="grid place-items-center p-6 sm:p-8" style={{ background: `${AMBER}0F` }}>
+      <div className="grid sm:grid-cols-[auto_1fr] rounded-2xl border overflow-hidden" style={{ borderColor: tint(AMBER, 20) }}>
+        <div className="grid place-items-center p-6 sm:p-8" style={{ background: tint(AMBER, 6) }}>
           <div className="relative size-36">
             <svg viewBox="0 0 120 120" className="size-36 -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke={`${AMBER}33`} strokeWidth="11" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke={tint(AMBER, 20)} strokeWidth="11" />
               <circle cx="60" cy="60" r="52" fill="none" stroke={AMBER} strokeWidth="11" strokeLinecap="round" strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="num font-bold" style={{ fontSize: 'clamp(28px,3vw,36px)', color: AMBER, letterSpacing: '-0.02em' }}>{progressPercent.toFixed(0)}%</span>
+              <span className="num font-bold" style={{ fontSize: 'clamp(28px,3vw,36px)', color: AMBER_INK, letterSpacing: '-0.02em' }}>{progressPercent.toFixed(0)}%</span>
               <span className="text-[10px] uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.ring_achieved')}</span>
             </div>
           </div>
@@ -328,7 +323,7 @@ export default function EmergencyFundPage() {
             <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
             <button type="button" onClick={() => document.getElementById('ef-kalkulator')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="text-base font-normal inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : t('emergency_fund.set_target_inline')} <Pencil className="size-3" /></button>
           </p>
-          <div className="mt-4 h-2.5 w-full rounded-full overflow-hidden" style={{ background: `${AMBER}26` }}>
+          <div className="mt-4 h-2.5 w-full rounded-full overflow-hidden" style={{ background: tint(AMBER, 15) }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%`, background: AMBER }} />
           </div>
           {targetAmount > 0 ? (
@@ -337,34 +332,17 @@ export default function EmergencyFundPage() {
                 {/* Mint cuma kalau coverage udah nyampe target — 0 bulan jangan hijau. */}
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_coverage')}</p><p className="num font-bold mt-1" style={{ color: coverageMonths >= targetMonths && targetAmount > 0 ? 'var(--c-mint-ink)' : 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_target')}</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} {t('emergency_fund.months_unit')}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_deficit')}</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? '#F43F5E' : MINT, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : t('emergency_fund.metric_achieved')}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_deficit')}</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? 'var(--c-coral-ink)' : MINT_INK, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : t('emergency_fund.metric_achieved')}</p></div>
               </div>
               {coverageMonths > 0 && <p className="mt-4 text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.coverage_explainer_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</span> {t('emergency_fund.coverage_explainer_until')} {etaDate(coverageMonths)}.</p>}
             </>
           ) : (
-            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.empty_target_pre')} <span className="font-semibold" style={{ color: '#B45309' }}>{t('emergency_fund.empty_target_calculator')}</span> {t('emergency_fund.empty_target_mid')} <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: '#B45309' }}>{t('emergency_fund.empty_target_action')}</button> {t('emergency_fund.empty_target_post')}</p>
+            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.empty_target_pre')} <span className="font-semibold" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_calculator')}</span> {t('emergency_fund.empty_target_mid')} <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_action')}</button> {t('emergency_fund.empty_target_post')}</p>
           )}
         </div>
       </div>
 
-      {/* Edukasi — apa itu dana darurat (adaptasi referensi user) */}
-      <div className="s-card p-5 sm:p-6">
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: '#8B5CF6' }}><Info className="size-3.5" /> {t('emergency_fund.edu_title')}</p>
-        <p className="text-sm mt-2 leading-relaxed max-w-3xl" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.edu_body_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('emergency_fund.edu_body_emphasis')}</span> {t('emergency_fund.edu_body_post')}</p>
-        <div className="mt-4 grid sm:grid-cols-2 gap-3">
-          <div className="rounded-xl p-4" style={{ background: `${MINT}14` }}>
-            <p className="num text-2xl font-bold" style={{ color: '#059669' }}>{t('emergency_fund.edu_stable_range')}</p>
-            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.edu_stable_pre')} <span className="font-semibold">{t('emergency_fund.edu_stable_word')}</span> {t('emergency_fund.edu_stable_post')}</p>
-          </div>
-          <div className="rounded-xl p-4" style={{ background: `${AMBER}14` }}>
-            <p className="num text-2xl font-bold" style={{ color: '#B45309' }}>{t('emergency_fund.edu_unstable_range')}</p>
-            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.edu_unstable_pre')} <span className="font-semibold">{t('emergency_fund.edu_unstable_word')}</span> {t('emergency_fund.edu_unstable_post')}</p>
-          </div>
-        </div>
-        <p className="text-[12px] mt-3 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.edu_footnote')}</p>
-      </div>
-
-      {/* Kalkulator (kiri) + Rencana setoran & Skenario ditumpuk (kanan) biar ruang kepakai */}
+      {/* Kalkulator (kiri) + Rencana setoran (kanan) */}
       <div className="grid gap-3 lg:grid-cols-2 items-start">
         <div id="ef-kalkulator" className="scroll-mt-20 s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_title')}</p>
@@ -378,7 +356,7 @@ export default function EmergencyFundPage() {
                   return (
                     <button key={k} type="button" onClick={() => setJobStability(k)}
                       className="rounded-lg border px-2 py-2.5 text-[12px] font-medium leading-tight transition"
-                      style={{ borderColor: on ? AMBER : 'var(--border-soft)', background: on ? `${AMBER}14` : 'var(--surface)', color: on ? '#B45309' : 'var(--ink-muted)' }}>
+                      style={{ borderColor: on ? AMBER : 'var(--border-soft)', background: on ? tint(AMBER, 9) : 'var(--surface)', color: on ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
                       {t(`emergency_fund.job_stability_${k}`)}
                     </button>
                   )
@@ -396,12 +374,12 @@ export default function EmergencyFundPage() {
               </div>
               <div className="grid gap-1.5"><Label>{t('emergency_fund.calc_monthly_expenses')}</Label><RpField value={monthlyExpenses} onChange={setMonthlyExpenses} /></div>
             </div>
-            <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: `${AMBER}14` }}>
+            <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: tint(AMBER, 9) }}>
               <div>
-                <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: '#B45309' }}>{t('emergency_fund.calc_recommendation')}</p>
+                <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.calc_recommendation')}</p>
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.calc_rec_pre')} {multiplier} {t('emergency_fund.calc_rec_mid')} ({multiplier}{t('emergency_fund.calc_rec_post')})</p>
               </div>
-              <span className="num text-xl font-bold whitespace-nowrap" style={{ color: AMBER }}>{formatCurrency(recommendation)}</span>
+              <span className="num text-xl font-bold whitespace-nowrap" style={{ color: AMBER_INK }}>{formatCurrency(recommendation)}</span>
             </div>
             <div className="grid gap-1.5"><Label>{t('emergency_fund.calc_your_target')}</Label><RpField value={targetAmount} onChange={setTargetAmount} /></div>
             <Button onClick={handleSaveSettings} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{t('emergency_fund.calc_save_target')}</Button>
@@ -415,9 +393,9 @@ export default function EmergencyFundPage() {
             <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_short_pre')} {formatCurrency(deficit)}. {t('emergency_fund.plan_short_question')}</p>
             <div className="mt-3"><RpField value={monthlySaving} onChange={setMonthlySaving} /></div>
             {monthsToGoal > 0 ? (
-              <div className="mt-3 rounded-xl p-4" style={{ background: `${AMBER}14` }}>
+              <div className="mt-3 rounded-xl p-4" style={{ background: tint(AMBER, 9) }}>
                 <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_with')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlySaving)}</span>{t('emergency_fund.plan_per_month_reached')}</p>
-                <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER }}>{etaDate(monthsToGoal)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
+                <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER_INK }}>{etaDate(monthsToGoal)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
               </div>
             ) : (
               <p className="mt-3 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_enter_hint')}</p>
@@ -433,27 +411,12 @@ export default function EmergencyFundPage() {
         ) : (
           <div className="s-card p-5 grid place-items-center text-center">
             <div>
-              <div className="size-11 rounded-full grid place-items-center mx-auto" style={{ background: `${MINT}1A` }}><Check className="size-5" style={{ color: MINT }} /></div>
+              <div className="size-11 rounded-full grid place-items-center mx-auto" style={{ background: tint(MINT, 10) }}><Check className="size-5" style={{ color: MINT }} /></div>
               <p className="font-semibold mt-2" style={{ color: 'var(--ink)' }}>{targetAmount > 0 ? t('emergency_fund.safe_title') : t('emergency_fund.calc_first_title')}</p>
               <p className="text-[12px] mt-1 max-w-xs" style={{ color: 'var(--ink-muted)' }}>{targetAmount > 0 ? t('emergency_fund.safe_body') : t('emergency_fund.calc_first_body')}</p>
             </div>
           </div>
         )}
-        {/* Skenario penggunaan — ditaruh di kolom kanan biar ruangnya kepakai */}
-        <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.scenario_title')}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.scenario_subtitle')}</p>
-          <div className="mt-3 space-y-2">
-            {scenarios.length === 0 ? (
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.scenario_empty')}</p>
-            ) : scenarios.map((s) => (
-              <div key={s.label} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
-                <div className="min-w-0"><p className="text-sm" style={{ color: 'var(--ink)' }}>{s.label}</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{s.note}</p></div>
-                <span className="num font-semibold shrink-0 whitespace-nowrap" style={{ color: AMBER }}>{s.months.toFixed(1)} bln</span>
-              </div>
-            ))}
-          </div>
-        </div>
         </div>
       </div>
 
@@ -475,7 +438,7 @@ export default function EmergencyFundPage() {
               ) : t('emergency_fund.journey_empty_subtitle')}
             </p>
           </div>
-          {targetAmount > 0 && <span className="text-[11px] num" style={{ color: MINT }}>● {t('emergency_fund.metric_target')} {formatCurrency(targetAmount)}</span>}
+          {targetAmount > 0 && <span className="text-[11px] num" style={{ color: MINT_INK }}>● {t('emergency_fund.metric_target')} {formatCurrency(targetAmount)}</span>}
         </div>
         {journey.length >= 2 ? (() => {
           const W = 720, H = 180, padT = 14, padB = 6
@@ -494,7 +457,7 @@ export default function EmergencyFundPage() {
               </svg>
               <div className="flex items-center justify-between mt-1.5 text-[10px]" style={{ color: 'var(--ink-soft)' }}>
                 <span>{journey[0].label}</span>
-                <span className="font-semibold" style={{ color: AMBER }}>{t('emergency_fund.journey_now')} · {formatCurrency(accumulatedFund)}</span>
+                <span className="font-semibold" style={{ color: AMBER_INK }}>{t('emergency_fund.journey_now')} · {formatCurrency(accumulatedFund)}</span>
               </div>
             </div>
           )
@@ -512,7 +475,6 @@ export default function EmergencyFundPage() {
         <div className="s-card p-5">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.locations_title')}</p>
-            <Button variant="outline" size="sm" onClick={openTxn}><Plus className="h-3.5 w-3.5" /> {t('emergency_fund.set_short')}</Button>
           </div>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.locations_subtitle')}</p>
           {allLocations.length > 0 && (
@@ -526,8 +488,13 @@ export default function EmergencyFundPage() {
                 <span className="flex items-center gap-2 min-w-0">
                   <span className="size-2 rounded-full shrink-0" style={{ background: locPalette[i % locPalette.length] }} />
                   <span className="min-w-0">
-                    <span className="flex items-center gap-1.5 text-sm truncate" style={{ color: 'var(--ink)' }}>{l.name}{l.kind === 'account' && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded shrink-0" style={{ background: `${MINT}1A`, color: '#059669' }}>{t('emergency_fund.location_account_badge')}</span>}</span>
-                    {l.kind === 'account' && <span className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.location_account_balance')} {formatCurrency(l.balance ?? 0)}</span>}
+                    <span className="flex items-center gap-1.5 text-sm truncate" style={{ color: 'var(--ink)' }}>{l.name}{l.kind === 'account' && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded shrink-0" style={{ background: tint(MINT, 10), color: 'var(--c-mint-ink)' }}>{t('emergency_fund.location_account_badge')}</span>}</span>
+                    {l.kind === 'account' && (
+                      <span className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                        {t('emergency_fund.location_account_balance')} {formatCurrency(l.balance ?? 0)}
+                        {l.amount > (l.balance ?? Infinity) && <span className="font-semibold" style={{ color: 'var(--c-amber-ink)' }}> · {t('emergency_fund.over_balance_badge')}</span>}
+                      </span>
+                    )}
                   </span>
                 </span>
                 <span className="flex items-center gap-1 shrink-0">
@@ -557,7 +524,6 @@ export default function EmergencyFundPage() {
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.log_title')}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.log_subtitle')}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={openTxn}><Plus className="h-4 w-4" /> {t('emergency_fund.set_short')}</Button>
           </div>
           {transactions.length === 0 ? (
             <p className="px-5 pb-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.log_empty')}</p>
@@ -580,12 +546,12 @@ export default function EmergencyFundPage() {
                         <td className="px-5 py-2.5 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{dmy(tx.date)}</td>
                         <td className="px-3 py-2.5">
                           <span className="flex items-center gap-1.5 min-w-0">
-                            {setor ? <ArrowDownLeft className="size-3.5 shrink-0" style={{ color: MINT }} /> : <ArrowUpRight className="size-3.5 shrink-0" style={{ color: '#F43F5E' }} />}
+                            {setor ? <ArrowDownLeft className="size-3.5 shrink-0" style={{ color: MINT }} /> : <ArrowUpRight className="size-3.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />}
                             <span className="truncate" style={{ color: 'var(--ink)' }}>{tx.location || (setor ? t('emergency_fund.txn_deposit') : t('emergency_fund.txn_withdrawal'))}</span>
                             {tx.note && <span className="truncate text-[11px]" style={{ color: 'var(--ink-soft)' }}>· {tx.note}</span>}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 text-right num font-semibold whitespace-nowrap" style={{ color: setor ? MINT : '#F43F5E' }}>{setor ? '+' : '−'}{formatCurrency(tx.amount)}</td>
+                        <td className="px-3 py-2.5 text-right num font-semibold whitespace-nowrap" style={{ color: setor ? MINT_INK : 'var(--c-coral-ink)' }}>{setor ? '+' : '−'}{formatCurrency(tx.amount)}</td>
                         <td className="px-5 py-2.5 text-right">
                           <Button variant="ghost" size="icon-sm" className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition" onClick={() => handleDeleteTxn(tx)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                         </td>
@@ -599,22 +565,12 @@ export default function EmergencyFundPage() {
         </div>
       </div>
 
-      {/* Tips Klunting — full-width, bullet 2 kolom biar lebarnya kepakai */}
-      <div className="s-card p-5">
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: '#8B5CF6' }}><Check className="size-3.5" /> {t('emergency_fund.tips_title')}</p>
-        <ul className="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-2.5">
-          {[t('emergency_fund.tip_1'), t('emergency_fund.tip_2'), t('emergency_fund.tip_3'), t('emergency_fund.tip_4')].map((tip, i) => (
-            <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: 'var(--ink-muted)' }}><Check className="size-3.5 mt-0.5 shrink-0" style={{ color: MINT }} /> {tip}</li>
-          ))}
-        </ul>
-      </div>
-
       {/* Catat transaksi (pembentukan) */}
       <Dialog open={txnDialogOpen} onOpenChange={setTxnDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: `${MINT}1A` }}><ShieldCheck className="size-5" style={{ color: MINT }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(MINT, 10) }}><ShieldCheck className="size-5" style={{ color: MINT }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{t('emergency_fund.txn_dialog_title')}</DialogTitle>
                 <DialogDescription>{t('emergency_fund.txn_dialog_desc')}</DialogDescription>
@@ -622,8 +578,8 @@ export default function EmergencyFundPage() {
             </div>
           </DialogHeader>
           <div className="grid gap-4 py-2">
-            <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: `${MINT}14`, border: `1px solid ${MINT}33` }}>
-              <Check className="size-4 mt-0.5 shrink-0" style={{ color: '#059669' }} />
+            <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: tint(MINT, 9), border: `1px solid ${tint(MINT, 20)}` }}>
+              <Check className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
               <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>{t('emergency_fund.txn_note_pre')} <strong>{t('emergency_fund.txn_note_emphasis')}</strong> {t('emergency_fund.txn_note_post')}</p>
             </div>
 
@@ -673,10 +629,10 @@ export default function EmergencyFundPage() {
                 return (
                   <div className="mt-1">
                     <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: over ? '#F43F5E' : MINT }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: over ? 'var(--c-coral)' : MINT }} />
                     </div>
                     <div className="flex items-center justify-between mt-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                      <span>{t('emergency_fund.txn_marked')} <span className="font-semibold" style={{ color: over ? '#E11D48' : 'var(--ink)' }}>{pct.toFixed(0)}%</span> {t('emergency_fund.txn_of_balance')}{over ? ` · ${t('emergency_fund.txn_over_balance')}` : ''}</span>
+                      <span>{t('emergency_fund.txn_marked')} <span className="font-semibold" style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}>{pct.toFixed(0)}%</span> {t('emergency_fund.txn_of_balance')}{over ? ` · ${t('emergency_fund.txn_over_balance')}` : ''}</span>
                       <button type="button" onClick={() => setTxnForm((f) => ({ ...f, total: acc.current_balance }))} className="num hover:underline" style={{ color: 'var(--ink-soft)' }}>{formatCurrency(txnForm.total)} / {formatCurrency(acc.current_balance)}</button>
                     </div>
                   </div>
@@ -735,7 +691,7 @@ export default function EmergencyFundPage() {
             <div className="grid gap-1.5">
               <Label>{t('emergency_fund.link_earmark_label')}</Label>
               <RpField value={linkForm.amount} onChange={(n) => setLinkForm((f) => ({ ...f, amount: n }))} />
-              {(() => { const acc = accounts.find((a) => a.id === linkForm.accountId); return acc && linkForm.amount > acc.current_balance ? <p className="text-[11px]" style={{ color: '#B45309' }}>{t('emergency_fund.link_over_balance')} ({formatCurrency(acc.current_balance)}).</p> : null })()}
+              {(() => { const acc = accounts.find((a) => a.id === linkForm.accountId); return acc && linkForm.amount > acc.current_balance ? <p className="text-[11px]" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.link_over_balance')} ({formatCurrency(acc.current_balance)}).</p> : null })()}
             </div>
           </div>
           <DialogFooter>

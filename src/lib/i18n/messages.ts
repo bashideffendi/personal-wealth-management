@@ -2264,6 +2264,8 @@ export const messages = {
     emergency_fund: {
       page_title: "Dana Darurat",
       header_eyebrow: "Bantalan keuangan",
+      info_benchmark: "Patokan umum: 3–6 bulan pengeluaran kalau penghasilanmu stabil, 6–12 bulan kalau gak menentu — makin banyak tanggungan, siapkan lebih besar.",
+      over_balance_badge: "melebihi saldo",
       page_subtitle: "Tabungan terpisah buat kejadian tak terduga: kehilangan pekerjaan, masalah kesehatan, perbaikan besar.",
       set_fund_button: "Atur dana darurat",
       set_short: "Atur",
@@ -5440,6 +5442,8 @@ export const messages = {
     emergency_fund: {
       page_title: "Emergency Fund",
       header_eyebrow: "Financial safety net",
+      info_benchmark: "Rule of thumb: 3–6 months of expenses if your income is stable, 6–12 months if it’s irregular — more dependents, bigger cushion.",
+      over_balance_badge: "exceeds balance",
       page_subtitle: "A separate savings pool for the unexpected: job loss, health issues, major repairs.",
       set_fund_button: "Set up emergency fund",
       set_short: "Set",
