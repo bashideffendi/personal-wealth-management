@@ -17,7 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus, Pencil, Trash2, Loader2, ArrowRight, Target,
+  Plus, Pencil, Trash2, Loader2, ArrowRight, Target, TrendingUp, Repeat, Trophy,
   Home, Car, Plane, GraduationCap, Smartphone, Heart, ShieldCheck, PiggyBank, Briefcase,
   Archive, RotateCcw,
   type LucideIcon,
@@ -410,41 +410,34 @@ export default function GoalsPage() {
         </div>
       ) : (
         <>
-          {/* Satu lembar, satu suara: hero satu angka → satu kalimat direktif
-              → baris goal. Stat cards dibuang — datanya hidup di hero, dan
-              halaman cuma punya SATU anchor fokal. */}
-          <div className="s-card p-0 overflow-hidden">
-            {/* Hero — progres gabungan semua tujuan */}
-            <div className="px-5 sm:px-7 pt-6 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
-              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
-                <p
-                  className="leading-none"
-                  style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(54px, 6vw, 74px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}
-                >
-                  {stats.pct.toFixed(0)}<span style={{ fontSize: '0.42em' }}>%</span>
-                </p>
-                <div className="flex-1 min-w-[250px] pb-1.5">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <p className="num text-[15px]" style={{ color: 'var(--ink)' }}>
-                      <span className="font-semibold">{formatCompactCurrency(stats.totalCurrent)}</span>
-                      <span style={{ color: 'var(--ink-soft)' }}> / {formatCompactCurrency(stats.totalTarget)}</span>
-                    </p>
-                    <p className="text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
-                      {activeGoals.length} {t('goals.goals_unit')}{stats.tercapai > 0 && ` · ${stats.tercapai} ${t('goals.achieved')}`}
-                    </p>
+          {/* Baris stat — pola KPI tile app-wide (selaras Transaksi/Anggaran/
+              Investasi): card netral + icon chip soft-tint. Kartu ke-4 =
+              Tercapai (nyata & memotivasi), bukan probabilitas rata-rata
+              sirkular yang dulu nangkring di situ. */}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: t('goals.stat_total_target'), value: formatCompactCurrency(stats.totalTarget), sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
+              { label: t('goals.stat_collected'), value: formatCompactCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
+              { label: t('goals.stat_monthly_contribution'), value: formatCompactCurrency(stats.iuranBulan), sub: stats.iuranVsIncome != null ? `${stats.iuranVsIncome.toFixed(0)}% ${t('goals.of_income')}` : `${stats.deadlineCount} ${t('goals.goals_with_deadline')}`, subColor: iuranWarnColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
+              { label: t('goals.stat_achieved'), value: `${stats.tercapai} / ${activeGoals.length}`, sub: activeGoals[0]?.deadline ? `${t('goals.stat_nearest')} ${new Date(activeGoals[0].deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}` : '—', subColor: 'var(--ink-soft)', icon: Trophy, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
+            ].map((c) => (
+              <div key={c.label} className="s-card p-5">
+                <div className="flex items-start justify-between">
+                  <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{c.label}</p>
+                  <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.chip }}>
+                    <c.icon className="size-4" style={{ color: c.color }} />
                   </div>
-                  <TickGauge pct={stats.pct} tone="var(--ink)" />
-                  <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
-                    {t('goals.monthly_label').toLowerCase()}{' '}
-                    <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCompactCurrency(stats.iuranBulan)}{t('goals.per_month_suffix')}</span>
-                    {stats.iuranVsIncome != null && (
-                      <span style={{ color: iuranWarnColor }}> · {stats.iuranVsIncome.toFixed(0)}% {t('goals.of_income')}</span>
-                    )}
-                  </p>
                 </div>
+                <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>
+                  {c.value}
+                </p>
+                <p className="text-[11px] mt-1.5" style={{ color: c.subColor }}>{c.sub}</p>
               </div>
-            </div>
+            ))}
+          </div>
 
+          {/* Lembar tujuan — direktif prioritas + baris passbook */}
+          <div className="s-card p-0 overflow-hidden">
             <GoalPyramid
               goals={activeGoals}
               onSetor={(id) => {
