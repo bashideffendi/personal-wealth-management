@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import type { Goal } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import { useT } from '@/lib/i18n/context'
 import {
@@ -123,21 +124,21 @@ const STATUS_DOT: Record<'ok' | 'risk' | 'overdue' | 'done', string> = {
 }
 
 /**
- * TickGauge — progress sebagai skala garis halus ala penggaris cetak, bukan
- * pill bar. Dua lapis repeating-gradient (tick 2px, pitch 6px): jejak tipis
- * sepanjang baris, bagian terisi lebih tinggi & pekat. Ink-first: warna cuma
- * muncul saat tercapai (mint) atau lewat deadline (coral).
+ * TickGauge — isi solid tipis + jarum penanda di ujung, berjalan di atas
+ * jejak tick samar (skala cetak). Versi tick-penuh sebelumnya kebaca kayak
+ * barcode di lebar besar — solid jauh lebih tenang, jarum kasih presisi.
+ * Ink-first: warna cuma saat tercapai (mint) / lewat deadline (coral).
  */
 function TickGauge({ pct, tone }: { pct: number; tone: string }) {
-  const ticks = (color: string) =>
-    `repeating-linear-gradient(90deg, ${color} 0 2px, transparent 2px 6px)`
+  const w = Math.min(pct, 100)
   return (
-    <div className="mt-2 relative h-[13px]" aria-hidden>
-      <div className="absolute inset-x-0 bottom-0 h-[7px]" style={{ background: ticks('var(--border)') }} />
+    <div className="relative h-[14px] w-full" aria-hidden>
       <div
-        className="absolute left-0 bottom-0 h-[13px]"
-        style={{ width: `${Math.min(pct, 100)}%`, background: ticks(tone) }}
+        className="absolute inset-x-0 bottom-[3px] h-[7px]"
+        style={{ background: 'repeating-linear-gradient(90deg, var(--border) 0 2px, transparent 2px 7px)' }}
       />
+      <div className="absolute left-0 bottom-[3px] h-[7px]" style={{ width: `${w}%`, background: tone }} />
+      <div className="absolute bottom-0 h-[14px] w-[2px]" style={{ left: `calc(${w}% - 1px)`, background: tone }} />
     </div>
   )
 }
@@ -450,106 +451,95 @@ export default function GoalsPage() {
               }}
             />
             {derived.map((d, i) => {
-              const { g, pct, remaining, perMonth, planned, contribution, done, layer, prob, requiredFor90 } = d
+              const { g, pct, remaining, perMonth, planned, contribution, done, prob, requiredFor90 } = d
               const Icon = CATEGORY_ICON[g.category] ?? Target
               const status = goalStatus(g, pct, done)
               const gaugeTone = done ? 'var(--c-mint)' : status?.tone === 'overdue' ? 'var(--c-coral)' : 'var(--ink)'
+              // Detail asumsi pindah ke tooltip ⓘ — baris harus kebaca sekali
+              // lirik, bukan paragraf metadata.
+              const assumption = d.profileKey && !done
+                ? `${t('goals.assume_prefix')} ${t(`goals.profile_${d.profileKey}`)} ~${Math.round((d.profileRet ?? 0) * 100)}${t('goals.percent_per_year')}, ${t('goals.assume_contrib')} ${formatCurrency(contribution)}${t('goals.per_month_suffix')}${planned == null ? ` (${t('goals.assume_default_plan')})` : ''}${prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution ? ` · ${t('goals.bump_to')} ${formatCurrency(requiredFor90)}${t('goals.per_month_suffix')} ${t('goals.for_90')}` : ''}`
+                : null
               return (
-                <div key={g.id} className="group px-5 sm:px-7 py-5 border-t transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_45%,transparent)]" style={{ borderColor: 'var(--border-soft)' }}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Icon className="size-4 shrink-0" strokeWidth={1.75} style={{ color: 'var(--ink-soft)' }} />
-                        <h3 className="text-[19px] leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-                          {g.name}
-                        </h3>
-                        {i === 0 && g.deadline && !done && (
-                          <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>
-                            {t('goals.badge_nearest')}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] mt-1 flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--ink-soft)' }}>
-                        {g.deadline
-                          ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
-                          : categoryLabel(g.category)}
-                        <span aria-hidden>·</span>
-                        {t(`goal_pyramid.layer_${layer}`)}
-                        {status && (
-                          <>
-                            <span aria-hidden>·</span>
-                            <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[9.5px]" style={{ color: 'var(--ink-muted)' }}>
-                              <span aria-hidden className="size-[5px] rounded-full" style={{ background: STATUS_DOT[status.tone] }} />
-                              {t(`goals.${status.key}`)}
+                <div
+                  key={g.id}
+                  className="group px-5 sm:px-7 py-4 border-t transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_45%,transparent)]"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  {/* Satu napas per goal: nama+meta | angka | gauge | % | aksi.
+                      Kolom konsisten antar baris biar mata bisa scan vertikal. */}
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 md:grid md:grid-cols-[minmax(0,1fr)_205px_150px_92px_auto] md:gap-x-7">
+                    <div className="min-w-0 flex items-start gap-3 w-full md:w-auto">
+                      <span className="num text-[10px] pt-[5px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Icon className="size-[15px] shrink-0" strokeWidth={1.75} style={{ color: 'var(--ink-soft)' }} />
+                          <h3 className="text-[17px] leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+                            {g.name}
+                          </h3>
+                          {i === 0 && g.deadline && !done && (
+                            <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>
+                              {t('goals.badge_nearest')}
                             </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    {/* Selalu kelihatan di touch; hover-reveal cuma di pointer device */}
-                    <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
-                      <Button variant="ghost" size="icon-sm" aria-label={t('goals.edit_aria')} onClick={() => openEdit(g)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
-                        <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-3.5 flex items-end gap-6 sm:gap-10">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="num text-[13px] truncate" style={{ color: 'var(--ink)' }}>
-                          <span className="font-semibold">{formatCurrency(g.current_amount)}</span>
-                          <span style={{ color: 'var(--ink-soft)' }}> / {formatCurrency(g.target_amount)}</span>
-                        </p>
-                        <p className="num text-[11px] shrink-0" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink-soft)' }}>
-                          {done ? t('goals.target_reached') : `${t('goals.remaining')} ${formatCurrency(remaining)}`}
+                          )}
+                        </div>
+                        <p className="text-[11px] mt-0.5 flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--ink-soft)' }}>
+                          {g.deadline
+                            ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
+                            : categoryLabel(g.category)}
+                          {status && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[9.5px]" style={{ color: 'var(--ink-muted)' }}>
+                                <span aria-hidden className="size-[5px] rounded-full" style={{ background: STATUS_DOT[status.tone] }} />
+                                {t(`goals.${status.key}`)}
+                              </span>
+                            </>
+                          )}
+                          {assumption && <InfoTip text={assumption} />}
                         </p>
                       </div>
-                      <TickGauge pct={pct} tone={gaugeTone} />
-                      <p className="text-[11px] mt-2.5 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
-                        {perMonth != null && (
-                          <>
-                            {t('goals.monthly_label').toLowerCase()}{' '}
-                            <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(perMonth)}</span>
-                          </>
-                        )}
-                        {prob != null && (
-                          <>
-                            {perMonth != null && ' · '}
-                            {t('goals.probability_label').toLowerCase()}{' '}
-                            <span className="num font-semibold" style={{ color: probInk(prob) }}>{prob.toFixed(0)}%</span>
-                          </>
-                        )}
-                        {d.profileKey && !done && (
-                          <>
-                            {' · '}{t('goals.assume_prefix').toLowerCase()} {t(`goals.profile_${d.profileKey}`)} ~{Math.round((d.profileRet ?? 0) * 100)}{t('goals.percent_per_year')}, {t('goals.assume_contrib')}{' '}
-                            <span className="num">{formatCurrency(contribution)}{t('goals.per_month_suffix')}</span>
-                            {planned == null && ` (${t('goals.assume_default_plan')})`}
-                          </>
-                        )}
-                        {prob != null && prob < 70 && requiredFor90 != null && requiredFor90 > contribution && (
-                          <>
-                            {' · '}{t('goals.bump_to')}{' '}
-                            <span className="num font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(requiredFor90)}{t('goals.per_month_suffix')}</span>{' '}
-                            {t('goals.for_90')}
-                          </>
-                        )}
+                    </div>
+
+                    <div className="md:text-right">
+                      <p className="num text-[13px]" style={{ color: 'var(--ink)' }}>
+                        <span className="font-semibold">{formatCompactCurrency(g.current_amount)}</span>
+                        <span style={{ color: 'var(--ink-soft)' }}> / {formatCompactCurrency(g.target_amount)}</span>
+                      </p>
+                      <p className="num text-[10.5px] mt-0.5" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink-soft)' }}>
+                        {done
+                          ? t('goals.target_reached')
+                          : perMonth != null
+                            ? `${t('goals.meta_monthly')} ${formatCompactCurrency(perMonth)}${t('goals.per_month_suffix')}`
+                            : `${t('goals.remaining')} ${formatCompactCurrency(remaining)}`}
                       </p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '2.4rem', color: 'var(--ink)' }}>
-                        {pct.toFixed(0)}<span style={{ fontSize: '1.2rem' }}>%</span>
+
+                    <div className="w-full md:w-auto">
+                      <TickGauge pct={pct} tone={gaugeTone} />
+                    </div>
+
+                    <div className="md:text-right">
+                      <p className="leading-none" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.9rem', color: 'var(--ink)' }}>
+                        {pct.toFixed(0)}<span style={{ fontSize: '1rem' }}>%</span>
                       </p>
-                      {/* Aksi quiet — text-link underline, bukan deretan tombol
-                          solid yang bikin tepi kanan lembar berisik. */}
+                      {prob != null && !done && (
+                        // Peluang diwarnai cuma kalau user set rencana sendiri —
+                        // angka default (iuran wajib) itu hipotesis, tampil tinta.
+                        <p className="text-[10px] mt-1" style={{ color: planned != null ? probInk(prob) : 'var(--ink-soft)' }}>
+                          {t('goals.probability_label').toLowerCase()} <span className="num font-semibold">{prob.toFixed(0)}%</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex md:flex-col items-center md:items-end gap-x-4 gap-y-1.5 ml-auto md:ml-0">
                       {done ? (
                         <button
                           type="button"
                           onClick={() => setActive(g.id, false)}
-                          className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition"
+                          className="inline-flex items-center gap-1.5 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition whitespace-nowrap"
                           style={{ color: 'var(--ink)' }}
                         >
                           <Archive className="size-3.5" /> {t('goals.archive')}
@@ -558,12 +548,21 @@ export default function GoalsPage() {
                         <button
                           type="button"
                           onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}
-                          className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition"
+                          className="inline-flex items-center gap-1 text-[12px] font-semibold underline underline-offset-4 decoration-[1.5px] hover:opacity-70 transition whitespace-nowrap"
                           style={{ color: 'var(--ink)' }}
                         >
                           {t('goals.deposit_now')} <ArrowRight className="size-3.5" />
                         </button>
                       )}
+                      {/* Selalu kelihatan di touch; hover-reveal di pointer device */}
+                      <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition">
+                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.edit_aria')} onClick={() => openEdit(g)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
+                          <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

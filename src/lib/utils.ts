@@ -25,8 +25,10 @@ export function formatDate(date: string | Date): string {
 export function formatCompactCurrency(amount: number): string {
   const sign = amount < 0 ? '-' : ''
   const abs = Math.abs(amount)
-  if (abs >= 1_000_000_000) return `${sign}Rp ${(abs / 1_000_000_000).toFixed(2)}M`
-  if (abs >= 1_000_000) return `${sign}Rp ${(abs / 1_000_000).toFixed(1)}jt`
+  // Trailing nol desimal dibuang — "Rp 40jt", bukan "Rp 40.0jt".
+  const trim = (s: string) => s.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
+  if (abs >= 1_000_000_000) return `${sign}Rp ${trim((abs / 1_000_000_000).toFixed(2))}M`
+  if (abs >= 1_000_000) return `${sign}Rp ${trim((abs / 1_000_000).toFixed(1))}jt`
   if (abs >= 1_000) return `${sign}Rp ${(abs / 1_000).toFixed(0)}rb`
   return `${sign}Rp ${abs.toFixed(0)}`
 }
