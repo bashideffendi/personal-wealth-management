@@ -18,11 +18,10 @@ export const maxDuration = 300
  *    sub (both used elsewhere in the app), and `expires_at` = period/trial end.
  *  - Dedup is by EXACT-date match: a once-daily run fires each threshold exactly
  *    once, so no extra column is needed. If the cron can run >1×/day, add a guard.
- *  - Needs env: SUPABASE_SERVICE_ROLE_KEY (scan all users) + CRON_SECRET.
- *  - NOT scheduled yet (no vercel.json crons entry) → totally inert until you
- *    wire it. To schedule (daily 02:00 UTC ≈ 09:00 WIB), add to vercel.json:
- *      { "crons": [{ "path": "/api/cron/reminders", "schedule": "0 2 * * *" }] }
- *    Vercel sends `Authorization: Bearer $CRON_SECRET` automatically.
+ *  - Needs env: SUPABASE_SERVICE_ROLE_KEY (scan all users) + CRON_SECRET +
+ *    RESEND_API_KEY (kalau absen, email lib no-op dan run-nya cuma log).
+ *  - Scheduled di vercel.json: daily 02:00 UTC ≈ 09:00 WIB. Vercel ngirim
+ *    `Authorization: Bearer $CRON_SECRET` otomatis.
  */
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://klunting.com'
