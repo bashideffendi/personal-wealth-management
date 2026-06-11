@@ -2,7 +2,8 @@
 
 import { toast } from 'sonner'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -26,11 +27,12 @@ import {
   Car, Smartphone, Zap, CheckCircle2, AlertCircle, Lightbulb, TrendingDown, Flag, type LucideIcon,
 } from 'lucide-react'
 
-const CAT: Record<string, { label: string; color: string; icon: LucideIcon }> = {
-  consumer:  { label: 'Konsumtif',      color: '#F43F5E', icon: CreditCard },
-  cash_loan: { label: 'Pinjaman Tunai', color: '#F59E0B', icon: Banknote },
-  long_term: { label: 'Jangka Panjang', color: '#8B5CF6', icon: Home },
+const CAT: Record<string, { label: string; color: string; ink: string; icon: LucideIcon }> = {
+  consumer:  { label: 'Konsumtif',      color: 'var(--c-coral)',  ink: 'var(--c-coral-ink)',  icon: CreditCard },
+  cash_loan: { label: 'Pinjaman Tunai', color: 'var(--c-amber)',  ink: 'var(--c-amber-ink)',  icon: Banknote },
+  long_term: { label: 'Jangka Panjang', color: 'var(--c-violet)', ink: 'var(--c-violet-ink)', icon: Home },
 }
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 const DEBT_TYPE_OPTIONS: Record<string, { value: string; label: string }[]> = {
   consumer: [
@@ -71,6 +73,15 @@ function ccNextDueISO(dueDay: number): string {
   return due.toISOString().split('T')[0]
 }
 
+/** Jatuh tempo berikutnya utang non-revolving: due_date tersimpan itu tanggal
+ *  TETAP (diisi sekali) — ambil HARI-nya lalu hitung kemunculan berikutnya.
+ *  Tanpa ini, begitu tanggalnya lewat, utang tampil "jatuh tempo" selamanya. */
+function nextDueISO(dateStr: string): string {
+  if (!dateStr) return ''
+  const day = new Date(dateStr).getDate()
+  return Number.isFinite(day) ? ccNextDueISO(day) : dateStr
+}
+
 function payoffDate(months: number): string {
   if (months <= 0 || months >= 600) return '—'
   const d = new Date(); d.setMonth(d.getMonth() + months)
@@ -97,11 +108,7 @@ const emptyForm = {
 export default function DebtsOverviewPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [debts, setDebts] = useState<Debt[]>([])
-  const [cards, setCards] = useState<CreditCardRow[]>([])
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
-  const [totalAssets, setTotalAssets] = useState(0)
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<typeof emptyForm>(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -110,35 +117,46 @@ export default function DebtsOverviewPage() {
   const [extraPayment, setExtraPayment] = useState(0)
   const [triedSave, setTriedSave] = useState(false)
 
-
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
-    const [debtsRes, ccRes, txRes, liqEntries, nlqRes, invRes] = await Promise.all([
-      supabase.from('debts').select('*').eq('user_id', user.id).order('remaining', { ascending: false }),
-      supabase.from('credit_cards').select('*').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
-      supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
-      fetchLiquidEntries(supabase, user.id),
-      supabase.from('assets_non_liquid').select('current_value').eq('user_id', user.id),
-      supabase.from('investments').select('total_value').eq('user_id', user.id),
-    ])
-    setDebts((debtsRes.data ?? []) as Debt[])
-    setCards((ccRes.data ?? []) as CreditCardRow[])
-    const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
-    const totalIncome = incomeRows.reduce((s, t) => s + (t.amount || 0), 0)
-    // Bagi pakai jumlah bulan DISTINCT yg beneran ada (cap 3, lantai 1) — bukan
-    // hardcode /3 yg under-estimate income kalau histori < 3 bln → DTI palsu rendah.
-    const incomeMonths = new Set(incomeRows.map((t) => (t.date || '').slice(0, 7)).filter(Boolean)).size
-    setMonthlyIncome(incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0)
-    const nlq = ((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0)
-    const inv = ((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0)
-    setTotalAssets(sumLiquid(liqEntries) + nlq + inv)
-    setLoading(false)
-  }
-
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // react-query — 6 query paralel di-cache antar navigasi; gagal fetch dapet
+  // error state + retry (dulu: kosong diam-diam tanpa penjelasan).
+  const pageQuery = useQuery({
+    queryKey: ['debts-page'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
+      const [debtsRes, ccRes, txRes, liqEntries, nlqRes, invRes] = await Promise.all([
+        supabase.from('debts').select('*').eq('user_id', user.id).order('remaining', { ascending: false }),
+        supabase.from('credit_cards').select('*').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
+        supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
+        fetchLiquidEntries(supabase, user.id),
+        supabase.from('assets_non_liquid').select('current_value').eq('user_id', user.id),
+        supabase.from('investments').select('total_value').eq('user_id', user.id),
+      ])
+      if (debtsRes.error) throw debtsRes.error
+      if (ccRes.error) throw ccRes.error
+      const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
+      const totalIncome = incomeRows.reduce((s, t) => s + (t.amount || 0), 0)
+      // Bagi pakai jumlah bulan DISTINCT yg beneran ada (cap 3, lantai 1) — bukan
+      // hardcode /3 yg under-estimate income kalau histori < 3 bln → DTI palsu rendah.
+      const incomeMonths = new Set(incomeRows.map((t) => (t.date || '').slice(0, 7)).filter(Boolean)).size
+      const nlq = ((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0)
+      const inv = ((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0)
+      return {
+        debts: (debtsRes.data ?? []) as Debt[],
+        cards: (ccRes.data ?? []) as CreditCardRow[],
+        monthlyIncome: incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0,
+        totalAssets: sumLiquid(liqEntries) + nlq + inv,
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const debts = pageQuery.data?.debts ?? []
+  const cards = pageQuery.data?.cards ?? []
+  const monthlyIncome = pageQuery.data?.monthlyIncome ?? 0
+  const totalAssets = pageQuery.data?.totalAssets ?? 0
+  const refresh = () => qc.invalidateQueries({ queryKey: ['debts-page'] })
 
   async function save() {
     setSaving(true)
@@ -154,13 +172,13 @@ export default function DebtsOverviewPage() {
       ? await supabase.from('debts').update(payload).eq('id', form.id)
       : await supabase.from('debts').insert(payload)
     if (error) { setSaving(false); toast.error(t('common.mutation_failed')); return }
-    setSaving(false); setDialogOpen(false); void load()
+    setSaving(false); setDialogOpen(false); refresh()
   }
   async function remove(id: string) {
     if (!confirm(t('debts.confirm_delete'))) return
     const { error: delErr } = await supabase.from('debts').delete().eq('id', id)
     if (delErr) { toast.error(t('common.delete_failed')); return }
-    void load()
+    refresh()
   }
   function openEdit(d: Debt) {
     setForm({ id: d.id, name: d.name, category: d.category, type: d.type,
@@ -228,7 +246,11 @@ export default function DebtsOverviewPage() {
     const f = FILTERS.find((x) => x.key === filter)
     return !f || f.cat == null ? allActive : allActive.filter((d) => d.category === f.cat)
   }, [allActive, filter])
-  const upcoming = useMemo(() => [...allActive].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || '')).slice(0, 4), [allActive])
+  // CC udah next-occurrence (ccNextDueISO); non-CC dinormalisasi di sini.
+  const upcoming = useMemo(() => allActive
+    .map((d) => (d.id.startsWith('cc:') ? d : { ...d, due_date: nextDueISO(d.due_date) }))
+    .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
+    .slice(0, 4), [allActive])
 
   // Validasi form dialog — pesan per-field, ditampilin setelah user coba simpan (triedSave).
   const formErrors: Record<string, string> = {}
@@ -260,9 +282,14 @@ export default function DebtsOverviewPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : allActive.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <PartyPopper className="size-12 mx-auto" style={{ color: '#10B981' }} />
+          <PartyPopper className="size-12 mx-auto" style={{ color: 'var(--c-mint)' }} />
           <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.debt_free')}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts.debt_free_desc')}</p>
         </div>
@@ -383,8 +410,8 @@ export default function DebtsOverviewPage() {
                       <tr key={d.id} className="group border-t align-top" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: `${meta.color}1A` }}>
-                              <Icon className="size-4" style={{ color: meta.color }} />
+                            <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: tint(meta.color, 10) }}>
+                              <Icon className="size-4" style={{ color: meta.ink }} />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
@@ -395,7 +422,7 @@ export default function DebtsOverviewPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-3"><span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${meta.color}1A`, color: meta.color }}>{getTypeLabel(d.type)}</span></td>
+                        <td className="px-3 py-3"><span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: tint(meta.color, 10), color: meta.ink }}>{getTypeLabel(d.type)}</span></td>
                         <td className="px-3 py-3 text-right">
                           <p className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
                           <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.of_amount')} {formatCurrency(d.principal)}</p>
@@ -443,13 +470,13 @@ export default function DebtsOverviewPage() {
                 const tenor = isRevolving(d.type) ? t('debts.revolving') : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} ${t('debts.months')}` : '—')
                 return (
                   <div key={d.id} className="flex items-start gap-3 p-4">
-                    <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}>
-                      <Icon className="size-4" style={{ color: meta.color }} />
+                    <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(meta.color, 10) }}>
+                      <Icon className="size-4" style={{ color: meta.ink }} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                        <span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: `${meta.color}1A`, color: meta.color }}>{getTypeLabel(d.type)}</span>
+                        <span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: tint(meta.color, 10), color: meta.ink }}>{getTypeLabel(d.type)}</span>
                       </div>
                       <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
                         {formatCurrency(d.remaining)} <span className="text-[10px] font-normal" style={{ color: 'var(--ink-soft)' }}>/ {formatCurrency(d.principal)}</span>
@@ -531,7 +558,7 @@ export default function DebtsOverviewPage() {
                 ))}
               </div>
             </div>
-            <PayoffTimeline result={tlResult} accent={tlStrategy === 'snowball' ? '#10B981' : '#8B5CF6'} />
+            <PayoffTimeline result={tlResult} accent={tlStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'} />
           </div>
 
           {/* What-If: percepat pelunasan dengan cicilan ekstra */}
@@ -559,7 +586,7 @@ export default function DebtsOverviewPage() {
               <input
                 type="range" min={0} max={extraMax} step={100_000} value={Math.min(extraPayment, extraMax)}
                 onChange={(e) => setExtraPayment(Number(e.target.value))}
-                className="flex-1 accent-[#10B981]" aria-label={t('debts.extra_payment_aria')}
+                className="flex-1 accent-[var(--c-mint)]" aria-label={t('debts.extra_payment_aria')}
               />
               <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint)' }}>+{formatCurrency(extraPayment)}</span>
             </div>
@@ -573,7 +600,10 @@ export default function DebtsOverviewPage() {
           {/* Pembayaran mendatang + Rasio */}
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.upcoming_payments')}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.upcoming_payments')}</p>
+                <Link href="/dashboard/debts/payments" className="text-[11px] font-medium hover:underline shrink-0" style={{ color: 'var(--ink-soft)' }}>{t('debts.record_payment_link')} →</Link>
+              </div>
               <div className="mt-3 space-y-2.5">
                 {upcoming.map((d) => {
                   const days = daysUntil(d.due_date)
@@ -616,7 +646,7 @@ export default function DebtsOverviewPage() {
         <DialogContent>
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(244,63,94,0.12)' }}><Banknote className="size-5" style={{ color: '#F43F5E' }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-coral-soft)' }}><Banknote className="size-5" style={{ color: 'var(--c-coral-ink)' }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('debts.dialog_edit_title') : t('debts.dialog_new_title')}</DialogTitle>
                 <DialogDescription>{t('debts.dialog_description')}</DialogDescription>
