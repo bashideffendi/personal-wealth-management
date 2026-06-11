@@ -10,6 +10,7 @@ import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Debt, CreditCard as CreditCardRow } from '@/types'
 import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
 import { useT } from '@/lib/i18n/context'
+import { EduTip } from '@/components/edu/edu-tip'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
@@ -480,7 +481,10 @@ export default function DebtsOverviewPage() {
           {/* ★ CENTERPIECE — Dua strategi pelunasan, di-highlight */}
           <div>
             <div className="mb-3">
-              <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_strategy')}</p>
+              <p className="eyebrow flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
+                {t('debts.payoff_strategy')}
+                <EduTip topic="debt-strategy" side="bottom" />
+              </p>
               <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('debts.payoff_strategy_subtitle')}</p>
             </div>
             {/* Rekomendasi tradeoff eksplisit */}
