@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Debt } from '@/types'
@@ -14,7 +16,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Loader2, Receipt } from 'lucide-react'
+import { Plus, Loader2, Receipt, Trash2, BadgeDollarSign, CalendarDays } from 'lucide-react'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { useT } from '@/lib/i18n/context'
 
 interface DebtPayment {
@@ -26,55 +29,72 @@ interface DebtPayment {
 }
 
 export default function DebtPaymentsPage() {
+  const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [debts, setDebts] = useState<Debt[]>([])
-  const [payments, setPayments] = useState<DebtPayment[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({
-    debt_id: '',
-    amount: 0,
-    date: new Date().toISOString().split('T')[0],
-    notes: '',
+    debt_id: '', amount: 0, date: new Date().toISOString().split('T')[0], notes: '',
   })
   const [saving, setSaving] = useState(false)
-  const t = useT()
 
-
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const [dR, pR] = await Promise.all([
-      supabase.from('debts').select('*').eq('user_id', user.id),
-      supabase.from('debt_payments').select('*').eq('user_id', user.id).order('date', { ascending: false }),
-    ])
-    setDebts((dR.data ?? []) as Debt[])
-    setPayments((pR.data ?? []) as DebtPayment[])
-    setLoading(false)
+  const pageQuery = useQuery({
+    queryKey: ['debt-payments'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [dR, pR] = await Promise.all([
+        supabase.from('debts').select('*').eq('user_id', user.id),
+        supabase.from('debt_payments').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+      ])
+      if (dR.error) throw dR.error
+      if (pR.error) throw pR.error
+      return { debts: (dR.data ?? []) as Debt[], payments: (pR.data ?? []) as DebtPayment[] }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const debts = pageQuery.data?.debts ?? []
+  const payments = pageQuery.data?.payments ?? []
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['debt-payments'] })
+    qc.invalidateQueries({ queryKey: ['debts-page'] }) // saldo utang di halaman utama ikut segar
   }
-
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
-    await supabase.from('debt_payments').insert({
-      user_id: user.id,
-      debt_id: form.debt_id,
-      amount: form.amount,
-      date: form.date,
-      notes: form.notes,
+    // Dua langkah: catat log dulu, baru kurangi saldo — berhenti + toast di
+    // langkah yang gagal biar gak ada log tanpa efek saldo (torn state).
+    const { error: insErr } = await supabase.from('debt_payments').insert({
+      user_id: user.id, debt_id: form.debt_id, amount: form.amount, date: form.date, notes: form.notes,
     })
+    if (insErr) { setSaving(false); toast.error(t('common.mutation_failed')); return }
     const d = debts.find((x) => x.id === form.debt_id)
     if (d) {
-      await supabase.from('debts').update({ remaining: Math.max(0, d.remaining - form.amount) }).eq('id', d.id)
+      const { error: updErr } = await supabase.from('debts').update({ remaining: Math.max(0, d.remaining - form.amount) }).eq('id', d.id)
+      if (updErr) { setSaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
     }
     setSaving(false)
     setDialogOpen(false)
     setForm({ debt_id: '', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
-    void load()
+    toast.success(t('debts_payments.saved_toast'))
+    refresh()
+  }
+
+  // Hapus pembayaran = batalkan efeknya juga: saldo utang DIKEMBALIKAN
+  // (pelajaran dari bug dana darurat — log hilang tapi saldo gak di-reverse).
+  async function removePayment(p: DebtPayment) {
+    if (!confirm(t('debts_payments.confirm_delete'))) return
+    const { error: delErr } = await supabase.from('debt_payments').delete().eq('id', p.id)
+    if (delErr) { toast.error(t('common.delete_failed')); return }
+    const d = debts.find((x) => x.id === p.debt_id)
+    if (d) {
+      const { error: updErr } = await supabase.from('debts').update({ remaining: d.remaining + p.amount }).eq('id', d.id)
+      if (updErr) toast.error(t('common.mutation_failed'))
+    }
+    refresh()
   }
 
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0)
@@ -86,93 +106,87 @@ export default function DebtPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <section
-        className="relative overflow-hidden rounded-3xl"
-        style={{
-          background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
-        }}
-      >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100, right: -60, width: 360, height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-          }}
-        />
-        <div className="relative p-6 sm:p-7">
-          <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.55)' }}
-          >
-            {t('debts_payments.eyebrow')}
-          </p>
-          <p
-            className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
-            style={{
-              fontSize: 'clamp(36px, 5vw, 56px)',
-              color: '#FFFFFF',
-              letterSpacing: '-0.04em',
-            }}
-          >
-            {formatCurrency(totalPaid)}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            <span>{payments.length} {t('debts_payments.transactions')}</span>
-            <span>·</span>
-            <span>{t('debts_payments.this_month')}: <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(thisMonth)}</span></span>
-          </div>
-        </div>
-      </section>
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {t('debts_payments.subtitle')}
-        </p>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4" /> {t('debts_payments.record_payment')}
-        </Button>
-      </div>
+      <QuietPageHeader
+        title={t('debts_payments.page_title')}
+        info={t('debts_payments.subtitle')}
+        actions={
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4" /> {t('debts_payments.record_payment')}
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
-      ) : payments.length === 0 ? (
-        <div className="s-card p-12 text-center">
-          <Receipt className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
-          <p className="mt-3 font-semibold">{t('debts_payments.empty_title')}</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.empty_subtitle')}</p>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : (
-        <div className="s-card overflow-hidden">
-          <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
-            {payments.map((p) => {
-              const d = debts.find((x) => x.id === p.debt_id)
-              return (
-                <div key={p.id} className="flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-2)]/60 transition-colors">
-                  <span
-                    className="inline-block h-2 w-2 rounded-full shrink-0"
-                    style={{ background: 'var(--c-mint)' }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                      {d?.name ?? '—'}
-                    </p>
-                    <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                      {formatDate(p.date)}{p.notes ? ` · ${p.notes}` : ''}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="num font-semibold tabular" style={{ color: 'var(--ink)' }}>
-                      {formatCurrency(p.amount)}
-                    </p>
-                  </div>
+        <>
+          {/* Stat row — pola KPI tile app-wide */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="s-card p-5">
+              <div className="flex items-start justify-between">
+                <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.eyebrow')}</p>
+                <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}>
+                  <BadgeDollarSign className="size-4" style={{ color: 'var(--c-mint)' }} />
                 </div>
-              )
-            })}
+              </div>
+              <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(totalPaid)}</p>
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>{payments.length} {t('debts_payments.transactions')}</p>
+            </div>
+            <div className="s-card p-5">
+              <div className="flex items-start justify-between">
+                <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.this_month')}</p>
+                <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+                  <CalendarDays className="size-4" style={{ color: 'var(--ink)' }} />
+                </div>
+              </div>
+              <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(thisMonth)}</p>
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
+                {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+              </p>
+            </div>
           </div>
-        </div>
+
+          {payments.length === 0 ? (
+            <div className="s-card p-12 text-center">
+              <Receipt className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
+              <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>{t('debts_payments.empty_title')}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.empty_subtitle')}</p>
+            </div>
+          ) : (
+            <div className="s-card overflow-hidden">
+              <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+                {payments.map((p) => {
+                  const d = debts.find((x) => x.id === p.debt_id)
+                  return (
+                    <div key={p.id} className="group flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-2)]/60 transition-colors">
+                      <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: 'var(--c-mint)' }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{d?.name ?? '—'}</p>
+                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                          {formatDate(p.date)}{p.notes ? ` · ${p.notes}` : ''}
+                        </p>
+                      </div>
+                      <p className="num font-semibold tabular shrink-0" style={{ color: 'var(--ink)' }}>{formatCurrency(p.amount)}</p>
+                      <Button
+                        variant="ghost" size="icon-sm"
+                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition shrink-0"
+                        aria-label={t('debts_payments.delete_aria')}
+                        onClick={() => removePayment(p)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
