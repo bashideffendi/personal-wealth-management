@@ -10,7 +10,8 @@
  * (tampilin identitas + tanggal dibuat, tanpa kontrol interaktif).
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useT } from '@/lib/i18n/context'
 import { formatCurrency } from '@/lib/utils'
@@ -28,6 +29,7 @@ import {
 import { MoneyFlowSankey, type FlowKind } from '@/components/dashboard/money-flow-sankey'
 import { ReportHiddenStyle } from '@/components/report/report-customizer'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
+import { Button } from '@/components/ui/button'
 
 interface GoalRow { id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }
 interface BudgetRow { category: string; type: string; amount: number }
@@ -47,27 +49,12 @@ export function MonthlyReportBody({
   const t = useT()
   const supabase = createClient()
   const now = new Date()
-  const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState('')
-
-  const [allTx, setAllTx] = useState<Transaction[]>([])
-  const [budgets, setBudgets] = useState<BudgetRow[]>([])
-  const [liquidTotal, setLiquidTotal] = useState(0)
-  const [nonLiquidTotal, setNonLiquidTotal] = useState(0)
-  const [investTotal, setInvestTotal] = useState(0)
-  const [debtTotal, setDebtTotal] = useState(0)
-  const [ccTotal, setCcTotal] = useState(0)
-  const [goals, setGoals] = useState<GoalRow[]>([])
-  const [recurring, setRecurring] = useState<RecurringRow[]>([])
-  const [debts, setDebts] = useState<DebtRow[]>([])
-  const [contracts, setContracts] = useState<ContractRow[]>([])
-
-  useEffect(() => {
-    let alive = true
-    void (async () => {
-      setLoading(true)
+  const pageQuery = useQuery({
+    queryKey: ['monthly-report', year, month],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !alive) { setLoading(false); return }
+      if (!user) throw new Error('unauthenticated')
       const profRes = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
       const fullName = (profRes.data as { full_name: string } | null)?.full_name?.trim() || user.email?.split('@')[0] || t('report.default_user')
 
@@ -78,7 +65,7 @@ export function MonthlyReportBody({
       const [txRes, budRes, liquidEntries, nlqRes, invRes, debtRes, ccRes, goalsRes, recRes, ctrRes, treeRes] = await Promise.all([
         supabase.from('transactions').select('*').eq('user_id', user.id).gte('date', startBound).lt('date', endBound).order('amount', { ascending: false }),
         supabase.from('budgets').select('category, type, amount').eq('user_id', user.id).eq('year', year).eq('month', month),
-        fetchLiquidEntries(supabase, user.id),
+        fetchLiquidEntries(supabase, user.id, { strict: true }),
         supabase.from('assets_non_liquid').select('current_value').eq('user_id', user.id),
         supabase.from('investments').select('total_value').eq('user_id', user.id),
         supabase.from('debts').select('name, monthly_payment, remaining, is_active').eq('user_id', user.id).eq('is_active', true),
@@ -88,12 +75,13 @@ export function MonthlyReportBody({
         supabase.from('contracts').select('name, cost, frequency, is_archived').eq('user_id', user.id).eq('is_archived', false),
         loadTree(supabase, user.id),
       ])
-      if (!alive) return
-      setUserName(fullName)
-      setAllTx((txRes.data ?? []) as Transaction[])
+      if (txRes.error) throw txRes.error
+      if (budRes.error) throw budRes.error
+
       // Filter ke leaf key tree saat ini (sama kayak dashboard & halaman Anggaran):
       // buang baris parent basi (double-count) + kategori stale yg udah dihapus/rename.
       const allBud = (budRes.data ?? []) as BudgetRow[]
+      let budgetRows: BudgetRow[]
       if (treeRes.dbAvailable) {
         const leafByType: Record<string, Set<string>> = {
           income: new Set(leafKeys(treeRes.tree.income)),
@@ -101,23 +89,41 @@ export function MonthlyReportBody({
           saving: new Set(leafKeys(treeRes.tree.saving)),
           investment: new Set(leafKeys(treeRes.tree.investment)),
         }
-        setBudgets(allBud.filter((b) => leafByType[b.type]?.has(b.category)))
+        budgetRows = allBud.filter((b) => leafByType[b.type]?.has(b.category))
       } else {
-        setBudgets(allBud)
+        budgetRows = allBud
       }
-      setLiquidTotal(sumLiquid(liquidEntries))
-      setNonLiquidTotal(((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
-      setInvestTotal(((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0))
-      setDebts((debtRes.data ?? []) as DebtRow[])
-      setDebtTotal(((debtRes.data ?? []) as DebtRow[]).reduce((s, a) => s + (a.remaining ?? 0), 0))
-      setCcTotal(((ccRes.data ?? []) as { current_balance: number }[]).reduce((s, a) => s + (a.current_balance ?? 0), 0))
-      setGoals((goalsRes.data ?? []) as GoalRow[])
-      setRecurring((recRes.data ?? []) as RecurringRow[])
-      setContracts((ctrRes.data ?? []) as ContractRow[])
-      if (alive) setLoading(false)
-    })()
-    return () => { alive = false }
-  }, [year, month]) // eslint-disable-line react-hooks/exhaustive-deps
+
+      const debtRows = (debtRes.data ?? []) as DebtRow[]
+      return {
+        userName: fullName,
+        allTx: (txRes.data ?? []) as Transaction[],
+        budgets: budgetRows,
+        liquidTotal: sumLiquid(liquidEntries),
+        nonLiquidTotal: ((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0),
+        investTotal: ((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0),
+        debts: debtRows,
+        debtTotal: debtRows.reduce((s, a) => s + (a.remaining ?? 0), 0),
+        ccTotal: ((ccRes.data ?? []) as { current_balance: number }[]).reduce((s, a) => s + (a.current_balance ?? 0), 0),
+        goals: (goalsRes.data ?? []) as GoalRow[],
+        recurring: (recRes.data ?? []) as RecurringRow[],
+        contracts: (ctrRes.data ?? []) as ContractRow[],
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const userName = pageQuery.data?.userName ?? ''
+  const allTx = useMemo(() => pageQuery.data?.allTx ?? [], [pageQuery.data])
+  const budgets = useMemo(() => pageQuery.data?.budgets ?? [], [pageQuery.data])
+  const liquidTotal = pageQuery.data?.liquidTotal ?? 0
+  const nonLiquidTotal = pageQuery.data?.nonLiquidTotal ?? 0
+  const investTotal = pageQuery.data?.investTotal ?? 0
+  const debtTotal = pageQuery.data?.debtTotal ?? 0
+  const ccTotal = pageQuery.data?.ccTotal ?? 0
+  const goals = useMemo(() => pageQuery.data?.goals ?? [], [pageQuery.data])
+  const recurring = useMemo(() => pageQuery.data?.recurring ?? [], [pageQuery.data])
+  const debts = useMemo(() => pageQuery.data?.debts ?? [], [pageQuery.data])
+  const contracts = useMemo(() => pageQuery.data?.contracts ?? [], [pageQuery.data])
 
   function bounds(y: number, m: number) {
     const start = `${y}-${String(m).padStart(2, '0')}-01`
@@ -234,6 +240,15 @@ export function MonthlyReportBody({
 
   if (loading) {
     return <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-mute)' }}><Loader2 className="size-5 animate-spin mr-2" /> {t('report.preparing')}</div>
+  }
+
+  if (pageQuery.isError) {
+    return (
+      <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+        <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+      </div>
+    )
   }
 
   const surplusWord = r.surplus >= 0 ? t('report.word_surplus') : t('report.word_deficit')
