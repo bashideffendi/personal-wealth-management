@@ -158,7 +158,7 @@ export function DashboardCustomizer() {
           >
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
-                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>{t('dashboard_customizer.modal_eyebrow')}</p>
+                <p className="eyebrow" style={{ color: 'var(--c-primary-ink)' }}>{t('dashboard_customizer.modal_eyebrow')}</p>
                 <h2 className="t-h2" style={{ color: 'var(--ink)' }}>{t('dashboard_customizer.modal_title')}</h2>
               </div>
               <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label={t('dashboard_customizer.close_aria')}>
@@ -188,7 +188,7 @@ export function DashboardCustomizer() {
                       {t(`dashboard_customizer.${b.labelKey}`)}
                     </span>
                     {on ? (
-                      <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary)' }} />
+                      <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary-ink)' }} />
                     ) : (
                       <EyeOff className="size-4 shrink-0" style={{ color: 'var(--text-mute)' }} />
                     )}
@@ -201,7 +201,7 @@ export function DashboardCustomizer() {
                 type="button"
                 onClick={() => persist([])}
                 className="mt-4 inline-flex items-center gap-1.5 t-sm font-medium"
-                style={{ color: 'var(--c-primary)' }}
+                style={{ color: 'var(--c-primary-ink)' }}
               >
                 <RotateCcw className="size-3.5" /> {t('dashboard_customizer.show_all')}
               </button>

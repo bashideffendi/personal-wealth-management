@@ -399,7 +399,7 @@ export default function GoalsPage() {
       ) : activeGoals.length === 0 ? (
         <div className="s-card flex flex-col items-center text-center py-16 px-8">
           <div className="size-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-primary-soft)' }}>
-            <Target className="size-7" style={{ color: 'var(--c-primary)' }} />
+            <Target className="size-7" style={{ color: 'var(--c-primary-ink)' }} />
           </div>
           <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
             {t('goals.empty_title')}

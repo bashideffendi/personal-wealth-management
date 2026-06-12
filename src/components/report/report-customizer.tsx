@@ -140,7 +140,7 @@ export function ReportCustomizer() {
           >
             <div className="flex items-start justify-between gap-3 mb-1">
               <div>
-                <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>{t('report_customizer.eyebrow')}</p>
+                <p className="eyebrow" style={{ color: 'var(--c-primary-ink)' }}>{t('report_customizer.eyebrow')}</p>
                 <h2 className="t-h2" style={{ color: 'var(--ink)' }}>{t('report_customizer.title')}</h2>
               </div>
               <button type="button" onClick={() => setOpen(false)} aria-label={t('report_customizer.close')}>
@@ -166,7 +166,7 @@ export function ReportCustomizer() {
                   >
                     <span className="t-sm" style={{ color: on ? 'var(--ink)' : 'var(--text-mute)' }}>{b.label}</span>
                     {on ? (
-                      <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary)' }} />
+                      <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary-ink)' }} />
                     ) : (
                       <EyeOff className="size-4 shrink-0" style={{ color: 'var(--text-mute)' }} />
                     )}
@@ -179,7 +179,7 @@ export function ReportCustomizer() {
                 type="button"
                 onClick={() => persist([])}
                 className="mt-4 inline-flex items-center gap-1.5 t-sm font-medium"
-                style={{ color: 'var(--c-primary)' }}
+                style={{ color: 'var(--c-primary-ink)' }}
               >
                 <RotateCcw className="size-3.5" /> {t('report_customizer.show_all')}
               </button>

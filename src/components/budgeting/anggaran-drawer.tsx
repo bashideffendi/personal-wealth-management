@@ -164,7 +164,7 @@ export function AnggaranMonthDrawer({
                       className="chip ml-2"
                       style={{
                         background: 'var(--c-primary-soft)',
-                        color: 'var(--c-primary)',
+                        color: 'var(--c-primary-ink)',
                         fontSize: 10,
                         height: 20,
                         padding: '0 8px',
@@ -412,13 +412,13 @@ export function AnggaranMonthDrawer({
               <div className="flex items-center justify-between">
                 <p
                   className="eyebrow"
-                  style={{ color: 'var(--c-primary)' }}
+                  style={{ color: 'var(--c-primary-ink)' }}
                 >
                   {t('anggaran_drawer.projection_title')}
                 </p>
                 <p
                   className="text-[11px] num tabular"
-                  style={{ color: 'var(--c-primary)' }}
+                  style={{ color: 'var(--c-primary-ink)' }}
                 >
                   {projection.daysLeft} {t('anggaran_drawer.days_left_suffix')}
                 </p>

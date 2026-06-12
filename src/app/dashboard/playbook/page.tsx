@@ -14,11 +14,11 @@ export default function PlaybookIndexPage() {
         <div className="flex items-center gap-2 mb-1.5">
           <div
             className="size-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary)' }}
+            style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary-ink)' }}
           >
             <Sparkles className="size-4" />
           </div>
-          <span className="eyebrow" style={{ color: 'var(--c-primary)' }}>
+          <span className="eyebrow" style={{ color: 'var(--c-primary-ink)' }}>
             Playbook
           </span>
         </div>

@@ -11,15 +11,17 @@
 .leaflet-container { isolation: isolate; }
 
 /* ============================================
-   Klunting — Design System v5 (Quiet Luxury, tuned · 2026-06-12)
-   Skeleton tetap (krem hangat + ink + warna cuma di data), eksekusi
-   dipertajam: (1) palet data BESPOKE — bukan lagi hex stock Tailwind,
-   hue di-warm-shift & lightness diharmonisasi biar chart kelihatan
-   dirancang, bukan template; (2) netral teks ikut HANGAT (dulu zinc
-   dingin di atas krem hangat — clash halus); (3) dark mode espresso
-   hangat (bukan biru-hitam generik); (4) tipografi keluarga Instrument
-   (Sans utk kerja, Serif italic utk momen). Kontras: -ink ≥ 4.5:1 di
-   putih, teks sekunder ≥ 6:1 (diverifikasi per nilai, lihat komentar).
+   Klunting — Design System v6 "VOLT & INK" (2026-06-13)
+   Pivot palet penuh (arahan user: premium·elegan·modern·fun·GEN Z):
+   (1) PRIMARY = volt #C9F24F — tombol/FAB/logo volt dgn TEKS HITAM
+       (14.4:1); volt = FILL ONLY, teks aksen wajib --c-primary-ink;
+   (2) kanvas porselen ber-cast hijau + kartu putih + grain kertas;
+   (3) netral green-cast ink (bukan warm brown era krem);
+   (4) dark = green-ink pekat, habitat asli volt (volt 13.7:1 di dark);
+   (5) palet DATA bespoke v5 dipertahankan (hijau=naik garnet=turun
+       brass=waspada iris=AI) — volt itu AKSI, emerald itu UANG;
+   (6) tipografi keluarga Instrument (Sans kerja, Serif italic momen).
+   Kontras: -ink ≥ 4.5:1, teks sekunder ≥ 6:1 (diverifikasi per nilai).
    ============================================ */
 
 :root {
@@ -42,17 +44,17 @@
   --violet-600:  #6A4BC2;
   --violet-700:  #5A3CAB;
 
-  /* ── Surfaces (Light) — linen v5.1: commit ke krem ──────
-     Kanvas diperdalam dari #F6F4EF (kebaca "putih kotor" di banyak layar)
-     jadi linen/oat yang JELAS disengaja — kartu putih mengambang kayak
-     kertas di atas meja (elevasi 1.10 → 1.18). Lapisan: kanvas linen →
-     kartu putih → sumur/input lebih dalam. ink-soft di kanvas 6.4:1. */
-  --paper:       #F2ECE1;
-  --bg:          #F2ECE1;
-  --bg-2:        #E9E1D2;
+  /* ── Surfaces (Light) — VOLT & INK v6: porselen ber-cast hijau ──────
+     Pivot dari dunia krem (arahan user: palet baru, gen z). Kanvas
+     porselen dengan undertone hijau samar — sejuk, bersih, dan jadi
+     panggung netral buat aksen VOLT. Kartu putih tetap mengambang
+     (elevasi 1.13), sumur/input selapis lebih dalam. */
+  --paper:       #F1F2EB;
+  --bg:          #F1F2EB;
+  --bg-2:        #E7E9DF;
   --surface:     #FFFFFF;    /* card bg pure white */
-  --surface-2:   #EDE7D9;    /* sumur/chip sekunder (ink-soft 6.0:1) */
-  --surface-3:   #E0D8C6;
+  --surface-2:   #EAECE1;    /* sumur/chip sekunder */
+  --surface-3:   #DCDFD0;
   --line:        rgba(24, 24, 27, 0.08);
   --line-strong: rgba(24, 24, 27, 0.14);
 
@@ -62,27 +64,30 @@
        --ink-muted = teks sekunder (paragraf pendukung, deskripsi). PEKAT.
        --ink-soft  = label/eyebrow/caption paling redup. FLOOR — jangan lebih terang.
      JANGAN pakai abu lebih terang dari --ink-soft buat TEKS yg harus kebaca. */
-  --ink:         #131110;    /* konten utama — warm near-black (dulu #0A0A0F zinc dingin) */
-  --ink-muted:   #46413A;    /* warm graphite — sekunder, kebaca (10.1:1) */
-  --ink-soft:    #5B544B;    /* sekunder-redup — FLOOR text (7.5:1 putih / 6.8:1 krem) */
-  --text:        #131110;
-  --text-2:      #46413A;    /* alias → ink-muted */
-  --text-mute:   #5B544B;    /* alias → ink-soft (floor) */
-  --text-faint:  #5B544B;    /* DULU #A1A1AA (gagal AA) → naikin ke floor; faint utk teks dilarang */
-  --border:      #DCD3C1;    /* warm grey — ikut kedalaman kanvas linen */
-  --border-soft: #E8E1D2;    /* warm hairline */
+  --ink:         #101410;    /* konten utama — green-cast ink (Volt & Ink v6) */
+  --ink-muted:   #3C443C;    /* green graphite — sekunder, kebaca (10.1:1) */
+  --ink-soft:    #545D4B;    /* sekunder-redup — FLOOR text (6.9:1 putih / 6.2:1 porselen) */
+  --text:        #101410;
+  --text-2:      #3C443C;    /* alias → ink-muted */
+  --text-mute:   #545D4B;    /* alias → ink-soft (floor) */
+  --text-faint:  #545D4B;    /* faint utk teks dilarang — samain ke floor */
+  --border:      #DBDED0;    /* green-grey — ikut undertone porselen */
+  --border-soft: #E7E9DD;    /* hairline */
 
   /* ── Semantic tokens — palet data bespoke (lightness diharmonisasi) ───
      Empat hue identitas tetap (hijau=naik, rose=turun, brass=waspada,
      iris=AI) tapi hex-nya milik Klunting: de-neon, warm-shift, dan
      lightness disetarakan biar berdampingan di chart tanpa ada yang
      teriak. Stock Tailwind 500 (10B981/F43F5E/F59E0B/8B5CF6) pensiun. */
-  /* PRIMARY = hijau racing Klunting (v5.1). Dulu ink hitam — app kebaca
-     monokrom padahal ikon app-nya sendiri gradien hijau. Tombol, FAB,
-     nav aktif, fokus: hijau dalam; teks tetap ink. Putih di atasnya 8.0:1. */
-  --c-primary:      #0A5C41;
-  --c-primary-soft: #E2F0E8;     /* tint hijau buat active states (ink-hijau 5.3:1) */
-  --c-primary-foreground: #FFFFFF;
+  /* PRIMARY = VOLT (v6, gen z signature). Tombol/FAB/logo = volt dengan
+     TEKS HITAM di atasnya (14.4:1) — bahasa visual Cash App/brat green.
+     ATURAN KERAS: volt cuma boleh jadi FILL. Sebagai teks di putih cuma
+     1.29:1 — teks/ikon/ring aksen WAJIB pakai --c-primary-ink (olive
+     dalam, 6.8:1 putih; di dark mode -ink justru = volt, 13.7:1). */
+  --c-primary:      #C9F24F;
+  --c-primary-soft: #ECF7CC;     /* tint volt buat active states (-ink 6.1:1) */
+  --c-primary-foreground: #101410;
+  --c-primary-ink:  #4A630E;
   --c-mint:         #129B69;     /* income/up — hijau dalam, gak neon (putih di atasnya 3.6:1, > lama) */
   --c-mint-soft:    #E7F4EC;
   --c-coral:        #D2495A;     /* expense/danger — garnet rose, lebih tenang dari coral pink */
@@ -97,15 +102,15 @@
   --c-coral-ink:    #A12C3F;
   --c-amber-ink:    #8F5E06;
   --c-violet-ink:   #5A3CAB;
-  --c-ink:          #131110;
+  --c-ink:          #101410;
 
   /* ── Dark inverse (sidebar, hero cards in light mode) ── */
   --black:       #0A0A0F;
   --black-soft:  #14141A;
   --black-2:     #1C1C24;
   --black-line:  rgba(255, 255, 255, 0.08);
-  --on-black:    #F6F4EF;
-  --on-black-mut:#A9A39A;
+  --on-black:    #F2F4EF;
+  --on-black-mut:#A2A89C;
 
   /* ── Hijau Klunting — ramp bespoke (warm sage-emerald) ── */
   --emerald-50:  #EDF6F1;
@@ -166,14 +171,13 @@
   --radius-cta:   28px;      /* CTA section */
 
   /* ── Editorial shadow scale ─────────────────────
-     Shadow tint is WARM (rgba 43,37,27 ≈ warm brown-black), not cool slate —
-     so depth stays coherent with the warm cream canvas + warm borders. One
-     shadow color across the scale; was previously a mix of cool 15,23,42 /
-     0,0,0 / 16,24,40. Opacities nudged ~+1% since warm tones read lighter. */
-  --shadow-sm: 0 1px 2px rgba(43, 37, 27, 0.05);
-  --shadow:    0 4px 16px -4px rgba(43, 37, 27, 0.07), 0 1px 3px rgba(43, 37, 27, 0.05);
-  --shadow-lg: 0 24px 48px -16px rgba(43, 37, 27, 0.14), 0 4px 12px rgba(43, 37, 27, 0.06);
-  --shadow-card: 0 1px 0 rgba(43, 37, 27, 0.05), 0 12px 24px -12px rgba(43, 37, 27, 0.10);
+     Shadow tint = green-ink (rgba 22,28,22) biar kedalaman koheren sama
+     undertone porselen v6 — bukan slate dingin atau cokelat era krem.
+     Satu warna shadow di seluruh skala. */
+  --shadow-sm: 0 1px 2px rgba(22, 28, 22, 0.05);
+  --shadow:    0 4px 16px -4px rgba(22, 28, 22, 0.07), 0 1px 3px rgba(22, 28, 22, 0.05);
+  --shadow-lg: 0 24px 48px -16px rgba(22, 28, 22, 0.14), 0 4px 12px rgba(22, 28, 22, 0.06);
+  --shadow-card: 0 1px 0 rgba(22, 28, 22, 0.05), 0 12px 24px -12px rgba(22, 28, 22, 0.10);
 
   /* ── LEGACY alias map — keeps existing components working ── */
   /* Old butter/lime → emerald (the new signature) */
@@ -258,8 +262,8 @@
   --orange-600:  var(--amber-600);
   --orange-700:  var(--amber-700);
 
-  --stone:       #75706A;
-  --stone-light: #A9A39A;
+  --stone:       #6E7568;
+  --stone-light: #A2A89C;
 
   /* ── Fonts — keluarga Instrument ───────────────── */
   --font-sans:    var(--font-sans-brand), "Instrument Sans",
@@ -303,7 +307,7 @@
   --color-destructive: var(--c-coral);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: var(--c-primary);
+  --color-ring: var(--c-primary-ink);
 
   /* Chart palette — emerald-led, amber/coral/violet/sky for variety */
   --color-chart-1: var(--c-mint);      /* emerald — main */
@@ -319,7 +323,7 @@
   --color-sidebar-accent: var(--surface-2);
   --color-sidebar-accent-foreground: var(--ink);
   --color-sidebar-border: var(--border);
-  --color-sidebar-ring: var(--c-primary);
+  --color-sidebar-ring: var(--c-primary-ink);
 
   --radius-sm: 10px;       /* chips, badge */
   --radius-md: 12px;
@@ -334,41 +338,44 @@
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — espresso v5.1: jurang elevasi DIPERLEBAR (bg lebih dalam,
-     kartu lebih terangkat, hairline lebih tegas) — versi awal "nyaru",
-     kartu lebur ke latar (rasio cuma 1.07; kini 1.13 + border 0.10). */
-  --paper:       #0E0C0A;
-  --bg:          #0E0C0A;
-  --bg-2:        #1E1A16;
-  --surface:     #1E1A16;
-  --surface-2:   #282320;
-  --surface-3:   #332D27;
+  /* Surfaces — INK v6: green-cast pekat, habitat asli volt. Jurang
+     elevasi tegas dipertahankan (bg dalam, kartu terangkat, hairline
+     0.10) — pelajaran "nyaru" dari espresso v5. */
+  --paper:       #0C0E0C;
+  --bg:          #0C0E0C;
+  --bg-2:        #161A16;
+  --surface:     #161A16;
+  --surface-2:   #1F241F;
+  --surface-3:   #293029;
   --line:        rgba(255, 255, 255, 0.10);
   --line-strong: rgba(255, 255, 255, 0.17);
 
-  /* Text — warm white ramp (kontras: 15.8 / 11.8 / 6.8 di atas surface) */
-  --ink:         #F4F2ED;
-  --ink-muted:   #D6D2CA;
-  --ink-soft:    #A6A097;
-  --text:        #F4F2ED;
-  --text-2:      #D6D2CA;
-  --text-mute:   #A6A097;
-  --text-faint:  #A6A097;   /* faint utk teks dilarang — samain ke floor --ink-soft */
+  /* Text — green-white ramp (kontras: 15.0 / 11.4 / 6.8 di atas surface) */
+  --ink:         #F2F4EF;
+  --ink-muted:   #CDD2C9;
+  --ink-soft:    #9CA496;
+  --text:        #F2F4EF;
+  --text-2:      #CDD2C9;
+  --text-mute:   #9CA496;
+  --text-faint:  #9CA496;   /* faint utk teks dilarang — samain ke floor --ink-soft */
   --border:      rgba(255, 255, 255, 0.10);
   --border-soft: rgba(255, 255, 255, 0.06);
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
-  --black:       #F6F4EF;
-  --black-soft:  #E8E4DC;
-  --black-2:     #D6D2CA;
+  --black:       #F2F4EF;
+  --black-soft:  #E2E5DC;
+  --black-2:     #CDD2C9;
   --black-line:  rgba(0, 0, 0, 0.10);
-  --on-black:    #14110D;
-  --on-black-mut:#57534E;
+  --on-black:    #101410;
+  --on-black-mut:#575E52;
 
-  /* Accents — versi terang palet bespoke (fill ≥ 6:1, -ink ≥ 9:1 di surface) */
-  --c-primary:      #3FBE8C;      /* hijau primary versi dark (teks gelap 8.1:1) */
-  --c-primary-soft: rgba(63, 190, 140, 0.14);
-  --c-primary-foreground: #0E0C0A;
+  /* Accents — VOLT pulang kampung: di dark dia kebaca sebagai FILL
+     (tombol, 15:1 dgn teks gelap) DAN sebagai teks/ring (13.7:1),
+     makanya -ink di dark = volt itu sendiri. */
+  --c-primary:      #C9F24F;
+  --c-primary-soft: rgba(201, 242, 79, 0.14);
+  --c-primary-foreground: #0C0E0C;
+  --c-primary-ink:  #C9F24F;
   --c-mint:         #3DBA8A;
   --c-mint-soft:    rgba(61, 186, 138, 0.13);
   --c-coral:        #ED7385;
@@ -382,7 +389,7 @@
   --c-coral-ink:    #F4A6AE;
   --c-amber-ink:    #EFCB7E;
   --c-violet-ink:   #C9BAF4;
-  --c-ink:          #F6F4EF;
+  --c-ink:          #F2F4EF;
 
   /* Legacy emerald tokens — boost untuk dark */
   --emerald-400: #5CCB9F;
@@ -405,7 +412,7 @@
   --color-primary-foreground: var(--c-primary-foreground);
   --color-accent: var(--c-mint);
   --color-accent-foreground: var(--ink);
-  --color-ring: var(--c-primary);
+  --color-ring: var(--c-primary-ink);
   --color-border: var(--border);
 
   /* Editorial shadows for dark */
@@ -441,7 +448,7 @@
      just backstops plain links, <summary>, and role=button that were relying
      on the browser default. Mouse clicks don't trigger :focus-visible. */
   :focus-visible {
-    outline: 2px solid var(--c-mint);
+    outline: 2px solid var(--c-primary-ink);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -450,15 +457,14 @@
     letter-spacing: -0.025em;
     font-weight: 600;
   }
-  /* Seleksi teks — butter hangat, satu-satunya kuning di app (momen fun
-     yang cuma muncul saat user berinteraksi, bukan dekorasi permanen). */
+  /* Seleksi teks — VOLT tint, momen fun yang cuma muncul saat interaksi. */
   ::selection {
-    background: #F3E2AE;
-    color: #131110;
+    background: #E5F6A8;
+    color: #101410;
   }
   .dark ::selection {
-    background: #57503B;
-    color: #F4F2ED;
+    background: #3A4413;
+    color: #F2F4EF;
   }
   /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
   * {

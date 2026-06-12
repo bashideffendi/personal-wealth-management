@@ -208,7 +208,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
       <div className="w-full" style={{ maxWidth: 600 }}>
         {/* Header: wordmark + progress */}
         <div className="flex items-center justify-between mb-5">
-          <span className="t-title font-semibold" style={{ color: 'var(--c-primary)' }}>
+          <span className="t-title font-semibold" style={{ color: 'var(--c-primary-ink)' }}>
             Klunting
           </span>
           <div className="flex items-center gap-3">
@@ -474,7 +474,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                     >
                       <div
                         className="size-8 rounded-[10px] flex items-center justify-center shrink-0"
-                        style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary)' }}
+                        style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary-ink)' }}
                       >
                         <Icon className="size-4" />
                       </div>

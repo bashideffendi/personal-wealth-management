@@ -135,7 +135,7 @@ export function GettingStarted() {
             <Sparkles className="size-4 text-white" />
           </div>
           <div>
-            <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>
+            <p className="eyebrow" style={{ color: 'var(--c-primary-ink)' }}>
               {t('getting_started.eyebrow')}
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-mute)' }}>
@@ -157,7 +157,7 @@ export function GettingStarted() {
       </div>
 
       {/* Progress bar */}
-      <div className="kl-bar mb-4" style={{ color: 'var(--c-primary)' }}>
+      <div className="kl-bar mb-4" style={{ color: 'var(--c-primary-ink)' }}>
         <i style={{ width: `${progressPct}%` }} />
       </div>
 

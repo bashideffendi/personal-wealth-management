@@ -1057,7 +1057,7 @@ export default function TransactionsPage() {
             type="button"
             onClick={resetFilters}
             className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium"
-            style={{ color: 'var(--c-primary)' }}
+            style={{ color: 'var(--c-primary-ink)' }}
           >
             <X className="size-3.5" /> {t('transactions.reset_filters')}
           </button>
