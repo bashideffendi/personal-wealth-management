@@ -27,10 +27,10 @@ interface Insight {
 }
 
 interface CachedInsights {
-  period: string         // "2026-05" cache key
   data: Insight[]
   generated_at: string   // ISO
 }
+type CacheStore = Record<string, CachedInsights>
 
 interface Props {
   monthTransactions: Transaction[]
@@ -43,34 +43,46 @@ interface Props {
 const CACHE_KEY = 'pwm-ai-insights'
 const CACHE_TTL_HOURS = 24
 
-function getCache(periodKey: string): CachedInsights | null {
-  if (typeof window === 'undefined') return null
+function readStore(): CacheStore {
   try {
     const raw = localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const cached = JSON.parse(raw) as CachedInsights
-    if (cached.period !== periodKey) return null
-    const ageHours = (Date.now() - new Date(cached.generated_at).getTime()) / (1000 * 60 * 60)
-    if (ageHours > CACHE_TTL_HOURS) return null
-    return cached
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    // Bentuk lama = satu entri { period, data, generated_at } → migrasikan.
+    if (parsed && parsed.period) return { [parsed.period]: { data: parsed.data, generated_at: parsed.generated_at } }
+    return parsed && typeof parsed === 'object' ? (parsed as CacheStore) : {}
   } catch {
-    return null
+    return {}
   }
 }
 
-function setCache(cached: CachedInsights) {
+// Cache PER PERIODE — dulu single-entry: pindah bulan di period picker
+// menimpa cache, balik lagi = fetch ulang = bakar kredit tiap switch.
+function getCache(periodKey: string): CachedInsights | null {
+  if (typeof window === 'undefined') return null
+  const entry = readStore()[periodKey]
+  if (!entry) return null
+  const ageHours = (Date.now() - new Date(entry.generated_at).getTime()) / 3_600_000
+  return ageHours > CACHE_TTL_HOURS ? null : entry
+}
+
+function setCache(periodKey: string, entry: CachedInsights) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cached))
+    const store = readStore()
+    store[periodKey] = entry
+    const keys = Object.keys(store).sort()
+    while (keys.length > 6) delete store[keys.shift() as string]
+    localStorage.setItem(CACHE_KEY, JSON.stringify(store))
   } catch {
     /* ignore */
   }
 }
 
 const TONE_STYLES: Record<Insight['tone'], { bg: string; border: string; emoji_bg: string; tint: string }> = {
-  positive:    { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.25)', emoji_bg: 'rgba(16, 185, 129, 0.15)', tint: 'var(--c-mint)' },
-  observation: { bg: 'rgba(14, 165, 233, 0.06)', border: 'rgba(14, 165, 233, 0.25)', emoji_bg: 'rgba(14, 165, 233, 0.15)', tint: 'var(--sky-600)' },
-  warning:     { bg: 'rgba(245, 158, 11, 0.06)', border: 'rgba(245, 158, 11, 0.30)', emoji_bg: 'rgba(245, 158, 11, 0.18)', tint: 'var(--amber-700)' },
+  positive:    { bg: 'color-mix(in srgb, var(--c-mint) 6%, transparent)', border: 'color-mix(in srgb, var(--c-mint) 25%, transparent)', emoji_bg: 'color-mix(in srgb, var(--c-mint) 15%, transparent)', tint: 'var(--c-mint-ink)' },
+  observation: { bg: 'color-mix(in srgb, var(--c-violet) 6%, transparent)', border: 'color-mix(in srgb, var(--c-violet) 25%, transparent)', emoji_bg: 'color-mix(in srgb, var(--c-violet) 15%, transparent)', tint: 'var(--c-violet-ink)' },
+  warning:     { bg: 'color-mix(in srgb, var(--c-amber) 6%, transparent)', border: 'color-mix(in srgb, var(--c-amber) 30%, transparent)', emoji_bg: 'color-mix(in srgb, var(--c-amber) 18%, transparent)', tint: 'var(--c-amber-ink)' },
 }
 
 export function AIInsightsCard({
@@ -92,8 +104,10 @@ export function AIInsightsCard({
 
   // Build summary input from transactions
   const summaryInput = useMemo(() => {
-    const income = monthTransactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-    const expense = monthTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    // Transfer antar-akun (2 leg income+expense) WAJIB di-exclude — kalau ikut,
+    // ringkasan yang dianalisis AI dobel dan insight-nya menyesatkan.
+    const income = monthTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
+    const expense = monthTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
     const saving = monthTransactions.filter((t) => t.type === 'saving').reduce((s, t) => s + t.amount, 0)
     const investment = monthTransactions.filter((t) => t.type === 'investment').reduce((s, t) => s + t.amount, 0)
 
@@ -107,8 +121,8 @@ export function AIInsightsCard({
     const lmTxs = yearTransactions.filter((t) => t.date >= lmStart && t.date < lmEnd)
 
     const last_month = {
-      income: lmTxs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-      expense: lmTxs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
+      income: lmTxs.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0),
+      expense: lmTxs.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0),
       saving: lmTxs.filter((t) => t.type === 'saving').reduce((s, t) => s + t.amount, 0),
       investment: lmTxs.filter((t) => t.type === 'investment').reduce((s, t) => s + t.amount, 0),
     }
@@ -116,13 +130,13 @@ export function AIInsightsCard({
     // Expense by category (this month + last month)
     const catMap: Record<string, { this_month: number; last_month: number }> = {}
     for (const tx of monthTransactions) {
-      if (tx.type !== 'expense') continue
+      if (tx.type !== 'expense' || tx.category === 'Transfer') continue
       const c = rootCategory(tx.category) // gabung subkategori ke induknya
       if (!catMap[c]) catMap[c] = { this_month: 0, last_month: 0 }
       catMap[c].this_month += tx.amount
     }
     for (const tx of lmTxs) {
-      if (tx.type !== 'expense') continue
+      if (tx.type !== 'expense' || tx.category === 'Transfer') continue
       const c = rootCategory(tx.category)
       if (!catMap[c]) catMap[c] = { this_month: 0, last_month: 0 }
       catMap[c].last_month += tx.amount
@@ -134,7 +148,7 @@ export function AIInsightsCard({
 
     // Top 5 expense transactions this month
     const top_expenses = monthTransactions
-      .filter((t) => t.type === 'expense')
+      .filter((t) => t.type === 'expense' && t.category !== 'Transfer')
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5)
       .map((t) => ({
@@ -219,7 +233,7 @@ export function AIInsightsCard({
       setInsights(data)
       const now = new Date().toISOString()
       setGeneratedAt(now)
-      setCache({ period: periodKey, data, generated_at: now })
+      setCache(periodKey, { data, generated_at: now })
     } catch (err) {
       setError(err instanceof Error ? err.message : t('ai_insights.error_fetch'))
     } finally {
@@ -253,7 +267,7 @@ export function AIInsightsCard({
             <Sparkles className="size-3.5 text-white" />
           </div>
           <div>
-            <p className="eyebrow" style={{ color: 'var(--c-violet)' }}>
+            <p className="eyebrow" style={{ color: 'var(--c-violet-ink)' }}>
               {t('ai_insights.title')}
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
@@ -290,8 +304,8 @@ export function AIInsightsCard({
           <div
             className="rounded-lg border p-3 flex items-start gap-2 text-xs"
             style={isInfo
-              ? { background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 28%, transparent)', color: 'var(--amber-700)' }
-              : { background: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.25)', color: 'var(--c-coral)' }}
+              ? { background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 28%, transparent)', color: 'var(--c-amber-ink)' }
+              : { background: 'color-mix(in srgb, var(--c-coral) 6%, transparent)', borderColor: 'color-mix(in srgb, var(--c-coral) 25%, transparent)', color: 'var(--c-coral-ink)' }}
           >
             {isInfo ? <Sparkles className="size-3.5 mt-0.5 shrink-0" /> : <AlertCircle className="size-3.5 mt-0.5 shrink-0" />}
             <span>{error}</span>
@@ -304,15 +318,15 @@ export function AIInsightsCard({
       {error && !insights && !loading && (
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {[
-            { label: 'Anggaran', desc: 'Cek pos mana yang over', href: '/dashboard/budgeting' },
-            { label: 'Transaksi', desc: 'Telusuri pengeluaranmu', href: '/dashboard/transactions' },
-            { label: 'Kekayaan', desc: 'Lihat tren net worth', href: '/dashboard/net-worth' },
+            { label: t('ai_insights.ptr_budget'), desc: t('ai_insights.ptr_budget_desc'), href: '/dashboard/budgeting' },
+            { label: t('ai_insights.ptr_tx'), desc: t('ai_insights.ptr_tx_desc'), href: '/dashboard/transactions' },
+            { label: t('ai_insights.ptr_nw'), desc: t('ai_insights.ptr_nw_desc'), href: '/dashboard/net-worth' },
           ].map((p) => (
             <a
               key={p.href}
               href={p.href}
               className="rounded-lg border p-3 transition hover:shadow-sm"
-              style={{ borderColor: 'var(--border-soft)', background: 'rgba(255,255,255,0.55)' }}
+              style={{ borderColor: 'var(--border-soft)', background: 'color-mix(in srgb, var(--surface) 55%, transparent)' }}
             >
               <p className="text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>{p.label}</p>
               <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--ink-muted)' }}>{p.desc}</p>
@@ -327,7 +341,7 @@ export function AIInsightsCard({
             <div
               key={i}
               className="h-16 rounded-lg animate-pulse"
-              style={{ background: 'rgba(255,255,255,0.5)' }}
+              style={{ background: 'color-mix(in srgb, var(--surface) 50%, transparent)' }}
             />
           ))}
         </div>
@@ -341,15 +355,15 @@ export function AIInsightsCard({
         const main = insights[0]
         const rest = insights.slice(1, 4)  // up to 3 saran
         // Colored dots cycling through tone-coded palette per mockup
-        const dotColors = ['var(--c-mint)', 'var(--amber-500)', 'var(--sky-500)', 'var(--c-coral)']
+        const dotColors = ['var(--c-mint)', 'var(--c-amber)', 'var(--c-violet)', 'var(--c-coral)']
         return (
           <>
             {/* MAIN insight — featured */}
+            {/* Emoji dari AI sengaja TIDAK dirender — aturan anti-slop app. */}
             <p
               className="text-sm sm:text-[15px] leading-relaxed mb-1 font-medium"
               style={{ color: 'var(--ink)' }}
             >
-              <span className="mr-1.5">{main.emoji}</span>
               {main.body}
             </p>
 

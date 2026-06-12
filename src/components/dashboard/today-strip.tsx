@@ -117,7 +117,7 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
           <Link
             href="/dashboard/transactions"
             className="text-[11px] font-medium hover:underline inline-flex items-center gap-0.5"
-            style={{ color: 'var(--c-mint)' }}
+            style={{ color: 'var(--c-mint-ink)' }}
           >
             {t('today_strip.view_all')}
             <ArrowRight className="size-3" />
@@ -128,7 +128,7 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
           <Stat
             label={t('today_strip.total_spending')}
             value={spendToday > 0 ? formatCurrency(spendToday) : 'Rp 0'}
-            tint="var(--c-coral)"
+            tint="var(--c-coral-ink)"
           />
           <Stat
             label={t('today_strip.top_category')}
@@ -151,17 +151,17 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
           className="flex items-center gap-2.5 px-4 py-2.5 sm:px-5 border-t transition hover:bg-[var(--surface-2)]"
           style={{
             borderColor: 'var(--border-soft)',
-            background: 'color-mix(in srgb, var(--amber-500) 8%, transparent)',
+            background: 'color-mix(in srgb, var(--c-amber) 8%, transparent)',
           }}
         >
           <AlertTriangle
             className="size-4 shrink-0"
-            style={{ color: 'var(--amber-700)' }}
+            style={{ color: 'var(--c-amber-ink)' }}
           />
           <p className="flex-1 text-xs sm:text-sm" style={{ color: 'var(--ink)' }}>
             <strong className="font-semibold">{warning.category}</strong>{' '}
             <span style={{ color: 'var(--ink-muted)' }}>{t('today_strip.warning_used')}</span>{' '}
-            <span className="num font-semibold" style={{ color: 'var(--amber-700)' }}>
+            <span className="num font-semibold" style={{ color: 'var(--c-amber-ink)' }}>
               {Math.round(warning.pct)}%
             </span>{' '}
             <span style={{ color: 'var(--ink-muted)' }}>

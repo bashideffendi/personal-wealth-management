@@ -21,13 +21,12 @@ interface InsightsPanelProps {
   creditCards: CreditCard[]
   contracts: Contract[]
   savingRate: number
-  netCashflow: number
   /** Render only one sub-card so alerts & forecast can be separate bento cards. */
   part?: 'alerts' | 'forecast'
 }
 
 export function InsightsPanel({
-  monthTransactions, yearTransactions, monthBudgets, creditCards, contracts, savingRate, netCashflow, part,
+  monthTransactions, yearTransactions, monthBudgets, creditCards, contracts, savingRate, part,
 }: InsightsPanelProps) {
   const t = useT()
   const alerts: Array<{ level: 'critical' | 'warn' | 'good'; text: string }> = []
@@ -226,8 +225,6 @@ export function InsightsPanel({
             {t('insights_panel.forecast_empty')}
           </p>
         )}
-        {/* silence unused variable — reserved for future cash-flow visualization */}
-        <span className="hidden">{netCashflow}</span>
     </div>
   )
 

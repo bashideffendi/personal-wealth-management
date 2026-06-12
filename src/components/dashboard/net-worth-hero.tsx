@@ -32,10 +32,10 @@ interface NetWorthHeroProps {
   monthlyTrend?: MonthlyData[]
 }
 
-const PERIODS = ['1B', '3B', '6B', '1T', 'ALL'] as const
+const PERIODS = ['1B', '3B', '6B', '1T'] as const
 type Period = (typeof PERIODS)[number]
 const PERIOD_TO_MONTHS: Record<Period, number> = {
-  '1B': 1, '3B': 3, '6B': 6, '1T': 12, ALL: 24,
+  '1B': 1, '3B': 3, '6B': 6, '1T': 12,
 }
 
 export function NetWorthHero({
@@ -92,7 +92,8 @@ export function NetWorthHero({
   const ytdPct = (() => {
     if (monthlyTrend.length < 2) return 0
     const ytdMonths = Math.min(now.getMonth() + 1, monthlyTrend.length)
-    const ytdSum = monthlyTrend.slice(-ytdMonths).reduce((s, m) => s + m.net, 0)
+    // slice dari JANUARI — slice(-n) di array 12-bulan ngambil ekor (bulan depan).
+    const ytdSum = monthlyTrend.slice(0, ytdMonths).reduce((s, m) => s + m.net, 0)
     const yearStart = netWorth - ytdSum
     if (yearStart === 0) return 0
     return (ytdSum / Math.abs(yearStart)) * 100
@@ -305,6 +306,7 @@ export function NetWorthHero({
                   <button
                     key={p}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => setChartPeriod(p)}
                     className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
                     style={{

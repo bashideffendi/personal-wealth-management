@@ -73,7 +73,7 @@ export function SortableSection({
         {...listeners}
         aria-label="Tarik untuk pindah posisi kartu"
         title="Tarik untuk pindah posisi"
-        className="absolute top-2 right-2 z-20 grid size-7 place-items-center rounded-lg border opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 cursor-grab active:cursor-grabbing touch-none"
+        className="absolute top-2 right-2 z-20 grid size-7 place-items-center rounded-lg border opacity-100 lg:opacity-0 transition lg:group-hover:opacity-100 focus-visible:opacity-100 cursor-grab active:cursor-grabbing touch-none"
         style={{ background: 'var(--surface)', borderColor: 'var(--line)', color: 'var(--text-mute)' }}
       >
         <GripVertical className="size-4" />

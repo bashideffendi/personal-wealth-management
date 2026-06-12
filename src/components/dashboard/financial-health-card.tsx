@@ -21,8 +21,9 @@ interface Props {
   part?: 'score' | 'coverage'
 }
 
-function tierChipStyle(color: string): React.CSSProperties {
-  return { background: `${color}1F`, color }
+// bg = tint via color-mix (hex+alpha concat dilarang & invalid utk var()).
+function tierChipStyle(color: string, ink: string): React.CSSProperties {
+  return { background: `color-mix(in srgb, ${color} 12%, transparent)`, color: ink }
 }
 
 export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, part }: Props) {
@@ -35,6 +36,11 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
     : burnMonths >= 6 ? 'var(--c-mint)'
     : burnMonths >= 3 ? 'var(--c-amber)'
     : 'var(--c-coral)'
+  // Teks pakai -ink (AA); bar/border tetap full-sat via burnColor.
+  const burnInk = !hasExpenseData ? 'var(--ink-soft)'
+    : burnMonths >= 6 ? 'var(--c-mint-ink)'
+    : burnMonths >= 3 ? 'var(--c-amber-ink)'
+    : 'var(--c-coral-ink)'
   const burnTint = !hasExpenseData ? 'var(--surface-2)'
     : burnMonths >= 6 ? 'var(--c-mint-soft)'
     : burnMonths >= 3 ? 'var(--c-amber-soft)'
@@ -67,19 +73,19 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="leading-none tabular-nums font-bold" style={{ fontSize: 68, letterSpacing: '-0.04em', color: tierMeta.color }}>
+                <span className="leading-none tabular-nums font-bold" style={{ fontSize: 68, letterSpacing: '-0.04em', color: tierMeta.ink }}>
                   {score}
                 </span>
-                <span className="text-[11px] mt-1.5 font-medium opacity-50" style={{ color: tierMeta.color }}>
+                <span className="text-[11px] mt-1.5 font-medium opacity-50" style={{ color: tierMeta.ink }}>
                   {t('health_card.out_of_100')}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={tierChipStyle(tierMeta.color)}>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={tierChipStyle(tierMeta.color, tierMeta.ink)}>
                 {tierMeta.label}
               </span>
-              {tier === 'thriving' && <Sparkles className="size-4" style={{ color: tierMeta.color }} />}
+              {tier === 'thriving' && <Sparkles className="size-4" style={{ color: tierMeta.ink }} />}
             </div>
             <p className="text-[12.5px] leading-relaxed max-w-[26ch]" style={{ color: 'var(--ink-muted)' }}>
               {tierMeta.description}
@@ -105,14 +111,14 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
         <p className="eyebrow">{t('health_card.cash_coverage')}</p>
         <EduTip topic="financial-health" side="bottom" />
       </div>
-      <div className="mt-3 flex-1 rounded-2xl p-5 flex flex-col" style={{ background: burnTint, border: `1px solid ${burnColor}33` }}>
+      <div className="mt-3 flex-1 rounded-2xl p-5 flex flex-col" style={{ background: burnTint, border: `1px solid color-mix(in srgb, ${burnColor} 20%, transparent)` }}>
         <div className="flex items-baseline gap-2">
-          <span className="num tabular leading-none font-bold" style={{ color: burnColor, fontSize: 68, letterSpacing: '-0.03em' }}>
+          <span className="num tabular leading-none font-bold" style={{ color: burnInk, fontSize: 68, letterSpacing: '-0.03em' }}>
             {!hasExpenseData ? '—' : burnMonths > 99 ? '99+' : burnMonths.toFixed(1)}
           </span>
-          <span className="text-base font-semibold" style={{ color: burnColor }}>{t('health_card.months')}</span>
+          <span className="text-base font-semibold" style={{ color: burnInk }}>{t('health_card.months')}</span>
         </div>
-        <p className="text-[12px] mt-2 font-bold uppercase tracking-[0.08em]" style={{ color: burnColor }}>
+        <p className="text-[12px] mt-2 font-bold uppercase tracking-[0.08em]" style={{ color: burnInk }}>
           {burnVerdict}
         </p>
 
@@ -138,7 +144,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
           )}
         </p>
 
-        <div className="mt-auto pt-4 border-t space-y-2" style={{ borderColor: `${burnColor}20` }}>
+        <div className="mt-auto pt-4 border-t space-y-2" style={{ borderColor: `color-mix(in srgb, ${burnColor} 12%, transparent)` }}>
           <div className="flex items-center justify-between text-[12px]">
             <span style={{ color: 'var(--ink-muted)' }}>{t('health_card.liquid_cash')}</span>
             <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(liquidBalance)}</span>
@@ -165,6 +171,12 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
     if (indicator.score >= 50) return 'var(--c-amber)'
     return 'var(--c-coral)'
   })()
+  const barInk = (() => {
+    if (isNa) return 'var(--ink-soft)'
+    if (indicator.score >= 75) return 'var(--c-mint-ink)'
+    if (indicator.score >= 50) return 'var(--c-amber-ink)'
+    return 'var(--c-coral-ink)'
+  })()
   const pct = isNa ? 0 : Math.min(100, Math.max(0, indicator.score))
   const tooltip = indicator.tip ? `${indicator.explainer}\n\n${t('health_card.tip_label')} ${indicator.tip}` : indicator.explainer
 
@@ -172,7 +184,7 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
     <div title={tooltip} className="cursor-help">
       <div className="flex items-center justify-between text-[12.5px] mb-1.5">
         <span style={{ color: 'var(--ink)' }}>{indicator.label}</span>
-        <span className="num text-[11px] font-semibold shrink-0" style={{ color: isNa ? 'var(--ink-soft)' : barColor }}>
+        <span className="num text-[11px] font-semibold shrink-0" style={{ color: isNa ? 'var(--ink-soft)' : barInk }}>
           {isNa ? 'N/A' : indicator.score}
         </span>
       </div>

@@ -84,6 +84,7 @@ export interface FHSResult {
   tierMeta: {
     label: string
     color: string
+    ink: string
     description: string
   }
 }
@@ -92,25 +93,29 @@ export interface FHSResult {
  * Tier metadata used for display. Indonesian labels for clarity (English
  * "Coping" was confusing — user feedback). Colors match Klunting palette.
  */
-const TIER_META: Record<FHSTier, { label: string; color: string; description: string }> = {
+const TIER_META: Record<FHSTier, { label: string; color: string; ink: string; description: string }> = {
   vulnerable: {
     label: 'Rentan',
-    color: '#F43F5E',
+    color: 'var(--c-coral)',
+    ink: 'var(--c-coral-ink)',
     description: 'Keuangan rentan — fokus stabilkan cashflow & buffer dulu.',
   },
   coping: {
     label: 'Bertahan',
-    color: '#F59E0B',
+    color: 'var(--c-amber)',
+    ink: 'var(--c-amber-ink)',
     description: 'Bertahan, tapi belum aman. Ada beberapa area yg perlu diperkuat.',
   },
   healthy: {
     label: 'Sehat',
-    color: '#10B981',
+    color: 'var(--c-mint)',
+    ink: 'var(--c-mint-ink)',
     description: 'Sehat secara finansial — pertahankan & mulai pikirkan growth.',
   },
   thriving: {
     label: 'Prima',
-    color: '#10B981',
+    color: 'var(--c-mint)',
+    ink: 'var(--c-mint-ink)',
     description: 'Kondisi prima. Optimasi pajak & estate planning mungkin next step.',
   },
 }

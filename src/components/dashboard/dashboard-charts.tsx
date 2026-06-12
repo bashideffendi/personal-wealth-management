@@ -48,11 +48,11 @@ export function MonthlyFlowChart({ data, fill }: { data: Array<{ month: string; 
             color: 'var(--on-black)',
           }}
           labelStyle={{ color: 'var(--on-black-mut)' }}
-          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+          cursor={{ fill: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-        <Bar dataKey="income" name={t('dashboard.kpi_income')} fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
-        <Bar dataKey="expense" name={t('dashboard.kpi_expense')} fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={24} />
+        <Bar dataKey="income" name={t('dashboard.kpi_income')} fill="var(--c-mint)" radius={[3, 3, 0, 0]} maxBarSize={24} />
+        <Bar dataKey="expense" name={t('dashboard.kpi_expense')} fill="var(--c-coral)" radius={[3, 3, 0, 0]} maxBarSize={24} />
       </BarChart>
     </ResponsiveContainer>
   )

@@ -60,15 +60,11 @@ import dynamic from 'next/dynamic'
 // Chart palette per design handoff tokens.css — emerald led, then sky,
 // amber, coral, violet for categorical variety. Replaces the older
 // "lime + orange + black" palette which clashed with the new design tokens.
+// Palet token (adaptif tema) — urutan sama dengan hub Kekayaan biar kategori
+// yang sama dapet warna yang sama di mana pun.
 const CHART_PALETTE = [
-  '#10B981', // emerald-500 — main / income
-  '#0EA5E9', // sky-500 — investment / info
-  '#F59E0B', // amber-500 — savings
-  '#F43F5E', // coral-500 — debt / expense
-  '#8B5CF6', // violet-500 — other
-  '#34D399', // emerald-400 — secondary green
-  '#7DD3FC', // sky-300 — secondary blue
-  '#FCD34D', // amber-300 — secondary yellow
+  'var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)',
+  'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)',
 ]
 
 // Charts deferred out of the initial dashboard JS — recharts loads only when a
@@ -680,11 +676,10 @@ export default function DashboardPage() {
           Section fixed (hero/health/forecast/period) gak punya order → tetap di atas. */}
       {/* Greeting + tombol Atur Dashboard (custom show/hide section) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {userFirstName ? (
-          <h1 className="t-h1" style={{ color: 'var(--ink)' }}>Hi, {userFirstName}</h1>
-        ) : (
-          <span />
-        )}
+        {/* Sapaan ikut jam (ID: "Pagi, Bashid" per mockup) — bukan "Hi" hardcode. */}
+        <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
+          {t(`dashboard.${now.getHours() < 11 ? 'greet_morning' : now.getHours() < 15 ? 'greet_afternoon' : now.getHours() < 19 ? 'greet_evening' : 'greet_night'}`)}{userFirstName ? `, ${userFirstName}` : ''}
+        </h1>
         {/* Period selector — top-right (konvensi). Surface bg + border supaya
             kebaca sebagai kontrol, bukan nyatu sama kanvas. Scope: widget bulanan. */}
         <div className="flex items-center gap-2">
@@ -844,19 +839,19 @@ export default function DashboardPage() {
           {/* Legend — wraps on narrow screens */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: '#10B981' }} />
+              <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-mint)' }} />
               {t('dashboard.kpi_income')}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: '#F43F5E' }} />
+              <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-coral)' }} />
               {t('dashboard.kpi_expense')}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: '#F59E0B' }} />
+              <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-amber)' }} />
               {t('dashboard.saving')}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: '#0EA5E9' }} />
+              <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-violet)' }} />
               {t('dashboard.investment')}
             </span>
           </div>
@@ -913,11 +908,11 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded" style={{ background: '#10B981' }} />
+                <span className="size-2.5 rounded" style={{ background: 'var(--c-mint)' }} />
                 {t('dashboard.kpi_income')}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded" style={{ background: '#F43F5E' }} />
+                <span className="size-2.5 rounded" style={{ background: 'var(--c-coral)' }} />
                 {t('dashboard.kpi_expense')}
               </span>
             </div>
@@ -974,11 +969,14 @@ export default function DashboardPage() {
                     const intensity = Math.max(hasIncome ? d.income / maxAmt : 0, hasExpense ? d.expense / maxAmt : 0)
                     const isPositive = net > 0
                     const isNegative = net < 0
+                    // Tint via token (red-500 lama OFF-palette) + alpha dibatasi 30%
+                    // biar teks -ink di atasnya tetap kebaca (AA).
+                    const tintPct = Math.round(Math.max(8, intensity * 30))
                     const bg =
                       isPositive
-                        ? `rgba(16, 185, 129, ${Math.max(0.10, intensity * 0.45)})`
+                        ? `color-mix(in srgb, var(--c-mint) ${tintPct}%, transparent)`
                         : isNegative
-                          ? `rgba(239, 68, 68, ${Math.max(0.10, intensity * 0.45)})`
+                          ? `color-mix(in srgb, var(--c-coral) ${tintPct}%, transparent)`
                           : 'transparent'
 
                     const tooltipParts: string[] = [`${t('dashboard.date_prefix')} ${d.day}`]
@@ -1017,17 +1015,17 @@ export default function DashboardPage() {
                           <div className="w-full text-right leading-none">
                             {hasIncome && hasExpense ? (
                               <>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: '#10B981' }}>
+                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                                   +{tight(d.income)}
                                 </p>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: '#F43F5E' }}>
+                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
                                   −{tight(d.expense)}
                                 </p>
                               </>
                             ) : (
                               <p
                                 className="num tabular text-[9px] sm:text-[11px] font-semibold"
-                                style={{ color: hasIncome ? '#10B981' : '#F43F5E' }}
+                                style={{ color: hasIncome ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                               >
                                 {hasIncome ? '+' : '−'}
                                 {tight(hasIncome ? d.income : d.expense)}
@@ -1059,7 +1057,7 @@ export default function DashboardPage() {
             <div className="flex h-[200px] items-center justify-center text-center text-sm px-4" style={{ color: 'var(--ink-soft)' }}>
               <span>
                 {t('dashboard.no_budget')}.{' '}
-                <a href="/dashboard/budgeting" className="inline-flex items-center gap-1 font-medium" style={{ color: 'var(--c-mint)' }}>
+                <a href="/dashboard/budgeting" className="inline-flex items-center gap-1 font-medium" style={{ color: 'var(--c-mint-ink)' }}>
                   {t('dashboard.set_now')} <ArrowRight className="h-3 w-3" />
                 </a>
               </span>
@@ -1102,7 +1100,6 @@ export default function DashboardPage() {
           creditCards={creditCards}
           contracts={contracts}
           savingRate={totals.savingRate}
-          netCashflow={totals.net}
         />
       </SortableSection>
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
@@ -1125,8 +1122,8 @@ export default function DashboardPage() {
                 <span
                   className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
                   style={{
-                    background: isSurplus ? 'var(--c-mint-soft)' : 'var(--coral-50)',
-                    color: isSurplus ? 'var(--c-mint)' : 'var(--c-coral)',
+                    background: isSurplus ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+                    color: isSurplus ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
                   }}
                 >
                   {isSurplus ? t('dashboard.surplus') : t('dashboard.deficit')} {formatCurrency(Math.abs(yearNet))}
@@ -1151,7 +1148,7 @@ export default function DashboardPage() {
             <Link
               href="/dashboard/assets/investment"
               className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
-              style={{ color: 'var(--c-mint)' }}
+              style={{ color: 'var(--c-mint-ink)' }}
             >
               {t('dashboard.detail')} <ArrowRight className="size-3" />
             </Link>
@@ -1160,8 +1157,8 @@ export default function DashboardPage() {
           {investmentPieData.length === 0 ? (
             <div className="flex flex-1 min-h-[240px] flex-col items-center justify-center text-center px-6">
               <div className="size-14 rounded-2xl flex items-center justify-center mb-3"
-                style={{ background: 'rgba(14, 165, 233, 0.12)' }}>
-                <TrendingUp className="size-7" style={{ color: '#0EA5E9' }} />
+                style={{ background: 'var(--c-violet-soft)' }}>
+                <TrendingUp className="size-7" style={{ color: 'var(--c-violet-ink)' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                 {t('dashboard.no_investment')}
@@ -1201,8 +1198,8 @@ export default function DashboardPage() {
                       className="num tabular text-sm font-semibold mt-0.5"
                       style={{
                         color: investmentSummary.unrealizedPL >= 0
-                          ? '#10B981'
-                          : '#F43F5E',
+                          ? 'var(--c-mint-ink)'
+                          : 'var(--c-coral-ink)',
                       }}
                     >
                       {investmentSummary.unrealizedPL >= 0 ? '+' : ''}
@@ -1249,13 +1246,13 @@ export default function DashboardPage() {
                       className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                       style={{
                         background:
-                          investmentSummary.risk === 'tinggi' ? 'rgba(239,68,68,0.12)'
-                          : investmentSummary.risk === 'sedang' ? 'rgba(245,158,11,0.14)'
-                          : 'rgba(16,185,129,0.12)',
+                          investmentSummary.risk === 'tinggi' ? 'color-mix(in srgb, var(--c-coral) 12%, transparent)'
+                          : investmentSummary.risk === 'sedang' ? 'color-mix(in srgb, var(--c-amber) 14%, transparent)'
+                          : 'color-mix(in srgb, var(--c-mint) 12%, transparent)',
                         color:
-                          investmentSummary.risk === 'tinggi' ? '#991B1B'
-                          : investmentSummary.risk === 'sedang' ? '#92400E'
-                          : '#065F46',
+                          investmentSummary.risk === 'tinggi' ? 'var(--c-coral-ink)'
+                          : investmentSummary.risk === 'sedang' ? 'var(--c-amber-ink)'
+                          : 'var(--c-mint-ink)',
                       }}
                       title={`${t('dashboard.top_holding')} = ${investmentSummary.topPct.toFixed(0)}${t('dashboard.concentration_tooltip')}`}
                     >
@@ -1304,7 +1301,7 @@ export default function DashboardPage() {
                             {h.cost > 0 && (
                               <span
                                 className="text-[10px] tabular shrink-0 font-medium"
-                                style={{ color: h.pl >= 0 ? '#10B981' : '#F43F5E' }}
+                                style={{ color: h.pl >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                               >
                                 {h.pl >= 0 ? '+' : ''}{plPct.toFixed(1)}%
                               </span>

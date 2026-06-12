@@ -66,6 +66,13 @@ function readHidden(): string[] {
 export function DashboardCustomizer() {
   const t = useT()
   const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const closeRef = useRef<HTMLButtonElement | null>(null)
+  // Fokus masuk ke dialog saat buka; balik ke tombol pemicu saat tutup.
+  useEffect(() => {
+    if (open) closeRef.current?.focus()
+    else triggerRef.current?.focus({ preventScroll: true })
+  }, [open])
   const [hidden, setHidden] = useState<string[]>(() =>
     typeof window === 'undefined' ? [...DEFAULT_HIDDEN] : readHidden(),
   )
@@ -111,7 +118,6 @@ export function DashboardCustomizer() {
   return (
     <>
       {/* Wrapper kosong (komponen self-hide / null) → collapse. Selalu aktif. */}
-      <style dangerouslySetInnerHTML={{ __html: '[data-block]:empty{display:none!important}' }} />
       {/* Sembunyiin block terpilih. Cuma setelah mount (default: semua tampil, gak ada flash). */}
       {ready && hiddenCount > 0 && (
         <style
@@ -122,6 +128,7 @@ export function DashboardCustomizer() {
       )}
 
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         className="btn-outline inline-flex items-center gap-1.5"
@@ -139,6 +146,10 @@ export function DashboardCustomizer() {
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.45)' }}
           onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('dashboard_customizer.modal_title')}
+          onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}
         >
           <div
             className="s-card w-full max-w-md p-5 sm:p-6"
@@ -150,7 +161,7 @@ export function DashboardCustomizer() {
                 <p className="eyebrow" style={{ color: 'var(--c-primary)' }}>{t('dashboard_customizer.modal_eyebrow')}</p>
                 <h2 className="t-h2" style={{ color: 'var(--ink)' }}>{t('dashboard_customizer.modal_title')}</h2>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label={t('dashboard_customizer.close_aria')}>
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label={t('dashboard_customizer.close_aria')}>
                 <X className="size-5" style={{ color: 'var(--text-mute)' }} />
               </button>
             </div>
@@ -165,6 +176,7 @@ export function DashboardCustomizer() {
                   <button
                     key={b.id}
                     type="button"
+                    aria-pressed={on}
                     onClick={() => toggle(b.id)}
                     className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition"
                     style={{

@@ -101,8 +101,7 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
               letterSpacing: '-0.025em',
             }}
           >
-            <span className="sm:hidden">{formatCurrency(value)}</span>
-            <span className="hidden sm:inline">{formatCurrency(value)}</span>
+            {formatCurrency(value)}
           </p>
         </div>
 
