@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import {
@@ -27,20 +28,22 @@ import { useT } from '@/lib/i18n/context'
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 type Freq = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
-const CAT_META: Record<string, { color: string; icon: LucideIcon }> = {
-  'Tempat Tinggal': { color: '#8B5CF6', icon: Home },
-  'Cicilan / Utang': { color: '#F43F5E', icon: Home },
-  Tagihan: { color: '#F59E0B', icon: Zap },
-  'Utilitas': { color: '#F59E0B', icon: Zap },
-  Langganan: { color: '#8B5CF6', icon: Film },
-  Hiburan: { color: '#8B5CF6', icon: Film },
-  Asuransi: { color: '#10B981', icon: Shield },
-  Investasi: { color: '#F59E0B', icon: TrendingUp },
-  Tabungan: { color: '#10B981', icon: Wallet },
-}
-const catMeta = (c: string) => CAT_META[c] ?? { color: '#64748B', icon: Repeat }
+const MINT = 'var(--c-mint)', AMBER = 'var(--c-amber)', VIOLET = 'var(--c-violet)', CORAL = 'var(--c-coral)'
+const VIOLET_INK = 'var(--c-violet-ink)', CORAL_INK = 'var(--c-coral-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
-const MINT = '#10B981', AMBER = '#F59E0B', VIOLET = '#8B5CF6', CORAL = '#F43F5E'
+const CAT_META: Record<string, { color: string; icon: LucideIcon }> = {
+  'Tempat Tinggal': { color: VIOLET, icon: Home },
+  'Cicilan / Utang': { color: CORAL, icon: Home },
+  Tagihan: { color: AMBER, icon: Zap },
+  'Utilitas': { color: AMBER, icon: Zap },
+  Langganan: { color: VIOLET, icon: Film },
+  Hiburan: { color: VIOLET, icon: Film },
+  Asuransi: { color: MINT, icon: Shield },
+  Investasi: { color: AMBER, icon: TrendingUp },
+  Tabungan: { color: MINT, icon: Wallet },
+}
+const catMeta = (c: string) => CAT_META[c] ?? { color: 'var(--ink-soft)', icon: Repeat }
 
 function categoriesFor(type: TxType): readonly string[] {
   switch (type) {
@@ -81,42 +84,81 @@ function clampDay(year: number, month: number, day: number) {
   return new Date(year, month, Math.min(day, last))
 }
 
-/** Tanggal jatuh tempo berikutnya (≥ hari ini). */
-function nextRunDate(r: { frequency: string; day_of_period: number }): Date {
+/** Parse "YYYY-MM-DD" jadi Date lokal 00:00 (hindari geser timezone dari new Date(iso)). */
+function parseISODate(s: string | null | undefined): Date | null {
+  if (!s) return null
+  const [y, m, d] = s.split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
+type RecurLike = { frequency: string; day_of_period: number; start_date?: string | null; end_date?: string | null }
+
+/** Sudah lewat end_date? (end_date kosong = jalan terus) */
+function isExpired(r: RecurLike): boolean {
+  const end = parseISODate(r.end_date)
+  return !!end && end < startOfToday()
+}
+
+/** Jatuh tempo berikutnya (≥ hari ini & ≥ start_date); null kalau sudah lewat end_date. */
+function nextRunDate(r: RecurLike): Date | null {
   const t = startOfToday()
+  const start = parseISODate(r.start_date)
+  const from = start && start > t ? start : t
+  const end = parseISODate(r.end_date)
+  let next: Date
   if (r.frequency === 'monthly') {
-    const thisMo = clampDay(t.getFullYear(), t.getMonth(), r.day_of_period)
-    return thisMo >= t ? thisMo : clampDay(t.getFullYear(), t.getMonth() + 1, r.day_of_period)
+    const cand = clampDay(from.getFullYear(), from.getMonth(), r.day_of_period)
+    next = cand >= from ? cand : clampDay(from.getFullYear(), from.getMonth() + 1, r.day_of_period)
+  } else if (r.frequency === 'yearly') {
+    // Anchor ke bulan+tanggal start_date — day_of_period (1–31) gak cukup buat setahun.
+    const anchor = start ?? from
+    const cand = clampDay(from.getFullYear(), anchor.getMonth(), anchor.getDate())
+    next = cand >= from ? cand : clampDay(from.getFullYear() + 1, anchor.getMonth(), anchor.getDate())
+  } else if (r.frequency === 'weekly') {
+    // Kemunculan berikutnya dari weekday start_date.
+    const anchorDow = (start ?? from).getDay()
+    const d = new Date(from)
+    d.setDate(d.getDate() + ((anchorDow - d.getDay() + 7) % 7))
+    next = d
+  } else {
+    next = new Date(from)
   }
-  if (r.frequency === 'yearly') {
-    const d = new Date(t.getFullYear(), 0, 1); d.setDate(r.day_of_period || 1)
-    return d >= t ? d : new Date(t.getFullYear() + 1, 0, r.day_of_period || 1)
-  }
-  if (r.frequency === 'weekly') { const d = new Date(t); d.setDate(t.getDate() + 7); return d }
-  const d = new Date(t); d.setDate(t.getDate() + 1); return d
+  if (end && next > end) return null
+  return next
 }
 
 /** Semua kemunculan dalam 30 hari ke depan (buat kalender). */
-function occurrencesIn30(r: { frequency: string; day_of_period: number }): Date[] {
-  const t = startOfToday(); const end = new Date(t.getTime() + 30 * DAY)
-  const out: Date[] = []
+function occurrencesIn30(r: RecurLike): Date[] {
+  const t = startOfToday()
+  const winEnd = new Date(t.getTime() + 30 * DAY)
+  const end = parseISODate(r.end_date)
+  const cap = end && end < winEnd ? end : winEnd
+  const first = nextRunDate(r)
+  if (!first || first > cap) return []
   if (r.frequency === 'daily') {
-    for (let i = 0; i <= 30; i++) out.push(new Date(t.getTime() + i * DAY))
-  } else if (r.frequency === 'weekly') {
-    let d = nextRunDate(r)
-    while (d <= end) { out.push(new Date(d)); d = new Date(d.getTime() + 7 * DAY) }
-  } else if (r.frequency === 'monthly') {
-    for (const mo of [t.getMonth(), t.getMonth() + 1]) {
-      const d = clampDay(t.getFullYear(), mo, r.day_of_period)
-      if (d >= t && d <= end) out.push(d)
-    }
-  } else {
-    const d = nextRunDate(r); if (d <= end) out.push(d)
+    const out: Date[] = []
+    for (let d = new Date(first); d <= cap; d = new Date(d.getTime() + DAY)) out.push(new Date(d))
+    return out
   }
-  return out
+  if (r.frequency === 'weekly') {
+    const out: Date[] = []
+    for (let d = new Date(first); d <= cap; d = new Date(d.getTime() + 7 * DAY)) out.push(new Date(d))
+    return out
+  }
+  if (r.frequency === 'monthly') {
+    const out = [first]
+    const second = clampDay(first.getFullYear(), first.getMonth() + 1, r.day_of_period)
+    if (second <= cap) out.push(second)
+    return out
+  }
+  return [first]
 }
 
 const dmy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+
+/** Ekuivalen bulanan buat agregasi lintas frekuensi. */
+const monthlyEq = (r: RecurringTransaction) => r.frequency === 'monthly' ? r.amount : r.frequency === 'weekly' ? r.amount * 52 / 12 : r.frequency === 'yearly' ? r.amount / 12 : r.amount * 365 / 12
 
 export default function RecurringPage() {
   const t = useT()
@@ -129,9 +171,7 @@ export default function RecurringPage() {
     monthly: t('recurring.freq_monthly'), yearly: t('recurring.freq_yearly'),
   }
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<RecurringTransaction[]>([])
-  const [accounts, setAccounts] = useState<Account[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -143,20 +183,25 @@ export default function RecurringPage() {
   const [detecting, setDetecting] = useState(false)
 
 
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const [rR, aR] = await Promise.all([
-      supabase.from('recurring_transactions').select('*').eq('user_id', user.id).order('day_of_period'),
-      supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
-    ])
-    setItems((rR.data ?? []) as RecurringTransaction[])
-    setAccounts((aR.data ?? []) as Account[])
-    setLoading(false)
-  }
-
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const pageQuery = useQuery({
+    queryKey: ['recurring'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [rR, aR] = await Promise.all([
+        supabase.from('recurring_transactions').select('*').eq('user_id', user.id).order('day_of_period'),
+        supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
+      ])
+      if (rR.error) throw rR.error
+      if (aR.error) throw aR.error
+      return { items: (rR.data ?? []) as RecurringTransaction[], accounts: (aR.data ?? []) as Account[] }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const items = useMemo(() => pageQuery.data?.items ?? [], [pageQuery.data])
+  const accounts = pageQuery.data?.accounts ?? []
+  const refresh = () => qc.invalidateQueries({ queryKey: ['recurring'] })
 
   async function save() {
     setSaving(true)
@@ -169,28 +214,38 @@ export default function RecurringPage() {
       start_date: form.start_date, end_date: form.end_date || null,
       is_active: form.is_active, notes: form.notes,
     }
-    if (form.id) await supabase.from('recurring_transactions').update(payload).eq('id', form.id)
-    else await supabase.from('recurring_transactions').insert(payload)
-    setSaving(false); setDialogOpen(false); void load()
+    const { error } = form.id
+      ? await supabase.from('recurring_transactions').update(payload).eq('id', form.id)
+      : await supabase.from('recurring_transactions').insert(payload)
+    setSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    setDialogOpen(false)
+    refresh()
   }
 
   async function remove(id: string) {
     if (!confirm(t('recurring.confirm_delete'))) return
-    await supabase.from('recurring_transactions').delete().eq('id', id); void load()
+    const { error } = await supabase.from('recurring_transactions').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    refresh()
   }
   async function toggleActive(r: RecurringTransaction) {
-    await supabase.from('recurring_transactions').update({ is_active: !r.is_active }).eq('id', r.id); void load()
+    const { error } = await supabase.from('recurring_transactions').update({ is_active: !r.is_active }).eq('id', r.id)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    refresh()
   }
   async function runNow(r: RecurringTransaction) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    await supabase.from('transactions').insert({
+    const { error } = await supabase.from('transactions').insert({
       user_id: user.id, date: new Date().toISOString().split('T')[0], account_id: r.account_id,
       type: r.type, category: r.category, description: `[Auto] ${r.name}`, amount: r.amount,
     })
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    // last_run_date cuma penanda; transaksi utamanya sudah benar tercatat.
     await supabase.from('recurring_transactions').update({ last_run_date: new Date().toISOString().split('T')[0] }).eq('id', r.id)
     toast.success(`${r.name} ${t('recurring.toast_recorded_suffix')}`)
-    void load()
+    refresh()
   }
 
   function openEdit(r: RecurringTransaction) {
@@ -206,7 +261,7 @@ export default function RecurringPage() {
     setDialogOpen(true)
   }
 
-  /** Cek dari riwayat: cari transaksi pengeluaran yang berulang (deskripsi sama ≥2×, ~bulanan). */
+  /** Cek dari riwayat: deskripsi sama dengan pola bulanan-ish (≥2 bulan berbeda, ≤2×/bulan). */
   async function detectFromHistory() {
     setDetecting(true); setDetectOpen(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -215,18 +270,20 @@ export default function RecurringPage() {
     const { data } = await supabase.from('transactions')
       .select('description, amount, category, type, date')
       .eq('user_id', user.id).neq('type', 'income').gte('date', cutoff)
-    const txs = (data ?? []) as { description: string; amount: number; category: string; type: string }[]
+    const txs = (data ?? []) as { description: string; amount: number; category: string; type: string; date: string }[]
     const existing = new Set(items.map((r) => r.name.trim().toLowerCase().replace(/^\[auto\]\s*/, '')))
-    const groups = new Map<string, { name: string; amounts: number[]; category: string; count: number }>()
-    for (const t of txs) {
-      const name = (t.description || '').replace(/^\[auto\]\s*/i, '').trim()
+    const groups = new Map<string, { name: string; amounts: number[]; category: string; count: number; months: Set<string> }>()
+    for (const tx of txs) {
+      const name = (tx.description || '').replace(/^\[auto\]\s*/i, '').trim()
       if (!name || existing.has(name.toLowerCase())) continue
-      const g = groups.get(name.toLowerCase()) ?? { name, amounts: [], category: t.category, count: 0 }
-      g.amounts.push(t.amount); g.count++
+      const g = groups.get(name.toLowerCase()) ?? { name, amounts: [], category: tx.category, count: 0, months: new Set<string>() }
+      g.amounts.push(tx.amount); g.count++; g.months.add((tx.date || '').slice(0, 7))
       groups.set(name.toLowerCase(), g)
     }
     const found = [...groups.values()]
-      .filter((g) => g.count >= 2)
+      // Pola langganan: nyebar di ≥2 bulan dan gak lebih dari ~2×/bulan —
+      // nyaring belanja harian ("Makan siang") yang kebetulan berulang.
+      .filter((g) => g.months.size >= 2 && g.count / g.months.size <= 2)
       .map((g) => ({ name: g.name, amount: Math.round(g.amounts.reduce((s, a) => s + a, 0) / g.amounts.length), category: g.category, count: g.count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 12)
@@ -234,7 +291,7 @@ export default function RecurringPage() {
   }
 
   // ---- Derived ----
-  const active = useMemo(() => items.filter((r) => r.is_active), [items])
+  const active = useMemo(() => items.filter((r) => r.is_active && !isExpired(r)), [items])
   const payments = useMemo(() => active.filter((r) => r.type !== 'income'), [active]) // "pembayaran"
   const byFreq = (f: Freq) => payments.filter((r) => r.frequency === f)
   const sum = (arr: RecurringTransaction[]) => arr.reduce((s, r) => s + r.amount, 0)
@@ -246,18 +303,19 @@ export default function RecurringPage() {
   const totalSetahun = perBulan * 12 + perMinggu * 52 + perTahun + perHari * 365
 
   const stats = [
-    { label: t('recurring.stat_per_month'), value: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
-    { label: t('recurring.stat_per_week'), value: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
-    { label: t('recurring.stat_per_year'), value: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: 'rgba(16,185,129,0.12)' },
-    { label: t('recurring.stat_total_year'), value: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
+    { label: t('recurring.stat_per_month'), value: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: tint(VIOLET, 12) },
+    { label: t('recurring.stat_per_week'), value: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: tint(AMBER, 12) },
+    { label: t('recurring.stat_per_year'), value: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: tint(MINT, 12) },
+    { label: t('recurring.stat_total_year'), value: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: tint(VIOLET, 12) },
   ]
 
   // Kalender 30 hari: amount per tanggal
   const today0 = startOfToday()
   const calendar = useMemo(() => {
+    const t0 = startOfToday()
     const days: { date: Date; amount: number; count: number }[] = []
     for (let i = 0; i < 30; i++) {
-      const d = new Date(today0.getTime() + i * DAY)
+      const d = new Date(t0.getTime() + i * DAY)
       let amount = 0, count = 0
       for (const r of payments) {
         if (occurrencesIn30(r).some((o) => o.toDateString() === d.toDateString())) { amount += r.amount; count++ }
@@ -265,11 +323,9 @@ export default function RecurringPage() {
       days.push({ date: d, amount, count })
     }
     return days
-  }, [payments]) // eslint-disable-line react-hooks/exhaustive-deps
-  const _calMax = Math.max(1, ...calendar.map((d) => d.amount))
+  }, [payments])
 
   // Breakdown per kategori (per bulan equivalent)
-  const monthlyEq = (r: RecurringTransaction) => r.frequency === 'monthly' ? r.amount : r.frequency === 'weekly' ? r.amount * 52 / 12 : r.frequency === 'yearly' ? r.amount / 12 : r.amount * 365 / 12
   const breakdown = useMemo(() => {
     const m = new Map<string, { total: number; count: number }>()
     for (const r of payments) {
@@ -278,20 +334,21 @@ export default function RecurringPage() {
       m.set(r.category, g)
     }
     return [...m.entries()].map(([cat, v]) => ({ cat, ...v })).sort((a, b) => b.total - a.total)
-  }, [payments]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [payments])
   const breakdownTotal = breakdown.reduce((s, b) => s + b.total, 0)
 
   // Saran heuristik
   const suggestions = useMemo(() => {
     const out: { title: string; body: string }[] = []
     const subs = payments.filter((r) => r.category === 'Langganan' || r.category === 'Hiburan')
-    if (subs.length >= 2) out.push({ title: `${subs.length} ${t('recurring.sug_subs_title_suffix')}`, body: `${t('recurring.total')} ${formatCurrency(sum(subs))}${t('recurring.per_month_short')}. ${t('recurring.sug_subs_body')}` })
+    if (subs.length >= 2) out.push({ title: `${subs.length} ${t('recurring.sug_subs_title_suffix')}`, body: `${t('recurring.total')} ${formatCurrency(subs.reduce((s, r) => s + r.amount, 0))}${t('recurring.per_month_short')}. ${t('recurring.sug_subs_body')}` })
     const biggest = [...payments].sort((a, b) => monthlyEq(b) - monthlyEq(a))[0]
     if (biggest) out.push({ title: `${biggest.name} ${t('recurring.sug_biggest_title_suffix')}`, body: `${formatCurrency(Math.round(monthlyEq(biggest)))}${t('recurring.per_month_short')} (${(monthlyEq(biggest) / Math.max(1, breakdownTotal) * 100).toFixed(0)}% ${t('recurring.sug_biggest_body_suffix')}).` })
-    const yearlyBig = byFreq('yearly')[0]
-    if (yearlyBig) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(nextRunDate(yearlyBig))}.` })
+    const yearlyBig = payments.filter((r) => r.frequency === 'yearly')[0]
+    const yNext = yearlyBig ? nextRunDate(yearlyBig) : null
+    if (yearlyBig && yNext) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(yNext)}.` })
     return out.slice(0, 3)
-  }, [payments]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [payments, breakdownTotal, t])
 
   const visible = filter === 'all' ? items : items.filter((r) => r.frequency === filter)
 
@@ -312,6 +369,11 @@ export default function RecurringPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : (
         <>
           {/* Stat strip */}
@@ -343,9 +405,9 @@ export default function RecurringPage() {
                   const isToday = i === 0
                   return (
                     <div key={i} className="shrink-0 rounded-lg border grid content-between text-center" title={has ? `${dmy(d.date)} · ${formatCurrency(d.amount)}` : dmy(d.date)}
-                      style={{ width: 46, height: 56, padding: 6, borderColor: isToday ? 'var(--ink)' : has ? `${VIOLET}55` : 'var(--border-soft)', background: has ? `${VIOLET}0F` : 'var(--surface)' }}>
-                      <span className="num text-[13px] font-semibold" style={{ color: isToday ? 'var(--ink)' : has ? VIOLET : 'var(--ink-soft)' }}>{d.date.getDate()}</span>
-                      {has && <span className="num text-[8.5px] leading-tight" style={{ color: VIOLET }}>{d.amount >= 1e6 ? `${(d.amount / 1e6).toFixed(1)}jt` : `${Math.round(d.amount / 1e3)}k`}</span>}
+                      style={{ width: 46, height: 56, padding: 6, borderColor: isToday ? 'var(--ink)' : has ? tint(VIOLET, 33) : 'var(--border-soft)', background: has ? tint(VIOLET, 6) : 'var(--surface)' }}>
+                      <span className="num text-[13px] font-semibold" style={{ color: isToday ? 'var(--ink)' : has ? VIOLET_INK : 'var(--ink-soft)' }}>{d.date.getDate()}</span>
+                      {has && <span className="num text-[8.5px] leading-tight" style={{ color: VIOLET_INK }}>{d.amount >= 1e6 ? `${(d.amount / 1e6).toFixed(1)}jt` : `${Math.round(d.amount / 1e3)}k`}</span>}
                     </div>
                   )
                 })}
@@ -367,7 +429,7 @@ export default function RecurringPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.list_title')}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {([['all', t('recurring.filter_all')], ['monthly', t('recurring.freq_monthly')], ['weekly', t('recurring.freq_weekly')], ['yearly', t('recurring.freq_yearly')]] as const).map(([f, lbl]) => (
+                    {([['all', t('recurring.filter_all')], ['monthly', t('recurring.freq_monthly')], ['weekly', t('recurring.freq_weekly')], ['daily', t('recurring.freq_daily')], ['yearly', t('recurring.freq_yearly')]] as const).map(([f, lbl]) => (
                       <button key={f} onClick={() => setFilter(f)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
                         style={{ background: filter === f ? 'var(--ink)' : 'var(--surface-2)', color: filter === f ? 'var(--surface)' : 'var(--ink-muted)' }}>{lbl}</button>
                     ))}
@@ -391,13 +453,14 @@ export default function RecurringPage() {
                         const meta = catMeta(r.category)
                         const Icon = meta.icon
                         const next = nextRunDate(r)
-                        const days = Math.round((next.getTime() - today0.getTime()) / DAY)
-                        const urgent = r.is_active && days <= 3
+                        const ended = isExpired(r)
+                        const days = next ? Math.round((next.getTime() - today0.getTime()) / DAY) : 0
+                        const urgent = r.is_active && !ended && next != null && days <= 3
                         return (
                           <tr key={r.id} className="group border-t align-middle" style={{ borderColor: 'var(--border-soft)' }}>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3 min-w-0">
-                                <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: `${meta.color}1A`, opacity: r.is_active ? 1 : 0.5 }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                                <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10), opacity: r.is_active ? 1 : 0.5 }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                                 <div className="min-w-0">
                                   <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}</p>
                                   <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{TYPE_LABELS[r.type]}{r.notes ? ` · ${r.notes}` : ''}</p>
@@ -408,13 +471,13 @@ export default function RecurringPage() {
                             <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{FREQ_LABELS[r.frequency]}</span></td>
                             <td className="px-3 py-3 text-[13px] truncate" style={{ color: 'var(--ink-muted)' }}>{acc?.name ?? '—'}</td>
                             <td className="px-3 py-3 text-right">
-                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL : 'var(--ink)' }}>{dmy(next)}</p>
-                              <p className="num text-[10px]" style={{ color: urgent ? CORAL : 'var(--ink-soft)' }}>{r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
+                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next) : '—'}</p>
+                              <p className="num text-[10px]" style={{ color: urgent ? CORAL_INK : 'var(--ink-soft)' }}>{ended ? t('recurring.badge_ended') : r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="num font-semibold tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(r.amount)}</span>
                               <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition mt-1">
-                                <Button variant="ghost" size="icon-sm" onClick={() => runNow(r)} title={t('recurring.action_record_now')} disabled={!r.is_active}><Play className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => runNow(r)} title={t('recurring.action_record_now')} disabled={!r.is_active || isExpired(r)}><Play className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon-sm" onClick={() => toggleActive(r)} title={r.is_active ? t('recurring.action_pause') : t('recurring.action_resume')}><Pause className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon-sm" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon-sm" onClick={() => remove(r.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
@@ -453,7 +516,7 @@ export default function RecurringPage() {
                 </div>
 
                 <div className="s-card p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: VIOLET }}><Sparkles className="size-3.5" /> {t('recurring.suggestions_title')}</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: VIOLET_INK }}><Sparkles className="size-3.5" /> {t('recurring.suggestions_title')}</p>
                   <div className="mt-3 space-y-2.5">
                     {suggestions.length > 0 ? suggestions.map((s, i) => (
                       <div key={i} className="rounded-xl p-3" style={{ background: 'var(--surface-2)' }}>
@@ -474,7 +537,7 @@ export default function RecurringPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(139,92,246,0.12)' }}><Repeat className="size-5" style={{ color: VIOLET }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(VIOLET, 12) }}><Repeat className="size-5" style={{ color: VIOLET_INK }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('recurring.dialog_edit_title') : t('recurring.dialog_add_title')}</DialogTitle>
                 <DialogDescription>{t('recurring.dialog_description')}</DialogDescription>
@@ -513,7 +576,11 @@ export default function RecurringPage() {
                   <SelectContent>{(Object.keys(FREQ_LABELS) as Freq[]).map((k) => <SelectItem key={k} value={k}>{FREQ_LABELS[k]}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-1.5"><Label>{t('recurring.field_date')} {form.frequency === 'monthly' ? '(1–31)' : ''}</Label><Input type="number" min={1} max={31} value={form.day_of_period} onChange={(e) => setForm({ ...form, day_of_period: Number(e.target.value) || 1 })} /></div>
+              <div className="grid gap-1.5"><Label>{t('recurring.field_date')} {form.frequency === 'monthly' ? '(1–31)' : ''}</Label>
+                {form.frequency === 'monthly'
+                  ? <Input type="number" min={1} max={31} value={form.day_of_period} onChange={(e) => setForm({ ...form, day_of_period: Number(e.target.value) || 1 })} />
+                  : <p className="text-[12px] flex items-center rounded-md border px-3" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)', minHeight: 36 }}>{form.frequency === 'weekly' ? t('recurring.weekly_follows_start') : form.frequency === 'yearly' ? t('recurring.yearly_follows_start') : t('recurring.daily_every_day')}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5"><Label>{t('recurring.field_start')}</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
@@ -532,7 +599,7 @@ export default function RecurringPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(139,92,246,0.12)' }}><Search className="size-5" style={{ color: VIOLET }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(VIOLET, 12) }}><Search className="size-5" style={{ color: VIOLET_INK }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{t('recurring.detect_title')}</DialogTitle>
                 <DialogDescription>{t('recurring.detect_description')}</DialogDescription>
