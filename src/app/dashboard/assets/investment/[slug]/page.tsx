@@ -57,6 +57,28 @@ function cryptoBase(t?: string | null): string {
   return (t ?? '').toUpperCase().replace(/[-_]?(USDT|USD)$/i, '').replace(/[-_]+$/, '')
 }
 
+// ── Harga emas live ──────────────────────────────────────────────────
+// Nilai emas pakai harga BUYBACK provider per gram (harga yang beneran
+// diterima kalau dijual hari ini). Provider tanpa harga publik (UBS, Pluang,
+// Tokopedia/Shopee, Lainnya) dinilai pakai acuan buyback Antam.
+const GOLD_SOURCE_RULES: [RegExp, string][] = [
+  [/antam|logam\s*mulia/i, 'anekalogam'],
+  [/galeri\s*24/i, 'galeri24'],
+  [/pegadaian/i, 'pegadaian'],
+  [/treasury/i, 'treasury'],
+  [/indogold/i, 'indogold'],
+  [/lakuemas/i, 'lakuemas'],
+]
+type GoldPriceMap = Record<string, { sell: number | null; buyback: number | null; date: string | null }>
+function goldQuoteFor(i: Investment, prices: GoldPriceMap): Quote | undefined {
+  let source = 'anekalogam'
+  const hay = `${i.platform ?? ''} ${i.name ?? ''}`
+  for (const [re, src] of GOLD_SOURCE_RULES) { if (re.test(hay)) { source = src; break } }
+  const gp = prices[source] ?? prices['anekalogam']
+  if (!gp?.buyback || gp.buyback <= 0) return undefined
+  return { ticker: i.ticker ?? '', price: gp.buyback, currency: 'IDR', changePct: null, marketState: null }
+}
+
 interface FormState {
   id: string | null
   name: string
@@ -129,6 +151,7 @@ export default function InvestmentCategoryPage() {
     try { localStorage.setItem(`pwm.investmentView.${slug}`, next) } catch {}
   }
   const [quotes, setQuotes] = useState<Record<string, Quote>>({})
+  const [goldPrices, setGoldPrices] = useState<GoldPriceMap>({})
   const [quotesUpdatedAt, setQuotesUpdatedAt] = useState<Date | null>(null)
   const [usdIdr, setUsdIdr] = useState<number>(FX_FALLBACK_USDIDR)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -152,6 +175,22 @@ export default function InvestmentCategoryPage() {
   // hook deps lint rule is happy without disabling it. Both `load` and
   // `refreshQuotes` are stable as long as `category` doesn't change.
   const refreshQuotes = useCallback(async (list: Investment[]) => {
+    // Emas: harga buyback per-gram dari harga publik provider — gak butuh ticker.
+    if (category === 'gold') {
+      setRefreshing(true)
+      try {
+        const res = await fetch('/api/gold-price')
+        if (!res.ok) return
+        const json = (await res.json()) as { providers?: { source: string; sellPerGram: number | null; buybackPerGram: number | null; recordedDate: string | null }[] }
+        const map: GoldPriceMap = {}
+        for (const pr of json.providers ?? []) map[pr.source] = { sell: pr.sellPerGram, buyback: pr.buybackPerGram, date: pr.recordedDate }
+        setGoldPrices(map)
+      } finally {
+        setRefreshing(false)
+        setQuotesUpdatedAt(new Date())
+      }
+      return
+    }
     const tickers = Array.from(new Set(list.map((i) => i.ticker).filter(Boolean) as string[]))
     if (tickers.length === 0) return
     setRefreshing(true)
@@ -331,11 +370,13 @@ export default function InvestmentCategoryPage() {
   // current_price manual. Crypto quotes udah pre-converted IDR di atas.
   const enriched = useMemo(() => {
     return items.map((i) => {
-      const q = i.ticker ? quotes[i.ticker.toUpperCase()] : undefined
+      const q = category === 'gold'
+        ? goldQuoteFor(i, goldPrices)
+        : i.ticker ? quotes[i.ticker.toUpperCase()] : undefined
       const e = enrichHolding(i, q, usdIdr)
       return { ...e, q, shares: i.quantity || 0 }
     })
-  }, [items, quotes, usdIdr])
+  }, [items, quotes, usdIdr, category, goldPrices])
 
   const totals = useMemo(() => {
     const invested = enriched.reduce((s, x) => s + x.invested, 0)
@@ -348,7 +389,7 @@ export default function InvestmentCategoryPage() {
   // Kelas aset yang punya harga live (stock & crypto pakai quote endpoint).
   // Sisanya (emas/deposito/obligasi/sbn/forex/p2p/pensiun/usaha/reksadana)
   // gak ada feed harian -> "Hari Ini" tampil "—".
-  const hasLivePrices = category === 'stock' || category === 'crypto'
+  const hasLivePrices = category === 'stock' || category === 'crypto' || category === 'gold'
 
   // P/L hari ini = selisih nilai pasar vs nilai penutupan kemarin, dihitung
   // dari changePct tiap quote: prior = market / (1 + pct/100). Hanya holding
@@ -501,10 +542,10 @@ export default function InvestmentCategoryPage() {
         <TabsContent value="holdings" className="space-y-6 mt-6">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {(category === 'stock' || category === 'crypto')
+          {(category === 'stock' || category === 'crypto' || category === 'gold')
             ? (quotesUpdatedAt
-                ? `${t('investment_detail.price_updated_at')} ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${t('investment_detail.price_not_realtime_suffix')}`
-                : t('investment_detail.price_not_realtime'))
+                ? `${t('investment_detail.price_updated_at')} ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${category === 'gold' ? t('investment_detail.gold_price_note') : t('investment_detail.price_not_realtime_suffix')}`
+                : category === 'gold' ? t('investment_detail.gold_price_note') : t('investment_detail.price_not_realtime'))
             : `${t('investment_detail.manage_positions')} ${subcat.label.toLowerCase()}.`}
         </p>
         <div className="flex gap-2 items-center">
@@ -542,11 +583,11 @@ export default function InvestmentCategoryPage() {
               </button>
             </div>
           )}
-          {(category === 'stock' || category === 'crypto') && (
+          {(category === 'stock' || category === 'crypto' || category === 'gold') && (
             <Button
               variant="outline"
               onClick={() => refreshQuotes(items)}
-              disabled={refreshing || !items.some((i) => i.ticker)}
+              disabled={refreshing || (category !== 'gold' && !items.some((i) => i.ticker))}
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               {t('investment_detail.refresh_price')}
