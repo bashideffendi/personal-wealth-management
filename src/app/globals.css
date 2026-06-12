@@ -11,32 +11,36 @@
 .leaflet-container { isolation: isolate; }
 
 /* ============================================
-   Klunting — Design System v4 (Modern fintech pivot, 2026-05-28 revert)
-   Restore emerald primary brand + clean near-white bg + JetBrains Mono.
-   Reference: Wise (light, friendly fintech), Mercury (professional),
-   Bibit/Stockbit (Indonesia investment, emerald-led), Linear (precise).
-   Drop editorial direction — Instrument Serif italic moments-only.
+   Klunting — Design System v5 (Quiet Luxury, tuned · 2026-06-12)
+   Skeleton tetap (krem hangat + ink + warna cuma di data), eksekusi
+   dipertajam: (1) palet data BESPOKE — bukan lagi hex stock Tailwind,
+   hue di-warm-shift & lightness diharmonisasi biar chart kelihatan
+   dirancang, bukan template; (2) netral teks ikut HANGAT (dulu zinc
+   dingin di atas krem hangat — clash halus); (3) dark mode espresso
+   hangat (bukan biru-hitam generik); (4) tipografi keluarga Instrument
+   (Sans utk kerja, Serif italic utk momen). Kontras: -ink ≥ 4.5:1 di
+   putih, teks sekunder ≥ 6:1 (diverifikasi per nilai, lihat komentar).
    ============================================ */
 
 :root {
-  /* ── Brand stops — emerald primary (Klunting signature) ── */
-  --brand-50:    #ECFDF5;
-  --brand-100:   #D1FAE5;
-  --brand-500:   #10B981;      /* primary emerald (Klunting brand) */
-  --brand-600:   #059669;
-  --brand-700:   #047857;
+  /* ── Brand stops — hijau Klunting (bespoke, bukan emerald-500 stock) ── */
+  --brand-50:    #EDF6F1;
+  --brand-100:   #D9EEE3;
+  --brand-500:   #129B69;      /* primary green (Klunting brand) */
+  --brand-600:   #0E7F57;
+  --brand-700:   #0B6E4D;
 
-  --mint-50:     #ECFDF5;
-  --mint-300:    #6EE7B7;
-  --mint-500:    #10B981;      /* income/positive accent */
-  --mint-600:    #059669;
+  --mint-50:     #EDF6F1;
+  --mint-300:    #8BCBAD;
+  --mint-500:    #129B69;      /* income/positive accent */
+  --mint-600:    #0E7F57;
 
-  --violet-50:   #F5F3FF;
-  --violet-100:  #EDE9FE;
-  --violet-300:  #C4B5FD;
-  --violet-500:  #8B5CF6;      /* AI/langganan/kewajiban tetap */
-  --violet-600:  #7C3AED;
-  --violet-700:  #6D28D9;
+  --violet-50:   #F1EEFA;
+  --violet-100:  #E5DFF6;
+  --violet-300:  #C2B4EA;
+  --violet-500:  #7C5FD3;     /* AI/langganan/kewajiban tetap — iris, bukan ungu neon */
+  --violet-600:  #6A4BC2;
+  --violet-700:  #5A3CAB;
 
   /* ── Surfaces (Light) — near-white, cool subtle ─────── */
   --paper:       #F6F4EF;    /* warm cream — match claude-code handoff */
@@ -54,82 +58,86 @@
        --ink-muted = teks sekunder (paragraf pendukung, deskripsi). PEKAT.
        --ink-soft  = label/eyebrow/caption paling redup. FLOOR — jangan lebih terang.
      JANGAN pakai abu lebih terang dari --ink-soft buat TEKS yg harus kebaca. */
-  --ink:         #0A0A0F;    /* konten utama */
-  --ink-muted:   #3F3F46;    /* Zinc-700 — sekunder, kebaca (~10:1) */
-  --ink-soft:    #5C5C66;    /* sekunder-redup — FLOOR text (~6.4:1, lebih gelap dari Zinc-500 lama) */
-  --text:        #0A0A0F;
-  --text-2:      #3F3F46;    /* alias → ink-muted */
-  --text-mute:   #5C5C66;    /* alias → ink-soft (floor) */
-  --text-faint:  #5C5C66;    /* DULU #A1A1AA (gagal AA) → naikin ke floor; faint utk teks dilarang */
+  --ink:         #131110;    /* konten utama — warm near-black (dulu #0A0A0F zinc dingin) */
+  --ink-muted:   #46413A;    /* warm graphite — sekunder, kebaca (10.1:1) */
+  --ink-soft:    #5B544B;    /* sekunder-redup — FLOOR text (7.5:1 putih / 6.8:1 krem) */
+  --text:        #131110;
+  --text-2:      #46413A;    /* alias → ink-muted */
+  --text-mute:   #5B544B;    /* alias → ink-soft (floor) */
+  --text-faint:  #5B544B;    /* DULU #A1A1AA (gagal AA) → naikin ke floor; faint utk teks dilarang */
   --border:      #E3DDD0;    /* warm grey — harmonize with cream (was cool #E4E4E7) */
   --border-soft: #EDE7DC;    /* warm hairline (was cool #F4F4F5) */
 
-  /* ── Semantic tokens — emerald primary restored ─── */
-  --c-primary:      #0A0A0F;     /* INK primary — Quiet Luxury brand (buttons, logo, nav) */
-  --c-primary-soft: #EEE9DF;     /* warm tint for active states (was cool #F4F4F5) */
+  /* ── Semantic tokens — palet data bespoke (lightness diharmonisasi) ───
+     Empat hue identitas tetap (hijau=naik, rose=turun, brass=waspada,
+     iris=AI) tapi hex-nya milik Klunting: de-neon, warm-shift, dan
+     lightness disetarakan biar berdampingan di chart tanpa ada yang
+     teriak. Stock Tailwind 500 (10B981/F43F5E/F59E0B/8B5CF6) pensiun. */
+  --c-primary:      #131110;     /* INK primary — Quiet Luxury brand (buttons, logo, nav) */
+  --c-primary-soft: #EEE9DF;     /* warm tint for active states */
   --c-primary-foreground: #FFFFFF;
-  --c-mint:         #10B981;     /* alias to primary — same hex */
-  --c-mint-soft:    #ECFDF5;
-  --c-coral:        #F43F5E;     /* expense/danger — back to bolder coral-500 */
-  --c-coral-soft:   #FFF1F2;
-  --c-amber:        #F59E0B;
-  --c-amber-soft:   #FFFBEB;
-  --c-violet:       #8B5CF6;
-  --c-violet-soft:  #F5F3FF;
+  --c-mint:         #129B69;     /* income/up — hijau dalam, gak neon (putih di atasnya 3.6:1, > lama) */
+  --c-mint-soft:    #E7F4EC;
+  --c-coral:        #D2495A;     /* expense/danger — garnet rose, lebih tenang dari coral pink */
+  --c-coral-soft:   #FAEDEE;
+  --c-amber:        #C98F0E;     /* warning/saving — brass/ochre, bukan oranye rambu */
+  --c-amber-soft:   #F9F1DD;
+  --c-violet:       #7C5FD3;     /* AI — iris */
+  --c-violet-soft:  #F1EEFA;
   /* AA-contrast foreground variants — readable on the soft tints AND on near-white
-     surfaces (the full-saturation hues above fail WCAG AA as small text). */
-  --c-mint-ink:     #047857;
-  --c-coral-ink:    #BE123C;
-  --c-amber-ink:    #B45309;
-  --c-violet-ink:   #6D28D9;
-  --c-ink:          #0A0A0F;
+     surfaces. Diverifikasi: mint 6.3 / coral 7.1 / amber 5.6 / violet 7.9 di putih. */
+  --c-mint-ink:     #0B6E4D;
+  --c-coral-ink:    #A12C3F;
+  --c-amber-ink:    #8F5E06;
+  --c-violet-ink:   #5A3CAB;
+  --c-ink:          #131110;
 
   /* ── Dark inverse (sidebar, hero cards in light mode) ── */
   --black:       #0A0A0F;
   --black-soft:  #14141A;
   --black-2:     #1C1C24;
   --black-line:  rgba(255, 255, 255, 0.08);
-  --on-black:    #F5F5F7;
-  --on-black-mut:#A1A1AA;
+  --on-black:    #F6F4EF;
+  --on-black-mut:#A9A39A;
 
-  /* ── Emerald — primary accent (the signature) ── */
-  --emerald-50:  #ECFDF5;
-  --emerald-100: #D1FAE5;
-  --emerald-200: #A7F3D0;
-  --emerald-300: #6EE7B7;
-  --emerald-400: #34D399;
-  --emerald-500: #10B981;   /* primary */
-  --emerald-600: #059669;
-  --emerald-700: #047857;
-  --emerald-800: #065F46;
-  --emerald-900: #064E3B;
+  /* ── Hijau Klunting — ramp bespoke (warm sage-emerald) ── */
+  --emerald-50:  #EDF6F1;
+  --emerald-100: #D9EEE3;
+  --emerald-200: #B7DFCC;
+  --emerald-300: #8BCBAD;
+  --emerald-400: #4AB386;
+  --emerald-500: #129B69;   /* primary */
+  --emerald-600: #0E7F57;
+  --emerald-700: #0B6E4D;
+  --emerald-800: #0A5740;
+  --emerald-900: #084433;
 
-  /* ── Coral — secondary accent (warmth, fun) ── */
-  --coral-50:    #FFF1F2;
-  --coral-100:   #FFE4E6;
-  --coral-200:   #FECDD3;
-  --coral-300:   #FDA4AF;
-  --coral-400:   #FB7185;
-  --coral-500:   #F43F5E;
-  --coral-600:   #E11D48;
-  --coral-700:   #BE123C;
+  /* ── Garnet rose — secondary accent (expense, warmth) ── */
+  --coral-50:    #FAEDEE;
+  --coral-100:   #F7DCDF;
+  --coral-200:   #F0BDC3;
+  --coral-300:   #E5929D;
+  --coral-400:   #DC6B7A;
+  --coral-500:   #D2495A;
+  --coral-600:   #B93748;
+  --coral-700:   #A12C3F;
 
-  /* ── Amber — tertiary (warning, savings tier) ── */
-  --amber-50:    #FFFBEB;
-  --amber-100:   #FEF3C7;
-  --amber-200:   #FDE68A;
-  --amber-300:   #FCD34D;
-  --amber-400:   #FBBF24;
-  --amber-500:   #F59E0B;
-  --amber-600:   #D97706;
-  --amber-700:   #B45309;
+  /* ── Brass — tertiary (warning, savings tier) ── */
+  --amber-50:    #F9F1DD;
+  --amber-100:   #F4E5C2;
+  --amber-200:   #ECD194;
+  --amber-300:   #E2B95F;
+  --amber-400:   #D9A532;
+  --amber-500:   #C98F0E;
+  --amber-600:   #AC7708;
+  --amber-700:   #8F5E06;
 
-  /* ── Sky — supplementary info color ── */
-  --sky-50:    #F0F9FF;
-  --sky-100:   #E0F2FE;
-  --sky-300:   #7DD3FC;
-  --sky-500:   #0EA5E9;
-  --sky-600:   #0284C7;
+  /* ── Sky — supplementary info color (calmer, warm-grey undertone) ── */
+  --sky-50:    #EFF6FA;
+  --sky-100:   #DFEDF6;
+  --sky-300:   #8FC3DE;
+  --sky-500:   #2D89BC;
+  --sky-600:   #1F71A0;
 
   /* ── Semantic ─────────────────────────────────── */
   --success:     var(--emerald-500);
@@ -221,8 +229,8 @@
   --burgundy-500: var(--coral-500);
   --burgundy-600: var(--coral-600);
   --burgundy-700: var(--coral-700);
-  --burgundy-800: #9F1239;
-  --burgundy-900: #881337;
+  --burgundy-800: #7E2434;
+  --burgundy-900: #66202C;
 
   /* moss → emerald */
   --moss-50:     var(--emerald-50);
@@ -243,18 +251,18 @@
   --orange-600:  var(--amber-600);
   --orange-700:  var(--amber-700);
 
-  --stone:       #71717A;
-  --stone-light: #A1A1AA;
+  --stone:       #75706A;
+  --stone-light: #A9A39A;
 
-  /* ── Fonts ───────────────────────────────────── */
-  --font-sans:    var(--font-sans-brand), "Inter",
+  /* ── Fonts — keluarga Instrument ───────────────── */
+  --font-sans:    var(--font-sans-brand), "Instrument Sans",
                   system-ui, -apple-system, sans-serif;
   --font-ui:      var(--font-sans);
-  /* Calm Premium: ONE typeface (Inter) for everything — display headings
-     and numbers included. Numbers get tabular figures via .num (font-
-     feature "tnum"), not a separate monospace. --font-display and
-     --font-mono alias to Inter so any legacy reference stays consistent. */
-  --font-display: var(--font-sans);
+  /* Instrument Sans untuk kerja (body, UI, angka tabular via .num);
+     Instrument Serif italic untuk momen display — judul halaman & judul
+     dialog yang dulu di-author pakai --font-display kini hidup lagi.
+     --font-mono tetap alias sans: angka pakai tnum, bukan monospace. */
+  --font-display: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
   --font-mono:    var(--font-sans);
 
   --radius: 1rem;       /* 16px — editorial card baseline */
@@ -295,7 +303,7 @@
   --color-chart-2: var(--c-amber);     /* amber */
   --color-chart-3: var(--c-coral);     /* coral — expense */
   --color-chart-4: var(--c-violet);    /* violet — AI */
-  --color-chart-5: #0EA5E9;            /* sky — supplementary */
+  --color-chart-5: var(--sky-500);     /* sky — supplementary */
 
   --color-sidebar: var(--surface);
   --color-sidebar-foreground: var(--ink);
@@ -314,62 +322,63 @@
 }
 
 /* ============================================
-   DARK MODE — Mercury-inspired premium navy
+   DARK MODE — espresso hangat (bukan biru-hitam generik)
+   Hue surface ikut kanvas krem (cokelat-abu dalam), teks warm white.
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — Mercury-inspired premium navy (restored fintech) */
-  --paper:       #0A0A0F;
-  --bg:          #0A0A0F;
-  --bg-2:        #14141A;
-  --surface:     #14141A;
-  --surface-2:   #1C1C24;
-  --surface-3:   #27272F;
+  /* Surfaces — espresso: gelap tapi sewarna dengan brand hangat */
+  --paper:       #11100E;
+  --bg:          #11100E;
+  --bg-2:        #1A1815;
+  --surface:     #1A1815;
+  --surface-2:   #221F1B;
+  --surface-3:   #2B2722;
   --line:        rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.14);
 
-  /* Text */
-  --ink:         #F4F4F5;
-  --ink-muted:   #D4D4D8;
-  --ink-soft:    #A1A1AA;
-  --text:        #F4F4F5;
-  --text-2:      #D4D4D8;
-  --text-mute:   #A1A1AA;
-  --text-faint:  #A1A1AA;   /* DULU #71717A (gagal AA ~3.7:1 di atas surface gelap) → samain ke floor --ink-soft */
+  /* Text — warm white ramp (kontras: 15.8 / 11.8 / 6.8 di atas surface) */
+  --ink:         #F4F2ED;
+  --ink-muted:   #D6D2CA;
+  --ink-soft:    #A6A097;
+  --text:        #F4F2ED;
+  --text-2:      #D6D2CA;
+  --text-mute:   #A6A097;
+  --text-faint:  #A6A097;   /* faint utk teks dilarang — samain ke floor --ink-soft */
   --border:      rgba(255, 255, 255, 0.07);
   --border-soft: rgba(255, 255, 255, 0.04);
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
-  --black:       #F5F5F7;
-  --black-soft:  #E4E4E7;
-  --black-2:     #D4D4D8;
+  --black:       #F6F4EF;
+  --black-soft:  #E8E4DC;
+  --black-2:     #D6D2CA;
   --black-line:  rgba(0, 0, 0, 0.10);
-  --on-black:    #0D0D10;
-  --on-black-mut:#52525B;
+  --on-black:    #14110D;
+  --on-black-mut:#57534E;
 
-  /* Accents — emerald primary restored, brighter for dark contrast */
-  --c-primary:      #F4F4F5;      /* INK inverts to near-white on dark */
+  /* Accents — versi terang palet bespoke (fill ≥ 6:1, -ink ≥ 9:1 di surface) */
+  --c-primary:      #F4F2ED;      /* INK inverts to near-white on dark */
   --c-primary-soft: rgba(255, 255, 255, 0.08);
-  --c-primary-foreground: #0A0A0F;
-  --c-mint:         #34D399;
-  --c-mint-soft:    rgba(52, 211, 153, 0.13);
-  --c-coral:        #FB7185;
-  --c-coral-soft:   rgba(251, 113, 133, 0.13);
-  --c-amber:        #FBBF24;
-  --c-amber-soft:   rgba(251, 191, 36, 0.13);
-  --c-violet:       #A78BFA;
-  --c-violet-soft:  rgba(167, 139, 250, 0.14);
+  --c-primary-foreground: #11100E;
+  --c-mint:         #3DBA8A;
+  --c-mint-soft:    rgba(61, 186, 138, 0.13);
+  --c-coral:        #ED7385;
+  --c-coral-soft:   rgba(237, 115, 133, 0.13);
+  --c-amber:        #E3A93C;
+  --c-amber-soft:   rgba(227, 169, 60, 0.13);
+  --c-violet:       #A78FE8;
+  --c-violet-soft:  rgba(167, 143, 232, 0.14);
   /* Lighter on dark — readable on dark soft tints + dark surfaces. */
-  --c-mint-ink:     #6EE7B7;
-  --c-coral-ink:    #FDA4AF;
-  --c-amber-ink:    #FCD34D;
-  --c-violet-ink:   #C4B5FD;
-  --c-ink:          #F5F5F7;
+  --c-mint-ink:     #82DBB1;
+  --c-coral-ink:    #F4A6AE;
+  --c-amber-ink:    #EFCB7E;
+  --c-violet-ink:   #C9BAF4;
+  --c-ink:          #F6F4EF;
 
   /* Legacy emerald tokens — boost untuk dark */
-  --emerald-400: #34D399;
-  --emerald-500: #10B981;
-  --emerald-600: #059669;
+  --emerald-400: #5CCB9F;
+  --emerald-500: #3DBA8A;
+  --emerald-600: #25A375;
 
   --success:     var(--c-mint);
   --success-bg:  var(--c-mint-soft);
@@ -426,6 +435,39 @@
     letter-spacing: -0.025em;
     font-weight: 600;
   }
+  /* Seleksi teks — butter hangat, satu-satunya kuning di app (momen fun
+     yang cuma muncul saat user berinteraksi, bukan dekorasi permanen). */
+  ::selection {
+    background: #F3E2AE;
+    color: #131110;
+  }
+  .dark ::selection {
+    background: #57503B;
+    color: #F4F2ED;
+  }
+  /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-soft);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 /* ============================================
@@ -444,9 +486,9 @@
   font-weight: 500;
 }
 
-/* Display utility — bold sans untuk hero net worth & H1.
-   Drop italic serif sebagai default per fintech redesign 2026-05-28.
-   Use Plus Jakarta 800 untuk maximum impact, tight tracking. */
+/* Display utility — bold SANS untuk hero net worth & angka besar.
+   Sengaja BUKAN var(--font-display): serif itu buat kata, angka tetap
+   Instrument Sans 800 tracking ketat biar tabular & berwibawa. */
 .font-display,
 .display {
   font-family: var(--font-sans);

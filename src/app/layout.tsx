@@ -1,24 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Instrument_Sans, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
 
-// Calm Premium typography — ONE typeface across the entire product.
-// Inter: hyper-readable, premium-neutral (Linear, Stripe, Copilot Money).
-// Headings, body, and tabular numbers all use Inter — consistency over
-// novelty. No separate mono or serif (dropped Plus Jakarta / JetBrains /
-// Instrument Serif). Variable font, so every weight is available.
-const inter = Inter({
+// Keluarga Instrument — SATU keluarga huruf untuk seluruh produk.
+// Instrument Sans (grotesque hangat, satu proyek dengan Instrument Serif):
+// body, UI, dan angka tabular (.num pakai fitur tnum — diverifikasi empiris).
+// Pasangan sans+serif satu foundry = sistem tipografi yang nyambung, bukan
+// dua font asing dijodohkan. Variable font, semua weight tersedia.
+const instrumentSans = Instrument_Sans({
   variable: "--font-sans-brand",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Instrument Serif (italic) — "moments of personality" ONLY. Called inline via
-// var(--font-instrument-serif) on a handful of landing/auth phrases. Deliberately
-// NOT wired to --font-display / --font-mono (those stay Inter app-wide → zero
-// dashboard regression). Body stays Inter too.
+// Instrument Serif (italic) — momen personality: judul halaman/dialog via
+// --font-display + frasa landing/auth via var(--font-instrument-serif).
+// Angka & body TETAP sans — serif cuma buat kata, jangan buat data.
 const instrumentSerif = Instrument_Serif({
   weight: "400",
   style: "italic",
@@ -111,7 +110,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${instrumentSans.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
