@@ -1477,6 +1477,11 @@ export const messages = {
     },
     rules: {
       page_title: "Aturan Kategori",
+      eyebrow: "Kategori Otomatis",
+      confirm_delete: "Hapus aturan ini?",
+      edit_rule: "Edit aturan",
+      delete_rule: "Hapus aturan",
+      dialog_title_edit: "Edit Aturan",
       page_subtitle: "Saat deskripsi transaksi mengandung teks yang cocok, kategori & tipe otomatis diisi. Contoh: “GRAB RIDE 25K” → auto Transportasi.",
       active_count: "aturan aktif",
       total_count: "total",
@@ -4673,6 +4678,11 @@ export const messages = {
     },
     rules: {
       page_title: "Category Rules",
+      eyebrow: "Auto-Categorize",
+      confirm_delete: "Delete this rule?",
+      edit_rule: "Edit rule",
+      delete_rule: "Delete rule",
+      dialog_title_edit: "Edit Rule",
       page_subtitle: "When a transaction description matches the text, the category and type are filled in automatically. Example: \"GRAB RIDE 25K\" → auto Transportation.",
       active_count: "active rules",
       total_count: "total",

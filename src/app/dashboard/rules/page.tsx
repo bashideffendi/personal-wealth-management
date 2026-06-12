@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useCategoryOptions } from '@/lib/use-category-options'
 import type { CategorizationRule } from '@/types'
@@ -14,7 +16,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Plus, Trash2, Loader2, Sparkles } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, Sparkles } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
@@ -34,27 +36,34 @@ export default function RulesPage() {
   const supabase = createClient()
   const t = useT()
   const { optionsForType, firstOf } = useCategoryOptions()
-  const [loading, setLoading] = useState(true)
-  const [rules, setRules] = useState<CategorizationRule[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
 
-
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase
-      .from('categorization_rules')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('priority', { ascending: false })
-    setRules((data ?? []) as CategorizationRule[])
-    setLoading(false)
+  const TYPE_LABEL: Record<string, string> = {
+    expense: t('rules.type_expense'), income: t('rules.type_income'),
+    saving: t('rules.type_saving'), investment: t('rules.type_investment'),
   }
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const pageQuery = useQuery({
+    queryKey: ['rules'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const { data, error } = await supabase
+        .from('categorization_rules')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('priority', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as CategorizationRule[]
+    },
+  })
+  const loading = pageQuery.isLoading
+  const rules = pageQuery.data ?? []
+  const refresh = () => qc.invalidateQueries({ queryKey: ['rules'] })
 
   async function save() {
     setSaving(true)
@@ -68,27 +77,37 @@ export default function RulesPage() {
       priority: form.priority,
       is_active: true,
     }
-    if (form.id) await supabase.from('categorization_rules').update(payload).eq('id', form.id)
-    else await supabase.from('categorization_rules').insert(payload)
+    const { error } = form.id
+      ? await supabase.from('categorization_rules').update(payload).eq('id', form.id)
+      : await supabase.from('categorization_rules').insert(payload)
     setSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
     setDialogOpen(false)
-    void load()
+    refresh()
   }
 
   async function remove(id: string) {
-    await supabase.from('categorization_rules').delete().eq('id', id)
-    void load()
+    if (!confirm(t('rules.confirm_delete'))) return
+    const { error } = await supabase.from('categorization_rules').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    refresh()
   }
 
   async function toggle(r: CategorizationRule) {
-    await supabase.from('categorization_rules').update({ is_active: !r.is_active }).eq('id', r.id)
-    void load()
+    const { error } = await supabase.from('categorization_rules').update({ is_active: !r.is_active }).eq('id', r.id)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    refresh()
+  }
+
+  function openEdit(r: CategorizationRule) {
+    setForm({ id: r.id, match_text: r.match_text, type: r.type as TxType, category: r.category, priority: r.priority ?? 1 })
+    setDialogOpen(true)
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Auto-Categorize"
+        eyebrow={t('rules.eyebrow')}
         title={t('rules.page_title')}
         subtitle={t('rules.page_subtitle')}
       />
@@ -104,6 +123,11 @@ export default function RulesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : rules.length === 0 ? (
         <div className="s-card p-12 text-center">
           <Sparkles className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--ink-soft)' }} />
@@ -130,16 +154,19 @@ export default function RulesPage() {
                   </span>
                   <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>→</span>
                   <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
-                    {r.type}
+                    {TYPE_LABEL[r.type] ?? r.type}
                   </span>
                   <span className="text-xs font-semibold">{r.category}</span>
                   {r.priority > 1 && (
-                    <span className="text-[10px] px-1.5 rounded font-semibold" style={{ background: 'var(--c-mint)', color: 'var(--c-mint)' }}>
+                    <span className="text-[10px] px-1.5 rounded font-semibold" style={{ background: 'color-mix(in srgb, var(--c-mint) 14%, transparent)', color: 'var(--c-mint-ink)' }}>
                       P{r.priority}
                     </span>
                   )}
                 </div>
-                <Button variant="ghost" size="icon-sm" onClick={() => remove(r.id)}>
+                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(r)} title={t('rules.edit_rule')} aria-label={t('rules.edit_rule')}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => remove(r.id)} title={t('rules.delete_rule')} aria-label={t('rules.delete_rule')}>
                   <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
                 </Button>
               </div>
@@ -151,7 +178,7 @@ export default function RulesPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('rules.dialog_title')}</DialogTitle>
+            <DialogTitle>{form.id ? t('rules.dialog_title_edit') : t('rules.dialog_title')}</DialogTitle>
             <DialogDescription>
               {t('rules.dialog_description')}
             </DialogDescription>
