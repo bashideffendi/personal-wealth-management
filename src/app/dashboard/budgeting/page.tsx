@@ -238,11 +238,17 @@ export default function BudgetingPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('budgets')
         .select('*')
         .eq('user_id', user.id)
         .eq('year', Number(selectedYear))
+      if (error) {
+        // Jangan render grid kosong seolah anggaran tahun ini blank.
+        toast.error(t('common.load_failed'))
+        setLoading(false)
+        return
+      }
 
       const map: BudgetMap = {}
       if (data) {
@@ -254,7 +260,7 @@ export default function BudgetingPage() {
       loadMonthlyActuals(supabase, user.id, selectedYear).then(setActuals)
       setLoading(false)
     },
-    [supabase],
+    [supabase, t],
   )
 
   useEffect(() => {
@@ -268,7 +274,8 @@ export default function BudgetingPage() {
     value: number,
   ) {
     const key = budgetKey(type, category, month)
-    if ((budgets[key] ?? 0) === value) return
+    const prevValue = budgets[key] ?? 0
+    if (prevValue === value) return
 
     setBudgets((prev) => ({ ...prev, [key]: value }))
 
@@ -277,7 +284,7 @@ export default function BudgetingPage() {
     } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase.from('budgets').upsert(
+    const { error } = await supabase.from('budgets').upsert(
       {
         user_id: user.id,
         year: Number(year),
@@ -288,6 +295,12 @@ export default function BudgetingPage() {
       },
       { onConflict: 'user_id,year,month,type,category' },
     )
+    if (error) {
+      // Optimistic write gagal → balikin sel + kabarin; jangan diem-diem
+      // nampilin angka yang sebenernya gak kesimpen.
+      setBudgets((prev) => ({ ...prev, [key]: prevValue }))
+      toast.error(t('common.mutation_failed'))
+    }
   }
 
   // ---- Drag-fill (tarik) ----
@@ -322,6 +335,11 @@ export default function BudgetingPage() {
   }
 
   async function fillRange(s: FillSource, lo: number, hi: number) {
+    const prevValues: Record<string, number> = {}
+    for (let m = lo; m <= hi; m++) {
+      const k = budgetKey(s.type, s.category, m)
+      prevValues[k] = budgets[k] ?? 0
+    }
     setBudgets((prev) => {
       const next = { ...prev }
       for (let m = lo; m <= hi; m++) next[budgetKey(s.type, s.category, m)] = s.value
@@ -335,7 +353,11 @@ export default function BudgetingPage() {
     for (let m = lo; m <= hi; m++) {
       rows.push({ user_id: user.id, year: Number(year), month: m, type: s.type, category: s.category, amount: s.value })
     }
-    await supabase.from('budgets').upsert(rows, { onConflict: 'user_id,year,month,type,category' })
+    const { error } = await supabase.from('budgets').upsert(rows, { onConflict: 'user_id,year,month,type,category' })
+    if (error) {
+      setBudgets((prev) => ({ ...prev, ...prevValues }))
+      toast.error(t('common.mutation_failed'))
+    }
   }
 
   // ---- Calculation helpers ----
@@ -792,30 +814,32 @@ export default function BudgetingPage() {
 
   // Color tokens per kind — editorial semantic per design handoff
   // Pendapatan=mint, Pengeluaran=coral, Tabungan=amber, Investasi=violet
+  // textOnFirm pakai token -ink (flip otomatis di dark mode — hex gelap
+  // hardcode dulunya gak kebaca di atas tint gelap).
   const KIND_COLOR: Record<BudgetType, { hex: string; bgSoft: string; bgFirm: string; textOnFirm: string }> = {
     income: {
-      hex: '#10B981', // mint
+      hex: 'var(--c-mint)',
       bgSoft: 'rgba(16, 185, 129, 0.05)',
       bgFirm: 'rgba(16, 185, 129, 0.16)',
-      textOnFirm: '#064E3B',
+      textOnFirm: 'var(--c-mint-ink)',
     },
     expense: {
-      hex: '#F43F5E', // coral
+      hex: 'var(--c-coral)',
       bgSoft: 'rgba(244, 63, 94, 0.05)',
       bgFirm: 'rgba(244, 63, 94, 0.14)',
-      textOnFirm: '#9F1239',
+      textOnFirm: 'var(--c-coral-ink)',
     },
     saving: {
-      hex: '#F59E0B', // amber
+      hex: 'var(--c-amber)',
       bgSoft: 'rgba(245, 158, 11, 0.06)',
       bgFirm: 'rgba(245, 158, 11, 0.18)',
-      textOnFirm: '#92400E',
+      textOnFirm: 'var(--c-amber-ink)',
     },
     investment: {
-      hex: '#8B5CF6', // violet
+      hex: 'var(--c-violet)',
       bgSoft: 'rgba(139, 92, 246, 0.05)',
       bgFirm: 'rgba(139, 92, 246, 0.15)',
-      textOnFirm: '#4C1D95',
+      textOnFirm: 'var(--c-violet-ink)',
     },
   }
 
@@ -902,7 +926,7 @@ export default function BudgetingPage() {
               {Array.from({ length: 12 }, (_, i) => {
                 const m = i + 1
                 const left = incomeOf(m) - allocatedOf(m)
-                const color = Math.abs(left) < 1 ? '#059669' : left > 0 ? '#B45309' : '#E11D48'
+                const color = Math.abs(left) < 1 ? 'var(--c-mint-ink)' : left > 0 ? 'var(--c-amber-ink)' : 'var(--c-coral-ink)'
                 return (
                   <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular" style={{ color }} title={privacyHidden ? '••••••' : formatCurrency(left)}>
                     {privacyHidden ? '••••••' : formatCurrency(left)}
@@ -951,10 +975,10 @@ export default function BudgetingPage() {
           rest of the page; color lives in the chip, not the whole card. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[
-          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: '#10B981', Icon: ArrowDownToLine, sub: t('budgeting.annual') },
-          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: '#F43F5E', Icon: ArrowUpFromLine, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
-          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: '#F59E0B', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
-          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: '#8B5CF6', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_income'), value: totalIncomeYear, dot: 'var(--c-mint)', Icon: ArrowDownToLine, sub: t('budgeting.annual') },
+          { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: 'var(--c-coral)', Icon: ArrowUpFromLine, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_saving'), value: totalSavingYear, dot: 'var(--c-amber)', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
+          { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: 'var(--c-violet)', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
         ].map((c) => (
           <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
             <div className="flex items-center gap-2.5">
@@ -983,7 +1007,7 @@ export default function BudgetingPage() {
           - sectionMonthTotal(leafInvestment, 'investment', bMonth)
         const ok = Math.abs(remaining) < 1
         const over = remaining < 0
-        const hex = ok ? '#10B981' : over ? '#F43F5E' : '#F59E0B'
+        const hex = ok ? 'var(--c-mint)' : over ? 'var(--c-coral)' : 'var(--c-amber)'
         const amt = privacyHidden ? '••••••' : formatCurrency(Math.abs(remaining))
         return (
           <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
