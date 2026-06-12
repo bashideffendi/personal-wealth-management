@@ -11,10 +11,11 @@
 .leaflet-container { isolation: isolate; }
 
 /* ============================================
-   Klunting — Design System v6 "VOLT & INK" (2026-06-13)
-   Pivot palet penuh (arahan user: premium·elegan·modern·fun·GEN Z):
-   (1) PRIMARY = volt #C9F24F — tombol/FAB/logo volt dgn TEKS HITAM
-       (14.4:1); volt = FILL ONLY, teks aksen wajib --c-primary-ink;
+   Klunting — Design System v6.1 "KLEIN & INK" (2026-06-13)
+   Palet gen z (premium·elegan·modern·fun). Aksen volt v6 DITOLAK user
+   (identik kompetitor Budggt) → Klein Blue, approved via plan-first:
+   (1) PRIMARY = Klein #2E3DD8 — tombol/FAB/logo + teks putih (7.6:1);
+       aksen sbg teks/ikon/ring wajib --c-primary-ink;
    (2) kanvas porselen ber-cast hijau + kartu putih + grain kertas;
    (3) netral green-cast ink (bukan warm brown era krem);
    (4) dark = green-ink pekat, habitat asli volt (volt 13.7:1 di dark);
@@ -79,15 +80,15 @@
      iris=AI) tapi hex-nya milik Klunting: de-neon, warm-shift, dan
      lightness disetarakan biar berdampingan di chart tanpa ada yang
      teriak. Stock Tailwind 500 (10B981/F43F5E/F59E0B/8B5CF6) pensiun. */
-  /* PRIMARY = VOLT (v6, gen z signature). Tombol/FAB/logo = volt dengan
-     TEKS HITAM di atasnya (14.4:1) — bahasa visual Cash App/brat green.
-     ATURAN KERAS: volt cuma boleh jadi FILL. Sebagai teks di putih cuma
-     1.29:1 — teks/ikon/ring aksen WAJIB pakai --c-primary-ink (olive
-     dalam, 6.8:1 putih; di dark mode -ink justru = volt, 13.7:1). */
-  --c-primary:      #C9F24F;
-  --c-primary-soft: #ECF7CC;     /* tint volt buat active states (-ink 6.1:1) */
-  --c-primary-foreground: #101410;
-  --c-primary-ink:  #4A630E;
+  /* PRIMARY = KLEIN BLUE (v6.1). Volt v6 ditolak user — identik
+     kompetitor lokal Budggt. Klein biru pekat: fashion-coded, kosong di
+     lanskap fintech ID (Dana/Blu/BCA = biru muda korporat), dan gak
+     ganggu semantik data (hijau=naik garnet=turun). Tombol/FAB/logo =
+     Klein + teks putih (7.6:1); teks/ikon/ring aksen = --c-primary-ink. */
+  --c-primary:      #2E3DD8;
+  --c-primary-soft: #E7E9FB;     /* tint Klein buat active states (-ink 7.6:1) */
+  --c-primary-foreground: #FFFFFF;
+  --c-primary-ink:  #2531C2;
   --c-mint:         #129B69;     /* income/up — hijau dalam, gak neon (putih di atasnya 3.6:1, > lama) */
   --c-mint-soft:    #E7F4EC;
   --c-coral:        #D2495A;     /* expense/danger — garnet rose, lebih tenang dari coral pink */
@@ -369,13 +370,14 @@
   --on-black:    #101410;
   --on-black-mut:#575E52;
 
-  /* Accents — VOLT pulang kampung: di dark dia kebaca sebagai FILL
-     (tombol, 15:1 dgn teks gelap) DAN sebagai teks/ring (13.7:1),
-     makanya -ink di dark = volt itu sendiri. */
-  --c-primary:      #C9F24F;
-  --c-primary-soft: rgba(201, 242, 79, 0.14);
+  /* Accents — Klein versi dark: periwinkle elektrik #8B96FF, kebaca
+     sebagai FILL (teks gelap 7.3:1) DAN teks/ring (6.6:1) → -ink = dia
+     sendiri. Watch-item: lightness mirip iris AI #A78FE8 (hue tetap
+     beda biru vs ungu) — konteks beda (tombol vs chip AI). */
+  --c-primary:      #8B96FF;
+  --c-primary-soft: rgba(139, 150, 255, 0.14);
   --c-primary-foreground: #0C0E0C;
-  --c-primary-ink:  #C9F24F;
+  --c-primary-ink:  #8B96FF;
   --c-mint:         #3DBA8A;
   --c-mint-soft:    rgba(61, 186, 138, 0.13);
   --c-coral:        #ED7385;
@@ -457,13 +459,13 @@
     letter-spacing: -0.025em;
     font-weight: 600;
   }
-  /* Seleksi teks — VOLT tint, momen fun yang cuma muncul saat interaksi. */
+  /* Seleksi teks — Klein tint, momen fun yang cuma muncul saat interaksi. */
   ::selection {
-    background: #E5F6A8;
+    background: #DDE2FB;
     color: #101410;
   }
   .dark ::selection {
-    background: #3A4413;
+    background: #272D5C;
     color: #F2F4EF;
   }
   /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
