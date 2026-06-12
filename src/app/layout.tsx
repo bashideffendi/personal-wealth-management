@@ -77,8 +77,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAFAF9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0A0A0F" },
+    // Nyamain kanvas v5.1 — chrome browser/PWA nyatu mulus sama app.
+    { media: "(prefers-color-scheme: light)", color: "#F2ECE1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E0C0A" },
   ],
   width: "device-width",
   initialScale: 1,

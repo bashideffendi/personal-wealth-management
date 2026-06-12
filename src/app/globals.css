@@ -42,13 +42,17 @@
   --violet-600:  #6A4BC2;
   --violet-700:  #5A3CAB;
 
-  /* ── Surfaces (Light) — near-white, cool subtle ─────── */
-  --paper:       #F6F4EF;    /* warm cream — match claude-code handoff */
-  --bg:          #F6F4EF;
-  --bg-2:        #ECE8DF;
+  /* ── Surfaces (Light) — linen v5.1: commit ke krem ──────
+     Kanvas diperdalam dari #F6F4EF (kebaca "putih kotor" di banyak layar)
+     jadi linen/oat yang JELAS disengaja — kartu putih mengambang kayak
+     kertas di atas meja (elevasi 1.10 → 1.18). Lapisan: kanvas linen →
+     kartu putih → sumur/input lebih dalam. ink-soft di kanvas 6.4:1. */
+  --paper:       #F2ECE1;
+  --bg:          #F2ECE1;
+  --bg-2:        #E9E1D2;
   --surface:     #FFFFFF;    /* card bg pure white */
-  --surface-2:   #F3EFE7;    /* warm off-white (was cool grey #F4F4F5) */
-  --surface-3:   #E9E3D6;
+  --surface-2:   #EDE7D9;    /* sumur/chip sekunder (ink-soft 6.0:1) */
+  --surface-3:   #E0D8C6;
   --line:        rgba(24, 24, 27, 0.08);
   --line-strong: rgba(24, 24, 27, 0.14);
 
@@ -65,8 +69,8 @@
   --text-2:      #46413A;    /* alias → ink-muted */
   --text-mute:   #5B544B;    /* alias → ink-soft (floor) */
   --text-faint:  #5B544B;    /* DULU #A1A1AA (gagal AA) → naikin ke floor; faint utk teks dilarang */
-  --border:      #E3DDD0;    /* warm grey — harmonize with cream (was cool #E4E4E7) */
-  --border-soft: #EDE7DC;    /* warm hairline (was cool #F4F4F5) */
+  --border:      #DCD3C1;    /* warm grey — ikut kedalaman kanvas linen */
+  --border-soft: #E8E1D2;    /* warm hairline */
 
   /* ── Semantic tokens — palet data bespoke (lightness diharmonisasi) ───
      Empat hue identitas tetap (hijau=naik, rose=turun, brass=waspada,
@@ -424,6 +428,12 @@
     background-color: var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
+  }
+  /* Grain kertas nyaris subliminal di kanvas light — tekstur premium yang
+     gak disadari tapi kerasa. Dark mode tetap bersih (noise di layar gelap
+     malah kebaca kotor). SVG turbulence repeat 160px, opacity 3.5%. */
+  html:not(.dark) body {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   }
   /* Keyboard focus — a visible emerald ring on any interactive element that
      doesn't define its own. shadcn's focus-visible:ring/outline-none utilities
