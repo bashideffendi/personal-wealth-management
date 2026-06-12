@@ -79,6 +79,9 @@ export const messages = {
       days_left: "hari lagi",
       more_bills: "tagihan lainnya",
     },
+    xp: {
+      hud_title: 'Level kamu — XP dari kebiasaan finansial sehat',
+    },
     playbook: {
       title: "Panduan finansial terpandu",
       subtitle: "Skenario keuangan umum di Indonesia, lengkap dengan langkah-langkahnya. Isi angka kamu, biar AI hitung target dan susun rencana yang bisa langsung dijalankan.",
@@ -3326,6 +3329,9 @@ export const messages = {
       today: "Today",
       days_left: "days left",
       more_bills: "more bills",
+    },
+    xp: {
+      hud_title: 'Your level — XP from healthy money habits',
     },
     playbook: {
       title: "Guided financial playbooks",

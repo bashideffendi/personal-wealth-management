@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/select'
 import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash } from 'lucide-react'
 import { toast } from 'sonner'
+import { awardXp } from '@/lib/xp'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -785,6 +786,7 @@ export default function TransactionsPage() {
     setQuickSaving(false)
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
     toast.success(t('transactions.toast_recorded'))
+    void awardXp(supabase, 'transaction') // XP best-effort — kebiasaan nyatat
 
     // Reset only amount + description; keep date/account/type/category
     // (most users add multiple similar transactions in a row)
