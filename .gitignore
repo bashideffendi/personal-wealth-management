@@ -59,3 +59,4 @@ skills-lock.json
 # Source universe buat scripts/split-stocks.mjs — 32 MB, regenerated saat data refresh.
 # Output split-nya (src/data/invest/stocks/*.json) yang di-commit, bukan sumbernya.
 src/data/invest/stocks.json
+.shots/

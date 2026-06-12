@@ -285,10 +285,10 @@ export default function EmergencyFundPage() {
   const monthsToGoal = monthlySaving > 0 ? Math.ceil(deficit / monthlySaving) : 0
 
   // Komposisi lokasi (bar) — akun riil (sinkron Aset Likuid) + lokasi non-akun.
-  const allLocations = useMemo(() => [
+  const allLocations = [
     ...accountAllocations.map((a) => ({ key: `acc-${a.id}`, kind: 'account' as const, name: a.accounts?.name ?? 'Akun', amount: a.amount, balance: a.accounts?.current_balance ?? 0, allocId: a.id, accountId: a.account_id })),
     ...locations.map((l) => ({ key: `loc-${l.id}`, kind: 'manual' as const, name: l.account_name, amount: l.amount, balance: null as number | null, allocId: l.id, accountId: null as string | null })),
-  ].filter((l) => l.amount > 0).sort((a, b) => b.amount - a.amount), [accountAllocations, locations])
+  ].filter((l) => l.amount > 0).sort((a, b) => b.amount - a.amount)
   const linkedAccountIds = new Set(accountAllocations.map((a) => a.account_id))
   const locPalette = [AMBER, 'var(--c-violet)', MINT, 'var(--ink)', 'var(--c-coral)', 'var(--ink-soft)']
 

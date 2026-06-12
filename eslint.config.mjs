@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
+    // Scope ke pola file yang sama dengan config "next" — rule react-hooks/*
+    // error kalau kena file di luar registrasi plugin (mis. *.cjs).
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       // Hidrasi localStorage/theme/SW di mount pakai setState-in-effect — idiom
       // yang sengaja (lazy initializer bakal mismatch SSR). Turunin ke warn biar
