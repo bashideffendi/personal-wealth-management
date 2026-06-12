@@ -473,7 +473,7 @@ function MenuView({
       icon: MessageSquareText,
       title: t('quickadd.ai_title'),
       body: t('quickadd.ai_body'),
-      tint: '#8B5CF6',
+      tint: 'var(--c-violet)',
       bg: 'rgba(139,92,246,0.12)',
       onSelect: onPickAI,
     },

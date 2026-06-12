@@ -273,7 +273,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-medium"
               style={{
                 background: dbSynced ? 'color-mix(in srgb, var(--c-mint) 14%, transparent)' : 'var(--surface-2)',
-                color: dbSynced ? '#047857' : 'var(--ink-soft)',
+                color: dbSynced ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
               }}
               title={dbSynced ? t('category_manager.synced_tooltip') : t('category_manager.local_tooltip')}
             >

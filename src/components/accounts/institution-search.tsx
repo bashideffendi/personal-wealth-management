@@ -133,7 +133,7 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
                         : 'rgba(132,204,22,0.10)',
                       color:
                         inst.type === 'bank' ? '#1E40AF'
-                        : inst.type === 'digital_wallet' ? '#6D28D9'
+                        : inst.type === 'digital_wallet' ? 'var(--c-violet-ink)'
                         : '#4D7C0F',
                     }}
                   >

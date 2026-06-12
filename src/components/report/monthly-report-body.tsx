@@ -359,9 +359,9 @@ export function MonthlyReportBody({
               <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
               <Tooltip formatter={(v: unknown, n) => [formatCurrency(Number(v) || 0), n === 'income' ? t('report.kpi_income') : n === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest')]} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} formatter={(v) => (v === 'income' ? t('report.kpi_income') : v === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest'))} />
-              <Bar dataKey="income" name="income" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={20} />
-              <Bar dataKey="expense" name="expense" fill="#F43F5E" radius={[3, 3, 0, 0]} maxBarSize={20} />
-              <Bar dataKey="saved" name="saved" fill="#8B5CF6" radius={[3, 3, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="income" name="income" fill="var(--c-mint)" radius={[3, 3, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="expense" name="expense" fill="var(--c-coral)" radius={[3, 3, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="saved" name="saved" fill="var(--c-violet)" radius={[3, 3, 0, 0]} maxBarSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </div>

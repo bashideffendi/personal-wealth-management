@@ -412,8 +412,8 @@ export default function ProfilePage() {
                   <span
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
                     style={{
-                      background: subscription?.plan_id === 'full' ? 'rgba(16,185,129,0.20)' : 'rgba(255,255,255,0.10)',
-                      color: subscription?.plan_id === 'full' ? '#6EE7B7' : 'rgba(255,255,255,0.85)',
+                      background: subscription?.plan_id === 'full' ? 'rgba(61,186,138,0.20)' : 'rgba(255,255,255,0.10)',
+                      color: subscription?.plan_id === 'full' ? '#82DBB1' : 'rgba(255,255,255,0.85)',
                     }}
                   >
                     {subscription?.plan_id === 'full' && <Crown className="size-3" />}

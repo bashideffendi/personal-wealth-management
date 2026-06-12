@@ -7,7 +7,7 @@
  * (lihat ownership-tab.tsx yang import lewat next/dynamic ssr:false — mirror dari
  * pola Soto map di src/components/map/).
  *
- * Node: perusahaan = emerald (#10B981) label=symbol · investor = abu (#71717A)
+ * Node: perusahaan = emerald (#129B69) label=symbol · investor = abu (#71717A)
  * label=name · emiten yang lagi dibuka di-highlight (gede + ink #0A0A0F).
  * Ukuran node ∝ degree (clamp 6–20). Edge: tebal ∝ pct, hover munculin pct%.
  *
@@ -42,11 +42,11 @@ import { useT } from '@/lib/i18n/context'
 // Palet di-hardcode (Sigma render ke canvas/WebGL — gak bisa baca CSS var).
 // Samain dengan token LIGHT theme di globals.css.
 const C = {
-  mint: '#10B981', // --c-mint  (perusahaan)
+  mint: '#129B69', // --c-mint  (perusahaan)
   primary: '#0A0A0F', // --c-primary (emiten aktif / ink)
   investor: '#71717A', // abu (investor) — antara --ink-muted & --ink-soft
   edge: '#D8D2C6', // hairline edge (turunan --border-soft)
-  edgeHi: '#10B981', // edge ke-highlight pas hover
+  edgeHi: '#129B69', // edge ke-highlight pas hover
   label: '#0A0A0F', // --ink
   white: '#FFFFFF',
 } as const

@@ -43,7 +43,7 @@ export function WealthHeader({
  * jadi gak ada judul dobel. Glow halus + hierarki kuat = kesan premium.
  */
 export function WealthHero({
-  eyebrow, title, headline, secondary = [], actions, accent = '#8B5CF6',
+  eyebrow, title, headline, secondary = [], actions, accent = '#7C5FD3',
 }: {
   eyebrow?: string
   title: string

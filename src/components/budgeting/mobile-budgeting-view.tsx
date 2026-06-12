@@ -40,10 +40,10 @@ interface MobileBudgetingViewProps {
 }
 
 const SECTIONS: { key: BudgetType; label: string; tint: string }[] = [
-  { key: 'income',     label: 'Pendapatan',  tint: '#10B981' }, // emerald
-  { key: 'expense',    label: 'Pengeluaran', tint: '#F43F5E' }, // coral
-  { key: 'saving',     label: 'Tabungan',    tint: '#F59E0B' }, // amber
-  { key: 'investment', label: 'Investasi',   tint: '#8B5CF6' }, // violet (match year grid)
+  { key: 'income',     label: 'Pendapatan',  tint: 'var(--c-mint)' }, // emerald
+  { key: 'expense',    label: 'Pengeluaran', tint: 'var(--c-coral)' }, // coral
+  { key: 'saving',     label: 'Tabungan',    tint: 'var(--c-amber)' }, // amber
+  { key: 'investment', label: 'Investasi',   tint: 'var(--c-violet)' }, // violet (match year grid)
 ]
 
 export function MobileBudgetingView({

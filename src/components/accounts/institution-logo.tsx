@@ -35,13 +35,13 @@ interface Props {
 const BANK_GRADIENTS = [
   'linear-gradient(135deg, #3B82F6, #1E40AF)',
   'linear-gradient(135deg, #6366F1, #4338CA)',
-  'linear-gradient(135deg, #0EA5E9, #0284C7)',
+  'linear-gradient(135deg, #2D89BC, #1F71A0)',
   'linear-gradient(135deg, #14B8A6, #0F766E)',
 ]
 const WALLET_GRADIENTS = [
   'var(--c-primary)',
-  'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-  'linear-gradient(135deg, #F59E0B, #D97706)',
+  'linear-gradient(135deg, #7C5FD3, #5A3CAB)',
+  'linear-gradient(135deg, #C98F0E, #AC7708)',
   'linear-gradient(135deg, #EC4899, #BE185D)',
 ]
 const CASH_GRADIENT = 'linear-gradient(135deg, #84CC16, #4D7C0F)'

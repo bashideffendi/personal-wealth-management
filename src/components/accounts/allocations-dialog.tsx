@@ -273,7 +273,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                 style={{
                   width: `${Math.min(100, (totalAllocated / balance) * 100)}%`,
                   background: overAllocated
-                    ? 'linear-gradient(90deg, #F59E0B, #F43F5E)'
+                    ? 'linear-gradient(90deg, var(--c-amber), var(--c-coral))'
                     : 'var(--c-primary)',
                 }}
               />

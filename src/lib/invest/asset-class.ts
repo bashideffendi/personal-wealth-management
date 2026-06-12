@@ -28,12 +28,12 @@ export function assetClassKey(inv: Pick<Investment, 'category' | 'currency'>): A
  * (cards, donut, chips, movers all read this; the per-slug gradient palette
  * in investment-visual.ts was retired after it diverged for 9/11 classes).
  * No red/coral family here on purpose: red is reserved app-wide for LOSS,
- * so an asset class must never wear it (Obligasi used to be #F43F5E).
+ * so an asset class must never wear it (Obligasi used to be #D2495A).
  */
 export const ASSET_CLASS_META: Record<AssetClassKey, { label: string; color: string }> = {
-  stock_idx:    { label: 'Saham IHSG', color: '#10B981' },
-  stock_us:     { label: 'Saham US',   color: '#0EA5E9' },
-  mutual_fund:  { label: 'Reksa Dana', color: '#8B5CF6' },
+  stock_idx:    { label: 'Saham IHSG', color: '#129B69' },
+  stock_us:     { label: 'Saham US',   color: '#2D89BC' },
+  mutual_fund:  { label: 'Reksa Dana', color: '#7C5FD3' },
   crypto:       { label: 'Crypto',     color: '#F97316' },
   gold:         { label: 'Emas',       color: '#EAB308' },
   bond:         { label: 'Obligasi',   color: '#3B82F6' },
@@ -42,7 +42,7 @@ export const ASSET_CLASS_META: Record<AssetClassKey, { label: string; color: str
   forex:        { label: 'Valas',      color: '#06B6D4' },
   p2p:          { label: 'P2P Lending', color: '#EC4899' },
   pension:      { label: 'Dana Pensiun', color: '#64748B' },
-  business:     { label: 'Bisnis',     color: '#B45309' },
+  business:     { label: 'Bisnis',     color: '#8F5E06' },
 }
 
 /** Stable display order (matches the donut/kinerja legend). */

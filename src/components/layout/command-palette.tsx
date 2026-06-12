@@ -504,7 +504,7 @@ export function CommandPalette() {
                               : 'var(--surface-2)',
                             color: isSelected
                               ? isAI
-                                ? '#8B5CF6'
+                                ? 'var(--c-violet)'
                                 : 'var(--c-mint)'
                               : 'var(--ink-muted)',
                           }}
@@ -624,7 +624,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
       investment: t('command_palette.type_investment'),
     }
     const typeColor: Record<string, string> = {
-      expense: '#F43F5E', income: '#10B981', saving: '#F59E0B', investment: '#0EA5E9',
+      expense: 'var(--c-coral)', income: 'var(--c-mint)', saving: 'var(--c-amber)', investment: 'var(--sky-500)',
     }
     const fmt = 'Rp ' + d.amount.toLocaleString('id-ID')
     return (

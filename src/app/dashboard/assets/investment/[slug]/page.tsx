@@ -444,7 +444,7 @@ export default function InvestmentCategoryPage() {
         <div className="flex items-start justify-between gap-3">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase inline-flex items-center gap-1.5"
-            style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}
+            style={{ color: up ? '#82DBB1' : '#F4A6AE' }}
           >
             {subcat.label}
             {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && (
@@ -494,8 +494,8 @@ export default function InvestmentCategoryPage() {
             <span
               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold mb-2"
               style={{
-                background: up ? 'rgba(16,185,129,0.18)' : 'rgba(251,113,133,0.18)',
-                color: up ? '#6EE7B7' : '#FDA4AF',
+                background: up ? 'rgba(61,186,138,0.18)' : 'rgba(237,115,133,0.18)',
+                color: up ? '#82DBB1' : '#F4A6AE',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
@@ -507,7 +507,7 @@ export default function InvestmentCategoryPage() {
         <p className="text-sm mt-2 inline-flex items-center gap-1.5 flex-wrap" style={{ color: 'rgba(255,255,255,0.55)' }}>
           <span>{items.length} {t('investment_detail.positions')} · {t('investment_detail.capital')} <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(totals.invested)}</span>
           {' · '}
-          P/L <span className="num font-semibold" style={{ color: up ? '#6EE7B7' : '#FDA4AF' }}>{formatCurrency(totals.pl)}</span></span>
+          P/L <span className="num font-semibold" style={{ color: up ? '#82DBB1' : '#F4A6AE' }}>{formatCurrency(totals.pl)}</span></span>
           {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && totals.invested > 0 && (
             <EduTip topic="loss-aversion" side="bottom" />
           )}
@@ -990,7 +990,7 @@ export default function InvestmentCategoryPage() {
                         background: 'var(--surface-2)',
                       }}
                     >
-                      <Lightbulb className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-amber, #F59E0B)' }} />
+                      <Lightbulb className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
                       <span>{cfg.topHint}</span>
                     </p>
                   )}

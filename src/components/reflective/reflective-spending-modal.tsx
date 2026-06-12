@@ -147,7 +147,7 @@ export function ReflectiveSpendingModal({
                     onClick={() => answer(q.key, true)}
                     className="size-7 rounded flex items-center justify-center transition"
                     style={{
-                      background: ans === true ? '#10B981' : 'var(--surface-2)',
+                      background: ans === true ? 'var(--c-mint)' : 'var(--surface-2)',
                       color: ans === true ? '#FFFFFF' : 'var(--ink-soft)',
                     }}
                     aria-label="Ya"
@@ -159,7 +159,7 @@ export function ReflectiveSpendingModal({
                     onClick={() => answer(q.key, false)}
                     className="size-7 rounded flex items-center justify-center transition"
                     style={{
-                      background: ans === false ? '#F43F5E' : 'var(--surface-2)',
+                      background: ans === false ? 'var(--c-coral)' : 'var(--surface-2)',
                       color: ans === false ? '#FFFFFF' : 'var(--ink-soft)',
                     }}
                     aria-label="Tidak"

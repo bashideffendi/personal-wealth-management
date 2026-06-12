@@ -133,7 +133,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
 
   const up = change ? change.up : true
   const lineColor = up ? 'var(--c-mint)' : 'var(--c-coral)'
-  const lineHex = up ? '#10B981' : '#F43F5E'
+  const lineHex = up ? '#129B69' : '#D2495A'
 
   // recharts data — keep raw `t` for the axis/tooltip formatters.
   const data = useMemo(() => points.map((p) => ({ t: p.t, c: p.c })), [points])

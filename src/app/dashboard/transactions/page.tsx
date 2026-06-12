@@ -910,10 +910,10 @@ export default function TransactionsPage() {
         const exp = filteredTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
         const stats = [
-          { label: t('transactions.summary_income'), dot: '#10B981', Icon: ArrowDownToLine, val: formatCurrency(inc), color: 'var(--ink)' },
-          { label: t('transactions.summary_expense'), dot: '#F43F5E', Icon: ArrowUpFromLine, val: formatCurrency(exp), color: 'var(--ink)' },
-          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? '#10B981' : '#F43F5E', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
-          { label: t('transactions.summary_total_count'), dot: '#8B5CF6', Icon: Hash, val: String(filteredTransactions.length), color: 'var(--ink)' },
+          { label: t('transactions.summary_income'), dot: 'var(--c-mint)', Icon: ArrowDownToLine, val: formatCurrency(inc), color: 'var(--ink)' },
+          { label: t('transactions.summary_expense'), dot: 'var(--c-coral)', Icon: ArrowUpFromLine, val: formatCurrency(exp), color: 'var(--ink)' },
+          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
+          { label: t('transactions.summary_total_count'), dot: 'var(--c-violet)', Icon: Hash, val: String(filteredTransactions.length), color: 'var(--ink)' },
         ]
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">

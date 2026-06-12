@@ -36,26 +36,26 @@ function getZone(ratio: number, hasNoDebt: boolean): Zone {
   if (hasNoDebt) {
     return {
       label: 'Bebas Utang',
-      color: '#10B981',
+      color: 'var(--c-mint)',
       bg: 'rgba(16,185,129,0.10)',
       description: 'Tidak ada utang aktif. Manfaatkan untuk akselerasi investasi.',
     }
   }
   if (ratio < 0.20) return {
     label: 'Excellent',
-    color: '#10B981',
+    color: 'var(--c-mint)',
     bg: 'rgba(16,185,129,0.10)',
     description: 'Cicilan sangat aman, ada banyak ruang untuk goals lain.',
   }
   if (ratio < 0.30) return {
     label: 'Healthy',
-    color: '#10B981',
+    color: 'var(--c-mint)',
     bg: 'rgba(16,185,129,0.10)',
     description: 'Cicilan masih sehat — di bawah ambang OJK 30%.',
   }
   if (ratio < 0.36) return {
     label: 'Caution',
-    color: '#F59E0B',
+    color: 'var(--c-amber)',
     bg: 'rgba(245,158,11,0.12)',
     description: 'Mendekati batas standar (36%). Hindari ambil cicilan baru.',
   }
@@ -67,7 +67,7 @@ function getZone(ratio: number, hasNoDebt: boolean): Zone {
   }
   return {
     label: 'At Risk',
-    color: '#F43F5E',
+    color: 'var(--c-coral)',
     bg: 'rgba(244,63,94,0.10)',
     description: 'Cicilan >50% income. Risiko tinggi — prioritas pelunasan utang.',
   }
@@ -133,7 +133,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
         <div
           className="relative h-3 rounded-full overflow-hidden"
           style={{
-            background: 'linear-gradient(90deg, #10B981 0%, #10B981 33%, #F59E0B 50%, #F59E0B 60%, #F43F5E 80%, #F43F5E 100%)',
+            background: 'linear-gradient(90deg, var(--c-mint) 0%, var(--c-mint) 33%, var(--c-amber) 50%, var(--c-amber) 60%, var(--c-coral) 80%, var(--c-coral) 100%)',
           }}
         >
           {/* Marker */}

@@ -31,8 +31,8 @@ export const brand = {
   surface: '#F4F4F5',
   card: '#FFFFFF',
   border: '#E4E4E7',
-  mint: '#10B981',
-  coral: '#F43F5E',
+  mint: '#129B69',
+  coral: '#D2495A',
   white: '#FFFFFF',
 }
 

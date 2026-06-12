@@ -390,10 +390,10 @@ export default function AccountsPage() {
               </p>
               {(totals30d.inSum > 0 || totals30d.outSum > 0) && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(16,185,129,0.16)', color: '#6EE7B7' }}>
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(61,186,138,0.16)', color: '#82DBB1' }}>
                     <ArrowDownLeft className="size-3.5" /> {t('accounts.in')} <span className="num font-semibold">+{formatCurrency(totals30d.inSum)}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(251,113,133,0.16)', color: '#FDA4AF' }}>
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(237,115,133,0.16)', color: '#F4A6AE' }}>
                     <ArrowUpRight className="size-3.5" /> {t('accounts.out')} <span className="num font-semibold">−{formatCurrency(totals30d.outSum)}</span>
                   </span>
                   <span style={{ color: 'rgba(255,255,255,0.45)' }}>· {t('accounts.last_30_days')}</span>

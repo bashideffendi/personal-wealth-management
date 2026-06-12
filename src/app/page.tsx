@@ -136,9 +136,9 @@ export default async function LandingPage() {
           <div className="relative lg:-mr-6">
             <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: '0 40px 90px -36px rgba(16,24,40,0.45)', background: 'var(--surface)' }}>
               <div className="flex items-center gap-2 px-4 h-9 border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
-                <span className="size-2.5 rounded-full" style={{ background: '#FB7185' }} />
-                <span className="size-2.5 rounded-full" style={{ background: '#FBBF24' }} />
-                <span className="size-2.5 rounded-full" style={{ background: '#34D399' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#ED7385' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#E3A93C' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#5CCB9F' }} />
                 <div className="ml-3 hidden sm:flex items-center rounded-md px-3 py-0.5 text-[11px] font-medium" style={{ background: 'var(--bg)', color: 'var(--ink-soft)' }}>klunting.com/dashboard</div>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}

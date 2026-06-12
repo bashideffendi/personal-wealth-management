@@ -20,7 +20,7 @@ export function AssetAllocationCard({
   const net = assets - debt
   const seg = [
     { key: 'liquid', label: t('asset_alloc.liquid'), value: Math.max(0, liquid), color: 'var(--c-mint)' },
-    { key: 'investment', label: t('asset_alloc.investment'), value: Math.max(0, investment), color: '#0EA5E9' },
+    { key: 'investment', label: t('asset_alloc.investment'), value: Math.max(0, investment), color: 'var(--sky-500)' },
     { key: 'other', label: t('asset_alloc.other'), value: Math.max(0, nonLiquid), color: 'var(--c-amber)' },
   ].filter((s) => s.value > 0)
 

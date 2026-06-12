@@ -124,7 +124,7 @@ export function AICreditsBadge() {
                   background: empty
                     ? 'var(--c-coral)'
                     : low
-                      ? 'linear-gradient(90deg, #F59E0B, #F43F5E)'
+                      ? 'linear-gradient(90deg, var(--c-amber), var(--c-coral))'
                       : 'var(--c-primary)',
                 }}
               />

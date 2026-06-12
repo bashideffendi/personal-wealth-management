@@ -90,11 +90,11 @@ const EMPTY_PAY: PayFormState = {
 function issuerGradient(issuer: string): string {
   const i = (issuer ?? '').toLowerCase()
   if (i.includes('bca'))     return 'linear-gradient(135deg, #1E3A8A, #1E40AF 60%, #3B82F6)'
-  if (i.includes('mandiri')) return 'linear-gradient(135deg, #064E3B, #047857 60%, #10B981)'
+  if (i.includes('mandiri')) return 'linear-gradient(135deg, #084433, #0B6E4D 60%, #129B69)'
   if (i.includes('jenius') || i.includes('btpn')) return 'linear-gradient(135deg, #0F172A, #1E293B 60%, #334155)'
   if (i.includes('bni'))     return 'linear-gradient(135deg, #7C2D12, #9A3412 60%, #EA580C)'
-  if (i.includes('bri'))     return 'linear-gradient(135deg, #0C4A6E, #0369A1 60%, #0EA5E9)'
-  if (i.includes('cimb'))    return 'linear-gradient(135deg, #881337, #9F1239 60%, #E11D48)'
+  if (i.includes('bri'))     return 'linear-gradient(135deg, #0C4A6E, #0369A1 60%, #2D89BC)'
+  if (i.includes('cimb'))    return 'linear-gradient(135deg, #66202C, #7E2434 60%, #B93748)'
   if (i.includes('danamon')) return 'linear-gradient(135deg, #422006, #713F12 60%, #CA8A04)'
   if (i.includes('permata') || i.includes('hsbc') || i.includes('uob')) {
     return 'linear-gradient(135deg, #3B0764, #581C87 60%, #9333EA)'

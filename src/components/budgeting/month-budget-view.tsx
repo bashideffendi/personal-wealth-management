@@ -37,10 +37,10 @@ interface MonthBudgetViewProps {
 }
 
 const SECTIONS: { key: BudgetType; label: string; tint: string }[] = [
-  { key: 'income',     label: 'Pendapatan',  tint: '#10B981' },
-  { key: 'expense',    label: 'Pengeluaran', tint: '#F43F5E' },
-  { key: 'saving',     label: 'Tabungan',    tint: '#F59E0B' },
-  { key: 'investment', label: 'Investasi',   tint: '#8B5CF6' },
+  { key: 'income',     label: 'Pendapatan',  tint: 'var(--c-mint)' },
+  { key: 'expense',    label: 'Pengeluaran', tint: 'var(--c-coral)' },
+  { key: 'saving',     label: 'Tabungan',    tint: 'var(--c-amber)' },
+  { key: 'investment', label: 'Investasi',   tint: 'var(--c-violet)' },
 ]
 
 export function MonthBudgetView({

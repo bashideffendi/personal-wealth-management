@@ -162,8 +162,8 @@ export function NetWorthHero({
               <span
                 className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
                 style={{
-                  background: monthDelta > 0 ? 'rgba(16,185,129,0.18)' : 'rgba(251,113,133,0.18)',
-                  color: monthDelta > 0 ? '#6EE7B7' : '#FDA4AF',
+                  background: monthDelta > 0 ? 'rgba(61,186,138,0.18)' : 'rgba(237,115,133,0.18)',
+                  color: monthDelta > 0 ? '#82DBB1' : '#F4A6AE',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
@@ -180,7 +180,7 @@ export function NetWorthHero({
                 YTD{' '}
                 <strong
                   className="num tabular"
-                  style={{ color: ytdPct >= 0 ? '#6EE7B7' : '#FDA4AF' }}
+                  style={{ color: ytdPct >= 0 ? '#82DBB1' : '#F4A6AE' }}
                 >
                   {ytdPct >= 0 ? '+' : ''}
                   {ytdPct.toFixed(1)}%
@@ -196,7 +196,7 @@ export function NetWorthHero({
               style={{ color: 'rgba(255,255,255,0.72)' }}
             >
               {t('nw_hero.forecast_prefix')}{' '}
-              <span className="font-semibold" style={{ color: '#6EE7B7' }}>
+              <span className="font-semibold" style={{ color: '#82DBB1' }}>
                 {t('nw_hero.forecast_target')}
               </span>{' '}
               {t('nw_hero.forecast_in')} {forecastMonths} {t('nw_hero.forecast_months')}.
@@ -233,7 +233,7 @@ export function NetWorthHero({
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
                 style={{
                   fontSize: 16,
-                  color: debtTotal > 0 ? '#FDA4AF' : '#FFFFFF',
+                  color: debtTotal > 0 ? '#F4A6AE' : '#FFFFFF',
                 }}
               >
                 {debtTotal > 0 ? `−${formatCurrency(debtTotal)}` : formatCurrency(0)}
@@ -283,7 +283,7 @@ export function NetWorthHero({
                   className="num tabular font-semibold mt-1.5"
                   style={{
                     fontSize: 14,
-                    color: sparkline.change >= 0 ? '#6EE7B7' : '#FDA4AF',
+                    color: sparkline.change >= 0 ? '#82DBB1' : '#F4A6AE',
                   }}
                 >
                   {sparkline.change >= 0 ? '+' : '−'}
@@ -334,15 +334,15 @@ export function NetWorthHero({
               >
                 <defs>
                   <linearGradient id="nwspark" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#3DBA8A" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#3DBA8A" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path d={sparkline.areaPath} fill="url(#nwspark)" />
                 <path
                   d={sparkline.linePath}
                   fill="none"
-                  stroke="#34D399"
+                  stroke="#5CCB9F"
                   strokeWidth="2.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"
@@ -353,13 +353,13 @@ export function NetWorthHero({
                       cx={sparkline.points[sparkline.points.length - 1].x}
                       cy={sparkline.points[sparkline.points.length - 1].y}
                       r="5"
-                      fill="#34D399"
+                      fill="#5CCB9F"
                     />
                     <circle
                       cx={sparkline.points[sparkline.points.length - 1].x}
                       cy={sparkline.points[sparkline.points.length - 1].y}
                       r="10"
-                      fill="#34D399"
+                      fill="#5CCB9F"
                       opacity="0.25"
                     />
                   </>

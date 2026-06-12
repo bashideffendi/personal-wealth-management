@@ -119,7 +119,7 @@ export default function CryptoCoinPage() {
           label={t('crypto_detail.price_usd')}
           value={price != null ? `$ ${price.toLocaleString('id-ID', { maximumFractionDigits: 2 })}` : '—'}
           sub={changePct != null ? `${up24 ? '+' : ''}${changePct.toFixed(2)}% · ${t('crypto_detail.window_24h')}` : undefined}
-          accent={changePct != null ? (up24 ? '#10B981' : '#F43F5E') : undefined}
+          accent={changePct != null ? (up24 ? 'var(--c-mint)' : 'var(--c-coral)') : undefined}
         />
         <Stat
           label={t('crypto_detail.price_idr')}
@@ -133,7 +133,7 @@ export default function CryptoCoinPage() {
             label={t('crypto_detail.your_position')}
             value={formatCurrency(pos.market)}
             sub={`${pos.qty.toLocaleString('id-ID')} ${t('crypto_detail.unit')} · ${pos.plPct >= 0 ? '+' : ''}${pos.plPct.toFixed(2)}%`}
-            accent={pos.pl >= 0 ? '#10B981' : '#F43F5E'}
+            accent={pos.pl >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'}
           />
         ) : (
           <div className="s-card p-4 flex flex-col justify-between">

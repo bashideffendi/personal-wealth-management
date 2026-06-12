@@ -41,8 +41,8 @@ function barColor(rank: number, total: number): string {
   // rank 0 (terbesar) = mint penuh; ekor = abu.
   const t = total <= 1 ? 0 : rank / (total - 1)
   if (t < 0.15) return 'var(--c-mint)'
-  if (t < 0.4) return '#34D399'
-  if (t < 0.7) return '#A7F3D0'
+  if (t < 0.4) return '#4AB386'
+  if (t < 0.7) return '#B7DFCC'
   return 'var(--surface-2)'
 }
 
