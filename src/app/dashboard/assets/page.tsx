@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -9,6 +10,7 @@ import { useT } from '@/lib/i18n/context'
 import type { AssetNonLiquid, Investment } from '@/types'
 
 import { Loader2, ArrowUpRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 
 // Defer recharts out of the assets route's initial JS (loads on chart mount).
@@ -21,39 +23,45 @@ const NonLiquidBar = dynamic(
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 260, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 
-const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
-  stock: 'Saham', mutual_fund: 'Reksa Dana', crypto: 'Crypto',
-  gold: 'Emas', bond: 'Obligasi', time_deposit: 'Deposito',
-  p2p: 'P2P Lending', business: 'Bisnis',
+// Label kategori investasi via i18n (key di ns assets.cat_*).
+const INVESTMENT_CATEGORY_KEYS: Record<string, string> = {
+  stock: 'assets.cat_stock', mutual_fund: 'assets.cat_mutual_fund', crypto: 'assets.cat_crypto',
+  gold: 'assets.cat_gold', bond: 'assets.cat_bond', time_deposit: 'assets.cat_time_deposit',
+  p2p: 'assets.cat_p2p', business: 'assets.cat_business',
+  forex: 'assets.cat_forex', sbn: 'assets.cat_sbn', pension: 'assets.cat_pension',
 }
+
+// Palet token buat pie + legend (didefinisikan di page biar lazy-boundary
+// chart gak ketembus import statis).
+const ALLOC_PALETTE = ['var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)', 'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)']
 
 export default function AssetsOverviewPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [liquidTotal, setLiquidTotal] = useState(0)
-  const [nonLiquid, setNonLiquid] = useState<AssetNonLiquid[]>([])
-  const [investments, setInvestments] = useState<Investment[]>([])
-
-  useEffect(() => {
-    void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const [liquidEntries, nlqR, invR] = await Promise.all([
-      fetchLiquidEntries(supabase, user.id),
-      supabase.from('assets_non_liquid').select('*').eq('user_id', user.id),
-      supabase.from('investments').select('*').eq('user_id', user.id),
-    ])
-    setLiquidTotal(sumLiquid(liquidEntries))
-    setNonLiquid((nlqR.data ?? []) as AssetNonLiquid[])
-    setInvestments((invR.data ?? []) as Investment[])
-    setLoading(false)
-  }
+  const pageQuery = useQuery({
+    queryKey: ['assets-hub'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [liquidEntries, nlqR, invR] = await Promise.all([
+        fetchLiquidEntries(supabase, user.id, { strict: true }),
+        supabase.from('assets_non_liquid').select('*').eq('user_id', user.id),
+        supabase.from('investments').select('*').eq('user_id', user.id),
+      ])
+      if (nlqR.error) throw nlqR.error
+      if (invR.error) throw invR.error
+      return {
+        liquidTotal: sumLiquid(liquidEntries),
+        nonLiquid: (nlqR.data ?? []) as AssetNonLiquid[],
+        investments: (invR.data ?? []) as Investment[],
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const liquidTotal = pageQuery.data?.liquidTotal ?? 0
+  const nonLiquid = useMemo(() => pageQuery.data?.nonLiquid ?? [], [pageQuery.data])
+  const investments = useMemo(() => pageQuery.data?.investments ?? [], [pageQuery.data])
 
   const totals = useMemo(() => {
     const nlq = nonLiquid.reduce((s, a) => s + a.current_value, 0)
@@ -82,18 +90,33 @@ export default function AssetsOverviewPage() {
   const allocation = useMemo(() => {
     return Object.entries(investmentByCategory)
       .filter(([, v]) => v > 0)
-      .map(([k, v]) => ({ name: INVESTMENT_CATEGORY_LABELS[k] ?? k, value: v }))
-  }, [investmentByCategory])
+      .map(([k, v]) => ({ name: INVESTMENT_CATEGORY_KEYS[k] ? t(INVESTMENT_CATEGORY_KEYS[k]) : k, value: v }))
+  }, [investmentByCategory, t])
 
+  // Samain dengan halaman Aset Non-Likuid: properti=violet, kendaraan=amber, pribadi=mint.
   const categoryColors: Record<string, string> = {
-    property: '#10B981', vehicle: '#0EA5E9', personal_item: '#F59E0B',
+    property: 'var(--c-violet)', vehicle: 'var(--c-amber)', personal_item: 'var(--c-mint)',
   }
+  const nonLiquidRows = Object.entries(nonLiquidByCategory).map(([k, v]) => ({
+    name: k === 'property' ? t('assets_nonliquid_cat.property') : k === 'vehicle' ? t('assets_nonliquid_cat.vehicle') : k === 'personal_item' ? t('assets_nonliquid_cat.personal_item') : k,
+    value: v,
+    color: categoryColors[k] ?? 'var(--c-mint)',
+  }))
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} />
         <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('assets.loading')}</span>
+      </div>
+    )
+  }
+
+  if (pageQuery.isError) {
+    return (
+      <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+        <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
       </div>
     )
   }
@@ -152,7 +175,7 @@ export default function AssetsOverviewPage() {
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#34D399' }} />
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
                   </div>
                   <span className="text-[11px] num font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>{pct.toFixed(0)}%</span>
                 </div>
@@ -177,10 +200,10 @@ export default function AssetsOverviewPage() {
             </div>
           ) : (
             <>
-              <AllocationPie data={allocation} />
+              <AllocationPie data={allocation} palette={ALLOC_PALETTE} />
               <div className="mt-3 space-y-1.5">
                 {allocation.map((row, i) => {
-                  const color = ['#10B981','#0EA5E9','#F59E0B','#F43F5E','#8B5CF6','#34D399','#7DD3FC','#737373'][i % 8]
+                  const color = ALLOC_PALETTE[i % ALLOC_PALETTE.length]
                   const pct = totals.inv > 0 ? (row.value / totals.inv) * 100 : 0
                   return (
                     <div key={row.name} className="flex items-center justify-between text-xs">
@@ -205,7 +228,7 @@ export default function AssetsOverviewPage() {
               {t('assets.no_non_liquid_assets')}
             </div>
           ) : (
-            <NonLiquidBar data={nonLiquidByCategory} categoryColors={categoryColors} />
+            <NonLiquidBar rows={nonLiquidRows} />
           )}
         </div>
       </div>
