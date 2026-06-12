@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -65,16 +67,20 @@ interface FormState {
   current_price: number
   sector: string
   notes: string
+  /** Currency holding yang DIEDIT — penentu suffix .JK saat simpan. */
+  currency: string
 }
 const EMPTY: FormState = {
   id: null, name: '', ticker: '', platform: '',
   quantity: 0, avg_cost: 0, current_price: 0, sector: '', notes: '',
+  currency: '',
 }
 
 export default function InvestmentCategoryPage() {
   const params = useParams<{ slug: string }>()
   const router = useRouter()
   const supabase = createClient()
+  const qc = useQueryClient()
   const t = useT()
 
   const slug = params.slug
@@ -100,6 +106,7 @@ export default function InvestmentCategoryPage() {
   const showNews = category === 'stock' && marketFilter !== 'us'
 
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [items, setItems] = useState<Investment[]>([])
 
@@ -213,14 +220,21 @@ export default function InvestmentCategoryPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
+    setLoadError(false)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase
+    if (!user) { setLoading(false); return }
+    const { data, error } = await supabase
       .from('investments')
       .select('*')
       .eq('user_id', user.id)
       .eq('category', category)
       .order('total_value', { ascending: false })
+    if (error) {
+      // Fetch gagal ≠ portofolio kosong — jangan render "belum ada posisi" palsu.
+      setLoadError(true)
+      setLoading(false)
+      return
+    }
     const all = (data ?? []) as Investment[]
     const list = marketFilter
       ? all.filter((i) => (((i.currency ?? '').toUpperCase() === 'USD') ? 'us' : 'idx') === marketFilter)
@@ -246,10 +260,20 @@ export default function InvestmentCategoryPage() {
       avg_cost: inv.avg_cost, current_price: inv.current_price || inv.avg_cost,
       sector: (inv as Investment & { sector?: string }).sector ?? '',
       notes: inv.notes ?? '',
+      currency: (inv.currency ?? '').toUpperCase(),
     })
     setDialogOpen(true)
   }
+  // Mutasi sukses → cache react-query halaman lain yang baca investments ikut segar.
+  const invalidateInvestmentCaches = () => {
+    qc.invalidateQueries({ queryKey: ['investment-overview'] })
+    qc.invalidateQueries({ queryKey: ['assets-hub'] })
+    qc.invalidateQueries({ queryKey: ['net-worth'] })
+  }
+
   async function save() {
+    if (form.quantity <= 0) { toast.error(t('investment_detail.toast_qty_invalid')); return }
+    if (form.avg_cost <= 0) { toast.error(t('investment_detail.toast_cost_invalid')); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
@@ -265,8 +289,10 @@ export default function InvestmentCategoryPage() {
       ticker: (() => {
         const raw = form.ticker.trim().toUpperCase()
         if (!raw) return null
-        // Saham: simpan format Yahoo (IDX -> .JK, US -> apa adanya). Selain itu apa adanya.
-        if (category === 'stock') return marketFilter === 'us' ? raw : toYahooTicker(raw)
+        // Saham: simpan format Yahoo (IDX -> .JK, US -> apa adanya). Holding US
+        // yang DIEDIT dari halaman "Semua" (marketFilter null) dideteksi via
+        // currency-nya — tanpa ini AAPL ketulis AAPL.JK dan quote-nya rusak.
+        if (category === 'stock') return (marketFilter === 'us' || form.currency === 'USD') ? raw : toYahooTicker(raw)
         return raw
       })(),
       platform: form.platform,
@@ -281,15 +307,20 @@ export default function InvestmentCategoryPage() {
       // right market bucket (overview split + this page's filter).
       ...(marketFilter ? { currency: marketFilter === 'us' ? 'USD' : 'IDR' } : {}),
     }
-    if (form.id) await supabase.from('investments').update(payload).eq('id', form.id)
-    else await supabase.from('investments').insert(payload)
+    const { error } = form.id
+      ? await supabase.from('investments').update(payload).eq('id', form.id)
+      : await supabase.from('investments').insert(payload)
     setSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
     setDialogOpen(false)
+    invalidateInvestmentCaches()
     void load()
   }
   async function remove(id: string) {
     if (!confirm(t('investment_detail.confirm_delete'))) return
-    await supabase.from('investments').delete().eq('id', id)
+    const { error } = await supabase.from('investments').delete().eq('id', id)
+    if (error) { toast.error(t('common.delete_failed')); return }
+    invalidateInvestmentCaches()
     void load()
   }
 
@@ -525,7 +556,12 @@ export default function InvestmentCategoryPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} /></div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
+      ) : loadError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => void load()}>{t('common.retry')}</Button>
+        </div>
       ) : items.length === 0 ? (
         <div className="s-card p-12 text-center">
           <p className="text-5xl">{subcat.emoji}</p>
@@ -544,7 +580,7 @@ export default function InvestmentCategoryPage() {
             label={t('investment_detail.stat_profit_loss')}
             value={`${formatCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
             glow={up ? 'glow-emerald' : 'glow-rose'}
-            accent={up ? '#10B981' : '#F43F5E'}
+            accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
           />
           <MiniStat
             label={t('investment_detail.stat_today')}
@@ -554,7 +590,7 @@ export default function InvestmentCategoryPage() {
                 : '—'
             }
             glow={todayPL ? (todayPL.value >= 0 ? 'glow-emerald' : 'glow-rose') : undefined}
-            accent={todayPL ? (todayPL.value >= 0 ? '#10B981' : '#F43F5E') : undefined}
+            accent={todayPL ? (todayPL.value >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)') : undefined}
           />
         </div>
 
@@ -662,16 +698,16 @@ export default function InvestmentCategoryPage() {
                       <Td className="text-right tabular">
                         <div style={{ color: 'var(--ink)' }}>{formatCurrency(e.live)}</div>
                         {e.q?.changePct !== null && e.q?.changePct !== undefined && (
-                          <div className="text-[10px] tabular" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint)' : 'var(--danger)' }}>
+                          <div className="text-[10px] tabular" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                             {formatPercent(e.q.changePct)}
                           </div>
                         )}
                       </Td>
                       <Td className="text-right tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</Td>
-                      <Td className="text-right tabular font-medium" style={{ color: pos ? 'var(--c-mint)' : 'var(--danger)' }}>
+                      <Td className="text-right tabular font-medium" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                         {formatCurrency(e.pl)}
                       </Td>
-                      <Td className="text-right tabular" style={{ color: pos ? 'var(--c-mint)' : 'var(--danger)' }}>
+                      <Td className="text-right tabular" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                         {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                       </Td>
                       <Td style={{ color: 'var(--ink-muted)' }}>{e.i.platform || '—'}</Td>
@@ -741,7 +777,7 @@ export default function InvestmentCategoryPage() {
                 <div className="mt-1.5 flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-muted)' }}>
                   <span>{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}</span>
                   {e.invested > 0 && (
-                    <span className="num font-medium" style={{ color: pos ? 'var(--c-mint)' : 'var(--danger)' }}>
+                    <span className="num font-medium" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                       {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                     </span>
                   )}
@@ -791,18 +827,28 @@ export default function InvestmentCategoryPage() {
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? `${t('investment_detail.dialog_edit')} ${subcat.label}` : `${t('investment_detail.dialog_add')} ${subcat.label}`}</DialogTitle>
-            <DialogDescription>
-              {category === 'stock'
-                ? t('investment_detail.dialog_desc_stock')
-                : category === 'crypto'
-                  ? t('investment_detail.dialog_desc_crypto')
-                  : t('investment_detail.dialog_desc_default')}
-            </DialogDescription>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-violet-soft)' }}>
+                {category === 'crypto'
+                  ? <Coins className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
+                  : <TrendingUp className="size-5" style={{ color: 'var(--c-violet-ink)' }} />}
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? `${t('investment_detail.dialog_edit')} ${subcat.label}` : `${t('investment_detail.dialog_add')} ${subcat.label}`}</DialogTitle>
+                <DialogDescription>
+                  {category === 'stock'
+                    ? t('investment_detail.dialog_desc_stock')
+                    : category === 'crypto'
+                      ? t('investment_detail.dialog_desc_crypto')
+                      : t('investment_detail.dialog_desc_default')}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="grid gap-3 py-2">
+          <div className="grid gap-4 py-2">
+            <StepInv n={1} text={t('investment_detail.step_instrument')} />
             {/* Stock-only: ticker autocomplete from IDX catalog auto-fills name + sector */}
             {category === 'stock' ? (
               <>
@@ -934,6 +980,7 @@ export default function InvestmentCategoryPage() {
               )
             })()}
 
+            <StepInv n={2} text={t('investment_detail.step_platform')} />
             {/* Platform / Sekuritas — per-category dropdown with curated
                 Indonesian platforms (APERD, banks, OJK-licensed P2P, etc.) */}
             {(() => {
@@ -1025,6 +1072,7 @@ export default function InvestmentCategoryPage() {
               )
             })()}
 
+            <StepInv n={3} text={t('investment_detail.step_position')} />
             {/* Qty / Cost / Price — labels + placeholders per category config */}
             {(() => {
               const cfg = getCategoryFormConfig(category)
@@ -1048,7 +1096,7 @@ export default function InvestmentCategoryPage() {
                   </div>
                   <div className="grid gap-1.5">
                     <Label>{costCfg.label}</Label>
-                    <NumberInput
+                    <RpFieldInv
                       value={form.avg_cost}
                       onChange={(n) => setForm({ ...form, avg_cost: n })}
                       placeholder={costCfg.placeholder ?? '0'}
@@ -1059,7 +1107,7 @@ export default function InvestmentCategoryPage() {
                   </div>
                   <div className="grid gap-1.5">
                     <Label>{priceCfg.label}</Label>
-                    <NumberInput
+                    <RpFieldInv
                       value={form.current_price}
                       onChange={(n) => setForm({ ...form, current_price: n })}
                       placeholder={priceCfg.placeholder ?? '0'}
@@ -1068,6 +1116,39 @@ export default function InvestmentCategoryPage() {
                       <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{priceCfg.help}</p>
                     )}
                   </div>
+                </div>
+              )
+            })()}
+
+            {/* Preview posisi LIVE — feedback paling berguna sebelum nyimpen:
+                modal vs nilai vs P/L langsung kelihatan saat ngetik. */}
+            {form.quantity > 0 && form.avg_cost > 0 && (() => {
+              const modal = form.quantity * form.avg_cost
+              const nilai = form.quantity * (form.current_price || form.avg_cost)
+              const pl = nilai - modal
+              const plPct = modal > 0 ? (pl / modal) * 100 : 0
+              const pos = pl >= 0
+              return (
+                <div className="rounded-lg p-3" style={{ background: 'var(--surface-2)' }}>
+                  <div className="grid grid-cols-3 gap-2 text-[12px]">
+                    <div>
+                      <p style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_capital')}</p>
+                      <p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(modal))}</p>
+                    </div>
+                    <div>
+                      <p style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_market')}</p>
+                      <p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(nilai))}</p>
+                    </div>
+                    <div>
+                      <p style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_pl')}</p>
+                      <p className="num font-semibold mt-0.5" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                        {pos ? '+' : ''}{formatCurrency(Math.round(pl))} ({pos ? '+' : ''}{plPct.toFixed(1)}%)
+                      </p>
+                    </div>
+                  </div>
+                  {(category === 'stock' || category === 'crypto') && (
+                    <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_hint_live')}</p>
+                  )}
                 </div>
               )
             })()}
@@ -1092,13 +1173,31 @@ export default function InvestmentCategoryPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('investment_detail.cancel')}</Button>
-            <Button onClick={save} disabled={saving || !form.name}>
+            <Button onClick={save} disabled={saving || !form.name || form.quantity <= 0 || form.avg_cost <= 0}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {form.id ? t('investment_detail.save') : t('investment_detail.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function StepInv({ n, text }: { n: number; text: string }) {
+  return (
+    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+      <span className="size-4 rounded grid place-items-center text-[9px] num" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{n}</span>
+      {text}
+    </p>
+  )
+}
+
+function RpFieldInv({ value, onChange, placeholder }: { value: number; onChange: (n: number) => void; placeholder?: string }) {
+  return (
+    <div className="flex items-stretch rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+      <span className="px-3 flex items-center text-sm font-medium border-r shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>Rp</span>
+      <NumberInput value={value} onChange={onChange} placeholder={placeholder ?? '0'} className="flex-1 border-0 rounded-none shadow-none focus-visible:ring-0" />
     </div>
   )
 }
