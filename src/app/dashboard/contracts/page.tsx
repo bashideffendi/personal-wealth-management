@@ -2,7 +2,8 @@
 
 import { toast } from 'sonner'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -23,17 +24,19 @@ import {
   ShieldCheck, RefreshCw, CalendarClock, type LucideIcon,
 } from 'lucide-react'
 
-const MINT = '#10B981', AMBER = '#F59E0B', VIOLET = '#8B5CF6', CORAL = '#F43F5E', INDIGO = '#6366F1', SKY = '#0EA5E9'
+const MINT = 'var(--c-mint)', AMBER = 'var(--c-amber)', VIOLET = 'var(--c-violet)', CORAL = 'var(--c-coral)'
+const MINT_INK = 'var(--c-mint-ink)', AMBER_INK = 'var(--c-amber-ink)', VIOLET_INK = 'var(--c-violet-ink)', CORAL_INK = 'var(--c-coral-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 const CAT: Record<ContractCategory, { label: string; icon: LucideIcon; color: string }> = {
   insurance: { label: 'Asuransi', icon: Shield, color: MINT },
   loan: { label: 'Pinjaman', icon: Landmark, color: AMBER },
   work: { label: 'Pekerjaan', icon: Briefcase, color: VIOLET },
-  property: { label: 'Properti', icon: Building2, color: INDIGO },
-  lease: { label: 'Sewa', icon: KeyRound, color: SKY },
+  property: { label: 'Properti', icon: Building2, color: 'var(--ink)' },
+  lease: { label: 'Sewa', icon: KeyRound, color: MINT_INK },
   subscription: { label: 'Langganan', icon: Clock, color: VIOLET },
   warranty: { label: 'Garansi', icon: Package, color: MINT },
-  other: { label: 'Lainnya', icon: FileText, color: '#64748B' },
+  other: { label: 'Lainnya', icon: FileText, color: 'var(--ink-soft)' },
 }
 const FREQ: Record<ContractFrequency, string> = {
   monthly: 'Bulanan', quarterly: 'Triwulan', yearly: 'Tahunan', one_time: 'Sekali Bayar',
@@ -81,8 +84,7 @@ const fullDate = (iso: string) => new Date(iso).toLocaleDateString('id-ID', { da
 export default function ContractsPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<Contract[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -92,16 +94,20 @@ export default function ContractsPage() {
   const today = useMemo(() => new Date(), [])
 
 
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const { data } = await supabase.from('contracts').select('*').eq('user_id', user.id).order('end_date', { ascending: true })
-    setItems((data ?? []) as Contract[])
-    setLoading(false)
-  }
-
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const pageQuery = useQuery({
+    queryKey: ['contracts'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const { data, error } = await supabase.from('contracts').select('*').eq('user_id', user.id).order('end_date', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as Contract[]
+    },
+  })
+  const loading = pageQuery.isLoading
+  const items = useMemo(() => pageQuery.data ?? [], [pageQuery.data])
+  const refresh = () => qc.invalidateQueries({ queryKey: ['contracts'] })
 
   async function save() {
     setSaving(true)
@@ -120,18 +126,18 @@ export default function ContractsPage() {
     let { error } = await write(withCov)
     if (error && /coverage/i.test(error.message || '')) ({ error } = await write(base)) // migration 037 belum jalan
     if (error) { setSaving(false); toast.error(t('common.mutation_failed')); return }
-    setSaving(false); setDialogOpen(false); void load()
+    setSaving(false); setDialogOpen(false); refresh()
   }
   async function remove(id: string) {
     if (!confirm(t('contracts.confirm_delete'))) return
     const { error } = await supabase.from('contracts').delete().eq('id', id)
     if (error) { toast.error(t('common.delete_failed')); return }
-    void load()
+    refresh()
   }
   async function toggleArchive(c: Contract) {
     const { error } = await supabase.from('contracts').update({ is_archived: !c.is_archived }).eq('id', c.id)
     if (error) { toast.error(t('common.mutation_failed')); return }
-    void load()
+    refresh()
   }
   function openEdit(c: Contract) {
     setForm({
@@ -152,10 +158,10 @@ export default function ContractsPage() {
 
   const big = formatCurrency
   const stats = [
-    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: INDIGO, tint: 'rgba(99,102,241,0.12)' },
-    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
-    { label: t('contracts.stat_coverage_total'), value: big(coverageTotal), sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: 'rgba(139,92,246,0.12)' },
-    { label: t('contracts.stat_premium'), value: big(monthlyCost), sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: 'rgba(16,185,129,0.12)' },
+    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: 'var(--ink)', tint: 'var(--surface-2)' },
+    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: tint(AMBER, 10) },
+    { label: t('contracts.stat_coverage_total'), value: big(coverageTotal), sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: tint(VIOLET, 10) },
+    { label: t('contracts.stat_premium'), value: big(monthlyCost), sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: tint(MINT, 10) },
   ]
 
   const visible = active
@@ -184,6 +190,11 @@ export default function ContractsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : (
         <>
           {/* Stat strip */}
@@ -235,10 +246,10 @@ export default function ContractsPage() {
                     const sub = c.category === 'insurance' && c.coverage > 0 ? `UP ${big(c.coverage)}`
                       : c.provider ? c.provider
                       : c.policy_number || meta.label
-                    const badge = st === 'overdue' ? { t: t('contracts.badge_overdue'), c: CORAL } : st === 'expiring' ? { t: t('contracts.badge_renewal'), c: AMBER } : { t: t('contracts.badge_active'), c: MINT }
+                    const badge = st === 'overdue' ? { t: t('contracts.badge_overdue'), c: CORAL, ink: CORAL_INK } : st === 'expiring' ? { t: t('contracts.badge_renewal'), c: AMBER, ink: AMBER_INK } : { t: t('contracts.badge_active'), c: MINT, ink: MINT_INK }
                     return (
                       <div key={c.id} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-2)] transition-colors">
-                        <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                        <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
                           <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{sub}</p>
@@ -251,7 +262,7 @@ export default function ContractsPage() {
                         <div className="text-right w-28 shrink-0">
                           {c.cost ? <><p className="num text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
                         </div>
-                        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: `${badge.c}1A`, color: badge.c }}>{badge.t}</span>
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: tint(badge.c, 10), color: badge.ink }}>{badge.t}</span>
                         <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
                           <Button variant="ghost" size="icon-sm" onClick={() => openEdit(c)}><Pencil className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon-sm" onClick={() => toggleArchive(c)} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
@@ -272,7 +283,7 @@ export default function ContractsPage() {
                   <div className="mt-4 space-y-3">
                     {timeline.map((c) => {
                       const st = getStatus(c, today)
-                      const color = st === 'overdue' ? CORAL : st === 'expiring' ? AMBER : MINT
+                      const color = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : MINT_INK
                       return (
                         <div key={c.id} className="flex items-start gap-4 rounded-xl px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
                           <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date)}</span>
@@ -296,7 +307,7 @@ export default function ContractsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(99,102,241,0.12)' }}><ShieldCheck className="size-5" style={{ color: INDIGO }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><ShieldCheck className="size-5" style={{ color: 'var(--ink)' }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('contracts.dialog_title_edit') : t('contracts.dialog_title_add')}</DialogTitle>
                 <DialogDescription>{t('contracts.dialog_desc')}</DialogDescription>
