@@ -1,8 +1,8 @@
 'use client'
 
 /**
- * SafeToSpendCard — "Sisa Aman Bulan Ini": pemasukan − terpakai − tagihan rutin
- * belum jatuh tempo = yang masih bebas dipakai. Layout 1 kolom (vertikal, sibling
+ * SafeToSpendCard — "Sisa Aman Bulan Ini": pemasukan − terpakai − ditabung/
+ * diinvestasikan − tagihan rutin belum jatuh tempo = yang masih bebas dipakai. Layout 1 kolom (vertikal, sibling
  * Cash Coverage): angka hero + bar di tengah, rincian di bawah. Ngisi penuh tinggi.
  */
 
@@ -18,13 +18,15 @@ function Row({ label, val, sign, color }: { label: string; val: number; sign: st
   )
 }
 
-export function SafeToSpendCard({ income, spent, upcoming }: { income: number; spent: number; upcoming: number }) {
+export function SafeToSpendCard({ income, spent, saved = 0, upcoming }: { income: number; spent: number; saved?: number; upcoming: number }) {
   const t = useT()
-  const safe = income - spent - upcoming
-  const committed = spent + upcoming
+  // saved = setoran tabungan + investasi bulan ini — uangnya sudah keluar dari
+  // yang bisa dibelanjakan, jadi WAJIB ikut dikurangkan.
+  const safe = income - spent - saved - upcoming
+  const committed = spent + saved + upcoming
   const pct = income > 0 ? Math.min(100, (committed / income) * 100) : 0
   const ok = safe >= 0
-  const numColor = income === 0 ? 'var(--ink-soft)' : ok ? 'var(--c-mint)' : 'var(--c-coral)'
+  const numColor = income === 0 ? 'var(--ink-soft)' : ok ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'
   const barColor = pct >= 90 ? 'var(--c-coral)' : pct >= 70 ? 'var(--c-amber)' : 'var(--c-mint)'
 
   if (income === 0 && spent === 0) {
@@ -60,8 +62,9 @@ export function SafeToSpendCard({ income, spent, upcoming }: { income: number; s
       </div>
 
       <div className="mt-auto pt-3 border-t space-y-2 shrink-0" style={{ borderColor: 'var(--border-soft)' }}>
-        <Row label={t('safe_card.income')} val={income} sign="+" color="var(--c-mint)" />
+        <Row label={t('safe_card.income')} val={income} sign="+" color="var(--c-mint-ink)" />
         <Row label={t('safe_card.spent')} val={spent} sign="−" />
+        {saved > 0 && <Row label={t('safe_card.saved')} val={saved} sign="−" />}
         {upcoming > 0 && <Row label={t('safe_card.upcoming')} val={upcoming} sign="−" />}
       </div>
     </article>

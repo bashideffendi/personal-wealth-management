@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { isExpired, nextRunDate, occurrencesInRange, startOfToday, type RecurLike } from '@/lib/recurrence'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -78,82 +79,9 @@ const EMPTY: FormState = {
 const DAY = 86_400_000
 // Helper module-level: dipanggil dari event handler (bukan render).
 const isoDaysAgo = (days: number) => new Date(Date.now() - days * DAY).toISOString().slice(0, 10)
-function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d }
-function clampDay(year: number, month: number, day: number) {
-  const last = new Date(year, month + 1, 0).getDate()
-  return new Date(year, month, Math.min(day, last))
-}
-
-/** Parse "YYYY-MM-DD" jadi Date lokal 00:00 (hindari geser timezone dari new Date(iso)). */
-function parseISODate(s: string | null | undefined): Date | null {
-  if (!s) return null
-  const [y, m, d] = s.split('-').map(Number)
-  if (!y || !m || !d) return null
-  return new Date(y, m - 1, d)
-}
-
-type RecurLike = { frequency: string; day_of_period: number; start_date?: string | null; end_date?: string | null }
-
-/** Sudah lewat end_date? (end_date kosong = jalan terus) */
-function isExpired(r: RecurLike): boolean {
-  const end = parseISODate(r.end_date)
-  return !!end && end < startOfToday()
-}
-
-/** Jatuh tempo berikutnya (≥ hari ini & ≥ start_date); null kalau sudah lewat end_date. */
-function nextRunDate(r: RecurLike): Date | null {
-  const t = startOfToday()
-  const start = parseISODate(r.start_date)
-  const from = start && start > t ? start : t
-  const end = parseISODate(r.end_date)
-  let next: Date
-  if (r.frequency === 'monthly') {
-    const cand = clampDay(from.getFullYear(), from.getMonth(), r.day_of_period)
-    next = cand >= from ? cand : clampDay(from.getFullYear(), from.getMonth() + 1, r.day_of_period)
-  } else if (r.frequency === 'yearly') {
-    // Anchor ke bulan+tanggal start_date — day_of_period (1–31) gak cukup buat setahun.
-    const anchor = start ?? from
-    const cand = clampDay(from.getFullYear(), anchor.getMonth(), anchor.getDate())
-    next = cand >= from ? cand : clampDay(from.getFullYear() + 1, anchor.getMonth(), anchor.getDate())
-  } else if (r.frequency === 'weekly') {
-    // Kemunculan berikutnya dari weekday start_date.
-    const anchorDow = (start ?? from).getDay()
-    const d = new Date(from)
-    d.setDate(d.getDate() + ((anchorDow - d.getDay() + 7) % 7))
-    next = d
-  } else {
-    next = new Date(from)
-  }
-  if (end && next > end) return null
-  return next
-}
-
-/** Semua kemunculan dalam 30 hari ke depan (buat kalender). */
-function occurrencesIn30(r: RecurLike): Date[] {
-  const t = startOfToday()
-  const winEnd = new Date(t.getTime() + 30 * DAY)
-  const end = parseISODate(r.end_date)
-  const cap = end && end < winEnd ? end : winEnd
-  const first = nextRunDate(r)
-  if (!first || first > cap) return []
-  if (r.frequency === 'daily') {
-    const out: Date[] = []
-    for (let d = new Date(first); d <= cap; d = new Date(d.getTime() + DAY)) out.push(new Date(d))
-    return out
-  }
-  if (r.frequency === 'weekly') {
-    const out: Date[] = []
-    for (let d = new Date(first); d <= cap; d = new Date(d.getTime() + 7 * DAY)) out.push(new Date(d))
-    return out
-  }
-  if (r.frequency === 'monthly') {
-    const out = [first]
-    const second = clampDay(first.getFullYear(), first.getMonth() + 1, r.day_of_period)
-    if (second <= cap) out.push(second)
-    return out
-  }
-  return [first]
-}
+// Logika tanggal recurrence dipindah ke lib bersama (dipakai juga widget
+// dashboard) — lihat src/lib/recurrence.ts.
+const occurrencesIn30 = (r: RecurLike) => occurrencesInRange(r, startOfToday(), 30)
 
 const dmy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
 

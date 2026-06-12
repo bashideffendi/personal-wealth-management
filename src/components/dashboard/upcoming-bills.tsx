@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { monthShort } from '@/lib/i18n/dates'
 import type { Contract, CreditCard } from '@/types'
+import { nextRunDate, parseISODate } from '@/lib/recurrence'
 
 interface BillItem {
   source: 'contract' | 'debt' | 'cc' | 'recurring'
@@ -22,7 +23,7 @@ interface UpcomingBillsProps {
   contracts: Contract[]
   debts: Array<{ id: string; name: string; remaining: number; due_date: string | null; monthly_payment: number }>
   creditCards: CreditCard[]
-  recurring: Array<{ id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number }>
+  recurring: Array<{ id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number; start_date?: string | null; end_date?: string | null }>
 }
 
 export function UpcomingBills({ contracts, debts, creditCards, recurring }: UpcomingBillsProps) {
@@ -45,36 +46,30 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
     }
     for (const d of debts) {
       if (!d.due_date) continue
-      const dueDate = new Date(d.due_date)
-      dueDate.setHours(0, 0, 0, 0)
+      // due_date utang = jangkar tanggal BULANAN (kemunculan berikutnya ≥ hari
+      // ini) — tanggal tersimpan yang sudah lewat bukan berarti tagihannya hilang.
+      const anchorDay = parseISODate(d.due_date)?.getDate()
+      if (!anchorDay) continue
+      const dueDate = nextRunDate({ frequency: 'monthly', day_of_period: anchorDay })
+      if (!dueDate) continue
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
       out.push({ source: 'debt', title: d.name, amount: d.monthly_payment > 0 ? d.monthly_payment : d.remaining, dueDate, daysUntil: days, Icon: CreditCardIcon, href: '/dashboard/debts' })
     }
     for (const c of creditCards) {
       if (c.current_balance <= 0) continue
-      const y = today.getFullYear()
-      const m = today.getMonth()
-      let dueDate = new Date(y, m, c.due_day)
-      dueDate.setHours(0, 0, 0, 0)
-      if (dueDate.getTime() < today.getTime()) {
-        dueDate = new Date(y, m + 1, c.due_day)
-        dueDate.setHours(0, 0, 0, 0)
-      }
+      const dueDate = nextRunDate({ frequency: 'monthly', day_of_period: c.due_day })
+      if (!dueDate) continue
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
       out.push({ source: 'cc', title: `${c.name}${c.last_four ? ` ••${c.last_four}` : ''}`, amount: c.current_balance, dueDate, daysUntil: days, Icon: CreditCardIcon, href: '/dashboard/credit-cards' })
     }
     for (const r of recurring) {
-      if (r.frequency !== 'monthly' || r.type === 'income') continue
-      const y = today.getFullYear()
-      const m = today.getMonth()
-      let dueDate = new Date(y, m, r.day_of_period)
-      dueDate.setHours(0, 0, 0, 0)
-      if (dueDate.getTime() < today.getTime()) {
-        dueDate = new Date(y, m + 1, r.day_of_period)
-        dueDate.setHours(0, 0, 0, 0)
-      }
+      // Semua frekuensi (weekly/daily/yearly ikut) via jadwal yang sama
+      // dengan halaman Recurring — clamp bulan pendek + hormati start/end_date.
+      if (r.type === 'income') continue
+      const dueDate = nextRunDate(r)
+      if (!dueDate) continue
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000)
       if (days < 0 || dueDate.getTime() > cutoff) continue
       out.push({ source: 'recurring', title: r.name, amount: r.amount, dueDate, daysUntil: days, Icon: r.type === 'saving' || r.type === 'investment' ? Target : Repeat, href: '/dashboard/recurring' })
@@ -126,7 +121,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
                   width: 44,
                   borderRadius: 10,
                   background: urgent ? 'var(--c-coral-soft)' : 'var(--surface-2)',
-                  color: urgent ? 'var(--c-coral)' : 'var(--text-2)',
+                  color: urgent ? 'var(--c-coral-ink)' : 'var(--text-2)',
                   textAlign: 'center',
                   padding: '4px 0',
                 }}
@@ -155,7 +150,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
                 <p
                   style={{
                     fontSize: 11,
-                    color: urgent ? 'var(--c-coral)' : 'var(--text-mute)',
+                    color: urgent ? 'var(--c-coral-ink)' : 'var(--text-mute)',
                   }}
                 >
                   {urgent ? t('upcoming_bills.urgent') : b.daysUntil === 0 ? t('upcoming_bills.today') : `${b.daysUntil} ${t('upcoming_bills.days_left')}`}

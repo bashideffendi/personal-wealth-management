@@ -11,7 +11,7 @@ import { formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
 interface GoalsWidgetProps {
-  goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null }>
+  goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null; created_at?: string | null }>
 }
 
 function etaLabel(deadline: string | null): string | null {
@@ -77,8 +77,20 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
         {goals.slice(0, 3).map((g, i) => {
           const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0
           const eta = etaLabel(g.deadline)
-          // Tone color based on progress
-          const tone = pct >= 75 ? 'mint' : pct >= 40 ? 'amber' : 'coral'
+          // Tone ikut PACE vs deadline — rumus sama dengan goalStatus halaman
+          // Tujuan (progress vs waktu berjalan), bukan % absolut. Goal jangka
+          // panjang yang baru 20% tapi on-track gak boleh tampil alarm.
+          const tone = (() => {
+            if (pct >= 100) return 'mint'
+            if (!g.deadline || !g.created_at) return 'mint'
+            const start = new Date(g.created_at).getTime()
+            const end = new Date(g.deadline).getTime()
+            const nowMs = Date.now()
+            if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 'mint'
+            if (nowMs >= end) return 'coral'
+            const expectedPct = ((nowMs - start) / (end - start)) * 100
+            return pct + 0.5 >= expectedPct ? 'mint' : expectedPct - pct > 25 ? 'coral' : 'amber'
+          })()
 
           // Circular progress ring math
           const radius = 18

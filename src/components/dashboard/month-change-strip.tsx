@@ -31,6 +31,8 @@ interface MonthChangeStripProps {
   priorMonthCount?: number
   /** Minimum absolute Rp diff per kategori untuk dianggap signifikan. */
   minAbsThreshold?: number
+  /** Porsi bulan berjalan yang sudah lewat (hari ke-N / total hari). 1 = bulan penuh. */
+  elapsedFraction?: number
 }
 
 function aggregateExpenseByCategory(txs: Tx[]): Map<string, number> {
@@ -50,6 +52,7 @@ export function MonthChangeStrip({
   priorMonthsTx,
   priorMonthCount = 3,
   minAbsThreshold = 50_000,
+  elapsedFraction = 1,
 }: MonthChangeStripProps) {
   // Need both: at least one current expense AND prior baseline.
   // (If user is brand new with only 1 month of data, this widget hides.)
@@ -77,9 +80,12 @@ export function MonthChangeStrip({
   // Compute diff per category. Include cats only in prior (might be "dropped") and only in current (new spend).
   const diffs: Array<{ category: string; cur: number; avg: number; abs: number; pct: number }> = []
   const allCats = new Set<string>([...current.keys(), ...priorAvg.keys()])
+  // Bulan berjalan masih parsial → baseline di-pro-rata ke porsi hari yang
+  // sudah lewat. Tanpa ini, di awal bulan semua kategori tampil "turun" palsu.
+  const frac = Math.min(1, Math.max(0.05, elapsedFraction))
   for (const cat of allCats) {
     const cur = current.get(cat) ?? 0
-    const avg = priorAvg.get(cat) ?? 0
+    const avg = (priorAvg.get(cat) ?? 0) * frac
     const abs = cur - avg
     if (Math.abs(abs) < minAbsThreshold) continue
     const pct = avg > 0 ? (abs / avg) * 100 : (cur > 0 ? 100 : 0)
@@ -140,8 +146,8 @@ function ChangeRow({
 }) {
   const up = row.abs > 0
   const Icon = up ? TrendingUp : TrendingDown
-  const colorVar = up ? 'var(--c-coral)' : 'var(--c-mint)'
-  const bgTint = up ? 'rgba(244,63,94,0.10)' : 'rgba(16,185,129,0.12)'
+  const colorVar = up ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)'
+  const bgTint = up ? 'color-mix(in srgb, var(--c-coral) 10%, transparent)' : 'color-mix(in srgb, var(--c-mint) 12%, transparent)'
   const sign = up ? '+' : '−'
 
   return (

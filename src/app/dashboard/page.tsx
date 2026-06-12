@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, getMonthName } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
-import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
+import { fetchLiquidEntries, sumLiquid, sumCashEquivalent } from '@/lib/liquid'
+import { isExpired, occurrencesInRange } from '@/lib/recurrence'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
@@ -53,6 +54,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 
 // Chart palette per design handoff tokens.css — emerald led, then sky,
@@ -87,15 +89,12 @@ const InvestmentPie = dynamic(
   { ssr: false, loading: () => skel(120, 120) },
 )
 
-const INVESTMENT_CATEGORY_LABELS: Record<string, string> = {
-  stock: 'Saham',
-  mutual_fund: 'Reksa Dana',
-  crypto: 'Crypto',
-  gold: 'Emas',
-  bond: 'Obligasi',
-  time_deposit: 'Deposito',
-  p2p: 'P2P Lending',
-  business: 'Bisnis',
+// Label kategori investasi via i18n — key sama dengan hub Kekayaan (assets.cat_*).
+const INVESTMENT_CATEGORY_KEYS: Record<string, string> = {
+  stock: 'assets.cat_stock', mutual_fund: 'assets.cat_mutual_fund', crypto: 'assets.cat_crypto',
+  gold: 'assets.cat_gold', bond: 'assets.cat_bond', time_deposit: 'assets.cat_time_deposit',
+  p2p: 'assets.cat_p2p', business: 'assets.cat_business',
+  forex: 'assets.cat_forex', sbn: 'assets.cat_sbn', pension: 'assets.cat_pension',
 }
 
 interface MonthlyData {
@@ -136,6 +135,9 @@ export default function DashboardPage() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  // Nomor urut fetch — hasil periode lama jangan menimpa periode aktif.
+  const fetchSeq = useRef(0)
 
   const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([])
   const [yearTransactions, setYearTransactions] = useState<Transaction[]>([])
@@ -144,17 +146,20 @@ export default function DashboardPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [liquidTotal, setLiquidTotal] = useState(0)
+  // Kas siap pakai (tanpa piutang) — buat runway & forecast, bukan neraca.
+  const [cashEquivalent, setCashEquivalent] = useState(0)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [nonLiquidTotal, setNonLiquidTotal] = useState(0)
   const [debtTotal, setDebtTotal] = useState(0)
   const [activeGoals, setActiveGoals] = useState<Array<{
-    id: string; name: string; target_amount: number; current_amount: number; deadline: string | null
+    id: string; name: string; target_amount: number; current_amount: number; deadline: string | null; created_at?: string | null
   }>>([])
   const [activeDebts, setActiveDebts] = useState<Array<{
     id: string; name: string; remaining: number; due_date: string | null; monthly_payment: number
   }>>([])
   const [recurringItems, setRecurringItems] = useState<Array<{
     id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number
+    start_date?: string | null; end_date?: string | null
   }>>([])
   const [userFirstName, setUserFirstName] = useState<string>('')
 
@@ -224,119 +229,137 @@ export default function DashboardPage() {
 
   async function fetchData() {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    // Capture first name for greeting per mockup ("Pagi, Bashid 👋")
-    const fullName = (user.user_metadata?.full_name as string | undefined)
-      || user.email?.split('@')[0]
-      || ''
-    setUserFirstName(fullName.split(' ')[0])
+    setLoadError(false)
+    const seq = ++fetchSeq.current
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { if (seq === fetchSeq.current) setLoading(false); return }
+      // Capture first name for greeting per mockup ("Pagi, Bashid")
+      const fullName = (user.user_metadata?.full_name as string | undefined)
+        || user.email?.split('@')[0]
+        || ''
 
-    const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
-    const endMonth = selectedMonth === 12 ? 1 : selectedMonth + 1
-    const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
-    const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
+      const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+      const endMonth = selectedMonth === 12 ? 1 : selectedMonth + 1
+      const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
+      const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
 
-    const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes, accRes] = await Promise.all([
-      supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('date', `${selectedYear}-01-01`)
-        .lt('date', `${selectedYear + 1}-01-01`)
-        .order('date', { ascending: false }),
-      supabase
-        .from('investments')
-        .select('category, total_value, name, platform, ticker, quantity, avg_cost, current_price')
-        .eq('user_id', user.id),
-      supabase
-        .from('budgets')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('year', selectedYear)
-        .eq('month', selectedMonth),
-      supabase
-        .from('credit_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true),
-      fetchLiquidEntries(supabase, user.id),
-      supabase
-        .from('debts')
-        .select('id, name, remaining, due_date, monthly_payment')
-        .eq('user_id', user.id)
-        .eq('is_active', true),
-      supabase
-        .from('contracts')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_archived', false)
-        .order('end_date', { ascending: true }),
-      supabase
-        .from('assets_non_liquid')
-        .select('current_value')
-        .eq('user_id', user.id),
-      supabase
-        .from('goals')
-        .select('id, name, target_amount, current_amount, deadline')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('deadline', { ascending: true, nullsFirst: false })
-        .limit(3),
-      supabase
-        .from('recurring_transactions')
-        .select('id, name, type, amount, frequency, day_of_period')
-        .eq('user_id', user.id)
-        .eq('is_active', true),
-      loadTree(supabase, user.id),
-      supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', user.id),
-    ])
-    setLiquidTotal(sumLiquid(liquidEntries))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setAccounts(((accRes as any)?.data ?? []) as Account[])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setNonLiquidTotal(((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setActiveGoals((goalsRes.data ?? []) as any[])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const debtRows = (debtRes.data ?? []) as any[]
-    // Total utang HARUS termasuk saldo kartu kredit — konsisten sama
-    // /dashboard/net-worth + report. Sebelumnya cuma debts.remaining →
-    // net worth hero kelebihan sebesar saldo CC.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ccSumForDebt = ((ccRes.data ?? []) as any[]).reduce((s, c) => s + (c.current_balance ?? 0), 0)
-    setDebtTotal(debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0) + ccSumForDebt)
-    setActiveDebts(debtRows)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setRecurringItems((recurRes.data ?? []) as any[])
+      const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes, accRes] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('date', `${selectedYear}-01-01`)
+          .lt('date', `${selectedYear + 1}-01-01`)
+          .order('date', { ascending: false }),
+        supabase
+          .from('investments')
+          .select('category, total_value, name, platform, ticker, quantity, avg_cost, current_price')
+          .eq('user_id', user.id),
+        supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('year', selectedYear)
+          .eq('month', selectedMonth),
+        supabase
+          .from('credit_cards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true),
+        fetchLiquidEntries(supabase, user.id, { strict: true }),
+        supabase
+          .from('debts')
+          .select('id, name, remaining, due_date, monthly_payment')
+          .eq('user_id', user.id)
+          .eq('is_active', true),
+        supabase
+          .from('contracts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
+          .order('end_date', { ascending: true }),
+        supabase
+          .from('assets_non_liquid')
+          .select('current_value')
+          .eq('user_id', user.id),
+        supabase
+          .from('goals')
+          .select('id, name, target_amount, current_amount, deadline, created_at')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('deadline', { ascending: true, nullsFirst: false })
+          .limit(3),
+        supabase
+          .from('recurring_transactions')
+          .select('id, name, type, amount, frequency, day_of_period, start_date, end_date')
+          .eq('user_id', user.id)
+          .eq('is_active', true),
+        loadTree(supabase, user.id),
+        supabase
+          .from('accounts')
+          .select('*')
+          .eq('user_id', user.id),
+      ])
+      // Periode keburu diganti user — buang hasil basi.
+      if (seq !== fetchSeq.current) return
+      // Query inti gagal = bilang terus terang, jangan render dashboard penuh nol palsu.
+      if (yearRes.error) throw yearRes.error
+      if (invRes.error) throw invRes.error
+      if (ccRes.error) throw ccRes.error
+      if (debtRes.error) throw debtRes.error
+      if (nlqRes.error) throw nlqRes.error
+      if (accRes.error) throw accRes.error
 
-    const yearTxs = (yearRes.data ?? []) as Transaction[]
-    setYearTransactions(yearTxs)
-    setMonthTransactions(yearTxs.filter((tx) => tx.date >= startDate && tx.date < endDate))
-    setInvestments((invRes.data ?? []) as Investment[])
-    // Filter budget ke LEAF KEY tree saat ini — samain PERSIS sama halaman
-    // Anggaran (parent = jumlah sub, kategori nonaktif dibuang). Tanpa ini,
-    // roll-up dashboard ngejumlahin baris parent BASI (double-count, mis. Family
-    // 4,5jt jadi 6jt) + kategori stale yg udah dihapus/rename (Tagihan dll).
-    // Fallback (tree DB gak ada) → jangan filter biar kategori custom gak kebuang.
-    const allBudgetRows = (budgetRes.data ?? []) as Budget[]
-    if (treeRes.dbAvailable) {
-      const leafByType: Record<string, Set<string>> = {
-        income: new Set(leafKeys(treeRes.tree.income)),
-        expense: new Set(leafKeys(treeRes.tree.expense)),
-        saving: new Set(leafKeys(treeRes.tree.saving)),
-        investment: new Set(leafKeys(treeRes.tree.investment)),
+      setUserFirstName(fullName.split(' ')[0])
+      setLiquidTotal(sumLiquid(liquidEntries))
+      setCashEquivalent(sumCashEquivalent(liquidEntries))
+      setAccounts((accRes.data ?? []) as Account[])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setNonLiquidTotal(((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setActiveGoals((goalsRes.data ?? []) as any[])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const debtRows = (debtRes.data ?? []) as any[]
+      // Total utang HARUS termasuk saldo kartu kredit — konsisten sama
+      // /dashboard/net-worth + report. Sebelumnya cuma debts.remaining →
+      // net worth hero kelebihan sebesar saldo CC.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ccSumForDebt = ((ccRes.data ?? []) as any[]).reduce((s, c) => s + (c.current_balance ?? 0), 0)
+      setDebtTotal(debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0) + ccSumForDebt)
+      setActiveDebts(debtRows)
+      // Recurring yang sudah lewat end_date di-exclude — konsisten halaman Recurring.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setRecurringItems(((recurRes.data ?? []) as any[]).filter((r) => !isExpired(r)))
+
+      const yearTxs = (yearRes.data ?? []) as Transaction[]
+      setYearTransactions(yearTxs)
+      setMonthTransactions(yearTxs.filter((tx) => tx.date >= startDate && tx.date < endDate))
+      setInvestments((invRes.data ?? []) as Investment[])
+      // Filter budget ke LEAF KEY tree saat ini — samain PERSIS sama halaman
+      // Anggaran (parent = jumlah sub, kategori nonaktif dibuang). Tanpa ini,
+      // roll-up dashboard ngejumlahin baris parent BASI (double-count, mis. Family
+      // 4,5jt jadi 6jt) + kategori stale yg udah dihapus/rename (Tagihan dll).
+      // Fallback (tree DB gak ada) → jangan filter biar kategori custom gak kebuang.
+      const allBudgetRows = (budgetRes.data ?? []) as Budget[]
+      if (treeRes.dbAvailable) {
+        const leafByType: Record<string, Set<string>> = {
+          income: new Set(leafKeys(treeRes.tree.income)),
+          expense: new Set(leafKeys(treeRes.tree.expense)),
+          saving: new Set(leafKeys(treeRes.tree.saving)),
+          investment: new Set(leafKeys(treeRes.tree.investment)),
+        }
+        setMonthBudgets(allBudgetRows.filter((b) => leafByType[b.type]?.has(b.category)))
+      } else {
+        setMonthBudgets(allBudgetRows)
       }
-      setMonthBudgets(allBudgetRows.filter((b) => leafByType[b.type]?.has(b.category)))
-    } else {
-      setMonthBudgets(allBudgetRows)
+      setCreditCards((ccRes.data ?? []) as CreditCard[])
+      setContracts((ctrRes.data ?? []) as Contract[])
+    } catch {
+      if (seq === fetchSeq.current) setLoadError(true)
+    } finally {
+      if (seq === fetchSeq.current) setLoading(false)
     }
-    setCreditCards((ccRes.data ?? []) as CreditCard[])
-    setContracts((ctrRes.data ?? []) as Contract[])
-    setLoading(false)
   }
 
   // ---- KPI aggregations ----
@@ -396,19 +419,24 @@ export default function DashboardPage() {
       .filter((t) => t.type === 'saving' || t.type === 'investment')
       .reduce((s, t) => s + t.amount, 0)
 
-    // If we don't have ≥30 days of data, use current month directly to avoid
-    // dividing by 3 on a single month and getting fake-low monthly averages.
+    // Bagi dengan jumlah BULAN DISTINCT yang benar-benar ada di window — bukan
+    // 3 tetap. Konsisten sama net-worth & debts page; window 90 hari yang
+    // kepotong batas tahun (Jan-Mar) gak lagi menekan rata-rata sampai 3x.
+    const monthsInWindow = new Set(recent.map((tx) => tx.date.slice(0, 7)))
+    const divisor = Math.min(3, Math.max(1, monthsInWindow.size))
     const hasEnoughHistory = recent.length >= 5
-    const monthlyIncome = hasEnoughHistory ? recentIncome / 3 : totals.income
-    const monthlyExpense = hasEnoughHistory ? recentExpense / 3 : totals.expense
-    const monthlySaved = hasEnoughHistory ? recentSaved / 3 : (totals.saving + totals.investment)
+    const monthlyIncome = hasEnoughHistory ? recentIncome / divisor : totals.income
+    const monthlyExpense = hasEnoughHistory ? recentExpense / divisor : totals.expense
+    const monthlySaved = hasEnoughHistory ? recentSaved / divisor : (totals.saving + totals.investment)
 
     // Debt aggregates — credit cards + active debts
     const ccBalance = creditCards.reduce((s, c) => s + (c.current_balance || 0), 0)
-    const ccMinPayments = creditCards.reduce(
-      (s, c) => s + Math.max(((c.current_balance || 0) * 0.05), 0),  // assume ~5% min payment
-      0,
-    )
+    // Min payment kanonik (sama dengan halaman Utang & Kekayaan):
+    // ~10% tagihan, lantai Rp 50rb, gak lebih dari tagihan.
+    const ccMinPayments = creditCards.reduce((s, c) => {
+      const bal = c.current_balance || 0
+      return s + (bal > 0 ? Math.min(bal, Math.max(50_000, Math.round(bal * 0.1))) : 0)
+    }, 0)
     const debtRemaining = activeDebts.reduce((s, d) => s + (d.remaining || 0), 0)
     const debtMonthly = activeDebts.reduce((s, d) => s + (d.monthly_payment || 0), 0)
     // Overdue heuristic: any credit card > 90% utilization
@@ -427,7 +455,7 @@ export default function DashboardPage() {
       monthlyIncome,
       monthlyExpense,
       monthlySaved,
-      liquidBalance: liquidTotal,
+      liquidBalance: cashEquivalent,
       investmentValue,
       totalDebt: ccBalance + debtRemaining,
       monthlyDebtPayments: ccMinPayments + debtMonthly,
@@ -443,7 +471,7 @@ export default function DashboardPage() {
     // Expose pengeluaran 90-hari (avg) ke kartu — Cash Coverage konsisten sama
     // skor FHS, gak reset ke 0 pas bulan berjalan masih kosong.
     return { ...fhs, _monthlyExpense: monthlyExpense }
-  }, [yearTransactions, totals, creditCards, activeDebts, contracts, investments, liquidTotal, activeGoals])
+  }, [yearTransactions, totals, creditCards, activeDebts, contracts, investments, cashEquivalent, activeGoals])
 
   // ---- Money Flow Sankey data ----
   // Aggregate by category for each kind. We cap to top 8 per side so the
@@ -495,13 +523,13 @@ export default function DashboardPage() {
   const investmentPieData = useMemo(() => {
     const byCategory: Record<string, number> = {}
     investments.forEach((inv) => {
-      const label = INVESTMENT_CATEGORY_LABELS[inv.category] || inv.category
+      const label = INVESTMENT_CATEGORY_KEYS[inv.category] ? t(INVESTMENT_CATEGORY_KEYS[inv.category]) : inv.category
       byCategory[label] = (byCategory[label] || 0) + (inv.total_value || 0)
     })
     return Object.entries(byCategory)
       .filter(([, v]) => v > 0)
       .map(([name, value]) => ({ name, value }))
-  }, [investments])
+  }, [investments, t])
 
   // ---- Investment portfolio metrics: total value, top holdings, P/L,
   //      and concentration risk. Used by the upgraded composition card.
@@ -518,7 +546,7 @@ export default function DashboardPage() {
       .filter((i) => (i.total_value || 0) > 0)
       .map((i) => ({
         id: i.id,
-        name: i.name || INVESTMENT_CATEGORY_LABELS[i.category] || i.category,
+        name: i.name || (INVESTMENT_CATEGORY_KEYS[i.category] ? t(INVESTMENT_CATEGORY_KEYS[i.category]) : i.category),
         platform: i.platform || '',
         ticker: i.ticker ?? null,
         category: i.category,
@@ -535,7 +563,7 @@ export default function DashboardPage() {
       topPct > 40 ? 'tinggi' : topPct > 25 ? 'sedang' : 'rendah'
 
     return { totalValue, totalCost, unrealizedPL, unrealizedPct, topHoldings, topPct, risk, count: enriched.length }
-  }, [investments])
+  }, [investments, t])
 
   // ---- Calendar: daily net per day of selected month ----
   const calendarData = useMemo(() => {
@@ -587,14 +615,18 @@ export default function DashboardPage() {
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i)
   const currentMonthYear = `${getMonthName(selectedMonth)} ${selectedYear}`
-  // Tagihan rutin (expense bulanan) yg BELUM jatuh tempo bulan ini — buat Sisa Aman.
+  // Tagihan rutin (SEMUA frekuensi) yg belum jatuh tempo sisa bulan ini — buat
+  // Sisa Aman. Pakai occurrencesInRange biar weekly/daily/yearly & end_date
+  // kehitung sama persis dengan halaman Recurring.
   const upcomingRecurring = (() => {
     const isCurrent = selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
     if (!isCurrent) return 0
-    const day = now.getDate()
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const daysLeft = new Date(selectedYear, selectedMonth, 0).getDate() - now.getDate()
     return recurringItems
-      .filter((r) => r.type === 'expense' && r.frequency === 'monthly' && r.day_of_period >= day)
-      .reduce((s, r) => s + r.amount, 0)
+      .filter((r) => r.type === 'expense')
+      .reduce((s, r) => s + occurrencesInRange(r, today, daysLeft).length * r.amount, 0)
   })()
 
   // Prior-3-months transactions for the "Apa yang berubah" strip. Slices
@@ -614,13 +646,29 @@ export default function DashboardPage() {
     return out
   }, [yearTransactions, selectedYear, selectedMonth])
 
+  // Trend buat hero: cuma bulan yang SUDAH berjalan. Array 12 bulan penuh
+  // (bulan depan = 0) meracuni delta bulan ini, YTD, sparkline & pace forecast.
+  const trendForHero =
+    selectedYear === now.getFullYear() ? monthlyData.slice(0, now.getMonth() + 1)
+    : selectedYear > now.getFullYear() ? []
+    : monthlyData
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--c-mint)' }} />
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} />
         <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>
           {t('dashboard.loading')}
         </span>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+        <Button variant="outline" onClick={() => void fetchData()}>{t('common.retry')}</Button>
       </div>
     )
   }
@@ -666,7 +714,7 @@ export default function DashboardPage() {
         nonLiquidTotal={nonLiquidTotal}
         investmentsTotal={investments.reduce((s, i) => s + (i.total_value || 0), 0)}
         debtTotal={debtTotal}
-        monthlyTrend={monthlyData}
+        monthlyTrend={trendForHero}
       />
 
       {/* FIXED summary band — NetWorth + 4 KPI + Cashflow selalu di atas
@@ -686,8 +734,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Cash-flow forecast — compact reminder of upcoming events. */}
+      {/* Runway pakai kas siap pakai — piutang bukan dana yang bisa dibelanjakan. */}
       <CashFlowForecast
-        liquidBalance={liquidTotal}
+        liquidBalance={cashEquivalent}
         recurringItems={recurringItems}
         contracts={contracts}
       />
@@ -705,6 +754,7 @@ export default function DashboardPage() {
         currentMonthTx={monthTransactions}
         priorMonthsTx={priorMonthsTx}
         priorMonthCount={3}
+        elapsedFraction={isCurrentPeriod ? now.getDate() / new Date(selectedYear, selectedMonth, 0).getDate() : 1}
       />
 
       {/* Onboarding mission card — auto-hides when user completes setup */}
@@ -732,7 +782,7 @@ export default function DashboardPage() {
 
       {/* Sisa Aman bulan ini — safe-to-spend (actionable) */}
       <SortableSection id="sisa-aman" order={blockOrder} overflow="fit-static" className="lg:col-span-1 lg:row-span-3">
-        <SafeToSpendCard income={totals.income} spent={totals.expense} upcoming={upcomingRecurring} />
+        <SafeToSpendCard income={totals.income} spent={totals.expense} saved={totals.saving + totals.investment} upcoming={upcomingRecurring} />
       </SortableSection>
 
       {/* Langganan & Rutin — total komitmen rutin/bulan */}
@@ -756,7 +806,7 @@ export default function DashboardPage() {
         <FinancialHealthCard
           part="score"
           result={fhsResult}
-          liquidBalance={liquidTotal}
+          liquidBalance={cashEquivalent}
           monthlyExpense={fhsResult._monthlyExpense}
         />
       </SortableSection>
@@ -766,7 +816,7 @@ export default function DashboardPage() {
         <FinancialHealthCard
           part="coverage"
           result={fhsResult}
-          liquidBalance={liquidTotal}
+          liquidBalance={cashEquivalent}
           monthlyExpense={fhsResult._monthlyExpense}
         />
       </SortableSection>

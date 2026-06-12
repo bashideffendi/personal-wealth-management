@@ -13,7 +13,7 @@ import { useT } from '@/lib/i18n/context'
 
 type Rec = { id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number }
 
-const FREQ_LABEL: Record<string, string> = { monthly: 'Bulanan', weekly: 'Mingguan', yearly: 'Tahunan', daily: 'Harian' }
+const FREQ_KEY: Record<string, string> = { monthly: 'recurring.freq_monthly', weekly: 'recurring.freq_weekly', yearly: 'recurring.freq_yearly', daily: 'recurring.freq_daily' }
 const monthlyEq = (r: Rec) =>
   r.frequency === 'monthly' ? r.amount
   : r.frequency === 'weekly' ? r.amount * 52 / 12
@@ -22,7 +22,9 @@ const monthlyEq = (r: Rec) =>
 
 export function SubscriptionsCard({ recurring }: { recurring: Rec[] }) {
   const t = useT()
-  const items = recurring.filter((r) => r.type === 'expense').sort((a, b) => monthlyEq(b) - monthlyEq(a))
+  // Non-income (expense + saving + investment rutin) — definisi 'pembayaran'
+  // yang sama dengan stat halaman Recurring.
+  const items = recurring.filter((r) => r.type !== 'income').sort((a, b) => monthlyEq(b) - monthlyEq(a))
   const total = items.reduce((s, r) => s + monthlyEq(r), 0)
 
   return (
@@ -51,7 +53,7 @@ export function SubscriptionsCard({ recurring }: { recurring: Rec[] }) {
               <div className="min-w-0">
                 <p className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>{r.name}</p>
                 <p className="truncate" style={{ fontSize: 11.5, color: 'var(--text-mute)' }}>
-                  {FREQ_LABEL[r.frequency] ?? r.frequency}{r.frequency === 'monthly' ? ` · tgl ${r.day_of_period}` : ''}
+                  {FREQ_KEY[r.frequency] ? t(FREQ_KEY[r.frequency]) : r.frequency}{r.frequency === 'monthly' ? ` · tgl ${r.day_of_period}` : ''}
                 </p>
               </div>
               <p className="num tabular text-right" style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>{formatCurrency(r.amount)}</p>

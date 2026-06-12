@@ -20,6 +20,7 @@ import { useMemo } from 'react'
 import { TrendingDown, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
+import { occurrencesInRange, toLocalISO } from '@/lib/recurrence'
 
 interface RecurringItem {
   name: string
@@ -27,6 +28,8 @@ interface RecurringItem {
   amount: number
   frequency: string  // 'monthly' | 'weekly' | 'yearly' | 'daily'
   day_of_period: number
+  start_date?: string | null
+  end_date?: string | null
 }
 
 interface ContractItem {
@@ -71,29 +74,27 @@ function buildForecast(
   const points: DayPoint[] = []
   let balance = startBalance
 
+  // Precompute jadwal kemunculan tiap item via lib recurrence — sama persis
+  // dengan halaman Recurring (weekly anchor weekday start_date, yearly anchor
+  // bulan+tanggal start_date, clamp bulan pendek, end_date dihormati).
+  // toLocalISO, bukan toISOString: di WIB toISOString menggeser tanggal -1 hari.
+  const schedules = recurring.map((r) => ({
+    r,
+    dates: new Set(occurrencesInRange(r, today, daysAhead - 1).map(toLocalISO)),
+  }))
+
   for (let i = 0; i < daysAhead; i++) {
     const date = new Date(today)
     date.setDate(today.getDate() + i)
-    const iso = date.toISOString().slice(0, 10)
-    const dom = date.getDate()
-    const dow = date.getDay()  // 0=Sun
+    const iso = toLocalISO(date)
 
     let inflow = 0
     let outflow = 0
     const events: DayPoint['events'] = []
 
     // Apply recurring transactions
-    for (const r of recurring) {
-      let matches = false
-      if (r.frequency === 'monthly' && r.day_of_period === dom) matches = true
-      else if (r.frequency === 'weekly' && r.day_of_period === dow) matches = true
-      else if (r.frequency === 'daily') matches = true
-      else if (r.frequency === 'yearly' && r.day_of_period === dom && date.getMonth() === today.getMonth()) {
-        // Crude: yearly fires on same dom + same month as today. Real
-        // recurring schemas are richer; this is a 90% approximation.
-        matches = true
-      }
-      if (!matches || r.amount <= 0) continue
+    for (const { r, dates } of schedules) {
+      if (!dates.has(iso) || r.amount <= 0) continue
       if (r.type === 'income') {
         inflow += r.amount
         events.push({ name: r.name, amount: r.amount, kind: 'in' })

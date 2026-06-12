@@ -313,6 +313,7 @@ export const messages = {
       committed_of_income: "terpakai + terjadwal dari pemasukan",
       income: "Pemasukan",
       spent: "Terpakai",
+      saved: "Ditabung & diinvestasikan",
       upcoming: "Tagihan akan datang",
     },
     subs_card: {
@@ -3535,6 +3536,7 @@ export const messages = {
       committed_of_income: "of income spent + scheduled",
       income: "Income",
       spent: "Spent",
+      saved: "Saved & invested",
       upcoming: "Upcoming bills",
     },
     subs_card: {
