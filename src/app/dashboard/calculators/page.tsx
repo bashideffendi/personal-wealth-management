@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -17,17 +18,19 @@ import {
 import { toast } from 'sonner'
 import { useT } from '@/lib/i18n/context'
 
-const VIOLET = '#8B5CF6', MINT = '#10B981', AMBER = '#F59E0B', CORAL = '#F43F5E'
+const VIOLET = 'var(--c-violet)', MINT = 'var(--c-mint)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
+const VIOLET_INK = 'var(--c-violet-ink)', MINT_INK = 'var(--c-mint-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 type CalcKey = 'kpr' | 'pensiun' | 'pendidikan' | 'bpjs' | 'dca' | 'pajak' | 'zakat'
-const CALCS: { key: CalcKey; titleKey: string; descKey: string; icon: LucideIcon; color: string }[] = [
-  { key: 'kpr', titleKey: 'card_kpr_title', descKey: 'card_kpr_desc', icon: Home, color: VIOLET },
-  { key: 'pensiun', titleKey: 'card_pensiun_title', descKey: 'card_pensiun_desc', icon: Shield, color: MINT },
-  { key: 'pendidikan', titleKey: 'card_pendidikan_title', descKey: 'card_pendidikan_desc', icon: GraduationCap, color: AMBER },
-  { key: 'bpjs', titleKey: 'card_bpjs_title', descKey: 'card_bpjs_desc', icon: Landmark, color: MINT },
-  { key: 'dca', titleKey: 'card_dca_title', descKey: 'card_dca_desc', icon: TrendingUp, color: VIOLET },
-  { key: 'pajak', titleKey: 'card_pajak_title', descKey: 'card_pajak_desc', icon: Receipt, color: CORAL },
-  { key: 'zakat', titleKey: 'card_zakat_title', descKey: 'card_zakat_desc', icon: Coins, color: MINT },
+const CALCS: { key: CalcKey; titleKey: string; descKey: string; icon: LucideIcon; color: string; ink: string }[] = [
+  { key: 'kpr', titleKey: 'card_kpr_title', descKey: 'card_kpr_desc', icon: Home, color: VIOLET, ink: VIOLET_INK },
+  { key: 'pensiun', titleKey: 'card_pensiun_title', descKey: 'card_pensiun_desc', icon: Shield, color: MINT, ink: MINT_INK },
+  { key: 'pendidikan', titleKey: 'card_pendidikan_title', descKey: 'card_pendidikan_desc', icon: GraduationCap, color: AMBER, ink: AMBER_INK },
+  { key: 'bpjs', titleKey: 'card_bpjs_title', descKey: 'card_bpjs_desc', icon: Landmark, color: MINT, ink: MINT_INK },
+  { key: 'dca', titleKey: 'card_dca_title', descKey: 'card_dca_desc', icon: TrendingUp, color: VIOLET, ink: VIOLET_INK },
+  { key: 'pajak', titleKey: 'card_pajak_title', descKey: 'card_pajak_desc', icon: Receipt, color: CORAL, ink: CORAL_INK },
+  { key: 'zakat', titleKey: 'card_zakat_title', descKey: 'card_zakat_desc', icon: Coins, color: MINT, ink: MINT_INK },
 ]
 
 export default function CalculatorsPage() {
@@ -61,10 +64,10 @@ export default function CalculatorsPage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {CALCS.filter((c) => c.key !== selected).map((c) => (
           <button key={c.key} type="button" onClick={() => pick(c.key)} className="s-card p-5 text-left transition hover:border-[var(--ink)]" style={{ borderColor: 'var(--border-soft)' }}>
-            <div className="size-10 rounded-xl grid place-items-center" style={{ background: `${c.color}1A` }}><c.icon className="size-5" style={{ color: c.color }} /></div>
+            <div className="size-10 rounded-xl grid place-items-center" style={{ background: tint(c.color, 10) }}><c.icon className="size-5" style={{ color: c.ink }} /></div>
             <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
             <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t(`calculators.${c.descKey}`)}</p>
-            <span className="inline-flex items-center gap-1 text-[13px] font-semibold mt-3" style={{ color: c.color }}>{t('calculators.open_calculator')} <ArrowRight className="size-3.5" /></span>
+            <span className="inline-flex items-center gap-1 text-[13px] font-semibold mt-3" style={{ color: c.ink }}>{t('calculators.open_calculator')} <ArrowRight className="size-3.5" /></span>
           </button>
         ))}
       </div>
@@ -76,6 +79,7 @@ export default function CalculatorsPage() {
 function KprFeatured() {
   const t = useT()
   const supabase = createClient()
+  const qc = useQueryClient()
   const [harga, setHarga] = useState(1_200_000_000)
   const [dpPct, setDpPct] = useState(20)
   const [tenor, setTenor] = useState(15)
@@ -96,12 +100,15 @@ function KprFeatured() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setCreating(false); return }
     const deadline = new Date(); deadline.setFullYear(deadline.getFullYear() + 2)
-    await supabase.from('goals').insert({
-      user_id: user.id, name: 'DP Rumah (KPR)', category: 'Properti',
+    // category pakai KEY goals ('property'), bukan label — label dirender via i18n.
+    const { error } = await supabase.from('goals').insert({
+      user_id: user.id, name: 'DP Rumah (KPR)', category: 'property',
       target_amount: dp, current_amount: 0, deadline: deadline.toISOString().slice(0, 10),
       notes: `KPR ${formatCurrency(harga)} · tenor ${tenor} thn @ ${bunga}%`, is_active: true,
     })
     setCreating(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    qc.invalidateQueries({ queryKey: ['goals-page'] })
     toast.success(t('calculators.toast_goal_created'))
   }
 
@@ -109,8 +116,8 @@ function KprFeatured() {
     <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border-soft)' }}>
       {/* Input (kiri, tinted) */}
       <div className="p-6 sm:p-7" style={{ background: 'var(--surface-2)' }}>
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET }}>
-          <span className="size-7 rounded-lg grid place-items-center" style={{ background: `${VIOLET}1A` }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
+        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
+          <span className="size-7 rounded-lg grid place-items-center" style={{ background: tint(VIOLET, 10) }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
         <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--ink)' }}>{t('calculators.kpr_featured_title')}</p>
         <div className="mt-5 space-y-5">
@@ -126,11 +133,11 @@ function KprFeatured() {
       {/* Result (kanan) */}
       <div className="p-6 sm:p-7" style={{ background: 'var(--surface)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
-        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(34px,4.5vw,46px)', color: VIOLET, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
+        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(34px,4.5vw,46px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_monthly_for')} {tenor} {t('calculators.unit_years')}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
           <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_interest')}</p><p className="num font-bold mt-0.5" style={{ color: CORAL }}>{jt(bungaTotal)}</p></div>
+          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_interest')}</p><p className="num font-bold mt-0.5" style={{ color: CORAL_INK }}>{jt(bungaTotal)}</p></div>
           <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_principal')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(principal)}</p></div>
         </div>
         <p className="text-[10px] uppercase tracking-wide mt-5 mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_payment_composition')}</p>
@@ -139,8 +146,8 @@ function KprFeatured() {
           <div style={{ width: `${100 - pokokPct}%`, background: CORAL }} />
         </div>
         <div className="flex items-center justify-between mt-1.5 text-[11px]">
-          <span style={{ color: VIOLET }}>● {t('calculators.kpr_principal')} {pokokPct.toFixed(0)}%</span>
-          <span style={{ color: CORAL }}>{t('calculators.kpr_interest')} {(100 - pokokPct).toFixed(0)}% ●</span>
+          <span style={{ color: VIOLET_INK }}>● {t('calculators.kpr_principal')} {pokokPct.toFixed(0)}%</span>
+          <span style={{ color: CORAL_INK }}>{t('calculators.kpr_interest')} {(100 - pokokPct).toFixed(0)}% ●</span>
         </div>
         <Button className="mt-5" onClick={makeGoal} disabled={creating || dp <= 0}>{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />} {t('calculators.kpr_make_goal')}</Button>
       </div>
@@ -206,9 +213,12 @@ function PensionGapCalculator() {
     const jhtAtRetire = fvCurrent + fvContrib
 
     // ── JP estimate (monthly pension benefit) ──
-    // Formula: 1% × gaji × tahun kontribusi. Capped.
+    // Formula: 1% × gaji × tahun kontribusi, dengan floor & cap resmi.
+    // Syarat manfaat BULANAN: minimal 15 tahun iuran — di bawah itu JP cair
+    // sekali (lump sum) yang nilainya kecil; biar jujur dihitung 0 di sini.
+    const jpEligible = totalYearsAtRetire >= 15
     const jpMonthlyRaw = 0.01 * monthlySalary * totalYearsAtRetire
-    const jpMonthly = Math.min(Math.max(jpMonthlyRaw, 354_310), 4_250_000)
+    const jpMonthly = jpEligible ? Math.min(Math.max(jpMonthlyRaw, 354_310), 4_250_000) : 0
 
     // ── DPLK estimate ──
     const fvDplkCurrent = currentDplkBalance * Math.pow(1 + monthlyReturn, monthsToRetire)
@@ -230,12 +240,12 @@ function PensionGapCalculator() {
     const gap = Math.max(0, targetMonthly - monthlyIncomeAtRetire)
 
     // ── Suggested DPLK top-up to close gap ──
-    // Find PMT that future-values to (gap × 12 / 0.04) = gap×300 over the period
-    const requiredLumpSum = gap > 0 ? gap * 300 : 0  // 4% rule reverse
-    const additionalLumpNeeded = Math.max(0, requiredLumpSum - dplkAtRetire - jhtAtRetire +
-      jhtAtRetire)  // already counted; this is just gap-converted
-    const suggestedDplkExtra = monthsToRetire > 0 && additionalLumpNeeded > 0
-      ? Math.ceil((additionalLumpNeeded * monthlyReturn) / (Math.pow(1 + monthlyReturn, monthsToRetire) - 1))
+    // Gap bulanan → kebutuhan lump sum via kebalikan aturan 4%: gap×12/0.04 = gap×300.
+    // Gap SUDAH memperhitungkan JHT/DPLK/JP — jangan dikurangi saldo lagi
+    // (versi lama mengurangkan dplkAtRetire dua kali → saran top-up ketinggian rendah).
+    const requiredLumpSum = gap > 0 ? gap * 300 : 0
+    const suggestedDplkExtra = monthsToRetire > 0 && requiredLumpSum > 0
+      ? Math.ceil((requiredLumpSum * monthlyReturn) / (Math.pow(1 + monthlyReturn, monthsToRetire) - 1))
       : 0
 
     // ── Tax saving from DPLK contribution ──
@@ -262,9 +272,8 @@ function PensionGapCalculator() {
   const status = onTrack ? t('calculators.status_healthy')
     : result.replacementActual >= replacementTarget * 0.7 ? t('calculators.status_caution')
     : t('calculators.status_at_risk')
-  const statusColor = onTrack ? '#10B981'
-    : result.replacementActual >= replacementTarget * 0.7 ? '#F59E0B'
-    : '#F43F5E'
+  const statusBase = onTrack ? MINT : result.replacementActual >= replacementTarget * 0.7 ? AMBER : CORAL
+  const statusInk = onTrack ? MINT_INK : result.replacementActual >= replacementTarget * 0.7 ? AMBER_INK : CORAL_INK
 
   return (
     <div className="pt-4 grid gap-6 lg:grid-cols-2">
@@ -295,14 +304,14 @@ function PensionGapCalculator() {
           </div>
           <span
             className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-            style={{ background: `${statusColor}1A`, color: statusColor }}
+            style={{ background: tint(statusBase, 10), color: statusInk }}
           >
             {status}
           </span>
         </div>
 
         <div className="mt-5 text-center p-4 rounded-lg" style={{ background: 'var(--surface-2)' }}>
-          <p className="num text-5xl font-bold leading-none" style={{ color: statusColor }}>
+          <p className="num text-5xl font-bold leading-none" style={{ color: statusInk }}>
             {result.replacementActual.toFixed(0)}%
           </p>
           <p className="text-xs mt-2" style={{ color: 'var(--ink-soft)' }}>
@@ -323,7 +332,7 @@ function PensionGapCalculator() {
           />
           <ResultRow label={t('calculators.bpjs_target_monthly')} v={result.targetMonthly} />
           {result.gap > 0 && (
-            <ResultRow label={t('calculators.bpjs_gap_monthly')} v={result.gap} accent="#F43F5E" />
+            <ResultRow label={t('calculators.bpjs_gap_monthly')} v={result.gap} accent={CORAL_INK} />
           )}
         </div>
 
@@ -332,16 +341,16 @@ function PensionGapCalculator() {
             className="mt-5 pt-4 border-t rounded-lg p-4"
             style={{
               borderColor: 'var(--border-soft)',
-              background: 'rgba(16,185,129,0.06)',
+              background: tint(MINT, 6),
             }}
           >
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#10B981' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MINT_INK }}>
               {t('calculators.bpjs_recommendation')}
             </p>
             <p className="text-sm mt-2" style={{ color: 'var(--ink)' }}>
               {t('calculators.bpjs_topup_dplk')}{' '}
               <span className="num font-bold">
-                +{formatCurrency(result.suggestedDplkExtra)}/bln
+                +{formatCurrency(result.suggestedDplkExtra)}{t('calculators.per_month')}
               </span>{' '}
               {t('calculators.bpjs_to_close_gap')}
             </p>
@@ -424,7 +433,7 @@ function FireCalculator() {
           <ResultRow label={t('calculators.shortfall')} v={result.needed} accent="var(--danger)" />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint-ink)" />
           <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
             {t('calculators.fire_summary_prefix')} <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>{t('calculators.fire_summary_mid')} {result.yearsToRetire} {t('calculators.fire_summary_years_at')} {annualReturn}{t('calculators.fire_summary_return_suffix')} {retireAge}.
           </p>
@@ -496,7 +505,7 @@ function KidsEducationCalculator() {
           <ResultRow label={t('calculators.shortfall')} v={result.needed} accent="var(--danger)" />
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint-ink)" />
         </div>
       </div>
     </div>
@@ -557,8 +566,8 @@ function DCASimulator() {
         <h3 className="font-semibold">{t('calculators.dca_result_prefix')} {years} {t('calculators.unit_years')}</h3>
         <div className="mt-4 space-y-2">
           <ResultRow label={t('calculators.dca_total_invested')} v={result.invested} />
-          <ResultRow label={t('calculators.dca_final_value')} v={result.fv} big accent="var(--c-mint)" />
-          <ResultRow label={t('calculators.dca_capital_gain')} v={result.gain} accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.dca_final_value')} v={result.fv} big accent="var(--c-mint-ink)" />
+          <ResultRow label={t('calculators.dca_capital_gain')} v={result.gain} accent="var(--c-mint-ink)" />
         </div>
         {result.data.length > 0 && (
           <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
@@ -697,11 +706,11 @@ function TaxCalculator() {
     for (const b of brackets) {
       const span = Math.min(remaining, b.cap - prevCap)
       if (span <= 0) break
-      const t = span * b.rate
-      tax += t
+      const amt = span * b.rate
+      tax += amt
       breakdown.push({
         bracket: `${formatCurrency(prevCap)} - ${b.cap === Infinity ? '∞' : formatCurrency(b.cap)} @ ${(b.rate * 100).toFixed(0)}%`,
-        tax: t,
+        tax: amt,
       })
       remaining -= span
       prevCap = b.cap
@@ -763,7 +772,7 @@ function TaxCalculator() {
         <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
           <ResultRow label={t('calculators.tax_yearly')} v={result.tax} accent="var(--danger)" big />
           <ResultRow label={t('calculators.tax_monthly')} v={result.monthlyTax} accent="var(--ink)" />
-          <ResultRow label={t('calculators.tax_take_home')} v={result.takeHome} accent="var(--c-mint)" />
+          <ResultRow label={t('calculators.tax_take_home')} v={result.takeHome} accent="var(--c-mint-ink)" />
         </div>
       </div>
     </div>
