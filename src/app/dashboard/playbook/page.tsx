@@ -22,7 +22,7 @@ export default function PlaybookIndexPage() {
             Playbook
           </span>
         </div>
-        <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
+        <h1 className="t-h1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
           {t('playbook.title')}
         </h1>
         <p className="t-body mt-1.5 max-w-2xl" style={{ color: 'var(--ink-soft)' }}>

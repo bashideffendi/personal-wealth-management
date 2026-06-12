@@ -67,7 +67,8 @@ export async function consumeAICredits(
   // SUPABASE_SERVICE_ROLE_KEY is provisioned — see migration 026.
   const privileged = createAdminClient() ?? supabase
 
-  await privileged.rpc('reset_ai_credits_if_due', { p_user_id: userId })
+  const { error: resetErr } = await privileged.rpc('reset_ai_credits_if_due', { p_user_id: userId })
+  if (resetErr) console.error('[ai-credits] reset_if_due gagal (jatah bulanan mungkin belum ke-reset):', resetErr.message)
 
   // Step 2: atomic consume
   const { data: charged, error } = await privileged.rpc('consume_ai_credits', {

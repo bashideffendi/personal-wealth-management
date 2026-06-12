@@ -9,6 +9,7 @@ import {
   Loader2,
   Lightbulb,
   AlertTriangle,
+  ChevronDown,
   ChevronRight,
   Flag,
 } from 'lucide-react'
@@ -29,7 +30,9 @@ interface PlanResult {
 }
 
 function formatRp(n: number): string {
-  return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID')
+  // Output AI yang lolos shape-guard server tapi anomali → '—', bukan "Rp 0" palsu.
+  if (!Number.isFinite(n)) return '—'
+  return 'Rp ' + Math.round(n).toLocaleString('id-ID')
 }
 
 export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
@@ -45,6 +48,12 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
   })
   const [loadingPlan, setLoadingPlan] = useState(false)
   const [plan, setPlan] = useState<PlanResult | null>(null)
+  // Saat fokus, tampilkan digit mentah (tanpa reformat ribuan) biar caret
+  // gak lompat ke akhir tiap ketikan di tengah nilai.
+  const [focusKey, setFocusKey] = useState<string | null>(null)
+  // Teks pakai varian -ink (AA); accent full-sat cuma buat ikon & tint.
+  const accentInk = playbook.accent.replace(/\)$/, '-ink)')
+  const hasNumberInput = playbook.inputs.some((f) => f.type === 'number' && values[f.key] !== '' && values[f.key] != null)
 
   // Prefill angka dari data user — best-effort (saldo likuid + arus kas bulan ini).
   useEffect(() => {
@@ -66,26 +75,41 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           .filter((a) => ['cash', 'bank', 'digital_wallet'].includes(a.type))
           .reduce((s, a) => s + Number(a.current_balance || 0), 0)
 
+        // Rata-rata 3 bulan PENUH terakhir — bulan berjalan masih parsial
+        // (tanggal 12 angkanya baru ~40%) dan bakal sistematis ngecilin
+        // target dana darurat / penilaian kemampuan cicilan.
+        // Kategori 'Transfer' (pindah antar-akun, 2 leg expense+income)
+        // WAJIB di-exclude — konvensi yang sama dengan dashboard.
         const now = new Date()
-        const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+        const monthFirst = (offset: number) => {
+          const d = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+        }
         const { data: txsRaw } = await supabase
           .from('transactions')
-          .select('type, amount')
+          .select('type, amount, category, date')
           .eq('user_id', user.id)
-          .gte('date', first)
-        const txs = (txsRaw ?? []) as unknown as { type: string; amount: number }[]
+          .gte('date', monthFirst(-3))
+          .lt('date', monthFirst(0))
+        const txs = (txsRaw ?? []) as unknown as { type: string; amount: number; category: string | null; date: string }[]
         let inc = 0
         let exp = 0
+        const monthsSeen = new Set<string>()
         for (const t of txs) {
+          if (t.category === 'Transfer') continue
           const amt = Number(t.amount || 0)
           if (t.type === 'income') inc += amt
           else if (t.type === 'expense') exp += amt
+          else continue
+          monthsSeen.add(String(t.date).slice(0, 7))
         }
+        // Bagi pakai bulan yang BENERAN ada datanya (user baru < 3 bulan).
+        const months = Math.max(1, Math.min(3, monthsSeen.size))
 
         const prefill: Record<string, number> = {
           liquidSavings: liquid,
-          monthlyIncome: inc,
-          monthlyExpense: exp,
+          monthlyIncome: Math.round(inc / months),
+          monthlyExpense: Math.round(exp / months),
         }
         if (!alive) return
         setValues((prev) => {
@@ -124,13 +148,16 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
         if (raw === '' || raw == null) continue
         inputs[f.key] = f.type === 'number' ? Number(raw) : raw
       }
+      // Tanggal LOKAL — toISOString itu UTC, mundur sehari buat WIB sebelum 07.00.
+      const d = new Date()
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       const res = await fetch('/api/playbook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug: playbook.slug,
           inputs,
-          today: new Date().toISOString().slice(0, 10),
+          today,
         }),
       })
       const json = await res.json()
@@ -139,6 +166,8 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
         return
       }
       setPlan(json.data as PlanResult)
+      // Generate makan 8 kredit — badge kredit di header ikut refresh.
+      window.dispatchEvent(new CustomEvent('pwm:ai-credits-changed'))
       toast.success(t('playbook_detail.toast_ready'))
     } catch {
       toast.error(t('playbook_detail.toast_connect_failed'))
@@ -167,7 +196,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           <Icon className="size-6" />
         </div>
         <div>
-          <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
+          <h1 className="t-h1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
             {playbook.title}
           </h1>
           <p className="t-body mt-1.5 max-w-2xl" style={{ color: 'var(--ink-soft)' }}>
@@ -189,7 +218,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
                   className="size-6 rounded-full flex items-center justify-center shrink-0 num font-semibold"
                   style={{
                     background: `color-mix(in oklab, ${playbook.accent} 14%, transparent)`,
-                    color: playbook.accent,
+                    color: accentInk,
                     fontSize: 12,
                   }}
                 >
@@ -220,26 +249,30 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           <div className="space-y-3">
             {playbook.inputs.map((f) => (
               <div key={f.key}>
-                <label className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
+                <label htmlFor={`pb-${f.key}`} className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
                   {f.label}
                 </label>
                 {f.type === 'select' ? (
-                  <select
-                    value={values[f.key]}
-                    onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                    className="w-full rounded-xl px-3.5 py-2.5 t-body outline-none transition appearance-none"
-                    style={{ background: 'var(--surface)', border: '1.5px solid var(--line)', color: 'var(--ink)' }}
-                  >
-                    {f.options?.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id={`pb-${f.key}`}
+                      value={values[f.key]}
+                      onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                      className="w-full rounded-xl pl-3.5 pr-9 py-2.5 t-body transition appearance-none"
+                      style={{ background: 'var(--surface)', border: '1.5px solid var(--line)', color: 'var(--ink)' }}
+                    >
+                      {f.options?.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="size-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
+                  </div>
                 ) : (
                   <div
-                    className="flex items-center rounded-xl px-3.5 py-2.5"
-                    style={{ background: 'var(--surface)', border: '1.5px solid var(--line)' }}
+                    className="flex items-center rounded-xl px-3.5 py-2.5 border-[1.5px] border-[var(--line)] transition focus-within:border-[var(--ink)]"
+                    style={{ background: 'var(--surface)' }}
                   >
                     {f.prefix && (
                       <span className="t-body mr-1.5 shrink-0" style={{ color: 'var(--text-mute)' }}>
@@ -247,13 +280,16 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
                       </span>
                     )}
                     <input
+                      id={`pb-${f.key}`}
                       type="text"
-                      inputMode="numeric"
+                      inputMode={f.decimal ? 'decimal' : 'numeric'}
                       value={
-                        f.prefix === 'Rp' && values[f.key]
+                        f.prefix === 'Rp' && values[f.key] && focusKey !== f.key
                           ? Number(values[f.key]).toLocaleString('id-ID')
                           : values[f.key]
                       }
+                      onFocus={() => setFocusKey(f.key)}
+                      onBlur={() => setFocusKey(null)}
                       onChange={(e) => setNumber(f.key, e.target.value, f.decimal)}
                       placeholder={f.placeholder}
                       className="flex-1 min-w-0 bg-transparent outline-none num t-body"
@@ -268,7 +304,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           <button
             type="button"
             onClick={generate}
-            disabled={loadingPlan}
+            disabled={loadingPlan || !hasNumberInput}
             className="btn-primary w-full mt-5 inline-flex items-center justify-center gap-2"
           >
             {loadingPlan ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
@@ -286,7 +322,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
 
       {/* Hasil rencana */}
       {plan && (
-        <section className="s-card p-5 sm:p-6" style={{ borderColor: playbook.accent }}>
+        <section className="s-card p-5 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="size-4" style={{ color: playbook.accent }} />
             <h2 className="t-title font-semibold" style={{ color: 'var(--ink)' }}>
@@ -300,9 +336,9 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
 
           {/* Stat tiles */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-            <Stat label={t('playbook_detail.stat_target_total')} value={formatRp(plan.targetTotal)} accent={playbook.accent} />
-            <Stat label={t('playbook_detail.stat_monthly')} value={formatRp(plan.setoranBulanan)} accent={playbook.accent} />
-            <Stat label={t('playbook_detail.stat_estimate')} value={plan.estimasiSelesai} accent={playbook.accent} isText />
+            <Stat label={t('playbook_detail.stat_target_total')} value={formatRp(plan.targetTotal)} accent={accentInk} />
+            <Stat label={t('playbook_detail.stat_monthly')} value={formatRp(plan.setoranBulanan)} accent={accentInk} />
+            <Stat label={t('playbook_detail.stat_estimate')} value={plan.estimasiSelesai} accent={accentInk} isText />
           </div>
 
           {/* Milestones */}

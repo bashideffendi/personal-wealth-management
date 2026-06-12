@@ -76,24 +76,31 @@ export interface HouseholdInvitation {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = SupabaseClient<any, any, any>
 
-/** Returns the household record the current user belongs to, or null. */
+/** Returns the household record the current user belongs to, or null.
+ *  Satu query embed (FK household_members.household_id → households ada,
+ *  diverifikasi resolve di prod) — hemat 1 RTT di kepala waterfall halaman. */
 export async function fetchActiveHousehold(supabase: DB, userId: string): Promise<Household | null> {
-  const memberRes = await supabase
+  const res = await supabase
     .from('household_members')
-    .select('household_id')
+    .select('household_id, households(*)')
     .eq('user_id', userId)
     .maybeSingle()
-  if (memberRes.error) throw memberRes.error
-  if (!memberRes.data) return null
+  if (res.error) throw res.error
+  return ((res.data as { households: Household | null } | null)?.households ?? null)
+}
 
-  const hhRes = await supabase
-    .from('households')
-    .select('*')
-    .eq('id', (memberRes.data as { household_id: string }).household_id)
-    .maybeSingle()
-
-  if (hhRes.error) throw hhRes.error
-  return (hhRes.data ?? null) as Household | null
+/** Nama anggota household via RPC 049 (kolom terbatas, sesama anggota saja).
+ *  PENTING: jangan embed `profiles!inner` dari household_members/activities —
+ *  gak ada FK ke profiles (user_id → auth.users) = PGRST200 fatal di prod.
+ *  Best-effort: RPC belum di-run → balikin map kosong, UI fallback "Anggota". */
+export async function fetchHouseholdDirectory(supabase: DB, householdId: string): Promise<Map<string, string | null>> {
+  const { data, error } = await supabase.rpc('get_household_directory', { hh_id: householdId })
+  if (error) {
+    console.error('[household] directory RPC gagal (migration 049 belum jalan?):', error.message)
+    return new Map()
+  }
+  const rows = (data ?? []) as { user_id: string; full_name: string | null }[]
+  return new Map(rows.map((r) => [r.user_id, r.full_name]))
 }
 
 /** Generates a URL-safe random token for invitations. */
@@ -127,23 +134,17 @@ export async function fetchHouseholdGoals(supabase: DB, householdId: string): Pr
   return (res.data ?? []) as HouseholdGoal[]
 }
 
-/** Recent household activity feed (joined with profiles for actor name). */
+/** Recent household activity feed. Nama aktor di-merge caller dari
+ *  fetchHouseholdDirectory — TANPA embed profiles (lihat catatan di atas). */
 export async function fetchHouseholdActivities(supabase: DB, householdId: string, limit = 12): Promise<HouseholdActivity[]> {
   const res = await supabase
     .from('household_activities')
-    .select('id, household_id, user_id, action, description, created_at, profiles!inner(full_name)')
+    .select('id, household_id, user_id, action, description, created_at')
     .eq('household_id', householdId)
     .order('created_at', { ascending: false })
     .limit(limit)
   if (res.error) throw res.error
-  type Row = {
-    id: string; household_id: string; user_id: string; action: string
-    description: string | null; created_at: string; profiles: { full_name: string | null } | null
-  }
-  return ((res.data ?? []) as unknown as Row[]).map((r) => ({
-    id: r.id, household_id: r.household_id, user_id: r.user_id, action: r.action,
-    description: r.description, created_at: r.created_at, full_name: r.profiles?.full_name ?? null,
-  }))
+  return (res.data ?? []) as HouseholdActivity[]
 }
 
 /** Log a household activity (RLS: only as self, in own household). Best-effort. */

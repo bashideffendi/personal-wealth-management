@@ -8,7 +8,7 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 import {
-  fetchActiveHousehold, generateInviteToken, isOwner,
+  fetchActiveHousehold, fetchHouseholdDirectory, generateInviteToken, isOwner,
   fetchHouseholdGoals, fetchHouseholdActivities, logActivity, getHouseholdNetWorth, setMyNetWorthSharing,
   type Household, type MemberWithProfile, type HouseholdInvitation,
   type HouseholdGoal, type HouseholdActivity, type HouseholdNetWorth,
@@ -93,8 +93,20 @@ export default function FamilyPage() {
   const pageQuery = useQuery({
     queryKey: ['family'],
     staleTime: 60 * 1000,
+    // Error skema (tabel/kolom/relasi absen) deterministik — retry cuma bikin
+    // user natap spinner ±7 detik. Satu retry buat error transien aja, dan
+    // jangan refetch tiap fokus tab (tombol Coba Lagi = jalur recovery).
+    retry: (count, err) => {
+      const code = (err as { code?: string })?.code ?? ''
+      if (code.startsWith('PGRST') || code === '42703' || code === '42P01' || code === '42501') return false
+      return count < 1
+    },
+    refetchOnWindowFocus: false,
     queryFn: async () => {
-      const { data: { user: u } } = await supabase.auth.getUser()
+      // getSession = lokal (tanpa round-trip auth server); middleware sudah
+      // memvalidasi sesi, dan semua data di bawah tetap dijaga RLS.
+      const { data: { session } } = await supabase.auth.getSession()
+      const u = session?.user
       if (!u) throw new Error('unauthenticated')
       const me: MyUser = { id: u.id, email: u.email ?? '' }
       const hh = await fetchActiveHousehold(supabase, u.id)
@@ -104,16 +116,21 @@ export default function FamilyPage() {
           members: [] as MemberWithProfile[], invitations: [] as HouseholdInvitation[],
           goals: [] as HouseholdGoal[], activities: [] as HouseholdActivity[],
           netWorth: null as HouseholdNetWorth | null,
+          partialFailures: [] as string[],
         }
       }
-      // select('*') = resilient: kolom baru (can_edit/relationship/share_net_worth)
-      // dibaca opsional, jadi page tetap jalan sebelum migration 041 di-run.
-      const [membersRes, invitesRes, goalsRes, activitiesRes, nwRes] = await Promise.all([
+      // Members = KRITIS (inti halaman) → gagal = error card. Sisanya
+      // SEKUNDER → best-effort: satu section gagal gak boleh matiin halaman
+      // (dulu Promise.all bikin error feed aktivitas meledakkan semuanya).
+      // select('*') tanpa embed: kolom 041 dibaca opsional, dan JANGAN
+      // pernah embed profiles dari sini (PGRST200 — gak ada FK ke profiles).
+      const [membersRes, dirRes, invitesRes, goalsRes, activitiesRes, nwRes] = await Promise.allSettled([
         supabase
           .from('household_members')
-          .select('*, profiles!inner(full_name)')
+          .select('*')
           .eq('household_id', hh.id)
           .order('joined_at'),
+        fetchHouseholdDirectory(supabase, hh.id),
         supabase
           .from('household_invitations')
           .select('*')
@@ -124,28 +141,40 @@ export default function FamilyPage() {
         fetchHouseholdActivities(supabase, hh.id),
         getHouseholdNetWorth(supabase, hh.id),
       ])
-      if (membersRes.error) throw membersRes.error
-      if (invitesRes.error) throw invitesRes.error
+      if (membersRes.status === 'rejected') throw membersRes.reason
+      if (membersRes.value.error) throw membersRes.value.error
+
+      const directory = dirRes.status === 'fulfilled' ? dirRes.value : new Map<string, string | null>()
+      const partialFailures: string[] = []
+      const invitations = invitesRes.status === 'fulfilled' && !invitesRes.value.error
+        ? ((invitesRes.value.data ?? []) as HouseholdInvitation[])
+        : (partialFailures.push('section_invites'), [] as HouseholdInvitation[])
+      const goals = goalsRes.status === 'fulfilled'
+        ? goalsRes.value
+        : (partialFailures.push('section_goals'), [] as HouseholdGoal[])
+      const activitiesRaw = activitiesRes.status === 'fulfilled'
+        ? activitiesRes.value
+        : (partialFailures.push('section_activities'), [] as HouseholdActivity[])
 
       type RawMember = {
         household_id: string; user_id: string; role: 'owner' | 'member'; joined_at: string
         can_edit?: boolean; relationship?: string | null; share_net_worth?: boolean
-        profiles: { full_name: string | null } | null
       }
-      const raw = (membersRes.data ?? []) as RawMember[]
+      const raw = (membersRes.value.data ?? []) as RawMember[]
       return {
         user: me,
         household: hh,
         members: raw.map((r) => ({
           household_id: r.household_id, user_id: r.user_id, role: r.role, joined_at: r.joined_at,
           can_edit: r.can_edit ?? true, relationship: r.relationship ?? null, share_net_worth: r.share_net_worth ?? false,
-          full_name: r.profiles?.full_name ?? null,
+          full_name: directory.get(r.user_id) ?? null,
           email: r.user_id === u.id ? (u.email ?? null) : null,
         })) as MemberWithProfile[],
-        invitations: (invitesRes.data ?? []) as HouseholdInvitation[],
-        goals: goalsRes,
-        activities: activitiesRes,
-        netWorth: nwRes,
+        invitations,
+        goals,
+        activities: activitiesRaw.map((a) => ({ ...a, full_name: directory.get(a.user_id) ?? null })),
+        netWorth: nwRes.status === 'fulfilled' ? nwRes.value : null,
+        partialFailures,
       }
     },
   })
@@ -157,6 +186,7 @@ export default function FamilyPage() {
   const goals = pageQuery.data?.goals ?? []
   const activities = pageQuery.data?.activities ?? []
   const netWorth = pageQuery.data?.netWorth ?? null
+  const partialFailures = pageQuery.data?.partialFailures ?? []
   const refresh = () => qc.invalidateQueries({ queryKey: ['family'] })
 
   async function createHousehold() {
@@ -418,6 +448,17 @@ export default function FamilyPage() {
           </Button>
         ) : undefined}
       />
+
+      {/* Sebagian section gagal dimuat — halaman tetap jalan, kasih tahu jujur */}
+      {partialFailures.length > 0 && (
+        <div className="rounded-xl px-4 py-3 flex items-center gap-2.5 flex-wrap" style={{ background: 'color-mix(in srgb, var(--c-amber) 10%, transparent)' }}>
+          <AlertCircle className="size-4 shrink-0" style={{ color: 'var(--c-amber-ink)' }} />
+          <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--c-amber-ink)' }}>
+            {t('family.partial_load_prefix')} {partialFailures.map((k) => t(`family.${k}`)).join(', ')}.
+          </p>
+          <Button variant="outline" size="sm" onClick={refresh}>{t('common.retry')}</Button>
+        </div>
+      )}
 
       {/* Hero — Lingkar Keluarga (data REAL) */}
       <section className="s-card overflow-hidden grid sm:grid-cols-[1.6fr_1fr_1fr]" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>

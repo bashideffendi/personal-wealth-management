@@ -110,8 +110,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Playbook tidak dikenal' }, { status: 400 })
   }
 
-  // Jangan charge kredit kalau user belum isi angka apapun.
+  // Jangan charge kredit kalau user belum isi angka apapun. Hitung field
+  // NUMBER saja — select punya nilai default yang selalu ikut kekirim,
+  // jadi kalau dihitung guard ini gak pernah kena (placebo).
   const filledCount = playbook.inputs.filter((f) => {
+    if (f.type !== 'number') return false
     const v = body.inputs?.[f.key]
     return v !== undefined && v !== '' && v !== null
   }).length
@@ -187,6 +190,15 @@ export async function POST(request: NextRequest) {
       await refundAICredits(supabase, user.id, 'playbook')
       return NextResponse.json({ error: 'Claude tidak menghasilkan rencana' }, { status: 502 })
     }
+    const planOut = block.input as { targetTotal?: unknown; setoranBulanan?: unknown; milestones?: unknown }
+    if (
+      !Number.isFinite(Number(planOut.targetTotal)) ||
+      !Number.isFinite(Number(planOut.setoranBulanan)) ||
+      !Array.isArray(planOut.milestones)
+    ) {
+      await refundAICredits(supabase, user.id, 'playbook')
+      return NextResponse.json({ error: 'Rencana yang dihasilkan tidak valid. Kredit dikembalikan — coba lagi.' }, { status: 502 })
+    }
 
     return NextResponse.json({
       data: block.input,
@@ -198,10 +210,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     await refundAICredits(supabase, user.id, 'playbook')
+    // Detail error cuma buat log server — err.message SDK bisa bawa detail
+    // internal (request id dsb.) yang gak ada gunanya di toast user.
+    console.error('[api/playbook]', err)
     if (err instanceof Anthropic.APIError) {
-      return NextResponse.json({ error: `Anthropic API error: ${err.message}` }, { status: 502 })
+      return NextResponse.json({ error: 'Layanan AI lagi bermasalah. Kredit dikembalikan — coba lagi.' }, { status: 502 })
     }
-    const msg = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Terjadi kesalahan. Kredit dikembalikan — coba lagi.' }, { status: 500 })
   }
 }
