@@ -115,9 +115,9 @@ export function NetWorthHero({
     <section
       className="relative overflow-hidden rounded-3xl"
       style={{
-        background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
-        color: '#F5F5F7',
-        boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40), 0 2px 4px rgba(0,0,0,0.06)',
+        background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+        color: 'var(--on-hero)',
+        
       }}
     >
       {/* Emerald ambient glow top-right */}
@@ -139,7 +139,7 @@ export function NetWorthHero({
           {/* Label net worth (greeting "Hi, Nama" pindah ke atas hero) */}
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.72)' }}
+            style={{ color: 'var(--on-hero-mut)' }}
           >
             {t('nw_hero.label_net_worth')}
           </p>
@@ -150,7 +150,7 @@ export function NetWorthHero({
             style={{
               fontSize: 'clamp(30px, 4.2vw, 42px)',
               letterSpacing: '-0.035em',
-              color: '#FFFFFF',
+              color: 'var(--on-hero)',
             }}
           >
             {formatCurrency(netWorth)}
@@ -162,8 +162,8 @@ export function NetWorthHero({
               <span
                 className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
                 style={{
-                  background: monthDelta > 0 ? 'rgba(61,186,138,0.18)' : 'rgba(237,115,133,0.18)',
-                  color: monthDelta > 0 ? '#82DBB1' : '#F4A6AE',
+                  background: monthDelta > 0 ? 'var(--hero-chip-pos-bg)' : 'var(--hero-chip-neg-bg)',
+                  color: monthDelta > 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
@@ -175,12 +175,12 @@ export function NetWorthHero({
             {ytdPct !== 0 && (
               <span
                 className="text-xs font-medium"
-                style={{ color: 'rgba(255,255,255,0.72)' }}
+                style={{ color: 'var(--on-hero-mut)' }}
               >
                 YTD{' '}
                 <strong
                   className="num tabular"
-                  style={{ color: ytdPct >= 0 ? '#82DBB1' : '#F4A6AE' }}
+                  style={{ color: ytdPct >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}
                 >
                   {ytdPct >= 0 ? '+' : ''}
                   {ytdPct.toFixed(1)}%
@@ -193,10 +193,10 @@ export function NetWorthHero({
           {forecastMonths && (
             <p
               className="text-[13px] mt-5 leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.72)' }}
+              style={{ color: 'var(--on-hero-mut)' }}
             >
               {t('nw_hero.forecast_prefix')}{' '}
-              <span className="font-semibold" style={{ color: '#82DBB1' }}>
+              <span className="font-semibold" style={{ color: 'var(--hero-chip-pos-fg)' }}>
                 {t('nw_hero.forecast_target')}
               </span>{' '}
               {t('nw_hero.forecast_in')} {forecastMonths} {t('nw_hero.forecast_months')}.
@@ -211,13 +211,13 @@ export function NetWorthHero({
             <div>
               <p
                 className="text-[11px] font-bold tracking-[0.12em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.62)' }}
+                style={{ color: 'var(--on-hero-mut)' }}
               >
                 {t('nw_hero.total_assets')}
               </p>
               <p
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
-                style={{ fontSize: 16, color: '#FFFFFF' }}
+                style={{ fontSize: 16, color: 'var(--on-hero)' }}
               >
                 {formatCurrency(totalAssets)}
               </p>
@@ -225,7 +225,7 @@ export function NetWorthHero({
             <div>
               <p
                 className="text-[11px] font-bold tracking-[0.12em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.62)' }}
+                style={{ color: 'var(--on-hero-mut)' }}
               >
                 {t('nw_hero.total_debt')}
               </p>
@@ -233,7 +233,7 @@ export function NetWorthHero({
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
                 style={{
                   fontSize: 16,
-                  color: debtTotal > 0 ? '#F4A6AE' : '#FFFFFF',
+                  color: debtTotal > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--on-hero)',
                 }}
               >
                 {debtTotal > 0 ? `−${formatCurrency(debtTotal)}` : formatCurrency(0)}
@@ -247,8 +247,8 @@ export function NetWorthHero({
               href="/dashboard/net-worth"
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
               style={{
-                background: '#FFFFFF',
-                color: '#241F31',
+                background: 'var(--on-hero)',
+                color: 'var(--hero-bg)',
               }}
             >
               {t('nw_hero.cta_detail')}
@@ -259,7 +259,7 @@ export function NetWorthHero({
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition hover:bg-white/10"
               style={{
                 background: 'rgba(255,255,255,0.06)',
-                color: '#F5F5F7',
+                color: 'var(--on-hero)',
                 border: '1px solid rgba(255,255,255,0.10)',
               }}
             >
@@ -274,7 +274,7 @@ export function NetWorthHero({
             <div>
               <p
                 className="text-[11px] font-semibold tracking-[0.14em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.66)' }}
+                style={{ color: 'var(--on-hero-mut)' }}
               >
                 {t('nw_hero.growth')}
               </p>
@@ -283,12 +283,12 @@ export function NetWorthHero({
                   className="num tabular font-semibold mt-1.5"
                   style={{
                     fontSize: 14,
-                    color: sparkline.change >= 0 ? '#82DBB1' : '#F4A6AE',
+                    color: sparkline.change >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)',
                   }}
                 >
                   {sparkline.change >= 0 ? '+' : '−'}
                   {formatCurrency(Math.abs(sparkline.change))}{' '}
-                  <span style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 500 }}>
+                  <span style={{ color: 'var(--on-hero-mut)', fontWeight: 500 }}>
                     ({sparkline.changePct >= 0 ? '+' : ''}
                     {sparkline.changePct.toFixed(1)}%)
                   </span>
@@ -311,7 +311,7 @@ export function NetWorthHero({
                     className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
                     style={{
                       background: active ? 'rgba(255,255,255,0.14)' : 'transparent',
-                      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.72)',
+                      color: active ? 'var(--on-hero)' : 'var(--on-hero-mut)',
                       cursor: 'pointer',
                       border: 0,
                     }}
@@ -334,15 +334,15 @@ export function NetWorthHero({
               >
                 <defs>
                   <linearGradient id="nwspark" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#3DBA8A" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#3DBA8A" stopOpacity="0" />
+                    <stop offset="0%" stopColor="var(--hero-accent)" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="var(--hero-accent)" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 <path d={sparkline.areaPath} fill="url(#nwspark)" />
                 <path
                   d={sparkline.linePath}
                   fill="none"
-                  stroke="#5CCB9F"
+                  stroke="var(--hero-accent-2)"
                   strokeWidth="2.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"
@@ -353,13 +353,13 @@ export function NetWorthHero({
                       cx={sparkline.points[sparkline.points.length - 1].x}
                       cy={sparkline.points[sparkline.points.length - 1].y}
                       r="5"
-                      fill="#5CCB9F"
+                      fill="var(--hero-accent-2)"
                     />
                     <circle
                       cx={sparkline.points[sparkline.points.length - 1].x}
                       cy={sparkline.points[sparkline.points.length - 1].y}
                       r="10"
-                      fill="#5CCB9F"
+                      fill="var(--hero-accent-2)"
                       opacity="0.25"
                     />
                   </>

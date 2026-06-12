@@ -711,7 +711,7 @@ export default function BudgetingPage() {
                 onBlur={() => void addSubInline(kind, node.name)}
                 placeholder={t('budgeting.new_subcategory_placeholder')}
                 className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
-                style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+                style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
               />
             </td>
           </tr>,
@@ -739,7 +739,7 @@ export default function BudgetingPage() {
               onBlur={() => addCategoryInline(kind)}
               placeholder={t('budgeting.new_category_placeholder')}
               className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
-              style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
+              style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
             />
           ) : (
             <button
@@ -897,7 +897,7 @@ export default function BudgetingPage() {
       sectionMonthTotal(leafInvestment, 'investment', m)
     const incomeOf = (m: number) => sectionMonthTotal(leafIncome, 'income', m)
     return (
-      <div className="overflow-hidden rounded-xl border" style={{ background: 'color-mix(in srgb, var(--ink) 4%, var(--surface))', borderColor: 'var(--border)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+      <div className="overflow-hidden rounded-xl border" style={{ background: 'color-mix(in srgb, var(--ink) 4%, var(--surface))', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
         <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '160px' }} />
@@ -980,7 +980,7 @@ export default function BudgetingPage() {
           { label: t('budgeting.total_saving'), value: totalSavingYear, dot: 'var(--c-amber)', Icon: PiggyBank, sub: `${totalIncomeYear > 0 ? Math.round((totalSavingYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
           { label: t('budgeting.total_investment'), value: totalInvestmentYear, dot: 'var(--c-violet)', Icon: TrendingUp, sub: `${totalIncomeYear > 0 ? Math.round((totalInvestmentYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
         ].map((c) => (
-          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+          <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}>
             <div className="flex items-center gap-2.5">
               <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${c.dot} 15%, var(--surface))`, color: c.dot }}>
                 <c.Icon className="size-4" />
@@ -1047,7 +1047,7 @@ export default function BudgetingPage() {
 
         {/* Desktop: title + month-header strip + per-section standalone cards */}
         <div className="hidden md:block space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
             <div className="min-w-0">
               <p className="eyebrow">{viewMode === 'year' ? t('budgeting.grid_eyebrow_year') : t('budgeting.grid_eyebrow_month')}</p>
               {viewMode === 'year' && (
@@ -1136,7 +1136,7 @@ export default function BudgetingPage() {
           <div className="overflow-x-auto pb-2">
             <div className="space-y-3 min-w-[1040px]">
               {/* Month-label header strip */}
-              <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+              <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                 <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '160px' }} />
@@ -1188,7 +1188,7 @@ export default function BudgetingPage() {
 
               {/* Each section = its own standalone rounded card, dipisah krem */}
               {sections.map((sec) => (
-                <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}>
+                <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                   <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
                       <col style={{ width: '160px' }} />

@@ -179,7 +179,7 @@ export default function LiquidAssetsPage() {
     const Icon = m.icon
     const isAccount = e.source === 'account'
     return (
-      <div key={`${e.source}-${e.id}`} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] p-5 transition-all hover:border-[var(--ink)] hover:shadow-lg">
+      <div key={`${e.source}-${e.id}`} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] p-5 transition-all hover:border-[var(--ink)] hover:shadow-lg">
         {e.source === 'asset_liquid' && (
           <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-sm transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
             <Button variant="ghost" size="icon-sm" onClick={() => { setForm({ id: e.id, name: e.name, type: e.type as FormState['type'], balance: e.balance }); setDialogOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -196,7 +196,7 @@ export default function LiquidAssetsPage() {
           </div>
         </div>
         <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</p>
-        <div className="mt-4 pt-3 border-t text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-4 pt-3 border-t text-[11px]" style={{ borderColor: 'var(--outline)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>
             {TIER_META[m.tier].label}
           </span>
@@ -240,7 +240,7 @@ export default function LiquidAssetsPage() {
       ) : (
         <>
           {/* Stat strip — ikut Aset Non-Likuid (ikon + sel kosong di-mute) */}
-          <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+          <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
               <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
@@ -289,7 +289,7 @@ export default function LiquidAssetsPage() {
                   <button key={j} onClick={() => setFilter(j)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === j ? 'var(--ink)' : 'var(--surface-2)', color: filter === j ? 'var(--surface)' : 'var(--ink-muted)' }}>{j}</button>
                 ))}
               </div>
-              <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+              <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
                 <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_liquid.view_card')} aria-label={t('assets_liquid.view_card')}><LayoutGrid className="size-4" /></button>
                 <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_liquid.view_table')} aria-label={t('assets_liquid.view_table')}><List className="size-4" /></button>
               </div>
@@ -298,10 +298,10 @@ export default function LiquidAssetsPage() {
 
           {/* Data — Tabel (datar, sortable) atau Kartu (grouped per jenis) */}
           {view === 'table' ? (
-            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+                  <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                     <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_asset')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_type')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_source')}</th>
@@ -315,7 +315,7 @@ export default function LiquidAssetsPage() {
                     const Icon = m.icon
                     const isAccount = e.source === 'account'
                     return (
-                      <tr key={`${e.source}-${e.id}`} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
+                      <tr key={`${e.source}-${e.id}`} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
                             {isAccount ? <InstitutionLogo accountName={e.name} size={32} shape="circle" /> : <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(m.color, 10) }}><Icon className="size-4" style={{ color: m.color }} /></div>}

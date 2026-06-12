@@ -37,7 +37,7 @@ export function SecurityActivity() {
   }, [])
 
   return (
-    <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+    <section className="s-card s-card-pad space-y-4">
       <div className="flex items-center gap-2">
         <History className="size-4 text-muted-foreground" />
         <div>

@@ -305,7 +305,7 @@ export default function NonLiquidAssetsPage() {
           <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: tint(up ? MINT : CORAL, 10), color: up ? MINT_INK : CORAL_INK }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
           <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
         </div>
-        <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--outline)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
           {hasMap && (
             <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
@@ -316,7 +316,7 @@ export default function NonLiquidAssetsPage() {
       </>
     )
     return (
-      <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] transition-all hover:border-[var(--ink)] hover:shadow-lg">
+      <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] transition-all hover:border-[var(--ink)] hover:shadow-lg">
         {/* Edit/hapus — toolbar ngambang kanan-atas (kebaca di atas peta maupun konten) */}
         <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-sm transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
           <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -401,7 +401,7 @@ export default function NonLiquidAssetsPage() {
       ) : (
         <>
           {/* Strip stat 4-sel (ikut mock) */}
-          <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+          <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.market_value_now')}</p>
               <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
@@ -454,7 +454,7 @@ export default function NonLiquidAssetsPage() {
           {/* Toolbar — judul + toggle Kartu/Tabel */}
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.asset_details')}</p>
-            <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
               <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_nonliquid.card_view')} aria-label={t('assets_nonliquid.card_view')}>
                 <LayoutGrid className="size-4" />
               </button>
@@ -466,10 +466,10 @@ export default function NonLiquidAssetsPage() {
 
           {/* Data — Tabel (datar, sortable) atau Kartu (grouped per kategori) */}
           {view === 'table' ? (
-            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+                  <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                     <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_asset')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_type')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_bought')} {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
@@ -495,7 +495,7 @@ export default function NonLiquidAssetsPage() {
                     const ageYears = a.purchase_date ? (nowMs - new Date(a.purchase_date).getTime()) / (365.25 * 86400000) : 0
                     const statusLabel = cat === 'property' ? t('assets_nonliquid.status_appreciation') : dd?.metode ? METODE_LABEL[dd.metode] : up ? t('assets_nonliquid.status_no_depreciation') : t('assets_nonliquid.status_depreciation')
                     return (
-                      <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
+                      <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.ink }} /></div>
@@ -770,8 +770,8 @@ function StepLabel({ n, text }: { n: number; text: string }) {
 
 function RpField({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
-    <div className="flex items-stretch rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
-      <span className="px-3 flex items-center text-sm font-medium border-r shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>Rp</span>
+    <div className="flex items-stretch rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
+      <span className="px-3 flex items-center text-sm font-medium border-r shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', borderColor: 'var(--outline)' }}>Rp</span>
       <NumberInput value={value} onChange={onChange} placeholder="0" className="flex-1 border-0 rounded-none shadow-none focus-visible:ring-0" />
     </div>
   )

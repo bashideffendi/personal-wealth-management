@@ -442,7 +442,7 @@ export default function GoalsPage() {
               return (
                 <div
                   key={g.id}
-                  className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border border-[var(--border-soft)] hover:border-[var(--ink)] transition-colors"
+                  className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] hover:border-[var(--ink)] transition-colors"
                 >
                   {/* Layout per mockup user: header (nama + meta + CTA kanan) →
                       angka terkumpul SERIF besar "dari target" kecil → bar + %
@@ -503,7 +503,7 @@ export default function GoalsPage() {
                     {/* Angka sebagai perhiasan: terkumpul serif besar, target kecil
                         di baseline yang sama — satu baris, gak boleh patah aneh. */}
                     <p className="mt-5 leading-none truncate">
-                      <span className="num" style={{ fontFamily: 'var(--font-display)', fontSize: '2.1rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+                      <span className="num" style={{ fontSize: '2.1rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
                         {formatCurrency(g.current_amount)}
                       </span>
                       <span className="num text-[12.5px] ml-2" style={{ color: 'var(--ink-soft)' }}>
@@ -523,7 +523,7 @@ export default function GoalsPage() {
 
                   {/* Footer 3 kolom — anchor kiri · tengah · kanan, label dijepit
                       h-4 biar tombol ⓘ gak ngedorong kolomnya turun. */}
-                  <div className="px-5 py-3.5 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
+                  <div className="px-5 py-3.5 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--outline)' }}>
                     <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.monthly_label')}
@@ -582,7 +582,7 @@ export default function GoalsPage() {
               {archivedOpen && (
                 <div className="mt-3">
                   {archivedGoals.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
+                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--outline)' }}>
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
                         <p className="num text-[11px]" style={{ color: 'var(--ink-soft)' }}>

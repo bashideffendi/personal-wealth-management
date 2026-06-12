@@ -88,7 +88,7 @@ export function MobileBudgetingView({
       {/* Month switcher */}
       <div
         className="flex items-center justify-between rounded-xl border px-3 py-2.5"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+        style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
       >
         <button
           type="button"
@@ -124,7 +124,7 @@ export function MobileBudgetingView({
       <div className="grid grid-cols-2 gap-2">
         <div
           className="rounded-lg border p-3"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
             {t('mobile_budget.allocated')}
@@ -135,7 +135,7 @@ export function MobileBudgetingView({
         </div>
         <div
           className="rounded-lg border p-3"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
             {t('mobile_budget.remaining')}
@@ -158,14 +158,14 @@ export function MobileBudgetingView({
           <div
             key={section.key}
             className="rounded-xl border overflow-hidden"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+            style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
           >
             {/* Section header */}
             <div
               className="flex items-center justify-between px-3 py-2 border-b"
               style={{
                 background: `color-mix(in srgb, ${section.tint} 8%, var(--surface))`,
-                borderColor: 'var(--border-soft)',
+                borderColor: 'var(--outline)',
               }}
             >
               <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export function MobileBudgetingView({
             </div>
 
             {/* Categories */}
-            <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="divide-y" style={{ borderColor: 'var(--outline)' }}>
               {cats.map((cat) => {
                 const value = getValue(section.key, cat, month)
                 return (

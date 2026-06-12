@@ -720,7 +720,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
         </div>
         <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months)}</span>
       </div>
-      <p className="mt-3 text-[15px] leading-snug italic" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
+      <p className="mt-3 text-[15px] leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
       <p className="text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
       {savedNote && (
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface)', color: accent }}>

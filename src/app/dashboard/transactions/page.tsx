@@ -920,7 +920,7 @@ export default function TransactionsPage() {
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {stats.map((s) => (
-              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}>
                 <div className="flex items-center gap-2.5">
                   <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
                     <s.Icon className="size-4" />
@@ -954,7 +954,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Search + filters — satu card: search di atas, filter di bawahnya */}
-      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
+      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
         <div className="relative">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
           <Input
@@ -1222,7 +1222,7 @@ export default function TransactionsPage() {
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Positioner side="bottom" align="end" sideOffset={6} className="z-50">
-                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
+                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
                     {allCategoryOptions.map((c) => (
                       <button key={c} type="button" onClick={() => { setBulkCatOpen(false); void bulkSetCategory(c) }} className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}>
                         {c}
@@ -1278,7 +1278,7 @@ export default function TransactionsPage() {
       ) : (
         <>
           {/* Desktop: per-day grouped table, in a card */}
-          <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
+          <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
             {/* Contained scroll so the column header can stick without colliding with
                 the page-level sticky TopNav. */}
             <div className="tx-scroll">
@@ -1370,7 +1370,7 @@ export default function TransactionsPage() {
                               </Popover.Trigger>
                               <Popover.Portal>
                                 <Popover.Positioner side="bottom" align="start" sideOffset={6} className="z-50">
-                                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
+                                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
                                     {optionsForType(tx.type).map((o) => (
                                       <button
                                         key={o.value}
@@ -1722,7 +1722,7 @@ export default function TransactionsPage() {
                       className="rounded-lg border py-2 text-xs font-semibold transition-colors"
                       style={active
                         ? { background: c.bg, color: c.color, borderColor: c.color }
-                        : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--border-soft)' }}
+                        : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--outline)' }}
                     >
                       {t(TYPE_LABEL_KEYS[ty])}
                     </button>
@@ -1881,7 +1881,7 @@ export default function TransactionsPage() {
                 {t('transactions.csv_preview_prefix')} {importRows.length} {t('transactions.csv_preview_suffix')}
               </p>
               <div className="text-xs">
-                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 font-semibold border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}>
+                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 font-semibold border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}>
                   <div className="col-span-1">✓</div>
                   <div className="col-span-2">{t('transactions.col_date')}</div>
                   <div className="col-span-4">{t('transactions.col_description')}</div>
@@ -1890,7 +1890,7 @@ export default function TransactionsPage() {
                   <div className="col-span-1 text-right">{t('transactions.col_amount')}</div>
                 </div>
                 {importRows.map((r, i) => (
-                  <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center" style={{ borderColor: 'var(--border-soft)' }}>
+                  <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center" style={{ borderColor: 'var(--outline)' }}>
                     <div className="col-span-1">
                       <input
                         type="checkbox"

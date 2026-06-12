@@ -430,7 +430,7 @@ function ResearchView({
             <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('research_tabs.investment_thesis')}</p>
             <p
               className="mt-2 pl-4 border-l-2 italic leading-relaxed text-base sm:text-lg"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
             >
               {research.frontmatter.thesis}
             </p>

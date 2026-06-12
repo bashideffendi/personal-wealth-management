@@ -76,9 +76,31 @@
   --text-faint:  #5E5749;    /* faint utk teks dilarang — samain ke floor */
   --border:      #E5DCC6;    /* hairline dalam (divider/tabel) — outline kartu pakai --outline */
   --border-soft: #F0E9D6;    /* hairline halus */
-  /* Outline kartun — bingkai 2px + bayangan offset keras (identitas v7) */
+  /* Outline kartun — bingkai 2px + bayangan offset keras (identitas v7).
+     DIMENSI kartu/tombol juga token sejak sistem multi-skin: tiap skin
+     ngatur ketebalan bingkai, gaya bayangan, dan radius-nya sendiri. */
   --outline:        #1E1B16;
   --outline-shadow: #1E1B16;
+  --outline-w:      2px;
+  --card-radius:    14px;
+  --card-shadow:    3px 3px 0 var(--outline-shadow);
+  --btn-shadow:     2px 2px 0 var(--outline-shadow);
+
+  /* ── Token HERO — panel gelap ikonik (net worth dkk). SELALU gelap di
+     light & dark mode; tiap skin ngatur nuansanya (cartoon=dusk ungu,
+     mono=ink, terminal=hitam amber). JANGAN redefine di .dark. ── */
+  --hero-bg:          #241F31;
+  --hero-mid:         #2C2640;
+  --hero-soft:        #322B45;
+  --on-hero:          #F4EDDC;
+  --on-hero-mut:      #B5ABCC;
+  --hero-line:        rgba(255, 255, 255, 0.10);
+  --hero-chip-pos-bg: rgba(61, 186, 138, 0.18);
+  --hero-chip-pos-fg: #82DBB1;
+  --hero-chip-neg-bg: rgba(237, 115, 133, 0.18);
+  --hero-chip-neg-fg: #F4A6AE;
+  --hero-accent:      #3DBA8A;
+  --hero-accent-2:    #5CCB9F;
 
   /* ── Semantic tokens — palet data bespoke (lightness diharmonisasi) ───
      Empat hue identitas tetap (hijau=naik, rose=turun, brass=waspada,
@@ -273,11 +295,11 @@
   --font-sans:    var(--font-sans-brand), "Instrument Sans",
                   system-ui, -apple-system, sans-serif;
   --font-ui:      var(--font-sans);
-  /* Instrument Sans untuk kerja (body, UI, angka tabular via .num);
-     Instrument Serif italic untuk momen display — judul halaman & judul
-     dialog yang dulu di-author pakai --font-display kini hidup lagi.
-     --font-mono tetap alias sans: angka pakai tnum, bukan monospace. */
-  --font-display: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+  /* Suara display PER-SKIN: cartoon = Baloo 2 (chubby game UI),
+     mono = Instrument Serif italic (quiet luxury), terminal = sans.
+     --font-display = KATA doang (judul, dialog) — angka tetap sans
+     tabular via .num. --font-mono tetap alias sans (tnum, bukan mono). */
+  --font-display: var(--font-baloo), "Baloo 2", var(--font-sans);
   --font-mono:    var(--font-sans);
 
   --radius: 1rem;       /* 16px — editorial card baseline */
@@ -424,6 +446,160 @@
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 36px -16px rgba(0, 0, 0, 0.5);
 }
 
+/* ============================================
+   SISTEM SKIN — html[data-skin] (localStorage 'pwm-skin', picker di
+   Profil). :root = skin default CARTOON. Tiap skin override: surfaces,
+   netral, primary, bahasa kartu (outline-w/card-shadow/radius), font
+   display, hero, selection. Token DATA (mint/coral/amber/violet) shared.
+   ============================================ */
+
+/* Cartoon: heading & tombol primer ikut suara Baloo */
+html[data-skin="cartoon"] h1,
+html[data-skin="cartoon"] h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+html[data-skin="cartoon"] .btn-primary {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+/* ── SKIN MONO — quiet luxury: ink hitam + porselen, tanpa aksen warna ── */
+html[data-skin="mono"] {
+  --paper:       #F4F3EE;
+  --bg:          #F4F3EE;
+  --bg-2:        #EAE8E0;
+  --surface:     #FFFFFF;
+  --surface-2:   #EFEDE6;
+  --surface-3:   #E3E0D6;
+  --ink:         #131110;
+  --ink-muted:   #46413A;
+  --ink-soft:    #5B544B;
+  --text:        #131110;
+  --text-2:      #46413A;
+  --text-mute:   #5B544B;
+  --text-faint:  #5B544B;
+  --border:      #E0DCD2;
+  --border-soft: #ECE9E1;
+  --outline:        var(--border);
+  --outline-shadow: transparent;
+  --outline-w:      1px;
+  --card-radius:    16px;
+  --card-shadow:    0 1px 0 rgba(28, 25, 23, 0.04);
+  --btn-shadow:     none;
+  --c-primary:      #131110;
+  --c-primary-soft: #ECEAE3;
+  --c-primary-foreground: #FFFFFF;
+  --c-primary-ink:  #131110;
+  --c-ink:          #131110;
+  --black:       #0A0A0F;
+  --black-soft:  #14141A;
+  --black-2:     #1C1C24;
+  --on-black:    #F5F5F7;
+  --on-black-mut:#A1A1AA;
+  --hero-bg:     #0A0A0F;
+  --hero-mid:    #14141A;
+  --hero-soft:   #1C1C24;
+  --on-hero:     #F5F5F7;
+  --on-hero-mut: rgba(255, 255, 255, 0.62);
+  --font-display: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+}
+html[data-skin="mono"] ::selection { background: #E5E2DA; color: #131110; }
+html[data-skin="mono"].dark {
+  --paper:       #0E0C0A;
+  --bg:          #0E0C0A;
+  --bg-2:        #1E1A16;
+  --surface:     #1E1A16;
+  --surface-2:   #282320;
+  --surface-3:   #332D27;
+  --ink:         #F4F2ED;
+  --ink-muted:   #D6D2CA;
+  --ink-soft:    #A6A097;
+  --text:        #F4F2ED;
+  --text-2:      #D6D2CA;
+  --text-mute:   #A6A097;
+  --text-faint:  #A6A097;
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --outline:        rgba(255, 255, 255, 0.12);
+  --outline-shadow: transparent;
+  --c-primary:      #F4F2ED;
+  --c-primary-soft: rgba(255, 255, 255, 0.08);
+  --c-primary-foreground: #0E0C0A;
+  --c-primary-ink:  #F4F2ED;
+  --c-ink:          #F4F2ED;
+  --black:       #F4F2ED;
+  --black-soft:  #E8E4DC;
+  --black-2:     #D6D2CA;
+  --on-black:    #14110D;
+  --on-black-mut:#57534E;
+}
+html[data-skin="mono"].dark ::selection { background: #44403A; color: #F4F2ED; }
+
+/* ── SKIN TERMINAL — Bloomberg modern: dark-only, amber, padat ──
+   (init script memaksa class .dark saat skin terminal — token di sini
+   menang dari .dark karena specificity attribute+type.) */
+html[data-skin="terminal"] {
+  --paper:       #0E0F12;
+  --bg:          #0E0F12;
+  --bg-2:        #16181D;
+  --surface:     #16181D;
+  --surface-2:   #1D2026;
+  --surface-3:   #262A31;
+  --line:        rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.17);
+  --ink:         #F2F2F0;
+  --ink-muted:   #C9CBCE;
+  --ink-soft:    #969AA3;
+  --text:        #F2F2F0;
+  --text-2:      #C9CBCE;
+  --text-mute:   #969AA3;
+  --text-faint:  #969AA3;
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --outline:        rgba(255, 255, 255, 0.12);
+  --outline-shadow: transparent;
+  --outline-w:      1px;
+  --card-radius:    10px;
+  --card-shadow:    none;
+  --btn-shadow:     none;
+  --c-primary:      #F7A600;
+  --c-primary-soft: rgba(247, 166, 0, 0.14);
+  --c-primary-foreground: #1A1100;
+  --c-primary-ink:  #F7A600;
+  --c-ink:          #F2F2F0;
+  --black:       #0A0A0A;
+  --black-soft:  #111214;
+  --black-2:     #16181D;
+  --on-black:    #F2F2F0;
+  --on-black-mut:#969AA3;
+  --hero-bg:     #0A0A0A;
+  --hero-mid:    #101114;
+  --hero-soft:   #16181D;
+  --on-hero:     #F2F2F0;
+  --on-hero-mut: #969AA3;
+  --hero-chip-pos-bg: rgba(74, 222, 150, 0.15);
+  --hero-chip-pos-fg: #4ADE96;
+  --hero-chip-neg-bg: rgba(248, 112, 131, 0.15);
+  --hero-chip-neg-fg: #F87083;
+  --hero-accent:      #F7A600;
+  --hero-accent-2:    #FFC55E;
+  --font-display: var(--font-sans);
+  --c-mint:         #3DBA8A;
+  --c-mint-soft:    rgba(61, 186, 138, 0.13);
+  --c-coral:        #ED7385;
+  --c-coral-soft:   rgba(237, 115, 133, 0.13);
+  --c-amber:        #E3A93C;
+  --c-amber-soft:   rgba(227, 169, 60, 0.13);
+  --c-violet:       #A78FE8;
+  --c-violet-soft:  rgba(167, 143, 232, 0.14);
+  --c-mint-ink:     #82DBB1;
+  --c-coral-ink:    #F4A6AE;
+  --c-amber-ink:    #EFCB7E;
+  --c-violet-ink:   #C9BAF4;
+}
+html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
+
 @layer base {
   * {
     @apply border-border outline-ring/40;
@@ -539,13 +715,25 @@
    Wise/Mercury/Linear-inspired clean cards + stat tiles. */
 
 /* Card — Wise-style pure white with soft shadow + line border */
-/* Kartu kartun v7: outline tinta 2px + bayangan offset keras —
-   bahasa visual inti Cartoon Quest (hairline dalam tetap --border). */
+/* Surface popup (modal/sheet/dropdown) ikut bahasa kartu skin —
+   di-skin via data-slot biar gak perlu nyentuh komponen shadcn. */
+[data-slot="dialog-content"],
+[data-slot="sheet-content"],
+[data-slot="select-content"],
+[data-slot="popover-content"] {
+  border: var(--outline-w) solid var(--outline);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+/* Kartu standar — dimensinya token, tiap skin punya bahasanya:
+   cartoon = outline 2px + bayangan offset; mono = hairline + shadow
+   lembut; terminal = hairline datar. */
 .s-card {
   background-color: var(--surface);
-  border: 2px solid var(--outline);
-  border-radius: 14px;
-  box-shadow: 3px 3px 0 var(--outline-shadow);
+  border: var(--outline-w) solid var(--outline);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 }
 .s-card-pad     { padding: 20px; }
 .s-card-pad-lg  { padding: 24px; }
@@ -553,20 +741,21 @@
 
 .dark .s-card {
   border-color: var(--outline);
-  box-shadow: 3px 3px 0 var(--outline-shadow);
+  box-shadow: var(--card-shadow);
 }
 
 /* Wise-style stat tile — used in KPI rows + dashboard stats */
+/* Stat tile = saudara kandung .s-card (ikut bahasa skin via token). */
 .stat-tile {
   background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: var(--outline-w) solid var(--outline);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
   padding: 18px 20px;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: transform 120ms, box-shadow 120ms;
 }
 .stat-tile:hover {
-  border-color: var(--line-strong);
-  box-shadow: 0 4px 12px -4px rgba(43, 37, 27, 0.10);
+  transform: translate(-1px, -1px);
 }
 
 /* Delta chip — small inline ±% indicator */
@@ -622,11 +811,12 @@
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
 }
 .btn-primary {
-  border: 2px solid var(--outline);
-  box-shadow: 2px 2px 0 var(--outline-shadow);
+  border: var(--outline-w) solid var(--outline);
+  box-shadow: var(--btn-shadow);
 }
 .btn-primary:hover { opacity: 0.95; }
-/* Efek "dipencet": tombol turun ke bayangannya — micro-fun v7 */
+/* Efek "dipencet": tombol turun ke bayangannya — micro-fun cartoon
+   (skin lain --btn-shadow: none → efeknya otomatis jadi scale halus). */
 .btn-primary:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--outline-shadow); }
 
 /* Transaction table row hover — a distinct faint mint, NOT the warm cream

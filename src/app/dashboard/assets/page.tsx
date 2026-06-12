@@ -126,9 +126,9 @@ export default function AssetsOverviewPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+          color: 'var(--on-hero)',
+          
         }}
       >
         <div
@@ -142,14 +142,14 @@ export default function AssetsOverviewPage() {
         <div className="relative p-6 sm:p-8">
         <p
           className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.55)' }}
+          style={{ color: 'var(--on-hero-mut)' }}
         >
           {t('assets.total_recorded_wealth')}
         </p>
         <p
           className="num tabular font-bold mt-4 leading-none whitespace-nowrap"
           style={{
-            color: '#FFFFFF',
+            color: 'var(--on-hero)',
             fontSize: 'clamp(40px, 6vw, 64px)',
             letterSpacing: '-0.04em',
           }}
@@ -169,17 +169,17 @@ export default function AssetsOverviewPage() {
                   border: '1px solid rgba(255,255,255,0.10)',
                 }}
               >
-                <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>{b.label}</p>
-                <p className="num tabular mt-2 font-bold" style={{ fontSize: 20, color: '#FFFFFF' }}>
+                <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{b.label}</p>
+                <p className="num tabular mt-2 font-bold" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
                   {formatCurrency(b.value)}
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
                   </div>
-                  <span className="text-[11px] num font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>{pct.toFixed(0)}%</span>
+                  <span className="text-[11px] num font-semibold" style={{ color: 'var(--on-hero-mut)' }}>{pct.toFixed(0)}%</span>
                 </div>
-                <div className="mt-2 flex items-center gap-0.5 text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <div className="mt-2 flex items-center gap-0.5 text-[11px]" style={{ color: 'var(--on-hero-mut)' }}>
                   {t('assets.view_detail')}
                 </div>
               </Link>

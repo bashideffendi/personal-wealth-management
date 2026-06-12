@@ -63,7 +63,7 @@ export default function CalculatorsPage() {
       {/* Calculator gallery */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {CALCS.filter((c) => c.key !== selected).map((c) => (
-          <button key={c.key} type="button" onClick={() => pick(c.key)} className="s-card p-5 text-left transition hover:border-[var(--ink)]" style={{ borderColor: 'var(--border-soft)' }}>
+          <button key={c.key} type="button" onClick={() => pick(c.key)} className="s-card p-5 text-left transition hover:border-[var(--ink)]" >
             <div className="size-10 rounded-xl grid place-items-center" style={{ background: tint(c.color, 10) }}><c.icon className="size-5" style={{ color: c.ink }} /></div>
             <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
             <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t(`calculators.${c.descKey}`)}</p>
@@ -113,13 +113,13 @@ function KprFeatured() {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border-soft)' }}>
+    <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" >
       {/* Input (kiri, tinted) */}
       <div className="p-6 sm:p-7" style={{ background: 'var(--surface-2)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
           <span className="size-7 rounded-lg grid place-items-center" style={{ background: tint(VIOLET, 10) }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
-        <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--ink)' }}>{t('calculators.kpr_featured_title')}</p>
+        <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('calculators.kpr_featured_title')}</p>
         <div className="mt-5 space-y-5">
           <div className="grid gap-1.5">
             <Label>{t('calculators.kpr_property_price')}</Label>
@@ -432,7 +432,7 @@ function FireCalculator() {
           <ResultRow label={`${t('calculators.fire_fv_savings')} (${result.yearsToRetire} ${t('calculators.years_left')})`} v={result.fvCurrent} />
           <ResultRow label={t('calculators.shortfall')} v={result.needed} accent="var(--danger)" />
         </div>
-        <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-4 pt-4 border-t" >
           <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint-ink)" />
           <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
             {t('calculators.fire_summary_prefix')} <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>{t('calculators.fire_summary_mid')} {result.yearsToRetire} {t('calculators.fire_summary_years_at')} {annualReturn}{t('calculators.fire_summary_return_suffix')} {retireAge}.
@@ -504,7 +504,7 @@ function KidsEducationCalculator() {
           <ResultRow label={t('calculators.edu_fv_savings')} v={result.fvCurrent} />
           <ResultRow label={t('calculators.shortfall')} v={result.needed} accent="var(--danger)" />
         </div>
-        <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-4 pt-4 border-t" >
           <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint-ink)" />
         </div>
       </div>
@@ -570,7 +570,7 @@ function DCASimulator() {
           <ResultRow label={t('calculators.dca_capital_gain')} v={result.gain} accent="var(--c-mint-ink)" />
         </div>
         {result.data.length > 0 && (
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+          <div className="mt-4 pt-4 border-t" >
             <p className="eyebrow mb-2">{t('calculators.dca_projection_per_year')}</p>
             <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
               {result.data.map((d) => (
@@ -625,7 +625,7 @@ function ZakatCalculator() {
           <Row label={t('calculators.zakat_gold_value')} v={goldValue} onChange={setGoldValue} />
           <Row label={t('calculators.zakat_debts')} v={debts} onChange={setDebts} />
         </div>
-        <div className="mt-5 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-5 pt-4 border-t space-y-2" >
           <ResultRow label={t('calculators.zakat_nisab')} v={nisabGold} />
           <ResultRow label={t('calculators.zakat_net_assets')} v={netAssets} />
           <ResultRow
@@ -650,7 +650,7 @@ function ZakatCalculator() {
         <div className="mt-4 space-y-3">
           <Row label={t('calculators.zakat_net_income')} v={monthlyIncome} onChange={setMonthlyIncome} />
         </div>
-        <div className="mt-5 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-5 pt-4 border-t space-y-2" >
           <ResultRow label={t('calculators.zakat_yearly_income')} v={yearlyIncome} />
           <ResultRow
             label={t('calculators.zakat_profesi_result')}
@@ -754,7 +754,7 @@ function TaxCalculator() {
           <ResultRow label="PTKP" v={PTKP[status]} />
           <ResultRow label={t('calculators.tax_pkp')} v={result.pkp} />
         </div>
-        <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-4 pt-4 border-t" >
           {result.breakdown.length > 0 && (
             <>
               <p className="eyebrow mb-2">{t('calculators.tax_breakdown')}</p>
@@ -769,7 +769,7 @@ function TaxCalculator() {
             </>
           )}
         </div>
-        <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="mt-4 pt-4 border-t space-y-2" >
           <ResultRow label={t('calculators.tax_yearly')} v={result.tax} accent="var(--danger)" big />
           <ResultRow label={t('calculators.tax_monthly')} v={result.monthlyTax} accent="var(--ink)" />
           <ResultRow label={t('calculators.tax_take_home')} v={result.takeHome} accent="var(--c-mint-ink)" />

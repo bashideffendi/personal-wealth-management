@@ -24,10 +24,11 @@ import {
 import {
   User, Bell, Database, Shield, Sparkles,
   Loader2, Crown, AlertTriangle, ExternalLink, LogOut,
-  Lock, Mail, Trash2, Download, Moon, LockKeyhole,
+  Lock, Mail, Trash2, Download, Moon, Palette, LockKeyhole,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { SkinPicker } from '@/components/theme/skin-picker'
 import { useLock } from '@/components/security/lock-provider'
 import { MfaSetup } from '@/components/security/mfa-setup'
 import { SecurityActivity } from '@/components/security/security-activity'
@@ -354,9 +355,9 @@ export default function ProfilePage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+          color: 'var(--on-hero)',
+          
         }}
       >
         <div
@@ -373,7 +374,7 @@ export default function ProfilePage() {
         <div className="relative p-6 sm:p-7">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.55)' }}
+            style={{ color: 'var(--on-hero-mut)' }}
           >
             {t('profile.eyebrow')}
           </p>
@@ -399,21 +400,21 @@ export default function ProfilePage() {
                   className="font-bold"
                   style={{
                     fontSize: 'clamp(28px, 4vw, 40px)',
-                    color: '#FFFFFF',
+                    color: 'var(--on-hero)',
                     letterSpacing: '-0.035em',
                   }}
                 >
                   {profile.full_name?.trim() || t('profile.default_name')}
                 </h1>
-                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--on-hero-mut)' }}>
                   {user.email}
                 </p>
                 <div className="mt-2.5 flex items-center gap-2 flex-wrap">
                   <span
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
                     style={{
-                      background: subscription?.plan_id === 'full' ? 'rgba(61,186,138,0.20)' : 'rgba(255,255,255,0.10)',
-                      color: subscription?.plan_id === 'full' ? '#82DBB1' : 'rgba(255,255,255,0.85)',
+                      background: subscription?.plan_id === 'full' ? 'var(--hero-chip-pos-bg)' : 'rgba(255,255,255,0.10)',
+                      color: subscription?.plan_id === 'full' ? 'var(--hero-chip-pos-fg)' : 'var(--on-hero)',
                     }}
                   >
                     {subscription?.plan_id === 'full' && <Crown className="size-3" />}
@@ -421,7 +422,7 @@ export default function ProfilePage() {
                     {t('profile.plan_prefix')} {planLabel}
                     {subscription?.status === 'trialing' && ` (${t('profile.plan_trial')})`}
                   </span>
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <span className="text-xs" style={{ color: 'var(--on-hero-mut)' }}>
                     {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''}
                   </span>
                 </div>
@@ -440,7 +441,7 @@ export default function ProfilePage() {
               {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? t('profile.cta_upgrade') : t('profile.cta_manage_sub')}
             </Link>
           </div>
-          <p className="text-xs mt-3" style={{ color: 'rgba(255,255,255,0.45)' }}>{today}</p>
+          <p className="text-xs mt-3" style={{ color: 'var(--on-hero-mut)' }}>{today}</p>
         </div>
       </section>
 
@@ -465,7 +466,7 @@ export default function ProfilePage() {
           <Link
             href="/dashboard/pricing"
             className="self-end inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition hover:opacity-90"
-            style={{ background: 'var(--c-amber-ink)', color: '#FFFFFF' }}
+            style={{ background: 'var(--c-amber-ink)', color: 'var(--on-hero)' }}
           >
             <Sparkles className="size-3.5" />
             {t('profile.ai_credits_topup')}
@@ -484,7 +485,7 @@ export default function ProfilePage() {
 
         {/* PREFERENSI */}
         <TabsContent value="preferensi" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <h3 className="font-semibold">{t('profile.identity_title')}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
@@ -503,7 +504,7 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <h3 className="font-semibold">{t('profile.appearance_title')}</h3>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-1.5">
@@ -559,6 +560,13 @@ export default function ProfilePage() {
                 {t('profile.theme_mode_hint')}
               </p>
             </div>
+            <div>
+              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />{t('profile.skin_label')}</Label>
+              <SkinPicker />
+              <p className="text-xs text-muted-foreground mt-2">
+                {t('profile.skin_hint')}
+              </p>
+            </div>
           </section>
 
           <div className="flex justify-end">
@@ -571,7 +579,7 @@ export default function ProfilePage() {
 
         {/* KEAMANAN */}
         <TabsContent value="keamanan" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <div className="flex items-center gap-2">
               <Lock className="size-4 text-muted-foreground" />
               <h3 className="font-semibold">{t('profile.change_password_title')}</h3>
@@ -590,7 +598,7 @@ export default function ProfilePage() {
 
           <SecurityActivity />
 
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <div className="flex items-center gap-2">
               <Mail className="size-4 text-muted-foreground" />
               <h3 className="font-semibold">{t('profile.email_section_title')}</h3>
@@ -603,7 +611,7 @@ export default function ProfilePage() {
             </p>
           </section>
 
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div className="flex items-start gap-2">
                 <Shield className="size-4 mt-0.5 text-muted-foreground" />
@@ -664,7 +672,7 @@ export default function ProfilePage() {
 
           {/* Biometric — only shown when PIN aktif & device support */}
           {lock.hasPin && lock.biometricSupported && (
-            <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+            <section className="s-card s-card-pad space-y-4">
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div className="flex items-start gap-2">
                   <Shield className="size-4 mt-0.5 text-muted-foreground" />
@@ -694,7 +702,7 @@ export default function ProfilePage() {
 
         {/* NOTIFIKASI */}
         <TabsContent value="notifikasi" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div className="flex items-start gap-2">
                 <Bell className="size-4 mt-0.5 text-muted-foreground" />
@@ -735,7 +743,7 @@ export default function ProfilePage() {
 
         {/* DATA */}
         <TabsContent value="data" className="space-y-6 mt-6">
-          <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+          <section className="s-card s-card-pad space-y-4">
             <div className="flex items-start gap-2">
               <Download className="size-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">

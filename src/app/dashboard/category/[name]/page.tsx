@@ -97,9 +97,9 @@ export default function CategoryDrilldownPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+          color: 'var(--on-hero)',
+          
         }}
       >
         <div
@@ -113,7 +113,7 @@ export default function CategoryDrilldownPage() {
         <div className="relative p-6 sm:p-7">
         <p
           className="text-[11px] font-semibold tracking-[0.18em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.55)' }}
+          style={{ color: 'var(--on-hero-mut)' }}
         >
           {t('category_detail.eyebrow_drilldown')}
         </p>
@@ -121,7 +121,7 @@ export default function CategoryDrilldownPage() {
           className="font-bold tracking-tight mt-2"
           style={{
             fontSize: 'clamp(28px, 4vw, 40px)',
-            color: '#FFFFFF',
+            color: 'var(--on-hero)',
             letterSpacing: '-0.035em',
           }}
         >
@@ -129,26 +129,26 @@ export default function CategoryDrilldownPage() {
         </h1>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_total')}</p>
-            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_total')}</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.total)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_ytd')}</p>
-            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_ytd')}</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.thisYear)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_this_month')}</p>
-            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_this_month')}</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.thisMonth)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('category_detail.stat_avg_per_tx')}</p>
-            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: '#FFFFFF' }}>
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_avg_per_tx')}</p>
+            <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.avg)}
             </p>
           </div>

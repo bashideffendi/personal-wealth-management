@@ -53,7 +53,7 @@ export function WealthHero({
   accent?: string
 }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl p-6 sm:p-7 bg-[var(--surface)] border border-[var(--border-soft)]">
+    <section className="relative overflow-hidden rounded-2xl p-6 sm:p-7 bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)]">
       <div className="absolute pointer-events-none" style={{ top: -110, right: -70, width: 340, height: 340, borderRadius: '50%', background: `radial-gradient(circle, ${accent}1F, transparent 65%)` }} />
       <div className="relative flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
@@ -68,7 +68,7 @@ export function WealthHero({
         {headline.sub && <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>{headline.sub}</p>}
       </div>
       {secondary.length > 0 && (
-        <div className="relative mt-5 pt-4 border-t flex flex-wrap gap-x-10 gap-y-3" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="relative mt-5 pt-4 border-t flex flex-wrap gap-x-10 gap-y-3" style={{ borderColor: 'var(--outline)' }}>
           {secondary.map((s, i) => (
             <div key={i}>
               <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{s.label}</p>

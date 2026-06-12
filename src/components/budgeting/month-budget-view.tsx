@@ -187,7 +187,7 @@ export function MonthBudgetView({
       {/* Header: month switcher + verdict */}
       <div
         className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
+        style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}
       >
         <div className="flex items-center gap-2">
           <button
@@ -217,7 +217,7 @@ export function MonthBudgetView({
             type="button"
             onClick={autoFillFromAverage}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
-            style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+            style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
             title={t('month_budget.btn_fill_average_title')}
           >
             <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
@@ -227,7 +227,7 @@ export function MonthBudgetView({
             type="button"
             onClick={copyFromPrevMonth}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
-            style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+            style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
             title={t('month_budget.btn_copy_prev_title')}
           >
             <Copy className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
@@ -238,7 +238,7 @@ export function MonthBudgetView({
               type="button"
               onClick={applyTargets}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
-              style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+              style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
               title={t('month_budget.btn_apply_targets_title')}
             >
               <Target className="size-3.5" style={{ color: 'var(--c-violet)' }} />
@@ -262,7 +262,7 @@ export function MonthBudgetView({
       {/* Summary strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((c) => (
-          <div key={c.label} className="rounded-xl border p-3.5" style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}>
+          <div key={c.label} className="rounded-xl border p-3.5" style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}>
             <p className="eyebrow">{c.label}</p>
             <p className="num tabular t-h2 mt-1" style={{ color: c.color }}>
               {formatCurrency(c.value)}
@@ -280,12 +280,12 @@ export function MonthBudgetView({
           <div
             key={sec.key}
             className="overflow-hidden rounded-xl border"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)', boxShadow: '0 1px 3px rgba(16,24,40,0.07)' }}
+            style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}
           >
             {/* Section header */}
             <div
               className="flex items-center justify-between px-3.5 py-2 border-b"
-              style={{ background: `color-mix(in srgb, ${sec.tint} 8%, var(--surface))`, borderColor: 'var(--border-soft)' }}
+              style={{ background: `color-mix(in srgb, ${sec.tint} 8%, var(--surface))`, borderColor: 'var(--outline)' }}
             >
               <div className="flex items-center gap-2">
                 <span className="size-2 rounded-full" style={{ background: sec.tint }} />
@@ -300,7 +300,7 @@ export function MonthBudgetView({
             {/* Column header */}
             <div
               className="grid grid-cols-[1fr_148px_148px_148px] gap-3 px-3.5 py-1.5 border-b eyebrow"
-              style={{ borderColor: 'var(--border-soft)' }}
+              style={{ borderColor: 'var(--outline)' }}
             >
               <span>{t('month_budget.col_category')}</span>
               <span className="text-right">{t('month_budget.col_plan')}</span>
@@ -309,7 +309,7 @@ export function MonthBudgetView({
             </div>
 
             {/* Rows */}
-            <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="divide-y" style={{ borderColor: 'var(--outline)' }}>
               {cats.map((cat) => {
                 const plan = getValue(sec.key, cat, month)
                 const act = actual(sec.key, cat)

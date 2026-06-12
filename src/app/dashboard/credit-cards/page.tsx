@@ -68,7 +68,7 @@ function NetworkMark({ network, size = 22 }: { network?: string | null; size?: n
     )
   }
   if (n === 'visa') {
-    return <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800, fontSize: size, color: '#FFFFFF', letterSpacing: '0.01em', lineHeight: 1 }}>VISA</span>
+    return <span style={{ fontFamily: 'var(--font-instrument-serif), Georgia, serif', fontStyle: 'italic', fontWeight: 800, fontSize: size, color: '#FFFFFF', letterSpacing: '0.01em', lineHeight: 1 }}>VISA</span>
   }
   const label = n === 'gpn' ? 'GPN' : n === 'jcb' ? 'JCB' : n === 'amex' ? 'AMEX' : (network || '').toUpperCase()
   return <span style={{ fontWeight: 800, fontSize: size * 0.72, color: '#FFFFFF', letterSpacing: '0.1em', lineHeight: 1 }}>{label}</span>
@@ -405,7 +405,7 @@ export default function CreditCardsPage() {
                       <button onClick={() => openEditCard(c)} aria-label={t('credit_cards.aria_edit')} className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Pencil className="h-3 w-3" /></button>
                       <button onClick={() => removeCard(c.id)} aria-label={t('credit_cards.aria_delete')} className="grid place-items-center rounded-md" style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.22)', color: '#FFF', backdropFilter: 'blur(4px)' }}><Trash2 className="h-3 w-3" /></button>
                     </div>
-                    <p className="absolute left-5" style={{ top: 56, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 19, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{c.name}</p>
+                    <p className="absolute left-5" style={{ top: 56, fontFamily: 'var(--font-display)', fontSize: 19, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{c.name}</p>
                     <div className="absolute bottom-5 left-5" style={{ fontFamily: 'var(--font-mono)', fontSize: 15, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.92)' }}>
                       •••• •••• •••• {c.last_four || '••••'}
                     </div>

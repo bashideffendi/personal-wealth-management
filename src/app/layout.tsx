@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Sans, Instrument_Serif } from "next/font/google";
+import { Baloo_2, Instrument_Sans, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
@@ -23,6 +23,15 @@ const instrumentSerif = Instrument_Serif({
   style: "italic",
   subsets: ["latin"],
   variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+// Baloo 2 — suara display tema Cartoon Quest (judul, dialog, tombol).
+// Chubby rounded khas game UI. HANYA buat kata — angka tetap Instrument
+// Sans tabular di semua tema.
+const baloo = Baloo_2({
+  subsets: ["latin"],
+  variable: "--font-baloo",
   display: "swap",
 });
 
@@ -92,12 +101,16 @@ export const viewport: Viewport = {
 const themeInitScript = `
 (function() {
   try {
+    var skin = localStorage.getItem('pwm-skin');
+    if (skin === 'mono' || skin === 'terminal' || skin === 'cartoon') {
+      document.documentElement.setAttribute('data-skin', skin);
+    }
     var stored = localStorage.getItem('pwm-theme');
     var mode = stored === 'light' || stored === 'dark' || stored === 'auto' ? stored : 'auto';
     var resolved = mode === 'auto'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : mode;
-    if (resolved === 'dark') document.documentElement.classList.add('dark');
+    if (resolved === 'dark' || skin === 'terminal') document.documentElement.classList.add('dark');
   } catch (e) {}
 })();
 `
@@ -111,7 +124,8 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${instrumentSans.variable} ${instrumentSerif.variable} h-full antialiased`}
+      data-skin="cartoon"
+      className={`${instrumentSans.variable} ${instrumentSerif.variable} ${baloo.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -364,9 +364,9 @@ export default function AccountsPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+          color: 'var(--on-hero)',
+          
         }}
       >
         <div
@@ -374,34 +374,34 @@ export default function AccountsPage() {
           style={{ top: -120, right: -80, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)' }}
         />
         <div className="relative p-6 sm:p-9">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>
             {t('accounts.hero_label')}
           </p>
           {!loading && accounts.length > 0 ? (
             <>
               <p
                 className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
-                style={{ color: '#FFFFFF', fontSize: 'clamp(36px, 5vw, 56px)', letterSpacing: '-0.04em' }}
+                style={{ color: 'var(--on-hero)', fontSize: 'clamp(36px, 5vw, 56px)', letterSpacing: '-0.04em' }}
               >
                 {formatCurrency(totalBalance)}
               </p>
-              <p className="text-sm mt-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <p className="text-sm mt-3" style={{ color: 'var(--on-hero-mut)' }}>
                 {t('accounts.total_balance_from')} {accounts.length} {t('accounts.accounts_word')} · {today}
               </p>
               {(totals30d.inSum > 0 || totals30d.outSum > 0) && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(61,186,138,0.16)', color: '#82DBB1' }}>
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'var(--hero-chip-pos-bg)', color: 'var(--hero-chip-pos-fg)' }}>
                     <ArrowDownLeft className="size-3.5" /> {t('accounts.in')} <span className="num font-semibold">+{formatCurrency(totals30d.inSum)}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'rgba(237,115,133,0.16)', color: '#F4A6AE' }}>
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'var(--hero-chip-neg-bg)', color: 'var(--hero-chip-neg-fg)' }}>
                     <ArrowUpRight className="size-3.5" /> {t('accounts.out')} <span className="num font-semibold">−{formatCurrency(totals30d.outSum)}</span>
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.45)' }}>· {t('accounts.last_30_days')}</span>
+                  <span style={{ color: 'var(--on-hero-mut)' }}>· {t('accounts.last_30_days')}</span>
                 </div>
               )}
             </>
           ) : (
-            <h1 className="font-bold mt-2" style={{ fontSize: 'clamp(28px, 4vw, 40px)', color: '#FFFFFF', letterSpacing: '-0.035em' }}>
+            <h1 className="font-bold mt-2" style={{ fontSize: 'clamp(28px, 4vw, 40px)', color: 'var(--on-hero)', letterSpacing: '-0.035em' }}>
               {t('accounts.manage_title')}
             </h1>
           )}
@@ -413,7 +413,7 @@ export default function AccountsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('accounts.list_label')}</p>
           <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
               <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('accounts.view_card')} aria-label={t('accounts.view_card')}><LayoutGrid className="size-4" /></button>
               <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('accounts.view_table')} aria-label={t('accounts.view_table')}><List className="size-4" /></button>
             </div>
@@ -442,10 +442,10 @@ export default function AccountsPage() {
         </div>
       ) : view === 'table' ? (
         /* ─── TABLE VIEW ─── */
-        <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+              <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_account')}</th>
                 <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_type')}</th>
                 <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_number')}</th>
@@ -458,7 +458,7 @@ export default function AccountsPage() {
                 const masked = maskAccountNumber(a.account_number, privacyHidden)
                 const typeLabel = ACCOUNT_TYPES[a.type as AccountType] ?? a.type
                 return (
-                  <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
+                  <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)' }}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <InstitutionLogo accountName={a.name} size={32} shape="circle" />
@@ -493,7 +493,7 @@ export default function AccountsPage() {
             const typeLabel = ACCOUNT_TYPES[a.type as AccountType] ?? a.type
             const masked = maskAccountNumber(a.account_number, privacyHidden)
             return (
-              <div key={a.id} className="group relative rounded-xl border bg-[var(--surface)] p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+              <div key={a.id} className="group relative rounded-xl border bg-[var(--surface)] p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
                 <div className="flex items-start gap-3">
                   <InstitutionLogo accountName={a.name} size={48} shape="circle" />
                   <div className="flex-1 min-w-0">
@@ -532,7 +532,7 @@ export default function AccountsPage() {
                   </div>
                 )}
 
-                <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
+                <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--outline)' }}>
                   {renderActivity(a, { muted: true, showWindow: true })}
                 </div>
               </div>

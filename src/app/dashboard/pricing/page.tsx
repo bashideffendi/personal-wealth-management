@@ -222,7 +222,7 @@ export default function PricingPage() {
               </div>
 
               <div className="mt-5 pt-4 border-t border-current/10">
-                <p className="text-xs text-center font-medium text-amber-700 inline-flex items-center justify-center gap-1 w-full">
+                <p className="text-xs text-center font-medium text-[var(--c-amber-ink)] inline-flex items-center justify-center gap-1 w-full">
                   <Sparkles className="size-3" />
                   {plan.ai_credits_monthly} {t('pricing.free_credits_monthly')}
                 </p>
@@ -233,7 +233,7 @@ export default function PricingPage() {
       </div>
 
       {/* Feature comparison */}
-      <section className="rounded-2xl border bg-[var(--surface)] p-6">
+      <section className="s-card s-card-pad-lg">
         <h3 className="font-semibold text-lg mb-4">{t('pricing.compare_title')}</h3>
         <div className="overflow-x-auto -mx-6 px-6">
           <table className="w-full text-sm">
@@ -272,10 +272,10 @@ export default function PricingPage() {
       </section>
 
       {/* AI Credits Top-up (separate from subscription) */}
-      <section className="rounded-2xl border bg-gradient-to-br from-amber-50 to-orange-50 p-6">
+      <section className="rounded-2xl border bg-[var(--c-amber-soft)] p-6">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-white p-2.5 shadow-sm">
-            <Sparkles className="size-5 text-amber-600" />
+          <div className="rounded-lg bg-[var(--surface)] p-2.5 border border-[var(--outline)]">
+            <Sparkles className="size-5 text-[var(--c-amber-ink)]" />
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">{t('pricing.topup_title')}</h3>
@@ -288,7 +288,7 @@ export default function PricingPage() {
           {CREDIT_PACKS.map((pack) => (
             <div
               key={pack.credits}
-              className={`relative rounded-xl border bg-[var(--surface)] p-4 ${pack.popular ? 'ring-2 ring-amber-400' : ''}`}
+              className={`relative rounded-xl border bg-[var(--surface)] p-4 ${pack.popular ? 'ring-2 ring-[var(--c-primary)]' : ''}`}
             >
               {pack.popular && (
                 <span className="absolute -top-2 right-3 rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">
@@ -315,7 +315,7 @@ export default function PricingPage() {
       </section>
 
       {/* Trust signals */}
-      <section className="rounded-2xl border bg-[var(--surface)] p-6">
+      <section className="s-card s-card-pad-lg">
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="flex items-start gap-3">
             <ShieldCheck className="size-5 text-[var(--c-mint)] mt-0.5" />
@@ -325,7 +325,7 @@ export default function PricingPage() {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <RefreshCcw className="size-5 text-amber-600 mt-0.5" />
+            <RefreshCcw className="size-5 text-[var(--c-amber-ink)] mt-0.5" />
             <div>
               <p className="font-semibold text-sm">{t('pricing.trust_no_renew_title')}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{t('pricing.trust_no_renew_desc')}</p>
@@ -342,7 +342,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="rounded-2xl border bg-[var(--surface)] p-6">
+      <section className="s-card s-card-pad-lg">
         <h3 className="font-semibold text-lg mb-4">{t('pricing.faq_title')}</h3>
         <div className="space-y-4 text-sm">
           <Faq q={t('pricing.faq_billing_q')} a={t('pricing.faq_billing_a')} />

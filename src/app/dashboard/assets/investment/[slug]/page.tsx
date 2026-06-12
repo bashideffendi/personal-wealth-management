@@ -420,9 +420,9 @@ export default function InvestmentCategoryPage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
-          color: '#F5F5F7',
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)',
+          background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+          color: 'var(--on-hero)',
+          
         }}
       >
         <div
@@ -437,14 +437,14 @@ export default function InvestmentCategoryPage() {
         <Link
           href="/dashboard/assets/investment"
           className="inline-flex items-center gap-1.5 text-xs font-medium mb-4 rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-white/10"
-          style={{ color: 'rgba(255,255,255,0.6)' }}
+          style={{ color: 'var(--on-hero-mut)' }}
         >
           <ArrowLeft className="size-3.5" /> {t('investment_detail.back_all_investments')}
         </Link>
         <div className="flex items-start justify-between gap-3">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase inline-flex items-center gap-1.5"
-            style={{ color: up ? '#82DBB1' : '#F4A6AE' }}
+            style={{ color: up ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}
           >
             {subcat.label}
             {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && (
@@ -470,8 +470,8 @@ export default function InvestmentCategoryPage() {
                   onClick={() => router.push(m.href)}
                   className="px-3 py-1 rounded-full text-xs font-semibold transition"
                   style={active
-                    ? { background: 'rgba(255,255,255,0.18)', color: '#fff' }
-                    : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}
+                    ? { background: 'rgba(255,255,255,0.18)', color: 'var(--on-hero)' }
+                    : { background: 'rgba(255,255,255,0.06)', color: 'var(--on-hero-mut)' }}
                 >
                   {m.label}
                 </button>
@@ -484,7 +484,7 @@ export default function InvestmentCategoryPage() {
             className="num tabular font-bold leading-none whitespace-nowrap"
             style={{
               fontSize: 'clamp(40px, 6vw, 64px)',
-              color: '#FFFFFF',
+              color: 'var(--on-hero)',
               letterSpacing: '-0.04em',
             }}
           >
@@ -494,8 +494,8 @@ export default function InvestmentCategoryPage() {
             <span
               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold mb-2"
               style={{
-                background: up ? 'rgba(61,186,138,0.18)' : 'rgba(237,115,133,0.18)',
-                color: up ? '#82DBB1' : '#F4A6AE',
+                background: up ? 'var(--hero-chip-pos-bg)' : 'var(--hero-chip-neg-bg)',
+                color: up ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
@@ -504,10 +504,10 @@ export default function InvestmentCategoryPage() {
             </span>
           )}
         </div>
-        <p className="text-sm mt-2 inline-flex items-center gap-1.5 flex-wrap" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          <span>{items.length} {t('investment_detail.positions')} · {t('investment_detail.capital')} <span className="num font-semibold" style={{ color: '#FFFFFF' }}>{formatCurrency(totals.invested)}</span>
+        <p className="text-sm mt-2 inline-flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--on-hero-mut)' }}>
+          <span>{items.length} {t('investment_detail.positions')} · {t('investment_detail.capital')} <span className="num font-semibold" style={{ color: 'var(--on-hero)' }}>{formatCurrency(totals.invested)}</span>
           {' · '}
-          P/L <span className="num font-semibold" style={{ color: up ? '#82DBB1' : '#F4A6AE' }}>{formatCurrency(totals.pl)}</span></span>
+          P/L <span className="num font-semibold" style={{ color: up ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>{formatCurrency(totals.pl)}</span></span>
           {(category === 'stock' || category === 'crypto' || category === 'mutual_fund') && totals.invested > 0 && (
             <EduTip topic="loss-aversion" side="bottom" />
           )}
@@ -553,7 +553,7 @@ export default function InvestmentCategoryPage() {
           {items.length > 0 && (
             <div
               className="flex items-center rounded-md border overflow-hidden"
-              style={{ borderColor: 'var(--border-soft)' }}
+              style={{ borderColor: 'var(--outline)' }}
             >
               <button
                 type="button"
@@ -645,7 +645,7 @@ export default function InvestmentCategoryPage() {
           <div className="s-card overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
+                <tr className="border-b" style={{ borderColor: 'var(--outline)' }}>
                   <Th>{category === 'stock' ? t('investment_detail.th_ticker') : t('investment_detail.th_coin')}</Th>
                   <Th>{category === 'stock' ? t('investment_detail.th_company') : t('investment_detail.th_name')}</Th>
                   {category === 'stock' && <Th>{t('investment_detail.th_sector')}</Th>}
@@ -664,7 +664,7 @@ export default function InvestmentCategoryPage() {
                 {enriched.map((e) => {
                   const pos = e.pl >= 0
                   return (
-                    <tr key={e.i.id} className="border-b hover:bg-[var(--surface-alt)]/50 transition-colors" style={{ borderColor: 'var(--border-soft)' }}>
+                    <tr key={e.i.id} className="border-b hover:bg-[var(--surface-alt)]/50 transition-colors" style={{ borderColor: 'var(--outline)' }}>
                       <Td>
                         {showStockResearch && e.i.ticker ? (
                           <Link
@@ -781,7 +781,7 @@ export default function InvestmentCategoryPage() {
               <div
                 key={e.i.id}
                 className="group relative rounded-xl p-4 bg-[var(--surface)] border transition-all hover:shadow-md hover:-translate-y-0.5"
-                style={{ borderColor: 'var(--border-soft)' }}
+                style={{ borderColor: 'var(--outline)' }}
               >
                 <div className="flex items-start gap-3">
                   {/* Logo by category — stock from IDX library, crypto from
@@ -1239,8 +1239,8 @@ function StepInv({ n, text }: { n: number; text: string }) {
 
 function RpFieldInv({ value, onChange, placeholder }: { value: number; onChange: (n: number) => void; placeholder?: string }) {
   return (
-    <div className="flex items-stretch rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
-      <span className="px-3 flex items-center text-sm font-medium border-r shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>Rp</span>
+    <div className="flex items-stretch rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
+      <span className="px-3 flex items-center text-sm font-medium border-r shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', borderColor: 'var(--outline)' }}>Rp</span>
       <NumberInput value={value} onChange={onChange} placeholder={placeholder ?? '0'} className="flex-1 border-0 rounded-none shadow-none focus-visible:ring-0" />
     </div>
   )

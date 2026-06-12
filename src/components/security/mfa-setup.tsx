@@ -90,7 +90,7 @@ export function MfaSetup() {
   }
 
   return (
-    <section className="rounded-xl border bg-[var(--surface)] p-5 space-y-4">
+    <section className="s-card s-card-pad space-y-4">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="flex items-start gap-2">
           <ShieldCheck className="size-4 mt-0.5" style={{ color: status === 'enrolled' ? 'var(--c-mint)' : 'var(--ink-soft)' }} />
