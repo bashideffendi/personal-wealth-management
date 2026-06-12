@@ -32,6 +32,7 @@ type DB = SupabaseClient<any, any, any>
 export async function fetchLiquidEntries(
   supabase: DB,
   userId: string,
+  opts?: { strict?: boolean },
 ): Promise<UnifiedLiquidEntry[]> {
   const [accRes, alRes] = await Promise.all([
     supabase
@@ -43,6 +44,14 @@ export async function fetchLiquidEntries(
       .select('id, name, type, balance')
       .eq('user_id', userId),
   ])
+
+  // strict: gagal query = throw (caller react-query nampilin error card).
+  // Default lama (?? []) bikin total "Rp 0 palsu" pas fetch gagal — caller
+  // dengan error-state harap pakai strict.
+  if (opts?.strict) {
+    if (accRes.error) throw accRes.error
+    if (alRes.error) throw alRes.error
+  }
 
   const fromAccounts: UnifiedLiquidEntry[] = (accRes.data ?? []).map((a: { id: string; name: string; type: string; current_balance: number }) => ({
     id: a.id,

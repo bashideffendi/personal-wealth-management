@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
@@ -22,37 +24,40 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus, Pencil, Trash2, Loader2, AlertTriangle, RefreshCw, Sparkles,
+  Plus, Pencil, Trash2, Loader2, AlertTriangle, RefreshCw,
   Landmark, TrendingUp, Banknote, Smartphone, HandCoins, Wallet,
-  Zap, Percent, LayoutGrid, List, ArrowUpDown, type LucideIcon,
+  Zap, Clock, LayoutGrid, List, ArrowUpDown, type LucideIcon,
 } from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
 import { useT } from '@/lib/i18n/context'
 
+const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
+const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
+
 // Likuiditas tier (perkiraan dari jenis aset — model belum simpan per-aset).
 type Tier = 'instan' | 't1' | 't30' | 't90'
 const TIER_META: Record<Tier, { label: string; bar: string }> = {
-  instan: { label: 'Instan', bar: '#10B981' },
-  t1:     { label: 'T+1',    bar: '#8B5CF6' },
-  t30:    { label: 'T+30',   bar: '#F59E0B' },
-  t90:    { label: 'T+60–90', bar: '#6366F1' },
+  instan: { label: 'Instan', bar: MINT },
+  t1:     { label: 'T+1',    bar: VIOLET },
+  t30:    { label: 'T+30',   bar: AMBER },
+  t90:    { label: 'T+60–90', bar: CORAL },
 }
 const TIER_ORDER: Tier[] = ['instan', 't1', 't30', 't90']
 
-// Perkiraan jenis · yield tahunan · likuiditas berdasarkan tipe.
-const TYPE_META: Record<string, { jenis: string; yield: number; tier: Tier; icon: LucideIcon; color: string }> = {
-  bank:           { jenis: 'Tabungan',   yield: 0.01,  tier: 'instan', icon: Landmark,   color: '#10B981' },
-  investment:     { jenis: 'Reksa Dana', yield: 0.045, tier: 't1',     icon: TrendingUp, color: '#8B5CF6' },
-  rdn:            { jenis: 'RDN',        yield: 0,     tier: 't1',     icon: TrendingUp, color: '#0EA5E9' },
-  cash:           { jenis: 'Kas',        yield: 0,     tier: 'instan', icon: Banknote,   color: '#F59E0B' },
-  digital_wallet: { jenis: 'E-Wallet',   yield: 0,     tier: 'instan', icon: Smartphone, color: '#6366F1' },
-  receivable:     { jenis: 'Piutang',    yield: 0,     tier: 't30',    icon: HandCoins,  color: '#F43F5E' },
+// Perkiraan jenis · likuiditas berdasarkan tipe.
+const TYPE_META: Record<string, { jenis: string; tier: Tier; icon: LucideIcon; color: string }> = {
+  bank:           { jenis: 'Tabungan',   tier: 'instan', icon: Landmark,   color: MINT },
+  investment:     { jenis: 'Reksa Dana', tier: 't1',     icon: TrendingUp, color: VIOLET },
+  rdn:            { jenis: 'RDN',        tier: 't1',     icon: TrendingUp, color: 'var(--ink)' },
+  cash:           { jenis: 'Kas',        tier: 'instan', icon: Banknote,   color: AMBER },
+  digital_wallet: { jenis: 'E-Wallet',   tier: 'instan', icon: Smartphone, color: 'var(--ink-soft)' },
+  receivable:     { jenis: 'Piutang',    tier: 't30',    icon: HandCoins,  color: CORAL },
 }
 // Fallback tipe gak dikenal: jangan tampil mentah — UPPERCASE biar gak keliatan kayak bug.
-const metaFor = (type: string) => TYPE_META[type] ?? { jenis: type.toUpperCase(), yield: 0, tier: 'instan' as Tier, icon: Wallet, color: '#64748B' }
+const metaFor = (type: string) => TYPE_META[type] ?? { jenis: type.toUpperCase(), tier: 'instan' as Tier, icon: Wallet, color: 'var(--ink-soft)' }
 
-const MM_YIELD = 0.0485 // RD Pasar Uang ~ acuan saran optimasi
 
 interface FormState {
   id: string | null
@@ -65,39 +70,43 @@ const EMPTY: FormState = { id: null, name: '', type: 'receivable', balance: 0 }
 export default function LiquidAssetsPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [entries, setEntries] = useState<UnifiedLiquidEntry[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState<string>('Semua')
   const [view, setView] = useState<'card' | 'table'>('card')
-  const [sortKey, setSortKey] = useState<'saldo' | 'yield'>('saldo')
+  const [sortKey, setSortKey] = useState<'saldo'>('saldo')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const data = await fetchLiquidEntries(supabase, user.id)
-    setEntries(data)
-    setLoading(false)
+  const pageQuery = useQuery({
+    queryKey: ['liquid-assets'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      return fetchLiquidEntries(supabase, user.id, { strict: true })
+    },
+  })
+  const loading = pageQuery.isLoading
+  const entries = useMemo(() => pageQuery.data ?? [], [pageQuery.data])
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['liquid-assets'] })
+    qc.invalidateQueries({ queryKey: ['net-worth'] }) // kekayaan bersih baca likuid
+    qc.invalidateQueries({ queryKey: ['debts-page'] }) // rasio utang pakai aset likuid
   }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { void load() }, [])
   useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem('pwm.liquid.view') : null
     if (v === 'table' || v === 'card') setView(v)
   }, [])
   function changeView(v: 'card' | 'table') { setView(v); try { localStorage.setItem('pwm.liquid.view', v) } catch { /* ignore */ } }
-  function toggleSort(k: 'saldo' | 'yield') {
+  function toggleSort(k: 'saldo') {
     if (sortKey === k) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else { setSortKey(k); setSortDir('desc') }
   }
 
   async function save() {
-    if (!form.name.trim()) { alert(t('assets_liquid.alert_name_required')); return }
+    if (!form.name.trim()) { toast.error(t('assets_liquid.alert_name_required')); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
@@ -111,20 +120,16 @@ export default function LiquidAssetsPage() {
       : supabase.from('assets_liquid').insert(payload)
     const { error } = await op
     setSaving(false)
-    if (error) { alert(`${t('assets_liquid.alert_save_failed')}: ${error.message}`); return }
+    if (error) { toast.error(t('common.mutation_failed')); return }
     setDialogOpen(false)
-    void load()
+    refresh()
   }
 
-  async function remove(id: string, source: 'account' | 'asset_liquid') {
-    if (source === 'account') {
-      alert(t('assets_liquid.alert_account_not_deletable'))
-      return
-    }
+  async function remove(id: string) {
     if (!confirm(t('assets_liquid.confirm_delete'))) return
     const { error } = await supabase.from('assets_liquid').delete().eq('id', id)
-    if (error) alert(`${t('assets_liquid.alert_delete_failed')}: ${error.message}`)
-    void load()
+    if (error) { toast.error(t('common.delete_failed')); return }
+    refresh()
   }
 
   const total = sumLiquid(entries)
@@ -132,25 +137,15 @@ export default function LiquidAssetsPage() {
   const accountCount = entries.length
 
   const stats = useMemo(() => {
-    let instan = 0, berbunga = 0, annualInterest = 0, piutang = 0, savingsIdle = 0
+    let instan = 0, fast = 0, piutang = 0
     for (const e of entries) {
       const m = metaFor(e.type)
       if (m.tier === 'instan') instan += e.balance
-      if (m.yield > 0) { berbunga += e.balance; annualInterest += e.balance * m.yield }
+      if (m.tier === 'instan' || m.tier === 't1') fast += e.balance
       if (e.type === 'receivable') piutang += e.balance
-      if (e.type === 'bank') savingsIdle += e.balance
     }
-    const weighted = total > 0 ? (annualInterest / total) * 100 : 0
-    const berbungaPct = total > 0 ? (berbunga / total) * 100 : 0
-    return { instan, berbunga, annualInterest, piutang, savingsIdle, weighted, berbungaPct }
-  }, [entries, total])
-
-  // Saran optimasi: pindahin tabungan nganggur ke RD Pasar Uang (estimasi).
-  const optimasi = useMemo(() => {
-    if (stats.savingsIdle <= 0) return null
-    const extra = stats.savingsIdle * (MM_YIELD - metaFor('bank').yield)
-    return { movable: stats.savingsIdle, extra }
-  }, [stats.savingsIdle])
+    return { instan, fast, piutang }
+  }, [entries])
 
   // Tangga likuiditas — bucket saldo per tier.
   const ladder = useMemo(() => {
@@ -176,7 +171,6 @@ export default function LiquidAssetsPage() {
   const typesPresent = Object.keys(grouped).sort((a, b) => typeSum(b) - typeSum(a))
   const sorted = [...visible].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1
-    if (sortKey === 'yield') return (metaFor(a.type).yield - metaFor(b.type).yield) * dir
     return (a.balance - b.balance) * dir
   })
 
@@ -189,13 +183,13 @@ export default function LiquidAssetsPage() {
         {e.source === 'asset_liquid' && (
           <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-sm transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
             <Button variant="ghost" size="icon-sm" onClick={() => { setForm({ id: e.id, name: e.name, type: e.type as FormState['type'], balance: e.balance }); setDialogOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => remove(e.id, e.source)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => remove(e.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
           </div>
         )}
         <div className="flex items-center gap-3">
           {isAccount
             ? <InstitutionLogo accountName={e.name} size={40} shape="circle" />
-            : <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: `${m.color}1A` }}><Icon className="size-5" style={{ color: m.color }} /></div>}
+            : <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(m.color, 10) }}><Icon className="size-5" style={{ color: m.color }} /></div>}
           <div className="min-w-0">
             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{e.name}</p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.auto_from_account') : t('assets_liquid.source_manual')}</p>
@@ -205,7 +199,6 @@ export default function LiquidAssetsPage() {
         <div className="mt-4 pt-3 border-t text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>
             {TIER_META[m.tier].label}
-            {m.yield > 0 && <> · {t('assets_liquid.yield_label')} <span className="num" style={{ color: '#10B981' }}>{(m.yield * 100).toFixed(2)}%</span></>}
           </span>
         </div>
       </div>
@@ -219,13 +212,13 @@ export default function LiquidAssetsPage() {
         title={t('assets_liquid.title')}
         subtitle={t('assets_liquid.subtitle')}
       >
-        <Button variant="outline" onClick={() => void load()}><RefreshCw className="h-4 w-4" /> {t('assets_liquid.btn_sync')}</Button>
+        <Button variant="outline" onClick={() => refresh()}><RefreshCw className="h-4 w-4" /> {t('assets_liquid.btn_sync')}</Button>
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> {t('assets_liquid.btn_add_asset')}</Button>
       </WealthHeader>
 
       {duplicates.length > 0 && (
-        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: '#F59E0B14', border: '1px solid #F59E0B33' }}>
-          <AlertTriangle className="size-5 shrink-0 mt-0.5" style={{ color: '#F59E0B' }} />
+        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: tint(AMBER, 8), border: `1px solid ${tint(AMBER, 20)}` }}>
+          <AlertTriangle className="size-5 shrink-0 mt-0.5" style={{ color: AMBER_INK }} />
           <div className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>
             <p className="font-medium">{t('assets_liquid.dup_title')}</p>
             <p className="mt-1" style={{ color: 'var(--ink-muted)' }}>
@@ -239,6 +232,11 @@ export default function LiquidAssetsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : (
         <>
           {/* Stat strip — ikut Aset Non-Likuid (ikon + sel kosong di-mute) */}
@@ -246,12 +244,12 @@ export default function LiquidAssetsPage() {
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
               <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
-              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')} <span className="num font-semibold" style={{ color: stats.weighted > 0 ? '#10B981' : 'var(--ink-muted)' }}>{stats.weighted.toFixed(2)}%</span></p>
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')}</p>
             </div>
             {([
-              { id: 'instant', label: t('assets_liquid.card_instant'), val: stats.instan, color: '#10B981', icon: Zap, sub: total > 0 ? `${((stats.instan / total) * 100).toFixed(0)}% ${t('assets_liquid.card_instant_sub')}` : '—' },
-              { id: 'interest', label: t('assets_liquid.card_interest'), val: stats.berbunga, color: '#F59E0B', icon: Percent, sub: stats.annualInterest > 0 ? `≈ +${formatCurrency(Math.round(stats.annualInterest))}${t('assets_liquid.per_year_suffix')}` : t('assets_liquid.card_interest_none') },
-              { id: 'receivable', label: t('assets_liquid.card_receivable'), val: stats.piutang, color: '#F43F5E', icon: HandCoins, sub: t('assets_liquid.card_receivable_sub') },
+              { id: 'instant', label: t('assets_liquid.card_instant'), val: stats.instan, color: MINT_INK, icon: Zap, sub: total > 0 ? `${((stats.instan / total) * 100).toFixed(0)}% ${t('assets_liquid.card_instant_sub')}` : '—' },
+              { id: 't1', label: t('assets_liquid.card_t1'), val: stats.fast, color: VIOLET_INK, icon: Clock, sub: total > 0 ? `${((stats.fast / total) * 100).toFixed(0)}% ${t('assets_liquid.card_t1_sub')}` : '—' },
+              { id: 'receivable', label: t('assets_liquid.card_receivable'), val: stats.piutang, color: CORAL_INK, icon: HandCoins, sub: t('assets_liquid.card_receivable_sub') },
             ] as const).map((c) => {
               const CIcon = c.icon
               const empty = c.val <= 0
@@ -307,7 +305,6 @@ export default function LiquidAssetsPage() {
                     <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_asset')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_type')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_source')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('yield')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_liquid.col_yield')} {sortKey === 'yield' && <ArrowUpDown className="size-3" />}</button></th>
                     <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_liquid.col_liquidity')}</th>
                     <th className="px-4 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('saldo')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_liquid.col_balance')} {sortKey === 'saldo' && <ArrowUpDown className="size-3" />}</button></th>
                   </tr>
@@ -321,20 +318,19 @@ export default function LiquidAssetsPage() {
                       <tr key={`${e.source}-${e.id}`} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            {isAccount ? <InstitutionLogo accountName={e.name} size={32} shape="circle" /> : <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: `${m.color}1A` }}><Icon className="size-4" style={{ color: m.color }} /></div>}
+                            {isAccount ? <InstitutionLogo accountName={e.name} size={32} shape="circle" /> : <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(m.color, 10) }}><Icon className="size-4" style={{ color: m.color }} /></div>}
                             <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{e.name}</p>
                           </div>
                         </td>
                         <td className="px-3 py-3"><span className="inline-flex items-center gap-1.5 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}><span className="size-1.5 rounded-full" style={{ background: m.color }} />{m.jenis}</span></td>
                         <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.source_account') : t('assets_liquid.source_manual')}</td>
-                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: m.yield > 0 ? '#10B981' : 'var(--ink-soft)' }}>{m.yield > 0 ? `${(m.yield * 100).toFixed(2)}%` : '—'}</td>
-                        <td className="px-3 py-3 text-right whitespace-nowrap" style={{ color: m.tier === 'instan' ? '#10B981' : 'var(--ink-muted)' }}>{TIER_META[m.tier].label}</td>
+                        <td className="px-3 py-3 text-right whitespace-nowrap" style={{ color: m.tier === 'instan' ? MINT_INK : 'var(--ink-muted)' }}>{TIER_META[m.tier].label}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-3">
                             {e.source === 'asset_liquid' && (
                               <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">
                                 <Button variant="ghost" size="icon-sm" onClick={() => { setForm({ id: e.id, name: e.name, type: e.type as FormState['type'], balance: e.balance }); setDialogOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => remove(e.id, e.source)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => remove(e.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
                               </div>
                             )}
                             <span className="num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</span>
@@ -357,7 +353,7 @@ export default function LiquidAssetsPage() {
                 return (
                   <section key={typeKey}>
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${m.color}1A` }}><SIcon className="size-4" style={{ color: m.color }} /></div>
+                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(m.color, 10) }}><SIcon className="size-4" style={{ color: m.color }} /></div>
                       <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{m.jenis}</h3>
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{list.length} {t('assets_liquid.asset_count_suffix')}</span>
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
@@ -378,31 +374,7 @@ export default function LiquidAssetsPage() {
             {t('assets_liquid.footnote')} <Link href="/dashboard/accounts" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('assets_liquid.footnote_link')}</Link>
           </p>
 
-          {/* 2 panel bawah */}
-          <div className="grid gap-3 lg:grid-cols-2">
-            {/* Optimasi yield */}
-            <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.yield_opt_heading')}</p>
-              <p className="mt-2 text-xl leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-                {t('assets_liquid.yield_opt_annual')} <span className="num font-semibold" style={{ color: '#10B981' }}>{formatCurrency(Math.round(stats.annualInterest))}</span>
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
-                {t('assets_liquid.yield_opt_weighted')} {stats.weighted.toFixed(2)}% · {stats.berbungaPct.toFixed(0)}% {t('assets_liquid.yield_opt_interest_bearing')}
-              </p>
-              {optimasi && (
-                <div className="mt-3 rounded-lg px-3 py-2.5" style={{ background: '#F59E0B14' }}>
-                  <p className="text-[11px] font-semibold flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                    <Sparkles className="size-3.5" /> {t('assets_liquid.suggestion_label')}
-                  </p>
-                  <p className="text-[12px] mt-1" style={{ color: 'var(--ink)' }}>
-                    {t('assets_liquid.suggestion_move')} <span className="num font-semibold">{formatCurrency(stats.savingsIdle)}</span> {t('assets_liquid.suggestion_to_mm')} →
-                    {' '}{t('assets_liquid.suggestion_potential')} <span className="num font-semibold" style={{ color: '#10B981' }}>+{formatCurrency(Math.round(optimasi.extra))}</span>{t('assets_liquid.suggestion_per_year_liquidity')}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Tangga likuiditas */}
+          {/* Tangga likuiditas */}
             <div className="s-card p-5">
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.ladder_heading')}</p>
               <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
@@ -422,7 +394,6 @@ export default function LiquidAssetsPage() {
                 ))}
               </div>
             </div>
-          </div>
         </>
       )}
 
@@ -430,7 +401,7 @@ export default function LiquidAssetsPage() {
         <DialogContent>
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}><Wallet className="size-5" style={{ color: '#10B981' }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: MINT_INK }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('assets_liquid.dialog_title_edit') : t('assets_liquid.dialog_title_add')}</DialogTitle>
                 <DialogDescription>

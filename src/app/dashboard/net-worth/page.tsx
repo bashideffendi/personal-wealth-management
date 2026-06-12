@@ -84,7 +84,7 @@ export default function NetWorthPage() {
       if (!user) throw new Error('unauthenticated')
       const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
       const [liquidEntries, nonLiquidRes, investmentRes, debtRes, ccRes, snapshotRes, txRes] = await Promise.all([
-        fetchLiquidEntries(supabase, user.id),
+        fetchLiquidEntries(supabase, user.id, { strict: true }),
         supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
         supabase.from('investments').select('total_value').eq('user_id', user.id),
         supabase.from('debts').select('id, name, category, remaining, interest_rate, monthly_payment').eq('user_id', user.id).eq('is_active', true),
