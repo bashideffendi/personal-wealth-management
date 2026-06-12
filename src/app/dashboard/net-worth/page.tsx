@@ -230,7 +230,7 @@ export default function NetWorthPage() {
 
       {/* Dark hero — 3 cell */}
       <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-[1.6fr_1fr_1fr]"
-        style={{ background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)', boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)' }}>
+        style={{ background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)', boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40)' }}>
         <div className="absolute pointer-events-none" style={{ top: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.20), transparent 65%)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(61,186,138,0.16), transparent 65%)' }} />
         <div className="relative p-6 sm:p-7 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>

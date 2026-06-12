@@ -115,7 +115,7 @@ export function NetWorthHero({
     <section
       className="relative overflow-hidden rounded-3xl"
       style={{
-        background: 'linear-gradient(135deg, #0A0A0F 0%, #14141A 50%, #1C1C24 100%)',
+        background: 'linear-gradient(135deg, #241F31 0%, #2C2640 50%, #322B45 100%)',
         color: '#F5F5F7',
         boxShadow: '0 24px 60px -20px rgba(0,0,0,0.40), 0 2px 4px rgba(0,0,0,0.06)',
       }}
@@ -248,7 +248,7 @@ export function NetWorthHero({
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
               style={{
                 background: '#FFFFFF',
-                color: '#0A0A0F',
+                color: '#241F31',
               }}
             >
               {t('nw_hero.cta_detail')}

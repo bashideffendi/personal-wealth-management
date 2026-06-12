@@ -11,10 +11,13 @@
 .leaflet-container { isolation: isolate; }
 
 /* ============================================
-   Klunting — Design System v6.1 "KLEIN & INK" (2026-06-13)
-   Palet gen z (premium·elegan·modern·fun). Aksen volt v6 DITOLAK user
-   (identik kompetitor Budggt) → Klein Blue, approved via plan-first:
-   (1) PRIMARY = Klein #2E3DD8 — tombol/FAB/logo + teks putih (7.6:1);
+   Klunting — Design System v7 "CARTOON QUEST" (2026-06-13)
+   Konsep RPG kartun modern (user pilih dari mockup: varian B, full app,
+   fase 1 reskin). Bahasa: kertas hangat + OUTLINE TINTA 2px + bayangan
+   offset keras + emas sebagai aksi + malam dusk ungu (dark & panel
+   hero). Data uang TETAP hijau=naik/garnet=turun. Fase 2 (mekanika
+   XP/quest) menyusul setelah reskin di-ACC:
+   (1) PRIMARY = emas #FFC83D — tombol/FAB/logo + teks tinta (11.1:1);
        aksen sbg teks/ikon/ring wajib --c-primary-ink;
    (2) kanvas porselen ber-cast hijau + kartu putih + grain kertas;
    (3) netral green-cast ink (bukan warm brown era krem);
@@ -45,17 +48,16 @@
   --violet-600:  #6A4BC2;
   --violet-700:  #5A3CAB;
 
-  /* ── Surfaces (Light) — VOLT & INK v6: porselen ber-cast hijau ──────
-     Pivot dari dunia krem (arahan user: palet baru, gen z). Kanvas
-     porselen dengan undertone hijau samar — sejuk, bersih, dan jadi
-     panggung netral buat aksen VOLT. Kartu putih tetap mengambang
-     (elevasi 1.13), sumur/input selapis lebih dalam. */
-  --paper:       #F1F2EB;
-  --bg:          #F1F2EB;
-  --bg-2:        #E7E9DF;
+  /* ── Surfaces (Light) — CARTOON QUEST v7: kertas dongeng ──────
+     Kanvas kertas hangat, kartu putih dengan outline tinta + bayangan
+     offset (bahasa kartun/neo-brutalist — lihat .s-card & .btn-primary).
+     Sumur/chip selapis lebih dalam dari kertas. */
+  --paper:       #FFF9EE;
+  --bg:          #FFF9EE;
+  --bg-2:        #F6EFDD;
   --surface:     #FFFFFF;    /* card bg pure white */
-  --surface-2:   #EAECE1;    /* sumur/chip sekunder */
-  --surface-3:   #DCDFD0;
+  --surface-2:   #F8F1E1;    /* sumur/chip sekunder */
+  --surface-3:   #EFE6D0;
   --line:        rgba(24, 24, 27, 0.08);
   --line-strong: rgba(24, 24, 27, 0.14);
 
@@ -65,30 +67,31 @@
        --ink-muted = teks sekunder (paragraf pendukung, deskripsi). PEKAT.
        --ink-soft  = label/eyebrow/caption paling redup. FLOOR — jangan lebih terang.
      JANGAN pakai abu lebih terang dari --ink-soft buat TEKS yg harus kebaca. */
-  --ink:         #101410;    /* konten utama — green-cast ink (Volt & Ink v6) */
-  --ink-muted:   #3C443C;    /* green graphite — sekunder, kebaca (10.1:1) */
-  --ink-soft:    #545D4B;    /* sekunder-redup — FLOOR text (6.9:1 putih / 6.2:1 porselen) */
-  --text:        #101410;
-  --text-2:      #3C443C;    /* alias → ink-muted */
-  --text-mute:   #545D4B;    /* alias → ink-soft (floor) */
-  --text-faint:  #545D4B;    /* faint utk teks dilarang — samain ke floor */
-  --border:      #DBDED0;    /* green-grey — ikut undertone porselen */
-  --border-soft: #E7E9DD;    /* hairline */
+  --ink:         #1E1B16;    /* konten utama — tinta kartun (warna outline juga) */
+  --ink-muted:   #4A453C;    /* sekunder, kebaca (9.5:1) */
+  --ink-soft:    #5E5749;    /* sekunder-redup — FLOOR text (7.2:1 putih / 6.8:1 kertas) */
+  --text:        #1E1B16;
+  --text-2:      #4A453C;    /* alias → ink-muted */
+  --text-mute:   #5E5749;    /* alias → ink-soft (floor) */
+  --text-faint:  #5E5749;    /* faint utk teks dilarang — samain ke floor */
+  --border:      #E5DCC6;    /* hairline dalam (divider/tabel) — outline kartu pakai --outline */
+  --border-soft: #F0E9D6;    /* hairline halus */
+  /* Outline kartun — bingkai 2px + bayangan offset keras (identitas v7) */
+  --outline:        #1E1B16;
+  --outline-shadow: #1E1B16;
 
   /* ── Semantic tokens — palet data bespoke (lightness diharmonisasi) ───
      Empat hue identitas tetap (hijau=naik, rose=turun, brass=waspada,
      iris=AI) tapi hex-nya milik Klunting: de-neon, warm-shift, dan
      lightness disetarakan biar berdampingan di chart tanpa ada yang
      teriak. Stock Tailwind 500 (10B981/F43F5E/F59E0B/8B5CF6) pensiun. */
-  /* PRIMARY = KLEIN BLUE (v6.1). Volt v6 ditolak user — identik
-     kompetitor lokal Budggt. Klein biru pekat: fashion-coded, kosong di
-     lanskap fintech ID (Dana/Blu/BCA = biru muda korporat), dan gak
-     ganggu semantik data (hijau=naik garnet=turun). Tombol/FAB/logo =
-     Klein + teks putih (7.6:1); teks/ikon/ring aksen = --c-primary-ink. */
-  --c-primary:      #2E3DD8;
-  --c-primary-soft: #E7E9FB;     /* tint Klein buat active states (-ink 7.6:1) */
-  --c-primary-foreground: #FFFFFF;
-  --c-primary-ink:  #2531C2;
+  /* PRIMARY = EMAS (v7 Cartoon Quest) — koin/loot, aksi utama. Tombol/
+     FAB/logo emas + TEKS TINTA (11.1:1). Emas = FILL ONLY; sebagai teks
+     di putih gagal kontras → teks/ikon/ring aksen = --c-primary-ink. */
+  --c-primary:      #FFC83D;
+  --c-primary-soft: #FFF3D6;     /* tint emas buat active states (-ink 5.2:1) */
+  --c-primary-foreground: #1E1B16;
+  --c-primary-ink:  #7E5600;
   --c-mint:         #129B69;     /* income/up — hijau dalam, gak neon (putih di atasnya 3.6:1, > lama) */
   --c-mint-soft:    #E7F4EC;
   --c-coral:        #D2495A;     /* expense/danger — garnet rose, lebih tenang dari coral pink */
@@ -103,15 +106,15 @@
   --c-coral-ink:    #A12C3F;
   --c-amber-ink:    #8F5E06;
   --c-violet-ink:   #5A3CAB;
-  --c-ink:          #101410;
+  --c-ink:          #1E1B16;
 
-  /* ── Dark inverse (sidebar, hero cards in light mode) ── */
-  --black:       #0A0A0F;
-  --black-soft:  #14141A;
-  --black-2:     #1C1C24;
-  --black-line:  rgba(255, 255, 255, 0.08);
-  --on-black:    #F2F4EF;
-  --on-black-mut:#A2A89C;
+  /* ── Dark inverse — panel "malam dusk" (hero cards di light mode) ── */
+  --black:       #241F31;
+  --black-soft:  #322B45;
+  --black-2:     #3C3454;
+  --black-line:  rgba(255, 255, 255, 0.10);
+  --on-black:    #F4EDDC;
+  --on-black-mut:#B5ABCC;
 
   /* ── Hijau Klunting — ramp bespoke (warm sage-emerald) ── */
   --emerald-50:  #EDF6F1;
@@ -175,10 +178,10 @@
      Shadow tint = green-ink (rgba 22,28,22) biar kedalaman koheren sama
      undertone porselen v6 — bukan slate dingin atau cokelat era krem.
      Satu warna shadow di seluruh skala. */
-  --shadow-sm: 0 1px 2px rgba(22, 28, 22, 0.05);
-  --shadow:    0 4px 16px -4px rgba(22, 28, 22, 0.07), 0 1px 3px rgba(22, 28, 22, 0.05);
-  --shadow-lg: 0 24px 48px -16px rgba(22, 28, 22, 0.14), 0 4px 12px rgba(22, 28, 22, 0.06);
-  --shadow-card: 0 1px 0 rgba(22, 28, 22, 0.05), 0 12px 24px -12px rgba(22, 28, 22, 0.10);
+  --shadow-sm: 0 1px 2px rgba(30, 27, 22, 0.05);
+  --shadow:    0 4px 16px -4px rgba(30, 27, 22, 0.07), 0 1px 3px rgba(30, 27, 22, 0.05);
+  --shadow-lg: 0 24px 48px -16px rgba(30, 27, 22, 0.14), 0 4px 12px rgba(30, 27, 22, 0.06);
+  --shadow-card: 0 1px 0 rgba(30, 27, 22, 0.05), 0 12px 24px -12px rgba(30, 27, 22, 0.10);
 
   /* ── LEGACY alias map — keeps existing components working ── */
   /* Old butter/lime → emerald (the new signature) */
@@ -263,8 +266,8 @@
   --orange-600:  var(--amber-600);
   --orange-700:  var(--amber-700);
 
-  --stone:       #6E7568;
-  --stone-light: #A2A89C;
+  --stone:       #6B6354;
+  --stone-light: #B0A893;
 
   /* ── Fonts — keluarga Instrument ───────────────── */
   --font-sans:    var(--font-sans-brand), "Instrument Sans",
@@ -339,45 +342,45 @@
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — INK v6: green-cast pekat, habitat asli volt. Jurang
-     elevasi tegas dipertahankan (bg dalam, kartu terangkat, hairline
-     0.10) — pelajaran "nyaru" dari espresso v5. */
-  --paper:       #0C0E0C;
-  --bg:          #0C0E0C;
-  --bg-2:        #161A16;
-  --surface:     #161A16;
-  --surface-2:   #1F241F;
-  --surface-3:   #293029;
-  --line:        rgba(255, 255, 255, 0.10);
-  --line-strong: rgba(255, 255, 255, 0.17);
+  /* Surfaces — MALAM DUSK v7: ungu senja dongeng (bukan hitam pekat).
+     Jurang elevasi tegas dipertahankan (panel 1.19 di atas bg). */
+  --paper:       #241F31;
+  --bg:          #241F31;
+  --bg-2:        #322B45;
+  --surface:     #322B45;
+  --surface-2:   #3C3454;
+  --surface-3:   #463D63;
+  --line:        rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.20);
 
-  /* Text — green-white ramp (kontras: 15.0 / 11.4 / 6.8 di atas surface) */
-  --ink:         #F2F4EF;
-  --ink-muted:   #CDD2C9;
-  --ink-soft:    #9CA496;
-  --text:        #F2F4EF;
-  --text-2:      #CDD2C9;
-  --text-mute:   #9CA496;
-  --text-faint:  #9CA496;   /* faint utk teks dilarang — samain ke floor --ink-soft */
-  --border:      rgba(255, 255, 255, 0.10);
-  --border-soft: rgba(255, 255, 255, 0.06);
+  /* Text — cream ramp (kontras: 11.5 / 8.9 / 6.5 di atas panel) */
+  --ink:         #F4EDDC;
+  --ink-muted:   #DCD3E8;
+  --ink-soft:    #B5ABCC;
+  --text:        #F4EDDC;
+  --text-2:      #DCD3E8;
+  --text-mute:   #B5ABCC;
+  --text-faint:  #B5ABCC;   /* faint utk teks dilarang — samain ke floor --ink-soft */
+  --border:      rgba(255, 255, 255, 0.12);
+  --border-soft: rgba(255, 255, 255, 0.07);
+  /* Outline kartun di malam: garis ungu terang + bayangan lebih gelap dari bg */
+  --outline:        #4A4063;
+  --outline-shadow: #171221;
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
-  --black:       #F2F4EF;
-  --black-soft:  #E2E5DC;
-  --black-2:     #CDD2C9;
+  --black:       #F4EDDC;
+  --black-soft:  #EDE3CC;
+  --black-2:     #DCD3E8;
   --black-line:  rgba(0, 0, 0, 0.10);
-  --on-black:    #101410;
-  --on-black-mut:#575E52;
+  --on-black:    #1E1B16;
+  --on-black-mut:#5E5749;
 
-  /* Accents — Klein versi dark: periwinkle elektrik #8B96FF, kebaca
-     sebagai FILL (teks gelap 7.3:1) DAN teks/ring (6.6:1) → -ink = dia
-     sendiri. Watch-item: lightness mirip iris AI #A78FE8 (hue tetap
-     beda biru vs ungu) — konteks beda (tombol vs chip AI). */
-  --c-primary:      #8B96FF;
-  --c-primary-soft: rgba(139, 150, 255, 0.14);
-  --c-primary-foreground: #0C0E0C;
-  --c-primary-ink:  #8B96FF;
+  /* Accents — EMAS tetap emas di malam (koin bercahaya): fill dgn teks
+     tinta (11.1:1), sbg teks/ring 8.7:1 di panel → -ink = dirinya. */
+  --c-primary:      #FFC83D;
+  --c-primary-soft: rgba(255, 200, 61, 0.14);
+  --c-primary-foreground: #1E1B16;
+  --c-primary-ink:  #FFC83D;
   --c-mint:         #3DBA8A;
   --c-mint-soft:    rgba(61, 186, 138, 0.13);
   --c-coral:        #ED7385;
@@ -391,7 +394,7 @@
   --c-coral-ink:    #F4A6AE;
   --c-amber-ink:    #EFCB7E;
   --c-violet-ink:   #C9BAF4;
-  --c-ink:          #F2F4EF;
+  --c-ink:          #F4EDDC;
 
   /* Legacy emerald tokens — boost untuk dark */
   --emerald-400: #5CCB9F;
@@ -459,14 +462,14 @@
     letter-spacing: -0.025em;
     font-weight: 600;
   }
-  /* Seleksi teks — Klein tint, momen fun yang cuma muncul saat interaksi. */
+  /* Seleksi teks — emas tint, momen fun yang cuma muncul saat interaksi. */
   ::selection {
-    background: #DDE2FB;
-    color: #101410;
+    background: #FFE9AC;
+    color: #1E1B16;
   }
   .dark ::selection {
-    background: #272D5C;
-    color: #F2F4EF;
+    background: #5A4A14;
+    color: #F4EDDC;
   }
   /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
   * {
@@ -536,19 +539,21 @@
    Wise/Mercury/Linear-inspired clean cards + stat tiles. */
 
 /* Card — Wise-style pure white with soft shadow + line border */
+/* Kartu kartun v7: outline tinta 2px + bayangan offset keras —
+   bahasa visual inti Cartoon Quest (hairline dalam tetap --border). */
 .s-card {
   background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 1px 0 rgba(43, 37, 27, 0.04);
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--outline-shadow);
 }
 .s-card-pad     { padding: 20px; }
 .s-card-pad-lg  { padding: 24px; }
 .s-card-pad-xl  { padding: 28px 32px; }
 
 .dark .s-card {
-  border-color: var(--border-soft);
-  box-shadow: none;
+  border-color: var(--outline);
+  box-shadow: 3px 3px 0 var(--outline-shadow);
 }
 
 /* Wise-style stat tile — used in KPI rows + dashboard stats */
@@ -616,8 +621,13 @@
   transition: opacity 150ms, transform 150ms, box-shadow 150ms;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
 }
-.btn-primary:hover { opacity: 0.92; }
-.btn-primary:active { transform: scale(0.97); }
+.btn-primary {
+  border: 2px solid var(--outline);
+  box-shadow: 2px 2px 0 var(--outline-shadow);
+}
+.btn-primary:hover { opacity: 0.95; }
+/* Efek "dipencet": tombol turun ke bayangannya — micro-fun v7 */
+.btn-primary:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--outline-shadow); }
 
 /* Transaction table row hover — a distinct faint mint, NOT the warm cream
    (var(--surface-2)) used by the table header + date-group separators, so a

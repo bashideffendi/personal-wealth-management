@@ -78,8 +78,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     // Nyamain kanvas v6 (Volt & Ink) — chrome browser/PWA nyatu mulus.
-    { media: "(prefers-color-scheme: light)", color: "#F1F2EB" },
-    { media: "(prefers-color-scheme: dark)", color: "#0C0E0C" },
+    { media: "(prefers-color-scheme: light)", color: "#FFF9EE" },
+    { media: "(prefers-color-scheme: dark)", color: "#241F31" },
   ],
   width: "device-width",
   initialScale: 1,
