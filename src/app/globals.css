@@ -73,8 +73,11 @@
      iris=AI) tapi hex-nya milik Klunting: de-neon, warm-shift, dan
      lightness disetarakan biar berdampingan di chart tanpa ada yang
      teriak. Stock Tailwind 500 (10B981/F43F5E/F59E0B/8B5CF6) pensiun. */
-  --c-primary:      #131110;     /* INK primary — Quiet Luxury brand (buttons, logo, nav) */
-  --c-primary-soft: #EEE9DF;     /* warm tint for active states */
+  /* PRIMARY = hijau racing Klunting (v5.1). Dulu ink hitam — app kebaca
+     monokrom padahal ikon app-nya sendiri gradien hijau. Tombol, FAB,
+     nav aktif, fokus: hijau dalam; teks tetap ink. Putih di atasnya 8.0:1. */
+  --c-primary:      #0A5C41;
+  --c-primary-soft: #E2F0E8;     /* tint hijau buat active states (ink-hijau 5.3:1) */
   --c-primary-foreground: #FFFFFF;
   --c-mint:         #129B69;     /* income/up — hijau dalam, gak neon (putih di atasnya 3.6:1, > lama) */
   --c-mint-soft:    #E7F4EC;
@@ -327,15 +330,17 @@
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — espresso: gelap tapi sewarna dengan brand hangat */
-  --paper:       #11100E;
-  --bg:          #11100E;
-  --bg-2:        #1A1815;
-  --surface:     #1A1815;
-  --surface-2:   #221F1B;
-  --surface-3:   #2B2722;
-  --line:        rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  /* Surfaces — espresso v5.1: jurang elevasi DIPERLEBAR (bg lebih dalam,
+     kartu lebih terangkat, hairline lebih tegas) — versi awal "nyaru",
+     kartu lebur ke latar (rasio cuma 1.07; kini 1.13 + border 0.10). */
+  --paper:       #0E0C0A;
+  --bg:          #0E0C0A;
+  --bg-2:        #1E1A16;
+  --surface:     #1E1A16;
+  --surface-2:   #282320;
+  --surface-3:   #332D27;
+  --line:        rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.17);
 
   /* Text — warm white ramp (kontras: 15.8 / 11.8 / 6.8 di atas surface) */
   --ink:         #F4F2ED;
@@ -345,8 +350,8 @@
   --text-2:      #D6D2CA;
   --text-mute:   #A6A097;
   --text-faint:  #A6A097;   /* faint utk teks dilarang — samain ke floor --ink-soft */
-  --border:      rgba(255, 255, 255, 0.07);
-  --border-soft: rgba(255, 255, 255, 0.04);
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-soft: rgba(255, 255, 255, 0.06);
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
   --black:       #F6F4EF;
@@ -357,9 +362,9 @@
   --on-black-mut:#57534E;
 
   /* Accents — versi terang palet bespoke (fill ≥ 6:1, -ink ≥ 9:1 di surface) */
-  --c-primary:      #F4F2ED;      /* INK inverts to near-white on dark */
-  --c-primary-soft: rgba(255, 255, 255, 0.08);
-  --c-primary-foreground: #11100E;
+  --c-primary:      #3FBE8C;      /* hijau primary versi dark (teks gelap 8.1:1) */
+  --c-primary-soft: rgba(63, 190, 140, 0.14);
+  --c-primary-foreground: #0E0C0A;
   --c-mint:         #3DBA8A;
   --c-mint-soft:    rgba(61, 186, 138, 0.13);
   --c-coral:        #ED7385;
