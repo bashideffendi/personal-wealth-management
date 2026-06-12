@@ -2,7 +2,8 @@
 
 import { toast } from 'sonner'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Account, CreditCard as CreditCardType, CreditCardPayment } from '@/types'
@@ -107,15 +108,14 @@ function minPayment(balance: number): number {
   return Math.min(balance, Math.max(50_000, Math.round(balance * 0.1)))
 }
 
-const MINT = '#10B981', AMBER = '#F59E0B', CORAL = '#F43F5E'
+const MINT = 'var(--c-mint)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
+const MINT_INK = 'var(--c-mint-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 export default function CreditCardsPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [cards, setCards] = useState<CreditCardType[]>([])
-  const [payments, setPayments] = useState<CreditCardPayment[]>([])
-  const [accounts, setAccounts] = useState<Account[]>([])
+  const qc = useQueryClient()
 
   const [cardDialogOpen, setCardDialogOpen] = useState(false)
   const [cardForm, setCardForm] = useState<CardFormState>(EMPTY_CARD)
@@ -129,22 +129,34 @@ export default function CreditCardsPage() {
   const [paySaving, setPaySaving] = useState(false)
 
 
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const [cR, pR, aR] = await Promise.all([
-      supabase.from('credit_cards').select('*').eq('user_id', user.id).order('current_balance', { ascending: false }),
-      supabase.from('credit_card_payments').select('*').eq('user_id', user.id).order('date', { ascending: false }),
-      supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
-    ])
-    setCards((cR.data ?? []) as CreditCardType[])
-    setPayments((pR.data ?? []) as CreditCardPayment[])
-    setAccounts((aR.data ?? []) as Account[])
-    setLoading(false)
+  const pageQuery = useQuery({
+    queryKey: ['credit-cards'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [cR, pR, aR] = await Promise.all([
+        supabase.from('credit_cards').select('*').eq('user_id', user.id).order('current_balance', { ascending: false }),
+        supabase.from('credit_card_payments').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+        supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
+      ])
+      if (cR.error) throw cR.error
+      if (pR.error) throw pR.error
+      return {
+        cards: (cR.data ?? []) as CreditCardType[],
+        payments: (pR.data ?? []) as CreditCardPayment[],
+        accounts: (aR.data ?? []) as Account[],
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const cards = useMemo(() => pageQuery.data?.cards ?? [], [pageQuery.data])
+  const payments = pageQuery.data?.payments ?? []
+  const accounts = pageQuery.data?.accounts ?? []
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['credit-cards'] })
+    qc.invalidateQueries({ queryKey: ['debts-page'] }) // CC ikut total utang di halaman Utang
   }
-
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveCard() {
     setCardSaving(true)
@@ -166,14 +178,16 @@ export default function CreditCardsPage() {
     // tanpa network biar gak gagal total (logo jaringan baru muncul stlh migrate).
     let { error } = await write(withNet)
     if (error && /network/i.test(error.message || '')) ({ error } = await write(base))
-    setCardSaving(false); setCardDialogOpen(false); void load()
+    setCardSaving(false)
+    if (error) { toast.error(t('common.mutation_failed')); return }
+    setCardDialogOpen(false); refresh()
   }
 
   async function removeCard(id: string) {
     if (!confirm(t('credit_cards.confirm_delete'))) return
     const { error } = await supabase.from('credit_cards').delete().eq('id', id)
     if (error) { toast.error(t('common.delete_failed')); return }
-    void load()
+    refresh()
   }
 
   function openEditCard(c: CreditCardType) {
@@ -202,11 +216,15 @@ export default function CreditCardsPage() {
       from_account_id: payForm.from_account_id || null, date: payForm.date, notes: payForm.notes,
     })
     if (payErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); return }
+    // Tiga langkah berurutan — berhenti + toast di langkah yang gagal, biar
+    // gak ada torn state (pembayaran tercatat tapi saldo kartu/rekening
+    // gak berubah, tanpa kabar).
     const card = cards.find((x) => x.id === payForm.card_id)
     if (card) {
-      await supabase.from('credit_cards')
+      const { error: cardErr } = await supabase.from('credit_cards')
         .update({ current_balance: Math.max(0, card.current_balance - payForm.amount) })
         .eq('id', card.id)
+      if (cardErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
     }
     // Bayar kartu = uang KELUAR dari rekening sumber → kurangi saldonya biar masuk
     // cash flow & net worth gak naik gratis. CC payment = transfer (bukan expense
@@ -214,12 +232,34 @@ export default function CreditCardsPage() {
     if (payForm.from_account_id) {
       const acc = accounts.find((a) => a.id === payForm.from_account_id)
       if (acc) {
-        await supabase.from('accounts')
+        const { error: accErr } = await supabase.from('accounts')
           .update({ current_balance: acc.current_balance - payForm.amount })
           .eq('id', acc.id)
+        if (accErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
       }
     }
-    setPaySaving(false); setPayDialogOpen(false); void load()
+    setPaySaving(false); setPayDialogOpen(false); refresh()
+  }
+
+  // Hapus pembayaran = batalkan efeknya DUA ARAH: saldo kartu balik naik,
+  // saldo rekening sumber dikembalikan (pelajaran reversal dari debt-payments).
+  async function removePayment(p: CreditCardPayment) {
+    if (!confirm(t('credit_cards.confirm_delete_payment'))) return
+    const { error: delErr } = await supabase.from('credit_card_payments').delete().eq('id', p.id)
+    if (delErr) { toast.error(t('common.delete_failed')); return }
+    const card = cards.find((x) => x.id === p.card_id)
+    if (card) {
+      const { error } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + p.amount }).eq('id', card.id)
+      if (error) toast.error(t('common.mutation_failed'))
+    }
+    if (p.from_account_id) {
+      const acc = accounts.find((a) => a.id === p.from_account_id)
+      if (acc) {
+        const { error } = await supabase.from('accounts').update({ current_balance: acc.current_balance + p.amount }).eq('id', acc.id)
+        if (error) toast.error(t('common.mutation_failed'))
+      }
+    }
+    refresh()
   }
 
   const active = useMemo(() => cards.filter((c) => c.is_active), [cards])
@@ -231,6 +271,7 @@ export default function CreditCardsPage() {
   }, [active])
 
   const utilColor = totals.utilization < 30 ? MINT : totals.utilization < 70 ? AMBER : CORAL
+  const utilInk = totals.utilization < 30 ? MINT_INK : totals.utilization < 70 ? AMBER_INK : CORAL_INK
   const utilZone = totals.utilization < 30 ? t('credit_cards.util_zone_safe') : totals.utilization < 70 ? t('credit_cards.util_zone_high') : t('credit_cards.util_zone_too_high')
 
   const today = new Date()
@@ -259,10 +300,10 @@ export default function CreditCardsPage() {
   const dueSoon = dueList.filter((d) => d.days <= 7)
 
   const stats: { label: string; value: string; sub: string; icon: LucideIcon; color: string; tint: string }[] = [
-    { label: t('credit_cards.stat_total_limit'), value: formatCurrency(totals.limit), sub: `${t('credit_cards.stat_from_n_cards_prefix')} ${totals.count} ${t('credit_cards.cards_unit')}`, icon: CreditCard, color: '#64748B', tint: 'rgba(100,116,139,0.12)' },
-    { label: t('credit_cards.stat_total_used'), value: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% ${t('credit_cards.stat_of_limit_suffix')}`, icon: ArrowUpRight, color: CORAL, tint: 'rgba(244,63,94,0.12)' },
-    { label: t('credit_cards.stat_available_limit'), value: formatCurrency(totals.available), sub: t('credit_cards.stat_ready_to_use'), icon: CheckCircle2, color: MINT, tint: 'rgba(16,185,129,0.12)' },
-    { label: t('credit_cards.stat_nearest_due'), value: nearest ? formatDate(nearest.due.toISOString()) : '—', sub: nearest ? `${nearest.days} ${t('credit_cards.days_left_suffix')}` : t('credit_cards.no_bills'), icon: CalendarClock, color: AMBER, tint: 'rgba(245,158,11,0.12)' },
+    { label: t('credit_cards.stat_total_limit'), value: formatCurrency(totals.limit), sub: `${t('credit_cards.stat_from_n_cards_prefix')} ${totals.count} ${t('credit_cards.cards_unit')}`, icon: CreditCard, color: 'var(--ink-soft)', tint: 'var(--surface-2)' },
+    { label: t('credit_cards.stat_total_used'), value: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% ${t('credit_cards.stat_of_limit_suffix')}`, icon: ArrowUpRight, color: CORAL, tint: tint(CORAL, 10) },
+    { label: t('credit_cards.stat_available_limit'), value: formatCurrency(totals.available), sub: t('credit_cards.stat_ready_to_use'), icon: CheckCircle2, color: MINT, tint: tint(MINT, 10) },
+    { label: t('credit_cards.stat_nearest_due'), value: nearest ? formatDate(nearest.due.toISOString()) : '—', sub: nearest ? `${nearest.days} ${t('credit_cards.days_left_suffix')}` : t('credit_cards.no_bills'), icon: CalendarClock, color: AMBER, tint: tint(AMBER, 10) },
   ]
 
   return (
@@ -290,6 +331,11 @@ export default function CreditCardsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : active.length === 0 ? (
         <div className="s-card p-12 text-center">
           <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}>
@@ -327,13 +373,13 @@ export default function CreditCardsPage() {
               type="button"
               onClick={() => openPayCard(dueSoon[0].c)}
               className="w-full flex items-center gap-3 rounded-xl border p-3 text-left transition hover:brightness-[0.99]"
-              style={{ borderColor: `${dueSoon[0].days <= 3 ? CORAL : AMBER}55`, background: `${dueSoon[0].days <= 3 ? CORAL : AMBER}0F` }}
+              style={{ borderColor: tint(dueSoon[0].days <= 3 ? CORAL : AMBER, 33), background: tint(dueSoon[0].days <= 3 ? CORAL : AMBER, 6) }}
             >
-              <CalendarClock className="size-4 shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }} />
+              <CalendarClock className="size-4 shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL_INK : AMBER_INK }} />
               <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
                 <strong>{dueSoon.length} {t('credit_cards.cards_unit')}</strong> {t('credit_cards.nudge_due_within_7d')} — <strong>{dueSoon[0].c.name}</strong> {dueSoon[0].days} {t('credit_cards.days_left_suffix')} ({formatCurrency(dueSoon[0].c.current_balance)}).
               </p>
-              <span className="text-[12px] font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL : AMBER }}>{t('credit_cards.pay_arrow')}</span>
+              <span className="text-[12px] font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL_INK : AMBER_INK }}>{t('credit_cards.pay_arrow')}</span>
             </button>
           )}
 
@@ -343,8 +389,9 @@ export default function CreditCardsPage() {
               const util = c.credit_limit > 0 ? (c.current_balance / c.credit_limit) * 100 : 0
               const due = nextDueDate(c.due_day)
               const daysLeft = daysUntil(due)
-              const urgency = daysLeft <= 3 ? CORAL : daysLeft <= 7 ? AMBER : 'var(--ink-muted)'
+              const urgency = daysLeft <= 3 ? CORAL_INK : daysLeft <= 7 ? AMBER_INK : 'var(--ink-muted)'
               const uColor = util > 80 ? CORAL : util > 50 ? AMBER : MINT
+              const uInk = util > 80 ? CORAL_INK : util > 50 ? AMBER_INK : MINT_INK
               return (
                 <div key={c.id} className="s-card overflow-hidden p-0 group">
                   {/* Visual gradient top */}
@@ -371,7 +418,7 @@ export default function CreditCardsPage() {
                   <div className="p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.utilization')}</p>
-                      <p className="num tabular text-[12px] font-semibold" style={{ color: uColor }}>{util.toFixed(0)}%</p>
+                      <p className="num tabular text-[12px] font-semibold" style={{ color: uInk }}>{util.toFixed(0)}%</p>
                     </div>
                     <div className="kl-bar mt-2" style={{ color: uColor }}><i style={{ width: `${Math.min(util, 100)}%` }} /></div>
                     <p className="num tabular mt-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
@@ -422,15 +469,15 @@ export default function CreditCardsPage() {
             </div>
 
             <div className="s-card p-5" style={{ background: `color-mix(in srgb, ${utilColor} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${utilColor} 25%, var(--border-soft))` }}>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: utilColor }}>{t('credit_cards.utilization_rate')}</p>
-              <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 52, color: utilColor, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
+              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: utilInk }}>{t('credit_cards.utilization_rate')}</p>
+              <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 52, color: utilInk, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
               <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> {t('credit_cards.of_total_limit')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>
               </p>
               <div className="mt-4 flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
-                <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: utilColor }} />
+                <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: utilInk }} />
                 <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {t('credit_cards.advice_prefix')} <strong style={{ color: 'var(--ink)' }}>{t('credit_cards.advice_below_30')}</strong>. {t('credit_cards.advice_you_are')} <strong style={{ color: utilColor }}>{utilZone}</strong>.
+                  {t('credit_cards.advice_prefix')} <strong style={{ color: 'var(--ink)' }}>{t('credit_cards.advice_below_30')}</strong>. {t('credit_cards.advice_you_are')} <strong style={{ color: utilInk }}>{utilZone}</strong>.
                 </p>
               </div>
             </div>
@@ -452,13 +499,21 @@ export default function CreditCardsPage() {
                   const c = cards.find((x) => x.id === p.card_id)
                   const a = accounts.find((x) => x.id === p.from_account_id)
                   return (
-                    <div key={p.id} className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-[var(--surface-2)]">
+                    <div key={p.id} className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-[var(--surface-2)]">
                       <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: MINT }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c?.name ?? '—'}</p>
                         <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{formatDate(p.date)}{a ? ` · ${t('credit_cards.from_prefix')} ${a.name}` : ''}{p.notes ? ` · ${p.notes}` : ''}</p>
                       </div>
-                      <p className="num font-semibold tabular" style={{ color: MINT }}>−{formatCurrency(p.amount)}</p>
+                      <p className="num font-semibold tabular" style={{ color: MINT_INK }}>−{formatCurrency(p.amount)}</p>
+                      <Button
+                        variant="ghost" size="icon-sm"
+                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition shrink-0"
+                        aria-label={t('credit_cards.delete_payment_aria')}
+                        onClick={() => removePayment(p)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                      </Button>
                     </div>
                   )
                 })}
@@ -473,8 +528,8 @@ export default function CreditCardsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'rgba(244,63,94,0.12)' }}>
-                <CreditCard className="size-5" style={{ color: CORAL }} />
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-coral-soft)' }}>
+                <CreditCard className="size-5" style={{ color: CORAL_INK }} />
               </div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{cardForm.id ? t('credit_cards.dialog_edit_title') : t('credit_cards.dialog_add_title')}</DialogTitle>
@@ -528,7 +583,7 @@ export default function CreditCardsPage() {
                       type="button"
                       onClick={() => setCardForm({ ...cardForm, network: on ? '' : net.value })}
                       className="rounded-lg border px-3 py-2 text-[12px] font-medium transition"
-                      style={{ borderColor: on ? CORAL : 'var(--border-soft)', background: on ? 'rgba(244,63,94,0.08)' : 'var(--surface)', color: on ? '#9F1239' : 'var(--ink-muted)' }}
+                      style={{ borderColor: on ? CORAL : 'var(--border-soft)', background: on ? 'var(--c-coral-soft)' : 'var(--surface)', color: on ? CORAL_INK : 'var(--ink-muted)' }}
                     >
                       {net.label}
                     </button>
