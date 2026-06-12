@@ -4,8 +4,9 @@
  * Liquid balance = money you can spend / convert to cash quickly.
  * In this app it comes from TWO sources:
  *
- * 1. `accounts` table (source of truth, auto-updated by transactions):
- *    cash / bank / digital_wallet types.
+ * 1. `accounts` table (cash / bank / digital_wallet). Source of truth, tapi
+ *    saldonya DIKELOLA MANUAL oleh user — insert transaksi TIDAK meng-update
+ *    saldo (satu-satunya penulis lain: pembayaran kartu kredit).
  * 2. `assets_liquid` table (manual entries for liquid items that are NOT
  *    transactional accounts): receivables, locked savings, foreign cash, etc.
  *

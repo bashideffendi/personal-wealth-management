@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -52,9 +53,9 @@ const accentFor = (t: string) => TYPE_ACCENT[t] ?? 'var(--ink-soft)'
 // Allocation pill colors — token-based so the text stays legible in dark mode
 // (the old hardcoded dark hex on a translucent bg was invisible in dark).
 const ALLOC_PILL: Record<AllocationPurpose, { bg: string; fg: string }> = {
-  emergency_fund: { bg: 'var(--c-mint-soft)',   fg: 'var(--c-mint)' },
-  goal:           { bg: 'var(--c-violet-soft)', fg: 'var(--c-violet)' },
-  sinking_fund:   { bg: 'var(--c-amber-soft)',  fg: 'var(--c-amber)' },
+  emergency_fund: { bg: 'var(--c-mint-soft)',   fg: 'var(--c-mint-ink)' },
+  goal:           { bg: 'var(--c-violet-soft)', fg: 'var(--c-violet-ink)' },
+  sinking_fund:   { bg: 'var(--c-amber-soft)',  fg: 'var(--c-amber-ink)' },
   other:          { bg: 'var(--surface-2)',     fg: 'var(--ink-muted)' },
 }
 
@@ -84,16 +85,12 @@ type AllocationSummary = {
 
 export default function AccountsPage() {
   const supabase = createClient()
+  const qc = useQueryClient()
   const { hidden: privacyHidden } = usePrivacy()
   const t = useT()
 
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null)
-  const [activityByAccount, setActivityByAccount] = useState<Record<string, ActivityStat>>({})
-  const [allocationsByAccount, setAllocationsByAccount] = useState<Record<string, AllocationSummary[]>>({})
   const [allocAccount, setAllocAccount] = useState<Account | null>(null)
 
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null)
 
@@ -105,11 +102,6 @@ export default function AccountsPage() {
   const [view, setView] = useState<'card' | 'table'>('card')
 
   useEffect(() => {
-    fetchData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem('pwm.accounts.view') : null
     if (v === 'table' || v === 'card') setView(v)
   }, [])
@@ -118,68 +110,82 @@ export default function AccountsPage() {
     try { localStorage.setItem('pwm.accounts.view', v) } catch { /* ignore */ }
   }
 
-  async function fetchData() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
+  const pageQuery = useQuery({
+    queryKey: ['accounts-page'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
 
-    // Activity window: last 30 days of transactions, aggregated per account.
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - 30)
-    const cutoffISO = cutoff.toISOString().slice(0, 10)
+      // Jendela aktivitas: transaksi 30 hari terakhir, diagregasi per akun.
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - 30)
+      const cutoffISO = cutoff.toISOString().slice(0, 10)
 
-    const [accRes, profRes, allocRes, goalsRes, txRes] = await Promise.all([
-      supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('profiles').select('default_account_id').eq('id', user.id).maybeSingle(),
-      // Allocations table may not exist yet (migration 016) — degrade gracefully.
-      supabase
-        .from('account_allocations')
-        .select('account_id, purpose_kind, goal_id, custom_label, amount')
-        .eq('user_id', user.id)
-        .then(
-          (r: { data: unknown; error: unknown }) => r,
-          () => ({ data: [] as unknown[], error: null as unknown }),
-        ),
-      supabase.from('goals').select('id, name').eq('user_id', user.id),
-      supabase.from('transactions').select('account_id, type, amount').eq('user_id', user.id).gte('date', cutoffISO),
-    ])
+      const [accRes, profRes, allocRes, goalsRes, txRes] = await Promise.all([
+        supabase.from('accounts').select('*').eq('user_id', user.id).order('name'),
+        supabase.from('profiles').select('default_account_id').eq('id', user.id).maybeSingle(),
+        // Tabel alokasi bisa belum ada (migration 016) — degrade halus.
+        supabase
+          .from('account_allocations')
+          .select('account_id, purpose_kind, goal_id, custom_label, amount')
+          .eq('user_id', user.id)
+          .then(
+            (r: { data: unknown; error: unknown }) => r,
+            () => ({ data: [] as unknown[], error: null as unknown }),
+          ),
+        supabase.from('goals').select('id, name').eq('user_id', user.id),
+        supabase.from('transactions').select('account_id, type, amount').eq('user_id', user.id).gte('date', cutoffISO),
+      ])
+      if (accRes.error) throw accRes.error
 
-    if (accRes.data) setAccounts(accRes.data)
-    if (profRes.data?.default_account_id) setDefaultAccountId(profRes.data.default_account_id as string)
+      type AllocRow = {
+        account_id: string
+        purpose_kind: AllocationPurpose
+        goal_id: string | null
+        custom_label: string | null
+        amount: number
+      }
+      const goalNameById: Record<string, string> = {}
+      ;((goalsRes.data ?? []) as { id: string; name: string }[]).forEach((g) => { goalNameById[g.id] = g.name })
+      const allocMap: Record<string, AllocationSummary[]> = {}
+      ;((allocRes.data ?? []) as AllocRow[]).forEach((row) => {
+        const label =
+          row.purpose_kind === 'emergency_fund' ? t('accounts.alloc_emergency_fund')
+          : row.purpose_kind === 'goal' ? (goalNameById[row.goal_id ?? ''] ?? t('accounts.alloc_goal'))
+          : (row.custom_label?.trim() || t('accounts.alloc_sinking_fund'))
+        if (!allocMap[row.account_id]) allocMap[row.account_id] = []
+        allocMap[row.account_id].push({ purpose_kind: row.purpose_kind, label, amount: row.amount })
+      })
 
-    // Allocations map
-    type AllocRow = {
-      account_id: string
-      purpose_kind: AllocationPurpose
-      goal_id: string | null
-      custom_label: string | null
-      amount: number
-    }
-    const goalNameById: Record<string, string> = {}
-    ;((goalsRes.data ?? []) as { id: string; name: string }[]).forEach((g) => { goalNameById[g.id] = g.name })
-    const map: Record<string, AllocationSummary[]> = {}
-    ;((allocRes.data ?? []) as AllocRow[]).forEach((row) => {
-      const label =
-        row.purpose_kind === 'emergency_fund' ? t('accounts.alloc_emergency_fund')
-        : row.purpose_kind === 'goal' ? (goalNameById[row.goal_id ?? ''] ?? t('accounts.alloc_goal'))
-        : (row.custom_label?.trim() || t('accounts.alloc_sinking_fund'))
-      if (!map[row.account_id]) map[row.account_id] = []
-      map[row.account_id].push({ purpose_kind: row.purpose_kind, label, amount: row.amount })
-    })
-    setAllocationsByAccount(map)
+      // Peta aktivitas (30 hari): in = income, out = sisanya.
+      const act: Record<string, ActivityStat> = {}
+      ;((txRes.data ?? []) as { account_id: string | null; type: string; amount: number }[]).forEach((tx) => {
+        if (!tx.account_id) return
+        const a = (act[tx.account_id] ??= { count: 0, inSum: 0, outSum: 0 })
+        a.count += 1
+        if (tx.type === 'income') a.inSum += tx.amount ?? 0
+        else a.outSum += tx.amount ?? 0
+      })
 
-    // Activity map (last 30 days): in = income, out = everything else.
-    const act: Record<string, ActivityStat> = {}
-    ;((txRes.data ?? []) as { account_id: string | null; type: string; amount: number }[]).forEach((t) => {
-      if (!t.account_id) return
-      const a = (act[t.account_id] ??= { count: 0, inSum: 0, outSum: 0 })
-      a.count += 1
-      if (t.type === 'income') a.inSum += t.amount ?? 0
-      else a.outSum += t.amount ?? 0
-    })
-    setActivityByAccount(act)
-
-    setLoading(false)
+      return {
+        accounts: (accRes.data ?? []) as Account[],
+        defaultAccountId: (profRes.data?.default_account_id as string | null) ?? null,
+        allocationsByAccount: allocMap,
+        activityByAccount: act,
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const accounts = useMemo(() => pageQuery.data?.accounts ?? [], [pageQuery.data])
+  const defaultAccountId = pageQuery.data?.defaultAccountId ?? null
+  const allocationsByAccount = pageQuery.data?.allocationsByAccount ?? {}
+  const activityByAccount = useMemo(() => pageQuery.data?.activityByAccount ?? {}, [pageQuery.data])
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['accounts-page'] })
+    qc.invalidateQueries({ queryKey: ['liquid-assets'] }) // saldo akun = aset likuid
+    qc.invalidateQueries({ queryKey: ['net-worth'] })
+    qc.invalidateQueries({ queryKey: ['debts-page'] }) // rasio utang pakai likuid
   }
 
   function openAddDialog() {
@@ -274,7 +280,7 @@ export default function AccountsPage() {
 
     setSaving(false)
     setDialogOpen(false)
-    fetchData()
+    refresh()
   }
 
   async function handleDelete() {
@@ -282,9 +288,16 @@ export default function AccountsPage() {
     const { error } = await supabase.from('accounts').delete().eq('id', deleteId)
     if (error) {
       toast.error(t('accounts.toast_delete_failed'))
+      setDeleteId(null)
+      return
+    }
+    // Akun default yang dihapus jangan ninggalin referensi nyangkut di profil.
+    if (deleteId === defaultAccountId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await supabase.from('profiles').update({ default_account_id: null }).eq('id', user.id)
     }
     setDeleteId(null)
-    fetchData()
+    refresh()
   }
 
   async function handleSetDefault(accountId: string) {
@@ -297,8 +310,8 @@ export default function AccountsPage() {
       .eq('id', user.id)
     setSettingDefaultId(null)
     if (error) { toast.error(`${t('accounts.toast_set_default_failed')}: ${error.message}`); return }
-    setDefaultAccountId(accountId)
     toast.success(t('accounts.toast_default_updated'))
+    refresh()
   }
 
   const today = formatDate(new Date())
@@ -339,8 +352,8 @@ export default function AccountsPage() {
     return (
       <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]" style={{ color }}>
         <span>{act.count} {t('accounts.trx')}{opts?.showWindow ? ` · ${t('accounts.days_30')}` : ''}</span>
-        {act.inSum > 0 && <span className="num" style={{ color: 'var(--c-mint)' }}>+{formatCurrency(act.inSum)}</span>}
-        {act.outSum > 0 && <span className="num" style={{ color: 'var(--c-coral)' }}>−{formatCurrency(act.outSum)}</span>}
+        {act.inSum > 0 && <span className="num" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(act.inSum)}</span>}
+        {act.outSum > 0 && <span className="num" style={{ color: 'var(--c-coral-ink)' }}>−{formatCurrency(act.outSum)}</span>}
       </span>
     )
   }
@@ -413,6 +426,11 @@ export default function AccountsPage() {
         <div className="flex items-center justify-center py-12" style={{ color: 'var(--ink-muted)' }}>
           <Loader2 className="size-5 animate-spin mr-2" /> {t('accounts.loading')}
         </div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : accounts.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed p-10 text-center" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
           <Wallet className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
@@ -476,7 +494,6 @@ export default function AccountsPage() {
             const masked = maskAccountNumber(a.account_number, privacyHidden)
             return (
               <div key={a.id} className="group relative rounded-xl border bg-[var(--surface)] p-4 transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
-                <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: accentFor(a.type) }} aria-hidden="true" />
                 <div className="flex items-start gap-3">
                   <InstitutionLogo accountName={a.name} size={48} shape="circle" />
                   <div className="flex-1 min-w-0">
@@ -528,7 +545,7 @@ export default function AccountsPage() {
         open={allocAccount !== null}
         onClose={() => setAllocAccount(null)}
         account={allocAccount}
-        onSaved={() => fetchData()}
+        onSaved={() => refresh()}
       />
 
       {!loading && accounts.length > 0 && (
@@ -578,7 +595,7 @@ export default function AccountsPage() {
                   <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((t) => (<SelectItem key={t} value={t}>{ACCOUNT_TYPES[t]}</SelectItem>))}
+                  {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k) => (<SelectItem key={k} value={k}>{ACCOUNT_TYPES[k]}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
