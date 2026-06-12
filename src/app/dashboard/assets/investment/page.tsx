@@ -1,13 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
-import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History } from 'lucide-react'
+import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown } from 'lucide-react'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
@@ -20,7 +20,7 @@ import { UpcomingDividends } from '@/components/investment/upcoming-dividends'
 import { WatchlistTargetChip } from '@/components/investment/watchlist-target-chip'
 import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
-import { FX_FALLBACK_USDIDR } from '@/lib/constants'
+import { FX_FALLBACK_USDIDR, INVESTMENT_SUBCATS } from '@/lib/constants'
 import { useT } from '@/lib/i18n/context'
 
 // Defer recharts out of the route's initial JS (loads on chart mount).
@@ -59,6 +59,24 @@ const NO_QUOTES: Record<string, LiveQuote> = {}
 export default function InvestmentOverviewPage() {
   const t = useT()
   const supabase = createClient()
+
+  // Menu "Tambah Holding" — pilih kelas aset dulu (investasi bukan cuma saham),
+  // lalu langsung dibuka form tambahnya via ?add=1 di halaman kelas.
+  const [addOpen, setAddOpen] = useState(false)
+  const addRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!addOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (addRef.current && !addRef.current.contains(e.target as Node)) setAddOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setAddOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [addOpen])
 
   // Server data via react-query: back-nav from a class page now renders
   // instantly from cache (staleTime 60s) instead of re-running getUser +
@@ -346,13 +364,38 @@ export default function InvestmentOverviewPage() {
             >
               <History className="size-3.5" /> {t('investment.dividend_history')}
             </Link>
-            <Link
-              href="/dashboard/assets/investment/stock"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
-              style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
-            >
-              <Plus className="size-3.5" /> {t('investment.add_holding')}
-            </Link>
+            <div className="relative" ref={addRef}>
+              <button
+                type="button"
+                onClick={() => setAddOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={addOpen}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
+                style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
+              >
+                <Plus className="size-3.5" /> {t('investment.add_holding')} <ChevronDown className="size-3" style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
+              </button>
+              {addOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border py-1.5 z-50 max-h-[60vh] overflow-y-auto"
+                  style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 12px 32px -12px rgba(16,24,40,0.18)' }}
+                >
+                  {INVESTMENT_SUBCATS.map((sc) => (
+                    <Link
+                      key={sc.slug}
+                      role="menuitem"
+                      href={`/dashboard/assets/investment/${sc.slug}?add=1`}
+                      onClick={() => setAddOpen(false)}
+                      className="block px-3.5 py-2 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                      style={{ color: 'var(--ink)' }}
+                    >
+                      {sc.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </>
         }
       />

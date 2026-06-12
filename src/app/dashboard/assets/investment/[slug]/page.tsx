@@ -141,8 +141,11 @@ export default function InvestmentCategoryPage() {
   const [activeTab, setActiveTab] = useState('holdings')
   useEffect(() => {
     const VALID = ['holdings', 'watchlist', 'research', 'compare', 'dividen-pro', 'log', 'dividen', 'berita']
-    const tb = new URLSearchParams(window.location.search).get('tab')
+    const sp = new URLSearchParams(window.location.search)
+    const tb = sp.get('tab')
     if (tb && VALID.includes(tb)) setActiveTab(tb)
+    // ?add=1 dari menu "Tambah Holding" di overview → langsung buka form.
+    if (sp.get('add') === '1') { setForm(EMPTY); setDialogOpen(true) }
   }, [])
 
   // Declared as useCallback before the useEffect that triggers it so the
