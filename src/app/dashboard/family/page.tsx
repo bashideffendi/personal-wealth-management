@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 import {
-  fetchActiveHousehold, generateInviteToken, isOwner, relationshipLabel,
+  fetchActiveHousehold, generateInviteToken, isOwner,
   fetchHouseholdGoals, fetchHouseholdActivities, logActivity, getHouseholdNetWorth, setMyNetWorthSharing,
   type Household, type MemberWithProfile, type HouseholdInvitation,
   type HouseholdGoal, type HouseholdActivity, type HouseholdNetWorth,
@@ -33,39 +34,29 @@ import {
 
 interface MyUser { id: string; email: string }
 
-const ROLE_LABEL: Record<'owner' | 'member', string> = { owner: 'Pemilik', member: 'Anggota' }
-const REL_OPTIONS = [
-  { value: 'pasangan', label: 'Pasangan' },
-  { value: 'orang_tua', label: 'Orang tua' },
-  { value: 'anak', label: 'Anak' },
-  { value: 'saudara', label: 'Saudara' },
-  { value: 'lainnya', label: 'Lainnya' },
-]
+const REL_KEYS = ['pasangan', 'orang_tua', 'anak', 'saudara', 'lainnya'] as const
+const REL_LABEL_KEY: Record<string, string> = {
+  pasangan: 'family.rel_pasangan', orang_tua: 'family.rel_orang_tua',
+  anak: 'family.rel_anak', saudara: 'family.rel_saudara', lainnya: 'family.rel_lainnya',
+}
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: (key: string) => string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff / 60000)
-  if (m < 1) return 'baru saja'
-  if (m < 60) return `${m} menit lalu`
+  if (m < 1) return t('family.time_just_now')
+  if (m < 60) return `${m} ${t('family.time_minutes_ago')}`
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h} jam lalu`
+  if (h < 24) return `${h} ${t('family.time_hours_ago')}`
   const d = Math.floor(h / 24)
-  if (d === 1) return 'kemarin'
-  if (d < 30) return `${d} hari lalu`
+  if (d === 1) return t('family.time_yesterday')
+  if (d < 30) return `${d} ${t('family.time_days_ago')}`
   return formatDate(new Date(iso))
 }
 
 export default function FamilyPage() {
   const supabase = createClient()
+  const qc = useQueryClient()
   const t = useT()
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<MyUser | null>(null)
-  const [household, setHousehold] = useState<Household | null>(null)
-  const [members, setMembers] = useState<MemberWithProfile[]>([])
-  const [invitations, setInvitations] = useState<HouseholdInvitation[]>([])
-  const [goals, setGoals] = useState<HouseholdGoal[]>([])
-  const [activities, setActivities] = useState<HouseholdActivity[]>([])
-  const [netWorth, setNetWorth] = useState<HouseholdNetWorth | null>(null)
 
   // Create household
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -99,21 +90,22 @@ export default function FamilyPage() {
   const [goalDeadline, setGoalDeadline] = useState('')
   const [savingGoal, setSavingGoal] = useState(false)
 
-  useEffect(() => {
-    void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  async function load() {
-    setLoading(true)
-    const { data: { user: u } } = await supabase.auth.getUser()
-    if (!u) { setLoading(false); return }
-    setUser({ id: u.id, email: u.email ?? '' })
-
-    const hh = await fetchActiveHousehold(supabase, u.id)
-    setHousehold(hh)
-
-    if (hh) {
+  const pageQuery = useQuery({
+    queryKey: ['family'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user: u } } = await supabase.auth.getUser()
+      if (!u) throw new Error('unauthenticated')
+      const me: MyUser = { id: u.id, email: u.email ?? '' }
+      const hh = await fetchActiveHousehold(supabase, u.id)
+      if (!hh) {
+        return {
+          user: me, household: null as Household | null,
+          members: [] as MemberWithProfile[], invitations: [] as HouseholdInvitation[],
+          goals: [] as HouseholdGoal[], activities: [] as HouseholdActivity[],
+          netWorth: null as HouseholdNetWorth | null,
+        }
+      }
       // select('*') = resilient: kolom baru (can_edit/relationship/share_net_worth)
       // dibaca opsional, jadi page tetap jalan sebelum migration 041 di-run.
       const [membersRes, invitesRes, goalsRes, activitiesRes, nwRes] = await Promise.all([
@@ -132,6 +124,8 @@ export default function FamilyPage() {
         fetchHouseholdActivities(supabase, hh.id),
         getHouseholdNetWorth(supabase, hh.id),
       ])
+      if (membersRes.error) throw membersRes.error
+      if (invitesRes.error) throw invitesRes.error
 
       type RawMember = {
         household_id: string; user_id: string; role: 'owner' | 'member'; joined_at: string
@@ -139,20 +133,31 @@ export default function FamilyPage() {
         profiles: { full_name: string | null } | null
       }
       const raw = (membersRes.data ?? []) as RawMember[]
-      setMembers(raw.map((r) => ({
-        household_id: r.household_id, user_id: r.user_id, role: r.role, joined_at: r.joined_at,
-        can_edit: r.can_edit ?? true, relationship: r.relationship ?? null, share_net_worth: r.share_net_worth ?? false,
-        full_name: r.profiles?.full_name ?? null,
-        email: r.user_id === u.id ? (u.email ?? null) : null,
-      })))
-      setInvitations((invitesRes.data ?? []) as HouseholdInvitation[])
-      setGoals(goalsRes)
-      setActivities(activitiesRes)
-      setNetWorth(nwRes)
-    }
-
-    setLoading(false)
-  }
+      return {
+        user: me,
+        household: hh,
+        members: raw.map((r) => ({
+          household_id: r.household_id, user_id: r.user_id, role: r.role, joined_at: r.joined_at,
+          can_edit: r.can_edit ?? true, relationship: r.relationship ?? null, share_net_worth: r.share_net_worth ?? false,
+          full_name: r.profiles?.full_name ?? null,
+          email: r.user_id === u.id ? (u.email ?? null) : null,
+        })) as MemberWithProfile[],
+        invitations: (invitesRes.data ?? []) as HouseholdInvitation[],
+        goals: goalsRes,
+        activities: activitiesRes,
+        netWorth: nwRes,
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const user = pageQuery.data?.user ?? null
+  const household = pageQuery.data?.household ?? null
+  const members = pageQuery.data?.members ?? []
+  const invitations = pageQuery.data?.invitations ?? []
+  const goals = pageQuery.data?.goals ?? []
+  const activities = pageQuery.data?.activities ?? []
+  const netWorth = pageQuery.data?.netWorth ?? null
+  const refresh = () => qc.invalidateQueries({ queryKey: ['family'] })
 
   async function createHousehold() {
     if (!user) return
@@ -173,6 +178,8 @@ export default function FamilyPage() {
       .insert({ household_id: hhData.id, user_id: user.id, role: 'owner' })
     setCreating(false)
     if (memErr) {
+      // Bersihin household yatim — tanpa membership, halaman gak bakal nemuin lagi.
+      await supabase.from('households').delete().eq('id', hhData.id)
       toast.error(`${t('family.toast_create_join_failed')}: ${memErr.message}`)
       return
     }
@@ -180,7 +187,7 @@ export default function FamilyPage() {
     setCreateDialogOpen(false)
     setNewHouseholdName('')
     toast.success(t('family.toast_created'))
-    await load()
+    refresh()
   }
 
   async function generateInvite() {
@@ -196,15 +203,27 @@ export default function FamilyPage() {
       .insert({ household_id: household.id, invited_by: user.id, email: inviteEmail.trim() || null, token })
       .select()
       .single()
-    setInviting(false)
     if (error || !data) {
+      setInviting(false)
       toast.error(`${t('family.toast_invite_failed')}: ${error?.message ?? 'unknown'}`)
       return
     }
     await logActivity(supabase, household.id, user.id, 'invite_sent', `Mengundang anggota baru${inviteEmail.trim() ? ` (${inviteEmail.trim()})` : ''}`)
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://personalwealthmanagement.vercel.app'
-    setGeneratedLink(`${baseUrl}/dashboard/join/${token}`)
-    void load()
+    setGeneratedLink(`${window.location.origin}/dashboard/join/${token}`)
+    if (inviteEmail.trim()) {
+      // Kirim email undangan via server — best-effort, link tetap bisa dibagi manual.
+      try {
+        const res = await fetch('/api/household/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invitationId: (data as { id: string }).id }),
+        })
+        const out = (await res.json().catch(() => null)) as { sent?: boolean } | null
+        if (res.ok && out?.sent) toast.success(t('family.toast_invite_emailed'))
+      } catch { /* tanpa RESEND_API_KEY atau offline: cukup link manual */ }
+    }
+    setInviting(false)
+    refresh()
   }
 
   async function copyLink() {
@@ -220,7 +239,7 @@ export default function FamilyPage() {
     if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}`); return }
     if (household && user) await logActivity(supabase, household.id, user.id, 'invite_revoked', 'Membatalkan undangan')
     toast.success(t('family.toast_invite_revoked'))
-    void load()
+    refresh()
   }
 
   async function removeMember(memberId: string) {
@@ -237,21 +256,27 @@ export default function FamilyPage() {
     if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}`); return }
     await logActivity(supabase, household.id, user.id, 'member_removed', `Mengeluarkan ${target?.full_name || 'anggota'}`)
     toast.success(t('family.toast_member_removed'))
-    void load()
+    refresh()
   }
 
   async function leaveHousehold() {
     if (!household || !user) return
     setLeaveDialogOpen(false)
-    await logActivity(supabase, household.id, user.id, 'member_left', 'Keluar dari keluarga')
+    // Log dulu (sesudah keluar, RLS nolak insert activity); kalau delete-nya
+    // gagal, log dicabut lagi biar gak ada riwayat "keluar" palsu.
+    const logId = await logActivity(supabase, household.id, user.id, 'member_left', 'Keluar dari keluarga')
     const { error } = await supabase
       .from('household_members')
       .delete()
       .eq('household_id', household.id)
       .eq('user_id', user.id)
-    if (error) { toast.error(`${t('family.toast_leave_failed')}: ${error.message}`); return }
+    if (error) {
+      if (logId) await supabase.from('household_activities').delete().eq('id', logId)
+      toast.error(`${t('family.toast_leave_failed')}: ${error.message}`)
+      return
+    }
     toast.success(t('family.toast_left'))
-    void load()
+    refresh()
   }
 
   async function deleteHousehold() {
@@ -260,7 +285,7 @@ export default function FamilyPage() {
     const { error } = await supabase.from('households').delete().eq('id', household.id)
     if (error) { toast.error(`${t('family.toast_disband_failed')}: ${error.message}`); return }
     toast.success(t('family.toast_disbanded'))
-    void load()
+    refresh()
   }
 
   async function toggleMyNetWorth() {
@@ -271,7 +296,7 @@ export default function FamilyPage() {
     setTogglingNW(false)
     if (!ok) { toast.error(t('family.toast_nw_failed')); return }
     toast.success(self.share_net_worth ? t('family.toast_nw_hidden') : t('family.toast_nw_shared'))
-    void load()
+    refresh()
   }
 
   function openPerms(m: MemberWithProfile) {
@@ -293,7 +318,7 @@ export default function FamilyPage() {
     await logActivity(supabase, household.id, user.id, 'permission_changed', `Mengubah izin ${permsMember.full_name || 'anggota'}`)
     toast.success(t('family.toast_perms_updated'))
     setPermsMember(null)
-    void load()
+    refresh()
   }
 
   async function createSharedGoal() {
@@ -310,13 +335,26 @@ export default function FamilyPage() {
     if (error) { toast.error(`${t('family.toast_failed')}: ${error.message}. ${t('family.toast_migration_042')}`); return }
     await logActivity(supabase, household.id, user.id, 'goal_created', `Membuat tujuan bersama "${goalName.trim()}"`)
     toast.success(t('family.toast_goal_added'))
+    qc.invalidateQueries({ queryKey: ['goals-page'] }) // goal bersama ikut nongol di halaman Tujuan
     setGoalDialogOpen(false)
     setGoalName(''); setGoalTarget(0); setGoalDeadline('')
-    void load()
+    refresh()
   }
 
   if (loading) {
     return <div className="flex items-center justify-center py-20" style={{ color: 'var(--ink-soft)' }}><Loader2 className="size-5 animate-spin mr-2" /> {t('family.loading')}</div>
+  }
+
+  if (pageQuery.isError) {
+    return (
+      <div className="space-y-6">
+        <FamilyHeader />
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
+      </div>
+    )
   }
 
   const isUserOwner = isOwner(household, user?.id ?? '')
@@ -354,9 +392,9 @@ export default function FamilyPage() {
             { icon: Users, title: t('family.step3_title'), desc: t('family.step3_desc') },
           ].map((step, i) => (
             <div key={i} className="s-card p-5">
-              <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--c-mint)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--c-mint-ink)' }}>
                 <step.icon className="size-4" />
-                <span className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('family.step_label')} {i + 1}</span>
+                <span className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('family.step_label')} {i + 1}</span>
               </div>
               <p className="font-semibold" style={{ color: 'var(--ink)' }}>{step.title}</p>
               <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
@@ -384,7 +422,7 @@ export default function FamilyPage() {
       {/* Hero — Lingkar Keluarga (data REAL) */}
       <section className="s-card overflow-hidden grid sm:grid-cols-[1.6fr_1fr_1fr]" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>
         <div className="p-5 sm:p-6 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--coral-700)' }}>{t('family.family_circle')}</p>
+          <p className="eyebrow" style={{ color: 'var(--c-coral-ink)' }}>{t('family.family_circle')}</p>
           <h2 className="mt-1.5 text-xl sm:text-2xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
           <p className="text-[13px] mt-2" style={{ color: 'var(--ink-muted)' }}>{members.length} {t('family.active_members')} · {t('family.created_on')} {formatDate(new Date(household.created_at))}</p>
         </div>
@@ -395,7 +433,7 @@ export default function FamilyPage() {
         </div>
         <div className="p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.invitations')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: invitations.length > 0 ? 'var(--c-amber)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
+          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: invitations.length > 0 ? 'var(--c-amber-ink)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
           <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? t('family.awaiting_acceptance') : t('family.none_pending')}</p>
         </div>
       </section>
@@ -408,7 +446,7 @@ export default function FamilyPage() {
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.combined_net_worth')}</p>
               {(netWorth?.members_sharing ?? 0) > 0 ? (
                 <>
-                  <p className="num font-bold mt-2 leading-none" style={{ fontSize: 28, color: 'var(--c-mint)', letterSpacing: '-0.02em' }}>{formatCurrency(netWorth?.combined_net_worth ?? 0)}</p>
+                  <p className="num font-bold mt-2 leading-none" style={{ fontSize: 28, color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(netWorth?.combined_net_worth ?? 0)}</p>
                   <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>
                     {t('family.assets')} <span className="num">{formatCurrency(netWorth?.combined_assets ?? 0)}</span> · {t('family.debts')} <span className="num">{formatCurrency(netWorth?.combined_debts ?? 0)}</span>
                   </p>
@@ -418,7 +456,7 @@ export default function FamilyPage() {
                 <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>{t('family.nw_none_sharing')}</p>
               )}
             </div>
-            <TrendingUp className="size-5 shrink-0" style={{ color: 'var(--c-mint)' }} />
+            <TrendingUp className="size-5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
           </div>
           {/* Toggle berbagi (current user) */}
           <button
@@ -454,7 +492,7 @@ export default function FamilyPage() {
           {members.map((m) => {
             const me = m.user_id === user?.id
             const owner = m.role === 'owner'
-            const relLabel = relationshipLabel(m.relationship)
+            const relLabel = m.relationship && REL_LABEL_KEY[m.relationship] ? t(REL_LABEL_KEY[m.relationship]) : null
             const viewOnly = !owner && m.can_edit === false
             return (
               <div key={m.user_id} className="flex items-center gap-3 p-4">
@@ -464,8 +502,8 @@ export default function FamilyPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{me ? t('family.you') : (m.full_name || t('family.member_fallback'))}</p>
-                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber)' : 'var(--ink-muted)' }}>
-                      {owner && <Crown className="size-2.5" />}{relLabel ?? ROLE_LABEL[m.role]}
+                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
+                      {owner && <Crown className="size-2.5" />}{relLabel ?? (m.role === 'owner' ? t('family.role_owner') : t('family.role_member'))}
                     </span>
                     {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />{t('family.view_only')}</span>}
                   </div>
@@ -500,7 +538,7 @@ export default function FamilyPage() {
               return (
                 <div key={inv.id} className="flex items-center gap-3 p-4">
                   <div className="size-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--c-amber-soft)' }}>
-                    <Mail className="size-4" style={{ color: 'var(--c-amber)' }} />
+                    <Mail className="size-4" style={{ color: 'var(--c-amber-ink)' }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || t('family.no_email_link')}</p>
@@ -537,7 +575,7 @@ export default function FamilyPage() {
                 <div key={g.id} className="p-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                    <span className="num text-[13px] font-semibold" style={{ color: 'var(--c-mint)' }}>{pct.toFixed(0)}%</span>
+                    <span className="num text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{pct.toFixed(0)}%</span>
                   </div>
                   <p className="num text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
                     {formatCurrency(g.current_amount)} <span style={{ color: 'var(--ink-soft)' }}>{t('family.of')} {formatCurrency(g.target_amount)}</span>
@@ -573,7 +611,7 @@ export default function FamilyPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] truncate" style={{ color: 'var(--ink)' }}><span className="font-medium">{a.user_id === user?.id ? t('family.you') : (a.full_name || t('family.member_fallback'))}</span> · {a.description}</p>
                 </div>
-                <span className="text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>{timeAgo(a.created_at)}</span>
+                <span className="text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>{timeAgo(a.created_at, t)}</span>
               </div>
             ))}
           </div>
@@ -586,12 +624,12 @@ export default function FamilyPage() {
         <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.whats_shared_desc')}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl p-4" style={{ background: 'var(--c-mint-soft)' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--c-mint)' }}><Check className="size-3.5" /> {t('family.shared')}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--c-mint-ink)' }}><Check className="size-3.5" /> {t('family.shared')}</p>
             <ul className="mt-2.5 space-y-2 text-sm" style={{ color: 'var(--ink)' }}>
-              <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_accounts')}</li>
-              <li className="flex items-center gap-2"><ArrowLeftRight className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_transactions')}</li>
-              <li className="flex items-center gap-2"><PieChart className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_budgets_goals')}</li>
-              <li className="flex items-center gap-2"><TrendingUp className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('family.shared_net_worth')} <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_net_worth_note')}</span></li>
+              <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_accounts')}</li>
+              <li className="flex items-center gap-2"><ArrowLeftRight className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_transactions')}</li>
+              <li className="flex items-center gap-2"><PieChart className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_budgets_goals')}</li>
+              <li className="flex items-center gap-2"><TrendingUp className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_net_worth')} <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_net_worth_note')}</span></li>
             </ul>
           </div>
           <div className="rounded-xl p-4" style={{ background: 'var(--surface-2)' }}>
@@ -654,7 +692,7 @@ export default function FamilyPage() {
             <>
               <div className="space-y-3 py-2">
                 <div className="rounded-lg p-3 text-sm flex items-start gap-2" style={{ background: 'var(--c-mint-soft)', color: 'var(--ink)' }}>
-                  <Check className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--c-mint)' }} />
+                  <Check className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
                   <span>{t('family.invite_link_created')}</span>
                 </div>
                 <div className="grid gap-1.5">
@@ -686,7 +724,7 @@ export default function FamilyPage() {
               <Label>{t('family.relationship_label')}</Label>
               <Select value={permRel} onValueChange={(v) => v && setPermRel(v)}>
                 <SelectTrigger><SelectValue placeholder={t('family.relationship_placeholder')} /></SelectTrigger>
-                <SelectContent>{REL_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                <SelectContent>{REL_KEYS.map((v) => <SelectItem key={v} value={v}>{t(REL_LABEL_KEY[v])}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <button type="button" onClick={() => setPermCanEdit((v) => !v)} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left" style={{ background: 'var(--surface-2)' }}>

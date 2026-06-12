@@ -83,6 +83,7 @@ export async function fetchActiveHousehold(supabase: DB, userId: string): Promis
     .select('household_id')
     .eq('user_id', userId)
     .maybeSingle()
+  if (memberRes.error) throw memberRes.error
   if (!memberRes.data) return null
 
   const hhRes = await supabase
@@ -91,6 +92,7 @@ export async function fetchActiveHousehold(supabase: DB, userId: string): Promis
     .eq('id', (memberRes.data as { household_id: string }).household_id)
     .maybeSingle()
 
+  if (hhRes.error) throw hhRes.error
   return (hhRes.data ?? null) as Household | null
 }
 
@@ -112,12 +114,6 @@ export function isOwner(household: Household | null, userId: string): boolean {
   return !!household && household.owner_user_id === userId
 }
 
-/** Indonesian label for a relationship code (or null). */
-export function relationshipLabel(rel?: string | null): string | null {
-  if (!rel) return null
-  const map: Record<string, string> = { pasangan: 'Pasangan', orang_tua: 'Orang tua', anak: 'Anak', saudara: 'Saudara', lainnya: 'Lainnya' }
-  return map[rel] ?? null
-}
 
 /** Shared (household-tagged) goals for the family page. */
 export async function fetchHouseholdGoals(supabase: DB, householdId: string): Promise<HouseholdGoal[]> {
@@ -127,6 +123,7 @@ export async function fetchHouseholdGoals(supabase: DB, householdId: string): Pr
     .eq('household_id', householdId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
+  if (res.error) throw res.error
   return (res.data ?? []) as HouseholdGoal[]
 }
 
@@ -138,6 +135,7 @@ export async function fetchHouseholdActivities(supabase: DB, householdId: string
     .eq('household_id', householdId)
     .order('created_at', { ascending: false })
     .limit(limit)
+  if (res.error) throw res.error
   type Row = {
     id: string; household_id: string; user_id: string; action: string
     description: string | null; created_at: string; profiles: { full_name: string | null } | null
@@ -149,8 +147,9 @@ export async function fetchHouseholdActivities(supabase: DB, householdId: string
 }
 
 /** Log a household activity (RLS: only as self, in own household). Best-effort. */
-export async function logActivity(supabase: DB, householdId: string, userId: string, action: string, description: string): Promise<void> {
-  await supabase.from('household_activities').insert({ household_id: householdId, user_id: userId, action, description })
+export async function logActivity(supabase: DB, householdId: string, userId: string, action: string, description: string): Promise<string | null> {
+  const { data } = await supabase.from('household_activities').insert({ household_id: householdId, user_id: userId, action, description }).select('id').single()
+  return (data as { id: string } | null)?.id ?? null
 }
 
 /** Combined household net worth via SECURITY DEFINER RPC (aggregate only). */
