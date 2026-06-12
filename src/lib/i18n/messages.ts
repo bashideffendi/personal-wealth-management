@@ -1406,6 +1406,7 @@ export const messages = {
       toast_app_locked: "App dikunci.",
       toast_reset_confirm_required: "Ketik \"HAPUS SEMUA\" persis untuk konfirmasi.",
       toast_reset_done: "Semua data dihapus.",
+      toast_reset_partial: "Reset gagal sebagian — gak semua data kehapus. Coba lagi.",
       toast_reset_done_desc: "Akan reload halaman.",
     },
     pricing: {
@@ -4608,6 +4609,7 @@ export const messages = {
       toast_app_locked: "App locked.",
       toast_reset_confirm_required: "Type \"HAPUS SEMUA\" exactly to confirm.",
       toast_reset_done: "All data deleted.",
+      toast_reset_partial: "Reset partially failed — not all data was deleted. Try again.",
       toast_reset_done_desc: "The page will reload.",
     },
     pricing: {

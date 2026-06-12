@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -23,7 +24,7 @@ import {
 import {
   User, Bell, Database, Shield, Sparkles,
   Loader2, Crown, AlertTriangle, ExternalLink, LogOut,
-  Lock, Mail, Trash2, Download, Palette, Moon, LockKeyhole,
+  Lock, Mail, Trash2, Download, Moon, LockKeyhole,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
@@ -40,7 +41,6 @@ interface Profile {
   full_name: string
   currency: string
   language: string
-  theme_accent: string
   show_decimals: boolean
   daily_reminder_enabled: boolean
   daily_reminder_time: string
@@ -55,29 +55,11 @@ interface Subscription {
   expires_at: string | null
 }
 
-interface Plan {
-  id: string
-  name: string
-  price_idr: number
-  ai_credits_monthly: number
-}
-
-const ACCENT_COLORS = [
-  { id: 'burgundy', name: 'Burgundy', hex: '#8b1538' },
-  { id: 'indigo',   name: 'Indigo',   hex: '#4f46e5' },
-  { id: 'emerald',  name: 'Emerald',  hex: '#10B981' },
-  { id: 'amber',    name: 'Amber',    hex: '#d97706' },
-  { id: 'rose',     name: 'Rose',     hex: '#e11d48' },
-  { id: 'slate',    name: 'Graphite', hex: '#475569' },
-]
-
-const PLAN_BADGES: Record<string, { label: string; bg: string; fg: string }> = {
-  basic:  { label: 'Basic',        bg: '#f1f5f9', fg: '#475569' },
-  full:   { label: 'Full Service', bg: '#d1fae5', fg: '#047857' },
-  // Legacy slugs kept for backward compatibility (pre-migration 020)
-  solo:   { label: 'Solo',         bg: '#f1f5f9', fg: '#475569' },
-  pro:    { label: 'Pro',          bg: '#fef3c7', fg: '#92400e' },
-  family: { label: 'Family',       bg: '#dbeafe', fg: '#1e40af' },
+// Cuma label yang kepake — bg/fg lama gak pernah dirender.
+const PLAN_LABEL: Record<string, string> = {
+  basic: 'Basic', full: 'Full Service',
+  // Slug legacy (pra-migration 020)
+  solo: 'Solo', pro: 'Pro', family: 'Family',
 }
 
 export default function ProfilePage() {
@@ -86,15 +68,7 @@ export default function ProfilePage() {
   const lock = useLock()
   const t = useT()
 
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [subscription, setSubscription] = useState<Subscription | null>(null)
-  const [, setPlan] = useState<Plan | null>(null)
-
-  // Counters for dashboard summary
-  const [accountCount, setAccountCount] = useState(0)
-  const [txCount, setTxCount] = useState(0)
 
   // Save state
   const [savingPrefs, setSavingPrefs] = useState(false)
@@ -183,72 +157,67 @@ export default function ProfilePage() {
   const [resetTyped, setResetTyped] = useState('')
   const [resetting, setResetting] = useState(false)
 
-  useEffect(() => {
-    void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const pageQuery = useQuery({
+    queryKey: ['profile-page'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user: u } } = await supabase.auth.getUser()
+      if (!u) throw new Error('unauthenticated')
+      const me = { id: u.id, email: u.email ?? '' }
 
-  async function load() {
-    setLoading(true)
-    const { data: { user: u } } = await supabase.auth.getUser()
-    if (!u) { setLoading(false); return }
-    setUser({ id: u.id, email: u.email ?? '' })
-
-    // Profile is required — others are best-effort (gracefully degrade if
-    // migration 014 hasn't been applied yet)
-    const pRes = await supabase.from('profiles').select('*').eq('id', u.id).maybeSingle()
-
-    // Hydrate profile with safe defaults so the UI never crashes on missing columns
-    const raw = (pRes.data ?? {}) as Partial<Profile>
-    setProfile({
-      id: raw.id ?? u.id,
-      full_name: raw.full_name ?? '',
-      currency: raw.currency ?? 'IDR',
-      language: raw.language ?? 'id',
-      theme_accent: raw.theme_accent ?? 'burgundy',
-      show_decimals: raw.show_decimals ?? false,
-      daily_reminder_enabled: raw.daily_reminder_enabled ?? false,
-      daily_reminder_time: raw.daily_reminder_time ?? '20:00',
-      ai_credits: raw.ai_credits ?? 0,
-      avatar_url: raw.avatar_url ?? null,
-    })
-
-    // These can fail if migration 014 hasn't run — wrap in try/catch
-    try {
-      const sRes = await supabase
-        .from('subscriptions')
-        .select('plan_id, status, started_at, expires_at')
-        .eq('user_id', u.id)
-        .in('status', ['active', 'trialing'])
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (sRes.data) {
-        setSubscription(sRes.data as Subscription)
-        const planRes = await supabase
-          .from('plans')
-          .select('id, name, price_idr, ai_credits_monthly')
-          .eq('id', (sRes.data as Subscription).plan_id)
-          .maybeSingle()
-        if (planRes.data) setPlan(planRes.data as Plan)
+      const pRes = await supabase.from('profiles').select('*').eq('id', u.id).maybeSingle()
+      if (pRes.error) throw pRes.error
+      // Hydrate dengan default aman biar UI gak pecah di kolom yang belum ada.
+      const raw = (pRes.data ?? {}) as Partial<Profile>
+      const prof: Profile = {
+        id: raw.id ?? u.id,
+        full_name: raw.full_name ?? '',
+        currency: raw.currency ?? 'IDR',
+        language: raw.language ?? 'id',
+        show_decimals: raw.show_decimals ?? false,
+        daily_reminder_enabled: raw.daily_reminder_enabled ?? false,
+        daily_reminder_time: raw.daily_reminder_time ?? '20:00',
+        ai_credits: raw.ai_credits ?? 0,
+        avatar_url: raw.avatar_url ?? null,
       }
-    } catch (err) {
-      console.warn('Subscription/plans query failed (likely migration 014 not yet run):', err)
-    }
 
-    try {
-      const [accRes, txRes] = await Promise.all([
-        supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', u.id),
-        supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('user_id', u.id),
-      ])
-      setAccountCount(accRes.count ?? 0)
-      setTxCount(txRes.count ?? 0)
-    } catch (err) {
-      console.warn('Counts query failed:', err)
-    }
+      // Langganan & counter best-effort (degrade halus pra-migration 014).
+      let sub: Subscription | null = null
+      try {
+        const sRes = await supabase
+          .from('subscriptions')
+          .select('plan_id, status, started_at, expires_at')
+          .eq('user_id', u.id)
+          .in('status', ['active', 'trialing'])
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (sRes.data) sub = sRes.data as Subscription
+      } catch { /* pra-migration */ }
 
-    setLoading(false)
-  }
+      let accounts = 0, txs = 0
+      try {
+        const [accRes, txRes] = await Promise.all([
+          supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', u.id),
+          supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('user_id', u.id),
+        ])
+        accounts = accRes.count ?? 0
+        txs = txRes.count ?? 0
+      } catch { /* best-effort */ }
+
+      return { user: me, profile: prof, subscription: sub, accountCount: accounts, txCount: txs }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const user = pageQuery.data?.user ?? null
+  const subscription = pageQuery.data?.subscription ?? null
+  const accountCount = pageQuery.data?.accountCount ?? 0
+  const txCount = pageQuery.data?.txCount ?? 0
+
+  // Seed form SEKALI dari hasil fetch — refetch background gak boleh nimpa editan.
+  useEffect(() => {
+    if (!profile && pageQuery.data?.profile) setProfile(pageQuery.data.profile)
+  }, [pageQuery.data, profile])
 
   async function savePreferences() {
     if (!profile || !user) return
@@ -259,7 +228,6 @@ export default function ProfilePage() {
         full_name: profile.full_name,
         currency: profile.currency,
         language: profile.language,
-        theme_accent: profile.theme_accent,
         show_decimals: profile.show_decimals,
       })
       .eq('id', user.id)
@@ -295,11 +263,16 @@ export default function ProfilePage() {
 
   async function updateReminderTime(time: string) {
     if (!profile || !user) return
+    const prev = profile.daily_reminder_time
     setProfile({ ...profile, daily_reminder_time: time })
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({ daily_reminder_time: time })
       .eq('id', user.id)
+    if (error) {
+      setProfile({ ...profile, daily_reminder_time: prev })
+      toast.error(t('profile.toast_update_failed'), { description: error.message })
+    }
   }
 
   // PIN is now managed device-side via LockProvider (see hook below).
@@ -310,8 +283,10 @@ export default function ProfilePage() {
     if (!user) return
     if (resetTyped !== 'HAPUS SEMUA') { toast.error(t('profile.toast_reset_confirm_required')); return }
     setResetting(true)
-    // Delete all user-scoped data (RLS filters per user, so this is safe)
-    await Promise.all([
+    // FK anak semuanya ON DELETE CASCADE (debt_payments→debts, allocations→accounts,
+    // fund_locations→emergency_funds) jadi paralel aman. Yang wajib: CEK errornya —
+    // reset parsial jangan ngaku sukses lalu redirect.
+    const results = await Promise.all([
       supabase.from('transactions').delete().eq('user_id', user.id),
       supabase.from('budgets').delete().eq('user_id', user.id),
       supabase.from('debt_payments').delete().eq('user_id', user.id),
@@ -325,6 +300,7 @@ export default function ProfilePage() {
       supabase.from('recurring_transactions').delete().eq('user_id', user.id),
       supabase.from('categorization_rules').delete().eq('user_id', user.id),
       supabase.from('contracts').delete().eq('user_id', user.id),
+      supabase.from('watchlist').delete().eq('user_id', user.id),
       supabase.from('assets_liquid').delete().eq('user_id', user.id),
       supabase.from('assets_non_liquid').delete().eq('user_id', user.id),
       supabase.from('emergency_funds').delete().eq('user_id', user.id),
@@ -333,6 +309,11 @@ export default function ProfilePage() {
       supabase.from('accounts').delete().eq('user_id', user.id),
     ])
     setResetting(false)
+    const failed = results.find((r) => r.error)
+    if (failed?.error) {
+      toast.error(t('profile.toast_reset_partial'), { description: failed.error.message })
+      return
+    }
     setResetDialogOpen(false)
     toast.success(t('profile.toast_reset_done'), { description: t('profile.toast_reset_done_desc') })
     window.location.href = '/dashboard'
@@ -343,10 +324,19 @@ export default function ProfilePage() {
     router.push('/login')
   }
 
-  if (loading) {
+  if (loading || (pageQuery.data && !profile)) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
         <Loader2 className="size-5 animate-spin mr-2" /> {t('profile.loading')}
+      </div>
+    )
+  }
+
+  if (pageQuery.isError) {
+    return (
+      <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+        <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
       </div>
     )
   }
@@ -356,9 +346,7 @@ export default function ProfilePage() {
   }
 
   const today = formatDate(new Date())
-  const planBadge = subscription
-    ? (PLAN_BADGES[subscription.plan_id] ?? PLAN_BADGES.basic)
-    : PLAN_BADGES.basic
+  const planLabel = subscription ? (PLAN_LABEL[subscription.plan_id] ?? 'Basic') : 'Basic'
 
   return (
     <div className="space-y-6">
@@ -430,11 +418,11 @@ export default function ProfilePage() {
                   >
                     {subscription?.plan_id === 'full' && <Crown className="size-3" />}
                     {subscription?.status === 'trialing' && <Sparkles className="size-3" />}
-                    {t('profile.plan_prefix')} {planBadge.label}
+                    {t('profile.plan_prefix')} {planLabel}
                     {subscription?.status === 'trialing' && ` (${t('profile.plan_trial')})`}
                   </span>
                   <span className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')} · {t('profile.stat_since')} {formatDate(new Date(subscription?.started_at ?? Date.now()))}
+                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''}
                   </span>
                 </div>
               </div>
@@ -457,11 +445,11 @@ export default function ProfilePage() {
       </section>
 
       {/* AI Credits card */}
-      <div className="rounded-xl border bg-gradient-to-br from-amber-50 to-orange-50 p-5">
+      <div className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 22%, transparent)' }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-white p-2 shadow-sm">
-              <Sparkles className="size-5 text-amber-600" />
+            <div className="rounded-lg p-2 shadow-sm" style={{ background: 'var(--surface)' }}>
+              <Sparkles className="size-5" style={{ color: 'var(--c-amber-ink)' }} />
             </div>
             <div>
               <p className="font-semibold">{t('profile.ai_credits_title')}</p>
@@ -476,7 +464,8 @@ export default function ProfilePage() {
           </div>
           <Link
             href="/dashboard/pricing"
-            className="self-end inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 transition"
+            className="self-end inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition hover:opacity-90"
+            style={{ background: 'var(--c-amber-ink)', color: '#FFFFFF' }}
           >
             <Sparkles className="size-3.5" />
             {t('profile.ai_credits_topup')}
@@ -557,7 +546,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setProfile({ ...profile, show_decimals: !profile.show_decimals })}
-                  className={`h-10 rounded-lg border text-sm font-medium transition ${profile.show_decimals ? 'bg-[var(--c-mint-soft)] border-emerald-300 text-[var(--c-mint)]' : 'bg-muted/40 border-muted text-muted-foreground'}`}
+                  className={`h-10 rounded-lg border text-sm font-medium transition ${profile.show_decimals ? 'bg-[var(--c-mint-soft)] border-[var(--c-mint)] text-[var(--c-mint-ink)]' : 'bg-muted/40 border-muted text-muted-foreground'}`}
                 >
                   {profile.show_decimals ? `${t('profile.decimals_on')} (${formatCurrency(12500.5)})` : `${t('profile.decimals_off')} (${formatCurrency(12500)})`}
                 </button>
@@ -569,23 +558,6 @@ export default function ProfilePage() {
               <p className="text-xs text-muted-foreground mt-2">
                 {t('profile.theme_mode_hint')}
               </p>
-            </div>
-            <div>
-              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />{t('profile.accent_color_label')}</Label>
-              <div className="flex flex-wrap gap-2">
-                {ACCENT_COLORS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setProfile({ ...profile, theme_accent: c.id })}
-                    className={`group flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-medium transition ${profile.theme_accent === c.id ? 'border-foreground' : 'border-transparent hover:border-muted-foreground/30'}`}
-                  >
-                    <span className="h-4 w-4 rounded-full" style={{ backgroundColor: c.hex }} />
-                    {c.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">{t('profile.accent_color_hint')}</p>
             </div>
           </section>
 
@@ -644,7 +616,7 @@ export default function ProfilePage() {
               </div>
               {lock.hasPin ? (
                 <div className="flex gap-2">
-                  <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">{t('profile.badge_active')}</Badge>
+                  <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint-ink)]">{t('profile.badge_active')}</Badge>
                   <Button variant="outline" size="sm" onClick={() => setPinRemoveDialogOpen(true)}>
                     {t('profile.pin_disable_btn')}
                   </Button>
@@ -705,7 +677,7 @@ export default function ProfilePage() {
                 </div>
                 {lock.hasBiometric ? (
                   <div className="flex gap-2">
-                    <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint)]">{t('profile.badge_active')}</Badge>
+                    <Badge className="bg-[var(--c-mint-soft)] text-[var(--c-mint-ink)]">{t('profile.badge_active')}</Badge>
                     <Button variant="outline" size="sm" onClick={disableBiometric}>
                       {t('profile.biometric_disable_btn')}
                     </Button>
@@ -754,8 +726,8 @@ export default function ProfilePage() {
             )}
           </section>
 
-          <section className="rounded-xl border bg-amber-50 border-amber-200 p-5">
-            <p className="text-sm text-amber-900">
+          <section className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 25%, transparent)' }}>
+            <p className="text-sm" style={{ color: 'var(--c-amber-ink)' }}>
               {t('profile.push_notice_prefix')} <strong>{t('profile.push_notice_bold')}</strong> {t('profile.push_notice_suffix')}
             </p>
           </section>
@@ -792,7 +764,7 @@ export default function ProfilePage() {
               <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
               <div className="flex-1">
                 <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{t('profile.danger_zone_title')}</h3>
-                <p className="text-sm mt-1" style={{ color: 'var(--c-coral)' }}>
+                <p className="text-sm mt-1" style={{ color: 'var(--c-coral-ink)' }}>
                   {t('profile.danger_zone_prefix')} <strong>{t('profile.danger_zone_bold')}</strong>.
                 </p>
                 <Button
@@ -819,8 +791,6 @@ export default function ProfilePage() {
       <div className="rounded-xl border bg-[var(--surface)] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="#" className="hover:underline text-muted-foreground">{t('profile.footer_tutorial')}</Link>
-            <Link href="#" className="hover:underline text-muted-foreground">{t('profile.footer_whats_new')}</Link>
             <a href="mailto:support@klunting.com" className="hover:underline text-muted-foreground inline-flex items-center gap-1">
               {t('profile.footer_contact_support')} <ExternalLink className="size-3" />
             </a>
@@ -928,7 +898,7 @@ export default function ProfilePage() {
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle style={{ color: 'var(--c-coral)' }}>{t('profile.reset_dialog_title')}</DialogTitle>
+            <DialogTitle style={{ color: 'var(--c-coral-ink)' }}>{t('profile.reset_dialog_title')}</DialogTitle>
             <DialogDescription>
               {t('profile.reset_dialog_desc_prefix')} <strong>{t('profile.reset_dialog_desc_bold')}</strong>. {t('profile.reset_dialog_desc_suffix')}
             </DialogDescription>
