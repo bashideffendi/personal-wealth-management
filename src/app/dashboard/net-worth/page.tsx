@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
@@ -8,7 +9,7 @@ import type { NetWorthSnapshot } from '@/types'
 import { projectNetWorth } from '@/lib/net-worth-projection'
 import type { PayoffDebt } from '@/lib/debt-payoff'
 import dynamic from 'next/dynamic'
-import { Loader2, TrendingUp, TrendingDown, Camera, Sparkles, History } from 'lucide-react'
+import { Loader2, TrendingUp, TrendingDown, RefreshCw, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useT } from '@/lib/i18n/context'
 
@@ -46,88 +47,129 @@ function ccMinPaymentNW(balance: number): number {
   return Math.min(balance, Math.max(50_000, Math.round(balance * 0.1)))
 }
 
+/** Delta net worth vs snapshot terdekat ke tanggal target — SATU util buat
+ *  hero & kartu riwayat (dulu logika ini di-copy-paste dua kali). Toleransi
+ *  45 hari: kalau riwayat belum nyampe (snapshot tertua baru kemarin),
+ *  tampil "—" daripada banding ke kemarin dan ngaku "vs bulan lalu". */
+function snapshotDelta(snapshots: NetWorthSnapshot[], target: Date): { delta: number; pct: number } | null {
+  if (snapshots.length < 2) return null
+  const last = snapshots[snapshots.length - 1]
+  let best: NetWorthSnapshot | null = null
+  let bestDist = Infinity
+  for (const s of snapshots) {
+    const d = Math.abs(new Date(s.snapshot_date).getTime() - target.getTime())
+    if (d < bestDist) { bestDist = d; best = s }
+  }
+  if (!best || best.snapshot_date === last.snapshot_date) return null
+  if (bestDist > 45 * 86_400_000) return null
+  const delta = last.net_worth - best.net_worth
+  return { delta, pct: best.net_worth !== 0 ? (delta / Math.abs(best.net_worth)) * 100 : 0 }
+}
+
 export default function NetWorthPage() {
   const supabase = createClient()
   const t = useT()
-  const [loading, setLoading] = useState(true)
-  const [snapshotting, setSnapshotting] = useState(false)
-  const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([])
+  const qc = useQueryClient()
   const [period, setPeriod] = useState<'3m' | '6m' | '12m' | 'all'>('12m')
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
-  const [data, setData] = useState<NetWorthData>({
-    cashAndEquivalent: 0, receivable: 0, property: 0, vehicle: 0, personalItem: 0,
-    longTermInvestment: 0, consumerDebt: 0, creditCard: 0, cashLoan: 0, longTermDebt: 0,
-  })
-  const [debtCount, setDebtCount] = useState(0)
-  const [payoffDebts, setPayoffDebts] = useState<PayoffDebt[]>([])
   const [nwStrategy, setNwStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
 
+  // react-query READ-ONLY — upsert snapshot dipisah ke efek di bawah.
+  // Dulu fetchData nyampur read+write (buka halaman = nulis DB) dan nge-query
+  // snapshots DUA kali (hasil pertama dibuang).
+  const pageQuery = useQuery({
+    queryKey: ['net-worth'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
+      const [liquidEntries, nonLiquidRes, investmentRes, debtRes, ccRes, snapshotRes, txRes] = await Promise.all([
+        fetchLiquidEntries(supabase, user.id),
+        supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
+        supabase.from('investments').select('total_value').eq('user_id', user.id),
+        supabase.from('debts').select('id, name, category, remaining, interest_rate, monthly_payment').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('credit_cards').select('id, name, current_balance, interest_rate').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('snapshot_date'),
+        supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
+      ])
+      if (nonLiquidRes.error) throw nonLiquidRes.error
+      if (debtRes.error) throw debtRes.error
+      if (snapshotRes.error) throw snapshotRes.error
 
-  async function fetchData() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90)
-    const [liquidEntries, nonLiquidRes, investmentRes, debtRes, ccRes, _snapshotRes, txRes] = await Promise.all([
-      fetchLiquidEntries(supabase, user.id),
-      supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
-      supabase.from('investments').select('total_value').eq('user_id', user.id),
-      supabase.from('debts').select('id, name, category, remaining, interest_rate, monthly_payment').eq('user_id', user.id).eq('is_active', true),
-      supabase.from('credit_cards').select('id, name, current_balance, interest_rate').eq('user_id', user.id).eq('is_active', true),
-      supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('snapshot_date'),
-      supabase.from('transactions').select('amount').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
-    ])
+      type NonLiquidRow = { category: string; current_value: number }
+      type DebtRow = { id: string; name: string; category: string; remaining: number; interest_rate: number; monthly_payment: number }
+      const nonLiquidAssets = (nonLiquidRes.data ?? []) as NonLiquidRow[]
+      const investments = (investmentRes.data ?? []) as { total_value: number }[]
+      const debts = (debtRes.data ?? []) as DebtRow[]
+      // Kartu kredit = utang revolving → ikut liabilitas
+      const cards = (ccRes.data ?? []) as { id: string; name: string; current_balance: number; interest_rate: number }[]
 
-    type NonLiquidRow = { category: string; current_value: number }
-    type DebtRow = { id: string; name: string; category: string; remaining: number; interest_rate: number; monthly_payment: number }
-    const nonLiquidAssets = (nonLiquidRes.data ?? []) as NonLiquidRow[]
-    const investments = (investmentRes.data ?? []) as { total_value: number }[]
-    const debts = (debtRes.data ?? []) as DebtRow[]
-    // Kartu kredit = utang revolving → ikut liabilitas
-    const cards = (ccRes.data ?? []) as { id: string; name: string; current_balance: number; interest_rate: number }[]
-    const creditCardDebt = cards.reduce((s, c) => s + (c.current_balance || 0), 0)
-    setDebtCount(debts.filter((d) => d.remaining > 0).length + cards.filter((c) => (c.current_balance || 0) > 0).length)
-    // PayoffDebt[] buat proyeksi — mapping CC persis kayak halaman Utang (interest ×12, min payment).
-    setPayoffDebts([
-      ...debts.filter((d) => d.remaining > 0).map((d) => ({ id: d.id, name: d.name, remaining: d.remaining, interest_rate: d.interest_rate || 0, monthly_payment: d.monthly_payment || 0 })),
-      ...cards.filter((c) => (c.current_balance || 0) > 0).map((c) => ({ id: `cc:${c.id}`, name: c.name, remaining: c.current_balance, interest_rate: (c.interest_rate || 0) * 12, monthly_payment: ccMinPaymentNW(c.current_balance) })),
-    ])
+      // Rata-rata income pakai jumlah bulan DISTINCT (cap 3, lantai 1) —
+      // SAMA dengan halaman Utang, biar DTI konsisten antar halaman.
+      const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
+      const totalIncome = incomeRows.reduce((s, r) => s + (r.amount || 0), 0)
+      const incomeMonths = new Set(incomeRows.map((r) => (r.date || '').slice(0, 7)).filter(Boolean)).size
 
-    const incomeRows = (txRes.data ?? []) as { amount: number }[]
-    setMonthlyIncome(incomeRows.length > 0 ? incomeRows.reduce((s, t) => s + (t.amount || 0), 0) / 3 : 0)
-
-    const sumCat = (rows: NonLiquidRow[], cat: string) => rows.filter((a) => a.category === cat).reduce((s, a) => s + (a.current_value || 0), 0)
-    const sumDebt = (cat: string) => debts.filter((d) => d.category === cat).reduce((s, d) => s + (d.remaining || 0), 0)
-
-    const next: NetWorthData = {
-      cashAndEquivalent: sumCashEquivalent(liquidEntries),
-      receivable: sumReceivable(liquidEntries),
-      property: sumCat(nonLiquidAssets, 'property'),
-      vehicle: sumCat(nonLiquidAssets, 'vehicle'),
-      personalItem: sumCat(nonLiquidAssets, 'personal_item'),
-      longTermInvestment: investments.reduce((s, inv) => s + (inv.total_value || 0), 0),
-      consumerDebt: sumDebt('consumer'),
-      creditCard: creditCardDebt,
-      cashLoan: sumDebt('cash_loan'),
-      longTermDebt: sumDebt('long_term'),
-    }
-    setData(next)
-
-    const totalAssetsNow = next.cashAndEquivalent + next.receivable + next.property + next.vehicle + next.personalItem + next.longTermInvestment
-    const totalDebtsNow = next.consumerDebt + next.creditCard + next.cashLoan + next.longTermDebt
-    const todayISO = new Date().toISOString().split('T')[0]
-    await supabase.from('net_worth_snapshots').upsert(
-      { user_id: user.id, snapshot_date: todayISO, total_assets: totalAssetsNow, total_debts: totalDebtsNow, net_worth: totalAssetsNow - totalDebtsNow },
-      { onConflict: 'user_id,snapshot_date' },
-    )
-    const refreshed = await supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('snapshot_date')
-    setSnapshots((refreshed.data ?? []) as NetWorthSnapshot[])
-    setLoading(false)
+      const sumCat = (rows: NonLiquidRow[], cat: string) => rows.filter((a) => a.category === cat).reduce((s, a) => s + (a.current_value || 0), 0)
+      const sumDebt = (cat: string) => debts.filter((d) => d.category === cat).reduce((s, d) => s + (d.remaining || 0), 0)
+      const data: NetWorthData = {
+        cashAndEquivalent: sumCashEquivalent(liquidEntries),
+        receivable: sumReceivable(liquidEntries),
+        property: sumCat(nonLiquidAssets, 'property'),
+        vehicle: sumCat(nonLiquidAssets, 'vehicle'),
+        personalItem: sumCat(nonLiquidAssets, 'personal_item'),
+        longTermInvestment: investments.reduce((s, inv) => s + (inv.total_value || 0), 0),
+        consumerDebt: sumDebt('consumer'),
+        creditCard: cards.reduce((s, c) => s + (c.current_balance || 0), 0),
+        cashLoan: sumDebt('cash_loan'),
+        longTermDebt: sumDebt('long_term'),
+      }
+      return {
+        data,
+        snapshots: (snapshotRes.data ?? []) as NetWorthSnapshot[],
+        monthlyIncome: incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0,
+        debtCount: debts.filter((d) => d.remaining > 0).length + cards.filter((c) => (c.current_balance || 0) > 0).length,
+        // PayoffDebt[] buat proyeksi — mapping CC persis kayak halaman Utang.
+        payoffDebts: [
+          ...debts.filter((d) => d.remaining > 0).map((d) => ({ id: d.id, name: d.name, remaining: d.remaining, interest_rate: d.interest_rate || 0, monthly_payment: d.monthly_payment || 0 })),
+          ...cards.filter((c) => (c.current_balance || 0) > 0).map((c) => ({ id: `cc:${c.id}`, name: c.name, remaining: c.current_balance, interest_rate: (c.interest_rate || 0) * 12, monthly_payment: ccMinPaymentNW(c.current_balance) })),
+        ] as PayoffDebt[],
+      }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const data = pageQuery.data?.data ?? {
+    cashAndEquivalent: 0, receivable: 0, property: 0, vehicle: 0, personalItem: 0,
+    longTermInvestment: 0, consumerDebt: 0, creditCard: 0, cashLoan: 0, longTermDebt: 0,
   }
+  const snapshots = useMemo(() => pageQuery.data?.snapshots ?? [], [pageQuery.data])
+  const monthlyIncome = pageQuery.data?.monthlyIncome ?? 0
+  const debtCount = pageQuery.data?.debtCount ?? 0
+  const payoffDebts = useMemo(() => pageQuery.data?.payoffDebts ?? [], [pageQuery.data])
 
-  useEffect(() => { void fetchData() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function takeManualSnapshot() { setSnapshotting(true); await fetchData(); setSnapshotting(false) }
+  // WRITE terpisah: snapshot harian di-upsert SETELAH data kebaca, dan cuma
+  // kalau nilai hari ini belum tercatat / berubah — buka halaman gak lagi
+  // selalu nulis DB.
+  useEffect(() => {
+    const d = pageQuery.data
+    if (!d) return
+    const totals = d.data
+    const assets = totals.cashAndEquivalent + totals.receivable + totals.property + totals.vehicle + totals.personalItem + totals.longTermInvestment
+    const debtsTotal = totals.consumerDebt + totals.creditCard + totals.cashLoan + totals.longTermDebt
+    const todayISO = new Date().toISOString().split('T')[0]
+    const last = d.snapshots[d.snapshots.length - 1]
+    if (last && last.snapshot_date === todayISO && last.total_assets === assets && last.total_debts === debtsTotal) return
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { error } = await supabase.from('net_worth_snapshots').upsert(
+        { user_id: user.id, snapshot_date: todayISO, total_assets: assets, total_debts: debtsTotal, net_worth: assets - debtsTotal },
+        { onConflict: 'user_id,snapshot_date' },
+      )
+      if (!error) qc.invalidateQueries({ queryKey: ['net-worth'] })
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageQuery.data])
 
   const totalCurrentAssets = data.cashAndEquivalent + data.receivable
   const totalNonCurrentAssets = data.property + data.vehicle + data.personalItem + data.longTermInvestment
@@ -137,37 +179,36 @@ export default function NetWorthPage() {
   const netWorth = totalAssets - totalDebt
   const isPositive = netWorth >= 0
   const projection = useMemo(() => projectNetWorth(totalAssets, payoffDebts, nwStrategy), [totalAssets, payoffDebts, nwStrategy])
-  const projAccent = nwStrategy === 'snowball' ? '#10B981' : '#8B5CF6'
+  const projAccent = nwStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'
   const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month), netWorth: p.netWorth })), [projection])
 
   const assetClasses = useMemo(() => ([
-    { label: t('networth.class_investment'), value: data.longTermInvestment, color: '#8B5CF6' },
-    { label: t('networth.class_cash'), value: data.cashAndEquivalent, color: '#10B981' },
-    { label: t('networth.class_property'), value: data.property, color: '#F59E0B' },
-    { label: t('networth.class_vehicle'), value: data.vehicle, color: '#6366F1' },
-    { label: t('networth.class_personal_item'), value: data.personalItem, color: '#F43F5E' },
-    { label: t('networth.class_receivable'), value: data.receivable, color: '#14B8A6' },
+    { label: t('networth.class_investment'), value: data.longTermInvestment, color: 'var(--c-violet)' },
+    { label: t('networth.class_cash'), value: data.cashAndEquivalent, color: 'var(--c-mint)' },
+    { label: t('networth.class_property'), value: data.property, color: 'var(--c-amber)' },
+    { label: t('networth.class_vehicle'), value: data.vehicle, color: 'var(--ink)' },
+    { label: t('networth.class_personal_item'), value: data.personalItem, color: 'var(--ink-soft)' },
+    { label: t('networth.class_receivable'), value: data.receivable, color: 'var(--c-mint-ink)' },
   ].filter((c) => c.value > 0)), [data, t])
 
   const heroStats = useMemo(() => {
-    if (snapshots.length < 2) return null
-    const last = snapshots[snapshots.length - 1]
-    const findClosest = (target: Date) => {
-      let best: NetWorthSnapshot | null = null, bestDist = Infinity
-      for (const s of snapshots) { const d = Math.abs(new Date(s.snapshot_date).getTime() - target.getTime()); if (d < bestDist) { bestDist = d; best = s } }
-      return best
-    }
     const now = new Date()
-    const d = (from: NetWorthSnapshot | null) => (from && from.snapshot_date !== last.snapshot_date)
-      ? { delta: last.net_worth - from.net_worth, pct: from.net_worth ? (last.net_worth - from.net_worth) / Math.abs(from.net_worth) * 100 : 0 } : null
     return {
-      vs1mo: d(findClosest(new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()))),
-      vsYtd: d(findClosest(new Date(now.getFullYear(), 0, 1))),
+      vs1mo: snapshotDelta(snapshots, new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())),
+      vsYtd: snapshotDelta(snapshots, new Date(now.getFullYear(), 0, 1)),
     }
   }, [snapshots])
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin" /></div>
+  }
+  if (pageQuery.isError) {
+    return (
+      <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+        <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+      </div>
+    )
   }
 
   return (
@@ -181,8 +222,8 @@ export default function NetWorthPage() {
           <Button variant="outline" onClick={() => document.getElementById('nw-history')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
             <History className="h-4 w-4" /> {t('networth.history')}
           </Button>
-          <Button onClick={takeManualSnapshot} disabled={snapshotting}>
-            {snapshotting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {t('networth.manual_snapshot')}
+          <Button onClick={() => pageQuery.refetch()} disabled={pageQuery.isFetching}>
+            {pageQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} {t('networth.refresh')}
           </Button>
         </div>
       </div>
@@ -222,7 +263,7 @@ export default function NetWorthPage() {
       </section>
 
       <div id="nw-history">
-        <NetWorthHistoryCard snapshots={snapshots} period={period} onPeriodChange={setPeriod} onSnapshot={takeManualSnapshot} snapshotting={snapshotting} />
+        <NetWorthHistoryCard snapshots={snapshots} period={period} onPeriodChange={setPeriod} />
       </div>
 
       {/* Proyeksi net worth saat utang lunas — pakai engine payoff yg sama dgn halaman Utang */}
@@ -236,7 +277,7 @@ export default function NetWorthPage() {
             <div className="flex gap-1.5 shrink-0">
               {(['snowball', 'avalanche'] as const).map((s) => (
                 <button key={s} onClick={() => setNwStrategy(s)} aria-pressed={nwStrategy === s} aria-label={`${t('networth.strategy')} ${s}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
-                  style={{ background: nwStrategy === s ? (s === 'snowball' ? '#10B981' : '#8B5CF6') : 'var(--surface-2)', color: nwStrategy === s ? '#FFF' : 'var(--ink)' }}>{s}</button>
+                  style={{ background: nwStrategy === s ? (s === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)') : 'var(--surface-2)', color: nwStrategy === s ? '#FFF' : 'var(--ink)' }}>{s}</button>
               ))}
             </div>
           </div>
@@ -244,8 +285,8 @@ export default function NetWorthPage() {
             <>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>{formatCurrency(projection.endNetWorth)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: '#10B981' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(projection.endNetWorth)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
               <div className="mt-4" style={{ height: 200 }}>
                 <ProjectionChart data={projChartData} accent={projAccent} />
@@ -261,13 +302,13 @@ export default function NetWorthPage() {
       {/* Rincian aset & liabilitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#10B981' }}>{t('networth.asset_breakdown')}</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--c-mint-ink)' }}>{t('networth.asset_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_assets')}</p>
               <Row label={t('networth.cash_and_equivalent')} value={data.cashAndEquivalent} />
               <Row label={t('networth.receivable')} value={data.receivable} />
-              <SubtotalRow label={t('networth.subtotal_current_assets')} value={totalCurrentAssets} color="#10B981" />
+              <SubtotalRow label={t('networth.subtotal_current_assets')} value={totalCurrentAssets} color="var(--c-mint)" ink="var(--c-mint-ink)" />
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.non_current_assets')}</p>
@@ -275,33 +316,33 @@ export default function NetWorthPage() {
               <Row label={t('networth.property')} value={data.property} />
               <Row label={t('networth.vehicle_equipment')} value={data.vehicle} />
               <Row label={t('networth.personal_item')} value={data.personalItem} />
-              <SubtotalRow label={t('networth.subtotal_non_current_assets')} value={totalNonCurrentAssets} color="#10B981" />
+              <SubtotalRow label={t('networth.subtotal_non_current_assets')} value={totalNonCurrentAssets} color="var(--c-mint)" ink="var(--c-mint-ink)" />
             </div>
             <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
               <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('networth.total_assets')}</span>
-              <span className="num font-bold" style={{ color: '#10B981' }}>{formatCurrency(totalAssets)}</span>
+              <span className="num font-bold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(totalAssets)}</span>
             </div>
           </div>
         </div>
 
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: '#F43F5E' }}>{t('networth.liabilities_breakdown')}</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--c-coral-ink)' }}>{t('networth.liabilities_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_debt')}</p>
               <Row label={t('networth.consumer_debt')} value={data.consumerDebt} neg />
               <Row label={t('networth.credit_card')} value={data.creditCard} neg />
               <Row label={t('networth.cash_loan')} value={data.cashLoan} neg />
-              <SubtotalRow label={t('networth.subtotal_current_debt')} value={totalCurrentDebt} color="#F43F5E" neg />
+              <SubtotalRow label={t('networth.subtotal_current_debt')} value={totalCurrentDebt} color="var(--c-coral)" ink="var(--c-coral-ink)" neg />
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.long_term_debt')}</p>
               <Row label={t('networth.mortgage_long_term')} value={data.longTermDebt} neg />
-              <SubtotalRow label={t('networth.subtotal_long_term')} value={data.longTermDebt} color="#F43F5E" neg />
+              <SubtotalRow label={t('networth.subtotal_long_term')} value={data.longTermDebt} color="var(--c-coral)" ink="var(--c-coral-ink)" neg />
             </div>
             <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
               <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('networth.total_debt')}</span>
-              <span className="num font-bold" style={{ color: '#F43F5E' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</span>
+              <span className="num font-bold" style={{ color: 'var(--c-coral-ink)' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</span>
             </div>
           </div>
         </div>
@@ -336,19 +377,23 @@ export default function NetWorthPage() {
           investmentValue={data.longTermInvestment}
           netWorth={netWorth}
           monthlyIncome={monthlyIncome}
+          monthlyDebtPayment={payoffDebts.reduce((s, d) => s + (d.monthly_payment || 0), 0)}
         />
       </div>
     </div>
   )
 }
 
-function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, investmentValue, netWorth, monthlyIncome }: {
-  liquidAssets: number; totalAssets: number; totalDebt: number; currentDebt: number; investmentValue: number; netWorth: number; monthlyIncome: number
+function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, investmentValue, netWorth, monthlyIncome, monthlyDebtPayment }: {
+  liquidAssets: number; totalAssets: number; totalDebt: number; currentDebt: number; investmentValue: number; netWorth: number; monthlyIncome: number; monthlyDebtPayment: number
 }) {
   const t = useT()
   const liquidity = currentDebt > 0 ? liquidAssets / currentDebt : null
   const solvency = totalAssets > 0 ? (totalDebt / totalAssets) * 100 : null
-  const dti = monthlyIncome > 0 ? (totalDebt / (monthlyIncome * 12)) * 100 : null
+  // DTI yang bener: CICILAN bulanan / penghasilan bulanan (konsisten dgn
+  // halaman Utang). Rumus lama (total utang / penghasilan setahun) itu metrik
+  // beda yang dipajang pakai label & ambang DTI.
+  const dti = monthlyIncome > 0 ? (monthlyDebtPayment / monthlyIncome) * 100 : null
   const investRatio = netWorth > 0 ? (investmentValue / netWorth) * 100 : null
   const rows = [
     { label: t('networth.ratio_liquidity'), ideal: t('networth.ratio_liquidity_ideal'), value: liquidity != null ? `${liquidity >= 99 ? '∞' : liquidity.toFixed(0)}x` : '—', ok: liquidity == null || liquidity >= 1 },
@@ -361,7 +406,7 @@ function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, i
       <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.balance_health_ratios')}</p>
       <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5">
         {rows.map((r) => {
-          const c = r.value === '—' ? 'var(--ink-soft)' : r.ok ? '#10B981' : '#F59E0B'
+          const c = r.value === '—' ? 'var(--ink-soft)' : r.ok ? 'var(--c-mint-ink)' : 'var(--c-amber-ink)'
           return (
             <div key={r.label}>
               <div className="flex items-center gap-1.5">
@@ -386,11 +431,11 @@ function Row({ label, value, neg = false }: { label: string; value: number; neg?
     </div>
   )
 }
-function SubtotalRow({ label, value, color, neg = false }: { label: string; value: number; color: string; neg?: boolean }) {
+function SubtotalRow({ label, value, color, ink, neg = false }: { label: string; value: number; color: string; ink: string; neg?: boolean }) {
   return (
-    <div className="flex items-center justify-between mt-1.5 rounded-md px-2 py-1.5" style={{ background: `${color}0F` }}>
+    <div className="flex items-center justify-between mt-1.5 rounded-md px-2 py-1.5" style={{ background: `color-mix(in srgb, ${color} 6%, transparent)` }}>
       <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{label}</span>
-      <span className="num text-[12px] font-semibold" style={{ color }}>{neg && value > 0 ? '−' : ''}{formatCurrency(value)}</span>
+      <span className="num text-[12px] font-semibold" style={{ color: ink }}>{neg && value > 0 ? '−' : ''}{formatCurrency(value)}</span>
     </div>
   )
 }
@@ -399,11 +444,9 @@ interface HistoryProps {
   snapshots: NetWorthSnapshot[]
   period: '3m' | '6m' | '12m' | 'all'
   onPeriodChange: (p: '3m' | '6m' | '12m' | 'all') => void
-  onSnapshot: () => void
-  snapshotting: boolean
 }
 
-function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, snapshotting }: HistoryProps) {
+function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps) {
   const t = useT()
   const filtered = useMemo(() => {
     if (period === 'all' || snapshots.length === 0) return snapshots
@@ -414,23 +457,11 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
   }, [snapshots, period])
 
   const stats = useMemo(() => {
-    if (snapshots.length === 0) return null
-    const last = snapshots[snapshots.length - 1]
-    const findClosest = (target: Date) => {
-      let best: NetWorthSnapshot | null = null, bestDist = Infinity
-      for (const s of snapshots) { const dist = Math.abs(new Date(s.snapshot_date).getTime() - target.getTime()); if (dist < bestDist) { bestDist = dist; best = s } }
-      return best
-    }
     const now = new Date()
-    const delta = (from: NetWorthSnapshot | null) => {
-      if (!from || from.snapshot_date === last.snapshot_date) return null
-      const d = last.net_worth - from.net_worth
-      return { delta: d, pct: from.net_worth !== 0 ? (d / Math.abs(from.net_worth)) * 100 : 0 }
-    }
     return {
-      vs1mo: delta(findClosest(new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()))),
-      vs3mo: delta(findClosest(new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()))),
-      vsYtd: delta(findClosest(new Date(now.getFullYear(), 0, 1))),
+      vs1mo: snapshotDelta(snapshots, new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())),
+      vs3mo: snapshotDelta(snapshots, new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())),
+      vsYtd: snapshotDelta(snapshots, new Date(now.getFullYear(), 0, 1)),
     }
   }, [snapshots])
 
@@ -455,15 +486,12 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange, onSnapshot, sn
               {periodLabels[p]}
             </button>
           ))}
-          <Button variant="outline" size="sm" onClick={onSnapshot} disabled={snapshotting} className="ml-1">
-            {snapshotting ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />}
-          </Button>
         </div>
       </div>
 
       {snapshots.length <= 1 ? (
         <div className="rounded-xl border-2 border-dashed p-8 text-center" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
-          <Sparkles className="size-7 mx-auto mb-2 opacity-50" style={{ color: '#10B981' }} />
+          <Sparkles className="size-7 mx-auto mb-2 opacity-50" style={{ color: 'var(--c-mint)' }} />
           <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{t('networth.first_snapshot_today')}</p>
           <p className="text-xs mt-1.5">{t('networth.first_snapshot_hint')}</p>
         </div>
@@ -488,7 +516,7 @@ function ChangeStat({ label, change }: { label: string; change: { delta: number;
     return <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p><p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>—</p></div>
   }
   const positive = change.delta >= 0
-  const color = positive ? '#10B981' : '#F43F5E'
+  const color = positive ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'
   const Icon = positive ? TrendingUp : TrendingDown
   return (
     <div>

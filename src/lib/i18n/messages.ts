@@ -1686,6 +1686,7 @@ export const messages = {
     networth: {
       eyebrow: "Neraca Pribadi",
       history: "Riwayat",
+      refresh: "Perbarui",
       manual_snapshot: "Snapshot manual",
       net_worth: "Kekayaan Bersih",
       vs_last_month_short: "vs bln lalu",
@@ -1729,7 +1730,7 @@ export const messages = {
       ratio_liquidity_ideal: "Ideal > 1x",
       ratio_solvency: "Solvabilitas (utang / aset)",
       ratio_solvency_ideal: "Ideal < 50%",
-      ratio_dti: "DTI (utang / pendapatan tahunan)",
+      ratio_dti: "DTI (cicilan / pendapatan bulanan)",
       ratio_dti_ideal: "Ideal < 36%",
       ratio_investment: "Investasi / Net Worth",
       ratio_investment_ideal: "Ideal > 30%",
@@ -4871,6 +4872,7 @@ export const messages = {
     networth: {
       eyebrow: "Personal Balance Sheet",
       history: "History",
+      refresh: "Refresh",
       manual_snapshot: "Manual snapshot",
       net_worth: "Net Worth",
       vs_last_month_short: "vs last month",
@@ -4914,7 +4916,7 @@ export const messages = {
       ratio_liquidity_ideal: "Ideal > 1x",
       ratio_solvency: "Solvency (debt / assets)",
       ratio_solvency_ideal: "Ideal < 50%",
-      ratio_dti: "DTI (debt / annual income)",
+      ratio_dti: "DTI (installments / monthly income)",
       ratio_dti_ideal: "Ideal < 36%",
       ratio_investment: "Investments / Net Worth",
       ratio_investment_ideal: "Ideal > 30%",
