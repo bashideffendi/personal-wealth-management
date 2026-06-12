@@ -3,6 +3,7 @@
 import { toast } from 'sonner'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/utils'
 import type { AssetNonLiquid } from '@/types'
@@ -23,12 +24,16 @@ import { WealthHeader } from '@/components/wealth/wealth-ui'
 import { depreciate, METODE_LABEL, type MetodePenyusutan } from '@/lib/depreciation'
 import { useT } from '@/lib/i18n/context'
 
+const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
+const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
+const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
+
 type Category = 'property' | 'vehicle' | 'personal_item'
 
-const CAT: Record<Category, { label: string; note: string; icon: LucideIcon; color: string }> = {
-  property:      { label: 'Properti',          note: 'Rumah, apartemen, tanah',     icon: Home, color: '#8B5CF6' },
-  vehicle:       { label: 'Kendaraan',         note: 'Mobil, motor, dll',           icon: Car,  color: '#F59E0B' },
-  personal_item: { label: 'Pribadi & Lainnya', note: 'Elektronik, perhiasan, seni', icon: Gem,  color: '#10B981' },
+const CAT: Record<Category, { label: string; note: string; icon: LucideIcon; color: string; ink: string }> = {
+  property:      { label: 'Properti',          note: 'Rumah, apartemen, tanah',     icon: Home, color: VIOLET, ink: VIOLET_INK },
+  vehicle:       { label: 'Kendaraan',         note: 'Mobil, motor, dll',           icon: Car,  color: AMBER, ink: AMBER_INK },
+  personal_item: { label: 'Pribadi & Lainnya', note: 'Elektronik, perhiasan, seni', icon: Gem,  color: MINT, ink: MINT_INK },
 }
 
 // Tipe preset per kategori (Elektronik/Koleksi masuk "Pribadi & Lainnya" —
@@ -99,8 +104,7 @@ const EMPTY: FormState = {
 export default function NonLiquidAssetsPage() {
   const t = useT()
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<AssetNonLiquid[]>([])
+  const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -124,31 +128,45 @@ export default function NonLiquidAssetsPage() {
     else { setSortKey(k); setSortDir('desc') }
   }
 
-  async function load() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const { data } = await supabase.from('assets_non_liquid').select('*').eq('user_id', user.id).order('current_value', { ascending: false })
-    const rows = (data ?? []) as AssetNonLiquid[]
-    // Penyusutan jalan terus seiring waktu → hitung ulang nilai buku aset yang
-    // menyusut (non-override) tiap load + tulis balik ke DB (best-effort) biar
-    // Net Worth di halaman lain ikut fresh.
-    const now = new Date()
-    const writeback: { id: string; current_value: number }[] = []
-    const fresh = rows.map((a) => {
-      const d = (a as WithDetails).details
-      if (d?.metode && d.metode !== 'none' && (d.masaManfaat ?? 0) > 0 && !d.deprOverride) {
-        const bv = Math.round(depreciate({ cost: a.purchase_value, residu: d.residu ?? 0, masaManfaat: d.masaManfaat ?? 0, metode: d.metode, start: a.purchase_date, asOf: now }).bookValue)
-        if (Math.abs(bv - a.current_value) > 1) { writeback.push({ id: a.id, current_value: bv }); return { ...a, current_value: bv } }
-      }
-      return a
-    })
-    setItems(fresh)
-    setLoading(false)
-    for (const w of writeback) void supabase.from('assets_non_liquid').update({ current_value: w.current_value }).eq('id', w.id)
+  const pageQuery = useQuery({
+    queryKey: ['nonliquid-assets'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const { data, error } = await supabase.from('assets_non_liquid').select('*').eq('user_id', user.id).order('current_value', { ascending: false })
+      if (error) throw error
+      const rows = (data ?? []) as AssetNonLiquid[]
+      // Penyusutan jalan terus seiring waktu → nilai buku dihitung fresh di sini
+      // (read-only); tulis-balik ke DB dipisah ke efek di bawah.
+      const now = new Date()
+      const writeback: { id: string; current_value: number }[] = []
+      const fresh = rows.map((a) => {
+        const d = (a as WithDetails).details
+        if (d?.metode && d.metode !== 'none' && (d.masaManfaat ?? 0) > 0 && !d.deprOverride) {
+          const bv = Math.round(depreciate({ cost: a.purchase_value, residu: d.residu ?? 0, masaManfaat: d.masaManfaat ?? 0, metode: d.metode, start: a.purchase_date, asOf: now }).bookValue)
+          if (Math.abs(bv - a.current_value) > 1) { writeback.push({ id: a.id, current_value: bv }); return { ...a, current_value: bv } }
+        }
+        return a
+      })
+      return { rows: fresh, writeback }
+    },
+  })
+  const loading = pageQuery.isLoading
+  const items = useMemo(() => pageQuery.data?.rows ?? [], [pageQuery.data])
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['nonliquid-assets'] })
+    qc.invalidateQueries({ queryKey: ['net-worth'] }) // kekayaan bersih baca non-likuid
   }
 
-  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Tulis-balik nilai buku hasil hitung-ulang (best-effort, fire-and-forget)
+  // biar halaman lain yang baca current_value dari DB ikut fresh.
+  useEffect(() => {
+    const wb = pageQuery.data?.writeback
+    if (!wb?.length) return
+    for (const w of wb) void supabase.from('assets_non_liquid').update({ current_value: w.current_value }).eq('id', w.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageQuery.data])
 
   async function save() {
     setSaving(true)
@@ -190,14 +208,14 @@ export default function NonLiquidAssetsPage() {
     }
     setSaving(false)
     setDialogOpen(false)
-    void load()
+    refresh()
   }
 
   async function remove(id: string) {
     if (!confirm(t('assets_nonliquid.confirm_delete'))) return
     const { error: delErr } = await supabase.from('assets_non_liquid').delete().eq('id', id)
     if (delErr) { toast.error(t('common.delete_failed')); return }
-    void load()
+    refresh()
   }
 
   function openEdit(a: AssetNonLiquid) {
@@ -233,7 +251,7 @@ export default function NonLiquidAssetsPage() {
       const { error: revalErr } = await supabase.from('assets_non_liquid').update(patch).eq('id', a.id)
       if (revalErr) { toast.error(t('common.mutation_failed')); break }
     }
-    setRevalSaving(false); setRevalOpen(false); void load()
+    setRevalSaving(false); setRevalOpen(false); refresh()
   }
 
   const total = useMemo(() => items.reduce((s, a) => s + a.current_value, 0), [items])
@@ -284,7 +302,7 @@ export default function NonLiquidAssetsPage() {
       <>
         <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
         <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-          <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: `${up ? '#10B981' : '#F43F5E'}1A`, color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
+          <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: tint(up ? MINT : CORAL, 10), color: up ? MINT_INK : CORAL_INK }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
           <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
         </div>
         <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--border-soft)' }}>
@@ -328,8 +346,8 @@ export default function NonLiquidAssetsPage() {
         ) : (
           <div className="p-5">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}>
-                <Icon className="size-5" style={{ color: meta.color }} />
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}>
+                <Icon className="size-5" style={{ color: meta.ink }} />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
@@ -370,6 +388,11 @@ export default function NonLiquidAssetsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : pageQuery.isError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
+        </div>
       ) : items.length === 0 ? (
         <div className="s-card p-12 text-center">
           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('assets_nonliquid.empty_title')}</p>
@@ -384,7 +407,7 @@ export default function NonLiquidAssetsPage() {
               <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                 {t('assets_nonliquid.initial_capital')} <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
-                <span className="num font-semibold" style={{ color: totalDelta >= 0 ? '#10B981' : '#F43F5E' }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
+                <span className="num font-semibold" style={{ color: totalDelta >= 0 ? MINT_INK : CORAL_INK }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
               </p>
             </div>
             {(Object.keys(CAT) as Category[]).map((cat) => {
@@ -393,10 +416,10 @@ export default function NonLiquidAssetsPage() {
               const empty = s.cur <= 0
               return (
                 <div key={cat} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
-                  <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].color }}><CatIcon className="size-3" />{CAT[cat].label}</p>
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].ink }}><CatIcon className="size-3" />{CAT[cat].label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-                    {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? '#10B981' : '#F43F5E' }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}
+                    {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? MINT_INK : CORAL_INK }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}
                   </p>
                 </div>
               )
@@ -475,7 +498,7 @@ export default function NonLiquidAssetsPage() {
                       <tr key={a.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                            <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.ink }} /></div>
                             <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
                           </div>
                         </td>
@@ -484,8 +507,8 @@ export default function NonLiquidAssetsPage() {
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{ageYears > 0 ? `${ageYears.toFixed(1)} ${t('assets_nonliquid.unit_years')}` : '—'}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
                         <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>
-                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{delta >= 0 ? '+' : '−'}{formatCurrency(Math.abs(delta))}</td>
-                        <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: up ? '#10B981' : '#F43F5E' }}>{up ? '+' : ''}{pct.toFixed(1)}%</td>
+                        <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: up ? MINT_INK : CORAL_INK }}>{delta >= 0 ? '+' : '−'}{formatCurrency(Math.abs(delta))}</td>
+                        <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: up ? MINT_INK : CORAL_INK }}>{up ? '+' : ''}{pct.toFixed(1)}%</td>
                         <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{statusLabel}</td>
                         <td className="px-3 py-3">
                           <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">
@@ -510,7 +533,7 @@ export default function NonLiquidAssetsPage() {
                 return (
                   <section key={cat}>
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${meta.color}1A` }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.ink }} /></div>
                       <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{s.count} {t('assets_nonliquid.item')}</span>
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
@@ -533,8 +556,8 @@ export default function NonLiquidAssetsPage() {
         <DialogContent className={`max-h-[92vh] overflow-y-auto ${form.category === 'property' ? 'sm:max-w-4xl' : 'sm:max-w-xl'}`}>
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: '#8B5CF61A' }}>
-                {(() => { const I = CAT[form.category].icon; return <I className="size-5" style={{ color: '#8B5CF6' }} /> })()}
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(VIOLET, 10) }}>
+                {(() => { const I = CAT[form.category].icon; return <I className="size-5" style={{ color: VIOLET_INK }} /> })()}
               </div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('assets_nonliquid.dialog_title_edit') : t('assets_nonliquid.dialog_title_add')}</DialogTitle>
@@ -554,9 +577,9 @@ export default function NonLiquidAssetsPage() {
                     return (
                       <button key={c} type="button" onClick={() => setForm({ ...form, category: c, type: '' })}
                         className="rounded-xl border p-3 flex flex-col items-center gap-1.5 transition"
-                        style={{ borderColor: on ? '#8B5CF6' : 'var(--border-soft)', background: on ? '#8B5CF60F' : 'var(--surface)' }}>
-                        <div className="size-9 rounded-lg grid place-items-center" style={{ background: on ? '#8B5CF61A' : 'var(--surface-2)' }}>
-                          <Icon className="size-4" style={{ color: on ? '#8B5CF6' : 'var(--ink-muted)' }} />
+                        style={{ borderColor: on ? VIOLET : 'var(--border-soft)', background: on ? tint(VIOLET, 6) : 'var(--surface)' }}>
+                        <div className="size-9 rounded-lg grid place-items-center" style={{ background: on ? tint(VIOLET, 10) : 'var(--surface-2)' }}>
+                          <Icon className="size-4" style={{ color: on ? VIOLET_INK : 'var(--ink-muted)' }} />
                         </div>
                         <span className="text-[12px] font-medium text-center leading-tight" style={{ color: on ? 'var(--ink)' : 'var(--ink-muted)' }}>{m.label}</span>
                       </button>
@@ -646,7 +669,7 @@ export default function NonLiquidAssetsPage() {
                       <span>{isDeprForm ? t('assets_nonliquid.label_current_book') : t('assets_nonliquid.label_current')}</span>
                       {isDeprForm && (form.deprOverride
                         ? <button type="button" onClick={() => setForm({ ...form, deprOverride: false })} className="text-[10px] underline" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.use_auto')}</button>
-                        : <span className="text-[10px] font-semibold" style={{ color: '#10B981' }}>{t('assets_nonliquid.auto')}</span>)}
+                        : <span className="text-[10px] font-semibold" style={{ color: MINT_INK }}>{t('assets_nonliquid.auto')}</span>)}
                     </Label>
                     <RpField value={shownCurrent} onChange={(n) => setForm({ ...form, current_value: n, deprOverride: true })} />
                   </div>
@@ -655,7 +678,7 @@ export default function NonLiquidAssetsPage() {
                   <div className="mt-2.5 rounded-lg p-3" style={{ background: 'var(--surface-2)' }}>
                     <div className="grid grid-cols-3 gap-2 text-[12px]">
                       <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_per_year')}</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.perYearFirst))}</p></div>
-                      <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_accumulated')}</p><p className="num font-semibold mt-0.5" style={{ color: '#E11D48' }}>−{formatCurrency(Math.round(deprPreview.accumulated))}</p></div>
+                      <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_accumulated')}</p><p className="num font-semibold mt-0.5" style={{ color: CORAL_INK }}>−{formatCurrency(Math.round(deprPreview.accumulated))}</p></div>
                       <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_book_value')}</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.bookValue))}</p></div>
                     </div>
                     <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
@@ -669,7 +692,7 @@ export default function NonLiquidAssetsPage() {
                   const p = (d / form.purchase_value) * 100
                   const up = d >= 0
                   return (
-                    <div className="mt-2.5 rounded-lg px-3 py-2 text-[12px] flex items-center gap-2" style={{ background: `${up ? '#10B981' : '#F43F5E'}14`, color: up ? '#059669' : '#E11D48' }}>
+                    <div className="mt-2.5 rounded-lg px-3 py-2 text-[12px] flex items-center gap-2" style={{ background: tint(up ? MINT : CORAL, 8), color: up ? MINT_INK : CORAL_INK }}>
                       {up ? <TrendingUp className="size-3.5 shrink-0" /> : <TrendingDown className="size-3.5 shrink-0" />}
                       {up ? t('assets_nonliquid.status_appreciation') : t('assets_nonliquid.status_depreciation')} <span className="num font-semibold">{up ? '+' : ''}{formatCurrency(d)} ({up ? '+' : ''}{p.toFixed(1)}%)</span> {t('assets_nonliquid.since_bought')}
                     </div>
@@ -687,7 +710,7 @@ export default function NonLiquidAssetsPage() {
             {form.category === 'property' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} /> {t('assets_nonliquid.location_on_map')}</Label>
+                  <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" style={{ color: VIOLET_INK }} /> {t('assets_nonliquid.location_on_map')}</Label>
                   <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('assets_nonliquid.optional')}</span>
                 </div>
                 <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('assets_nonliquid.ph_full_address')} />
@@ -698,7 +721,7 @@ export default function NonLiquidAssetsPage() {
 
           <DialogFooter className="sm:justify-between sm:items-center">
             <p className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-              <ShieldCheck className="size-3.5" style={{ color: '#10B981' }} /> {t('assets_nonliquid.encrypted_note')}
+              <ShieldCheck className="size-3.5" style={{ color: MINT_INK }} /> {t('assets_nonliquid.encrypted_note')}
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('assets_nonliquid.cancel')}</Button>
