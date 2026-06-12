@@ -193,6 +193,7 @@ export default function TransactionsPage() {
     fetchData()
   }
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Dialog state
@@ -490,6 +491,14 @@ export default function TransactionsPage() {
         .maybeSingle(),
     ])
 
+    // Fetch utama gagal = bilang terus terang, jangan render daftar kosong
+    // seolah transaksinya memang nol.
+    if (txRes.error || accRes.error) {
+      setLoadError(true)
+      setLoading(false)
+      return
+    }
+    setLoadError(false)
     if (txRes.data) setTransactions(txRes.data)
     if (accRes.data) setAccounts(accRes.data)
     if (ccRes.data) setCreditCards(ccRes.data as CreditCard[])
@@ -1242,6 +1251,11 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
           <span className="ml-2" style={{ color: 'var(--ink-soft)' }}>{t('transactions.loading')}</span>
+        </div>
+      ) : loadError ? (
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => { setLoading(true); void fetchData() }}>{t('common.retry')}</Button>
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
