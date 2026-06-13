@@ -20,7 +20,6 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
-import { XpHud } from '@/components/layout/xp-hud'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import { useI18n, useT } from '@/lib/i18n/context'
 import { LangToggle } from '@/components/layout/lang-toggle'
@@ -300,8 +299,6 @@ export function TopNav({ user }: TopNavProps) {
             <div className="hidden sm:block">
               <AICreditsBadge />
             </div>
-
-            <XpHud />
 
             <button
               onClick={openQuickAdd}

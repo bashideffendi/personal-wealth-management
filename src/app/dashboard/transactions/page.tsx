@@ -49,7 +49,6 @@ import {
 } from '@/components/ui/select'
 import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash } from 'lucide-react'
 import { toast } from 'sonner'
-import { awardXp } from '@/lib/xp'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -786,7 +785,6 @@ export default function TransactionsPage() {
     setQuickSaving(false)
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
     toast.success(t('transactions.toast_recorded'))
-    void awardXp(supabase, 'transaction') // XP best-effort — kebiasaan nyatat
 
     // Reset only amount + description; keep date/account/type/category
     // (most users add multiple similar transactions in a row)
@@ -920,7 +918,7 @@ export default function TransactionsPage() {
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {stats.map((s) => (
-              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}>
+              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                 <div className="flex items-center gap-2.5">
                   <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
                     <s.Icon className="size-4" />
@@ -954,7 +952,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Search + filters — satu card: search di atas, filter di bawahnya */}
-      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
+      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="relative">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
           <Input
@@ -1280,7 +1278,7 @@ export default function TransactionsPage() {
           {/* Desktop: per-day grouped table, in a card.
               JANGAN overflow-hidden di sini — ancestor overflow!=visible
               mematahkan position:sticky thead (bug 2026-06-13). */}
-          <div className="hidden md:block s-card" style={{ padding: 0 }}>
+          <div className="hidden md:block s-card" style={{ padding: 0, borderColor: 'var(--border)', boxShadow: 'none' }}>
             {/* Mengalir penuh — thead sticky nempel di bawah TopNav (.tx-scroll
                 di globals), jadi header kolom gak ikut ter-scroll. */}
             <div className="tx-scroll">
@@ -1295,7 +1293,7 @@ export default function TransactionsPage() {
                 <col style={{ width: '8%' }} />
               </colgroup>
               <TableHeader>
-                <TableRow className="bg-[var(--surface-3)] hover:bg-[var(--surface-3)]">
+                <TableRow className="bg-[var(--surface-2)] hover:bg-[var(--surface-2)]">
                   <TableHead className="pl-3 pr-0">
                     <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label={t('transactions.select_all')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                   </TableHead>

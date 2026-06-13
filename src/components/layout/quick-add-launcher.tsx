@@ -17,7 +17,6 @@ import { useRouter } from 'next/navigation'
 import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { awardXp } from '@/lib/xp'
 import { useCategoryOptions } from '@/lib/use-category-options'
 import type { Account, CreditCard } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -293,7 +292,6 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       toast.error(t('quickadd.save_failed'), { description: error.message })
       return
     }
-    void awardXp(supabase, 'transaction')
     toast.success(t('quickadd.saved'), {
       description: `${previewData.merchant} · Rp ${previewData.total.toLocaleString('id-ID')}`,
     })
@@ -352,7 +350,6 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       toast.error(t('quickadd.save_failed'), { description: error.message })
       return
     }
-    void awardXp(supabase, 'transaction')
     toast.success(t('quickadd.saved'))
     setOpen(false)
     router.refresh()

@@ -74,8 +74,8 @@
   --text-2:      #4A453C;    /* alias → ink-muted */
   --text-mute:   #5E5749;    /* alias → ink-soft (floor) */
   --text-faint:  #5E5749;    /* faint utk teks dilarang — samain ke floor */
-  --border:      #E5DCC6;    /* hairline dalam (divider/tabel) — outline kartu pakai --outline */
-  --border-soft: #F0E9D6;    /* hairline halus */
+  --border:      #D5C39D;    /* garis kartu/divider — JELAS kelihatan di krem (dulu #E5DCC6 pudar/gak kebaca) */
+  --border-soft: #E6DCC4;    /* hairline halus */
   /* Outline kartun — bingkai 2px + bayangan offset keras (identitas v7).
      DIMENSI kartu/tombol juga token sejak sistem multi-skin: tiap skin
      ngatur ketebalan bingkai, gaya bayangan, dan radius-nya sendiri. */
@@ -852,7 +852,7 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
    tableLayout:fixed + lebar %, jadi gak pernah butuh scroll horizontal:
    matikan overflow-nya HANYA di sini supaya thead sticky ke viewport. */
 .tx-scroll [data-slot="table-container"] { overflow: visible; }
-.tx-scroll thead th { position: sticky; top: 57px; z-index: 20; background: var(--surface-3); }
+.tx-scroll thead th { position: sticky; top: 57px; z-index: 20; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 /* Tabel duduk flush di kartu ber-radius (gak bisa overflow-hidden krn matahin
    sticky) — bulatkan sudut sel pinggir biar ngikutin lengkung kartu, gak ada
    sudut kotak nongol bikin garis dobel. Sedikit < radius kartu (14) biar di
@@ -891,40 +891,6 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
   background: var(--bar-track);
   border: var(--bar-outline-w) solid var(--outline);
   overflow: hidden;
-}
-
-/* ── Coin-burst + level-up FX (Cartoon Quest) ──────────────────────
-   Dipicu komponen XpFx saat dapat XP. Koin emas melayang naik + fade. */
-@keyframes coin-fly {
-  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
-  20%  { transform: translateY(-6px) scale(1.1); opacity: 1; }
-  100% { transform: translateY(-46px) scale(0.9); opacity: 0; }
-}
-@keyframes levelup-pop {
-  0%   { transform: scale(0.5) rotate(-8deg); opacity: 0; }
-  35%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
-  70%  { transform: scale(1) rotate(0deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 0; }
-}
-.xpfx-coin {
-  position: fixed;
-  z-index: 90;
-  pointer-events: none;
-  animation: coin-fly 1100ms ease-out forwards;
-  font-weight: 700;
-  font-family: var(--font-display);
-}
-.xpfx-levelup {
-  position: fixed;
-  z-index: 91;
-  pointer-events: none;
-  left: 50%;
-  top: 28%;
-  transform: translateX(-50%);
-  animation: levelup-pop 2200ms ease-out forwards;
-}
-@media (prefers-reduced-motion: reduce) {
-  .xpfx-coin, .xpfx-levelup { animation-duration: 1ms; }
 }
 
 /* Budget grid — faint vertical column gridlines + a stronger separator after the
