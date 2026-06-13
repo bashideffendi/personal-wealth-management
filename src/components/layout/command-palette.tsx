@@ -637,7 +637,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         </div>
         <div
           className="rounded-xl border p-4"
-          style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
+          style={{ boxShadow: 'var(--card-shadow)', borderColor: 'var(--border)', background: 'var(--surface-2)' }}
         >
           <div className="flex items-baseline justify-between gap-2 mb-2">
             <span

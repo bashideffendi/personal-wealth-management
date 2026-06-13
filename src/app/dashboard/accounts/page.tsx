@@ -432,7 +432,7 @@ export default function AccountsPage() {
           <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : accounts.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed p-10 text-center" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
+        <div className="rounded-xl border-2 border-dashed p-10 text-center" style={{ boxShadow: 'var(--card-shadow)', borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
           <Wallet className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
           <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.empty_title')}</h3>
           <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>

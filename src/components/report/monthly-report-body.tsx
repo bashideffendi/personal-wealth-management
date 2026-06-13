@@ -481,7 +481,7 @@ export function MonthlyReportBody({
                       <span className="t-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</span>
                       <span className="num t-sm shrink-0" style={{ color: 'var(--c-mint)' }}>{p.toFixed(0)}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}><div className="h-full rounded-full" style={{ width: `${p}%`, background: 'var(--c-mint)' }} /></div>
+                    <span className="quest-bar" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '8px' }}><i style={{ width: `${p}%` }} /></span>
                     <p className="num t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{money(g.current_amount)} / {money(g.target_amount)}</p>
                   </div>
                 )

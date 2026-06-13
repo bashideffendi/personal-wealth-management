@@ -240,7 +240,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
         <div
           className="rounded-lg border p-4"
           style={{
-            background: overAllocated ? 'rgba(239,68,68,0.06)' : 'var(--surface-2)',
+            boxShadow: 'var(--card-shadow)', background: overAllocated ? 'rgba(239,68,68,0.06)' : 'var(--surface-2)',
             borderColor: overAllocated ? 'rgba(239,68,68,0.30)' : 'var(--border-soft)',
           }}
         >

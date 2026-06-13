@@ -622,9 +622,7 @@ export default function FamilyPage() {
                     {formatCurrency(g.current_amount)} <span style={{ color: 'var(--ink-soft)' }}>{t('family.of')} {formatCurrency(g.target_amount)}</span>
                     {g.deadline && <span style={{ color: 'var(--ink-soft)' }}> · {t('family.target')} {formatDate(new Date(g.deadline))}</span>}
                   </p>
-                  <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
-                  </div>
+                  <span className="quest-bar mt-2 w-full" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '8px' }}><i style={{ width: `${pct}%` }} /></span>
                 </div>
               )
             })}

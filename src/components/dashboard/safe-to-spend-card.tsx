@@ -51,9 +51,7 @@ export function SafeToSpendCard({ income, spent, saved = 0, upcoming }: { income
         </p>
         {income > 0 && (
           <div className="mt-5">
-            <div className="h-2.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
-            </div>
+            <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: barColor, ['--bar-h' as string]: '10px' }}><i style={{ width: `${pct}%` }} /></span>
             <p className="text-[10.5px] mt-1.5" style={{ color: 'var(--text-mute)' }}>
               {Math.round(pct)}% {t('safe_card.committed_of_income')}
             </p>

@@ -369,7 +369,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div
       className="rounded-2xl border p-10 text-center"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+      style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
       <div
         className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"

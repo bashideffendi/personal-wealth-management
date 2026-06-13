@@ -185,7 +185,7 @@ function Statement({
     return (
       <div
         className="rounded-2xl border p-5"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <p className="eyebrow">{title}</p>
         <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
@@ -322,7 +322,7 @@ function QuarterlyStatement({
     return (
       <div
         className="rounded-2xl border p-5"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
           Data kuartalan tidak tersedia untuk ticker ini.

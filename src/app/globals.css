@@ -846,7 +846,7 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
 /* Tabel transaksi mengalir penuh di halaman (semua baris tampil, scroll
    halaman biasa). thead nempel di bawah TopNav (sticky top-0 z-40) supaya
    header kolom GAK ikut ter-scroll pas baca daftar panjang. */
-.tx-scroll thead th { position: sticky; top: 56px; z-index: 20; background: var(--surface-3); }
+.tx-scroll thead th { position: sticky; top: 57px; z-index: 20; background: var(--surface-3); }
 
 /* ── Quest bar — progress bar ala game (match mockup Cartoon Quest) ──
    Track tebal + outline tinta + fill bulat. .quest-bar = track,
@@ -1067,11 +1067,16 @@ body {
    Drop Instrument Serif default per fintech pivot 2026-05-28.
    Bold sans = Wise/Mercury/Bibit standard for hero numbers. */
 /* Progress bar editorial */
+/* .kl-bar = alias quest-bar (track outline + fill bulat). Fill pakai
+   currentColor (konsumen set `color: var(--c-X)`), beda dari quest-bar
+   yang pakai --bar-fill — keduanya seragam skin via token. */
 .kl-bar {
   position: relative;
-  height: 8px;
+  display: block;
+  height: var(--bar-h);
   border-radius: 999px;
-  background: var(--surface-2);
+  background: var(--bar-track);
+  border: var(--bar-outline-w) solid var(--outline);
   overflow: hidden;
 }
 .kl-bar > i {

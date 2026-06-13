@@ -110,7 +110,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
   return (
     <div
       className="rounded-xl border p-5"
-      style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+      style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -162,7 +162,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
                   width: widthFor[key],
                   background: 'var(--surface)',
                   borderColor: isFocus ? meta.color : 'var(--border-soft)',
-                  boxShadow: isFocus ? `0 0 0 1px ${meta.color}` : 'none',
+                  boxShadow: isFocus ? `0 0 0 1px ${meta.color}, var(--card-shadow)` : 'var(--card-shadow)',
                 }}
               >
                 <div className="flex items-center justify-between gap-2">

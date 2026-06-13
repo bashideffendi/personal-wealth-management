@@ -81,7 +81,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
     <div
       className="rounded-2xl border p-5 sm:p-6"
       style={{
-        background: isHighRate
+        boxShadow: 'var(--card-shadow)', background: isHighRate
           ? 'linear-gradient(135deg, rgba(244,63,94,0.04), var(--surface) 50%)'
           : 'var(--surface)',
         borderColor: isHighRate ? 'rgba(244,63,94,0.20)' : 'var(--border)',

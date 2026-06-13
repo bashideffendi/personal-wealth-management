@@ -182,9 +182,7 @@ export default function CategoryDrilldownPage() {
                     <li key={name} className="flex items-center gap-3">
                       <span className="text-sm flex-1 truncate">{name}</span>
                       <div className="flex items-center gap-2 shrink-0">
-                        <div className="h-1 w-20 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
-                        </div>
+                        <span className="quest-bar w-20" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '7px' }}><i style={{ width: `${pct}%` }} /></span>
                         <span className="num text-xs tabular w-24 text-right">{formatCurrency(amt)}</span>
                       </div>
                     </li>

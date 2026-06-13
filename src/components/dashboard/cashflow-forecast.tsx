@@ -148,7 +148,7 @@ export function CashFlowForecast({
     return (
       <div
         className="rounded-2xl border p-5 sm:p-6"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <div className="flex items-start gap-3 mb-2">
           <div
@@ -208,7 +208,7 @@ export function CashFlowForecast({
     <div
       className="rounded-2xl border p-4 sm:p-5"
       style={{
-        background: hasNegative
+        boxShadow: 'var(--card-shadow)', background: hasNegative
           ? 'linear-gradient(135deg, rgba(244,63,94,0.04), var(--surface) 50%)'
           : 'var(--surface)',
         borderColor: hasNegative ? 'rgba(244,63,94,0.20)' : 'var(--border)',

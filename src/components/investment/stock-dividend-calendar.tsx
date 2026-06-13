@@ -102,7 +102,7 @@ export function StockDividendCalendar() {
           {watchlistDividends.length === 0 ? (
             <div
               className="rounded-2xl border p-8 text-center"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+              style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
             >
               <p className="text-sm" style={{ color: 'var(--ink)' }}>
                 {t('dividend_calendar.empty_watchlist_title')}
@@ -120,7 +120,7 @@ export function StockDividendCalendar() {
       <div
         className="rounded-lg border p-3 text-[11px] flex items-start gap-2"
         style={{
-          background: 'var(--surface-2)',
+          boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)',
           borderColor: 'var(--border-soft)',
           color: 'var(--ink-muted)',
         }}

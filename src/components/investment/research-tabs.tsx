@@ -300,7 +300,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
         ) : (
           <div
             className="rounded-2xl border p-8 text-center text-sm"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+            style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
           >
             {t('research_tabs.valuation_no_data')}
           </div>
@@ -423,7 +423,7 @@ function ResearchView({
       {/* Markdown body (header rekomendasi + fair value sekarang di strip atas) */}
       <article
         className="rounded-2xl border p-5 sm:p-6"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         {research.frontmatter.thesis && (
           <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
@@ -584,7 +584,7 @@ function GenerateResearchEmpty({
       <div
         className="rounded-2xl border p-8 sm:p-10 text-center"
         style={{
-          background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
+          boxShadow: 'var(--card-shadow)', background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
           borderColor: 'var(--border)',
         }}
       >
@@ -680,7 +680,7 @@ function RegenerateBar({
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
-      style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
+      style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
     >
       <span className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
         {dataPeriod ? `${t('research_tabs.based_on')} ${dataPeriod}` : ''}
@@ -706,7 +706,7 @@ function DisclaimerBox() {
     <div
       className="rounded-lg border p-3 text-[11px] flex items-start gap-2"
       style={{
-        background: 'var(--surface-2)',
+        boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)',
         borderColor: 'var(--border-soft)',
         color: 'var(--ink-muted)',
       }}

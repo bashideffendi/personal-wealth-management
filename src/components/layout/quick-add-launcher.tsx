@@ -674,7 +674,7 @@ function PreviewView({
         <div
           className="mt-4 rounded-lg border p-3 text-xs"
           style={{
-            background: 'var(--surface-2)',
+            boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)',
             borderColor: 'var(--border-soft)',
             color: 'var(--ink-muted)',
           }}

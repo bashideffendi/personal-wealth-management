@@ -140,7 +140,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
       <div className="space-y-4">
         <div
           className="rounded-2xl border p-8 sm:p-10 text-center"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+          style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"

@@ -348,9 +348,7 @@ export default function EmergencyFundPage() {
             <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
             <button type="button" onClick={() => document.getElementById('ef-kalkulator')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="text-base font-normal inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : t('emergency_fund.set_target_inline')} <Pencil className="size-3" /></button>
           </p>
-          <div className="mt-4 h-2.5 w-full rounded-full overflow-hidden" style={{ background: tint(AMBER, 15) }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%`, background: AMBER }} />
-          </div>
+          <span className="quest-bar mt-4 w-full" style={{ ['--bar-fill' as string]: AMBER, ['--bar-h' as string]: '10px' }}><i style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%` }} /></span>
           {targetAmount > 0 ? (
             <>
               <div className="mt-5 grid grid-cols-3 gap-4">
@@ -614,7 +612,7 @@ export default function EmergencyFundPage() {
                 const acc = accounts.find((a) => a.name === txnForm.location)
                 return (
                   <div className="relative">
-                    <div className="flex items-center gap-3 h-12 rounded-lg border px-3" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
+                    <div className="flex items-center gap-3 h-12 rounded-lg border px-3" style={{ boxShadow: 'var(--card-shadow)', borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
                       {txnOther ? (
                         <><div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Plus className="size-4" style={{ color: 'var(--ink-muted)' }} /></div><span className="text-sm" style={{ color: 'var(--ink)' }}>{t('emergency_fund.txn_other_place')}</span></>
                       ) : acc ? (
@@ -653,9 +651,7 @@ export default function EmergencyFundPage() {
                 const over = pct > 100
                 return (
                   <div className="mt-1">
-                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: over ? 'var(--c-coral)' : MINT }} />
-                    </div>
+                    <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: over ? 'var(--c-coral)' : MINT, ['--bar-h' as string]: '8px' }}><i style={{ width: `${Math.min(100, pct)}%` }} /></span>
                     <div className="flex items-center justify-between mt-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
                       <span>{t('emergency_fund.txn_marked')} <span className="font-semibold" style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}>{pct.toFixed(0)}%</span> {t('emergency_fund.txn_of_balance')}{over ? ` · ${t('emergency_fund.txn_over_balance')}` : ''}</span>
                       <button type="button" onClick={() => setTxnForm((f) => ({ ...f, total: acc.current_balance }))} className="num hover:underline" style={{ color: 'var(--ink-soft)' }}>{formatCurrency(txnForm.total)} / {formatCurrency(acc.current_balance)}</button>

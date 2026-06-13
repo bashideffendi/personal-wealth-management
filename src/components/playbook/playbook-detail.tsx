@@ -272,7 +272,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
                 ) : (
                   <div
                     className="flex items-center rounded-xl px-3.5 py-2.5 border-[1.5px] border-[var(--line)] transition focus-within:border-[var(--ink)]"
-                    style={{ background: 'var(--surface)' }}
+                    style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)' }}
                   >
                     {f.prefix && (
                       <span className="t-body mr-1.5 shrink-0" style={{ color: 'var(--text-mute)' }}>

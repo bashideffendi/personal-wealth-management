@@ -1049,7 +1049,7 @@ export default function DashboardPage() {
         <div className="s-card p-6 h-full">
           <div className="mb-4">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
-            <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
+            <h3 className="t-h2 mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
               {t('dashboard.expense_categories')}
             </h3>
           </div>
@@ -1076,9 +1076,9 @@ export default function DashboardPage() {
                         {row.pct.toFixed(0)}%
                       </span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: 'var(--surface-2)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pctCapped}%`, backgroundColor: barColor }} />
-                    </div>
+                    <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: barColor, ['--bar-h' as string]: '9px' }}>
+                      <i style={{ width: `${pctCapped}%` }} />
+                    </span>
                     <div className="text-[10px] mt-0.5 num" style={{ color: 'var(--ink-soft)' }}>
                       {formatCurrency(row.actual)} / {formatCurrency(row.budget)}
                     </div>

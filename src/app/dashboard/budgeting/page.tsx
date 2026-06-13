@@ -1010,7 +1010,7 @@ export default function BudgetingPage() {
         const hex = ok ? 'var(--c-mint)' : over ? 'var(--c-coral)' : 'var(--c-amber)'
         const amt = privacyHidden ? '••••••' : formatCurrency(Math.abs(remaining))
         return (
-          <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
+          <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ boxShadow: 'var(--card-shadow)', background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
             {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
             <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
               <span className="font-semibold">{shortMonths[bMonth - 1]}</span>{' — '}

@@ -88,7 +88,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
     <div
       className="rounded-2xl border p-5 sm:p-6"
       style={{
-        background: 'var(--surface)',
+        boxShadow: 'var(--card-shadow)', background: 'var(--surface)',
         borderColor: 'var(--border)',
       }}
     >

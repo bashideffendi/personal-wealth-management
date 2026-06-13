@@ -1208,7 +1208,7 @@ export default function TransactionsPage() {
 
       {/* Bulk-action bar — appears when rows are selected (desktop) */}
       {selectedIds.size > 0 && (
-        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
+        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
           <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
             {selectedIds.size} {t('transactions.selected_count')}
           </span>
@@ -1277,8 +1277,10 @@ export default function TransactionsPage() {
         </div>
       ) : (
         <>
-          {/* Desktop: per-day grouped table, in a card */}
-          <div className="hidden md:block overflow-hidden s-card" style={{ padding: 0 }}>
+          {/* Desktop: per-day grouped table, in a card.
+              JANGAN overflow-hidden di sini — ancestor overflow!=visible
+              mematahkan position:sticky thead (bug 2026-06-13). */}
+          <div className="hidden md:block s-card" style={{ padding: 0 }}>
             {/* Mengalir penuh — thead sticky nempel di bawah TopNav (.tx-scroll
                 di globals), jadi header kolom gak ikut ter-scroll. */}
             <div className="tx-scroll">

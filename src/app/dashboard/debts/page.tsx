@@ -303,9 +303,7 @@ export default function DebtsOverviewPage() {
               <p className="text-[12px] mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                 {t('debts.already_paid')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(totalPaid)}</span> {t('debts.of_principal')} <span className="num">{formatCurrency(totalPrincipal)}</span>
               </p>
-              <div className="mt-3 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(paidPct, 100)}%`, background: 'var(--c-mint)' }} />
-              </div>
+              <span className="quest-bar mt-3 w-full" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '8px' }}><i style={{ width: `${Math.min(paidPct, 100)}%` }} /></span>
               <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
                 <span className="num">{paidPct.toFixed(0)}% {t('debts.paid_off')}</span><span className="num">{Math.max(0, 100 - paidPct).toFixed(0)}% {t('debts.remaining_label')}</span>
               </div>
@@ -416,9 +414,7 @@ export default function DebtsOverviewPage() {
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
                               <p className="text-[10.5px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.due_on')} {d.due_date ? new Date(d.due_date).getDate() : '—'}{t('debts.day_of_month_suffix')}</p>
-                              <div className="mt-1.5 h-1 w-28 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                                <div className="h-full rounded-full" style={{ width: `${Math.min(paid, 100)}%`, background: meta.color }} />
-                              </div>
+                              <span className="quest-bar mt-1.5" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '7px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
                             </div>
                           </div>
                         </td>
@@ -481,9 +477,7 @@ export default function DebtsOverviewPage() {
                       <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
                         {formatCurrency(d.remaining)} <span className="text-[10px] font-normal" style={{ color: 'var(--ink-soft)' }}>/ {formatCurrency(d.principal)}</span>
                       </p>
-                      <div className="mt-1.5 h-1 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(paid, 100)}%`, background: meta.color }} />
-                      </div>
+                      <span className="quest-bar mt-1.5 w-full" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '7px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
                         <span>{t('debts.interest_label')} <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span></span>
                         <span>{t('debts.payment_label')} <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
@@ -818,9 +812,7 @@ function RatioRow({ label, ideal, value, idealMax }: { label: string; ideal: str
           {value != null ? `${value.toFixed(1)}%` : '—'}<span className="size-1.5 rounded-full" style={{ background: color }} />
         </span>
       </div>
-      <div className="mt-1.5 h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
-      </div>
+      <span className="quest-bar mt-1.5 w-full" style={{ ['--bar-fill' as string]: color, ['--bar-h' as string]: '8px' }}><i style={{ width: `${pct}%` }} /></span>
     </div>
   )
 }

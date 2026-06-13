@@ -101,7 +101,7 @@ export function MonthChangeStrip({
     <section
       className="rounded-2xl border px-4 py-3 sm:px-5 sm:py-3.5"
       style={{
-        background: 'var(--surface)',
+        boxShadow: 'var(--card-shadow)', background: 'var(--surface)',
         borderColor: 'var(--border)',
       }}
       aria-label="Perubahan bulan ini dibanding 3 bulan terakhir"

@@ -129,9 +129,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
               <span>0</span>
               <span>Target 6 bln</span>
             </div>
-            <div className="h-2.5 w-full rounded-full overflow-hidden" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(burnMonths / 6, 1) * 100}%`, background: burnColor }} />
-            </div>
+            <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: burnColor, ['--bar-h' as string]: '10px' }}><i style={{ width: `${Math.min(burnMonths / 6, 1) * 100}%` }} /></span>
           </div>
         )}
 
@@ -188,9 +186,7 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
           {isNa ? 'N/A' : indicator.score}
         </span>
       </div>
-      <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
-      </div>
+      <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: barColor, ['--bar-h' as string]: '8px' }}><i style={{ width: `${pct}%` }} /></span>
     </div>
   )
 }
