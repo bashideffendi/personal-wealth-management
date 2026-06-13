@@ -25,6 +25,7 @@ export function QuietPageHeader({
   info,
   actions,
   docTitle,
+  icon: Icon,
 }: {
   title: string
   /** Longer explanation — shown in an ⓘ tooltip instead of a permanent subtitle. */
@@ -32,6 +33,8 @@ export function QuietPageHeader({
   actions?: React.ReactNode
   /** Overrides the document title (defaults to `title`). */
   docTitle?: string
+  /** Ikon RPG opsional — chip kecil ber-outline sebelum judul (tema cartoon). */
+  icon?: React.ComponentType<{ className?: string }>
 }) {
   useEffect(() => {
     const prev = document.title
@@ -43,10 +46,19 @@ export function QuietPageHeader({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-      <div className="flex items-center gap-1.5 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
+        {Icon && (
+          <span
+            className="grid place-items-center shrink-0 rounded-xl"
+            style={{ width: 34, height: 34, background: 'var(--c-primary-soft)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--btn-shadow)', color: 'var(--c-primary-ink)' }}
+            aria-hidden
+          >
+            <Icon className="size-4" />
+          </span>
+        )}
         <h1
-          className="font-semibold tracking-tight truncate"
-          style={{ fontSize: 24, color: 'var(--ink)', letterSpacing: '-0.025em' }}
+          className="tracking-tight truncate"
+          style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}
         >
           {title}
         </h1>

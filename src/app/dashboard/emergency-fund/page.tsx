@@ -323,6 +323,7 @@ export default function EmergencyFundPage() {
       {/* Header quiet (konsisten work pages) — subtitle + edukasi + tips
           ngumpul di satu ⓘ, gak jadi kartu statis yang makan halaman. */}
       <QuietPageHeader
+        icon={ShieldCheck}
         title={t('emergency_fund.page_title')}
         info={`${t('emergency_fund.page_subtitle')} ${t('emergency_fund.info_benchmark')} ${t('emergency_fund.tip_1')} ${t('emergency_fund.tip_2')}`}
         actions={<Button onClick={openTxn}><Plus className="h-4 w-4" /> {t('emergency_fund.set_fund_button')}</Button>}

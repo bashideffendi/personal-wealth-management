@@ -950,6 +950,7 @@ export default function BudgetingPage() {
   return (
     <div className="space-y-6">
       <QuietPageHeader
+        icon={PiggyBank}
         title={t('budgeting.title')}
         info={t('budgeting.subtitle')}
         actions={

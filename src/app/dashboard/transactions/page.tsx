@@ -874,6 +874,7 @@ export default function TransactionsPage() {
       {/* Quiet header (Monarch/YNAB minimal-chrome) — compact label + ⓘ tooltip,
           primary action + overflow on the right. Orientation via top-nav. */}
       <QuietPageHeader
+        icon={Wallet}
         title={t('transactions.page_title')}
         info={t('transactions.page_subtitle')}
         actions={

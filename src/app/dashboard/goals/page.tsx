@@ -20,7 +20,7 @@ import {
   Plus, Pencil, Trash2, Loader2, ArrowRight, Target, TrendingUp, Repeat, Sparkles,
   Home, Car, Plane, GraduationCap, Smartphone, Heart, ShieldCheck, PiggyBank, Briefcase,
   Archive, RotateCcw,
-  type LucideIcon,
+  Trophy, type LucideIcon,
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { InfoTip } from '@/components/ui/info-tip'
@@ -373,6 +373,7 @@ export default function GoalsPage() {
   return (
     <div className="space-y-6">
       <QuietPageHeader
+        icon={Trophy}
         title={t('goals.title')}
         info={t('goals.subtitle')}
         actions={
