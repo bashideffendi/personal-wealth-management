@@ -53,7 +53,7 @@ export default function ContactPage() {
 
         <div className="mt-8 s-card p-5" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-            <strong style={{ color: 'var(--ink)' }}>Tentang Klunting.</strong> Klunting adalah aplikasi manajemen keuangan pribadi berbasis web yang membantu mencatat transaksi, memantau net worth, anggaran, investasi, utang, dan tujuan finansial dalam satu tempat. Layanan berlangganan dengan trial 14 hari gratis. Lihat <Link href="/terms" className="underline font-medium" style={{ color: 'var(--ink)' }}>Syarat &amp; Ketentuan</Link>, <Link href="/privacy" className="underline font-medium" style={{ color: 'var(--ink)' }}>Kebijakan Privasi</Link>, dan <Link href="/refund" className="underline font-medium" style={{ color: 'var(--ink)' }}>Kebijakan Pengembalian Dana</Link>.
+            <strong style={{ color: 'var(--ink)' }}>Tentang Klunting.</strong> Klunting adalah aplikasi manajemen keuangan pribadi berbasis web yang membantu mencatat transaksi, memantau net worth, anggaran, investasi, utang, dan tujuan finansial dalam satu tempat. Layanan berlangganan dengan trial 21 hari gratis. Lihat <Link href="/terms" className="underline font-medium" style={{ color: 'var(--ink)' }}>Syarat &amp; Ketentuan</Link>, <Link href="/privacy" className="underline font-medium" style={{ color: 'var(--ink)' }}>Kebijakan Privasi</Link>, dan <Link href="/refund" className="underline font-medium" style={{ color: 'var(--ink)' }}>Kebijakan Pengembalian Dana</Link>.
           </p>
         </div>
 
