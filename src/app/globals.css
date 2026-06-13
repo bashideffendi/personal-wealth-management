@@ -846,6 +846,12 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
 /* Tabel transaksi mengalir penuh di halaman (semua baris tampil, scroll
    halaman biasa). thead nempel di bawah TopNav (sticky top-0 z-40) supaya
    header kolom GAK ikut ter-scroll pas baca daftar panjang. */
+/* Komponen <Table> shadcn membungkus tabel dalam div overflow-x-auto —
+   itu scroll-container yang mematahkan position:sticky thead (header
+   kolom nabrak baris tanggal, bug 2026-06-13). Tabel transaksi pakai
+   tableLayout:fixed + lebar %, jadi gak pernah butuh scroll horizontal:
+   matikan overflow-nya HANYA di sini supaya thead sticky ke viewport. */
+.tx-scroll [data-slot="table-container"] { overflow: visible; }
 .tx-scroll thead th { position: sticky; top: 57px; z-index: 20; background: var(--surface-3); }
 
 /* ── Quest bar — progress bar ala game (match mockup Cartoon Quest) ──
