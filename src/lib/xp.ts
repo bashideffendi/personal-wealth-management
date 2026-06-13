@@ -99,6 +99,8 @@ export async function awardXp(supabase: DB, source: XpSource, refId?: string): P
     const sumToday = ((todayRows ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount || 0), 0)
     if (sumToday + cfg.amount > cfg.capPerDay) return false
 
+    // Total sebelum (buat deteksi naik level), lalu insert.
+    const before = await fetchMyXp(supabase)
     const { error } = await supabase
       .from('xp_events')
       .insert({ user_id: uid, source, amount: cfg.amount, ref_id: refId ?? null })
@@ -106,7 +108,13 @@ export async function awardXp(supabase: DB, source: XpSource, refId?: string): P
       console.error('[xp] award gagal:', error.message)
       return false
     }
+    const lvBefore = levelFromXp(before).level
+    const lvAfter = levelFromXp(before + cfg.amount).level
     window.dispatchEvent(new CustomEvent('pwm:xp-changed'))
+    // Detail buat FX coin-burst + level-up overlay (XpFx).
+    window.dispatchEvent(new CustomEvent('pwm:xp-gain', {
+      detail: { amount: cfg.amount, leveledUp: lvAfter > lvBefore, newLevel: lvAfter },
+    }))
     return true
   } catch {
     return false

@@ -354,7 +354,7 @@ export default function NetWorthPage() {
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_composition')}</p>
           {totalAssets > 0 ? (
             <>
-              <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+              <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
                 {assetClasses.map((c) => (<div key={c.label} style={{ width: `${(c.value / totalAssets) * 100}%`, background: c.color }} />))}
               </div>
               <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5">

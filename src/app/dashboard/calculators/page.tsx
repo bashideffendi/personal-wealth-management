@@ -141,7 +141,7 @@ function KprFeatured() {
           <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_principal')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(principal)}</p></div>
         </div>
         <p className="text-[10px] uppercase tracking-wide mt-5 mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_payment_composition')}</p>
-        <div className="flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+        <div className="flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
           <div style={{ width: `${pokokPct}%`, background: VIOLET }} />
           <div style={{ width: `${100 - pokokPct}%`, background: CORAL }} />
         </div>

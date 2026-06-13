@@ -874,6 +874,51 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
   transition: width 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* quest-track = skin track DOANG (outline + bg + radius), buat bar
+   SEGMENTED (banyak segmen warna) atau GAUGE (marker/threshold) yang
+   gak cocok model fill tunggal .quest-bar. Isi (segmen/marker) tetap. */
+.quest-track {
+  height: var(--bar-h);
+  border-radius: 999px;
+  background: var(--bar-track);
+  border: var(--bar-outline-w) solid var(--outline);
+  overflow: hidden;
+}
+
+/* ── Coin-burst + level-up FX (Cartoon Quest) ──────────────────────
+   Dipicu komponen XpFx saat dapat XP. Koin emas melayang naik + fade. */
+@keyframes coin-fly {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  20%  { transform: translateY(-6px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-46px) scale(0.9); opacity: 0; }
+}
+@keyframes levelup-pop {
+  0%   { transform: scale(0.5) rotate(-8deg); opacity: 0; }
+  35%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+  70%  { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 0; }
+}
+.xpfx-coin {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  animation: coin-fly 1100ms ease-out forwards;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+.xpfx-levelup {
+  position: fixed;
+  z-index: 91;
+  pointer-events: none;
+  left: 50%;
+  top: 28%;
+  transform: translateX(-50%);
+  animation: levelup-pop 2200ms ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .xpfx-coin, .xpfx-levelup { animation-duration: 1ms; }
+}
+
 /* Budget grid — faint vertical column gridlines + a stronger separator after the
    sticky Category column, so the 12 month columns are easy to track left-to-right. */
 .budget-grid td, .budget-grid th { border-right: 1px solid var(--border-soft); }

@@ -425,7 +425,7 @@ export default function RecurringPage() {
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.by_category')}</p>
                   {breakdown.length > 0 ? (
                     <>
-                      <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+                      <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
                         {breakdown.map((b) => <div key={b.cat} title={b.cat} style={{ width: `${(b.total / breakdownTotal) * 100}%`, background: catMeta(b.cat).color }} />)}
                       </div>
                       <div className="mt-3 space-y-2">

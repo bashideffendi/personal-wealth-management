@@ -501,7 +501,7 @@ export default function EmergencyFundPage() {
           </div>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.locations_subtitle')}</p>
           {allLocations.length > 0 && (
-            <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+            <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '9px' }}>
               {allLocations.map((l, i) => <div key={l.key} title={l.name} style={{ width: `${(l.amount / Math.max(1, accumulatedFund)) * 100}%`, background: locPalette[i % locPalette.length] }} />)}
             </div>
           )}

@@ -40,7 +40,7 @@ export function AssetAllocationCard({
       </div>
 
       {assets > 0 && (
-        <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full shrink-0" style={{ background: 'var(--surface-2)' }}>
+        <div className="mt-4 flex w-full shrink-0 quest-track" style={{ ['--bar-h' as string]: '11px' }}>
           {seg.map((s) => (
             <div key={s.key} style={{ width: `${(s.value / assets) * 100}%`, background: s.color }} title={`${s.label}: ${formatCurrency(s.value)}`} />
           ))}

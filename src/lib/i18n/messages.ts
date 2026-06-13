@@ -81,6 +81,7 @@ export const messages = {
     },
     xp: {
       hud_title: 'Level kamu — XP dari kebiasaan finansial sehat',
+      level_up: 'NAIK LEVEL!',
     },
     playbook: {
       title: "Panduan finansial terpandu",
@@ -3344,6 +3345,7 @@ export const messages = {
     },
     xp: {
       hud_title: 'Your level — XP from healthy money habits',
+      level_up: 'LEVEL UP!',
     },
     playbook: {
       title: "Guided financial playbooks",

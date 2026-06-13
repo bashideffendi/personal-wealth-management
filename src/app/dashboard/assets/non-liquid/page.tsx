@@ -429,7 +429,7 @@ export default function NonLiquidAssetsPage() {
           {/* Allocation bar — komposisi kelas aset (porto glance). Cuma muncul kalau >=2 kelas. */}
           {total > 0 && activeCatCount >= 2 && (
             <div className="s-card p-4">
-              <div className="flex h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+              <div className="flex w-full quest-track" style={{ ['--bar-h' as string]: '9px' }}>
                 {(Object.keys(CAT) as Category[]).map((cat) => {
                   const s = catStat(cat)
                   return s.cur > 0 ? <div key={cat} title={CAT[cat].label} style={{ width: `${(s.cur / total) * 100}%`, background: CAT[cat].color }} /> : null

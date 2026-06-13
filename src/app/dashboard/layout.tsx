@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TopNav } from '@/components/layout/top-nav'
+import { XpFx } from '@/components/layout/xp-fx'
 import { QuickAddLauncher } from '@/components/layout/quick-add-launcher'
 import { CommandPalette } from '@/components/layout/command-palette'
 import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
@@ -70,6 +71,7 @@ export default async function DashboardLayout({
       style={{ background: 'var(--bg)' }}
     >
       <TopNav user={user} />
+      <XpFx />
       <main
         className="flex-1 pt-6 md:pt-7 pb-24 md:pb-16"
         style={{ background: 'var(--bg)' }}

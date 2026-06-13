@@ -267,7 +267,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
           </div>
           {/* Allocation bar */}
           {balance > 0 && (
-            <div className="mt-3 h-2 rounded-full overflow-hidden flex" style={{ background: 'var(--surface-3)' }}>
+            <div className="mt-3 flex quest-track" style={{ ['--bar-h' as string]: '9px' }}>
               <div
                 className="h-full"
                 style={{

@@ -266,7 +266,7 @@ export default function LiquidAssetsPage() {
           {/* Allocation bar — komposisi per jenis (muncul kalau >=2 jenis) */}
           {total > 0 && typesPresent.length >= 2 && (
             <div className="s-card p-4">
-              <div className="flex h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+              <div className="flex w-full quest-track" style={{ ['--bar-h' as string]: '9px' }}>
                 {typesPresent.map((t) => (typeSum(t) > 0 ? <div key={t} title={metaFor(t).jenis} style={{ width: `${(typeSum(t) / total) * 100}%`, background: metaFor(t).color }} /> : null))}
               </div>
               <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5">
@@ -377,7 +377,7 @@ export default function LiquidAssetsPage() {
           {/* Tangga likuiditas */}
             <div className="s-card p-5">
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.ladder_heading')}</p>
-              <div className="mt-3 flex h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+              <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
                 {ladder.map((b) => (
                   <div key={b.tier} style={{ width: `${total > 0 ? (b.amount / total) * 100 : 0}%`, background: TIER_META[b.tier].bar }} />
                 ))}
