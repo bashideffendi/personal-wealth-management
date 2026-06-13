@@ -120,7 +120,7 @@ export function StockResearchTab() {
     <div className="space-y-3">
       <div
         className="rounded-xl border p-3 flex flex-wrap items-center gap-2"
-        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
+        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <div className="relative flex-1 min-w-[200px]">
           <Search

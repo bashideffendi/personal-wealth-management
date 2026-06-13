@@ -81,10 +81,10 @@
      ngatur ketebalan bingkai, gaya bayangan, dan radius-nya sendiri. */
   --outline:        #1E1B16;
   --outline-shadow: #1E1B16;
-  --outline-w:      2px;
+  --outline-w:      1.5px;
   --card-radius:    14px;
-  --card-shadow:    3px 3px 0 var(--outline-shadow);
-  --btn-shadow:     2px 2px 0 var(--outline-shadow);
+  --card-shadow:    2px 2px 0 var(--outline-shadow);
+  --btn-shadow:     1.5px 1.5px 0 var(--outline-shadow);
   --btn-radius:     999px;   /* cartoon = tombol pill chunky (match mockup) */
   /* Progress bar ala game (.quest-bar): track tebal + outline tinta +
      fill bulat. Skin lain ngecilin tinggi & ilangin outline. */
@@ -853,6 +853,14 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
    matikan overflow-nya HANYA di sini supaya thead sticky ke viewport. */
 .tx-scroll [data-slot="table-container"] { overflow: visible; }
 .tx-scroll thead th { position: sticky; top: 57px; z-index: 20; background: var(--surface-3); }
+/* Tabel duduk flush di kartu ber-radius (gak bisa overflow-hidden krn matahin
+   sticky) — bulatkan sudut sel pinggir biar ngikutin lengkung kartu, gak ada
+   sudut kotak nongol bikin garis dobel. Sedikit < radius kartu (14) biar di
+   dalam border. */
+.tx-scroll thead th:first-child { border-top-left-radius: 13px; }
+.tx-scroll thead th:last-child { border-top-right-radius: 13px; }
+.tx-scroll tbody tr:last-child td:first-child { border-bottom-left-radius: 13px; }
+.tx-scroll tbody tr:last-child td:last-child { border-bottom-right-radius: 13px; }
 
 /* ── Quest bar — progress bar ala game (match mockup Cartoon Quest) ──
    Track tebal + outline tinta + fill bulat. .quest-bar = track,

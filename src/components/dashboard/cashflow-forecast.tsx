@@ -148,7 +148,7 @@ export function CashFlowForecast({
     return (
       <div
         className="rounded-2xl border p-5 sm:p-6"
-        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
+        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <div className="flex items-start gap-3 mb-2">
           <div

@@ -874,7 +874,6 @@ export default function TransactionsPage() {
       {/* Quiet header (Monarch/YNAB minimal-chrome) — compact label + ⓘ tooltip,
           primary action + overflow on the right. Orientation via top-nav. */}
       <QuietPageHeader
-        icon={Wallet}
         title={t('transactions.page_title')}
         info={t('transactions.page_subtitle')}
         actions={
@@ -1209,7 +1208,7 @@ export default function TransactionsPage() {
 
       {/* Bulk-action bar — appears when rows are selected (desktop) */}
       {selectedIds.size > 0 && (
-        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
+        <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
           <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
             {selectedIds.size} {t('transactions.selected_count')}
           </span>

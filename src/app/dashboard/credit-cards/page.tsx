@@ -542,7 +542,7 @@ export default function CreditCardsPage() {
             <div className="grid gap-1.5">
               <Label>{t('credit_cards.issuer_bank')}</Label>
               {cardForm.issuer ? (
-                <div className="flex items-center gap-3 rounded-xl border p-2.5" style={{ boxShadow: 'var(--card-shadow)', borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
+                <div className="flex items-center gap-3 rounded-xl border p-2.5" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
                   <InstitutionLogo accountName={cardForm.issuer} size={38} shape="rounded" />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{cardForm.issuer}</p>

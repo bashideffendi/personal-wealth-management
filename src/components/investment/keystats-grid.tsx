@@ -614,7 +614,7 @@ export function KeyStatsGrid({
     <div className="flex flex-col gap-4">
       <div
         className="rounded-lg border p-3"
-        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
+        style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
       >
         <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
           <strong style={{ color: 'var(--ink)' }}>Key Statistics</strong> — dihitung

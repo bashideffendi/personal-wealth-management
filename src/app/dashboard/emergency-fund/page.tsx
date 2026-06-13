@@ -323,7 +323,6 @@ export default function EmergencyFundPage() {
       {/* Header quiet (konsisten work pages) — subtitle + edukasi + tips
           ngumpul di satu ⓘ, gak jadi kartu statis yang makan halaman. */}
       <QuietPageHeader
-        icon={ShieldCheck}
         title={t('emergency_fund.page_title')}
         info={`${t('emergency_fund.page_subtitle')} ${t('emergency_fund.info_benchmark')} ${t('emergency_fund.tip_1')} ${t('emergency_fund.tip_2')}`}
         actions={<Button onClick={openTxn}><Plus className="h-4 w-4" /> {t('emergency_fund.set_fund_button')}</Button>}
@@ -613,7 +612,7 @@ export default function EmergencyFundPage() {
                 const acc = accounts.find((a) => a.name === txnForm.location)
                 return (
                   <div className="relative">
-                    <div className="flex items-center gap-3 h-12 rounded-lg border px-3" style={{ boxShadow: 'var(--card-shadow)', borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
+                    <div className="flex items-center gap-3 h-12 rounded-lg border px-3" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
                       {txnOther ? (
                         <><div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Plus className="size-4" style={{ color: 'var(--ink-muted)' }} /></div><span className="text-sm" style={{ color: 'var(--ink)' }}>{t('emergency_fund.txn_other_place')}</span></>
                       ) : acc ? (

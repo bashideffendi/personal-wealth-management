@@ -323,7 +323,7 @@ export default function ImportMutasiPage() {
       {stage === 'processing' && (
         <div
           className="rounded-2xl border p-8 text-center"
-          style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           <Loader2
             className="size-8 mx-auto animate-spin"
@@ -352,7 +352,7 @@ export default function ImportMutasiPage() {
       {stage === 'importing' && (
         <div
           className="rounded-2xl border p-8 text-center"
-          style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           <Loader2
             className="size-8 mx-auto animate-spin"
@@ -367,7 +367,7 @@ export default function ImportMutasiPage() {
       {stage === 'done' && importStats && (
         <div
           className="rounded-2xl border p-8 text-center"
-          style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
@@ -439,7 +439,7 @@ function InputStage({
   return (
     <div
       className="rounded-2xl border p-5 sm:p-6 space-y-5"
-      style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}
+      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
       {/* Account selector */}
       <div className="grid gap-1.5">

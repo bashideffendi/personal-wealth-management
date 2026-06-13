@@ -88,7 +88,7 @@ export function MobileBudgetingView({
       {/* Month switcher */}
       <div
         className="flex items-center justify-between rounded-xl border px-3 py-2.5"
-        style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--outline)' }}
+        style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
       >
         <button
           type="button"
@@ -124,7 +124,7 @@ export function MobileBudgetingView({
       <div className="grid grid-cols-2 gap-2">
         <div
           className="rounded-lg border p-3"
-          style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--outline)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
             {t('mobile_budget.allocated')}
@@ -135,7 +135,7 @@ export function MobileBudgetingView({
         </div>
         <div
           className="rounded-lg border p-3"
-          style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--outline)' }}
+          style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
             {t('mobile_budget.remaining')}

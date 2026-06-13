@@ -72,7 +72,7 @@ export function PricingSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
           {/* Pro */}
-          <div className="rounded-2xl p-7 border-2 relative" style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
+          <div className="rounded-2xl p-7 border-2 relative" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
             <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', letterSpacing: '0.08em' }}>
               Paling populer
             </span>
@@ -102,7 +102,7 @@ export function PricingSection() {
           </div>
 
           {/* Max */}
-          <div className="rounded-2xl p-7 border" style={{ boxShadow: 'var(--card-shadow)', background: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <div className="rounded-2xl p-7 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-2 mb-3">
               <Users className="size-5" style={{ color: 'var(--ink-muted)' }} />
               <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Max</h3>
