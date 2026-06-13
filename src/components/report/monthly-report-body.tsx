@@ -403,9 +403,9 @@ export function MonthlyReportBody({
                     <span className="t-sm truncate" style={{ color: 'var(--ink)' }}>{b.category}</span>
                     <span className="num t-cap shrink-0" style={{ color }}>{b.ratio.toFixed(0)}% · {money(b.actual)}/{money(b.budget)}</span>
                   </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, b.ratio)}%`, background: color }} />
-                  </div>
+                  <span className="quest-bar" style={{ ['--bar-fill' as string]: color, ['--bar-h' as string]: '9px' }}>
+                    <i style={{ width: `${Math.min(100, b.ratio)}%` }} />
+                  </span>
                 </div>
               )
             })}
@@ -423,9 +423,9 @@ export function MonthlyReportBody({
               {r.expense_by_category.map((row) => (
                 <div key={row.name} className="flex items-center gap-2.5">
                   <span className="t-sm w-24 sm:w-28 shrink-0 truncate" style={{ color: 'var(--ink)' }}>{row.name}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${(row.amount / r.maxExp) * 100}%`, background: 'var(--c-violet)' }} />
-                  </div>
+                  <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: 'var(--c-violet)', ['--bar-h' as string]: '9px' }}>
+                    <i style={{ width: `${(row.amount / r.maxExp) * 100}%` }} />
+                  </span>
                   <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{money(row.amount)}</span>
                   {r.hasPrev && <span className="num t-cap w-16 text-right shrink-0" style={{ color: row.delta > 0 ? 'var(--c-coral)' : row.delta < 0 ? 'var(--c-mint)' : 'var(--text-mute)' }}>{row.delta === 0 ? '—' : `${row.delta > 0 ? '+' : '−'}${formatCurrency(Math.abs(row.delta))}`}</span>}
                 </div>
@@ -441,9 +441,9 @@ export function MonthlyReportBody({
               {r.income_by_source.map((row) => (
                 <div key={row.name} className="flex items-center gap-2.5">
                   <span className="t-sm w-24 sm:w-28 shrink-0 truncate" style={{ color: 'var(--ink)' }}>{row.name}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${row.share}%`, background: 'var(--c-mint)' }} />
-                  </div>
+                  <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '9px' }}>
+                    <i style={{ width: `${row.share}%` }} />
+                  </span>
                   <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{money(row.amount)}</span>
                   <span className="num t-cap w-10 text-right shrink-0" style={{ color: 'var(--text-mute)' }}>{row.share.toFixed(0)}%</span>
                 </div>

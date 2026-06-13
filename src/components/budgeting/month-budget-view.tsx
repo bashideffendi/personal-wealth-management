@@ -326,9 +326,9 @@ export function MonthBudgetView({
                         {label}
                       </p>
                       {plan > 0 && (
-                        <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: overRow ? 'var(--c-coral)' : sec.tint }} />
-                        </div>
+                        <span className="quest-bar mt-1.5" style={{ ['--bar-fill' as string]: overRow ? 'var(--c-coral)' : sec.tint, ['--bar-h' as string]: '8px' }}>
+                          <i style={{ width: `${Math.min(pct, 100)}%` }} />
+                        </span>
                       )}
                       {(() => {
                         const tgt = targetAmountFor(sec.key, cat)

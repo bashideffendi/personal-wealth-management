@@ -116,19 +116,19 @@ export function AICreditsBadge() {
             </div>
 
             {/* Progress bar — current vs cap, capped at 100% visual */}
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${Math.min(100, pct)}%`,
-                  background: empty
-                    ? 'var(--c-coral)'
-                    : low
-                      ? 'linear-gradient(90deg, var(--c-amber), var(--c-coral))'
-                      : 'var(--c-primary)',
-                }}
-              />
-            </div>
+            <span
+              className="quest-bar"
+              style={{
+                ['--bar-h' as string]: '8px',
+                ['--bar-fill' as string]: empty
+                  ? 'var(--c-coral)'
+                  : low
+                    ? 'linear-gradient(90deg, var(--c-amber), var(--c-coral))'
+                    : 'var(--c-primary)',
+              }}
+            >
+              <i style={{ width: `${Math.min(100, pct)}%` }} />
+            </span>
 
             <p className="text-[11px] mt-2 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
               Plafon bulanan{' '}

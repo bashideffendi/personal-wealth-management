@@ -1141,7 +1141,7 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="eyebrow">{t('dashboard.portfolio')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
+              <h3 className="t-h2 mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
                 {t('dashboard.investment_allocation')}
               </h3>
             </div>
@@ -1243,12 +1243,13 @@ export default function DashboardPage() {
                       {t('dashboard.top_holding')}
                     </p>
                     <span
-                      className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                      className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                       style={{
                         background:
-                          investmentSummary.risk === 'tinggi' ? 'color-mix(in srgb, var(--c-coral) 12%, transparent)'
-                          : investmentSummary.risk === 'sedang' ? 'color-mix(in srgb, var(--c-amber) 14%, transparent)'
-                          : 'color-mix(in srgb, var(--c-mint) 12%, transparent)',
+                          investmentSummary.risk === 'tinggi' ? 'color-mix(in srgb, var(--c-coral) 16%, transparent)'
+                          : investmentSummary.risk === 'sedang' ? 'color-mix(in srgb, var(--c-amber) 18%, transparent)'
+                          : 'color-mix(in srgb, var(--c-mint) 16%, transparent)',
+                        border: 'var(--bar-outline-w, 1.5px) solid var(--outline)',
                         color:
                           investmentSummary.risk === 'tinggi' ? 'var(--c-coral-ink)'
                           : investmentSummary.risk === 'sedang' ? 'var(--c-amber-ink)'
@@ -1285,16 +1286,10 @@ export default function DashboardPage() {
                               {formatCurrency(h.value)}
                             </span>
                           </div>
-                          <div className="mt-1 flex items-center gap-2">
-                            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${pct}%`,
-                                  background: CHART_PALETTE[i % CHART_PALETTE.length],
-                                }}
-                              />
-                            </div>
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: CHART_PALETTE[i % CHART_PALETTE.length], ['--bar-h' as string]: '9px' }}>
+                              <i style={{ width: `${pct}%` }} />
+                            </span>
                             <span className="text-[10px] tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
                               {pct.toFixed(0)}%
                             </span>
