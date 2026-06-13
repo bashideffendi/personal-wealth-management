@@ -392,11 +392,11 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg flex items-center justify-center z-30 transition-all hover:scale-110 active:scale-95"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-[var(--card-shadow)] flex items-center justify-center z-30 transition-all hover:scale-110 active:scale-95"
           style={{
             background: 'var(--c-primary)',
             color: 'var(--c-primary-foreground)',
-            boxShadow: '0 10px 24px -6px rgba(16, 24, 40, 0.14)',
+            boxShadow: 'var(--card-shadow)',
           }}
           aria-label={t('quickadd.add_transaction')}
           title={t('quickadd.add_transaction')}
@@ -707,7 +707,7 @@ function PreviewView({
           style={{
             background: 'var(--c-primary)',
             color: 'var(--c-primary-foreground)',
-            boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+            boxShadow: 'var(--card-shadow)',
           }}
         >
           {saving ? (
@@ -930,7 +930,7 @@ function ManualForm({
           style={{
             background: 'var(--c-primary)',
             color: 'var(--c-primary-foreground)',
-            boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+            boxShadow: 'var(--card-shadow)',
           }}
         >
           {saving && <Loader2 className="size-4 animate-spin" />}

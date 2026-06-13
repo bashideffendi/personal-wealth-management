@@ -34,6 +34,21 @@ export interface LevelInfo {
   needed: number      // XP yang dibutuhkan buat naik dari level berjalan
 }
 
+/** Gelar per rentang level — bumbu RPG, ID casual. */
+const TITLES: [number, string][] = [
+  [1, 'Pemula Hemat'],
+  [4, 'Penjaga Dompet'],
+  [8, 'Ahli Anggaran'],
+  [14, 'Juragan Tabungan'],
+  [22, 'Master Cuan'],
+  [35, 'Sultan Disiplin'],
+]
+export function levelTitle(level: number): string {
+  let title = TITLES[0][1]
+  for (const [min, t] of TITLES) if (level >= min) title = t
+  return title
+}
+
 export function levelFromXp(totalXp: number): LevelInfo {
   let level = 1
   let acc = 0

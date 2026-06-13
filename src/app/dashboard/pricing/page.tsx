@@ -157,7 +157,7 @@ export default function PricingPage() {
           return (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl ${theme.bg} p-6 ring-1 ${theme.ring} ${plan.popular ? 'shadow-lg lg:scale-105' : 'shadow-sm'} transition`}
+              className={`relative flex flex-col rounded-2xl ${theme.bg} p-6 ring-1 ${theme.ring} ${plan.popular ? 'shadow-[var(--card-shadow)] lg:scale-105' : 'shadow-[var(--card-shadow)]'} transition`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow">

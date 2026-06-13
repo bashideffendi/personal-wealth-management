@@ -139,7 +139,7 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
           {/* Marker */}
           {!hasNoDebt && monthlyIncome > 0 && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-white shadow-md transition-all duration-700"
+              className="absolute top-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-white shadow-[var(--card-shadow)] transition-all duration-700"
               style={{
                 left: `calc(${markerPos}% - 8px)`,
                 background: zone.color,

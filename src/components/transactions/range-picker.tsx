@@ -181,7 +181,7 @@ export function RangePicker({
               background: 'var(--surface)',
               borderColor: 'var(--border-soft)',
               width: 'min(640px, calc(100vw - 2rem))',
-              boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30), 0 2px 8px rgba(16,24,40,0.06)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <div className="flex flex-col gap-4 sm:flex-row">

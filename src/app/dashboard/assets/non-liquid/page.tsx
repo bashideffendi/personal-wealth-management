@@ -318,7 +318,7 @@ export default function NonLiquidAssetsPage() {
     return (
       <div key={a.id} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] transition-all hover:border-[var(--ink)] hover:shadow-lg">
         {/* Edit/hapus — toolbar ngambang kanan-atas (kebaca di atas peta maupun konten) */}
-        <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-sm transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
+        <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-[var(--card-shadow)] transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
           <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon-sm" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} /></Button>
         </div>
@@ -328,7 +328,7 @@ export default function NonLiquidAssetsPage() {
             <div className="relative h-28 w-full">
               <LeafletMap lat={a.latitude!} lng={a.longitude!} readOnly height={112} />
               {/* badge kategori ngambang di pojok peta */}
-              <div className="absolute -bottom-5 left-5 z-[2] size-10 rounded-xl grid place-items-center shadow-md ring-2 ring-[var(--surface)]" style={{ background: meta.color }}>
+              <div className="absolute -bottom-5 left-5 z-[2] size-10 rounded-xl grid place-items-center shadow-[var(--card-shadow)] ring-2 ring-[var(--surface)]" style={{ background: meta.color }}>
                 <Icon className="size-5" style={{ color: '#fff' }} />
               </div>
             </div>

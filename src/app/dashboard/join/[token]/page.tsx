@@ -113,7 +113,7 @@ export default function JoinHouseholdPage() {
 
   return (
     <div className="max-w-md mx-auto py-12">
-      <div className="s-card s-card-pad-xl text-center shadow-sm">
+      <div className="s-card s-card-pad-xl text-center shadow-[var(--card-shadow)]">
         {state.kind === 'loading' && (
           <div className="py-12">
             <Loader2 className="size-8 mx-auto animate-spin text-muted-foreground" />
@@ -140,7 +140,7 @@ export default function JoinHouseholdPage() {
               className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4"
               style={{
                 background: 'var(--c-primary)',
-                boxShadow: '0 10px 28px -10px rgba(16, 24, 40, 0.14)',
+                boxShadow: 'var(--card-shadow)',
               }}
             >
               <Home className="size-8 text-white" />

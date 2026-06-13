@@ -46,7 +46,7 @@ export function HistoryChart({ data }: { data: Array<{ date: string; rawDate: st
           if (!active || !payload?.length) return null
           const p = payload[0].payload as { rawDate: string; assets: number; debts: number; net: number }
           return (
-            <div className="rounded-md border px-3 py-2 text-xs shadow-md" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
+            <div className="rounded-md border px-3 py-2 text-xs shadow-[var(--card-shadow)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
               <p className="font-semibold mb-1.5">{new Date(p.rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="num tabular flex justify-between gap-3"><span style={{ color: 'var(--c-mint)' }}>● {t('networth.assets')}</span><span>{formatCurrency(p.assets)}</span></p>
               <p className="num tabular flex justify-between gap-3"><span style={{ color: 'var(--c-coral)' }}>● {t('networth.debt')}</span><span>{formatCurrency(Math.abs(p.debts))}</span></p>

@@ -68,7 +68,7 @@ export function ServiceWorkerRegister() {
 
   return (
     <div
-      className="fixed top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg animate-in slide-in-from-top duration-300"
+      className="fixed top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-[var(--card-shadow)] animate-in slide-in-from-top duration-300"
       style={{
         background: 'rgba(0, 0, 0, 0.85)',
         color: '#FCA5A5',

@@ -676,7 +676,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
             style={{
               background: 'var(--c-primary)',
-              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Check className="size-4" />

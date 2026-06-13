@@ -390,7 +390,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
       {/* Tooltip hover edge */}
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-10 rounded-lg border px-2.5 py-1.5 text-[11px] shadow-sm"
+          className="pointer-events-none absolute z-10 rounded-lg border px-2.5 py-1.5 text-[11px] shadow-[var(--card-shadow)]"
           style={{
             left: tooltip.x + 12,
             top: tooltip.y + 12,

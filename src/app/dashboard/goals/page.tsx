@@ -512,9 +512,9 @@ export default function GoalsPage() {
                     </p>
 
                     <div className="mt-3.5 flex items-center gap-3">
-                      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? 'var(--c-mint)' : layerColor }} />
-                      </div>
+                      <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: done ? 'var(--c-mint)' : layerColor }}>
+                        <i style={{ width: `${Math.min(pct, 100)}%` }} />
+                      </span>
                       <span className="num text-[12px] font-semibold shrink-0" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
                         {pct.toFixed(0)}%
                       </span>

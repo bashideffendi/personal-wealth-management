@@ -379,7 +379,7 @@ export default function InvestmentOverviewPage() {
                 <div
                   role="menu"
                   className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border py-1.5 z-50 max-h-[60vh] overflow-y-auto"
-                  style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 12px 32px -12px rgba(16,24,40,0.18)' }}
+                  style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
                 >
                   {INVESTMENT_SUBCATS.map((sc) => (
                     <Link

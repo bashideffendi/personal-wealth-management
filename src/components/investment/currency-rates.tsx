@@ -131,7 +131,7 @@ export function CurrencyRates() {
                   alt={`${t('investment.fx_flag_alt')} ${pair.name}`}
                   width={32}
                   height={32}
-                  className="shrink-0 rounded-full ring-1 ring-black/10 shadow-sm"
+                  className="shrink-0 rounded-full ring-1 ring-black/10 shadow-[var(--card-shadow)]"
                   unoptimized
                 />
                 <div className="min-w-0 flex-1">

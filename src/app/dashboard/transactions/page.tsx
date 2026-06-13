@@ -954,7 +954,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Search + filters — satu card: search di atas, filter di bawahnya */}
-      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
+      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
         <div className="relative">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
           <Input
@@ -1222,7 +1222,7 @@ export default function TransactionsPage() {
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Positioner side="bottom" align="end" sideOffset={6} className="z-50">
-                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
+                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: 'var(--card-shadow)' }}>
                     {allCategoryOptions.map((c) => (
                       <button key={c} type="button" onClick={() => { setBulkCatOpen(false); void bulkSetCategory(c) }} className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}>
                         {c}
@@ -1278,9 +1278,9 @@ export default function TransactionsPage() {
       ) : (
         <>
           {/* Desktop: per-day grouped table, in a card */}
-          <div className="hidden md:block overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: '0 1px 3px rgba(16,24,40,0.05), 0 10px 24px -10px rgba(16,24,40,0.12)' }}>
-            {/* Contained scroll so the column header can stick without colliding with
-                the page-level sticky TopNav. */}
+          <div className="hidden md:block overflow-hidden s-card" style={{ padding: 0 }}>
+            {/* Mengalir penuh — thead sticky nempel di bawah TopNav (.tx-scroll
+                di globals), jadi header kolom gak ikut ter-scroll. */}
             <div className="tx-scroll">
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
@@ -1370,7 +1370,7 @@ export default function TransactionsPage() {
                               </Popover.Trigger>
                               <Popover.Portal>
                                 <Popover.Positioner side="bottom" align="start" sideOffset={6} className="z-50">
-                                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: '0 16px 48px -16px rgba(16,24,40,0.30)' }}>
+                                  <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: 'var(--card-shadow)' }}>
                                     {optionsForType(tx.type).map((o) => (
                                       <button
                                         key={o.value}

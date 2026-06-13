@@ -96,7 +96,7 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
             style={{
               background: 'var(--c-primary)',
               color: 'var(--c-primary-foreground)',
-              boxShadow: '0 2px 6px -2px rgba(16, 24, 40, 0.12)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             {initials}
@@ -114,7 +114,7 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-lg overflow-hidden z-50"
+          className="absolute right-0 top-full mt-2 w-64 rounded-lg border shadow-[var(--card-shadow)] overflow-hidden z-50"
           style={{
             background: 'var(--surface)',
             borderColor: 'var(--border)',

@@ -593,7 +593,7 @@ function GenerateResearchEmpty({
           style={{
             background: 'var(--c-primary)',
             color: 'var(--c-primary-foreground)',
-            boxShadow: '0 10px 28px -10px rgba(16, 24, 40, 0.14)',
+            boxShadow: 'var(--card-shadow)',
           }}
         >
           <Sparkles className="size-6" />

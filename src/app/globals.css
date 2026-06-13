@@ -85,6 +85,12 @@
   --card-radius:    14px;
   --card-shadow:    3px 3px 0 var(--outline-shadow);
   --btn-shadow:     2px 2px 0 var(--outline-shadow);
+  --btn-radius:     999px;   /* cartoon = tombol pill chunky (match mockup) */
+  /* Progress bar ala game (.quest-bar): track tebal + outline tinta +
+     fill bulat. Skin lain ngecilin tinggi & ilangin outline. */
+  --bar-h:          12px;
+  --bar-outline-w:  2px;
+  --bar-track:      var(--surface-3);
 
   /* ── Token HERO — panel gelap ikonik (net worth dkk). SELALU gelap di
      light & dark mode; tiap skin ngatur nuansanya (cartoon=dusk ungu,
@@ -487,6 +493,10 @@ html[data-skin="mono"] {
   --card-radius:    16px;
   --card-shadow:    0 1px 0 rgba(28, 25, 23, 0.04);
   --btn-shadow:     none;
+  --btn-radius:     10px;
+  --bar-h:          7px;
+  --bar-outline-w:  0px;
+  --bar-track:      var(--surface-3);
   --c-primary:      #131110;
   --c-primary-soft: #ECEAE3;
   --c-primary-foreground: #FFFFFF;
@@ -563,6 +573,10 @@ html[data-skin="terminal"] {
   --card-radius:    10px;
   --card-shadow:    none;
   --btn-shadow:     none;
+  --btn-radius:     6px;
+  --bar-h:          6px;
+  --bar-outline-w:  0px;
+  --bar-track:      var(--surface-3);
   --c-primary:      #F7A600;
   --c-primary-soft: rgba(247, 166, 0, 0.14);
   --c-primary-foreground: #1A1100;
@@ -801,11 +815,11 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: var(--btn-radius);
   border: 0;
   background: var(--c-primary);
   color: var(--c-primary-foreground);
-  padding: 9px 14px;
+  padding: 9px 16px;
   cursor: pointer;
   transition: opacity 150ms, transform 150ms, box-shadow 150ms;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
@@ -829,8 +843,30 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
    the Akun/Jenis/Kategori/Jumlah labels stay put on long lists (a page-level
    sticky header would slide under the sticky TopNav). Each th needs its own bg to
    occlude rows scrolling beneath it. */
-.tx-scroll { max-height: 68vh; overflow-y: auto; }
-.tx-scroll thead th { position: sticky; top: 0; z-index: 20; background: var(--surface-3); }
+/* Tabel transaksi mengalir penuh di halaman (semua baris tampil, scroll
+   halaman biasa). thead nempel di bawah TopNav (sticky top-0 z-40) supaya
+   header kolom GAK ikut ter-scroll pas baca daftar panjang. */
+.tx-scroll thead th { position: sticky; top: 56px; z-index: 20; background: var(--surface-3); }
+
+/* ── Quest bar — progress bar ala game (match mockup Cartoon Quest) ──
+   Track tebal + outline tinta + fill bulat. .quest-bar = track,
+   .quest-bar > i = fill (set width inline/var). Warna fill via --bar-fill. */
+.quest-bar {
+  display: block;
+  height: var(--bar-h);
+  border-radius: 999px;
+  background: var(--bar-track);
+  border: var(--bar-outline-w) solid var(--outline);
+  overflow: hidden;
+  padding: 0;
+}
+.quest-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bar-fill, var(--c-primary));
+  transition: width 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
 /* Budget grid — faint vertical column gridlines + a stronger separator after the
    sticky Category column, so the 12 month columns are easy to track left-to-right. */

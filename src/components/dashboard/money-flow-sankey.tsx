@@ -330,7 +330,7 @@ export function MoneyFlowSankey({
               if (data.source && data.target) {
                 return (
                   <div
-                    className="rounded-md border px-2.5 py-1.5 text-xs shadow-md"
+                    className="rounded-md border px-2.5 py-1.5 text-xs shadow-[var(--card-shadow)]"
                     style={{
                       background: 'var(--surface)',
                       borderColor: 'var(--border)',

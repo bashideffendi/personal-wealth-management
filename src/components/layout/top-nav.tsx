@@ -353,7 +353,7 @@ export function TopNav({ user }: TopNavProps) {
               <div className="flex items-center gap-2">
                 <div
                   className="grid place-items-center"
-                  style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)' }}
+                  style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: 'var(--card-shadow)' }}
                 >
                   K
                 </div>

@@ -12,7 +12,7 @@ export default function ContactPage() {
     <div className="min-h-screen" style={{ background: 'var(--paper)', color: 'var(--ink)' }}>
       <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="grid place-items-center" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)' }}>K</div>
+          <div className="grid place-items-center" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: 'var(--card-shadow)' }}>K</div>
           <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Klunting</span>
         </Link>
       </header>

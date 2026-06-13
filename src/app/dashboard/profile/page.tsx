@@ -390,7 +390,7 @@ export default function ProfilePage() {
                   fontSize: 28,
                   letterSpacing: '-0.04em',
                   lineHeight: 1,
-                  boxShadow: '0 8px 24px -8px rgba(16, 24, 40, 0.14)',
+                  boxShadow: 'var(--card-shadow)',
                 }}
               >
                 {(profile.full_name || user.email).slice(0, 1).toUpperCase()}
@@ -434,7 +434,7 @@ export default function ProfilePage() {
               style={{
                 background: 'var(--c-primary)',
                 color: 'var(--c-primary-foreground)',
-                boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+                boxShadow: 'var(--card-shadow)',
               }}
             >
               <Crown className="size-4" />
@@ -449,7 +449,7 @@ export default function ProfilePage() {
       <div className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 22%, transparent)' }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg p-2 shadow-sm" style={{ background: 'var(--surface)' }}>
+            <div className="rounded-lg p-2 shadow-[var(--card-shadow)]" style={{ background: 'var(--surface)' }}>
               <Sparkles className="size-5" style={{ color: 'var(--c-amber-ink)' }} />
             </div>
             <div>

@@ -216,7 +216,7 @@ export default function LeafletMap({
         {/* Layer switcher — disembunyiin di mode readOnly (thumbnail kartu jadi bersih) */}
         {!readOnly && (
         <div
-          className="absolute top-2 right-2 z-[500] flex rounded-lg shadow-lg overflow-hidden"
+          className="absolute top-2 right-2 z-[500] flex rounded-lg shadow-[var(--card-shadow)] overflow-hidden"
           style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
         >
           {(Object.keys(TILE_LAYERS) as MapStyle[]).map((key) => (

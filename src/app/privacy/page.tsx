@@ -23,7 +23,7 @@ export default function PrivacyPage() {
               background: 'var(--c-primary)',
               color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800,
               fontSize: 16, letterSpacing: '-0.04em',
-              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             K

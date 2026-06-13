@@ -107,7 +107,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
                   aria-pressed={active}
                   onClick={() => setChartRange(r.key)}
                   className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
-                  style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(16,24,40,0.08)' } : { color: 'var(--ink-soft)' }}
+                  style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: 'var(--card-shadow)' } : { color: 'var(--ink-soft)' }}
                 >
                   {r.key === 'all' ? t('investment.range_all') : r.label}
                 </button>

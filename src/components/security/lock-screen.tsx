@@ -107,7 +107,7 @@ export function LockScreen() {
             style={{
               background: 'var(--c-primary)',
               color: 'var(--c-primary-foreground)',
-              boxShadow: '0 10px 28px -10px rgba(16, 24, 40, 0.14)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Lock className="size-6" />
@@ -177,7 +177,7 @@ export function LockScreen() {
             style={{
               background: 'var(--c-primary)',
               color: 'var(--c-primary-foreground)',
-              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             Buka

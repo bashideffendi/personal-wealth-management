@@ -22,7 +22,7 @@ export function InfoTip({ text }: { text: React.ReactNode }) {
         <Tooltip.Portal>
           <Tooltip.Positioner side="bottom" align="start" sideOffset={6} className="z-[60]">
             <Tooltip.Popup
-              className="max-w-[280px] rounded-lg px-2.5 py-1.5 text-[11px] leading-snug shadow-lg outline-none"
+              className="max-w-[280px] rounded-lg px-2.5 py-1.5 text-[11px] leading-snug shadow-[var(--card-shadow)] outline-none"
               style={{ background: 'var(--ink)', color: 'var(--surface)' }}
             >
               {text}

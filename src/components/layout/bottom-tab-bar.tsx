@@ -64,11 +64,11 @@ export function BottomTabBar() {
           <button
             type="button"
             onClick={openQuickAdd}
-            className="relative -translate-y-3 size-14 rounded-full flex items-center justify-center shadow-lg transition active:scale-95"
+            className="relative -translate-y-3 size-14 rounded-full flex items-center justify-center shadow-[var(--card-shadow)] transition active:scale-95"
             style={{
               background: 'var(--c-primary)',
               color: 'var(--c-primary-foreground)',
-              boxShadow: '0 8px 20px -4px rgba(16, 24, 40, 0.12)',
+              boxShadow: 'var(--card-shadow)',
             }}
             aria-label={t('bottom_tab.add_transaction')}
           >

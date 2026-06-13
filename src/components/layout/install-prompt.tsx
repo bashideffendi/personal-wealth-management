@@ -126,7 +126,7 @@ export function InstallPrompt() {
             style={{
               background: 'var(--c-primary)',
               color: 'var(--c-primary-foreground)',
-              boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Download className="size-5" />
@@ -158,7 +158,7 @@ export function InstallPrompt() {
                 style={{
                   background: 'var(--c-primary)',
                   color: 'var(--c-primary-foreground)',
-                  boxShadow: '0 4px 12px -4px rgba(16, 24, 40, 0.12)',
+                  boxShadow: 'var(--card-shadow)',
                 }}
               >
                 {t('install_prompt.install_now')}

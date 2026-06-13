@@ -134,7 +134,7 @@ export default async function LandingPage() {
 
           {/* Real product screenshot — visible immediately */}
           <div className="relative lg:-mr-6">
-            <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: '0 40px 90px -36px rgba(16,24,40,0.45)', background: 'var(--surface)' }}>
+            <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)', background: 'var(--surface)' }}>
               <div className="flex items-center gap-2 px-4 h-9 border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
                 <span className="size-2.5 rounded-full" style={{ background: '#ED7385' }} />
                 <span className="size-2.5 rounded-full" style={{ background: '#E3A93C' }} />
@@ -231,7 +231,7 @@ export default async function LandingPage() {
               Pelajari anggaran &amp; arus kas <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="rounded-2xl overflow-hidden border p-3 sm:p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)', boxShadow: '0 30px 70px -32px rgba(16,24,40,0.40)' }}>
+          <div className="rounded-2xl overflow-hidden border p-3 sm:p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/features/sankey.webp"
