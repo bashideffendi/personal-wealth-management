@@ -146,14 +146,17 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
     // 1b) Catat consent UU PDP — upsert terpisah & best-effort, supaya kalau
     // kolom belum ada (migration 046 belum di-apply) onboarding tetap jalan.
     try {
-      await supabase
+      const { error: consentErr } = await supabase
         .from('profiles')
         .upsert(
           { id: user.id, consent_at: new Date().toISOString(), consent_version: CONSENT_VERSION },
           { onConflict: 'id' },
         )
-    } catch {
-      /* migration 046 belum di-apply — jangan blokir onboarding */
+      // Jangan blokir onboarding kalau gagal, TAPI log (UU PDP: kita harus bisa
+      // buktikan consent — kalau ini gagal diam-diam, ada user tanpa record consent).
+      if (consentErr) console.warn('[onboarding] consent write gagal (migration 046 belum di-apply?):', consentErr.message)
+    } catch (e) {
+      console.warn('[onboarding] consent write error:', e)
     }
 
     // 2) Buat akun pertama kalau diisi.
