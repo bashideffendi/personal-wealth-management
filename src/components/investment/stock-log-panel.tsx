@@ -22,6 +22,7 @@ import {
 import { Plus, Trash2, Loader2, TrendingUp, TrendingDown } from 'lucide-react'
 import { StockLogo } from '@/components/investment/stock-logo'
 import { IDX_BROKERS, getBrokerByName, computeFee } from '@/lib/idx-brokers'
+import { computeRealizedPL } from '@/lib/invest/fifo'
 import { useT } from '@/lib/i18n/context'
 
 interface FormState {
@@ -42,36 +43,6 @@ const EMPTY: FormState = {
   date: new Date().toISOString().split('T')[0], notes: '',
 }
 
-// FIFO realized P/L computation
-function computeRealizedPL(txs: StockTransaction[]): number {
-  const byTicker: Record<string, StockTransaction[]> = {}
-  for (const t of txs) {
-    const k = t.ticker ?? 'unknown'
-    if (!byTicker[k]) byTicker[k] = []
-    byTicker[k].push(t)
-  }
-  let total = 0
-  for (const group of Object.values(byTicker)) {
-    const sorted = [...group].sort((a, b) => a.date.localeCompare(b.date))
-    const lots: { shares: number; cost: number }[] = []
-    for (const t of sorted) {
-      if (t.side === 'buy') {
-        lots.push({ shares: t.shares, cost: t.price + (t.shares > 0 ? t.fee / t.shares : 0) })
-      } else {
-        let remaining = t.shares
-        while (remaining > 0 && lots.length > 0) {
-          const lot = lots[0]
-          const take = Math.min(lot.shares, remaining)
-          total += take * (t.price - lot.cost) - (t.fee * (take / t.shares))
-          lot.shares -= take
-          remaining -= take
-          if (lot.shares <= 0) lots.shift()
-        }
-      }
-    }
-  }
-  return total
-}
 
 export function StockLogPanel() {
   const t = useT()
