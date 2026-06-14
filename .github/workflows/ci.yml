@@ -20,10 +20,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Pakai .nvmrc (Node 22) biar sama persis dgn engines>=22 & lokal —
+          # hindari "lolos CI di 20, gagal di runtime 22" (reliability-5).
+          node-version-file: '.nvmrc'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        # npm ci = reproducible dari package-lock (gagal kalau lockfile drift),
+        # bukan npm install yang bisa diam-diam mutasi lockfile.
+        run: npm ci --no-audit --no-fund
 
       - name: Lint (blocking — errors fail CI; set-state-in-effect tetap warning)
         run: npm run lint
