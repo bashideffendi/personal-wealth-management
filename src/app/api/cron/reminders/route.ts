@@ -34,6 +34,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Env-gate: cron cuma jalan di production (atau lokal saat dev/testing, di mana
+  // VERCEL_ENV unset). Preview/branch deploy share env DB prod → jangan biarin
+  // cron preview kirim email ke user beneran. [reliability-6]
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production') {
+    return NextResponse.json({ ok: true, skipped: `disabled on VERCEL_ENV=${process.env.VERCEL_ENV}` })
+  }
+
   const admin = createAdminClient()
   if (!admin) {
     return NextResponse.json(
