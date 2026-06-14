@@ -154,7 +154,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-12 pt-6 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-          <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--c-mint)' }}>
+          <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
             ← Kembali ke beranda
           </Link>
         </div>

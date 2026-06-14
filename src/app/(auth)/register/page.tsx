@@ -64,7 +64,7 @@ export default function RegisterPage() {
           <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 21 hari gratis, tanpa kartu kredit.</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
             {['Akses penuh', 'Tanpa kartu kredit', 'Batal kapan saja'].map((t) => (
-              <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
+              <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} /> {t}</span>
             ))}
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function RegisterPage() {
 
       {success ? (
           <div className="text-center py-2">
-            <div className="mx-auto grid place-items-center" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
+            <div className="mx-auto grid place-items-center" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
               <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
@@ -86,7 +86,7 @@ export default function RegisterPage() {
               type="button"
               onClick={() => { setSuccess(false); setEmail(''); setPassword(''); setFullName('') }}
               className="mt-4 text-sm font-semibold hover:underline"
-              style={{ color: 'var(--c-mint)' }}
+              style={{ color: 'var(--c-mint-ink)' }}
             >
               Gunakan email lain
             </button>

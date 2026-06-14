@@ -404,7 +404,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
           {' → '}
           <span style={{ fontWeight: 600 }}>{tooltip.info.toLabel}</span>
           {tooltip.info.pct != null && (
-            <span className="num tabular ml-1 font-semibold" style={{ color: 'var(--c-mint)' }}>
+            <span className="num tabular ml-1 font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
               {tooltip.info.pct.toFixed(2)}%
             </span>
           )}

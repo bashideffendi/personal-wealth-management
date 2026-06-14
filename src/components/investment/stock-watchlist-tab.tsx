@@ -296,7 +296,7 @@ export function StockWatchlistTab() {
                           <span style={{ color: reachedTarget ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
                             {formatCurrency(row.target_price)}
                             {reachedTarget && (
-                              <Badge className="ml-1 bg-[var(--c-mint-soft)] text-[var(--c-mint)]">{t('watchlist.targetReached')}</Badge>
+                              <Badge className="ml-1 bg-[var(--c-mint-soft)] text-[var(--c-mint-ink)]">{t('watchlist.targetReached')}</Badge>
                             )}
                           </span>
                         ) : (
@@ -482,7 +482,7 @@ function AddDialog({
                         </span>
                       )}
                     </span>
-                    <Plus className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} />
+                    <Plus className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
                   </button>
                 </li>
               ))}

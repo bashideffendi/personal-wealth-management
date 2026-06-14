@@ -280,7 +280,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
             </div>
           )}
           {overAllocated && (
-            <p className="text-[11px] mt-2" style={{ color: 'var(--c-coral)' }}>
+            <p className="text-[11px] mt-2" style={{ color: 'var(--c-coral-ink)' }}>
               {t('allocations.over_allocated_warning')}
             </p>
           )}
@@ -364,7 +364,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                         <div>
                           <Label className="text-[11px]">{t('allocations.status')}</Label>
                           {emergencyFund ? (
-                            <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--c-mint)' }}>
+                            <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--c-mint-ink)' }}>
                               ✓ {t('allocations.connected')}
                             </p>
                           ) : (

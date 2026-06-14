@@ -338,7 +338,7 @@ export default function AccountsPage() {
         <Pencil className="size-3.5" />
       </Button>
       <Button variant="ghost" size="icon-sm" aria-label={t('accounts.action_delete')} onClick={() => setDeleteId(a.id)} title={t('accounts.action_delete_short')}>
-        <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />
+        <Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} />
       </Button>
     </>
   )
@@ -564,7 +564,7 @@ export default function AccountsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint)' }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? t('accounts.dialog_edit_title') : t('accounts.dialog_add_title')}</DialogTitle>
                 <DialogDescription>

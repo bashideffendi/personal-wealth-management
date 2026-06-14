@@ -327,7 +327,7 @@ export default function ImportMutasiPage() {
         >
           <Loader2
             className="size-8 mx-auto animate-spin"
-            style={{ color: 'var(--c-mint)' }}
+            style={{ color: 'var(--c-mint-ink)' }}
           />
           <p className="text-sm font-medium mt-3" style={{ color: 'var(--ink)' }}>
             {t('import_tx.processing_title')}
@@ -356,7 +356,7 @@ export default function ImportMutasiPage() {
         >
           <Loader2
             className="size-8 mx-auto animate-spin"
-            style={{ color: 'var(--c-mint)' }}
+            style={{ color: 'var(--c-mint-ink)' }}
           />
           <p className="text-sm font-medium mt-3" style={{ color: 'var(--ink)' }}>
             {t('import_tx.importing_title')}

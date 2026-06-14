@@ -125,7 +125,7 @@ export function StockDividendCalendar() {
           color: 'var(--ink-muted)',
         }}
       >
-        <Calendar className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
+        <Calendar className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint-ink)' }} />
         <span>
           {t('dividend_calendar.footer_note')}
         </span>
@@ -215,7 +215,7 @@ function DividendList({ events }: { events: DividendEvent[] }) {
                   <td className="px-3 py-2.5">
                     <Link
                       href={`/dashboard/assets/investment/stock/research/${ev.ticker}`}
-                      className="inline-flex items-center text-[var(--ink-soft)] hover:text-[var(--c-mint)]"
+                      className="inline-flex items-center text-[var(--ink-soft)] hover:text-[var(--c-mint-ink)]"
                     >
                       <ArrowUpRight className="size-3.5" />
                     </Link>

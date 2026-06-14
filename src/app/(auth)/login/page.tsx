@@ -172,7 +172,7 @@ export default function LoginPage() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold" style={{ color: 'var(--ink-muted)' }}>Password</label>
-              <Link href="/forgot-password" className="text-xs font-medium hover:underline" style={{ color: 'var(--c-mint)' }}>Lupa?</Link>
+              <Link href="/forgot-password" className="text-xs font-medium hover:underline" style={{ color: 'var(--c-mint-ink)' }}>Lupa?</Link>
             </div>
             <div className="relative">
               <Input type={showPw ? 'text' : 'password'} aria-label="Password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11 pr-10" autoComplete="current-password" />

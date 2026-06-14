@@ -101,7 +101,7 @@ export function MethodInfoDialog({
               className="flex items-start gap-2 rounded-md p-3 text-sm"
               style={{ background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.25)' }}
             >
-              <AlertCircle className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral)' }} />
+              <AlertCircle className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral-ink)' }} />
               <div>
                 <p className="font-semibold" style={{ color: 'var(--coral-600)' }}>
                   Kurang cocok buat sektor {sector}
@@ -134,7 +134,7 @@ export function MethodInfoDialog({
             <ul className="flex flex-col gap-1 text-sm">
               {info.bestFor.map((item, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
+                  <Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint-ink)' }} />
                   <span style={{ color: 'var(--ink)' }}>{item}</span>
                 </li>
               ))}
@@ -145,7 +145,7 @@ export function MethodInfoDialog({
             <ul className="flex flex-col gap-1 text-sm">
               {info.limitations.map((item, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <X className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral)' }} />
+                  <X className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral-ink)' }} />
                   <span style={{ color: 'var(--ink-muted)' }}>{item}</span>
                 </li>
               ))}

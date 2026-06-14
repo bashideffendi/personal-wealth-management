@@ -627,7 +627,7 @@ function ReassignDialog({
               className="grid size-10 shrink-0 place-items-center rounded-xl"
               style={{ background: 'color-mix(in srgb, var(--c-coral) 12%, transparent)' }}
             >
-              <Trash2 className="size-5" style={{ color: 'var(--c-coral)' }} />
+              <Trash2 className="size-5" style={{ color: 'var(--c-coral-ink)' }} />
             </div>
             <div className="min-w-0">
               <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
@@ -859,7 +859,7 @@ function SortableCategory(props: SortableCategoryProps) {
         <button
           type="button"
           onClick={props.onDeleteCat}
-          className="rounded p-1 text-[var(--ink-soft)] transition hover:bg-[color:color-mix(in_srgb,var(--c-coral)_14%,transparent)] hover:text-[var(--c-coral)]"
+          className="rounded p-1 text-[var(--ink-soft)] transition hover:bg-[color:color-mix(in_srgb,var(--c-coral)_14%,transparent)] hover:text-[var(--c-coral-ink)]"
           aria-label={`${t('category_manager.delete')} ${cat.name}`}
         >
           <Trash2 className="size-3.5" />
@@ -984,7 +984,7 @@ function SortableSub(props: SortableSubProps) {
       <button
         type="button"
         onClick={props.onDelete}
-        className="rounded p-1 text-[var(--ink-soft)] transition hover:text-[var(--c-coral)]"
+        className="rounded p-1 text-[var(--ink-soft)] transition hover:text-[var(--c-coral-ink)]"
         aria-label={`${t('category_manager.delete')} ${props.name}`}
       >
         <Trash2 className="size-3" />
@@ -1030,7 +1030,7 @@ function NameInput({
         type="button"
         onMouseDown={(e) => e.preventDefault()}
         onClick={onCommit}
-        className="rounded p-1 text-[var(--c-mint)] hover:bg-[var(--surface-2)]"
+        className="rounded p-1 text-[var(--c-mint-ink)] hover:bg-[var(--surface-2)]"
         aria-label={t('category_manager.save')}
       >
         <Check className="size-4" />

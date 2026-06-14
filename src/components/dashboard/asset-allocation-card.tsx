@@ -69,7 +69,7 @@ export function AssetAllocationCard({
         {debt > 0 && (
           <div className="flex items-center justify-between text-[12px]">
             <span style={{ color: 'var(--ink-muted)' }}>{t('asset_alloc.debt')}</span>
-            <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>−{formatCurrency(debt)}</span>
+            <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>−{formatCurrency(debt)}</span>
           </div>
         )}
       </div>

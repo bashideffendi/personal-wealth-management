@@ -1257,7 +1257,7 @@ export default function TransactionsPage() {
               onClick={() => void bulkDelete()}
               disabled={bulkBusy}
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50"
-              style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral)', background: 'var(--surface)' }}
+              style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral-ink)', background: 'var(--surface)' }}
             >
               {bulkBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />} {t('transactions.bulk_delete')}
             </button>
@@ -1443,7 +1443,7 @@ export default function TransactionsPage() {
                                 <Pencil className="size-4" style={{ color: 'var(--ink-soft)' }} />
                               </Button>
                               <Button variant="ghost" size="icon-sm" aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`} onClick={() => handleDelete(tx.id)}>
-                                <Trash2 className="size-4" style={{ color: 'var(--c-coral)' }} />
+                                <Trash2 className="size-4" style={{ color: 'var(--c-coral-ink)' }} />
                               </Button>
                             </div>
                           </TableCell>
@@ -1531,7 +1531,7 @@ export default function TransactionsPage() {
                           type="button"
                           onClick={() => handleDelete(tx.id)}
                           className="text-[11px] inline-flex items-center gap-0.5 font-medium"
-                          style={{ color: 'var(--c-coral)' }}
+                          style={{ color: 'var(--c-coral-ink)' }}
                         >
                           <Trash2 className="size-3" /> {t('transactions.delete')}
                         </button>
@@ -1606,11 +1606,11 @@ export default function TransactionsPage() {
                           </div>
                         )}
                         {!extracting && extractError && (
-                          <div style={{ color: 'var(--c-coral)' }}>{extractError}</div>
+                          <div style={{ color: 'var(--c-coral-ink)' }}>{extractError}</div>
                         )}
                         {!extracting && !extractError && extractConfidence && (
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1 text-[var(--c-mint)]">
+                            <div className="flex items-center gap-1 text-[var(--c-mint-ink)]">
                               <Sparkles className="size-3" />
                               <span className="font-medium">{t('transactions.form_autofilled')}</span>
                             </div>

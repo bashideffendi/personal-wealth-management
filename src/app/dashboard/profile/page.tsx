@@ -769,7 +769,7 @@ export default function ProfilePage() {
             }}
           >
             <div className="flex items-start gap-2">
-              <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
+              <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />
               <div className="flex-1">
                 <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{t('profile.danger_zone_title')}</h3>
                 <p className="text-sm mt-1" style={{ color: 'var(--c-coral-ink)' }}>

@@ -220,7 +220,7 @@ export function MonthBudgetView({
             style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
             title={t('month_budget.btn_fill_average_title')}
           >
-            <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
+            <Sparkles className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} />
             {t('month_budget.btn_fill_average')}
           </button>
           <button

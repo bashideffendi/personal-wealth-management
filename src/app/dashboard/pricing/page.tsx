@@ -110,7 +110,7 @@ export default function PricingPage() {
       <div className="text-center max-w-2xl mx-auto">
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
-          style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}
+          style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
         >
           <span className="size-1.5 rounded-full" style={{ background: 'var(--c-mint)' }} />
           <span className="text-xs font-semibold">{t('pricing.trial_badge')}</span>
@@ -120,7 +120,7 @@ export default function PricingPage() {
           style={{ fontSize: 'clamp(32px, 4.5vw, 52px)', color: 'var(--ink)', lineHeight: 1.1, letterSpacing: '-0.035em' }}
         >
           {t('pricing.hero_title_before')}{' '}
-          <span style={{ color: 'var(--c-mint)' }}>{t('pricing.hero_title_highlight')}</span>{' '}
+          <span style={{ color: 'var(--c-mint-ink)' }}>{t('pricing.hero_title_highlight')}</span>{' '}
           {t('pricing.hero_title_after')}
         </h1>
         <p className="text-base mt-4 max-w-xl mx-auto" style={{ color: 'var(--ink-muted)' }}>
@@ -142,7 +142,7 @@ export default function PricingPage() {
                 style={{ background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-soft)', boxShadow: on ? '0 1px 3px rgba(16,24,40,0.10)' : undefined }}
               >
                 {label}
-                {key === 'annual' && <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>{t('pricing.save_badge')}</span>}
+                {key === 'annual' && <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>{t('pricing.save_badge')}</span>}
               </button>
             )
           })}
@@ -207,7 +207,7 @@ export default function PricingPage() {
               </button>
 
               {plan.seats > 1 && (
-                <p className="text-xs text-center mt-2 text-[var(--c-mint)] font-medium inline-flex items-center justify-center gap-1 w-full">
+                <p className="text-xs text-center mt-2 text-[var(--c-mint-ink)] font-medium inline-flex items-center justify-center gap-1 w-full">
                   <Users className="size-3.5 shrink-0" /> {t('pricing.seats_before')} {plan.seats} {t('pricing.seats_after')}
                 </p>
               )}
@@ -318,7 +318,7 @@ export default function PricingPage() {
       <section className="s-card s-card-pad-lg">
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="flex items-start gap-3">
-            <ShieldCheck className="size-5 text-[var(--c-mint)] mt-0.5" />
+            <ShieldCheck className="size-5 text-[var(--c-mint-ink)] mt-0.5" />
             <div>
               <p className="font-semibold text-sm">{t('pricing.trust_secure_title')}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{t('pricing.trust_secure_desc')}</p>
@@ -365,7 +365,7 @@ export default function PricingPage() {
 function renderCell(v: boolean | string) {
   if (typeof v === 'string') return <span className="font-medium tabular-nums">{v}</span>
   return v
-    ? <Check className="size-4 mx-auto text-[var(--c-mint)]" />
+    ? <Check className="size-4 mx-auto text-[var(--c-mint-ink)]" />
     : <span className="text-muted-foreground/40">—</span>
 }
 

@@ -242,7 +242,7 @@ export function StockResearchTab() {
                     <td className="px-3 py-2.5">
                       <Link
                         href={`/dashboard/assets/investment/stock/research/${r.ticker}`}
-                        className="inline-flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--c-mint)] transition"
+                        className="inline-flex items-center justify-center text-[var(--ink-soft)] hover:text-[var(--c-mint-ink)] transition"
                         aria-label={`${t('stock_research.aria_open_research')} ${r.ticker}`}
                       >
                         <ArrowUpRight className="size-4" />
@@ -280,7 +280,7 @@ export function StockResearchTab() {
           color: 'var(--ink-muted)',
         }}
       >
-        <Sparkles className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
+        <Sparkles className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-mint-ink)' }} />
         <span>
           {t('stock_research.footer_disclaimer')}
         </span>

@@ -604,7 +604,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
   if (state.kind === 'parsing') {
     return (
       <div className="px-6 py-12 text-center">
-        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint)' }} />
+        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint-ink)' }} />
         <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
           {t('command_palette.ai_parsing')}
         </p>
@@ -630,8 +630,8 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
     return (
       <div className="px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="size-3.5" style={{ color: 'var(--c-mint)' }} />
-          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--c-mint)' }}>
+          <Sparkles className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} />
+          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
             {t('command_palette.ai_confirm_title')}
           </p>
         </div>
@@ -693,7 +693,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
   if (state.kind === 'saving') {
     return (
       <div className="px-6 py-12 text-center">
-        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint)' }} />
+        <Loader2 className="size-6 mx-auto animate-spin" style={{ color: 'var(--c-mint-ink)' }} />
         <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>{t('command_palette.saving')}</p>
       </div>
     )
@@ -706,7 +706,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
           className="size-12 mx-auto rounded-full flex items-center justify-center"
           style={{ background: 'var(--c-mint-soft)' }}
         >
-          <Check className="size-6" style={{ color: 'var(--c-mint)' }} />
+          <Check className="size-6" style={{ color: 'var(--c-mint-ink)' }} />
         </div>
         <p className="text-sm mt-3 font-semibold" style={{ color: 'var(--ink)' }}>
           {t('command_palette.recorded')}
@@ -722,7 +722,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         className="size-10 mx-auto rounded-full flex items-center justify-center"
         style={{ background: 'rgba(244,63,94,0.12)' }}
       >
-        <AlertCircle className="size-5" style={{ color: 'var(--c-coral)' }} />
+        <AlertCircle className="size-5" style={{ color: 'var(--c-coral-ink)' }} />
       </div>
       <p className="text-sm mt-3 font-medium" style={{ color: 'var(--ink)' }}>
         {t('command_palette.parse_failed')}

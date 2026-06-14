@@ -325,7 +325,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
             {upcomingDividends.length > 0 && (
               <>
                 <div className="px-5 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                  <Calendar className="size-4" style={{ color: 'var(--c-mint)' }} />
+                  <Calendar className="size-4" style={{ color: 'var(--c-mint-ink)' }} />
                   <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                     {t('research_tabs.upcoming_dividends')}
                   </p>
@@ -347,7 +347,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
                         <TableCell className="font-medium">{e.exDate}</TableCell>
                         <TableCell>{e.payDate}</TableCell>
                         <TableCell className="text-right num">Rp {formatPrice(e.dividend)}</TableCell>
-                        <TableCell className="text-right num" style={{ color: 'var(--c-mint)' }}>
+                        <TableCell className="text-right num" style={{ color: 'var(--c-mint-ink)' }}>
                           {price > 0 ? formatPercentValue(e.dividend / price) : '—'}
                         </TableCell>
                       </TableRow>
@@ -427,7 +427,7 @@ function ResearchView({
       >
         {research.frontmatter.thesis && (
           <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('research_tabs.investment_thesis')}</p>
+            <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('research_tabs.investment_thesis')}</p>
             <p
               className="mt-2 pl-4 border-l-2 italic leading-relaxed text-base sm:text-lg"
               style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}

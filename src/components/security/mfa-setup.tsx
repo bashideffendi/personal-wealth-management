@@ -100,7 +100,7 @@ export function MfaSetup() {
           </div>
         </div>
         {status === 'enrolled' && (
-          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
             <ShieldCheck className="size-3.5" /> {t('mfa.active')}
           </span>
         )}

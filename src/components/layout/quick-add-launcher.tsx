@@ -561,7 +561,7 @@ function ScanningView() {
         />
         <Loader2
           className="size-8 animate-spin relative"
-          style={{ color: 'var(--c-mint)' }}
+          style={{ color: 'var(--c-mint-ink)' }}
         />
       </div>
       <p className="mt-4 text-sm font-medium" style={{ color: 'var(--ink)' }}>

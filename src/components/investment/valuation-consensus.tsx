@@ -288,7 +288,7 @@ function TimeGapDisclosure({
         className="flex items-start gap-2 rounded-md p-3 text-sm"
         style={{ background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.25)' }}
       >
-        <AlertTriangle className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral)' }} />
+        <AlertTriangle className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-coral-ink)' }} />
         <div>
           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('valuation.noFiscalYearTitle')}</p>
           <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>

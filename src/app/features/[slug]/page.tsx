@@ -127,7 +127,7 @@ export default async function FeatureDetailPage({ params }: { params: Promise<{ 
         {/* trust line */}
         <div className="max-w-5xl mx-auto mt-6 flex items-center gap-x-5 gap-y-2 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
           {['Akses penuh 21 hari', 'Tanpa kartu kredit', 'Data dienkripsi, tidak dijual'].map((t) => (
-            <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
+            <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} /> {t}</span>
           ))}
         </div>
       </main>

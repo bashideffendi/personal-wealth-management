@@ -127,7 +127,7 @@ export default async function LandingPage() {
             </div>
             <div className="mt-6 flex items-center gap-x-4 gap-y-2 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
               {['Akses penuh 21 hari', 'Tanpa kartu kredit', 'Data dienkripsi, tidak dijual'].map((t) => (
-                <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint)' }} /> {t}</span>
+                <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} /> {t}</span>
               ))}
             </div>
           </div>
@@ -167,7 +167,7 @@ export default async function LandingPage() {
               { icon: EyeOff, t: 'Tanpa iklan, data tidak dijual' },
             ].map((p) => (
               <div key={p.t} className="flex items-start gap-2.5">
-                <p.icon className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint)' }} />
+                <p.icon className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint-ink)' }} />
                 <span className="t-sm" style={{ color: 'var(--ink-muted)' }}>{p.t}</span>
               </div>
             ))}
@@ -207,7 +207,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="mt-12">
-            <Link href="/features" className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint)' }}>
+            <Link href="/features" className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
               Lihat semua fitur secara detail <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -227,7 +227,7 @@ export default async function LandingPage() {
               investasi — dalam satu diagram aliran. Langsung kelihatan apa yang menyerap uangmu, dan
               berapa yang tersisa.
             </p>
-            <Link href="/features/anggaran" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint)' }}>
+            <Link href="/features/anggaran" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
               Pelajari anggaran &amp; arus kas <ArrowRight className="size-4" />
             </Link>
           </div>

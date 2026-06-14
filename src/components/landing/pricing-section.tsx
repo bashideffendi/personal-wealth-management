@@ -62,7 +62,7 @@ export function PricingSection() {
                 >
                   {label}
                   {key === 'annual' && (
-                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>HEMAT</span>
+                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>HEMAT</span>
                   )}
                 </button>
               )
@@ -87,7 +87,7 @@ export function PricingSection() {
             </div>
             {annual ? (
               <>
-                <p className="text-xs font-medium" style={{ color: 'var(--c-mint)' }}>≈ Rp 12.417/bln — hemat {savingsPct(149000, 19000)}% dari bulanan</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--c-mint-ink)' }}>≈ Rp 12.417/bln — hemat {savingsPct(149000, 19000)}% dari bulanan</p>
                 <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}><span style={{ textDecoration: 'line-through' }}>Rp 249.000</span> · harga promo peluncuran</p>
               </>
             ) : (
@@ -114,7 +114,7 @@ export function PricingSection() {
             </div>
             {annual ? (
               <>
-                <p className="text-xs font-medium" style={{ color: 'var(--c-mint)' }}>≈ Rp 24.917/bln — hemat {savingsPct(299000, 35000)}% dari bulanan</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--c-mint-ink)' }}>≈ Rp 24.917/bln — hemat {savingsPct(299000, 35000)}% dari bulanan</p>
                 <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}><span style={{ textDecoration: 'line-through' }}>Rp 499.000</span> · harga promo peluncuran</p>
               </>
             ) : (

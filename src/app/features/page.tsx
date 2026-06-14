@@ -55,7 +55,7 @@ export default function FeaturesPage() {
                 </div>
                 <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>{f.name}</h2>
                 <p className="mt-1.5 text-sm leading-relaxed flex-1" style={{ color: 'var(--ink-muted)' }}>{f.tagline}</p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold transition-all group-hover:gap-2.5" style={{ color: 'var(--c-mint)' }}>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold transition-all group-hover:gap-2.5" style={{ color: 'var(--c-mint-ink)' }}>
                   Pelajari <ArrowRight className="size-4" />
                 </span>
               </Link>

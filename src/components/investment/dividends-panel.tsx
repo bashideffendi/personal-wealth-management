@@ -193,12 +193,12 @@ export function DividendsPanel() {
                   <tr key={d.id} className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
                     <Td>{formatDate(d.pay_date)}</Td>
                     <Td>
-                      <span className="rounded-sm px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
                         {d.ticker ?? s?.ticker ?? '—'}
                       </span>
                     </Td>
                     <Td className="text-right num">{d.shares.toLocaleString('id-ID')}</Td>
-                    <Td className="text-right num font-semibold" style={{ color: 'var(--c-mint)' }}>
+                    <Td className="text-right num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                       {formatCurrency(d.amount)}
                     </Td>
                     <Td className="text-right num" style={{ color: 'var(--ink-muted)' }}>

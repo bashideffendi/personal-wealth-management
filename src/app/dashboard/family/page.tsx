@@ -556,7 +556,7 @@ export default function FamilyPage() {
                       <SlidersHorizontal className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
                     </Button>
                     <Button variant="ghost" size="icon-sm" onClick={() => removeMember(m.user_id)} disabled={removingMemberId === m.user_id} title={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
-                      {removingMemberId === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} />}
+                      {removingMemberId === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} />}
                     </Button>
                   </>
                 )}
@@ -586,7 +586,7 @@ export default function FamilyPage() {
                     <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}><CalendarClock className="size-3" /> {t('family.expires')} {formatDate(new Date(inv.expires_at))}</p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(link); toast.success(t('family.toast_invite_link_copied')) }}><Copy className="size-3.5" /> {t('family.copy')}</Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => revokeInvite(inv.id)} title={t('family.revoke_invite')} aria-label={t('family.revoke_invite')}><Trash2 className="size-3.5" style={{ color: 'var(--c-coral)' }} /></Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => revokeInvite(inv.id)} title={t('family.revoke_invite')} aria-label={t('family.revoke_invite')}><Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} /></Button>
                 </div>
               )
             })}
@@ -689,7 +689,7 @@ export default function FamilyPage() {
       {/* Zona Berbahaya */}
       <section className="s-card p-5" style={{ borderColor: 'color-mix(in srgb, var(--c-coral) 28%, transparent)' }}>
         <div className="flex items-start gap-3">
-          <AlertCircle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral)' }} />
+          <AlertCircle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />
           <div className="flex-1">
             <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('family.danger_zone')}</p>
             {isUserOwner ? (

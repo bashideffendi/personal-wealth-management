@@ -131,7 +131,7 @@ export default function DebtPaymentsPage() {
               <div className="flex items-start justify-between">
                 <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.eyebrow')}</p>
                 <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}>
-                  <BadgeDollarSign className="size-4" style={{ color: 'var(--c-mint)' }} />
+                  <BadgeDollarSign className="size-4" style={{ color: 'var(--c-mint-ink)' }} />
                 </div>
               </div>
               <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(totalPaid)}</p>

@@ -93,7 +93,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
           style={{ background: isHighRate ? 'rgba(244,63,94,0.10)' : 'rgba(245,158,11,0.12)' }}
         >
           {isHighRate ? (
-            <AlertCircle className="size-4" style={{ color: 'var(--c-coral)' }} />
+            <AlertCircle className="size-4" style={{ color: 'var(--c-coral-ink)' }} />
           ) : (
             <TrendingUp className="size-4" style={{ color: 'var(--c-amber)' }} />
           )}

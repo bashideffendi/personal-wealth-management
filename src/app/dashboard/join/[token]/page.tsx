@@ -124,7 +124,7 @@ export default function JoinHouseholdPage() {
         {state.kind === 'invalid' && (
           <div>
             <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--c-coral-soft)' }}>
-              <AlertCircle className="size-7" style={{ color: 'var(--c-coral)' }} />
+              <AlertCircle className="size-7" style={{ color: 'var(--c-coral-ink)' }} />
             </div>
             <h2 className="text-xl font-bold">{t('join.invalid_title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm">{state.reason}</p>
@@ -149,7 +149,7 @@ export default function JoinHouseholdPage() {
             <p className="text-muted-foreground mt-2">
               {t('join.preview_subtitle')}
             </p>
-            <p className="text-2xl font-bold mt-1" style={{ color: 'var(--c-mint)' }}>
+            <p className="text-2xl font-bold mt-1" style={{ color: 'var(--c-mint-ink)' }}>
               {state.data.household_name}
             </p>
 
@@ -202,7 +202,7 @@ export default function JoinHouseholdPage() {
         {state.kind === 'accepted' && (
           <div>
             <div className="mx-auto h-14 w-14 rounded-full bg-[var(--c-mint-soft)] flex items-center justify-center mb-3">
-              <CheckCircle className="size-7 text-[var(--c-mint)]" />
+              <CheckCircle className="size-7 text-[var(--c-mint-ink)]" />
             </div>
             <h2 className="text-xl font-bold">{t('join.accepted_title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm">
@@ -214,7 +214,7 @@ export default function JoinHouseholdPage() {
         {state.kind === 'error' && (
           <div>
             <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--c-coral-soft)' }}>
-              <AlertCircle className="size-7" style={{ color: 'var(--c-coral)' }} />
+              <AlertCircle className="size-7" style={{ color: 'var(--c-coral-ink)' }} />
             </div>
             <h2 className="text-xl font-bold">{t('join.error_title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm">{state.message}</p>

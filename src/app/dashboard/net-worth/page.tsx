@@ -491,7 +491,7 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
 
       {snapshots.length <= 1 ? (
         <div className="rounded-xl border-2 border-dashed p-8 text-center" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
-          <Sparkles className="size-7 mx-auto mb-2 opacity-50" style={{ color: 'var(--c-mint)' }} />
+          <Sparkles className="size-7 mx-auto mb-2 opacity-50" style={{ color: 'var(--c-mint-ink)' }} />
           <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{t('networth.first_snapshot_today')}</p>
           <p className="text-xs mt-1.5">{t('networth.first_snapshot_hint')}</p>
         </div>

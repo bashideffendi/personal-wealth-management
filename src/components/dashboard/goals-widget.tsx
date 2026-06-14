@@ -66,7 +66,7 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
         <Link
           href="/dashboard/goals"
           className="text-xs font-semibold inline-flex items-center gap-0.5 hover:underline"
-          style={{ color: 'var(--c-mint)' }}
+          style={{ color: 'var(--c-mint-ink)' }}
         >
           {t('goals_widget.view_all')}
           <ChevronRight className="size-3" />

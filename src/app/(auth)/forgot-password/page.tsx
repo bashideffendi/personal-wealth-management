@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
 
       {sent ? (
           <div className="text-center py-2">
-            <div className="mx-auto grid place-items-center mb-4" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}>
+            <div className="mx-auto grid place-items-center mb-4" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
               <svg className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
               onClick={handleResend}
               disabled={cooldown > 0 || resending}
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline disabled:opacity-60 disabled:no-underline"
-              style={{ color: 'var(--c-mint)' }}
+              style={{ color: 'var(--c-mint-ink)' }}
             >
               {resending && <Loader2 className="size-3.5 animate-spin" />}
               {cooldown > 0 ? `Kirim ulang dalam ${cooldown}s` : 'Kirim ulang'}

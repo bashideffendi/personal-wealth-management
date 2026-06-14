@@ -406,7 +406,7 @@ export default function LiquidAssetsPage() {
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{form.id ? t('assets_liquid.dialog_title_edit') : t('assets_liquid.dialog_title_add')}</DialogTitle>
                 <DialogDescription>
                   {t('assets_liquid.dialog_desc_before')}{' '}
-                  <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint)' }}>{t('assets_liquid.dialog_desc_link')}</Link>
+                  <Link href="/dashboard/accounts" className="font-semibold hover:underline" style={{ color: 'var(--c-mint-ink)' }}>{t('assets_liquid.dialog_desc_link')}</Link>
                   {' '}{t('assets_liquid.dialog_desc_after')}
                 </DialogDescription>
               </div>

@@ -172,7 +172,7 @@ export function CashFlowForecast({
         <a
           href="/dashboard/recurring"
           className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold transition hover:underline"
-          style={{ color: 'var(--c-mint)' }}
+          style={{ color: 'var(--c-mint-ink)' }}
         >
           Set up recurring →
         </a>
@@ -226,7 +226,7 @@ export function CashFlowForecast({
         {hasNegative ? (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
-            style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral)' }}
+            style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
           >
             <AlertTriangle className="size-2.5" />
             Risiko Negatif
@@ -241,7 +241,7 @@ export function CashFlowForecast({
         ) : (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide shrink-0"
-            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint)' }}
+            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
           >
             <TrendingUp className="size-2.5" />
             Aman

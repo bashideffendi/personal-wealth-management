@@ -227,7 +227,7 @@ export function StockCompareTab() {
 
       {selected.length >= 2 && (
         <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
-          <CheckCircle2 className="size-3 shrink-0" style={{ color: 'var(--c-mint)' }} /> {t('stock_compare.legend')}
+          <CheckCircle2 className="size-3 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('stock_compare.legend')}
         </p>
       )}
 
@@ -268,7 +268,7 @@ function CompareRow({
           }}
         >
           {v.jsx ?? v.raw}
-          {v.isWinner && <CheckCircle2 className="inline size-3 ml-1 align-text-bottom" style={{ color: 'var(--c-mint)' }} />}
+          {v.isWinner && <CheckCircle2 className="inline size-3 ml-1 align-text-bottom" style={{ color: 'var(--c-mint-ink)' }} />}
         </td>
       ))}
     </tr>
@@ -363,7 +363,7 @@ function PickerDialog({
                         </span>
                       )}
                     </span>
-                    <Plus className="size-4 shrink-0" style={{ color: 'var(--c-mint)' }} />
+                    <Plus className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
                   </button>
                 </li>
               ))}

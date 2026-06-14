@@ -289,7 +289,7 @@ export default function DebtsOverviewPage() {
         </div>
       ) : allActive.length === 0 ? (
         <div className="s-card p-12 text-center">
-          <PartyPopper className="size-12 mx-auto" style={{ color: 'var(--c-mint)' }} />
+          <PartyPopper className="size-12 mx-auto" style={{ color: 'var(--c-mint-ink)' }} />
           <p className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.debt_free')}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts.debt_free_desc')}</p>
         </div>
@@ -299,9 +299,9 @@ export default function DebtsOverviewPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_remaining')}</p>
-              <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--c-coral)', letterSpacing: '-0.02em' }}>{formatCurrency(totalRemaining)}</p>
+              <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(totalRemaining)}</p>
               <p className="text-[12px] mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                {t('debts.already_paid')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(totalPaid)}</span> {t('debts.of_principal')} <span className="num">{formatCurrency(totalPrincipal)}</span>
+                {t('debts.already_paid')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(totalPaid)}</span> {t('debts.of_principal')} <span className="num">{formatCurrency(totalPrincipal)}</span>
               </p>
               <span className="quest-bar mt-3 w-full" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '8px' }}><i style={{ width: `${Math.min(paidPct, 100)}%` }} /></span>
               <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
@@ -309,10 +309,10 @@ export default function DebtsOverviewPage() {
               </div>
               {/* Countdown bebas utang — focal point (pakai strategi aktif) */}
               <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid var(--border-soft)' }}>
-                <Flag className="size-3.5 shrink-0" style={{ color: 'var(--c-mint)' }} />
+                <Flag className="size-3.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
                 {tlResult.feasible && tlResult.months > 0 && tlResult.months < 600 ? (
                   <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-muted)' }}>
-                    {t('debts.debt_free_by')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(tlResult.months)}</span>
+                    {t('debts.debt_free_by')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(tlResult.months)}</span>
                     <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} ${t('debts.years')}` : `${tlResult.months} ${t('debts.months')}`} {t('debts.to_go')}</span>
                   </p>
                 ) : (
@@ -336,7 +336,7 @@ export default function DebtsOverviewPage() {
               </div>
               {monthlyInterestNow > 0 && (
                 <p className="text-[11px] mt-2.5 pt-2.5 leading-snug" style={{ borderTop: '1px solid var(--border-soft)', color: 'var(--ink-soft)' }}>
-                  {t('debts.of_this_payment')} ± <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{formatCurrency(Math.round(monthlyInterestNow))}</span>{t('debts.per_month_interest_burn')}
+                  {t('debts.of_this_payment')} ± <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{formatCurrency(Math.round(monthlyInterestNow))}</span>{t('debts.per_month_interest_burn')}
                 </p>
               )}
             </div>
@@ -366,7 +366,7 @@ export default function DebtsOverviewPage() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.high_interest_title')}</p>
                 <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
+                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
                 </p>
               </div>
             </div>
@@ -425,7 +425,7 @@ export default function DebtsOverviewPage() {
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="inline-flex items-center justify-end gap-1">
-                            {d.interest_rate >= 18 && <AlertCircle className="size-3" style={{ color: 'var(--c-coral)' }} aria-hidden="true" />}
+                            {d.interest_rate >= 18 && <AlertCircle className="size-3" style={{ color: 'var(--c-coral-ink)' }} aria-hidden="true" />}
                             <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span>
                             {d.interest_rate >= 18 && <span className="sr-only">{t('debts.high_interest_sr')}</span>}
                           </span>
@@ -489,7 +489,7 @@ export default function DebtsOverviewPage() {
                       {!isCC && (
                         <div className="mt-2 flex gap-3">
                           <button type="button" onClick={() => openEdit(d)} className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>{t('debts.edit')}</button>
-                          <button type="button" onClick={() => remove(d.id)} className="text-[11px] font-medium" style={{ color: 'var(--c-coral)' }}>{t('debts.delete')}</button>
+                          <button type="button" onClick={() => remove(d.id)} className="text-[11px] font-medium" style={{ color: 'var(--c-coral-ink)' }}>{t('debts.delete')}</button>
                         </div>
                       )}
                     </div>
@@ -513,7 +513,7 @@ export default function DebtsOverviewPage() {
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
-                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
+                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
                 ) : (
                   <>{t('debts.tradeoff_similar')}</>
                 )}
@@ -539,7 +539,7 @@ export default function DebtsOverviewPage() {
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_timeline')}</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-                  {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>{t('debts.consumer_debt_free')} <span className="num font-semibold" style={{ color: 'var(--c-mint)' }}>{payoffDate(consumerFreeMonth)}</span> · </>)}
+                  {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>{t('debts.consumer_debt_free')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(consumerFreeMonth)}</span> · </>)}
                   {t('debts.all_paid_off')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate(tlResult.months)}</span>
                 </p>
               </div>
@@ -582,7 +582,7 @@ export default function DebtsOverviewPage() {
                 onChange={(e) => setExtraPayment(Number(e.target.value))}
                 className="flex-1 accent-[var(--c-mint)]" aria-label={t('debts.extra_payment_aria')}
               />
-              <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint)' }}>+{formatCurrency(extraPayment)}</span>
+              <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(extraPayment)}</span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
               <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.now_paid_off')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months)}</p></div>
@@ -613,7 +613,7 @@ export default function DebtsOverviewPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
                           <p className="text-[10px] flex items-center gap-1" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
-                            {urgent ? <><AlertCircle className="size-2.5" /> {t('debts.urgent')} · {days <= 0 ? t('debts.due_now') : `${days} ${t('debts.days_left')}`}</> : isCC ? <><CheckCircle2 className="size-2.5" style={{ color: 'var(--c-mint)' }} /> {t('debts.autodebit_active')}</> : `${days} ${t('debts.days_left')}`}
+                            {urgent ? <><AlertCircle className="size-2.5" /> {t('debts.urgent')} · {days <= 0 ? t('debts.due_now') : `${days} ${t('debts.days_left')}`}</> : isCC ? <><CheckCircle2 className="size-2.5" style={{ color: 'var(--c-mint-ink)' }} /> {t('debts.autodebit_active')}</> : `${days} ${t('debts.days_left')}`}
                           </p>
                         </div>
                       </div>
@@ -651,7 +651,7 @@ export default function DebtsOverviewPage() {
             <div className="grid gap-1.5">
               <Label>{t('debts.field_name')}</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={triedSave && !!formErrors.name} />
-              {triedSave && formErrors.name && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.name}</p>}
+              {triedSave && formErrors.name && <p className="text-[11px]" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.name}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
@@ -671,11 +671,11 @@ export default function DebtsOverviewPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5"><Label>{t('debts.field_principal')}</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>{t('debts.field_remaining')}</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.remaining}</p>}</div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_remaining')}</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.remaining}</p>}</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5"><Label>{t('debts.field_interest')}</Label><Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} /></div>
-              <div className="grid gap-1.5"><Label>{t('debts.field_monthly')}</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-[11px]" style={{ color: 'var(--c-coral)' }}>{formErrors.monthly_payment}</p>}</div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_monthly')}</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-[11px]" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.monthly_payment}</p>}</div>
               <div className="grid gap-1.5"><Label>{t('debts.field_due_date')}</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
           </div>
@@ -745,7 +745,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
         <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_interest')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
         <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.character')}</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
       </div>
-      {!result.feasible && <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--c-coral)' }}>{t('debts.infeasible_note')}</p>}
+      {!result.feasible && <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--c-coral-ink)' }}>{t('debts.infeasible_note')}</p>}
     </div>
   )
 }

@@ -73,7 +73,7 @@ export default function RefundPage() {
         </div>
 
         <div className="mt-12 pt-6 border-t flex flex-wrap gap-4" style={{ borderColor: 'var(--border-soft)' }}>
-          <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--c-mint)' }}>← Kembali ke beranda</Link>
+          <Link href="/" className="text-sm font-medium hover:underline" style={{ color: 'var(--c-mint-ink)' }}>← Kembali ke beranda</Link>
           <Link href="/terms" className="text-sm font-medium hover:underline" style={{ color: 'var(--ink-muted)' }}>Syarat &amp; Ketentuan</Link>
           <Link href="/contact" className="text-sm font-medium hover:underline" style={{ color: 'var(--ink-muted)' }}>Hubungi Kami</Link>
         </div>

@@ -77,7 +77,7 @@ export function NewsTab() {
   if (loading) {
     return (
       <div className="py-16 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-        <Loader2 className="size-5 mx-auto animate-spin mb-2" style={{ color: 'var(--c-mint)' }} />
+        <Loader2 className="size-5 mx-auto animate-spin mb-2" style={{ color: 'var(--c-mint-ink)' }} />
         {t('news.loading')}
       </div>
     )
@@ -123,7 +123,7 @@ export function NewsTab() {
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="eyebrow"
-                      style={{ color: 'var(--c-mint)' }}
+                      style={{ color: 'var(--c-mint-ink)' }}
                     >
                       {item.source}
                     </span>

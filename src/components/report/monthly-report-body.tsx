@@ -319,7 +319,7 @@ export function MonthlyReportBody({
 
       {/* Ringkasan eksekutif — narasi prosa 3 sub-paragraf + strip arus kas */}
       <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
-        <p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('report.exec_summary')}</p>
+        <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('report.exec_summary')}</p>
         <div className="mt-2.5 space-y-2.5" style={{ maxWidth: variant === 'print' ? '64ch' : undefined }}>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
             <strong>{t('report.cashflow_label')}</strong> {t('report.cashflow_during')} {MONTHS[month - 1]} {year}, {t('report.cashflow_income')} {money(r.income)} {t('report.cashflow_and_expense')} {money(r.expense)} {t('report.cashflow_result')} {surplusWord}{' '}
@@ -479,7 +479,7 @@ export function MonthlyReportBody({
                   <div key={g.id}>
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="t-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</span>
-                      <span className="num t-sm shrink-0" style={{ color: 'var(--c-mint)' }}>{p.toFixed(0)}%</span>
+                      <span className="num t-sm shrink-0" style={{ color: 'var(--c-mint-ink)' }}>{p.toFixed(0)}%</span>
                     </div>
                     <span className="quest-bar" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '8px' }}><i style={{ width: `${p}%` }} /></span>
                     <p className="num t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{money(g.current_amount)} / {money(g.target_amount)}</p>
@@ -512,12 +512,12 @@ export function MonthlyReportBody({
 
       {/* Sorotan */}
       <div data-report-block="sorotan" className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
-        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint)' }}>{t('report.highlights_eyebrow')}</p></div>
+        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint-ink)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('report.highlights_eyebrow')}</p></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `${t('report.highlight_saving_rate')} ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? t('report.dir_up') : t('report.dir_down')} ${Math.abs(r.savingRateDelta).toFixed(0)}pp ${t('report.from_prefix')} ${r.prevMonthLabel}` : t('report.this_month') },
-            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint)' }} />, title: `${topDown.name} ${t('report.dir_down_word')}`, sub: `${t('report.highlight_saved')} ${formatCurrency(Math.abs(topDown.delta))} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
-            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral)' }} />, title: `${topUp.name} ${t('report.dir_up_word')}`, sub: `+${formatCurrency(topUp.delta)} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
+            r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint-ink)' }} />, title: `${topDown.name} ${t('report.dir_down_word')}`, sub: `${t('report.highlight_saved')} ${formatCurrency(Math.abs(topDown.delta))} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
+            r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral-ink)' }} />, title: `${topUp.name} ${t('report.dir_up_word')}`, sub: `+${formatCurrency(topUp.delta)} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
           ].filter(Boolean).slice(0, 3).map((h, i) => {
             const item = h as { icon: React.ReactNode; title: string; sub: string }
             return <div key={i} className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}><div className="mb-1.5">{item.icon}</div><p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</p><p className="t-cap mt-0.5" style={{ color: 'var(--text-mute)' }}>{item.sub}</p></div>
@@ -533,7 +533,7 @@ export function MonthlyReportBody({
           <ul className="mt-3 space-y-2">
             {steps.map((s, i) => (
               <li key={i} className="flex gap-2.5">
-                <span className="shrink-0 num t-sm font-semibold" style={{ color: 'var(--c-mint)' }}>{i + 1}.</span>
+                <span className="shrink-0 num t-sm font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{i + 1}.</span>
                 <span className="t-sm" style={{ color: 'var(--ink)' }}>{s}</span>
               </li>
             ))}
@@ -555,7 +555,7 @@ export function MonthlyReportBody({
                     <td className="py-2 t-cap num" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</td>
                     <td className="py-2" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</td>
                     <td className="py-2 t-cap" style={{ color: 'var(--text-mute)' }}>{tx.category}</td>
-                    <td className="py-2 text-right num font-semibold" style={{ color: 'var(--c-coral)' }}>{money(tx.amount)}</td>
+                    <td className="py-2 text-right num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</td>
                   </tr>
                 ))}
               </tbody>
