@@ -256,8 +256,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ai-5: kalau AI nemu 0 transaksi valid, user gak dapet hasil apa-apa →
+    // balikin kreditnya (refund di-clamp server-side, gak bisa over-grant).
+    // Ini success-path (gak ada error) jadi gak bentrok sama refund di catch.
+    const parsed = toolUseBlock.input as { transactions?: unknown[] }
+    const txCount = Array.isArray(parsed.transactions) ? parsed.transactions.length : 0
+    if (txCount === 0) {
+      await refundAICredits(supabase, user.id, 'mutasi_import')
+    }
+
     return NextResponse.json({
       data: toolUseBlock.input,
+      refunded: txCount === 0,
       usage: {
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
