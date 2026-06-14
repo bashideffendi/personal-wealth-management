@@ -182,11 +182,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm select-none cursor-pointer" style={{ color: 'var(--ink-muted)' }}>
-            <input type="checkbox" defaultChecked className="size-4 rounded" style={{ accentColor: 'var(--c-primary)' }} />
-            Tetap masuk di perangkat ini
-          </label>
-
           <Button type="submit" disabled={loading} className="mt-1 h-11 w-full text-sm font-semibold" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', border: 0 }}>
             {loading ? <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Memproses…</span> : 'Masuk'}
           </Button>

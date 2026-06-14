@@ -316,10 +316,6 @@ export function TopNav({ user }: TopNavProps) {
               title="Notifikasi (segera)"
             >
               <Bell className="size-3.5" />
-              <span
-                className="absolute"
-                style={{ top: 7, right: 7, width: 7, height: 7, background: 'var(--c-coral)', borderRadius: '50%', border: '2px solid var(--bg)' }}
-              />
             </button>
 
             <div className="hidden sm:block">
