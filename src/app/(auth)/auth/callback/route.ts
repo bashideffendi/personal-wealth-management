@@ -34,7 +34,11 @@ export async function GET(request: Request) {
         } = await supabase.auth.getUser()
         if (user?.email) {
           // Audit: record the sign-in (covers Google OAuth + magic link).
-          await supabase.from('security_events').insert({ user_id: user.id, event: 'login' })
+          // Isi IP + User-Agent dari header (security-10). x-forwarded-for di
+          // Vercel = "client, proxy1, …" → ambil hop pertama (IP klien asli).
+          const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
+          const ua = request.headers.get('user-agent') || null
+          await supabase.from('security_events').insert({ user_id: user.id, event: 'login', ip, user_agent: ua })
           const { data: profile } = await supabase
             .from('profiles')
             .select('welcomed_at, full_name')
