@@ -234,7 +234,7 @@ export function CashFlowForecast({
         ) : hasRisk ? (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
-            style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber)' }}
+            style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber-ink)' }}
           >
             Saldo Tipis
           </span>

@@ -294,7 +294,7 @@ export default function NetWorthPage() {
               <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
             </>
           ) : (
-            <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber)' }}>{t('networth.projection_not_feasible')}</p>
+            <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber-ink)' }}>{t('networth.projection_not_feasible')}</p>
           )}
         </section>
       )}

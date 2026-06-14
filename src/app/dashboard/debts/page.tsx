@@ -316,7 +316,7 @@ export default function DebtsOverviewPage() {
                     <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} ${t('debts.years')}` : `${tlResult.months} ${t('debts.months')}`} {t('debts.to_go')}</span>
                   </p>
                 ) : (
-                  <p className="text-[12px] leading-snug" style={{ color: 'var(--c-amber)' }}>{t('debts.payment_below_interest')}</p>
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--c-amber-ink)' }}>{t('debts.payment_below_interest')}</p>
                 )}
               </div>
             </div>

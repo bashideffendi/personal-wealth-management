@@ -312,10 +312,11 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                 {t('onboarding.account_desc')}
               </p>
 
-              <label className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
+              <label htmlFor="onboarding-acct-name" className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
                 {t('onboarding.account_name_label')}
               </label>
               <input
+                id="onboarding-acct-name"
                 type="text"
                 value={acctName}
                 onChange={(e) => setAcctName(e.target.value)}
@@ -352,7 +353,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                 })}
               </div>
 
-              <label className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
+              <label htmlFor="onboarding-acct-balance" className="block t-sm font-medium mb-1.5" style={{ color: 'var(--ink)' }}>
                 {t('onboarding.account_balance_label')}
               </label>
               <div
@@ -363,6 +364,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                   Rp
                 </span>
                 <input
+                  id="onboarding-acct-balance"
                   type="text"
                   inputMode="numeric"
                   value={balanceRaw ? Number(balanceRaw).toLocaleString('id-ID') : ''}

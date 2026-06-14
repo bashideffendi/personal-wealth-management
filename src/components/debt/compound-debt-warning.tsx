@@ -112,7 +112,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
       {/* Headline scenario — what 1 month of interest looks like */}
       <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--ink)' }}>
         {label ? <span className="font-semibold">{label}</span> : t('compound_warning.this_debt')} {t('compound_warning.with_interest')}{' '}
-        <span className="font-bold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--c-amber)' }}>
+        <span className="font-bold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--c-amber-ink)' }}>
           {annualRate.toFixed(1)}{t('compound_warning.rate_suffix')}
         </span>
         {' '}{t('compound_warning.generates')}{' '}
