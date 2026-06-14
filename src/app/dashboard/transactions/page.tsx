@@ -653,14 +653,20 @@ export default function TransactionsPage() {
     }
     const nu = ccContribution(form.type, form.account_id, form.amount)
     if (nu) cardDeltas[form.account_id] = (cardDeltas[form.account_id] ?? 0) + nu
+    let ccSyncFailed = false
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
       if (delta === 0) continue
       const card = creditCards.find((c) => c.id === cardId)
-      if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
+      if (card) {
+        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
+        if (ccErr) ccSyncFailed = true
+      }
     }
 
     setSaving(false)
     setDialogOpen(false)
+    // Surface kegagalan sync saldo kartu (jangan diam-diam — biar user bisa koreksi).
+    if (ccSyncFailed) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek & sesuaikan di halaman Kartu Kredit.')
     fetchData()
   }
 
@@ -672,7 +678,10 @@ export default function TransactionsPage() {
     // Reverse the CC outstanding this expense had added.
     if (tx && tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
       const card = creditCards.find((c) => c.id === tx.account_id)
-      if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance - tx.amount }).eq('id', card.id)
+      if (card) {
+        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance - tx.amount }).eq('id', card.id)
+        if (ccErr) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
+      }
     }
     toast.success(t('transactions.toast_deleted'))
     fetchData()
@@ -708,10 +717,15 @@ export default function TransactionsPage() {
         cardDeltas[tx.account_id] = (cardDeltas[tx.account_id] ?? 0) - tx.amount
       }
     }
+    let ccSyncFailed = false
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
       const card = creditCards.find((c) => c.id === cardId)
-      if (card && delta !== 0) await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
+      if (card && delta !== 0) {
+        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
+        if (ccErr) ccSyncFailed = true
+      }
     }
+    if (ccSyncFailed) toast.warning('Saldo kartu kredit gagal diperbarui untuk sebagian item. Cek di halaman Kartu Kredit.')
     toast.success(`${ids.length} ${t('transactions.bulk_deleted')}`)
     setSelectedIds(new Set())
     fetchData()
