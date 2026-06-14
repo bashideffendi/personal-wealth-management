@@ -252,7 +252,9 @@ export default function DashboardPage() {
       const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes, accRes] = await Promise.all([
         supabase
           .from('transactions')
-          .select('*')
+          // Kolom eksplisit (performance-7) — query ini narik setahun transaksi;
+          // hindari select('*'). Semua konsumen cuma baca 6 kolom ini.
+          .select('id, date, type, category, description, amount')
           .eq('user_id', user.id)
           .gte('date', `${selectedYear}-01-01`)
           .lt('date', `${selectedYear + 1}-01-01`)
