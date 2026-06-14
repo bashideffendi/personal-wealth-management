@@ -237,14 +237,24 @@ export function getValuations(): Valuation[] {
   return loadValuations()
 }
 
+// Index ticker→row dibangun sekali per loader (performance-4): getValuation/
+// Detail dulu .find() linear ~700-1000 entri tiap panggil. Memoized se-instance.
+function indexBy<T>(loader: () => T[], key: (x: T) => string): () => Map<string, T> {
+  let m: Map<string, T> | null = null
+  return () => {
+    if (!m) m = new Map(loader().map((x) => [key(x).toUpperCase(), x]))
+    return m
+  }
+}
+const valuationByTicker = indexBy(loadValuations, (v) => v.ticker)
+const valuationDetailByTicker = indexBy(loadValuationDetails, (v) => v.ticker)
+
 export function getValuation(ticker: string): Valuation | undefined {
-  const t = ticker.toUpperCase()
-  return loadValuations().find((v) => v.ticker === t)
+  return valuationByTicker().get(ticker.toUpperCase())
 }
 
 export function getValuationDetail(ticker: string): ValuationDetail | undefined {
-  const t = ticker.toUpperCase()
-  return loadValuationDetails().find((v) => v.ticker === t)
+  return valuationDetailByTicker().get(ticker.toUpperCase())
 }
 
 export function getEmittenStat(ticker: string): EmittenStat | undefined {
@@ -256,13 +266,33 @@ export function getDividendEvents(): DividendEvent[] {
   return loadDividendEvents()
 }
 
+// Group dividend events per ticker sekali (performance-4): dulu .filter() over
+// ~3000+ baris tiap panggil. exDate-desc sort di-apply saat build group.
+let _dividendsByTicker: Map<string, DividendEvent[]> | null = null
+function dividendsByTicker(): Map<string, DividendEvent[]> {
+  if (_dividendsByTicker) return _dividendsByTicker
+  const m = new Map<string, DividendEvent[]>()
+  for (const d of loadDividendEvents()) {
+    const k = (d.ticker ?? '').toUpperCase()
+    const arr = m.get(k)
+    if (arr) arr.push(d)
+    else m.set(k, [d])
+  }
+  for (const arr of m.values()) {
+    arr.sort((a, b) => {
+      if (!a.exDate || !b.exDate) return 0
+      return b.exDate.localeCompare(a.exDate)
+    })
+  }
+  _dividendsByTicker = m
+  return m
+}
+
 /** Dividend events for a specific ticker, sorted by exDate desc. */
 export function getDividendsForTicker(ticker: string): DividendEvent[] {
-  const t = ticker.toUpperCase()
-  return loadDividendEvents().filter((d) => d.ticker === t).sort((a, b) => {
-    if (!a.exDate || !b.exDate) return 0
-    return b.exDate.localeCompare(a.exDate)
-  })
+  // .slice() → balikin array baru tiap panggil (kontrak lama: .filter() bikin
+  // array baru), biar caller gak bisa korup cache lewat sort/push in-place.
+  return (dividendsByTicker().get(ticker.toUpperCase()) ?? []).slice()
 }
 
 /** Dividend events with ex-date in the future (upcoming). Sorted ascending. */

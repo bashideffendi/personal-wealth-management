@@ -74,9 +74,13 @@ export function getBrokerByName(name: string | null | undefined): IdxBroker | un
   )
 }
 
+// Map code→broker (performance-4): getBrokerByCode dipanggil per-render +
+// tiap recompute fee. Empty-code ('') entri ke-key tapi gak pernah ke-return
+// karena guard `if (!code)` di bawah — perilaku identik dgn .find() lama.
+const BROKER_BY_CODE = new Map(IDX_BROKERS.map((b) => [b.code.toUpperCase(), b]))
 export function getBrokerByCode(code: string | null | undefined): IdxBroker | undefined {
   if (!code) return undefined
-  return IDX_BROKERS.find((b) => b.code === code.toUpperCase())
+  return BROKER_BY_CODE.get(code.toUpperCase())
 }
 
 /**

@@ -71,9 +71,13 @@ export function listEmiten(): EmittenInfo[] {
   return out
 }
 
+// Map ticker→info, dibangun sekali dari listEmiten() (performance-4): getEmiten
+// dulu .find() linear ~990 entri tiap panggil. Memoized se-instance, sama
+// profil staleness dgn _cached (JSON build-time static).
+let _byTicker: Map<string, EmittenInfo> | null = null
 export function getEmiten(ticker: string): EmittenInfo | undefined {
-  const upper = ticker.toUpperCase()
-  return listEmiten().find((e) => e.ticker === upper)
+  if (!_byTicker) _byTicker = new Map(listEmiten().map((e) => [e.ticker, e]))
+  return _byTicker.get(ticker.toUpperCase())
 }
 
 /** Lookup batch — return map keyed by ticker. Tickers not found → omitted. */
