@@ -18,6 +18,13 @@ const RANGE_MAP: Record<string, { interval: Interval; limit: number }> = {
   '5Y': { interval: '1w', limit: 260 },
 }
 
+// Cache TTL per-range (detik) — data candle makin panjang range makin jarang
+// berubah. Route ini TIDAK auth-gated & identik buat semua caller → boleh
+// shared (s-maxage di CDN Vercel). [performance-5]
+const CACHE_TTL: Record<string, number> = {
+  '1D': 60, '1W': 300, '1M': 1800, '3M': 1800, YTD: 3600, '1Y': 3600, '3Y': 21600, '5Y': 21600,
+}
+
 // "BTC-USD" / "BTC-USDT" / "BTCUSDT" / "BTC" → "BTCUSDT" (Binance spot pair).
 function toBinanceSymbol(raw: string): string {
   const base = raw.trim().toUpperCase().replace(/[-_]?(USDT|USD)$/i, '').replace(/[-_]+$/, '')
@@ -42,10 +49,15 @@ export async function GET(req: NextRequest) {
     }
     const last = points.length ? points[points.length - 1].c : null
     const prev = points.length ? points[0].c : null
-    return NextResponse.json({
-      points,
-      meta: { currency: 'USD', previousClose: prev, regularMarketPrice: last },
-    })
+    const ttl = CACHE_TTL[range] ?? 60
+    return NextResponse.json(
+      {
+        points,
+        meta: { currency: 'USD', previousClose: prev, regularMarketPrice: last },
+      },
+      // Cache cuma response SUKSES; empty/error (di bawah) tetap tak ter-cache.
+      { headers: { 'Cache-Control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl}` } },
+    )
   } catch (err) {
     // Symbol not on Binance (e.g. exotic alt) or transient error — empty, no 500.
     // Log so a real Binance outage leaves a trace instead of looking like "no data".

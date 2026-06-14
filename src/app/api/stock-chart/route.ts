@@ -33,6 +33,13 @@ function normalizeRange(raw: string | null): RangeKey {
   return (valid.includes(u as RangeKey) ? u : '1D') as RangeKey
 }
 
+// Cache TTL per-range (detik). Route ini AUTH-gated → pakai `private` (browser
+// only), JANGAN s-maxage (biar response per-user gak nyangkut di CDN shared).
+// [performance-5]
+const CACHE_TTL: Record<RangeKey, number> = {
+  '1D': 60, '1W': 300, '1M': 1800, '3M': 1800, YTD: 3600, '1Y': 3600, '3Y': 21600, '5Y': 21600,
+}
+
 interface ChartPoint {
   t: number
   c: number
@@ -111,7 +118,11 @@ export async function GET(request: Request) {
       regularMarketPrice: m?.regularMarketPrice ?? null,
     }
 
-    return NextResponse.json({ points, meta, range })
+    return NextResponse.json(
+      { points, meta, range },
+      // Cache cuma response sukses (private = browser-only, authed route).
+      { headers: { 'Cache-Control': `private, max-age=${CACHE_TTL[range] ?? 60}` } },
+    )
   } catch {
     return empty
   }

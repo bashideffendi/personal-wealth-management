@@ -34,7 +34,11 @@ export async function GET(request: Request) {
 
   try {
     const tickers = await get24hTickers(symbols)
-    return NextResponse.json({ tickers })
+    // Authed → private; 30s biar remount cepat gak nge-hammer Binance. [performance-5]
+    return NextResponse.json(
+      { tickers },
+      { headers: { 'Cache-Control': 'private, max-age=30' } },
+    )
   } catch (err) {
     console.error('[crypto-price] failed:', err instanceof Error ? err.message : err)
     return NextResponse.json(

@@ -17,7 +17,12 @@ export async function GET() {
 
   try {
     const { items } = await getAllNews()
-    return NextResponse.json({ items })
+    // Authed → private; 60s biar remount cepat skip auth+reassembly (RSS sendiri
+    // udah di-cache via next revalidate:600 di getAllNews). [performance-5]
+    return NextResponse.json(
+      { items },
+      { headers: { 'Cache-Control': 'private, max-age=60' } },
+    )
   } catch (err) {
     // Graceful: never break the tab — return empty + error flag, status 200.
     // Log so a persistently-broken feed (e.g. missing key) is visible, not silent.
