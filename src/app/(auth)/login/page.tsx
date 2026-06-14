@@ -166,7 +166,7 @@ export default function LoginPage() {
 
           <div>
             <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Email</label>
-            <Input type="email" placeholder="kamu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" autoComplete="email" />
+            <Input type="email" aria-label="Email" placeholder="kamu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" autoComplete="email" />
           </div>
 
           <div>
@@ -175,7 +175,7 @@ export default function LoginPage() {
               <Link href="/forgot-password" className="text-xs font-medium hover:underline" style={{ color: 'var(--c-mint)' }}>Lupa?</Link>
             </div>
             <div className="relative">
-              <Input type={showPw ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11 pr-10" autoComplete="current-password" />
+              <Input type={showPw ? 'text' : 'password'} aria-label="Password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11 pr-10" autoComplete="current-password" />
               <button type="button" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Sembunyikan password' : 'Lihat password'} className="absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center size-7 rounded-md" style={{ color: 'var(--ink-soft)' }}>
                 {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>

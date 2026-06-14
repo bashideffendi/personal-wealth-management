@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from 'react'
 import { WifiOff } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function ServiceWorkerRegister() {
   const [offline, setOffline] = useState(false)
@@ -36,7 +37,15 @@ export function ServiceWorkerRegister() {
             if (!installing) return
             installing.addEventListener('statechange', () => {
               if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                // Update terpasang (controller udah ada = bukan install pertama).
+                // Aktifkan SW baru + prompt reload — tab lama jalan kode lama sampai
+                // di-reload (jangan auto-reload, bisa motong aktivitas user).
                 installing.postMessage({ type: 'SKIP_WAITING' })
+                toast('Versi baru Klunting tersedia', {
+                  description: 'Muat ulang buat pakai versi terbaru.',
+                  action: { label: 'Muat ulang', onClick: () => window.location.reload() },
+                  duration: 12000,
+                })
               }
             })
           })
