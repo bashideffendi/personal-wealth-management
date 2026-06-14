@@ -102,7 +102,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>7. Data kamu</h2>
             <p>
-              Data finansial yang kamu input tetap milikmu. Kamu dapat mengekspornya (CSV) atau menghapus akunmu kapan
+              Data finansial yang kamu input tetap milikmu. Kamu dapat mengekspornya (JSON) atau menghapus akunmu kapan
               saja. Penanganan data diatur dalam{' '}
               <Link href="/privacy" className="underline font-medium" style={{ color: 'var(--ink)' }}>Kebijakan Privasi</Link>.
             </p>

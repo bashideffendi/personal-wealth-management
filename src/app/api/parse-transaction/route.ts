@@ -80,6 +80,11 @@ export async function POST(request: NextRequest) {
   if (!text || text.length < 3) {
     return NextResponse.json({ error: 'Text terlalu pendek' }, { status: 400 })
   }
+  // Cap panjang input — catat transaksi = kalimat pendek; tolak payload gede
+  // (anti token-cost abuse; route ini sengaja unlimited/tanpa kredit).
+  if (text.length > 2000) {
+    return NextResponse.json({ error: 'Teks terlalu panjang' }, { status: 400 })
+  }
 
   const SCHEMA: Anthropic.Tool.InputSchema = {
     type: 'object',
@@ -153,13 +158,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (err) {
-    if (err instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { error: `Anthropic API error: ${err.message}` },
-        { status: 502 },
-      )
-    }
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[parse-transaction] failed:', err)
+    return NextResponse.json({ error: 'Gagal memproses teks. Coba lagi.' }, { status: 502 })
   }
 }

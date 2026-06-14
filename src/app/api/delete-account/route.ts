@@ -41,6 +41,9 @@ const DELETE_ORDER = [
   'assets_non_liquid',
   'accounts',
   'net_worth_snapshots',
+  'portfolio_snapshots',
+  'security_events',
+  'household_activities',
   'subscriptions',
   'ai_credit_ledger',
   'household_members',
@@ -64,6 +67,16 @@ export async function POST() {
       errors[table] = error.message
     }
   }
+  // Tabel dengan kolom pemilik ≠ user_id — hapus eksplisit supaya erasure gak
+  // bergantung ke cascade auth (yg cuma jalan kalau service-role tersedia).
+  // households delete akan cascade household_members/activities/invitations sisa.
+  for (const [table, col] of [['household_invitations', 'invited_by'], ['households', 'owner_user_id']] as const) {
+    const { error } = await db.from(table).delete().eq(col, user.id)
+    if (error && !/does not exist|relation|column .* does not exist/i.test(error.message)) {
+      errors[table] = error.message
+    }
+  }
+
   // profiles is keyed on id, not user_id.
   {
     const { error } = await db.from('profiles').delete().eq('id', user.id)

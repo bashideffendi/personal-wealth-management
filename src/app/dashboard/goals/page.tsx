@@ -193,7 +193,15 @@ export default function GoalsPage() {
           description: `${t('goals.deposit_tx_desc')} ${depositGoal.name}`,
           amount: depositAmt,
         })
-        if (txErr) toast.error(t('goals.deposit_tx_error'))
+        if (txErr) {
+          // Kompensasi: linked-transaction gagal → balikin current_amount goal supaya
+          // progres goal gak naik tanpa transaksi saving tercatat (biar konsisten).
+          await supabase.from('goals').update({ current_amount: depositGoal.current_amount }).eq('id', depositGoal.id)
+          setDepositing(false)
+          toast.error(t('goals.deposit_tx_error'))
+          refresh()
+          return
+        }
       }
     }
     setDepositing(false)

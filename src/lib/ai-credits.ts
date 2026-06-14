@@ -129,7 +129,9 @@ export async function refundAICredits(
       p_user_id: userId,
       p_amount: amount,
     })
-  } catch {
-    // intentionally ignored — refund failure shouldn't shadow the upstream error
+  } catch (err) {
+    // Non-throwing (refund failure shouldn't shadow the upstream error), tapi
+    // LOG supaya kredit yg gagal di-refund bisa di-rekonsiliasi (bukan hilang diam2).
+    console.error('[ai-credits] refund failed:', userId, costKey, err instanceof Error ? err.message : err)
   }
 }

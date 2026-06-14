@@ -129,7 +129,7 @@ export default function DebtsOverviewPage() {
       const [debtsRes, ccRes, txRes, liqEntries, nlqRes, invRes] = await Promise.all([
         supabase.from('debts').select('*').eq('user_id', user.id).order('remaining', { ascending: false }),
         supabase.from('credit_cards').select('*').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
-        supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
+        supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').neq('category', 'Transfer').gte('date', cutoff.toISOString().slice(0, 10)),
         fetchLiquidEntries(supabase, user.id, { strict: true }),
         supabase.from('assets_non_liquid').select('current_value').eq('user_id', user.id),
         supabase.from('investments').select('total_value').eq('user_id', user.id),

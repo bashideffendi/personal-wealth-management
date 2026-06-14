@@ -34,7 +34,7 @@ export default function OpengraphImage() {
             display: 'flex',
             width: '100%',
             height: 10,
-            background: 'linear-gradient(90deg, #129B69 0%, #0B6E4D 100%)',
+            background: 'linear-gradient(90deg, #FFD15C 0%, #E8A100 100%)',
           }}
         />
 
@@ -64,8 +64,8 @@ export default function OpengraphImage() {
                 height: 108,
                 borderRadius: 26,
                 background:
-                  'linear-gradient(135deg, #129B69 0%, #0B6E4D 100%)',
-                color: '#FFFFFF',
+                  'linear-gradient(135deg, #FFD15C 0%, #E8A100 100%)',
+                color: '#1E1B16',
                 fontSize: 66,
                 fontWeight: 800,
                 letterSpacing: '-0.05em',
@@ -118,7 +118,7 @@ export default function OpengraphImage() {
                 width: 14,
                 height: 14,
                 borderRadius: 7,
-                background: '#129B69',
+                background: '#FFC83D',
                 marginRight: 16,
               }}
             />

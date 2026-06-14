@@ -90,7 +90,7 @@ export default function NetWorthPage() {
         supabase.from('debts').select('id, name, category, remaining, interest_rate, monthly_payment').eq('user_id', user.id).eq('is_active', true),
         supabase.from('credit_cards').select('id, name, current_balance, interest_rate').eq('user_id', user.id).eq('is_active', true),
         supabase.from('net_worth_snapshots').select('*').eq('user_id', user.id).order('snapshot_date'),
-        supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').gte('date', cutoff.toISOString().slice(0, 10)),
+        supabase.from('transactions').select('amount, date').eq('user_id', user.id).eq('type', 'income').neq('category', 'Transfer').gte('date', cutoff.toISOString().slice(0, 10)),
       ])
       if (nonLiquidRes.error) throw nonLiquidRes.error
       if (debtRes.error) throw debtRes.error

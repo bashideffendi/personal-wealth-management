@@ -114,16 +114,16 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>6. Penyimpanan & retensi</h2>
             <p>
-              Data disimpan selama akunmu aktif. Jika kamu menghapus akun, data pribadimu dihapus permanen dalam{' '}
-              <strong>maksimal 30 hari</strong> (jeda ini agar kamu sempat mengekspor data bila diperlukan), kecuali yang
-              wajib kami simpan oleh hukum.
+              Data disimpan selama akunmu aktif. Saat kamu menghapus akun, data pribadimu langsung dihapus permanen dari
+              database; salinan di cadangan (backup) ter-purge dalam <strong>maksimal 30 hari</strong>, kecuali yang wajib
+              kami simpan oleh hukum. Ekspor dulu datamu sebelum menghapus bila perlu.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>7. Hak kamu (UU PDP)</h2>
             <ul className="space-y-1.5 list-disc pl-5">
-              <li><strong>Akses & portabilitas:</strong> ekspor seluruh data dalam format CSV dari menu Profil kapan saja.</li>
+              <li><strong>Akses & portabilitas:</strong> ekspor seluruh data dalam format JSON dari menu Profil kapan saja.</li>
               <li><strong>Koreksi:</strong> perbarui datamu langsung di aplikasi.</li>
               <li><strong>Penghapusan:</strong> hapus akun & seluruh data dari Profil → Hapus Akun.</li>
               <li><strong>Penarikan persetujuan:</strong> berhenti memakai layanan dan hapus akun kapan saja.</li>

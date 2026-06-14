@@ -101,7 +101,7 @@ export default function RegisterPage() {
           </div>
           <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
             {error && (
-              <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral)' }}>
+              <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral-ink)' }}>
                 {error}
               </div>
             )}

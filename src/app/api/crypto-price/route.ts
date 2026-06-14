@@ -36,8 +36,9 @@ export async function GET(request: Request) {
     const tickers = await get24hTickers(symbols)
     return NextResponse.json({ tickers })
   } catch (err) {
+    console.error('[crypto-price] failed:', err instanceof Error ? err.message : err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to fetch from Binance' },
+      { error: 'Gagal ambil harga kripto. Coba lagi.' },
       { status: 502 },
     )
   }

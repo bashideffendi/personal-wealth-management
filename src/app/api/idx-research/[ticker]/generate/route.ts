@@ -145,14 +145,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
   } catch (err) {
     await refundAICredits(supabase, user.id, 'stock_research')
-    if (err instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { error: `Anthropic API error: ${err.message}`, status: err.status },
-        { status: 502 },
-      )
-    }
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[idx-research/generate] failed:', err)
+    return NextResponse.json({ error: 'Layanan riset AI lagi bermasalah, coba lagi.' }, { status: 502 })
   }
 
   // Parse frontmatter dari output Claude

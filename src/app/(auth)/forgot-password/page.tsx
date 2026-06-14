@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
             <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
               Cek inbox dan folder spam. Belum diterima dalam 5 menit? Kirim ulang di bawah.
             </p>
-            {error && <p className="mt-2 text-sm" style={{ color: 'var(--c-coral)' }}>{error}</p>}
+            {error && <p className="mt-2 text-sm" style={{ color: 'var(--c-coral-ink)' }}>{error}</p>}
             <button
               type="button"
               onClick={handleResend}
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
             {error && (
-              <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral)' }}>
+              <div className="rounded-lg border p-3 text-sm" style={{ background: 'var(--c-coral-soft)', borderColor: 'color-mix(in srgb, var(--c-coral) 30%, transparent)', color: 'var(--c-coral-ink)' }}>
                 {error}
               </div>
             )}

@@ -81,17 +81,33 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Charge 2 credits before generating insights
+  // Parse + validate body BEFORE charging credits (jangan bakar kredit user buat
+  // request jelek). Coerce numerik & default array supaya section-builder di bawah
+  // GAK BISA crash di input.expense_by_category.filter(...) — bug input-2.
+  let input: InsightInput
+  try {
+    const raw = (await request.json()) as Record<string, unknown>
+    const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
+    const lm = raw.last_month && typeof raw.last_month === 'object' ? (raw.last_month as Record<string, unknown>) : null
+    input = {
+      period_label: typeof raw.period_label === 'string' ? raw.period_label : '',
+      income: num(raw.income), expense: num(raw.expense), saving: num(raw.saving),
+      investment: num(raw.investment), net: num(raw.net), saving_rate: num(raw.saving_rate),
+      last_month: lm ? { income: num(lm.income), expense: num(lm.expense), saving: num(lm.saving), investment: num(lm.investment) } : undefined,
+      expense_by_category: (Array.isArray(raw.expense_by_category) ? raw.expense_by_category : []) as InsightInput['expense_by_category'],
+      top_expenses: (Array.isArray(raw.top_expenses) ? raw.top_expenses : []) as InsightInput['top_expenses'],
+      goals: (Array.isArray(raw.goals) ? raw.goals : []) as InsightInput['goals'],
+      upcoming_bills: (Array.isArray(raw.upcoming_bills) ? raw.upcoming_bills : []) as InsightInput['upcoming_bills'],
+      today: typeof raw.today === 'string' ? raw.today : new Date().toISOString().slice(0, 10),
+    }
+  } catch {
+    return NextResponse.json({ error: 'Body harus JSON' }, { status: 400 })
+  }
+
+  // Charge 2 credits only AFTER body is validated
   const credit = await consumeAICredits(supabase, user.id, 'insights')
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
-  }
-
-  let input: InsightInput
-  try {
-    input = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Body harus JSON' }, { status: 400 })
   }
 
   const SCHEMA: Anthropic.Tool.InputSchema = {
@@ -228,12 +244,9 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (err) {
-    // Refund credits since the call failed
+    // Refund credits since the call failed; log real error server-side, return generic
     await refundAICredits(supabase, user.id, 'insights')
-    if (err instanceof Anthropic.APIError) {
-      return NextResponse.json({ error: `Anthropic API error: ${err.message}` }, { status: 502 })
-    }
-    const msg = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[insights] generation failed:', err)
+    return NextResponse.json({ error: 'Gagal membuat insight. Coba lagi sebentar.' }, { status: 502 })
   }
 }

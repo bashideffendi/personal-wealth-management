@@ -265,13 +265,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     await refundAICredits(supabase, user.id, 'mutasi_import')
-    if (err instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { error: `Anthropic API error: ${err.message}`, status: err.status },
-        { status: 502 },
-      )
-    }
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[import-mutasi] failed:', err)
+    return NextResponse.json({ error: 'Gagal memproses mutasi. Coba lagi sebentar.' }, { status: 502 })
   }
 }

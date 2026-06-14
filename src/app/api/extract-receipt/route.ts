@@ -252,13 +252,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     // Refund credits since the call failed — user shouldn't pay for a 502
     await refundAICredits(supabase, user.id, 'receipt_scan')
-    if (err instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { error: `Anthropic API error: ${err.message}`, status: err.status },
-        { status: 502 },
-      )
-    }
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[extract-receipt] failed:', err)
+    return NextResponse.json({ error: 'Gagal membaca struk. Coba lagi sebentar.' }, { status: 502 })
   }
 }

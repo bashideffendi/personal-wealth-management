@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-// Favicon — 32x32 emerald square with "K" monogram (Klunting)
+// Favicon — 32x32 gold square with dark "K" monogram (Klunting brand)
 export const size = { width: 32, height: 32 }
 export const contentType = 'image/png'
 
@@ -14,8 +14,8 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #129B69 0%, #0B6E4D 100%)',
-          color: '#FFFFFF',
+          background: 'linear-gradient(135deg, #FFD15C 0%, #E8A100 100%)',
+          color: '#1E1B16',
           fontSize: 22,
           fontWeight: 800,
           fontFamily: 'system-ui',

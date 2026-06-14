@@ -211,20 +211,24 @@ export default function CreditCardsPage() {
     setPaySaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setPaySaving(false); return }
-    const { error: payErr } = await supabase.from('credit_card_payments').insert({
+    const { data: payRow, error: payErr } = await supabase.from('credit_card_payments').insert({
       user_id: user.id, card_id: payForm.card_id, amount: payForm.amount,
       from_account_id: payForm.from_account_id || null, date: payForm.date, notes: payForm.notes,
-    })
-    if (payErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); return }
-    // Tiga langkah berurutan — berhenti + toast di langkah yang gagal, biar
-    // gak ada torn state (pembayaran tercatat tapi saldo kartu/rekening
-    // gak berubah, tanpa kabar).
+    }).select('id').single()
+    if (payErr || !payRow) { setPaySaving(false); toast.error(t('common.mutation_failed')); return }
+    const paymentId = payRow.id as string
+    // Tiga langkah berurutan dengan KOMPENSASI: kalau langkah saldo gagal, hapus
+    // payment row (dan balikin saldo kartu) supaya gak ada torn state — pembayaran
+    // tercatat tapi saldo gak berubah (yg bikin reversal over-credit pas dihapus).
     const card = cards.find((x) => x.id === payForm.card_id)
     if (card) {
       const { error: cardErr } = await supabase.from('credit_cards')
         .update({ current_balance: Math.max(0, card.current_balance - payForm.amount) })
         .eq('id', card.id)
-      if (cardErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
+      if (cardErr) {
+        await supabase.from('credit_card_payments').delete().eq('id', paymentId)
+        setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
+      }
     }
     // Bayar kartu = uang KELUAR dari rekening sumber → kurangi saldonya biar masuk
     // cash flow & net worth gak naik gratis. CC payment = transfer (bukan expense
@@ -235,7 +239,12 @@ export default function CreditCardsPage() {
         const { error: accErr } = await supabase.from('accounts')
           .update({ current_balance: acc.current_balance - payForm.amount })
           .eq('id', acc.id)
-        if (accErr) { setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
+        if (accErr) {
+          // rollback: balikin saldo kartu + hapus payment row (all-or-nothing)
+          if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance }).eq('id', card.id)
+          await supabase.from('credit_card_payments').delete().eq('id', paymentId)
+          setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
+        }
       }
     }
     setPaySaving(false); setPayDialogOpen(false); refresh()

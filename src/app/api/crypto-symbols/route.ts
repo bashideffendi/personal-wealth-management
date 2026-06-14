@@ -51,8 +51,9 @@ export async function GET() {
     cache = { fetchedAt: Date.now(), symbols }
     return NextResponse.json({ symbols, source: 'binance' })
   } catch (err) {
+    console.error('[crypto-symbols] failed:', err instanceof Error ? err.message : err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to fetch from Binance' },
+      { error: 'Gagal ambil daftar kripto. Coba lagi.' },
       { status: 502 },
     )
   }

@@ -1,10 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Demo mode is OPT-IN ONLY (explicit flag) and can NEVER activate on the
+// production Vercel deployment. A missing/typo'd Supabase env must FAIL CLOSED
+// (the Supabase client throws below) — we must NOT silently serve an
+// unauthenticated mock session on a real production deploy.
 const isDemo =
-  (process.env.NEXT_PUBLIC_DEMO_MODE ?? '').trim() === 'true' ||
-  !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  (process.env.NEXT_PUBLIC_DEMO_MODE ?? '').trim() === 'true' &&
+  process.env.VERCEL_ENV !== 'production'
 
 export async function updateSession(request: NextRequest) {
   // Demo mode: bypass all auth. If someone hits /login or /register, push them

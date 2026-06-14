@@ -43,6 +43,12 @@ const TABLES = [
   'subscriptions',
   'ai_credit_ledger',
   'household_members',
+  'household_activities',
+  'household_invitations',
+  'portfolio_snapshots',
+  'budget_categories',
+  'emergency_fund_transactions',
+  'security_events',
 ]
 
 // Page through a table so exports aren't capped at Supabase's 1000-row default.
