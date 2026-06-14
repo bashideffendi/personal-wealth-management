@@ -3,6 +3,7 @@ import YahooFinance from 'yahoo-finance2'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { get24hTickers } from '@/lib/binance'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
+import { withResilience } from '@/lib/retry'
 import { FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment } from '@/types'
 
@@ -36,7 +37,9 @@ interface YahooQuoteShape {
 }
 
 async function fetchYahoo(ticker: string) {
-  const raw = (await yahooFinance.quote(ticker)) as YahooQuoteShape
+  // retry+breaker (reliability-9); maxDuration 300 + Promise.allSettled jadi
+  // generous retry aman, kegagalan tetap di-skip.
+  const raw = (await withResilience('yahoo', () => yahooFinance.quote(ticker), { retries: 1 })) as YahooQuoteShape
   const price = raw.regularMarketPrice ?? raw.postMarketPrice ?? raw.preMarketPrice ?? 0
   return {
     ticker,

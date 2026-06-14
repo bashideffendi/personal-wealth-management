@@ -11,6 +11,8 @@
  * Indonesian ISPs that partially block `binance.com`) exhibit.
  */
 
+import { withResilience } from './retry'
+
 const BASE = process.env.BINANCE_PUBLIC_BASE ?? 'https://data-api.binance.vision'
 
 export interface Ticker24h {
@@ -42,23 +44,32 @@ export type Interval =
   | '1d' | '3d' | '1w' | '1M'
 
 async function binanceFetch(path: string, init?: RequestInit): Promise<unknown> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 8000)
-  try {
-    const res = await fetch(`${BASE}${path}`, {
-      ...init,
-      headers: { 'User-Agent': 'wealth-mgmt/1.0', ...(init?.headers ?? {}) },
-      cache: 'no-store',
-      signal: controller.signal,
-    })
-    if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      throw new Error(`Binance ${res.status}: ${text.slice(0, 200)}`)
-    }
-    return res.json()
-  } finally {
-    clearTimeout(timeout)
-  }
+  // retry+circuit-breaker (reliability-9). retries:1 → maks 2 attempt; tiap
+  // attempt punya AbortController 8s sendiri (dibikin di dalam fn) biar abort
+  // attempt-1 gak nyangkut ke attempt-2. Worst case ~16s < budget rute.
+  return withResilience(
+    'binance',
+    async () => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000)
+      try {
+        const res = await fetch(`${BASE}${path}`, {
+          ...init,
+          headers: { 'User-Agent': 'wealth-mgmt/1.0', ...(init?.headers ?? {}) },
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          const text = await res.text().catch(() => '')
+          throw new Error(`Binance ${res.status}: ${text.slice(0, 200)}`)
+        }
+        return res.json()
+      } finally {
+        clearTimeout(timeout)
+      }
+    },
+    { retries: 1 },
+  )
 }
 
 /**

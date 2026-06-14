@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
 import { createClient } from '@/lib/supabase/server'
+import { withResilience } from '@/lib/retry'
 
 // yahoo-finance2 v3 requires class instantiation (removed default instance)
 const yahooFinance = new YahooFinance()
@@ -39,7 +40,8 @@ interface YahooQuoteShape {
 
 async function fetchLive(ticker: string): Promise<QuoteResult> {
   const raw = (await Promise.race([
-    yahooFinance.quote(ticker),
+    // retry+breaker (reliability-9); QUOTE_TIMEOUT_MS tetap jadi cap luar total.
+    withResilience('yahoo', () => yahooFinance.quote(ticker), { retries: 1 }),
     new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('yahoo-timeout')), QUOTE_TIMEOUT_MS),
     ),
