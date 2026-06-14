@@ -17,6 +17,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Playbook } from '@/lib/playbooks'
 import { playbookIcon } from '@/components/playbook/icons'
 import { useT } from '@/lib/i18n/context'
+import { formatRupiahPlain as formatRp } from '@/lib/utils'
 
 interface PlanResult {
   ringkasan: string
@@ -27,12 +28,6 @@ interface PlanResult {
   milestones: { judul: string; target: string; kapan: string }[]
   tips: string[]
   perhatian?: string[]
-}
-
-function formatRp(n: number): string {
-  // Output AI yang lolos shape-guard server tapi anomali → '—', bukan "Rp 0" palsu.
-  if (!Number.isFinite(n)) return '—'
-  return 'Rp ' + Math.round(n).toLocaleString('id-ID')
 }
 
 export function PlaybookDetail({ playbook }: { playbook: Playbook }) {

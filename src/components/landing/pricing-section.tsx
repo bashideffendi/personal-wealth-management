@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Crown, Users, Check } from 'lucide-react'
+import { formatRupiahPlain as fmt } from '@/lib/utils'
 
 type Billing = 'annual' | 'monthly'
 
-const fmt = (n: number) => 'Rp ' + n.toLocaleString('id-ID')
 const savingsPct = (annual: number, monthly: number) => Math.round((1 - annual / (monthly * 12)) * 100)
 
 const PRO_FEATURES = [

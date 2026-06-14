@@ -10,6 +10,7 @@
 import type { Stock } from '@/lib/invest/stocks'
 import { canonicalYear, computeTTM } from '@/lib/invest/valuation'
 import { computePiotroski } from '@/lib/invest/piotroski'
+import { formatRupiahPlain as fmtFullIDR } from '@/lib/utils'
 import { reverseDCF } from '@/lib/invest/reverse-dcf'
 
 // ─── Prop shapes (decoupled — research-tabs feeds plain objects) ──────
@@ -63,12 +64,6 @@ function fmtIDR(n: number | null | undefined): string {
   if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(2)} M`
   if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(2)} Jt`
   return n.toLocaleString('id-ID', { maximumFractionDigits: 0 })
-}
-
-/** Full (non-compact) IDR untuk tooltip: "Rp 73.862.910.000.000" */
-function fmtFullIDR(n: number | null | undefined): string {
-  if (n === null || n === undefined || isNaN(n)) return '—'
-  return `Rp ${Math.round(n).toLocaleString('id-ID')}`
 }
 
 function fmtNum(n: number | null | undefined, digits = 2): string {

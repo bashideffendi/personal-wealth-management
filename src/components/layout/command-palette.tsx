@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { formatRupiahPlain } from '@/lib/utils'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import {
   Search, ArrowRight, Sparkles, Receipt, Wallet, Target, Calculator,
@@ -626,7 +627,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
     const typeColor: Record<string, string> = {
       expense: 'var(--c-coral)', income: 'var(--c-mint)', saving: 'var(--c-amber)', investment: 'var(--sky-500)',
     }
-    const fmt = 'Rp ' + d.amount.toLocaleString('id-ID')
+    const fmt = formatRupiahPlain(d.amount)
     return (
       <div className="px-5 py-4">
         <div className="flex items-center gap-2 mb-3">

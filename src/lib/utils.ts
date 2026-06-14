@@ -14,6 +14,17 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
+/**
+ * Rupiah "plain" — "Rp 149.000" dgn SPASI ASCII + bulat ke integer + non-finite
+ * → "—". Beda dari formatCurrency (Intl): itu pakai non-breaking space (U+00A0)
+ * & tanda minus di depan simbol ("-Rp 5.000"). Util ini nyatuin beberapa
+ * formatter ad-hoc `'Rp ' + n.toLocaleString('id-ID')` yang tersebar; output
+ * byte-identik dgn yang lama. JANGAN tukar ke formatCurrency (beda codepoint).
+ */
+export function formatRupiahPlain(n: number | null | undefined): string {
+  return Number.isFinite(n) ? 'Rp ' + Math.round(n as number).toLocaleString('id-ID') : '—'
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
