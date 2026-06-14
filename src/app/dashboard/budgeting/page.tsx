@@ -267,6 +267,13 @@ export default function BudgetingPage() {
     fetchBudgets(year)
   }, [year, fetchBudgets])
 
+  // Re-fetch budget saat ada mutasi data dari FAB/command palette.
+  useEffect(() => {
+    const h = () => { void fetchBudgets(year) }
+    window.addEventListener('klunting:data-changed', h)
+    return () => window.removeEventListener('klunting:data-changed', h)
+  }, [year, fetchBudgets])
+
   async function handleCellBlur(
     type: BudgetType,
     category: string,

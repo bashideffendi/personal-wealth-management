@@ -451,6 +451,14 @@ export default function TransactionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Re-fetch saat ada mutasi data dari FAB/command palette.
+  useEffect(() => {
+    const h = () => { void fetchData() }
+    window.addEventListener('klunting:data-changed', h)
+    return () => window.removeEventListener('klunting:data-changed', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ⌘ on Mac, Ctrl elsewhere — the command palette binds metaKey || ctrlKey.
   const [isMac, setIsMac] = useState(false)
   useEffect(() => {

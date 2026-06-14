@@ -296,6 +296,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       description: `${previewData.merchant} · Rp ${previewData.total.toLocaleString('id-ID')}`,
     })
     setOpen(false)
+    window.dispatchEvent(new CustomEvent('klunting:data-changed'))
     router.refresh()
   }
 
@@ -352,6 +353,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     }
     toast.success(t('quickadd.saved'))
     setOpen(false)
+    window.dispatchEvent(new CustomEvent('klunting:data-changed'))
     router.refresh()
   }
 

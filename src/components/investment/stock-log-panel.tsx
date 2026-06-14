@@ -56,7 +56,7 @@ function computeRealizedPL(txs: StockTransaction[]): number {
     const lots: { shares: number; cost: number }[] = []
     for (const t of sorted) {
       if (t.side === 'buy') {
-        lots.push({ shares: t.shares, cost: t.price })
+        lots.push({ shares: t.shares, cost: t.price + (t.shares > 0 ? t.fee / t.shares : 0) })
       } else {
         let remaining = t.shares
         while (remaining > 0 && lots.length > 0) {

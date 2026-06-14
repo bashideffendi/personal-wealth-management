@@ -177,6 +177,15 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, selectedMonth])
 
+  // Re-fetch saat ada mutasi data dari mana pun (FAB quick-add / command palette)
+  // — router.refresh() gak nge-refresh client-fetch ini.
+  useEffect(() => {
+    const h = () => { void fetchData() }
+    window.addEventListener('klunting:data-changed', h)
+    return () => window.removeEventListener('klunting:data-changed', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Hydrate urutan dari DB sekali (lintas-perangkat); jangan timpa kalau user udah nge-drag sesi ini.
   useEffect(() => {
     void (async () => {

@@ -283,7 +283,7 @@ export const messages = {
     },
     nw_hero: {
       label_net_worth: "Kekayaan Bersih",
-      this_month: "bulan ini",
+      this_month: "arus kas bln ini",
       forecast_prefix: "Kalau ritme ini lanjut, kamu capai",
       forecast_target: "Rp 1 miliar",
       forecast_in: "dalam",
@@ -292,7 +292,7 @@ export const messages = {
       total_debt: "Total Utang",
       cta_detail: "Rincian kekayaan",
       cta_import: "Import mutasi",
-      growth: "Pertumbuhan",
+      growth: "Tren arus kas",
       empty_chart: "Catat transaksi untuk lihat trend",
     },
     accounts_card: {
@@ -3543,7 +3543,7 @@ export const messages = {
     },
     nw_hero: {
       label_net_worth: "Net Worth",
-      this_month: "this month",
+      this_month: "cash flow this mo",
       forecast_prefix: "At this pace, you'll reach",
       forecast_target: "Rp 1 billion",
       forecast_in: "in",
@@ -3552,7 +3552,7 @@ export const messages = {
       total_debt: "Total Debt",
       cta_detail: "Net worth detail",
       cta_import: "Import transactions",
-      growth: "Growth",
+      growth: "Cash flow trend",
       empty_chart: "Record transactions to see the trend",
     },
     accounts_card: {
