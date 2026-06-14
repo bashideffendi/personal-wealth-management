@@ -49,9 +49,21 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getUser() bisa THROW kalau Auth Supabase down / network error. Jangan biarin
+  // itu nge-500-in SELURUH app (landing/login/marketing ikut mati). Fail-open:
+  // anggap "tidak ada user" saat gagal → rute publik tetap render; rute privat
+  // tetap diarahkan ke /login (aman — gak bocorin halaman privat saat auth tak
+  // terverifikasi). [reliability-3]
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user'] = null
+  try {
+    const res = await supabase.auth.getUser()
+    user = res.data.user
+  } catch (e) {
+    console.error(
+      '[middleware] supabase.auth.getUser gagal — fail-open ke rute publik:',
+      e instanceof Error ? e.message : e,
+    )
+  }
 
   // Public routes that anonymous users can access without redirect:
   //   - /                                   → landing
