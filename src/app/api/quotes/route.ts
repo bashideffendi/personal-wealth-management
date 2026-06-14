@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { withResilience } from '@/lib/retry'
 
 // yahoo-finance2 v3 requires class instantiation (removed default instance)
@@ -156,7 +157,12 @@ export async function GET(request: Request) {
       }
     })
     if (successes.length > 0) {
-      await supabase.from('price_snapshots').upsert(
+      // Cache harga SHARED → tulis via service-role (security-4/5). price_snapshots
+      // RLS gak punya policy write buat authenticated (migrasi 002), jadi upsert
+      // user-client sebelumnya sebenernya silently ditolak; admin bikin warm-cache
+      // ini jalan + nutup vektor. Fallback ke user client kalau key absen.
+      const writer = createAdminClient() ?? supabase
+      await writer.from('price_snapshots').upsert(
         successes.map((q) => ({
           ticker: q.ticker,
           price: q.price,

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 import { rateLimit } from '@/lib/rate-limit'
 import {
@@ -152,8 +153,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   // Parse frontmatter dari output Claude
   const fm = parseFrontmatter(markdown)
 
-  // Save ke cache (shared across users)
-  const { error: insErr } = await supabase
+  // Save ke cache SHARED lintas-user → WAJIB lewat service-role (security-4/5):
+  // migrasi 022 ngasih authenticated upsert/update "own" sehingga user mana pun
+  // bisa nimpa research ticker apa pun (cache-poisoning). Tulis via admin; kalau
+  // SUPABASE_SERVICE_ROLE_KEY absen → fallback ke user client (perilaku lama).
+  const writer = createAdminClient() ?? supabase
+  const { error: insErr } = await writer
     .from('stock_research_cache')
     .upsert(
       {
