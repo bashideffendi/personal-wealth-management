@@ -104,8 +104,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-base font-semibold mb-2" style={{ color: 'var(--ink)' }}>5. Fitur AI</h2>
             <p>
-              Fitur AI (scan struk, parse transaksi, insight keuangan, research saham) mengirim konten yang kamu pilih
-              — teks atau gambar struk — ke penyedia model AI pihak ketiga untuk diproses. Konten ini{' '}
+              Fitur AI (scan struk, parse transaksi, import mutasi rekening, insight keuangan, research saham) mengirim
+              konten yang kamu pilih — teks, gambar struk, dan <strong>dokumen mutasi rekening yang kamu unggah</strong>
+              (berisi nomor & nama rekening serta saldo) — ke penyedia model AI pihak ketiga untuk diproses. Konten ini{' '}
               <strong>tidak dipakai untuk melatih model</strong> oleh penyedia (sesuai kebijakan API mereka). Output AI
               bersifat informatif, bisa keliru, dan <strong>bukan</strong> nasihat keuangan/pajak/hukum profesional.
             </p>

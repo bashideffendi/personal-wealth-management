@@ -108,18 +108,18 @@ export default function RegisterPage() {
 
             <div>
               <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Nama lengkap</label>
-              <Input type="text" placeholder="Budi Santoso" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" autoComplete="name" />
+              <Input type="text" aria-label="Nama lengkap" placeholder="Budi Santoso" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" autoComplete="name" />
             </div>
 
             <div>
               <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Email</label>
-              <Input type="email" placeholder="kamu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" autoComplete="email" />
+              <Input type="email" aria-label="Email" placeholder="kamu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" autoComplete="email" />
             </div>
 
             <div>
               <label className="text-xs font-semibold block mb-1.5" style={{ color: 'var(--ink-muted)' }}>Password</label>
               <div className="relative">
-                <Input type={showPw ? 'text' : 'password'} placeholder="Minimal 8 karakter" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="h-11 pr-10" autoComplete="new-password" />
+                <Input type={showPw ? 'text' : 'password'} aria-label="Password" placeholder="Minimal 8 karakter" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="h-11 pr-10" autoComplete="new-password" />
                 <button type="button" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Sembunyikan password' : 'Lihat password'} className="absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center size-7 rounded-md" style={{ color: 'var(--ink-soft)' }}>
                   {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
