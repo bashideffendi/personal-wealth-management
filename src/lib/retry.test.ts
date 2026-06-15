@@ -66,7 +66,7 @@ describe('defaultShouldRetry', () => {
 
 describe('withBreaker', () => {
   it('buka setelah threshold gagal beruntun → CircuitOpenError tanpa manggil fn', async () => {
-    let t = 1000
+    const t = 1000
     const now = () => t
     let calls = 0
     const boom = () => { calls++; return Promise.reject(new Error('down')) }
@@ -139,7 +139,7 @@ describe('mapLimit', () => {
 
 describe('withResilience', () => {
   it('gabung breaker + retry: retry dulu, kalau tetap gagal hitung ke breaker', async () => {
-    let t = 0
+    const t = 0
     const now = () => t
     let calls = 0
     const fail = () => { calls++; return Promise.reject(new Error('500')) }
