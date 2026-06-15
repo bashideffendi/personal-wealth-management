@@ -149,3 +149,32 @@ export function withResilience<T>(
 ): Promise<T> {
   return withBreaker(key, () => withRetry(fn, opts), opts)
 }
+
+/**
+ * Map dengan batas konkurensi — drop-in buat `Promise.allSettled(items.map(fn))`
+ * tapi cuma `concurrency` task jalan barengan (anti thundering-herd ke upstream).
+ * Hasil di urutan asli, format `PromiseSettledResult[]` sama persis. Gak pernah
+ * reject (tiap kegagalan jadi {status:'rejected'}).
+ */
+export async function mapLimit<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length)
+  let next = 0
+  const workers = Math.max(1, Math.min(concurrency, items.length || 1))
+  async function worker() {
+    let i = next++
+    while (i < items.length) {
+      try {
+        results[i] = { status: 'fulfilled', value: await fn(items[i], i) }
+      } catch (reason) {
+        results[i] = { status: 'rejected', reason }
+      }
+      i = next++
+    }
+  }
+  await Promise.all(Array.from({ length: workers }, () => worker()))
+  return results
+}

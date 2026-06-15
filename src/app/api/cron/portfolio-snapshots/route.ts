@@ -3,7 +3,7 @@ import YahooFinance from 'yahoo-finance2'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { get24hTickers } from '@/lib/binance'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
-import { withResilience } from '@/lib/retry'
+import { withResilience, mapLimit } from '@/lib/retry'
 import { FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment } from '@/types'
 
@@ -102,7 +102,10 @@ export async function GET(request: Request) {
   const quotes: Record<string, LiveQuote> = {}
   let fx = FX_FALLBACK_USDIDR
 
-  const settled = await Promise.allSettled(yahooSyms.map(fetchYahoo))
+  // Throttle fan-out Yahoo (performance-2): maks 6 konkuren biar gak thundering-
+  // herd (yang malah micu rate-limit + buka circuit-breaker). Hasil identik,
+  // cuma di-pace; maxDuration 300 jadi aman.
+  const settled = await mapLimit(yahooSyms, 6, fetchYahoo)
   const fetchedAt = new Date().toISOString()
   const cacheRows: Array<Record<string, unknown>> = []
   for (const r of settled) {

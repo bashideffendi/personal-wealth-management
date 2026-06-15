@@ -5,6 +5,7 @@ import {
   withResilience,
   CircuitOpenError,
   defaultShouldRetry,
+  mapLimit,
   _resetBreakers,
 } from './retry'
 
@@ -98,6 +99,41 @@ describe('withBreaker', () => {
     // setelah sukses, breaker tutup → call berikut jalan normal
     const r2 = await withBreaker('svc2', async () => 'ok', { threshold: 3, cooldownMs: 5000, now })
     expect(r2).toBe('ok')
+  })
+})
+
+describe('mapLimit', () => {
+  it('hasil di urutan asli, format PromiseSettledResult', async () => {
+    const r = await mapLimit([1, 2, 3], 2, async (x) => x * 2)
+    expect(r.map((x) => (x.status === 'fulfilled' ? x.value : null))).toEqual([2, 4, 6])
+  })
+
+  it('hormati batas konkurensi (maks in-flight ≤ N)', async () => {
+    let inFlight = 0
+    let peak = 0
+    const fn = async (x: number) => {
+      inFlight++
+      peak = Math.max(peak, inFlight)
+      await new Promise((res) => setTimeout(res, 5))
+      inFlight--
+      return x
+    }
+    await mapLimit([1, 2, 3, 4, 5, 6, 7, 8], 3, fn)
+    expect(peak).toBeLessThanOrEqual(3)
+  })
+
+  it('kegagalan jadi {status:rejected}, gak nge-reject keseluruhan', async () => {
+    const r = await mapLimit([1, 2, 3], 2, async (x) => {
+      if (x === 2) throw new Error('boom')
+      return x
+    })
+    expect(r[0]).toEqual({ status: 'fulfilled', value: 1 })
+    expect(r[1].status).toBe('rejected')
+    expect(r[2]).toEqual({ status: 'fulfilled', value: 3 })
+  })
+
+  it('array kosong → []', async () => {
+    expect(await mapLimit([], 4, async (x) => x)).toEqual([])
   })
 })
 
