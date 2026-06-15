@@ -60,7 +60,7 @@ describe('METHOD_INFO / METHOD_ORDER — integritas data', () => {
     const valid = new Set(['ideal', 'works', 'avoid'])
     for (const [k, info] of Object.entries(METHOD_INFO)) {
       for (const [sector, s] of Object.entries(info.sectorSuitability)) {
-        expect(valid.has(s), `${k}.${sector}=${s}`).toBe(true)
+        expect(valid.has(s as string), `${k}.${sector}=${s}`).toBe(true)
       }
     }
   })

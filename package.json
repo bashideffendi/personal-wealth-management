@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "split-stocks": "node scripts/split-stocks.mjs",
     "email:dev": "email dev --dir src/emails --port 3030",
     "email:export": "email export --dir src/emails --outDir email-previews --pretty",

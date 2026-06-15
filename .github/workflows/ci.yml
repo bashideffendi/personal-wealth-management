@@ -33,6 +33,9 @@ jobs:
       - name: Lint (blocking — errors fail CI; set-state-in-effect tetap warning)
         run: npm run lint
 
+      - name: Typecheck (tsc --noEmit — termasuk *.test.ts yg di-skip next build)
+        run: npm run typecheck
+
       - name: Unit tests + coverage floor (money math, Monte Carlo)
         run: npm run test:coverage
 
