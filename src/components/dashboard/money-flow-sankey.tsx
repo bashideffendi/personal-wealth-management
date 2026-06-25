@@ -33,7 +33,7 @@ import {
   Rectangle,
   ResponsiveContainer,
 } from 'recharts'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
 export type FlowKind = 'income' | 'expense' | 'saving' | 'investment' | 'middle'
@@ -72,6 +72,18 @@ function trunc(s: string, max: number): string {
   return s.slice(0, max - 1) + '…'
 }
 
+// Batasi jumlah node per sisi (anti-cramping + anti-truncation, resep Stockbit:
+// node terbatas). Top (max-1) by-amount + sisanya digabung jadi "Lainnya (N)".
+function capCats(list: CategoryAmount[], max: number, othersKind: FlowKind): CategoryAmount[] {
+  if (list.length <= max) return list
+  const sorted = [...list].sort((a, b) => b.amount - a.amount)
+  const head = sorted.slice(0, max - 1)
+  const rest = sorted.slice(max - 1)
+  const restSum = rest.reduce((s, c) => s + c.amount, 0)
+  if (restSum > 0) head.push({ name: `Lainnya (${rest.length})`, amount: restSum, kind: othersKind })
+  return head
+}
+
 // ─── Custom node renderer ───────────────────────────────────────────────
 // In recharts Sankey, original data props (kind) are merged onto the
 // payload object directly — NOT under payload.payload.
@@ -85,7 +97,7 @@ function makeRenderNode(compact: boolean) {
   // Compact mode is sized to fit within ~70px label margin on a 375px
   // mobile viewport. Names truncate hard ("Cryptocurr…") and amounts use
   // the compact "Rp 5,5jt" format instead of full "Rp 5.500.000".
-  const labelMax = compact ? 10 : 22
+  const labelMax = compact ? 14 : 24
   const fontMain = compact ? 9.5 : 11
   const fontSub = compact ? 8.5 : 10
   const labelGap = compact ? 4 : 8
@@ -144,7 +156,7 @@ function makeRenderNode(compact: boolean) {
             fontVariantNumeric: 'tabular-nums',
           }}
         >
-          {compact ? formatCurrency(payload.value) : formatCurrency(payload.value)}
+          {compact ? formatCompactCurrency(payload.value) : formatCurrency(payload.value)}
         </text>
       </Layer>
     )
@@ -223,8 +235,8 @@ export function MoneyFlowSankey({
   const emptyMessage = emptyMessageProp ?? t('sankey.emptyMessage')
 
   const data = useMemo(() => {
-    const incomeFiltered = income.filter((c) => c.amount > 0)
-    const outflowFiltered = outflow.filter((c) => c.amount > 0)
+    const incomeFiltered = capCats(income.filter((c) => c.amount > 0), 6, 'income')
+    const outflowFiltered = capCats(outflow.filter((c) => c.amount > 0), 7, 'middle')
 
     if (incomeFiltered.length === 0 && outflowFiltered.length === 0) return null
 
