@@ -15,9 +15,8 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Search, Plus, Bell, ChevronDown, Menu as MenuIcon, X,
+  Search, Plus, Bell, ChevronDown,
 } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
@@ -156,7 +155,6 @@ export function TopNav({ user }: TopNavProps) {
   const { t } = useI18n()
   const navLabel = (it: NavItem) => (it.titleKey ? t(it.titleKey) : it.label)
   const [scrolled, setScrolled] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
   const [isMac, setIsMac] = useState(false)
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) }, [])
 
@@ -179,14 +177,6 @@ export function TopNav({ user }: TopNavProps) {
   function openQuickAdd() {
     window.dispatchEvent(new CustomEvent('klunting:quick-add'))
   }
-
-  const fullName = (user.user_metadata?.full_name as string) || user.email || 'Pengguna'
-  const initials = fullName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
 
   return (
     <>
@@ -261,19 +251,6 @@ export function TopNav({ user }: TopNavProps) {
             <NavDropdown label={t('nav.section.secondary')} items={lainnya} pathname={pathname} align="right" />
           </nav>
 
-          {/* ─── Mobile menu trigger ─── */}
-          <div className="lg:hidden flex justify-center">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium"
-              style={{ color: 'var(--ink-muted)', background: 'var(--surface-2)', border: '1px solid var(--line)' }}
-              aria-label="Buka menu"
-            >
-              <MenuIcon className="size-4" />
-              {t('nav.menu')}
-            </button>
-          </div>
-
           {/* ─── Actions right ─── */}
           <div className="flex items-center gap-2">
             <button
@@ -304,7 +281,7 @@ export function TopNav({ user }: TopNavProps) {
 
             <button
               onClick={openQuickAdd}
-              className="btn-outline btn-primary"
+              className="btn-outline btn-primary hidden md:inline-flex"
               style={{ padding: '9px 12px' }}
               aria-label="Tambah cepat"
             >
@@ -312,7 +289,7 @@ export function TopNav({ user }: TopNavProps) {
             </button>
 
             <button
-              className="relative grid place-items-center"
+              className="relative hidden md:grid place-items-center"
               style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text-2)' }}
               aria-label="Notifikasi"
               title="Notifikasi (segera)"
@@ -320,158 +297,11 @@ export function TopNav({ user }: TopNavProps) {
               <Bell className="size-3.5" />
             </button>
 
-            <div className="hidden sm:block">
-              <AvatarMenu user={user} />
-            </div>
-            <div className="sm:hidden">
-              <AvatarMenu user={user} />
-            </div>
+            <AvatarMenu user={user} />
           </div>
         </div>
       </header>
 
-      {/* ─── Mobile menu drawer ─── */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-50 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-modal="true"
-          role="dialog"
-        >
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} />
-          <div
-            className="absolute top-0 right-0 bottom-0 w-[320px] max-w-[88vw] flex flex-col"
-            style={{ background: 'var(--surface)', borderLeft: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--line)' }}>
-              <div className="flex items-center gap-2">
-                <div
-                  className="grid place-items-center"
-                  style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: 'var(--card-shadow)' }}
-                >
-                  K
-                </div>
-                <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-                  Klunting
-                </span>
-              </div>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="grid place-items-center"
-                style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-                aria-label="Tutup"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3">
-              <p className="px-3 py-2 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
-                {t('nav.section.main')}
-              </p>
-              <div className="flex flex-col gap-0.5 mb-3">
-                {primary.map((it) => {
-                  if (it.children?.length) {
-                    return (
-                      <div key={it.href} className="mt-1">
-                        <p className="px-3 py-1.5 text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-                          {navLabel(it)}
-                        </p>
-                        <div className="ml-3 flex flex-col gap-0.5 border-l pl-2" style={{ borderColor: 'var(--line)' }}>
-                          {it.children.map((c) => {
-                            const active = isActiveItem(pathname, c)
-                            return (
-                              <Link
-                                key={c.href}
-                                href={c.href}
-                                aria-current={active ? 'page' : undefined}
-                                onClick={() => setMobileOpen(false)}
-                                className="px-3 py-2 rounded-lg text-[13px] transition-colors"
-                                style={{
-                                  fontWeight: active ? 600 : 500,
-                                  color: active ? 'var(--c-primary)' : 'var(--ink-muted)',
-                                  background: active ? 'var(--c-primary-soft)' : 'transparent',
-                                }}
-                              >
-                                {navLabel(c)}
-                              </Link>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  }
-                  const active = isActiveItem(pathname, it)
-                  return (
-                    <Link
-                      key={it.href}
-                      href={it.href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={() => setMobileOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm transition-colors"
-                      style={{
-                        fontWeight: active ? 600 : 500,
-                        color: active ? 'var(--c-primary)' : 'var(--ink)',
-                        background: active ? 'var(--c-primary-soft)' : 'transparent',
-                      }}
-                    >
-                      {navLabel(it)}
-                    </Link>
-                  )
-                })}
-              </div>
-
-              <p className="px-3 py-2 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
-                {t('nav.section.secondary')}
-              </p>
-              <div className="flex flex-col gap-0.5">
-                {lainnya.map((it) => {
-                  const active = isActiveItem(pathname, it)
-                  return (
-                    <Link
-                      key={it.href}
-                      href={it.href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={() => setMobileOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm transition-colors"
-                      style={{
-                        fontWeight: active ? 600 : 500,
-                        color: active ? 'var(--c-primary)' : 'var(--ink-muted)',
-                        background: active ? 'var(--c-primary-soft)' : 'transparent',
-                      }}
-                    >
-                      {navLabel(it)}
-                    </Link>
-                  )
-                })}
-              </div>
-
-              {/* Language toggle (mobile) */}
-              <div className="px-3 mt-5">
-                <p className="text-[10px] font-bold uppercase mb-2" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>{t('common.language')}</p>
-                <LangToggle full />
-              </div>
-            </div>
-
-            <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--line)' }}>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                    {fullName}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
