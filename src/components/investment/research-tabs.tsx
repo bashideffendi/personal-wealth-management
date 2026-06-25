@@ -172,7 +172,13 @@ export function ResearchTabs(props: ResearchTabsProps) {
 
   return (
     <Tabs defaultValue="research" className="w-full">
-      <div className="overflow-x-auto -mx-1 px-1 pb-1">
+      <div
+        className="no-scrollbar overflow-x-auto -mx-1 px-1 pb-1"
+        style={{
+          maskImage: 'linear-gradient(to right, #000 calc(100% - 24px), transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 24px), transparent)',
+        }}
+      >
         <TabsList variant="pill" className="inline-flex gap-1.5 w-auto">
           <TabsTrigger value="research">
             <BookOpen className="size-3.5 mr-1.5" />

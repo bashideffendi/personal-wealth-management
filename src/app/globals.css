@@ -1204,3 +1204,15 @@ body[data-calm="true"] [data-loss] {
 body[data-calm="true"] [data-loss]:hover {
   filter: blur(0) !important;
 }
+
+/* ============================================
+   MOBILE SHELL — utilitas app-native (redesign F1/F3)
+   ============================================ */
+/* Sembunyiin scrollbar (SegmentedTabs + list horizontal) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (max-width: 767px) {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { overscroll-behavior-y: contain; }
+}
