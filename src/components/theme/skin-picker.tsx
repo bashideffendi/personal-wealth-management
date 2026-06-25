@@ -10,8 +10,8 @@ type Mode = 'light' | 'dark' | 'auto'
 const SKINS: { key: Skin; darkOnly?: boolean; light: SwatchColors; dark: SwatchColors }[] = [
   {
     key: 'cartoon',
-    light: { bg: '#FFF9EE', card: '#FFFFFF', accent: '#FFC83D', outline: '#1E1B16' },
-    dark: { bg: '#241F31', card: '#322B45', accent: '#FFC83D', outline: '#4A4063' },
+    light: { bg: '#FAFAFA', card: '#FFFFFF', accent: '#17b890', outline: '#E4E4E7' },
+    dark: { bg: '#0F0F14', card: '#19191F', accent: '#46E0B4', outline: '#2A2A33' },
   },
   {
     key: 'mono',
@@ -28,7 +28,7 @@ const SKINS: { key: Skin; darkOnly?: boolean; light: SwatchColors; dark: SwatchC
 type SwatchColors = { bg: string; card: string; accent: string; outline: string }
 
 const THEME_COLOR: Record<Skin, { light: string; dark: string }> = {
-  cartoon: { light: '#FFF9EE', dark: '#241F31' },
+  cartoon: { light: '#FAFAFA', dark: '#0F0F14' },
   mono: { light: '#F4F3EE', dark: '#0E0C0A' },
   terminal: { light: '#0E0F12', dark: '#0E0F12' },
 }

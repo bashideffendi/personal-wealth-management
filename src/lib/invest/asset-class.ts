@@ -31,9 +31,9 @@ export function assetClassKey(inv: Pick<Investment, 'category' | 'currency'>): A
  * so an asset class must never wear it (Obligasi used to be #D2495A).
  */
 export const ASSET_CLASS_META: Record<AssetClassKey, { label: string; color: string }> = {
-  stock_idx:    { label: 'Saham IHSG', color: '#129B69' },
+  stock_idx:    { label: 'Saham IHSG', color: '#17b890' },
   stock_us:     { label: 'Saham US',   color: '#2D89BC' },
-  mutual_fund:  { label: 'Reksa Dana', color: '#7C5FD3' },
+  mutual_fund:  { label: 'Reksa Dana', color: '#8b4fb0' },
   crypto:       { label: 'Crypto',     color: '#F97316' },
   gold:         { label: 'Emas',       color: '#EAB308' },
   bond:         { label: 'Obligasi',   color: '#3B82F6' },
