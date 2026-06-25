@@ -451,7 +451,7 @@ function WelcomeInsights() {
           <Sparkles className="size-4 text-white" />
         </div>
         <div>
-          <p className="eyebrow" style={{ color: 'var(--c-violet)' }}>
+          <p className="eyebrow" style={{ color: 'var(--c-violet-ink)' }}>
             {t('ai_insights.welcome_eyebrow')}
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-mute)' }}>

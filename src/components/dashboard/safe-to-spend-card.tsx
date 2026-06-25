@@ -43,7 +43,7 @@ export function SafeToSpendCard({ income, spent, saved = 0, upcoming }: { income
       <p className="eyebrow shrink-0">{t('safe_card.title')}</p>
 
       <div className="flex-1 flex flex-col justify-center">
-        <p className="num tabular leading-none font-bold" style={{ fontSize: 42, letterSpacing: '-0.025em', color: numColor }}>
+        <p className="num tabular leading-none font-bold" style={{ fontSize: 24, letterSpacing: '-0.02em', color: numColor }}>
           {formatCurrency(safe)}
         </p>
         <p className="text-[13px] mt-2 font-medium" style={{ color: numColor }}>
