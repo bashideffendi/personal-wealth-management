@@ -349,7 +349,7 @@ export function AnggaranMonthDrawer({
                               className="chip"
                               style={{
                                 background: 'var(--c-coral-soft)',
-                                color: 'var(--c-coral)',
+                                color: 'var(--c-coral-ink)',
                                 height: 18,
                                 fontSize: 9,
                                 padding: '0 6px',

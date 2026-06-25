@@ -311,7 +311,7 @@ function PensionGapCalculator() {
         </div>
 
         <div className="mt-5 text-center p-4 rounded-lg" style={{ background: 'var(--surface-2)' }}>
-          <p className="num text-5xl font-bold leading-none" style={{ color: statusInk }}>
+          <p className="num text-4xl font-bold leading-none" style={{ color: statusInk }}>
             {result.replacementActual.toFixed(0)}%
           </p>
           <p className="text-xs mt-2" style={{ color: 'var(--ink-soft)' }}>

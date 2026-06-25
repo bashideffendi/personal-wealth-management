@@ -73,7 +73,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="leading-none tabular-nums font-bold" style={{ fontSize: 68, letterSpacing: '-0.04em', color: tierMeta.ink }}>
+                <span className="leading-none tabular-nums font-bold" style={{ fontSize: 46, letterSpacing: '-0.03em', color: tierMeta.ink }}>
                   {score}
                 </span>
                 <span className="text-[11px] mt-1.5 font-medium opacity-50" style={{ color: tierMeta.ink }}>
@@ -113,7 +113,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
       </div>
       <div className="mt-3 flex-1 rounded-2xl p-5 flex flex-col" style={{ background: burnTint, border: `1px solid color-mix(in srgb, ${burnColor} 20%, transparent)` }}>
         <div className="flex items-baseline gap-2">
-          <span className="num tabular leading-none font-bold" style={{ color: burnInk, fontSize: 68, letterSpacing: '-0.03em' }}>
+          <span className="num tabular leading-none font-bold" style={{ color: burnInk, fontSize: 46, letterSpacing: '-0.03em' }}>
             {!hasExpenseData ? '—' : burnMonths > 99 ? '99+' : burnMonths.toFixed(1)}
           </span>
           <span className="text-base font-semibold" style={{ color: burnInk }}>{t('health_card.months')}</span>

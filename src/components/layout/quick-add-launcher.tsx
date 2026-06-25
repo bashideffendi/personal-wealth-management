@@ -626,7 +626,7 @@ function PreviewView({
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
           style={{
             background: 'var(--c-mint-soft)',
-            color: 'var(--c-mint)',
+            color: 'var(--c-mint-ink)',
             letterSpacing: '0.06em',
           }}
         >
@@ -914,7 +914,7 @@ function ManualForm({
               className="self-start mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition hover:opacity-80"
               style={{
                 background: 'var(--c-mint-soft)',
-                color: 'var(--c-mint)',
+                color: 'var(--c-mint-ink)',
                 border: '1px solid color-mix(in srgb, var(--c-mint) 25%, transparent)',
               }}
               title={t('quickadd.suggestion_tooltip')}

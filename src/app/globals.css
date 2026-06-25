@@ -139,12 +139,12 @@
   --c-blue-ink:     #4350C2;
   --c-ink:          #18181b;
 
-  /* ── Dark inverse — panel "malam dusk" (hero cards di light mode) ── */
-  --black:       #241F31;
-  --black-soft:  #322B45;
-  --black-2:     #3C3454;
+  /* ── Dark inverse — panel charcoal (hero/ink cards di light mode) ── */
+  --black:       #0F0F14;
+  --black-soft:  #19191F;
+  --black-2:     #212129;
   --black-line:  rgba(255, 255, 255, 0.10);
-  --on-black:    #F4EDDC;
+  --on-black:    #FAFAFA;
   --on-black-mut:#B5ABCC;
 
   /* ── Hijau Klunting — ramp bespoke (warm sage-emerald) ── */
@@ -657,14 +657,14 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
     letter-spacing: -0.025em;
     font-weight: 600;
   }
-  /* Seleksi teks — emas tint, momen fun yang cuma muncul saat interaksi. */
+  /* Seleksi teks — teal tint brand, momen halus saat interaksi. */
   ::selection {
-    background: #FFE9AC;
-    color: #1E1B16;
+    background: #E4F6F0;
+    color: #18181b;
   }
   .dark ::selection {
-    background: #5A4A14;
-    color: #F4EDDC;
+    background: #0C3B30;
+    color: #FAFAFA;
   }
   /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
   * {
