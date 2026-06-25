@@ -115,23 +115,10 @@ export function NetWorthHero({
     <section
       className="relative overflow-hidden rounded-3xl"
       style={{
-        background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+        background: 'var(--hero-bg)', border: '1px solid var(--hero-line)', boxShadow: 'var(--card-shadow)',
         color: 'var(--on-hero)',
-        
       }}
     >
-      {/* Emerald ambient glow top-right */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: -120,
-          right: -80,
-          width: 380,
-          height: 380,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-        }}
-      />
 
       <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-6 lg:gap-8 p-5 sm:p-6 lg:p-7">
         {/* ───── LEFT: numeric block ───── */}
@@ -148,8 +135,8 @@ export function NetWorthHero({
           <p
             className="num tabular font-bold leading-none mt-2 whitespace-nowrap"
             style={{
-              fontSize: 'clamp(30px, 4.2vw, 42px)',
-              letterSpacing: '-0.035em',
+              fontSize: 'clamp(26px, 5vw, 32px)',
+              letterSpacing: '-0.025em',
               color: 'var(--on-hero)',
             }}
           >

@@ -15,7 +15,7 @@
  */
 
 import { useT } from '@/lib/i18n/context'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency } from '@/lib/utils'
 import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, ArrowLeftRight,
   TrendingUp, TrendingDown,
@@ -96,12 +96,12 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
           <p
             className="num tabular font-bold mt-1 leading-tight truncate"
             style={{
-              fontSize: 22,
+              fontSize: 19,
               color: 'var(--ink)',
-              letterSpacing: '-0.025em',
+              letterSpacing: '-0.02em',
             }}
           >
-            {formatCurrency(value)}
+            {formatCompactCurrency(value)}
           </p>
         </div>
 
