@@ -79,6 +79,13 @@ const TYPE_TINT: Record<TxType, string> = {
   saving: 'var(--amber-500)',
   investment: 'var(--sky-500)',
 }
+// Varian -ink (AA-safe) buat TEKS label tipe; TYPE_TINT (hue terang) cuma buat tint bg.
+const TYPE_TINT_INK: Record<TxType, string> = {
+  income: 'var(--c-mint-ink)',
+  expense: 'var(--c-coral-ink)',
+  saving: 'var(--c-amber-ink)',
+  investment: 'var(--c-blue-ink)',
+}
 
 interface QuickAddLauncherProps {
   /**
@@ -643,7 +650,7 @@ function PreviewView({
             className="inline-flex items-center px-2 py-1 rounded-full font-semibold uppercase"
             style={{
               background: 'color-mix(in srgb, ' + TYPE_TINT[data.type] + ' 12%, transparent)',
-              color: TYPE_TINT[data.type],
+              color: TYPE_TINT_INK[data.type],
               letterSpacing: '0.04em',
             }}
           >

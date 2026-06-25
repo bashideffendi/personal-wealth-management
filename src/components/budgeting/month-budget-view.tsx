@@ -176,10 +176,10 @@ export function MonthBudgetView({
   }
 
   const stats = [
-    { label: t('month_budget.stat_income_actual'), value: incomeActual, sub: `${t('month_budget.stat_income_plan_pre')} ${formatCurrency(incomePlan)}`, color: 'var(--c-mint)' },
+    { label: t('month_budget.stat_income_actual'), value: incomeActual, sub: `${t('month_budget.stat_income_plan_pre')} ${formatCurrency(incomePlan)}`, color: 'var(--c-mint-ink)' },
     { label: t('month_budget.stat_plan_out'), value: planOut, sub: t('month_budget.stat_plan_out_sub'), color: 'var(--ink)' },
-    { label: t('month_budget.stat_actual_out'), value: actualOut, sub: planOut > 0 ? `${Math.round((actualOut / planOut) * 100)}${t('month_budget.stat_actual_out_pct_post')}` : '—', color: over ? 'var(--c-coral)' : 'var(--ink)' },
-    { label: t('month_budget.stat_remaining'), value: planOut - actualOut, sub: over ? t('month_budget.stat_remaining_over') : t('month_budget.stat_remaining_left'), color: planOut - actualOut >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' },
+    { label: t('month_budget.stat_actual_out'), value: actualOut, sub: planOut > 0 ? `${Math.round((actualOut / planOut) * 100)}${t('month_budget.stat_actual_out_pct_post')}` : '—', color: over ? 'var(--c-coral-ink)' : 'var(--ink)' },
+    { label: t('month_budget.stat_remaining'), value: planOut - actualOut, sub: over ? t('month_budget.stat_remaining_over') : t('month_budget.stat_remaining_left'), color: planOut - actualOut >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
   ]
 
   return (
@@ -250,7 +250,7 @@ export function MonthBudgetView({
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
               style={{
                 background: verdict.tone === 'over' ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)',
-                color: verdict.tone === 'over' ? 'var(--c-coral)' : 'var(--c-mint)',
+                color: verdict.tone === 'over' ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)',
               }}
             >
               {verdict.text}
@@ -335,7 +335,7 @@ export function MonthBudgetView({
                         if (tgt == null) return null
                         const met = plan >= tgt
                         return (
-                          <p className="num text-[10px] mt-0.5" style={{ color: met ? 'var(--c-mint)' : 'var(--c-violet)' }}>
+                          <p className="num text-[10px] mt-0.5" style={{ color: met ? 'var(--c-mint-ink)' : 'var(--c-violet-ink)' }}>
                             {t('month_budget.row_target')} {formatCurrency(tgt)}{met ? ' ✓' : ''}
                           </p>
                         )

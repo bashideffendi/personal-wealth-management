@@ -153,9 +153,9 @@ export function CashFlowForecast({
         <div className="flex items-start gap-3 mb-2">
           <div
             className="size-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(14,165,233,0.12)' }}
+            style={{ background: 'var(--c-blue-soft)' }}
           >
-            <Calendar className="size-4" style={{ color: 'var(--sky-600)' }} />
+            <Calendar className="size-4" style={{ color: 'var(--c-blue-ink)' }} />
           </div>
           <div>
             <p className="eyebrow">Forecast Saldo</p>
@@ -184,6 +184,8 @@ export function CashFlowForecast({
   const hasNegative = negativeDays.length > 0
   const hasRisk = riskDays.length > 0
   const accentColor = hasNegative ? 'var(--c-coral)' : hasRisk ? 'var(--c-amber)' : 'var(--c-mint)'
+  // Varian -ink (AA-safe) buat TEKS Stat; accentColor (hue terang) buat garis chart.
+  const accentColorInk = hasNegative ? 'var(--c-coral-ink)' : hasRisk ? 'var(--c-amber-ink)' : 'var(--c-mint-ink)'
 
   // SVG chart dimensions
   const chartH = 80
@@ -260,13 +262,13 @@ export function CashFlowForecast({
           <Stat
             label="Akhir 30h"
             value={formatCurrency(endBalance)}
-            color={endBalance < liquidBalance ? 'var(--c-coral)' : 'var(--c-mint)'}
+            color={endBalance < liquidBalance ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)'}
             icon={endBalance < liquidBalance ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />}
           />
           <Stat
             label="Terendah"
             value={formatCurrency(minPoint?.balance ?? liquidBalance)}
-            color={minPoint && minPoint.balance < safetyBuffer ? accentColor : 'var(--ink)'}
+            color={minPoint && minPoint.balance < safetyBuffer ? accentColorInk : 'var(--ink)'}
             sub={minPoint?.balance !== undefined && minPoint.balance < liquidBalance
               ? `H+${forecast.indexOf(minPoint)}`
               : undefined}
@@ -325,7 +327,7 @@ export function CashFlowForecast({
                 </span>
                 <span
                   className="num font-semibold"
-                  style={{ color: p.inflow > p.outflow ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                  style={{ color: p.inflow > p.outflow ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                 >
                   {p.inflow > p.outflow ? '+' : '-'}
                   {formatCurrency(Math.max(p.inflow, p.outflow))}

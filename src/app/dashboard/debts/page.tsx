@@ -366,7 +366,7 @@ export default function DebtsOverviewPage() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.high_interest_title')}</p>
                 <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
+                  {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet-ink)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
                 </p>
               </div>
             </div>
@@ -513,7 +513,7 @@ export default function DebtsOverviewPage() {
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
-                  <><span style={{ color: 'var(--c-violet)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
+                  <><span style={{ color: 'var(--c-violet-ink)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
                 ) : (
                   <>{t('debts.tradeoff_similar')}</>
                 )}

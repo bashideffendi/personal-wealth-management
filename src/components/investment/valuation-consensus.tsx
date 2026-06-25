@@ -194,7 +194,7 @@ export function ValuationConsensus({
                         <span
                           className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
                           style={{
-                            background: undervalued ? 'var(--c-mint)' : 'var(--c-coral)',
+                            background: undervalued ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
                             color: '#FFFFFF',
                           }}
                         >

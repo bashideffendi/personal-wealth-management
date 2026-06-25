@@ -718,7 +718,7 @@ function PreviewStage({
                   </Select>
                 </td>
                 <td className="px-3 py-2 text-right num text-xs whitespace-nowrap" style={{ color: 'var(--ink)' }}>
-                  <span style={{ color: r.type === 'expense' ? 'var(--c-coral)' : 'var(--c-mint)' }}>
+                  <span style={{ color: r.type === 'expense' ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>
                     {r.type === 'expense' ? '−' : '+'}{formatCurrency(r.amount)}
                   </span>
                 </td>

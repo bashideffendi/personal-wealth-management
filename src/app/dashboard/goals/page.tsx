@@ -511,7 +511,7 @@ export default function GoalsPage() {
                     {/* Angka sebagai perhiasan: terkumpul serif besar, target kecil
                         di baseline yang sama — satu baris, gak boleh patah aneh. */}
                     <p className="mt-5 leading-none truncate">
-                      <span className="num" style={{ fontSize: '2.1rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+                      <span className="num" style={{ fontSize: '1.75rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
                         {formatCurrency(g.current_amount)}
                       </span>
                       <span className="num text-[12.5px] ml-2" style={{ color: 'var(--ink-soft)' }}>

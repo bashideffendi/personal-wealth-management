@@ -60,3 +60,6 @@ skills-lock.json
 # Output split-nya (src/data/invest/stocks/*.json) yang di-commit, bukan sumbernya.
 src/data/invest/stocks.json
 .shots/
+
+# tucked reference assets (folder reorg 2026-06-21)
+_reference/

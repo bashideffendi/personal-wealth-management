@@ -50,7 +50,7 @@ export function HistoryChart({ data }: { data: Array<{ date: string; rawDate: st
               <p className="font-semibold mb-1.5">{new Date(p.rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="num tabular flex justify-between gap-3"><span style={{ color: 'var(--c-mint-ink)' }}>● {t('networth.assets')}</span><span>{formatCurrency(p.assets)}</span></p>
               <p className="num tabular flex justify-between gap-3"><span style={{ color: 'var(--c-coral-ink)' }}>● {t('networth.debt')}</span><span>{formatCurrency(Math.abs(p.debts))}</span></p>
-              <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}><span style={{ color: 'var(--c-violet)' }}>● {t('networth.net_worth')}</span><span>{formatCurrency(p.net)}</span></p>
+              <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}><span style={{ color: 'var(--c-violet-ink)' }}>● {t('networth.net_worth')}</span><span>{formatCurrency(p.net)}</span></p>
             </div>
           )
         }} />
