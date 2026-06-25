@@ -1,9 +1,16 @@
 import { ImageResponse } from 'next/og'
 
-// iOS apple-touch-icon — 180x180 (standard size for newer iPhones).
-// iOS auto-rounds corners, so we use a flat fill instead of a rounded rect.
+// iOS apple-touch-icon — 180x180. iOS auto-rounds corners, jadi ink tile
+// flat + mark 4-warna Klunting (plus-layout) di tengah.
 export const size = { width: 180, height: 180 }
 export const contentType = 'image/png'
+
+const TILES = [
+  { c: '#17b890', left: 72, top: 30 },    // atas — teal
+  { c: '#f0664f', left: 30, top: 72 },    // kiri — coral
+  { c: '#5d6fe0', left: 114, top: 72 },   // kanan — biru
+  { c: '#8b4fb0', left: 72, top: 114 },   // bawah — ungu
+]
 
 export default function AppleIcon() {
   return new ImageResponse(
@@ -13,17 +20,24 @@ export default function AppleIcon() {
           width: '100%',
           height: '100%',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #FFD15C 0%, #E8A100 100%)',
-          color: '#1E1B16',
-          fontSize: 120,
-          fontWeight: 800,
-          fontFamily: 'system-ui',
-          letterSpacing: '-0.05em',
+          position: 'relative',
+          background: '#18181b',
         }}
       >
-        K
+        {TILES.map((t) => (
+          <div
+            key={t.c}
+            style={{
+              position: 'absolute',
+              left: t.left,
+              top: t.top,
+              width: 36,
+              height: 36,
+              borderRadius: 11,
+              background: t.c,
+            }}
+          />
+        ))}
       </div>
     ),
     { ...size },

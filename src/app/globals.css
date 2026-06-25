@@ -373,62 +373,66 @@
 .dark {
   /* Surfaces — MALAM DUSK v7: ungu senja dongeng (bukan hitam pekat).
      Jurang elevasi tegas dipertahankan (panel 1.19 di atas bg). */
-  --paper:       #241F31;
-  --bg:          #241F31;
-  --bg-2:        #322B45;
-  --surface:     #322B45;
-  --surface-2:   #3C3454;
-  --surface-3:   #463D63;
-  --line:        rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 255, 255, 0.20);
+  --paper:       #0F0F14;
+  --bg:          #0F0F14;
+  --bg-2:        #15151B;
+  --surface:     #19191F;
+  --surface-2:   #212129;
+  --surface-3:   #2A2A33;
+  --line:        rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.16);
 
-  /* Text — cream ramp (kontras: 11.5 / 8.9 / 6.5 di atas panel) */
-  --ink:         #F4EDDC;
-  --ink-muted:   #DCD3E8;
-  --ink-soft:    #B5ABCC;
-  --text:        #F4EDDC;
-  --text-2:      #DCD3E8;
-  --text-mute:   #B5ABCC;
-  --text-faint:  #B5ABCC;   /* faint utk teks dilarang — samain ke floor --ink-soft */
-  --border:      rgba(255, 255, 255, 0.12);
-  --border-soft: rgba(255, 255, 255, 0.07);
-  /* Outline kartun di malam: garis ungu terang + bayangan lebih gelap dari bg */
-  --outline:        #4A4063;
-  --outline-shadow: #171221;
+  /* Text — netral near-white ramp (AA di atas panel #19191F) */
+  --ink:         #FAFAFA;
+  --ink-muted:   #D4D4D8;
+  --ink-soft:    #A1A1AA;
+  --text:        #FAFAFA;
+  --text-2:      #D4D4D8;
+  --text-mute:   #A1A1AA;
+  --text-faint:  #A1A1AA;   /* faint — floor, masih AA di panel gelap */
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  /* Hairline + shadow buat malam (flat, bukan offset kartun) */
+  --outline:        rgba(255, 255, 255, 0.10);
+  --outline-shadow: rgba(0, 0, 0, 0.40);
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
-  --black:       #F4EDDC;
-  --black-soft:  #EDE3CC;
-  --black-2:     #DCD3E8;
+  --black:       #FAFAFA;
+  --black-soft:  #F4F4F5;
+  --black-2:     #E4E4E7;
   --black-line:  rgba(0, 0, 0, 0.10);
-  --on-black:    #1E1B16;
-  --on-black-mut:#5E5749;
+  --on-black:    #18181b;
+  --on-black-mut:#52525B;
 
   /* Accents — EMAS tetap emas di malam (koin bercahaya): fill dgn teks
      tinta (11.1:1), sbg teks/ring 8.7:1 di panel → -ink = dirinya. */
-  --c-primary:      #FFC83D;
-  --c-primary-soft: rgba(255, 200, 61, 0.14);
-  --c-primary-foreground: #1E1B16;
-  --c-primary-ink:  #FFC83D;
-  --c-mint:         #3DBA8A;
-  --c-mint-soft:    rgba(61, 186, 138, 0.13);
-  --c-coral:        #ED7385;
-  --c-coral-soft:   rgba(237, 115, 133, 0.13);
+  --c-primary:      #FAFAFA;   /* dark: tombol terang + teks ink (mirror light) */
+  --c-primary-soft: rgba(255, 255, 255, 0.10);
+  --c-primary-foreground: #18181b;
+  --c-primary-ink:  #FAFAFA;
+  --accent:         #46E0B4;   /* aksen teal terang di malam */
+  --c-mint:         #46E0B4;
+  --c-mint-soft:    rgba(23, 184, 144, 0.16);
+  --c-coral:        #FF8A75;
+  --c-coral-soft:   rgba(240, 102, 79, 0.16);
   --c-amber:        #E3A93C;
-  --c-amber-soft:   rgba(227, 169, 60, 0.13);
-  --c-violet:       #A78FE8;
-  --c-violet-soft:  rgba(167, 143, 232, 0.14);
+  --c-amber-soft:   rgba(227, 169, 60, 0.14);
+  --c-violet:       #B98ED6;
+  --c-violet-soft:  rgba(139, 79, 176, 0.18);
+  --c-blue:         #8B97F0;
+  --c-blue-soft:    rgba(93, 111, 224, 0.18);
   /* Lighter on dark — readable on dark soft tints + dark surfaces. */
-  --c-mint-ink:     #82DBB1;
-  --c-coral-ink:    #F4A6AE;
+  --c-mint-ink:     #6FE6C2;
+  --c-coral-ink:    #FFB0A0;
   --c-amber-ink:    #EFCB7E;
-  --c-violet-ink:   #C9BAF4;
-  --c-ink:          #F4EDDC;
+  --c-violet-ink:   #D4B8EA;
+  --c-blue-ink:     #B3BBF7;
+  --c-ink:          #FAFAFA;
 
   /* Legacy emerald tokens — boost untuk dark */
-  --emerald-400: #5CCB9F;
-  --emerald-500: #3DBA8A;
-  --emerald-600: #25A375;
+  --emerald-400: #46E0B4;
+  --emerald-500: #2DD0A6;
+  --emerald-600: #17b890;
 
   --success:     var(--c-mint);
   --success-bg:  var(--c-mint-soft);
