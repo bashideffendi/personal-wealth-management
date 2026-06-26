@@ -546,20 +546,17 @@ export function MonthlyReportBody({
         <div data-report-block="top10" className="s-card p-5 sm:p-6">
           <p className="eyebrow">{t('report.top_eyebrow')}</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.top_title')}</h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full t-sm">
-              <thead><tr className="text-left eyebrow" style={{ color: 'var(--text-mute)' }}><th className="pb-2 font-medium">{t('report.col_date')}</th><th className="pb-2 font-medium">{t('report.col_description')}</th><th className="pb-2 font-medium">{t('report.col_category')}</th><th className="pb-2 font-medium text-right">{t('report.col_amount')}</th></tr></thead>
-              <tbody>
-                {r.top_expenses.map((tx, i) => (
-                  <tr key={i} style={{ borderTop: '1px solid var(--line)' }}>
-                    <td className="py-2 t-cap num" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</td>
-                    <td className="py-2" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</td>
-                    <td className="py-2 t-cap" style={{ color: 'var(--text-mute)' }}>{tx.category}</td>
-                    <td className="py-2 text-right num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-3 flex flex-col">
+            {r.top_expenses.map((tx, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5" style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                <span className="num shrink-0 w-11 text-[11px]" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</span>
+                  <span className="block truncate text-[11px]" style={{ color: 'var(--text-mute)' }}>{tx.category}</span>
+                </span>
+                <span className="num font-semibold shrink-0 text-[13.5px]" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

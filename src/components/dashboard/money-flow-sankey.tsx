@@ -131,33 +131,37 @@ function makeRenderNode(compact: boolean) {
           fill={color}
           fillOpacity={isMiddle ? 1 : 0.95}
         />
-        <text
-          x={labelX}
-          y={y + height / 2 - 4}
-          textAnchor={anchor}
-          dominantBaseline="middle"
-          style={{
-            fontSize: fontMain,
-            fontWeight: 600,
-            fill: 'currentColor',
-          }}
-        >
-          {trunc(payload.name, labelMax)}
-        </text>
-        <text
-          x={labelX}
-          y={y + height / 2 + lineGap}
-          textAnchor={anchor}
-          dominantBaseline="middle"
-          style={{
-            fontSize: fontSub,
-            fill: 'currentColor',
-            opacity: 0.65,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {compact ? formatCompactCurrency(payload.value) : formatCurrency(payload.value)}
-        </text>
+        {!isMiddle && (
+          <>
+            <text
+              x={labelX}
+              y={y + height / 2 - 4}
+              textAnchor={anchor}
+              dominantBaseline="middle"
+              style={{
+                fontSize: fontMain,
+                fontWeight: 600,
+                fill: 'currentColor',
+              }}
+            >
+              {trunc(payload.name, labelMax)}
+            </text>
+            <text
+              x={labelX}
+              y={y + height / 2 + lineGap}
+              textAnchor={anchor}
+              dominantBaseline="middle"
+              style={{
+                fontSize: fontSub,
+                fill: 'currentColor',
+                opacity: 0.65,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {compact ? formatCompactCurrency(payload.value) : formatCurrency(payload.value)}
+            </text>
+          </>
+        )}
       </Layer>
     )
   }
