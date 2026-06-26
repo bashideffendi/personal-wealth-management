@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Search, Plus, Bell, ChevronDown,
+  Search, Bell, ChevronDown,
 } from 'lucide-react'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
@@ -174,10 +174,6 @@ export function TopNav({ user }: TopNavProps) {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
   }
 
-  function openQuickAdd() {
-    window.dispatchEvent(new CustomEvent('klunting:quick-add'))
-  }
-
   return (
     <>
       <header
@@ -190,12 +186,11 @@ export function TopNav({ user }: TopNavProps) {
           paddingTop: 'env(safe-area-inset-top)',
         }}
       >
+        {/* Mobile: flex justify-end → actions (avatar) PASTI di kanan (brand
+            absolute center, nav hidden). Desktop: grid 3-kolom. */}
         <div
-          className="relative mx-auto grid items-center gap-4 md:gap-6 px-4 md:px-8 py-3"
-          style={{
-            gridTemplateColumns: 'auto 1fr auto',
-            maxWidth: 1400,
-          }}
+          className="relative mx-auto flex items-center justify-end gap-4 md:gap-6 px-4 md:px-8 py-3 lg:grid lg:[grid-template-columns:auto_1fr_auto]"
+          style={{ maxWidth: 1400 }}
         >
           {/* ─── Brand — di TENGAH pas mobile (ala Stockbit), kiri pas desktop ─── */}
           <Link
@@ -250,9 +245,8 @@ export function TopNav({ user }: TopNavProps) {
             <NavDropdown label={t('nav.section.secondary')} items={lainnya} pathname={pathname} align="right" />
           </nav>
 
-          {/* ─── Actions right ─── (paksa kolom 3: pas mobile brand absolute +
-              nav hidden, tanpa ini actions ke-auto-place ke kolom 1/kiri) ─── */}
-          <div className="flex items-center gap-2 col-start-3 justify-self-end">
+          {/* ─── Actions right (mobile: flex justify-end; desktop: grid kolom 3) ─── */}
+          <div className="flex items-center gap-2">
             <button
               onClick={openCommandPalette}
               className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] transition-colors"
@@ -278,15 +272,6 @@ export function TopNav({ user }: TopNavProps) {
             <div className="hidden sm:block">
               <AICreditsBadge />
             </div>
-
-            <button
-              onClick={openQuickAdd}
-              className="btn-outline btn-primary hidden md:inline-flex"
-              style={{ padding: '9px 12px' }}
-              aria-label="Tambah cepat"
-            >
-              <Plus className="size-3.5" />
-            </button>
 
             <button
               className="relative hidden md:grid place-items-center"
