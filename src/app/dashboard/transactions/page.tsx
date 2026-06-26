@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useDeferredValue, Fragment } from 'react'
+import { useEffect, useState, useMemo, useDeferredValue, useRef, Fragment } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
@@ -440,6 +440,14 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState<string>('')
   // Quick-add inline row is hidden by default; the toolbar "+ Tambah" toggles it.
   const [showQuickAdd, setShowQuickAdd] = useState(false)
+  // Form "Tambah Cepat" muncul di bawah filter — scroll ke tengah pas dibuka
+  // biar user gak ketinggalan / harus scroll cari sendiri.
+  const quickAddRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!showQuickAdd) return
+    const id = setTimeout(() => quickAddRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
+    return () => clearTimeout(id)
+  }, [showQuickAdd])
   // Bulk edit + inline category (desktop table power features)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [inlineCatId, setInlineCatId] = useState<string | null>(null)
@@ -1090,7 +1098,7 @@ export default function TransactionsPage() {
           Fast path: Tab between fields, Enter to submit. Full modal (struk OCR + tags)
           via the "Detail" button. */}
       {showQuickAdd && !loading && accounts.length + creditCards.length > 0 && (
-        <div className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--c-primary)' }}>
+        <div ref={quickAddRef} className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--accent, var(--c-mint))' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
             <Plus className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
