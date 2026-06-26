@@ -24,11 +24,10 @@ import {
 import {
   User, Bell, Database, Shield, Sparkles,
   Loader2, Crown, AlertTriangle, ExternalLink, LogOut,
-  Lock, Mail, Trash2, Download, Moon, Palette, LockKeyhole,
+  Lock, Mail, Trash2, Download, Moon, LockKeyhole,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
-import { SkinPicker } from '@/components/theme/skin-picker'
 import { useLock } from '@/components/security/lock-provider'
 import { MfaSetup } from '@/components/security/mfa-setup'
 import { SecurityActivity } from '@/components/security/security-activity'
@@ -446,18 +445,18 @@ export default function ProfilePage() {
       </section>
 
       {/* AI Credits card */}
-      <div className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 22%, transparent)' }}>
+      <div className="rounded-xl border p-5" style={{ background: 'var(--c-violet-soft)', borderColor: 'color-mix(in srgb, var(--c-violet) 22%, transparent)' }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
             <div className="rounded-lg p-2 shadow-[var(--card-shadow)]" style={{ background: 'var(--surface)' }}>
-              <Sparkles className="size-5" style={{ color: 'var(--c-amber-ink)' }} />
+              <Sparkles className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
             </div>
             <div>
               <p className="font-semibold">{t('profile.ai_credits_title')}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {t('profile.ai_credits_desc')}
               </p>
-              <p className="mt-3 text-3xl font-bold tabular-nums">
+              <p className="mt-3 text-2xl font-bold tabular-nums">
                 {profile.ai_credits.toLocaleString('id-ID')}
                 <span className="text-sm font-normal text-muted-foreground ml-1">{t('profile.ai_credits_unit')}</span>
               </p>
@@ -466,7 +465,7 @@ export default function ProfilePage() {
           <Link
             href="/dashboard/pricing"
             className="self-end inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition hover:opacity-90"
-            style={{ background: 'var(--c-amber-ink)', color: 'var(--on-hero)' }}
+            style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}
           >
             <Sparkles className="size-3.5" />
             {t('profile.ai_credits_topup')}
@@ -558,13 +557,6 @@ export default function ProfilePage() {
               <ThemeToggle />
               <p className="text-xs text-muted-foreground mt-2">
                 {t('profile.theme_mode_hint')}
-              </p>
-            </div>
-            <div>
-              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />{t('profile.skin_label')}</Label>
-              <SkinPicker />
-              <p className="text-xs text-muted-foreground mt-2">
-                {t('profile.skin_hint')}
               </p>
             </div>
           </section>
