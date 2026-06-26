@@ -243,7 +243,7 @@ export default function LiquidAssetsPage() {
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
-              <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
+              <p className="num tabular text-2xl sm:text-3xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')}</p>
             </div>
             {([
