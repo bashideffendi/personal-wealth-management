@@ -14,7 +14,6 @@
  *   net       → emerald (positive) atau coral (negative)
  */
 
-import { useT } from '@/lib/i18n/context'
 import { formatCompactCurrency } from '@/lib/utils'
 import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, ArrowLeftRight,
@@ -49,7 +48,6 @@ const TONE_MAP: Record<NonNullable<KpiCardProps['kind']>, {
 }
 
 export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
-  const t = useT()
   const k = kind ?? 'net'
 
   // Delta chip = perubahan REAL vs bulan lalu (bukan dekorasi statis). Panah =
@@ -117,13 +115,12 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
         )}
       </div>
 
-      {/* Note bottom */}
-      <p
-        className="text-[11px] mt-2.5"
-        style={{ color: 'var(--ink-soft)' }}
-      >
-        {note ?? t('dashboard.current_month')}
-      </p>
+      {/* Note bottom — cuma kalau ada info berarti (drop filler "Bulan berjalan") */}
+      {note && (
+        <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
+          {note}
+        </p>
+      )}
     </article>
   )
 }

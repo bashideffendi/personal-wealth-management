@@ -688,7 +688,7 @@ export default function DashboardPage() {
       {/* Greeting + tombol Atur Dashboard (custom show/hide section) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         {/* Sapaan ikut jam (ID: "Pagi, Bashid" per mockup) — bukan "Hi" hardcode. */}
-        <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
+        <h1 className="font-semibold tracking-tight truncate" style={{ fontSize: 18, color: 'var(--ink)', letterSpacing: '-0.01em' }}>
           {t(`dashboard.${now.getHours() < 11 ? 'greet_morning' : now.getHours() < 15 ? 'greet_afternoon' : now.getHours() < 19 ? 'greet_evening' : 'greet_night'}`)}{userFirstName ? `, ${userFirstName}` : ''}
         </h1>
         {/* Period selector — top-right (konvensi). Surface bg + border supaya

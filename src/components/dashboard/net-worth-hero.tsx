@@ -99,18 +99,6 @@ export function NetWorthHero({
     return (ytdSum / Math.abs(yearStart)) * 100
   })()
 
-  // Forecast: when reach Rp 1B at current pace?
-  const forecastMonths = (() => {
-    if (monthlyTrend.length < 3) return null
-    const recentAvg = monthlyTrend.slice(-3).reduce((s, m) => s + m.net, 0) / 3
-    if (recentAvg <= 0) return null
-    const target = 1_000_000_000
-    if (netWorth >= target) return null
-    const months = Math.ceil((target - netWorth) / recentAvg)
-    if (months > 60 || months < 1) return null
-    return months
-  })()
-
   return (
     <section
       className="relative overflow-hidden rounded-3xl"
@@ -175,20 +163,6 @@ export function NetWorthHero({
               </span>
             )}
           </div>
-
-          {/* Forecast hint */}
-          {forecastMonths && (
-            <p
-              className="text-[13px] mt-5 leading-relaxed"
-              style={{ color: 'var(--on-hero-mut)' }}
-            >
-              {t('nw_hero.forecast_prefix')}{' '}
-              <span className="font-semibold" style={{ color: 'var(--hero-chip-pos-fg)' }}>
-                {t('nw_hero.forecast_target')}
-              </span>{' '}
-              {t('nw_hero.forecast_in')} {forecastMonths} {t('nw_hero.forecast_months')}.
-            </p>
-          )}
 
           {/* Asset/Debt split */}
           <div
