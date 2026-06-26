@@ -1136,7 +1136,7 @@ export default function TransactionsPage() {
               type="date"
               value={quickForm.date}
               onChange={(e) => setQuickForm({ ...quickForm, date: e.target.value })}
-              className="h-9 w-full col-span-1 sm:col-span-2 min-w-0"
+              className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0"
             />
             {/* Account */}
             <Select
