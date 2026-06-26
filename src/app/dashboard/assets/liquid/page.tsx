@@ -179,7 +179,7 @@ export default function LiquidAssetsPage() {
     const Icon = m.icon
     const isAccount = e.source === 'account'
     return (
-      <div key={`${e.source}-${e.id}`} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] p-5 transition-all hover:border-[var(--ink)] hover:shadow-lg">
+      <div key={`${e.source}-${e.id}`} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] p-4 transition-all hover:border-[var(--ink)] hover:shadow-lg">
         {e.source === 'asset_liquid' && (
           <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-[var(--card-shadow)] transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
             <Button variant="ghost" size="icon-sm" onClick={() => { setForm({ id: e.id, name: e.name, type: e.type as FormState['type'], balance: e.balance }); setDialogOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -195,7 +195,7 @@ export default function LiquidAssetsPage() {
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.auto_from_account') : t('assets_liquid.source_manual')}</p>
           </div>
         </div>
-        <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</p>
+        <p className="num text-xl mt-2.5 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</p>
         <div className="mt-4 pt-3 border-t text-[11px]" style={{ borderColor: 'var(--outline)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>
             {TIER_META[m.tier].label}

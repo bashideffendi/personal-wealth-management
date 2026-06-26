@@ -485,7 +485,35 @@ export default function AccountsPage() {
         </div>
       ) : (
         /* ─── CARD VIEW ─── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <>
+        {/* Mobile: baris-compact (1 kartu + hairline divider, ala Stockbit) */}
+        <div className="sm:hidden rounded-xl border overflow-hidden" style={{ borderColor: 'var(--outline)', background: 'var(--surface)' }}>
+          {accounts.map((a, i) => {
+            const allocsM = allocationsByAccount[a.id] ?? []
+            const allocatedM = allocsM.reduce((s, x) => s + x.amount, 0)
+            const freeM = (a.current_balance ?? 0) - allocatedM
+            const typeLabelM = ACCOUNT_TYPES[a.type as AccountType] ?? a.type
+            return (
+              <div key={a.id} className="flex items-center gap-3 px-3.5" style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                <InstitutionLogo accountName={a.name} size={30} shape="circle" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-medium truncate leading-tight inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+                    {a.name?.trim() || t('accounts.unnamed_account')}
+                    {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
+                  </p>
+                  <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                    {typeLabelM}{allocatedM > 0 ? ` · ${t('accounts.free')} ${formatCurrency(freeM)}` : ''}
+                  </p>
+                </div>
+                <p className="num tabular text-[14px] font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(a.current_balance ?? 0)}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+        {/* sm+: kartu kaya (alokasi + aktivitas 30h) */}
+        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-3">
           {accounts.map((a) => {
             const allocs = allocationsByAccount[a.id] ?? []
             const totalAllocated = allocs.reduce((s, x) => s + x.amount, 0)
@@ -539,6 +567,7 @@ export default function AccountsPage() {
             )
           })}
         </div>
+        </>
       )}
 
       <AccountAllocationsDialog

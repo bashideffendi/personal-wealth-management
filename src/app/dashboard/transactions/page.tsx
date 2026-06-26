@@ -1480,72 +1480,57 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {/* Mobile: stacked card list */}
-          <div className="md:hidden space-y-2">
-            {filteredTransactions.map((tx) => {
-              // AA-contrast ink variants; saving/investment stay neutral (the chip
-              // already carries the color) — matches desktop, no more amber/sky split.
+          {/* Mobile: baris-compact (1 kartu + hairline divider, ala Stockbit).
+              Tap baris = edit; tombol hapus kecil di kanan (stopPropagation). */}
+          <div
+            className="md:hidden rounded-xl border overflow-hidden"
+            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+          >
+            {filteredTransactions.map((tx, i) => {
+              // AA-contrast ink variants; saving/investment stay neutral.
               const amountColor = tx.type === 'income'
                 ? 'var(--c-mint-ink)'
                 : tx.type === 'expense'
                   ? 'var(--c-coral-ink)'
                   : 'var(--ink)'
+              const tint = TYPE_BADGE_STYLES[tx.type]
               return (
                 <div
                   key={tx.id}
-                  className="rounded-xl border bg-[var(--surface)] p-3"
-                  style={{ borderColor: 'var(--border)' }}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditDialog(tx)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditDialog(tx) } }}
+                  aria-label={`${t('transactions.edit')}: ${tx.description || tx.category}`}
+                  className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)] cursor-pointer"
+                  style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span
-                          className="chip"
-                          style={{
-                            background: TYPE_BADGE_STYLES[tx.type].bg,
-                            color: TYPE_BADGE_STYLES[tx.type].color,
-                            height: 20,
-                            fontSize: 10,
-                            padding: '0 8px',
-                          }}
-                        >
-                          {t(TYPE_LABEL_KEYS[tx.type])}
-                        </span>
-                        <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                          {formatDateShort(tx.date, locale)}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
-                        {tx.description || tx.category}
-                      </p>
-                      <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                        {tx.category} · {getAccountName(tx.account_id)}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="num text-sm font-bold tabular-nums" style={{ color: amountColor }}>
-                        {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
-                      </p>
-                      <div className="mt-1 flex items-center justify-end gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => openEditDialog(tx)}
-                          className="text-[11px] inline-flex items-center gap-0.5 font-medium"
-                          style={{ color: 'var(--ink-muted)' }}
-                        >
-                          <Pencil className="size-3" /> {t('transactions.edit')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(tx.id)}
-                          className="text-[11px] inline-flex items-center gap-0.5 font-medium"
-                          style={{ color: 'var(--c-coral-ink)' }}
-                        >
-                          <Trash2 className="size-3" /> {t('transactions.delete')}
-                        </button>
-                      </div>
-                    </div>
+                  <div
+                    className="grid place-items-center shrink-0"
+                    style={{ width: 30, height: 30, borderRadius: 8, background: tint.bg, color: tint.color }}
+                  >
+                    <CategoryIcon category={tx.category} className="size-[15px]" />
                   </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                      {tx.description || tx.category}
+                    </p>
+                    <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                      {formatDateShort(tx.date, locale)} · {tx.category} · {getAccountName(tx.account_id)}
+                    </p>
+                  </div>
+                  <p className="num text-[14px] font-semibold tabular-nums leading-tight shrink-0" style={{ color: amountColor }}>
+                    {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
+                    aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`}
+                    className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                    style={{ color: 'var(--ink-soft)' }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
               )
             })}

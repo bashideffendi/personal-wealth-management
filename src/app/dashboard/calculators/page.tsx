@@ -59,13 +59,24 @@ export default function CalculatorsPage() {
        <ZakatCalculator />}
 
       {/* Calculator gallery */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {CALCS.filter((c) => c.key !== selected).map((c) => (
-          <button key={c.key} type="button" onClick={() => pick(c.key)} className="s-card p-5 text-left transition hover:border-[var(--ink)]" >
-            <div className="size-10 rounded-xl grid place-items-center" style={{ background: tint(c.color, 10) }}><c.icon className="size-5" style={{ color: c.ink }} /></div>
-            <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
-            <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t(`calculators.${c.descKey}`)}</p>
-            <span className="inline-flex items-center gap-1 text-[13px] font-semibold mt-3" style={{ color: c.ink }}>{t('calculators.open_calculator')} <ArrowRight className="size-3.5" /></span>
+      {/* Galeri kalkulator — baris-compact (1 kartu + hairline divider) */}
+      <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        {CALCS.filter((c) => c.key !== selected).map((c, i) => (
+          <button
+            key={c.key}
+            type="button"
+            onClick={() => pick(c.key)}
+            className="w-full text-left flex items-center gap-3 px-3.5 transition-colors hover:bg-[var(--surface-2)]"
+            style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+          >
+            <div className="size-[30px] rounded-lg grid place-items-center shrink-0" style={{ background: tint(c.color, 10) }}>
+              <c.icon className="size-[15px]" style={{ color: c.ink }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
+              <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t(`calculators.${c.descKey}`)}</p>
+            </div>
+            <ArrowRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
           </button>
         ))}
       </div>

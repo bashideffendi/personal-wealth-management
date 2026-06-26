@@ -300,7 +300,7 @@ export default function NonLiquidAssetsPage() {
       : a.type || meta.note
     const body = (
       <>
-        <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
+        <p className="num text-xl mt-2.5 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
         <div className="mt-1.5 flex items-center gap-2 text-[11px]">
           <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: tint(up ? MINT : CORAL, 10), color: up ? MINT_INK : CORAL_INK }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
           <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
@@ -332,7 +332,7 @@ export default function NonLiquidAssetsPage() {
                 <Icon className="size-5" style={{ color: '#fff' }} />
               </div>
             </div>
-            <div className="px-5 pb-5 pt-8">
+            <div className="px-4 pb-4 pt-8">
               <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
               <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
               {a.address && (
@@ -344,7 +344,7 @@ export default function NonLiquidAssetsPage() {
             </div>
           </>
         ) : (
-          <div className="p-5">
+          <div className="p-4">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}>
                 <Icon className="size-5" style={{ color: meta.ink }} />

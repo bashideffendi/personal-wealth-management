@@ -361,7 +361,7 @@ export default function RecurringPage() {
                     ))}
                   </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto hidden md:block">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
@@ -414,6 +414,42 @@ export default function RecurringPage() {
                       })}
                     </tbody>
                   </table>
+                </div>
+                {/* Mobile: baris-compact (1 baris + hairline; tap = edit) */}
+                <div className="md:hidden">
+                  {visible.map((r, i) => {
+                    const meta = catMeta(r.category)
+                    const Icon = meta.icon
+                    const next = nextRunDate(r)
+                    const ended = isExpired(r)
+                    const days = next ? Math.round((next.getTime() - today0.getTime()) / DAY) : 0
+                    const urgent = r.is_active && !ended && next != null && days <= 3
+                    return (
+                      <button
+                        type="button"
+                        key={r.id}
+                        onClick={() => openEdit(r)}
+                        className="w-full text-left flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)]"
+                        style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none', opacity: r.is_active ? 1 : 0.6 }}
+                      >
+                        <div className="size-[30px] rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}>
+                          <Icon className="size-[15px]" style={{ color: meta.color }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[14px] font-medium truncate leading-tight flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+                            {r.name}
+                            {!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}
+                          </p>
+                          <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                            {FREQ_LABELS[r.frequency]} · {next ? dmy(next) : '—'}{r.is_active && !ended && next ? ` · ${days} ${t('recurring.days_left')}` : ended ? ` · ${t('recurring.badge_ended')}` : ''}
+                          </p>
+                        </div>
+                        <p className="num tabular text-[14px] font-semibold leading-tight shrink-0" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>
+                          {formatCurrency(r.amount)}
+                        </p>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

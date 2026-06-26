@@ -455,10 +455,10 @@ export default function GoalsPage() {
                   {/* Layout per mockup user: header (nama + meta + CTA kanan) →
                       angka terkumpul SERIF besar "dari target" kecil → bar + %
                       → hairline → footer 3 kolom small-caps. */}
-                  <div className="p-5">
+                  <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
+                        <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
                           <Icon className="size-4" style={{ color: layerInk }} />
                         </div>
                         <div className="min-w-0">
@@ -510,8 +510,8 @@ export default function GoalsPage() {
 
                     {/* Angka sebagai perhiasan: terkumpul serif besar, target kecil
                         di baseline yang sama — satu baris, gak boleh patah aneh. */}
-                    <p className="mt-5 leading-none truncate">
-                      <span className="num" style={{ fontSize: '1.75rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+                    <p className="mt-3.5 leading-none truncate">
+                      <span className="num" style={{ fontSize: '1.375rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
                         {formatCurrency(g.current_amount)}
                       </span>
                       <span className="num text-[12.5px] ml-2" style={{ color: 'var(--ink-soft)' }}>
@@ -531,7 +531,7 @@ export default function GoalsPage() {
 
                   {/* Footer 3 kolom — anchor kiri · tengah · kanan, label dijepit
                       h-4 biar tombol ⓘ gak ngedorong kolomnya turun. */}
-                  <div className="px-5 py-3.5 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--outline)' }}>
+                  <div className="px-4 py-3 border-t hidden sm:grid grid-cols-3 gap-3" style={{ borderColor: 'var(--outline)' }}>
                     <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.monthly_label')}

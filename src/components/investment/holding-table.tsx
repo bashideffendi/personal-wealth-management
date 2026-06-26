@@ -173,7 +173,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
           })}
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm border-collapse" style={{ minWidth: 760 }}>
           <thead>
             <tr style={{ background: 'var(--surface-3)' }}>
@@ -246,6 +246,40 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
             })}
           </tbody>
         </table>
+      </div>
+      {/* Mobile: baris-compact (1 baris + hairline; tap → riset saham IDX/crypto) */}
+      <div className="md:hidden border-t" style={{ borderColor: 'var(--border-soft)' }}>
+        {holdingRows.map((r, i) => {
+          const plUp = (r.plPct ?? 0) >= 0
+          const tone = verdictTone(r.verdict, t)
+          const rowClass = 'flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)]'
+          const rowStyle = { minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }
+          const inner = (
+            <>
+              <span className="num tabular text-[11px] font-bold px-1.5 py-1 rounded shrink-0" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
+                {r.sym || '—'}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
+                <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                  {r.classLabel} · {r.qty.toLocaleString('id-ID')}
+                  {tone && r.mos != null ? <span className="num font-semibold" style={{ color: tone.color }}> · MoS {r.mos >= 0 ? '+' : ''}{(r.mos * 100).toFixed(0)}%</span> : null}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(r.market)}</p>
+                {r.plPct != null && (
+                  <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" data-loss={!plUp ? 'true' : undefined} style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                    {plUp ? '+' : ''}{r.plPct.toFixed(1)}%
+                  </p>
+                )}
+              </div>
+            </>
+          )
+          return r.href
+            ? <Link key={r.id} href={r.href} className={rowClass} style={rowStyle}>{inner}</Link>
+            : <div key={r.id} className={rowClass} style={rowStyle}>{inner}</div>
+        })}
       </div>
       {wedgeSummary && (
         <p className="px-5 sm:px-6 py-2.5 text-[10px] border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
