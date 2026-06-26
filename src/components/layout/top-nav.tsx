@@ -197,22 +197,17 @@ export function TopNav({ user }: TopNavProps) {
           }}
         >
           {/* ─── Brand left ─── */}
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div
-              className="grid place-items-center"
-              style={{
-                width: 32, height: 32, borderRadius: 10,
-                background: 'var(--c-primary)', color: 'var(--c-primary-foreground)',
-                fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em',
-              }}
-            >
-              K
-            </div>
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" className="shrink-0">
+              <rect x="35" y="3" width="30" height="30" rx="9" fill="#17b890" />
+              <rect x="3" y="35" width="30" height="30" rx="9" fill="#f0664f" />
+              <rect x="67" y="35" width="30" height="30" rx="9" fill="#5d6fe0" />
+              <rect x="35" y="67" width="30" height="30" rx="9" fill="#8b4fb0" />
+            </svg>
             <span
-              className="hidden sm:inline"
-              style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}
+              style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 19, letterSpacing: '-0.02em', color: 'var(--ink)' }}
             >
-              Klunting
+              klunting
             </span>
           </Link>
 
