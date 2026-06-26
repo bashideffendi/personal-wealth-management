@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Baloo_2, Geist } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
@@ -13,6 +13,14 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-sans-brand",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Baloo 2 — font display tema "Cartoon" (OPSI, bukan default). Cuma kepakai
+// kalau user pilih skin cartoon (via --font-display di [data-skin="cartoon"]).
+const baloo = Baloo_2({
+  subsets: ["latin"],
+  variable: "--font-baloo",
   display: "swap",
 });
 
@@ -83,15 +91,15 @@ const themeInitScript = `
 (function() {
   try {
     var skin = localStorage.getItem('pwm-skin');
-    if (skin === 'mono' || skin === 'terminal' || skin === 'cartoon') {
-      document.documentElement.setAttribute('data-skin', skin);
+    if (skin === 'cartoon') {
+      document.documentElement.setAttribute('data-skin', 'cartoon');
     }
     var stored = localStorage.getItem('pwm-theme');
     var mode = stored === 'light' || stored === 'dark' || stored === 'auto' ? stored : 'auto';
     var resolved = mode === 'auto'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : mode;
-    if (resolved === 'dark' || skin === 'terminal') document.documentElement.classList.add('dark');
+    if (resolved === 'dark') document.documentElement.classList.add('dark');
   } catch (e) {}
 })();
 `
@@ -105,8 +113,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      data-skin="cartoon"
-      className={`${geistSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${baloo.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

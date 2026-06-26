@@ -458,11 +458,40 @@
 }
 
 /* ============================================
-   SISTEM SKIN — html[data-skin] (localStorage 'pwm-skin', picker di
-   Profil). :root = skin default CARTOON. Tiap skin override: surfaces,
-   netral, primary, bahasa kartu (outline-w/card-shadow/radius), font
-   display, hero, selection. Token DATA (mint/coral/amber/violet) shared.
+   SISTEM SKIN — html[data-skin] (localStorage 'pwm-skin', picker di Profil).
+   DEFAULT = base :root (redesign "Bersih", TANPA data-skin). Skin opsi yang
+   aktif: "cartoon" (tampilan lawas emas/dongeng). Blok mono & terminal di bawah
+   = LEGACY/dorman (gak ada di picker, init script abaikan) — disimpen aja.
    ============================================ */
+
+/* Cartoon (OPSI, BUKAN default) — restore tampilan LAMA: emas + dusk + cream +
+   border tan + outline/shadow offset tebal + Baloo. Default app = redesign baru
+   (base :root). Block ini cuma aktif kalau user pilih skin "cartoon". */
+html[data-skin="cartoon"] {
+  --paper: #FFF9EE; --bg: #FFF9EE; --bg-2: #F6EFDD;
+  --surface: #FFFFFF; --surface-2: #F8F1E1; --surface-3: #EFE6D0;
+  --line: rgba(30,27,22,0.10); --line-strong: rgba(30,27,22,0.16);
+  --ink: #1E1B16; --ink-muted: #4A453C; --ink-soft: #5E5749;
+  --text: #1E1B16; --text-2: #4A453C; --text-mute: #5E5749; --text-faint: #5E5749;
+  --border: #D5C39D; --border-soft: #E6DCC4;
+  --outline: #1E1B16; --outline-shadow: #1E1B16; --outline-w: 1.5px;
+  --card-radius: 14px;
+  --card-shadow: 2px 2px 0 var(--outline-shadow);
+  --btn-shadow: 1.5px 1.5px 0 var(--outline-shadow);
+  --hero-bg: #241F31; --hero-mid: #2C2640; --hero-soft: #322B45;
+  --on-hero: #F4EDDC; --on-hero-mut: #B5ABCC;
+  --hero-accent: #3DBA8A; --hero-accent-2: #5CCB9F;
+  --hero-chip-pos-bg: rgba(61,186,138,0.18); --hero-chip-pos-fg: #82DBB1;
+  --hero-chip-neg-bg: rgba(237,115,133,0.18); --hero-chip-neg-fg: #F4A6AE;
+  --c-primary: #FFC83D; --c-primary-soft: #FFF3D6; --c-primary-foreground: #1E1B16; --c-primary-ink: #7E5600;
+  --accent: #129B69;
+  --c-mint: #129B69; --c-mint-soft: #E7F4EC;
+  --c-coral: #D2495A; --c-coral-soft: #FAEDEE;
+  --c-amber: #C98F0E; --c-amber-soft: #F9F1DD;
+  --c-violet: #7C5FD3; --c-violet-soft: #F1EEFA;
+  --c-mint-ink: #0B6E4D; --c-coral-ink: #A12C3F; --c-amber-ink: #8F5E06; --c-violet-ink: #5A3CAB;
+  --font-display: var(--font-baloo), "Baloo 2", var(--font-sans);
+}
 
 /* Cartoon: heading & tombol primer ikut suara Baloo */
 html[data-skin="cartoon"] h1,

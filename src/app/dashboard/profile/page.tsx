@@ -24,10 +24,11 @@ import {
 import {
   User, Bell, Database, Shield, Sparkles,
   Loader2, Crown, AlertTriangle, ExternalLink, LogOut,
-  Lock, Mail, Trash2, Download, Moon, LockKeyhole,
+  Lock, Mail, Trash2, Download, Moon, LockKeyhole, Palette,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { SkinPicker } from '@/components/theme/skin-picker'
 import { useLock } from '@/components/security/lock-provider'
 import { MfaSetup } from '@/components/security/mfa-setup'
 import { SecurityActivity } from '@/components/security/security-activity'
@@ -557,6 +558,13 @@ export default function ProfilePage() {
               <ThemeToggle />
               <p className="text-xs text-muted-foreground mt-2">
                 {t('profile.theme_mode_hint')}
+              </p>
+            </div>
+            <div>
+              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />Tema tampilan</Label>
+              <SkinPicker />
+              <p className="text-xs text-muted-foreground mt-2">
+                Default <strong>Bersih</strong> (redesign baru). <strong>Cartoon</strong> = tampilan lawas (emas/dongeng), opsional.
               </p>
             </div>
           </section>
