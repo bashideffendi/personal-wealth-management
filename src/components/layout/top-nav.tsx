@@ -250,8 +250,9 @@ export function TopNav({ user }: TopNavProps) {
             <NavDropdown label={t('nav.section.secondary')} items={lainnya} pathname={pathname} align="right" />
           </nav>
 
-          {/* ─── Actions right ─── */}
-          <div className="flex items-center gap-2">
+          {/* ─── Actions right ─── (paksa kolom 3: pas mobile brand absolute +
+              nav hidden, tanpa ini actions ke-auto-place ke kolom 1/kiri) ─── */}
+          <div className="flex items-center gap-2 col-start-3 justify-self-end">
             <button
               onClick={openCommandPalette}
               className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] transition-colors"

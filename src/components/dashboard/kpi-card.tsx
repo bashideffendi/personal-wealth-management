@@ -67,9 +67,9 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
     : ICON_MAP[k]
 
   return (
-    <article className="stat-tile">
-      <div className="flex items-start gap-3">
-        {/* Icon box */}
+    <article className="stat-tile flex flex-col">
+      {/* Header: ikon + label + chip Δ — di baris ini boleh sempit */}
+      <div className="flex items-center gap-2.5">
         <div
           className="grid place-items-center shrink-0"
           style={{
@@ -82,31 +82,15 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
         >
           <IconCmp className="size-[15px]" />
         </div>
-
-        {/* Label + value */}
-        <div className="min-w-0 flex-1">
-          <p
-            className="text-[11px] font-medium leading-tight"
-            style={{ color: 'var(--ink-muted)' }}
-          >
-            {label}
-          </p>
-          <p
-            className="num tabular font-bold mt-1 leading-tight truncate"
-            style={{
-              fontSize: 19,
-              color: 'var(--ink)',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {formatCompactCurrency(value)}
-          </p>
-        </div>
-
-        {/* Delta chip top-right — perubahan vs bulan lalu (real, bukan statis) */}
+        <p
+          className="text-[11px] font-medium leading-tight flex-1 min-w-0 line-clamp-2"
+          style={{ color: 'var(--ink-muted)' }}
+        >
+          {label}
+        </p>
         {showDelta && (
           <span
-            className={`delta-chip ${deltaGood ? 'delta-chip-positive' : 'delta-chip-negative'}`}
+            className={`delta-chip shrink-0 ${deltaGood ? 'delta-chip-positive' : 'delta-chip-negative'}`}
             title="Perubahan vs bulan lalu"
           >
             {deltaUp ? <TrendingUp className="size-2.5" /> : <TrendingDown className="size-2.5" />}
@@ -115,6 +99,17 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
         )}
       </div>
 
+      {/* Angka — BARIS PENUH sendiri (gak ke-squeeze ikon/chip) */}
+      <p
+        className="num tabular font-bold mt-auto pt-2.5 leading-tight truncate"
+        style={{
+          fontSize: 19,
+          color: 'var(--ink)',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {formatCompactCurrency(value)}
+      </p>
     </article>
   )
 }
