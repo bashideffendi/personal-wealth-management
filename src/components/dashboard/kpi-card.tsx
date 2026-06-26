@@ -47,7 +47,7 @@ const TONE_MAP: Record<NonNullable<KpiCardProps['kind']>, {
   net: { icon: 'var(--c-mint)', iconBg: 'var(--c-mint-soft)' },
 }
 
-export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
+export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
   const k = kind ?? 'net'
 
   // Delta chip = perubahan REAL vs bulan lalu (bukan dekorasi statis). Panah =
@@ -73,14 +73,14 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
         <div
           className="grid place-items-center shrink-0"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
+            width: 30,
+            height: 30,
+            borderRadius: 9,
             background: tone.iconBg,
             color: tone.icon,
           }}
         >
-          <IconCmp className="size-4" />
+          <IconCmp className="size-[15px]" />
         </div>
 
         {/* Label + value */}
@@ -115,12 +115,6 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
         )}
       </div>
 
-      {/* Note bottom — cuma kalau ada info berarti (drop filler "Bulan berjalan") */}
-      {note && (
-        <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
-          {note}
-        </p>
-      )}
     </article>
   )
 }

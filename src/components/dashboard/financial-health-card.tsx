@@ -53,7 +53,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
 
   // ─── Card: Skor + deskripsi + breakdown ────────────────────────────
   const scoreCard = (
-    <div className="s-card p-6 sm:p-7 h-full">
+    <div className="s-card p-4 sm:p-5 h-full">
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 sm:gap-8 h-full">
         {/* Score + tier description — ngisi tinggi kolom */}
         <div className="sm:col-span-5 flex flex-col">
@@ -106,7 +106,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
 
   // ─── Card: Cash Coverage / runway ──────────────────────────────────
   const coverageCard = (
-    <div className="s-card p-6 h-full flex flex-col">
+    <div className="s-card p-4 h-full flex flex-col">
       <div className="flex items-center gap-1.5 shrink-0">
         <p className="eyebrow">{t('health_card.cash_coverage')}</p>
         <EduTip topic="financial-health" side="bottom" />

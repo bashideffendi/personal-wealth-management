@@ -108,7 +108,7 @@ export function NetWorthHero({
       }}
     >
 
-      <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-6 lg:gap-8 p-5 sm:p-6 lg:p-7">
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-5 lg:gap-8 p-4 sm:p-5">
         {/* ───── LEFT: numeric block ───── */}
         <div className="min-w-0">
           {/* Label net worth (greeting "Hi, Nama" pindah ke atas hero) */}

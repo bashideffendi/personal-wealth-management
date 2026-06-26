@@ -12,7 +12,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
 import { ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
@@ -78,8 +78,10 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
           <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
         )}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {visibleCards.map((c) => {
+      {/* List baris ringkas (watchlist-style) — 1 kartu + divider, bukan kartu
+          gede per kelas. ~52px/baris: icon + nama/posisi · nilai/% kanan. */}
+      <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        {visibleCards.map((c, i) => {
           const data = c.d ?? { invested: 0, market: 0, count: 0 }
           const pl = data.market - data.invested
           const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
@@ -91,42 +93,31 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
             <Link
               key={c.key}
               href={c.href}
-              className="group rounded-xl border p-4 transition-all hover:shadow-md hover:-translate-y-0.5"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border-soft)' }}
+              className="flex items-center gap-3 px-3.5 transition-colors hover:bg-[var(--surface-2)]"
+              style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div
-                  className="grid place-items-center shrink-0"
-                  style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${color} 15%, var(--surface))`, color }}
-                >
-                  <CardIcon className="size-4" strokeWidth={2} />
-                </div>
-                <ArrowUpRight
-                  className="size-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0 mt-1"
-                  style={{ color: 'var(--ink-soft)' }}
-                />
+              <div
+                className="grid place-items-center shrink-0"
+                style={{ width: 30, height: 30, borderRadius: 8, background: `color-mix(in srgb, ${color} 15%, var(--surface))`, color }}
+              >
+                <CardIcon className="size-[15px]" strokeWidth={2} />
               </div>
-              <p className="font-semibold text-sm mt-3 tracking-tight" style={{ color: 'var(--ink)' }}>
-                {c.label}
-              </p>
-              <p className="num text-lg mt-1 tabular font-semibold" style={{ color: 'var(--ink)' }}>
-                {formatCurrency(data.market)}
-              </p>
-              <div className="mt-1.5 flex items-center justify-between text-[11px]">
-                <span style={{ color: 'var(--ink-soft)' }}>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-[14px] truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.label}</p>
+                <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {hasPosition ? `${data.count} ${t('investment.positions')}` : t('investment.no_position')}
-                </span>
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="num tabular font-semibold text-[14px] leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(data.market)}</p>
                 {data.invested > 0 && (
-                  <span
-                    className="num font-semibold tabular px-1.5 py-0.5 rounded"
+                  <p
+                    className="num tabular font-semibold text-[11.5px] leading-tight mt-0.5"
                     data-loss={plUp ? undefined : 'true'}
-                    style={{
-                      color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
-                      background: plUp ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
-                    }}
+                    style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                   >
                     {plUp ? '+' : ''}{pct.toFixed(2)}%
-                  </span>
+                  </p>
                 )}
               </div>
             </Link>

@@ -25,7 +25,7 @@ export function AssetAllocationCard({
   ].filter((s) => s.value > 0)
 
   return (
-    <article className="s-card flex flex-col h-full" style={{ padding: 24 }}>
+    <article className="s-card flex flex-col h-full" style={{ padding: 16 }}>
       <div className="flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <p className="eyebrow">{t('asset_alloc.title')}</p>

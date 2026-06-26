@@ -294,17 +294,9 @@ export function MoneyFlowSankey({
 
   if (!data) {
     return (
-      <div
-        className="flex items-center justify-center rounded-xl border text-sm"
-        style={{
-          height,
-          color: 'var(--ink-soft)',
-          borderColor: 'var(--border-soft)',
-          background: 'var(--surface-2)',
-        }}
-      >
+      <p className="text-[13px] text-center py-10 px-6" style={{ color: 'var(--ink-soft)' }}>
         {emptyMessage}
-      </div>
+      </p>
     )
   }
 

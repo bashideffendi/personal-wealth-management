@@ -45,7 +45,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
   )
 
   return (
-    <article className="s-card" style={{ padding: 24 }}>
+    <article className="s-card" style={{ padding: 16 }}>
       <div className="flex items-center justify-between">
         <p className="eyebrow">{t('recent_tx.title')}</p>
         <Link

@@ -36,7 +36,7 @@ export function AccountsCard({ accounts }: { accounts: AccountRow[] }) {
   const sorted = [...accounts].sort((a, b) => (b.current_balance || 0) - (a.current_balance || 0))
 
   return (
-    <article className="s-card flex flex-col" style={{ padding: 24 }}>
+    <article className="s-card flex flex-col" style={{ padding: 16 }}>
       <div className="flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <p className="eyebrow">{t('accounts_card.title')}</p>

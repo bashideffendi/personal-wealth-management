@@ -754,9 +754,9 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
 }
-.s-card-pad     { padding: 20px; }
-.s-card-pad-lg  { padding: 24px; }
-.s-card-pad-xl  { padding: 28px 32px; }
+.s-card-pad     { padding: 14px; }
+.s-card-pad-lg  { padding: 16px; }
+.s-card-pad-xl  { padding: 18px 20px; }
 
 .dark .s-card {
   border-color: var(--outline);

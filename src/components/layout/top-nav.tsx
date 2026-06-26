@@ -187,6 +187,7 @@ export function TopNav({ user }: TopNavProps) {
           backdropFilter: scrolled ? 'blur(14px) saturate(1.2)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(14px) saturate(1.2)' : 'none',
           borderBottom: '1px solid var(--line)',
+          paddingTop: 'env(safe-area-inset-top)',
         }}
       >
         <div
