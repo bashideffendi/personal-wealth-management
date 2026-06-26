@@ -25,9 +25,6 @@ export default function PlaybookIndexPage() {
         <h1 className="t-h1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
           {t('playbook.title')}
         </h1>
-        <p className="t-body mt-1.5 max-w-2xl" style={{ color: 'var(--ink-soft)' }}>
-          {t('playbook.subtitle')}
-        </p>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">

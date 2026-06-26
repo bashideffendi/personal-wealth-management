@@ -46,9 +46,7 @@ export default function CalculatorsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="min-w-0">
-        <p className="eyebrow mb-1.5">{CALCS.length} {t('calculators.eyebrow_quick_tools')}</p>
-        <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
-        <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--ink-muted)' }}>{t('calculators.page_subtitle')}</p>
+        <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
       </div>
 
       {/* Featured calculator */}

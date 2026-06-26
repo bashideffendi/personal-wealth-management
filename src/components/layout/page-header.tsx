@@ -15,31 +15,30 @@ import * as React from 'react'
 export function PageHeader({
   title,
   subtitle,
-  eyebrow,
   actions,
 }: {
   title: string
   subtitle?: React.ReactNode
+  /** Tidak dirender lagi (app-bar minimalis) — disimpan biar pemanggil lama gak error. */
   eyebrow?: string
   actions?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="min-w-0">
-        {eyebrow && <p className="eyebrow mb-1.5">{eyebrow}</p>}
         <h1
-          className="font-bold tracking-tight"
+          className="font-semibold tracking-tight truncate"
           style={{
-            fontSize: 'clamp(24px, 3vw, 30px)',
+            fontSize: 20,
             color: 'var(--ink)',
-            letterSpacing: '-0.03em',
-            lineHeight: 1.1,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2,
           }}
         >
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm mt-1.5 max-w-2xl" style={{ color: 'var(--ink-muted)' }}>
+          <p className="text-[12.5px] mt-0.5 max-w-xl" style={{ color: 'var(--ink-soft)' }}>
             {subtitle}
           </p>
         )}

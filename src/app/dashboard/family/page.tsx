@@ -830,8 +830,7 @@ function FamilyHeader({ action }: { action?: ReactNode }) {
   return (
     <header className="flex items-start justify-between gap-4 flex-wrap">
       <div className="max-w-xl">
-        <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.header_eyebrow')}</p>
-        <h1 className="mt-1 text-2xl sm:text-[28px] leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+        <h1 className="text-[20px] font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
           {t('family.header_title')}
         </h1>
         <p className="text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>

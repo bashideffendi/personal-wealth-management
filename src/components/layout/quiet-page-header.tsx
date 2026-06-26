@@ -58,7 +58,7 @@ export function QuietPageHeader({
         )}
         <h1
           className="tracking-tight truncate"
-          style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}
+          style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}
         >
           {title}
         </h1>

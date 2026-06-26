@@ -178,9 +178,7 @@ export default function ContractsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{items.length} {t('contracts.eyebrow_recorded')}</p>
-          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('contracts.page_title')}</h1>
-          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>{t('contracts.page_subtitle')}</p>
+          <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('contracts.page_title')}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={() => setSearchOpen((v) => !v)}><Search className="h-4 w-4" /> {t('contracts.btn_search')}</Button>
