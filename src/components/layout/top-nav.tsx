@@ -191,22 +191,25 @@ export function TopNav({ user }: TopNavProps) {
         }}
       >
         <div
-          className="mx-auto grid items-center gap-4 md:gap-6 px-4 md:px-8 py-3"
+          className="relative mx-auto grid items-center gap-4 md:gap-6 px-4 md:px-8 py-3"
           style={{
             gridTemplateColumns: 'auto 1fr auto',
             maxWidth: 1400,
           }}
         >
-          {/* ─── Brand left ─── */}
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true" className="shrink-0">
+          {/* ─── Brand — di TENGAH pas mobile (ala Stockbit), kiri pas desktop ─── */}
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:translate-x-0 lg:translate-y-0"
+          >
+            <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" className="shrink-0">
               <rect x="35" y="3" width="30" height="30" rx="9" fill="#17b890" />
               <rect x="3" y="35" width="30" height="30" rx="9" fill="#f0664f" />
               <rect x="67" y="35" width="30" height="30" rx="9" fill="#5d6fe0" />
               <rect x="35" y="67" width="30" height="30" rx="9" fill="#8b4fb0" />
             </svg>
             <span
-              style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 19, letterSpacing: '-0.02em', color: 'var(--ink)' }}
+              style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 21, letterSpacing: '-0.02em', color: 'var(--ink)' }}
             >
               klunting
             </span>
