@@ -80,6 +80,36 @@ export async function POST(request: NextRequest, context: RouteContext) {
     })
   }
 
+  // Idempotency guard — cegah double-charge kalau 2 request ticker sama barengan
+  // (double-click/retry). Best-effort: kalau tabel belum ada (migrasi 060 belum
+  // apply) / no service-role → skip guard (perilaku lama). Klaim di-release di finally.
+  const claimWriter = createAdminClient() ?? supabase
+  let claimActive = false
+  try {
+    await claimWriter
+      .from('research_generation_claims')
+      .delete()
+      .lt('claimed_at', new Date(Date.now() - 5 * 60_000).toISOString())
+    const { data: claimRows, error: claimErr } = await claimWriter
+      .from('research_generation_claims')
+      .upsert({ ticker, user_id: user.id }, { onConflict: 'ticker', ignoreDuplicates: true })
+      .select('ticker')
+    if (!claimErr && (claimRows?.length ?? 0) === 0) {
+      // Ticker ini lagi di-generate request lain → re-cek cache; kalau belum ada, minta tunggu.
+      const { data: c2 } = await supabase
+        .from('stock_research_cache')
+        .select('content, frontmatter, generated_at, model')
+        .eq('ticker', ticker)
+        .maybeSingle()
+      if (c2) {
+        return NextResponse.json({ ticker, content: c2.content, frontmatter: c2.frontmatter, generated_at: c2.generated_at, model: c2.model, cached: true })
+      }
+      return NextResponse.json({ error: 'Riset ticker ini lagi diproses, coba lagi sebentar.' }, { status: 409 })
+    }
+    claimActive = !claimErr
+  } catch { /* guard best-effort — lanjut tanpa klaim */ }
+
+  try {
   // Charge credits sebelum panggil Claude
   const credit = await consumeAICredits(supabase, user.id, 'stock_research')
   if (!credit.ok) {
@@ -189,6 +219,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     cached: false,
     credits_remaining: credit.remaining,
   })
+  } finally {
+    // Release klaim (kalau kita yang klaim) — lewat semua exit path di atas.
+    if (claimActive) {
+      try { await claimWriter.from('research_generation_claims').delete().eq('ticker', ticker) } catch { /* ignore */ }
+    }
+  }
 }
 
 function parseFrontmatter(md: string): Record<string, string | number> {
