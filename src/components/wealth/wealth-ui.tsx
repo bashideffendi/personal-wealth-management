@@ -19,7 +19,8 @@ export function WealthHeader({
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
+      {/* F9: judul pindah ke MobileAppBar di <md */}
+      <div className="hidden md:block min-w-0">
         {eyebrow && (
           <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
             {eyebrow}

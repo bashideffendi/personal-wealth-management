@@ -1245,3 +1245,50 @@ body[data-calm="true"] [data-loss]:hover {
   html { -webkit-tap-highlight-color: transparent; }
   body { overscroll-behavior-y: contain; }
 }
+
+/* ═══ F9 MOBILE SHELL — kanvas app-native (<md) ═══════════════════════════
+   Keputusan redesign 2026-07-02 (mockup lima layar di-approve user):
+   di HP kartu TANPA border/shadow — pemisahan datang dari kontras kanvas
+   (abu) vs permukaan (putih) + section header nempel kanvas, pola
+   grouped-list iOS/Revolut. Desktop & skin cartoon TIDAK berubah. */
+@media (max-width: 767px) {
+  :root:not([data-skin='cartoon']) {
+    --bg: #eff0f4;
+    --paper: #eff0f4;
+    --bg-2: #e8e9ee;
+    --card-shadow: none;
+    --card-radius: 16px;
+  }
+  :root.dark:not([data-skin='cartoon']) {
+    --bg: #0b0b10;
+    --paper: #0b0b10;
+    --bg-2: #101016;
+  }
+  :root:not([data-skin='cartoon']) .s-card {
+    border-color: transparent;
+    box-shadow: none;
+  }
+  :root:not([data-skin='cartoon']) .stat-tile {
+    border-color: transparent;
+    box-shadow: none;
+  }
+  /* Tile/kartu pola tailwind (rounded-xl|2xl + border) ikut borderless.
+     Border fungsional (input rounded-md/lg, chip rounded-full, border
+     berwarna via inline style) TIDAK kena — inline style menang. */
+  :root:not([data-skin='cartoon']) .rounded-xl.border,
+  :root:not([data-skin='cartoon']) .rounded-2xl.border {
+    border-color: transparent;
+  }
+  /* Section header nempel kanvas (dipakai layout mobile F9) */
+  .m-sec {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 14px 2px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .m-sec a, .m-sec button { font-size: 11.5px; font-weight: 500; color: var(--c-mint-ink); }
+}

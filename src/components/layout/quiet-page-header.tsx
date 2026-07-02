@@ -46,7 +46,8 @@ export function QuietPageHeader({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-      <div className="flex items-center gap-2 min-w-0">
+      {/* F9: judul pindah ke MobileAppBar di <md — cluster judul desktop-only */}
+      <div className="hidden md:flex items-center gap-2 min-w-0">
         {Icon && (
           <span
             className="grid place-items-center shrink-0 rounded-xl"

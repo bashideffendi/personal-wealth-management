@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { MobileHome } from '@/components/dashboard/mobile-home'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid, sumCashEquivalent } from '@/lib/liquid'
 import { isExpired, occurrencesInRange } from '@/lib/recurrence'
@@ -695,6 +696,21 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* F9: mobile = Beranda baru (6 modul, mockup approved); desktop = bento
+          existing utuh di dalam wrapper hidden md:contents. */}
+      <MobileHome
+        greeting={`${t(`dashboard.${now.getHours() < 11 ? 'greet_morning' : now.getHours() < 15 ? 'greet_afternoon' : now.getHours() < 19 ? 'greet_evening' : 'greet_night'}`)}${userFirstName ? `, ${userFirstName}` : ''}`}
+        todayLabel={new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+        netWorth={liquidTotal + nonLiquidTotal + investments.reduce((s, i) => s + (i.total_value || 0), 0) - debtTotal}
+        ytdPct={null}
+        income={totals.income}
+        expense={totals.expense}
+        monthLabel={currentMonthYear}
+        budget={budgetProgress}
+        transactions={monthTransactions}
+        investment={investmentSummary ?? null}
+      />
+      <div className="hidden md:contents">
       {/* flex-col + gap = ritme sama kayak space-y-6, tapi `order` bisa dipakai
           DashboardCustomizer buat reorder section (data-block) tanpa ngerombak DOM.
           Section fixed (hero/health/forecast/period) gak punya order → tetap di atas. */}
@@ -1408,6 +1424,7 @@ export default function DashboardPage() {
         ) : null}
       </DragOverlay>
       </DndContext>
+      </div>
 
     </div>
   )

@@ -11,11 +11,11 @@
  * top actions so switching is one tap from anywhere.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
-  Search, Bell, ChevronDown,
+  Search, Bell, ChevronDown, ArrowLeft,
 } from 'lucide-react'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
@@ -149,6 +149,76 @@ function NavDropdown({
   )
 }
 
+/**
+ * MobileAppBar — app bar kontekstual <md (F9 shell, 2026-07-02).
+ * Logo bar dibuang total di mobile: subhalaman = back + judul 17px (pola
+ * app native); Beranda = null (greeting dirender halaman). Judul dari
+ * NAV_ITEMS (longest prefix match) dgn fallback document.title yang
+ * di-set QuietPageHeader ("X · Klunting").
+ */
+function MobileAppBar({ pathname }: { pathname: string }) {
+  const { t } = useI18n()
+  const router = useRouter()
+  const [docTitle, setDocTitle] = useState('')
+
+  useEffect(() => {
+    // document.title di-set effect halaman — baca setelah macrotask biar kebaca.
+    const id = setTimeout(() => {
+      const dt = document.title.replace(/ · Klunting$/, '')
+      setDocTitle(dt === 'Klunting' ? '' : dt)
+    }, 60)
+    return () => clearTimeout(id)
+  }, [pathname])
+
+  const flat = useMemo(() => {
+    const out: NavItem[] = []
+    for (const it of NAV_ITEMS) {
+      out.push(it)
+      if (it.children) out.push(...it.children)
+    }
+    return out
+  }, [])
+
+  if (pathname === '/dashboard') return null
+
+  const matched = flat
+    .filter((it) => it.href !== '/dashboard' && matchesPath(pathname, it.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]
+  const title = matched ? (matched.titleKey ? t(matched.titleKey) : matched.label ?? '') : docTitle
+
+  function goBack() {
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back()
+    else router.push('/dashboard')
+  }
+
+  return (
+    <header
+      className="md:hidden sticky top-0 z-40"
+      style={{
+        background: 'color-mix(in srgb, var(--bg) 88%, transparent)',
+        backdropFilter: 'blur(14px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(14px) saturate(1.2)',
+        paddingTop: 'env(safe-area-inset-top)',
+      }}
+    >
+      <div className="flex items-center gap-1 px-2" style={{ height: 48 }}>
+        <button
+          type="button"
+          onClick={goBack}
+          aria-label="Kembali"
+          className="grid place-items-center size-9 rounded-full transition-colors active:bg-[var(--surface-2)]"
+          style={{ color: 'var(--ink)' }}
+        >
+          <ArrowLeft className="size-5" />
+        </button>
+        <h1 className="text-[17px] font-semibold truncate" style={{ color: 'var(--ink)', letterSpacing: '-0.01em', fontFamily: 'var(--font-display)' }}>
+          {title}
+        </h1>
+      </div>
+    </header>
+  )
+}
+
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname()
   const { t } = useI18n()
@@ -175,8 +245,10 @@ export function TopNav({ user }: TopNavProps) {
 
   return (
     <>
+      {/* F9: <md pakai app bar kontekstual, logo bar desktop-only */}
+      <MobileAppBar pathname={pathname} />
       <header
-        className="sticky top-0 z-40 transition-[background,backdrop-filter,border-color] duration-200"
+        className="hidden md:block sticky top-0 z-40 transition-[background,backdrop-filter,border-color] duration-200"
         style={{
           background: scrolled ? 'color-mix(in srgb, var(--bg) 80%, transparent)' : 'var(--bg)',
           backdropFilter: scrolled ? 'blur(14px) saturate(1.2)' : 'none',
