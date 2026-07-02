@@ -32,8 +32,16 @@ const TAB_HREFS = new Set([
 type SheetItem = { href: string; titleKey?: string; label: string; icon: string }
 
 const PRIMARY: SheetItem[] = NAV_ITEMS
-  .filter((it) => it.section === 'primary' && !TAB_HREFS.has(it.href))
+  .filter((it) => it.section === 'primary' && !TAB_HREFS.has(it.href) && it.href !== '/dashboard/net-worth')
   .map((it) => ({ href: it.href, titleKey: it.titleKey, label: it.label, icon: it.icon }))
+
+// Anak-anak "Kekayaan" (Net Worth, Akun, Aset Likuid/Non-Likuid, Utang, Kartu
+// Kredit, Dana Darurat) — di mobile gak muat jadi tab & tadinya gak ke-surface
+// di sheet sama sekali (Utang dll jadi susah dijangkau). Munculin di sini.
+const WEALTH_PARENT = NAV_ITEMS.find((it) => it.href === '/dashboard/net-worth')
+const WEALTH: SheetItem[] = (WEALTH_PARENT?.children ?? []).map((c) => ({
+  href: c.href, titleKey: c.titleKey, label: c.label, icon: 'Building2',
+}))
 
 const SECONDARY: SheetItem[] = NAV_ITEMS
   .filter((it) => it.section === 'secondary')
@@ -109,6 +117,7 @@ export function MoreSheet({
     <BottomSheet open={open} onOpenChange={onOpenChange} title={t('nav.menu')}>
       <div className="pt-1">
         <Section label={t('nav.section.main')} items={PRIMARY} />
+        <Section label={t('nav.wealth')} items={WEALTH} />
         <Section label={t('nav.section.secondary')} items={SECONDARY} />
         <Section label="Akun" items={ACCOUNT} />
       </div>

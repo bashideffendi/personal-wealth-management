@@ -38,7 +38,6 @@ const PRIMARY_HREFS = new Set<string>([
 ])
 
 const HIDDEN_HREFS = new Set<string>([
-  '/dashboard/rules',
   '/dashboard/subscriptions',
 ])
 
