@@ -18,6 +18,7 @@ import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useCategoryOptions } from '@/lib/use-category-options'
+import { adjustCardBalance } from '@/lib/data/balances'
 import type { Account, CreditCard } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -347,12 +348,9 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     // Bump credit card outstanding if applicable
     const cc = cards.find((c) => c.id === form.account_id)
     if (cc && form.type === 'expense' && !error) {
-      const { error: ccErr } = await supabase
-        .from('credit_cards')
-        .update({ current_balance: cc.current_balance + form.amount })
-        .eq('id', cc.id)
+      const { ok: ccOk } = await adjustCardBalance(supabase, cc.id, form.amount, cc.current_balance)
       // Jangan senyap: kalau saldo kartu gagal naik, kasih tau (samain jalur lain)
-      if (ccErr) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
+      if (!ccOk) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
     }
 
     setManualSaving(false)

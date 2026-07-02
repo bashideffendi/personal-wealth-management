@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { adjustCardBalance, adjustAccountBalance } from '@/lib/data/balances'
 import type { Account, CreditCard as CreditCardType, CreditCardPayment } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -222,10 +223,8 @@ export default function CreditCardsPage() {
     // tercatat tapi saldo gak berubah (yg bikin reversal over-credit pas dihapus).
     const card = cards.find((x) => x.id === payForm.card_id)
     if (card) {
-      const { error: cardErr } = await supabase.from('credit_cards')
-        .update({ current_balance: Math.max(0, card.current_balance - payForm.amount) })
-        .eq('id', card.id)
-      if (cardErr) {
+      const { ok: cardOk } = await adjustCardBalance(supabase, card.id, -payForm.amount, card.current_balance, true)
+      if (!cardOk) {
         await supabase.from('credit_card_payments').delete().eq('id', paymentId)
         setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
       }
@@ -236,10 +235,8 @@ export default function CreditCardsPage() {
     if (payForm.from_account_id) {
       const acc = accounts.find((a) => a.id === payForm.from_account_id)
       if (acc) {
-        const { error: accErr } = await supabase.from('accounts')
-          .update({ current_balance: acc.current_balance - payForm.amount })
-          .eq('id', acc.id)
-        if (accErr) {
+        const { ok: accOk } = await adjustAccountBalance(supabase, acc.id, -payForm.amount, acc.current_balance)
+        if (!accOk) {
           // rollback: balikin saldo kartu + hapus payment row (all-or-nothing)
           if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance }).eq('id', card.id)
           await supabase.from('credit_card_payments').delete().eq('id', paymentId)
@@ -258,14 +255,14 @@ export default function CreditCardsPage() {
     if (delErr) { toast.error(t('common.delete_failed')); return }
     const card = cards.find((x) => x.id === p.card_id)
     if (card) {
-      const { error } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + p.amount }).eq('id', card.id)
-      if (error) toast.error(t('common.mutation_failed'))
+      const { ok } = await adjustCardBalance(supabase, card.id, p.amount, card.current_balance)
+      if (!ok) toast.error(t('common.mutation_failed'))
     }
     if (p.from_account_id) {
       const acc = accounts.find((a) => a.id === p.from_account_id)
       if (acc) {
-        const { error } = await supabase.from('accounts').update({ current_balance: acc.current_balance + p.amount }).eq('id', acc.id)
-        if (error) toast.error(t('common.mutation_failed'))
+        const { ok } = await adjustAccountBalance(supabase, acc.id, p.amount, acc.current_balance)
+        if (!ok) toast.error(t('common.mutation_failed'))
       }
     }
     refresh()

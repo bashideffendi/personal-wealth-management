@@ -16,6 +16,7 @@ import type { Transaction, Account, CreditCard, CategorizationRule } from '@/typ
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
+import { adjustCardBalance } from '@/lib/data/balances'
 
 import { Button } from '@/components/ui/button'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
@@ -674,8 +675,8 @@ export default function TransactionsPage() {
       if (delta === 0) continue
       const card = creditCards.find((c) => c.id === cardId)
       if (card) {
-        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
-        if (ccErr) ccSyncFailed = true
+        const { ok: ccOk } = await adjustCardBalance(supabase, cardId, delta, card.current_balance)
+        if (!ccOk) ccSyncFailed = true
       }
     }
 
@@ -695,8 +696,8 @@ export default function TransactionsPage() {
     if (tx && tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
       const card = creditCards.find((c) => c.id === tx.account_id)
       if (card) {
-        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance - tx.amount }).eq('id', card.id)
-        if (ccErr) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
+        const { ok: ccOk } = await adjustCardBalance(supabase, card.id, -tx.amount, card.current_balance)
+        if (!ccOk) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
       }
     }
     toast.success(t('transactions.toast_deleted'))
@@ -737,8 +738,8 @@ export default function TransactionsPage() {
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
       const card = creditCards.find((c) => c.id === cardId)
       if (card && delta !== 0) {
-        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
-        if (ccErr) ccSyncFailed = true
+        const { ok: ccOk } = await adjustCardBalance(supabase, cardId, delta, card.current_balance)
+        if (!ccOk) ccSyncFailed = true
       }
     }
     if (ccSyncFailed) toast.warning('Saldo kartu kredit gagal diperbarui untuk sebagian item. Cek di halaman Kartu Kredit.')
