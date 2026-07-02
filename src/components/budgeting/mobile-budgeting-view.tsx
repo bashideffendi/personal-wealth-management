@@ -23,6 +23,9 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
+import { RingProgress } from '@/components/ui/ring-progress'
+import { CategoryIcon } from '@/components/transactions/category-icon'
+import { categoryHue } from '@/lib/category-hue'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { useI18n } from '@/lib/i18n/context'
 import { monthLong } from '@/lib/i18n/dates'
@@ -150,37 +153,46 @@ export function MobileBudgetingView({
         </button>
       </div>
 
-      {/* Kartu ringkasan — terpakai vs dialokasikan bulan terpilih */}
-      <section className="s-card px-3.5 py-3 mt-3">
-        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-          {t('safe_card.spent')} · {monthLong(month - 1, locale)}
-        </p>
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
+      {/* Kartu ringkasan — F10: ring besar % terpakai (momen visual ala
+          Budggt "HARI 13") + angka & chip sisa di kanan */}
+      <section className="s-card px-4 py-3.5 mt-3 flex items-center gap-4">
+        <RingProgress
+          pct={spentPct}
+          size={84}
+          strokeWidth={9}
+          color={overBudget ? 'var(--c-coral)' : 'var(--c-mint)'}
+          label={allocated > 0 ? `${Math.round(Math.min(spentPct, 999))}%` : '—'}
+          subLabel={t('safe_card.spent').toLowerCase()}
+          className="shrink-0"
+        />
+        <div className="min-w-0">
+          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+            {t('safe_card.spent')} · {monthLong(month - 1, locale)}
+          </p>
+          <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+            <span
+              className="num tabular font-semibold"
+              style={{ fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink)' }}
+              title={full(spent)}
+            >
+              {compact(spent)}
+            </span>
+            <span className="text-[11.5px]" style={{ color: 'var(--ink-soft)' }} title={full(allocated)}>
+              / <span className="num">{compact(allocated)}</span> {t('mobile_budget.allocated').toLowerCase()}
+            </span>
+          </p>
           <span
-            className="num tabular font-semibold"
-            style={{ fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink)' }}
-            title={full(spent)}
+            className="num tabular inline-block mt-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium"
+            style={{
+              background: overBudget ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)',
+              color: overBudget ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)',
+            }}
           >
-            {compact(spent)}
+            {overBudget
+              ? `${privacyHidden ? 'Rp ••••' : formatCompactCurrency(spent - allocated)} ${t('month_budget.stat_remaining_over')}`
+              : `${t('month_budget.stat_remaining')} ${privacyHidden ? 'Rp ••••' : formatCompactCurrency(allocated - spent)}`}
           </span>
-          <span className="text-[11.5px]" style={{ color: 'var(--ink-soft)' }} title={full(allocated)}>
-            / <span className="num">{compact(allocated)}</span> {t('mobile_budget.allocated').toLowerCase()}
-          </span>
-        </p>
-        <div className="mt-2 h-[6px] rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }} aria-hidden>
-          <div
-            className="h-full rounded-full"
-            style={{ width: `${Math.min(spentPct, 100)}%`, background: overBudget ? 'var(--c-coral)' : 'var(--c-mint)' }}
-          />
         </div>
-        <p
-          className="num tabular text-[11px] mt-1.5"
-          style={{ color: overBudget ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}
-        >
-          {overBudget
-            ? `${privacyHidden ? 'Rp ••••' : formatCurrency(spent - allocated)} ${t('month_budget.stat_remaining_over')}`
-            : `${t('month_budget.stat_remaining')} ${privacyHidden ? 'Rp ••••' : formatCurrency(allocated - spent)}`}
-        </p>
       </section>
 
       {/* Strip over-alokasi (rencana > pendapatan) — ramping, bukan banner */}
@@ -223,19 +235,31 @@ export function MobileBudgetingView({
                 const sepIdx = cat.indexOf(SUB_SEP)
                 const isSub = sepIdx !== -1
                 const label = isSub ? cat.slice(sepIdx + SUB_SEP.length) : cat
+                // F10: hue kategori — sub ikut hue induknya biar satu keluarga.
+                const hue = categoryHue(isSub ? cat.slice(0, sepIdx) : cat)
                 const rowKey = `${section.key}|${cat}`
                 const isEditing = editing?.key === rowKey
                 return (
                   <div key={cat} className="py-2" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
                     <div className="flex items-center justify-between gap-2 min-h-[24px]">
-                      <p
-                        className="text-[12.5px] font-medium truncate"
-                        style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
-                        title={cat}
-                      >
-                        {isSub && <span className="mr-1 opacity-40">└</span>}
-                        {label}
-                      </p>
+                      <span className="flex items-center gap-2 min-w-0">
+                        {!isSub && (
+                          <span
+                            className="grid place-items-center size-6 rounded-[8px] shrink-0"
+                            style={{ background: hue.soft, color: hue.ink }}
+                          >
+                            <CategoryIcon category={label} className="size-[13px]" />
+                          </span>
+                        )}
+                        <p
+                          className="text-[12.5px] font-medium truncate"
+                          style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
+                          title={cat}
+                        >
+                          {isSub && <span className="mr-1 opacity-40">└</span>}
+                          {label}
+                        </p>
+                      </span>
                       {isEditing ? (
                         <NumberInput
                           autoFocus
@@ -267,7 +291,7 @@ export function MobileBudgetingView({
                     <div className="mt-1.5 h-[5px] rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }} aria-hidden>
                       <div
                         className="h-full rounded-full"
-                        style={{ width: `${Math.min(pct, 100)}%`, background: overRow ? 'var(--c-coral)' : 'var(--c-mint)' }}
+                        style={{ width: `${Math.min(pct, 100)}%`, background: overRow ? 'var(--c-coral)' : hue.bar }}
                       />
                     </div>
                   </div>

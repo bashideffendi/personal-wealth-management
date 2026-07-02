@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { RingProgress } from '@/components/ui/ring-progress'
 import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import { useT } from '@/lib/i18n/context'
@@ -419,8 +420,39 @@ export default function GoalsPage() {
         </div>
       ) : (
         <>
-          {/* 4 stat cards */}
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          {/* F10 mobile: ringkasan = ring total terkumpul (4 tile pindah md+) */}
+          <section className="s-card px-4 py-3.5 flex items-center gap-4 md:hidden">
+            <RingProgress
+              pct={stats.pct}
+              size={84}
+              strokeWidth={9}
+              color="var(--c-violet)"
+              label={stats.totalTarget > 0 ? `${stats.pct.toFixed(0)}%` : '—'}
+              subLabel={t('goals.of_target')}
+              className="shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                {t('goals.stat_collected')} · {activeGoals.length} {t('goals.goals_unit')}
+              </p>
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+                <span className="num tabular font-semibold" style={{ fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink)' }} title={formatCurrency(stats.totalCurrent)}>
+                  {formatCompactCurrency(stats.totalCurrent)}
+                </span>
+                <span className="num text-[11.5px]" style={{ color: 'var(--ink-soft)' }} title={formatCurrency(stats.totalTarget)}>
+                  / {formatCompactCurrency(stats.totalTarget)}
+                </span>
+              </p>
+              {stats.avgProb != null && (
+                <span className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                  {t('goals.stat_avg_probability')} {stats.avgProb.toFixed(0)}%
+                </span>
+              )}
+            </div>
+          </section>
+
+          {/* 4 stat cards (md+) */}
+          <div className="hidden md:grid gap-3 grid-cols-2 lg:grid-cols-4">
             {statCards.map((c) => (
               <div key={c.label} className="s-card p-5">
                 <div className="flex items-start justify-between">
@@ -459,7 +491,16 @@ export default function GoalsPage() {
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
+                        {/* F10 mobile: ring progres gantiin chip ikon (md+ tetap ikon) */}
+                        <RingProgress
+                          pct={pct}
+                          size={36}
+                          strokeWidth={4}
+                          color={done ? 'var(--c-mint)' : layerColor}
+                          label={`${Math.min(pct, 999).toFixed(0)}`}
+                          className="shrink-0 md:hidden"
+                        />
+                        <div className="size-8 rounded-xl hidden md:flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
                           <Icon className="size-4" style={{ color: layerInk }} />
                         </div>
                         <div className="min-w-0">
