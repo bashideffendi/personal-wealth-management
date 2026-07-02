@@ -136,8 +136,8 @@ export function ValuationConsensus({
           </div>
         )}
 
-        {/* ── Per-method table ────────────────────────────────────── */}
-        <div className="overflow-x-auto rounded-md border" style={{ borderColor: 'var(--border-soft)' }}>
+        {/* ── Per-method table (desktop) ──────────────────────────── */}
+        <div className="hidden md:block overflow-x-auto rounded-md border" style={{ borderColor: 'var(--border-soft)' }}>
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: 'var(--surface-2)' }}>
@@ -211,6 +211,52 @@ export function ValuationConsensus({
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Per-method list (mobile) — baris ringkas, formula via dialog info ── */}
+        <div className="md:hidden rounded-md border overflow-hidden" style={{ borderColor: 'var(--border-soft)' }}>
+          {data.results.map((r, idx) => {
+            const suitability = getSuitability(r.method, sector)
+            const isAvoid = suitability === 'avoid'
+            const suit = suitStyle(suitability)
+            return (
+              <div
+                key={r.method}
+                className="flex items-center gap-3 px-3 py-2"
+                style={{
+                  minHeight: 56,
+                  borderTop: idx === 0 ? undefined : '1px solid var(--border-soft)',
+                  background: isAvoid ? 'rgba(244,63,94,0.04)' : undefined,
+                }}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[14px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                      {r.method}
+                    </span>
+                    <MethodInfoDialog methodKey={r.method} sector={sector} />
+                  </div>
+                  <span
+                    className="mt-0.5 inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-semibold"
+                    style={{ background: suit.bg, color: suit.fg }}
+                  >
+                    {suitabilityLabel(suitability)}
+                  </span>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                    {r.fairValue === null ? '—' : `Rp ${formatPrice(r.fairValue)}`}
+                  </p>
+                  <p
+                    className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5"
+                    style={{ color: signColorVar(r.mos), opacity: isAvoid ? 0.6 : 1 }}
+                  >
+                    {formatPercentValue(r.mos)}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         {/* ── Global assumptions footer ───────────────────────────── */}

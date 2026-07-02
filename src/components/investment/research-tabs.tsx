@@ -336,30 +336,59 @@ export function ResearchTabs(props: ResearchTabsProps) {
                     {t('research_tabs.upcoming_dividends')}
                   </p>
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('research_tabs.col_period')}</TableHead>
-                      <TableHead>Ex-Date</TableHead>
-                      <TableHead>Pay Date</TableHead>
-                      <TableHead className="text-right">{t('research_tabs.col_per_share')}</TableHead>
-                      <TableHead className="text-right">Yield*</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {upcomingDividends.map((e, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{e.period}</TableCell>
-                        <TableCell className="font-medium">{e.exDate}</TableCell>
-                        <TableCell>{e.payDate}</TableCell>
-                        <TableCell className="text-right num">Rp {formatPrice(e.dividend)}</TableCell>
-                        <TableCell className="text-right num" style={{ color: 'var(--c-mint-ink)' }}>
-                          {price > 0 ? formatPercentValue(e.dividend / price) : '—'}
-                        </TableCell>
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('research_tabs.col_period')}</TableHead>
+                        <TableHead>Ex-Date</TableHead>
+                        <TableHead>Pay Date</TableHead>
+                        <TableHead className="text-right">{t('research_tabs.col_per_share')}</TableHead>
+                        <TableHead className="text-right">Yield*</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {upcomingDividends.map((e, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{e.period}</TableCell>
+                          <TableCell className="font-medium">{e.exDate}</TableCell>
+                          <TableCell>{e.payDate}</TableCell>
+                          <TableCell className="text-right num">Rp {formatPrice(e.dividend)}</TableCell>
+                          <TableCell className="text-right num" style={{ color: 'var(--c-mint-ink)' }}>
+                            {price > 0 ? formatPercentValue(e.dividend / price) : '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {/* Mobile: baris ringkas tanggal + nilai */}
+                <div className="md:hidden">
+                  {upcomingDividends.map((e, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-5 py-2"
+                      style={{ minHeight: 56, borderTop: i === 0 ? undefined : '1px solid var(--border-soft)' }}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-medium leading-tight truncate" style={{ color: 'var(--ink)' }}>{e.period}</p>
+                        <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                          Ex {e.exDate ?? '—'} · Pay {e.payDate ?? '—'}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                          Rp {formatPrice(e.dividend)}
+                        </p>
+                        {price > 0 && (
+                          <p className="num tabular text-[11px] font-semibold leading-tight mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>
+                            Yield* {formatPercentValue(e.dividend / price)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
             <div className="px-5 py-3 flex items-center gap-2" style={{ borderTop: upcomingDividends.length > 0 ? '1px solid var(--border-soft)' : undefined, borderBottom: '1px solid var(--border-soft)' }}>
@@ -371,7 +400,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
                 {pastDividends.length} {t('research_tabs.payments_suffix')}
               </span>
             </div>
-            <div className="overflow-x-auto max-h-[400px]">
+            <div className="hidden md:block overflow-x-auto max-h-[400px]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -392,6 +421,26 @@ export function ResearchTabs(props: ResearchTabsProps) {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+            {/* Mobile: baris ringkas tanggal + nilai (scroll internal ikut versi desktop) */}
+            <div className="md:hidden max-h-[420px] overflow-y-auto">
+              {pastDividends.map((e, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-5 py-2"
+                  style={{ minHeight: 52, borderTop: i === 0 ? undefined : '1px solid var(--border-soft)' }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-medium leading-tight truncate" style={{ color: 'var(--ink)' }}>{e.period}</p>
+                    <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                      Ex {e.exDate ?? '—'} · Pay {e.payDate ?? '—'}
+                    </p>
+                  </div>
+                  <p className="num tabular text-[14px] font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
+                    Rp {formatPrice(e.dividend)}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -435,7 +484,7 @@ function ResearchView({
           <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
             <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('research_tabs.investment_thesis')}</p>
             <p
-              className="mt-2 pl-4 border-l-2 italic leading-relaxed text-base sm:text-lg"
+              className="mt-2 pl-4 border-l-2 italic leading-relaxed text-[15px] sm:text-base"
               style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
             >
               {research.frontmatter.thesis}
@@ -443,7 +492,25 @@ function ResearchView({
           </div>
         )}
         <div className="prose-research max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{research.body}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              // Tabel markdown (mis. "Highlights Finansial — Tren 5 Tahun") bisa
+              // 6-7 kolom: bungkus scroll horizontal + edge-fade di mobile biar
+              // kolom terakhir gak keiris diam-diam.
+              table: (props) => {
+                const { node, ...tableProps } = props
+                void node
+                return (
+                  <div className="md-table-scroll">
+                    <table {...tableProps} />
+                  </div>
+                )
+              },
+            }}
+          >
+            {research.body}
+          </ReactMarkdown>
         </div>
       </article>
 
@@ -475,12 +542,17 @@ function ResearchView({
           margin-bottom: 0.4em;
           color: var(--ink);
         }
+        /* Mobile: rata kiri — justify di kolom sempit bikin "rivers" spasi */
         :global(.prose-research p) {
           margin: 0.7em 0;
           color: var(--ink-muted);
-          text-align: justify;
-          text-justify: inter-word;
           hyphens: auto;
+        }
+        @media (min-width: 768px) {
+          :global(.prose-research p) {
+            text-align: justify;
+            text-justify: inter-word;
+          }
         }
         :global(.prose-research strong) {
           color: var(--ink);
@@ -520,6 +592,27 @@ function ResearchView({
           border-collapse: collapse;
           margin: 1em 0;
           font-size: 13px;
+        }
+        /* Wrapper scroll horizontal tabel markdown (min-w tetap + edge-fade
+           mobile sebagai indikator masih ada kolom di kanan) */
+        :global(.prose-research .md-table-scroll) {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          margin: 1em 0;
+        }
+        :global(.prose-research .md-table-scroll table) {
+          margin: 0;
+          min-width: 560px;
+        }
+        :global(.prose-research .md-table-scroll th),
+        :global(.prose-research .md-table-scroll td) {
+          white-space: nowrap;
+        }
+        @media (max-width: 767px) {
+          :global(.prose-research .md-table-scroll) {
+            mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+            -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+          }
         }
         :global(.prose-research th),
         :global(.prose-research td) {

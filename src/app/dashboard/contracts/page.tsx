@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus, Pencil, Trash2, Loader2, Archive, ArchiveRestore, Search, Check,
+  Plus, Trash2, Loader2, Archive, ArchiveRestore, Search, Check,
   Shield, Landmark, Briefcase, Building2, KeyRound, Clock, Package, FileText,
   ShieldCheck, RefreshCw, CalendarClock, type LucideIcon,
 } from 'lucide-react'
@@ -247,25 +247,34 @@ export default function ContractsPage() {
                       : c.policy_number || meta.label
                     const badge = st === 'overdue' ? { t: t('contracts.badge_overdue'), c: CORAL, ink: CORAL_INK } : st === 'expiring' ? { t: t('contracts.badge_renewal'), c: AMBER, ink: AMBER_INK } : { t: t('contracts.badge_active'), c: MINT, ink: MINT_INK }
                     return (
-                      <div key={c.id} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-2)] transition-colors">
-                        <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                      <div
+                        key={c.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openEdit(c)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEdit(c) } }}
+                        aria-label={`${t('contracts.dialog_title_edit')}: ${c.name}`}
+                        className="group flex items-center gap-3 px-4 py-2 hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] transition-colors cursor-pointer"
+                        style={{ minHeight: 56 }}
+                      >
+                        <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                          <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{sub}</p>
+                          <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                          <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                            <span className="font-medium" style={{ color: badge.ink }}>{badge.t}</span>{' · '}{sub}
+                          </p>
                         </div>
                         <span className="hidden sm:inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
                         <div className="hidden md:block text-right w-24 shrink-0">
                           <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('contracts.col_remaining')}</p>
                           <p className="num text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{humanizeSisa(c.end_date, today)}</p>
                         </div>
-                        <div className="text-right w-28 shrink-0">
-                          {c.cost ? <><p className="num text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
+                        <div className="text-right shrink-0">
+                          {c.cost ? <><p className="num tabular-nums text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
                         </div>
-                        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: tint(badge.c, 10), color: badge.ink }}>{badge.t}</span>
                         <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
-                          <Button variant="ghost" size="icon-sm" onClick={() => openEdit(c)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => toggleArchive(c)} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => remove(c.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); toggleArchive(c) }} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')} aria-label={`${c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}: ${c.name}`}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); remove(c.id) }} aria-label={`${t('debts.delete')}: ${c.name}`}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                         </div>
                       </div>
                     )
@@ -279,16 +288,16 @@ export default function ContractsPage() {
                 <div className="s-card p-5">
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.timeline_title')}</p>
                   <p className="text-base mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{expiring.length} {t('contracts.timeline_subtitle')}</p>
-                  <div className="mt-4 space-y-3">
-                    {timeline.map((c) => {
+                  <div className="mt-2">
+                    {timeline.map((c, i) => {
                       const st = getStatus(c, today)
                       const color = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : MINT_INK
                       return (
-                        <div key={c.id} className="flex items-start gap-4 rounded-xl px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
+                        <div key={c.id} className="flex items-start gap-4 py-2.5" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
                           <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date)}</span>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
-                            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
+                            <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
+                            <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
                           </div>
                         </div>
                       )

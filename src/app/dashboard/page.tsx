@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, getMonthName } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid, sumCashEquivalent } from '@/lib/liquid'
 import { isExpired, occurrencesInRange } from '@/lib/recurrence'
@@ -165,6 +166,8 @@ export default function DashboardPage() {
   // Drag overlay — visual yg gerak pas drag (bukan kartu in-place). dragSize =
   // footprint kartu sumber biar preview-nya seukuran aslinya.
   const [activeId, setActiveId] = useState<string | null>(null)
+  // Sheet sankey penuh (mobile) — kartu Beranda cuma ringkasan in/out/sisa.
+  const [sankeySheetOpen, setSankeySheetOpen] = useState(false)
   const [dragSize, setDragSize] = useState<{ w: number; h: number } | null>(null)
   const [dragHtml, setDragHtml] = useState<string>('')
   const dragSensors = useSensors(
@@ -857,8 +860,8 @@ export default function DashboardPage() {
               {t('dashboard.money_flow_sub')}
             </p>
           </div>
-          {/* Legend — wraps on narrow screens */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          {/* Legend — ikut grouping sankey (nabung+investasi = satu grup violet) */}
+          <div className="hidden md:flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-mint)' }} />
               {t('dashboard.kpi_income')}
@@ -868,18 +871,15 @@ export default function DashboardPage() {
               {t('dashboard.kpi_expense')}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-amber)' }} />
-              {t('dashboard.saving')}
-            </span>
-            <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-violet)' }} />
-              {t('dashboard.investment')}
+              {t('dashboard.saving')} + {t('dashboard.investment')}
             </span>
           </div>
         </div>
 
-        {/* Two renders so we can tune layout per breakpoint without media queries
-            inside the chart itself. Tailwind hides the inactive one. */}
+        {/* Desktop: sankey inline. Mobile: kartu RINGKAS (in/out/sisa + bar) yang
+            nge-tap buka sheet sankey penuh — keputusan review: thumbnail bukan
+            tempat sankey; layar penuh khusus ala Stockbit. */}
         <div className="hidden md:flex md:flex-1 md:min-h-0 md:flex-col">
           <MoneyFlowSankey
             income={sankeyData.income}
@@ -889,13 +889,69 @@ export default function DashboardPage() {
           />
         </div>
         <div className="md:hidden">
-          <MoneyFlowSankey
-            income={sankeyData.income}
-            outflow={sankeyData.outflow}
-            compact
-            height={Math.max(300, Math.min(420, 60 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 30))}
-            emptyMessage={t('dashboard.sankey_empty')}
-          />
+          {(() => {
+            const totalIn = sankeyData.income.reduce((s, c) => s + c.amount, 0)
+            const exp = sankeyData.outflow.filter((c) => c.kind === 'expense').reduce((s, c) => s + c.amount, 0)
+            const sav = sankeyData.outflow.filter((c) => c.kind === 'saving' || c.kind === 'investment').reduce((s, c) => s + c.amount, 0)
+            const totalOut = sankeyData.outflow.reduce((s, c) => s + c.amount, 0)
+            if (totalIn === 0 && totalOut === 0) {
+              return (
+                <p className="text-[13px] text-center py-4" style={{ color: 'var(--ink-soft)' }}>
+                  {t('dashboard.sankey_empty')}
+                </p>
+              )
+            }
+            const base = Math.max(totalIn, totalOut)
+            const sisa = Math.max(0, totalIn - totalOut)
+            const pct = (v: number) => `${(v / base) * 100}%`
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  {[
+                    { label: t('dashboard.sankey_in'), val: totalIn, color: 'var(--c-mint-ink)' },
+                    { label: t('dashboard.sankey_out'), val: totalOut, color: 'var(--c-coral-ink)' },
+                    { label: t('dashboard.sankey_left'), val: sisa, color: 'var(--ink)' },
+                  ].map((s) => (
+                    <div key={s.label} className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{s.label}</p>
+                      <p className="num tabular text-[14px] font-semibold mt-0.5" title={formatCurrency(s.val)} style={{ color: s.color }}>
+                        {formatCompactCurrency(s.val)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2.5 flex h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }} aria-hidden>
+                  {exp > 0 && <span style={{ width: pct(exp), background: 'var(--c-coral)' }} />}
+                  {sav > 0 && <span style={{ width: pct(sav), background: 'var(--c-violet)' }} />}
+                  {sisa > 0 && <span style={{ width: pct(sisa), background: 'color-mix(in srgb, var(--ink) 22%, transparent)' }} />}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSankeySheetOpen(true)}
+                  className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border py-2 text-[13px] font-medium transition-colors active:bg-[var(--surface-2)]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--ink)' }}
+                >
+                  {t('dashboard.sankey_view_full')} →
+                </button>
+              </>
+            )
+          })()}
+          <BottomSheet
+            open={sankeySheetOpen}
+            onOpenChange={setSankeySheetOpen}
+            title={t('dashboard.money_flow')}
+            description={t('dashboard.money_flow_sub')}
+          >
+            <div className="px-1 pb-2">
+              <MoneyFlowSankey
+                income={sankeyData.income}
+                outflow={sankeyData.outflow}
+                compact
+                height={Math.max(420, Math.min(560, 80 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 52))}
+                emptyMessage={t('dashboard.sankey_empty')}
+              />
+            </div>
+          </BottomSheet>
         </div>
         </div>
       </SortableSection>
@@ -919,14 +975,13 @@ export default function DashboardPage() {
       {/* Activity calendar (per-card, span 2) */}
       <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
-        <div className="s-card p-5 sm:p-6 h-full">
-          <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
-            <div>
-              <p className="eyebrow">{t('dashboard.activity_this_month')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
-                {MONTHS[selectedMonth - 1]} {selectedYear}
-              </h3>
-            </div>
+        <div className="s-card p-4 sm:p-5 h-full">
+          <div className="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
+            {/* Eyebrow-only (ala Stockbit) — bulan+tahun digabung ke eyebrow
+                biar konteks periode gak hilang pas t-h2 dibuang. */}
+            <p className="eyebrow">
+              {t('dashboard.activity_this_month')} · {MONTHS[selectedMonth - 1]} {selectedYear}
+            </p>
             <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded" style={{ background: 'var(--c-mint)' }} />
@@ -982,7 +1037,7 @@ export default function DashboardPage() {
                     font so amounts fit inside. */}
                 <div className="grid grid-cols-7 gap-1 flex-1 auto-rows-fr min-h-0">
                   {days.map((d, i) => {
-                    if (d.day === null) return <div key={`pad-${i}`} className="min-h-[38px]" />
+                    if (d.day === null) return <div key={`pad-${i}`} className="min-h-[32px]" />
                     const isToday = isCurrentMonth && d.day === todayDay
                     const hasIncome = d.income > 0
                     const hasExpense = d.expense > 0
@@ -1018,10 +1073,12 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={d.day}
-                        className="min-h-[38px] rounded-md relative flex flex-col items-start justify-between p-1 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
+                        className="min-h-[32px] rounded-md relative flex flex-col items-start justify-between px-1 py-0.5 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
                         style={{
-                          background: bg || 'var(--surface-2)',
-                          border: isToday ? '2px solid var(--c-mint)' : '1px solid var(--border-soft)',
+                          // Borderless: tint = penanda aktivitas (sel kosong polos),
+                          // cuma "hari ini" yang dapet ring mint.
+                          background: bg,
+                          border: isToday ? '2px solid var(--c-mint)' : 'none',
                         }}
                         title={tooltipParts.join(' · ')}
                       >
@@ -1036,10 +1093,20 @@ export default function DashboardPage() {
                           <div className="w-full text-right leading-none">
                             {hasIncome && hasExpense ? (
                               <>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+                                {/* Mobile: 1 baris net aja — 2 baris bikin SEMUA baris
+                                    kalender (auto-rows-fr) ikut melar. Detail tetap ada
+                                    di tooltip + breakdown per-hari. */}
+                                <p
+                                  className="sm:hidden num tabular text-[9px] font-semibold"
+                                  style={{ color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+                                >
+                                  {net >= 0 ? '+' : '−'}
+                                  {tight(net)}
+                                </p>
+                                <p className="hidden sm:block num tabular text-[9px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                                   +{tight(d.income)}
                                 </p>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
+                                <p className="hidden sm:block num tabular text-[9px] font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
                                   −{tight(d.expense)}
                                 </p>
                               </>
@@ -1067,15 +1134,12 @@ export default function DashboardPage() {
 
       {/* Budget Progress (per-card, span 1) */}
       <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
-        <div className="s-card p-6 h-full">
-          <div className="mb-4">
+        <div className="s-card p-4 sm:p-5 h-full">
+          <div className="mb-3">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
-            <h3 className="t-h2 mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-              {t('dashboard.expense_categories')}
-            </h3>
           </div>
           {budgetProgress.length === 0 ? (
-            <div className="flex h-[200px] items-center justify-center text-center text-sm px-4" style={{ color: 'var(--ink-soft)' }}>
+            <div className="flex items-center justify-center text-center text-sm px-4 py-6" style={{ color: 'var(--ink-soft)' }}>
               <span>
                 {t('dashboard.no_budget')}.{' '}
                 <a href="/dashboard/budgeting" className="inline-flex items-center gap-1 font-medium" style={{ color: 'var(--c-mint-ink)' }}>
@@ -1125,14 +1189,9 @@ export default function DashboardPage() {
       </SortableSection>
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
       <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
-        <div className="s-card p-6 h-full">
-          <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
-            <div>
-              <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
-                {t('dashboard.income_vs_expense')}
-              </h3>
-            </div>
+        <div className="s-card p-4 sm:p-5 h-full">
+          <div className="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
+            <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
             {/* Surplus/Deficit chip per mockup line 168 */}
             {(() => {
               const yearIncome = monthlyData.reduce((s, m) => s + m.income, 0)
@@ -1159,13 +1218,8 @@ export default function DashboardPage() {
       {/* Investment allocation donut (per-card, span 1) */}
       <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
         <div className="s-card p-5 sm:p-6 flex flex-col h-full">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="eyebrow">{t('dashboard.portfolio')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-                {t('dashboard.investment_allocation')}
-              </h3>
-            </div>
+          <div className="flex items-center justify-between gap-3">
+            <p className="eyebrow">{t('dashboard.portfolio')}</p>
             <Link
               href="/dashboard/assets/investment"
               className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
@@ -1176,10 +1230,10 @@ export default function DashboardPage() {
           </div>
 
           {investmentPieData.length === 0 ? (
-            <div className="flex flex-1 min-h-[240px] flex-col items-center justify-center text-center px-6">
-              <div className="size-14 rounded-2xl flex items-center justify-center mb-3"
+            <div className="flex flex-1 flex-col items-center justify-center text-center px-6 py-6">
+              <div className="size-10 rounded-xl flex items-center justify-center mb-2"
                 style={{ background: 'var(--c-violet-soft)' }}>
-                <TrendingUp className="size-7" style={{ color: 'var(--c-violet-ink)' }} />
+                <TrendingUp className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                 {t('dashboard.no_investment')}

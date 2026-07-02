@@ -550,10 +550,12 @@ export default function InvestmentCategoryPage() {
             : `${t('investment_detail.manage_positions')} ${subcat.label.toLowerCase()}.`}
         </p>
         <div className="flex gap-2 items-center flex-wrap">
-          {/* View toggle — Card / List. Hidden when no positions yet. */}
+          {/* View toggle — Card / List. Hidden when no positions yet.
+              Desktop-only: di mobile kedua view render baris ringkas yang
+              sama (F8d density), jadi toggle-nya no-op di sana. */}
           {items.length > 0 && (
             <div
-              className="flex items-center rounded-md border overflow-hidden"
+              className="hidden md:flex items-center rounded-md border overflow-hidden"
               style={{ borderColor: 'var(--outline)' }}
             >
               <button
@@ -608,8 +610,8 @@ export default function InvestmentCategoryPage() {
           <Button variant="outline" onClick={() => void load()}>{t('common.retry')}</Button>
         </div>
       ) : items.length === 0 ? (
-        <div className="s-card p-12 text-center">
-          <p className="text-5xl">{subcat.emoji}</p>
+        <div className="s-card p-8 text-center">
+          <p className="text-3xl">{subcat.emoji}</p>
           <p className="mt-3 font-semibold">{t('investment_detail.empty_no_positions')} {subcat.label}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('investment_detail.empty_hint')}</p>
         </div>
@@ -641,10 +643,82 @@ export default function InvestmentCategoryPage() {
           />
         </div>
 
+        {/* ─── MOBILE LIST ─── F8d density: baris ringkas ~60px dalam SATU
+            kartu + divider hairline, dipakai KEDUA view (card/list) — tabel
+            12 kolom & grid kartu tinggal di desktop. Tap baris → edit posisi;
+            hapus = icon kecil kanan (stopPropagation), pola list transaksi. */}
+        <div className="s-card p-0 overflow-hidden md:hidden">
+          {enriched.map((e, idx) => {
+            const pos = e.pl >= 0
+            const tick = category === 'stock' && e.i.ticker
+              ? fromYahooTicker(e.i.ticker)
+              : category === 'crypto' && e.i.ticker
+                ? cryptoBase(e.i.ticker)
+                : (e.i.ticker ?? '')
+            return (
+              <div
+                key={e.i.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => openEdit(e.i)}
+                onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openEdit(e.i) } }}
+                aria-label={`${t('investment_detail.aria_edit_position')}: ${e.i.name}`}
+                className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)] cursor-pointer"
+                style={{ minHeight: 60, borderTop: idx ? '1px solid var(--border-soft)' : 'none' }}
+              >
+                {category === 'stock' ? (
+                  <StockLogo ticker={e.i.ticker} size={32} shape="circle" />
+                ) : category === 'crypto' ? (
+                  <CryptoLogo symbol={e.i.ticker} size={32} shape="circle" />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
+                  <p className="num tabular text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                    {tick ? `${tick} · ` : ''}{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</p>
+                  {e.invested > 0 && (
+                    <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                      {pos ? '+' : ''}{e.plPct.toFixed(2)}%
+                    </p>
+                  )}
+                </div>
+                {/* Akses riset/detail dari mobile (tap baris = edit) — tanpa ini
+                    deep-link riset cuma kejangkau dari tabel desktop. */}
+                {(showStockResearch || category === 'crypto') && e.i.ticker ? (
+                  <Link
+                    href={showStockResearch
+                      ? `/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`
+                      : `/dashboard/assets/investment/crypto/${cryptoBase(e.i.ticker)}`}
+                    onClick={(ev) => ev.stopPropagation()}
+                    aria-label={`Research: ${e.i.name}`}
+                    className="grid place-items-center size-7 rounded-md shrink-0 transition-colors active:bg-[var(--surface-2)]"
+                    style={{ color: 'var(--ink-soft)' }}
+                  >
+                    <FileSearch className="size-3.5" />
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={(ev) => { ev.stopPropagation(); remove(e.i.id) }}
+                  aria-label={`${t('investment_detail.aria_delete_position')}: ${e.i.name}`}
+                  className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                  style={{ color: 'var(--ink-soft)' }}
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
         {view === 'list' ? (
         // ─── LIST VIEW ─── shared by all categories. Logo column adapts:
         // stock → StockLogo, crypto → CryptoLogo, others → no logo cell.
-        <div className="space-y-4">
+        // Desktop-only — mobile pakai baris ringkas di atas.
+        <div className="hidden md:block space-y-4">
           <div className="s-card overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
@@ -776,8 +850,9 @@ export default function InvestmentCategoryPage() {
           </div>
         </div>
       ) : (
-        // Card list for non-stock categories
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        // Card list for non-stock categories — desktop-only, mobile pakai
+        // baris ringkas di atas (F8d density).
+        <div className="hidden gap-3 md:grid md:grid-cols-2 lg:grid-cols-3">
           {enriched.map((e) => {
             const pos = e.pl >= 0
             return (

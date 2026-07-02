@@ -75,8 +75,12 @@ export function MoreSheet({
         >
           {label}
         </p>
-        <div className="grid grid-cols-2 gap-2">
-          {items.map((it) => {
+        {/* Baris-compact: 1 grup ber-border + hairline divider (bukan grid tile) */}
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{ border: '0.5px solid var(--border)', background: 'var(--surface)' }}
+        >
+          {items.map((it, i) => {
             const Icon = ICONS[it.icon] ?? Sparkles
             const active = matchesPath(pathname, it.href)
             return (
@@ -85,11 +89,11 @@ export function MoreSheet({
                 href={it.href}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => onOpenChange(false)}
-                className="flex items-center gap-2.5 px-3 rounded-xl transition-colors"
+                className="flex items-center gap-2.5 px-3 transition-colors active:bg-[var(--surface-2)]"
                 style={{
                   minHeight: 52,
-                  border: '0.5px solid var(--border)',
-                  background: active ? 'var(--c-mint-soft)' : 'var(--surface)',
+                  borderTop: i ? '1px solid var(--border-soft)' : 'none',
+                  background: active ? 'var(--c-mint-soft)' : undefined,
                 }}
               >
                 <Icon

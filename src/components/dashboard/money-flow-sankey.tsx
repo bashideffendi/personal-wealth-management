@@ -1,31 +1,27 @@
 'use client'
 
 /**
- * Money Flow Sankey — Stockbit-style flow viz applied to personal finance.
+ * Money Flow Sankey — resep Stockbit (broker-distribution) dipindah ke money flow.
  *
- *   Income source (left)  →  Total Pemasukan (middle hub)  →  Spending (right)
+ * KEPUTUSAN DESAIN (jangan diubah tanpa baca ini — hasil 2 ronde review user):
+ *   1. DUA KOLOM saja (sumber → tujuan), TANPA hub tengah. Hub bikin label
+ *      numpuk di tengah viewport sempit. Link = split proporsional:
+ *      link(i,o) = in_i × out_o / total — konservasi tetap (Σ per node benar).
+ *   2. Node = bar TIPIS 8px di tepi → pita aliran dapat ~95% lebar chart.
+ *   3. Label PENDEK nempel node DI DALAM area chart (bukan margin samping):
+ *      kiri = nama di pangkal pita; kanan = "nilai · nama" di kiri node.
+ *      Teks pakai halo (paint-order stroke) biar kebaca di atas pita.
+ *   4. Warna by GRUP (bukan rainbow per node): masuk=mint, belanja=coral,
+ *      nabung+investasi=violet, penyeimbang/Lainnya=abu. Pita kecil (<3%
+ *      total) selalu abu biar fokus ke aliran besar.
+ *   5. Cap 7 node/sisi + "Lainnya (N)". Tipe modest — nol angka raksasa.
  *
- * Why a middle hub?
- *   It anchors the visual — every link width sums INTO the hub on one side
- *   and back OUT the other. Reads as "all your income pools here, then
- *   gets distributed."
- *
- * Conservation matters. If sum(income) ≠ sum(outflow), recharts visually
- * shrinks the middle bar to the smaller side, which makes the smaller
- * income source (e.g. Side Hustle at the bottom) appear to drop off into
- * empty space. Fix: add a synthetic balancing node so in == out always.
- *   - Surplus (income > outflow) → "Belum Terpakai" pseudo-outflow.
- *   - Deficit (outflow > income) → "Defisit Bulan Ini" pseudo-income.
- *
- * Categories colored by kind:
- *   - Income     → emerald (Klunting signature)
- *   - Expense    → coral
- *   - Saving     → amber
- *   - Investment → sky/violet
- *   - Hub/Surplus/Deficit → ink (neutral hub)
+ * Balancing: kalau income ≠ outflow, tambah pseudo-node ("Belum Terpakai" /
+ * "Defisit Bulan Ini") biar kedua kolom sama tinggi — tanpa ini sisi kecil
+ * keliatan putus.
  */
 
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import {
   Sankey,
   Tooltip,
@@ -47,7 +43,8 @@ interface CategoryAmount {
 interface MoneyFlowSankeyProps {
   income: CategoryAmount[]      // left side
   outflow: CategoryAmount[]     // right side: expense + saving + investment
-  middleLabel?: string          // default "Total Pemasukan"
+  /** Tidak dipakai lagi (hub dihapus) — dipertahankan biar caller lama gak error. */
+  middleLabel?: string
   surplusLabel?: string         // label for the balancing pseudo-outflow
   deficitLabel?: string         // label for the balancing pseudo-income
   height?: number | string
@@ -56,37 +53,43 @@ interface MoneyFlowSankeyProps {
   compact?: boolean
 }
 
-// ─── Color palette — fintech semantic ──────────────────────────────────
-// income=emerald, expense=coral, saving=amber, investment=violet (AI/long-
-// term accent), middle=ink hub. Link ribbons fillOpacity ~0.42.
-const COLORS: Record<FlowKind, { node: string; link: string }> = {
-  income:     { node: 'var(--c-mint)', link: 'color-mix(in srgb, var(--c-mint) 42%, transparent)' },  // emerald
-  expense:    { node: 'var(--c-coral)', link: 'color-mix(in srgb, var(--c-coral) 40%, transparent)' },   // coral
-  saving:     { node: 'var(--c-amber)', link: 'color-mix(in srgb, var(--c-amber) 42%, transparent)' },  // amber
-  investment: { node: 'var(--c-violet)', link: 'color-mix(in srgb, var(--c-violet) 38%, transparent)' },  // violet
-  middle:     { node: 'var(--ink)', link: 'color-mix(in srgb, var(--ink) 20%, transparent)' }, // ink hub (theme-aware)
+// ─── Warna by grup (resep #4) ───────────────────────────────────────────
+// saving+investment sengaja SATU grup violet di viz ini (grouping, bukan
+// token global — di legend/kalender saving tetap amber).
+const GROUP_NODE: Record<FlowKind, string> = {
+  income:     'var(--c-mint)',
+  expense:    'var(--c-coral)',
+  saving:     'var(--c-violet)',
+  investment: 'var(--c-violet)',
+  middle:     'color-mix(in srgb, var(--ink) 38%, transparent)',
 }
+const GROUP_LINK: Record<FlowKind, string> = {
+  income:     'color-mix(in srgb, var(--c-mint) 34%, transparent)',
+  expense:    'color-mix(in srgb, var(--c-coral) 32%, transparent)',
+  saving:     'color-mix(in srgb, var(--c-violet) 30%, transparent)',
+  investment: 'color-mix(in srgb, var(--c-violet) 30%, transparent)',
+  middle:     'color-mix(in srgb, var(--ink) 14%, transparent)',
+}
+const LINK_GRAY = 'color-mix(in srgb, var(--ink) 12%, transparent)'
 
 function trunc(s: string, max: number): string {
   if (s.length <= max) return s
   return s.slice(0, max - 1) + '…'
 }
 
-// Batasi jumlah node per sisi (anti-cramping + anti-truncation, resep Stockbit:
-// node terbatas). Top (max-1) by-amount + sisanya digabung jadi "Lainnya (N)".
-function capCats(list: CategoryAmount[], max: number, othersKind: FlowKind): CategoryAmount[] {
-  if (list.length <= max) return list
+// Batasi jumlah node per sisi (anti-cramping, resep #5). Top (max-1) by-amount
+// + sisanya digabung jadi "Lainnya (N)" abu-abu.
+function capCats(list: CategoryAmount[], max: number): CategoryAmount[] {
   const sorted = [...list].sort((a, b) => b.amount - a.amount)
+  if (sorted.length <= max) return sorted
   const head = sorted.slice(0, max - 1)
   const rest = sorted.slice(max - 1)
   const restSum = rest.reduce((s, c) => s + c.amount, 0)
-  if (restSum > 0) head.push({ name: `Lainnya (${rest.length})`, amount: restSum, kind: othersKind })
+  if (restSum > 0) head.push({ name: `Lainnya (${rest.length})`, amount: restSum, kind: 'middle' })
   return head
 }
 
 // ─── Custom node renderer ───────────────────────────────────────────────
-// In recharts Sankey, original data props (kind) are merged onto the
-// payload object directly — NOT under payload.payload.
 interface SankeyNodeData {
   name: string
   value: number
@@ -94,14 +97,17 @@ interface SankeyNodeData {
 }
 
 function makeRenderNode(compact: boolean) {
-  // Compact mode is sized to fit within ~70px label margin on a 375px
-  // mobile viewport. Names truncate hard ("Cryptocurr…") and amounts use
-  // the compact "Rp 5,5jt" format instead of full "Rp 5.500.000".
-  const labelMax = compact ? 14 : 24
-  const fontMain = compact ? 9.5 : 11
-  const fontSub = compact ? 8.5 : 10
-  const labelGap = compact ? 4 : 8
-  const lineGap = compact ? 6 : 9
+  const labelMax = compact ? 16 : 26
+  const fontMain = compact ? 10 : 11.5
+  const fontSub = compact ? 9 : 10
+  const gap = 6
+  // Halo biar teks kebaca di atas pita (label digambar DI DALAM chart).
+  const halo: CSSProperties = {
+    paintOrder: 'stroke',
+    stroke: 'var(--surface)',
+    strokeWidth: 3,
+    strokeLinejoin: 'round',
+  }
 
   return function renderNode(props: {
     x: number
@@ -114,12 +120,13 @@ function makeRenderNode(compact: boolean) {
   }) {
     const { x, y, width, height, payload, containerWidth } = props
     const kind: FlowKind = payload.kind ?? 'income'
-    const color = COLORS[kind].node
-    // The middle hub sits roughly centered — anchor labels right of it
-    const isLeft = x < containerWidth * 0.4
-    const isMiddle = !isLeft && x < containerWidth * 0.6
-    const labelX = isLeft ? x - labelGap : x + width + labelGap
-    const anchor = isLeft ? 'end' : 'start'
+    const isLeft = x < containerWidth / 2
+    // Label DI DALAM chart: kiri → kanan node (pangkal pita), kanan → kiri node.
+    const labelX = isLeft ? x + width + gap : x - gap
+    const anchor = isLeft ? 'start' : 'end'
+    const cy = y + Math.max(height, 4) / 2
+    // Dua baris cuma kalau node cukup tinggi; kalau pendek, satu baris.
+    const twoLines = Math.max(height, 4) >= 26
 
     return (
       <Layer>
@@ -128,39 +135,27 @@ function makeRenderNode(compact: boolean) {
           y={y}
           width={width}
           height={Math.max(height, 4)}
-          fill={color}
-          fillOpacity={isMiddle ? 1 : 0.95}
+          fill={GROUP_NODE[kind]}
+          fillOpacity={0.95}
         />
-        {!isMiddle && (
+        {twoLines ? (
           <>
-            <text
-              x={labelX}
-              y={y + height / 2 - 4}
-              textAnchor={anchor}
-              dominantBaseline="middle"
-              style={{
-                fontSize: fontMain,
-                fontWeight: 600,
-                fill: 'currentColor',
-              }}
-            >
+            <text x={labelX} y={cy - 4} textAnchor={anchor} dominantBaseline="middle"
+              style={{ fontSize: fontMain, fontWeight: 600, fill: 'currentColor', ...halo }}>
               {trunc(payload.name, labelMax)}
             </text>
-            <text
-              x={labelX}
-              y={y + height / 2 + lineGap}
-              textAnchor={anchor}
-              dominantBaseline="middle"
-              style={{
-                fontSize: fontSub,
-                fill: 'currentColor',
-                opacity: 0.65,
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {compact ? formatCompactCurrency(payload.value) : formatCurrency(payload.value)}
+            <text x={labelX} y={cy + (compact ? 7 : 9)} textAnchor={anchor} dominantBaseline="middle"
+              style={{ fontSize: fontSub, fill: 'currentColor', opacity: 0.7, fontVariantNumeric: 'tabular-nums', ...halo }}>
+              {formatCompactCurrency(payload.value)}
             </text>
           </>
+        ) : (
+          <text x={labelX} y={cy} textAnchor={anchor} dominantBaseline="middle"
+            style={{ fontSize: fontSub, fontWeight: 600, fill: 'currentColor', ...halo }}>
+            {isLeft
+              ? trunc(payload.name, labelMax)
+              : `${formatCompactCurrency(payload.value)} · ${trunc(payload.name, labelMax - 4)}`}
+          </text>
         )}
       </Layer>
     )
@@ -168,9 +163,6 @@ function makeRenderNode(compact: boolean) {
 }
 
 // ─── Custom link renderer ───────────────────────────────────────────────
-// Color income-side (source kind income) by source kind = emerald.
-// Color outflow-side (target kind != middle) by target kind so each
-// branch from the hub clearly reads as expense/saving/investment.
 interface SankeyLinkData {
   sourceX: number
   sourceY: number
@@ -180,44 +172,44 @@ interface SankeyLinkData {
   targetControlX: number
   linkWidth: number
   payload: {
+    value?: number
     target: { kind?: FlowKind; name?: string }
     source: { kind?: FlowKind; name?: string }
   }
 }
 
-function renderLink(props: SankeyLinkData) {
-  const {
-    sourceX, sourceY, sourceControlX,
-    targetX, targetY, targetControlX,
-    linkWidth, payload,
-  } = props
-  const targetKind = payload.target.kind
-  const sourceKind = payload.source.kind
-  // Inflow side: source is income (or deficit pseudo-income), target is hub
-  //   → use source kind so deficit can be shown in indigo and real income in green
-  // Outflow side: source is hub, target is expense/saving/investment/surplus
-  //   → use target kind
-  const kind: FlowKind = (targetKind && targetKind !== 'middle')
-    ? targetKind
-    : (sourceKind && sourceKind !== 'middle')
-      ? sourceKind
-      : 'middle'
-  const stroke = COLORS[kind].link
+function makeRenderLink(total: number) {
+  return function renderLink(props: SankeyLinkData) {
+    const {
+      sourceX, sourceY, sourceControlX,
+      targetX, targetY, targetControlX,
+      linkWidth, payload,
+    } = props
+    // Warna pita ikut TUJUAN (grup belanja/nabung), fallback sumber.
+    // Pita kecil (<3% total) & penyeimbang → abu (resep #4).
+    const targetKind = payload.target.kind
+    const sourceKind = payload.source.kind
+    const kind: FlowKind = (targetKind && targetKind !== 'middle')
+      ? targetKind
+      : (sourceKind && sourceKind !== 'middle') ? sourceKind : 'middle'
+    const small = total > 0 && (payload.value ?? 0) / total < 0.03
+    const stroke = small ? LINK_GRAY : GROUP_LINK[kind]
 
-  return (
-    <Layer>
-      <path
-        d={`
-          M${sourceX},${sourceY}
-          C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}
-        `}
-        stroke={stroke}
-        strokeWidth={Math.max(linkWidth, 1)}
-        fill="none"
-        strokeOpacity={1}
-      />
-    </Layer>
-  )
+    return (
+      <Layer>
+        <path
+          d={`
+            M${sourceX},${sourceY}
+            C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}
+          `}
+          stroke={stroke}
+          strokeWidth={Math.max(linkWidth, 1)}
+          fill="none"
+          strokeOpacity={1}
+        />
+      </Layer>
+    )
+  }
 }
 
 // ─── Main component ─────────────────────────────────────────────────────
@@ -225,7 +217,6 @@ function renderLink(props: SankeyLinkData) {
 export function MoneyFlowSankey({
   income,
   outflow,
-  middleLabel: middleLabelProp,
   surplusLabel: surplusLabelProp,
   deficitLabel: deficitLabelProp,
   height = 360,
@@ -233,66 +224,51 @@ export function MoneyFlowSankey({
   compact = false,
 }: MoneyFlowSankeyProps) {
   const t = useT()
-  const middleLabel = middleLabelProp ?? t('sankey.middleLabel')
   const surplusLabel = surplusLabelProp ?? t('sankey.surplusLabel')
   const deficitLabel = deficitLabelProp ?? t('sankey.deficitLabel')
   const emptyMessage = emptyMessageProp ?? t('sankey.emptyMessage')
 
-  const data = useMemo(() => {
-    const incomeFiltered = capCats(income.filter((c) => c.amount > 0), 6, 'income')
-    const outflowFiltered = capCats(outflow.filter((c) => c.amount > 0), 7, 'middle')
+  const built = useMemo(() => {
+    const incomeFiltered = capCats(income.filter((c) => c.amount > 0), 7)
+    const outflowFiltered = capCats(outflow.filter((c) => c.amount > 0), 7)
 
     if (incomeFiltered.length === 0 && outflowFiltered.length === 0) return null
 
     const totalIn = incomeFiltered.reduce((s, c) => s + c.amount, 0)
     const totalOut = outflowFiltered.reduce((s, c) => s + c.amount, 0)
 
-    // Balance the diagram so the middle hub bar height = totalIn = totalOut.
-    // This is what makes Side Hustle (or any small income source) connect
-    // properly to the bottom of the hub instead of being visually orphaned.
+    // Balance kedua kolom (lihat docblock).
     const balancedIncome = [...incomeFiltered]
     const balancedOutflow = [...outflowFiltered]
     if (totalIn > totalOut) {
-      // Surplus — money came in but isn't spent/saved/invested yet
-      balancedOutflow.push({
-        name: surplusLabel,
-        amount: totalIn - totalOut,
-        kind: 'middle',
-      })
+      balancedOutflow.push({ name: surplusLabel, amount: totalIn - totalOut, kind: 'middle' })
     } else if (totalOut > totalIn) {
-      // Deficit — spent more than earned (drew from savings, debt, etc.)
-      balancedIncome.push({
-        name: deficitLabel,
-        amount: totalOut - totalIn,
-        kind: 'middle',
-      })
+      balancedIncome.push({ name: deficitLabel, amount: totalOut - totalIn, kind: 'middle' })
     }
+    const total = Math.max(totalIn, totalOut)
+    if (total <= 0) return null
 
-    // Build nodes: income | middle | outflow
+    // Nodes: income (kiri) | outflow (kanan) — 2 kolom, tanpa hub.
     const nodes: { name: string; kind: FlowKind }[] = []
-    const incomeStartIdx = nodes.length
     balancedIncome.forEach((c) => nodes.push({ name: c.name, kind: c.kind }))
-
-    const middleIdx = nodes.length
-    nodes.push({ name: middleLabel, kind: 'middle' })
-
     const outflowStartIdx = nodes.length
     balancedOutflow.forEach((c) => nodes.push({ name: c.name, kind: c.kind }))
 
-    // Links: every income → middle, middle → every outflow
+    // Links: split proporsional tiap sumber ke tiap tujuan (konservasi ✓).
+    // Nilai super kecil (<0.5) dibuang biar recharts gak gambar hairline nol.
     const links: { source: number; target: number; value: number }[] = []
-    balancedIncome.forEach((c, i) => {
-      links.push({ source: incomeStartIdx + i, target: middleIdx, value: c.amount })
-    })
-    balancedOutflow.forEach((c, i) => {
-      links.push({ source: middleIdx, target: outflowStartIdx + i, value: c.amount })
+    balancedIncome.forEach((inc, i) => {
+      balancedOutflow.forEach((out, j) => {
+        const value = (inc.amount * out.amount) / total
+        if (value >= 0.5) links.push({ source: i, target: outflowStartIdx + j, value })
+      })
     })
 
     if (links.length === 0) return null
-    return { nodes, links }
-  }, [income, outflow, middleLabel, surplusLabel, deficitLabel])
+    return { data: { nodes, links }, total }
+  }, [income, outflow, surplusLabel, deficitLabel])
 
-  if (!data) {
+  if (!built) {
     return (
       <p className="text-[13px] text-center py-10 px-6" style={{ color: 'var(--ink-soft)' }}>
         {emptyMessage}
@@ -300,14 +276,14 @@ export function MoneyFlowSankey({
     )
   }
 
-  // Asymmetric on compact: spending category names (right side) tend to be
-  // longer than income source names ("Cryptocurrency" vs "Gaji"), so give
-  // the right side more breathing room.
+  // Margin tipis — label digambar DI DALAM chart (resep #2/#3), pita dapat
+  // hampir seluruh lebar. Bukan margin 130px kiri-kanan kayak versi hub dulu.
   const margin = compact
-    ? { top: 8, right: 88, bottom: 8, left: 56 }
-    : { top: 14, right: 130, bottom: 14, left: 130 }
+    ? { top: 8, right: 10, bottom: 8, left: 10 }
+    : { top: 12, right: 14, bottom: 12, left: 14 }
 
   const renderNode = makeRenderNode(compact)
+  const renderLink = makeRenderLink(built.total)
 
   return (
     <div
@@ -316,9 +292,9 @@ export function MoneyFlowSankey({
     >
       <ResponsiveContainer width="100%" height="100%">
         <Sankey
-          data={data}
-          nodePadding={compact ? 12 : 22}
-          nodeWidth={compact ? 8 : 10}
+          data={built.data}
+          nodePadding={compact ? 14 : 22}
+          nodeWidth={8}
           iterations={48}
           margin={margin}
           link={renderLink as never}
@@ -348,6 +324,20 @@ export function MoneyFlowSankey({
                     <p className="font-medium">
                       {data.source.name} → {data.target.name}
                     </p>
+                    <p className="num tabular mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                      {formatCurrency(data.payload?.value ?? data.value ?? 0)}
+                    </p>
+                  </div>
+                )
+              }
+              // Tap node → total node itu (akses full digit di mobile).
+              if (data.name != null && (data.value != null || data.payload?.value != null)) {
+                return (
+                  <div
+                    className="rounded-md border px-2.5 py-1.5 text-xs shadow-[var(--card-shadow)]"
+                    style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}
+                  >
+                    <p className="font-medium">{data.name}</p>
                     <p className="num tabular mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                       {formatCurrency(data.payload?.value ?? data.value ?? 0)}
                     </p>

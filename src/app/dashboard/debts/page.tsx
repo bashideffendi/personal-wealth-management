@@ -455,43 +455,64 @@ export default function DebtsOverviewPage() {
                 </tbody>
               </table>
             </div>
-            {/* Mobile: kartu per-utang (tabel di-hide di <sm) */}
-            <div className="sm:hidden divide-y" style={{ borderColor: 'var(--border-soft)' }}>
-              {visible.map((d) => {
+            {/* Mobile: baris kompak ~72px — tap baris = edit (CC → kelola kartu), hapus = icon kecil (pola list transaksi) */}
+            <div className="sm:hidden">
+              {visible.map((d, i) => {
                 const meta = CAT[d.category] ?? CAT.consumer
                 const Icon = typeIcon(d.type)
                 const isCC = d.id.startsWith('cc:')
                 const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
                 const tenor = isRevolving(d.type) ? t('debts.revolving') : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} ${t('debts.months')}` : '—')
-                return (
-                  <div key={d.id} className="flex items-start gap-3 p-4">
-                    <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(meta.color, 10) }}>
-                      <Icon className="size-4" style={{ color: meta.ink }} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                        <span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: tint(meta.color, 10), color: meta.ink }}>{getTypeLabel(d.type)}</span>
+                const itemClass = 'block w-full px-4 py-3 text-left transition-colors active:bg-[var(--surface-2)] cursor-pointer'
+                const itemStyle = { borderTop: i ? '1px solid var(--border-soft)' : 'none' }
+                const inner = (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(meta.color, 10) }}>
+                        <Icon className="size-4" style={{ color: meta.ink }} />
                       </div>
-                      <p className="num font-semibold mt-1" style={{ color: 'var(--ink)' }}>
-                        {formatCurrency(d.remaining)} <span className="text-[10px] font-normal" style={{ color: 'var(--ink-soft)' }}>/ {formatCurrency(d.principal)}</span>
-                      </p>
-                      <span className="quest-bar mt-1.5 w-full" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '7px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
-                      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                        <span>{t('debts.interest_label')} <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span></span>
-                        <span>{t('debts.payment_label')} <span className="num font-medium" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span></span>
-                        <span className="num shrink-0">{tenor}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{d.name}</p>
+                        <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                          {t('debts.interest_label')} <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral-ink)' : 'var(--ink-muted)' }}>{d.interest_rate}%</span>
+                          {' · '}{t('debts.payment_label')} <span className="num">{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span>
+                        </p>
                       </div>
-                      {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && (
-                        <p className="num text-[10px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_cap')} {payoffDate(tlResult.perDebt[d.id] ?? 0)}{(tlResult.perDebtInterest[d.id] ?? 0) > 0 ? ` · ± ${formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} ${t('debts.interest_word')}` : ''}</p>
-                      )}
+                      <div className="text-right shrink-0">
+                        <p className="num tabular-nums text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
+                        <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{tenor}</p>
+                      </div>
                       {!isCC && (
-                        <div className="mt-2 flex gap-3">
-                          <button type="button" onClick={() => openEdit(d)} className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)' }}>{t('debts.edit')}</button>
-                          <button type="button" onClick={() => remove(d.id)} className="text-[11px] font-medium" style={{ color: 'var(--c-coral-ink)' }}>{t('debts.delete')}</button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); remove(d.id) }}
+                          aria-label={`${t('debts.delete')} ${d.name}`}
+                          className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                          style={{ color: 'var(--ink-soft)' }}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
                       )}
                     </div>
+                    <span className="quest-bar mt-2 w-full" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '4px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
+                  </>
+                )
+                return isCC ? (
+                  <Link key={d.id} href="/dashboard/credit-cards" aria-label={`${t('debts.manage_in_credit_cards')}: ${d.name}`} className={itemClass} style={itemStyle}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <div
+                    key={d.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openEdit(d)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEdit(d) } }}
+                    aria-label={`${t('debts.edit')} ${d.name}`}
+                    className={itemClass}
+                    style={itemStyle}
+                  >
+                    {inner}
                   </div>
                 )
               })}
@@ -705,11 +726,11 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
   const karakter = isSnow ? t('debts.character_fast') : t('debts.character_efficient')
   const byId = new Map(debts.map((d) => [d.id, d]))
   return (
-    <div className="rounded-2xl p-5 sm:p-6 transition-shadow hover:shadow-lg" style={{ background: accentSoft, border: `1.5px solid color-mix(in srgb, ${accent} 55%, transparent)` }}>
+    <div className="rounded-2xl p-4 sm:p-6 transition-shadow hover:shadow-lg" style={{ background: accentSoft, border: `1.5px solid color-mix(in srgb, ${accent} 55%, transparent)` }}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>{t('debts.strategy')}</p>
-          <h3 className="text-2xl leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
+          <h3 className="text-[18px] font-semibold leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
         </div>
         <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months)}</span>
       </div>
