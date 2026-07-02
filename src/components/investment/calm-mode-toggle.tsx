@@ -37,7 +37,8 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
       type="button"
       onClick={toggle}
       aria-pressed={calm}
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition border"
+      aria-label={calm ? 'Calm Mode ON' : 'Calm Mode'}
+      className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium transition border"
       style={{
         background: calm ? 'var(--c-mint-soft)' : 'var(--surface)',
         borderColor: calm ? 'color-mix(in srgb, var(--c-mint) 30%, transparent)' : 'var(--border)',
@@ -46,7 +47,8 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
       title={calm ? t('investment.calm_on_hint_long') : t('investment.calm_off_hint_long')}
     >
       {calm ? <HeartPulse className="size-3.5" /> : <Heart className="size-3.5" />}
-      <span>{calm ? 'Calm Mode ON' : 'Calm Mode'}</span>
+      {/* Mobile <sm: icon-only biar action bar header muat 1 baris */}
+      <span className="hidden sm:inline">{calm ? 'Calm Mode ON' : 'Calm Mode'}</span>
     </button>
   )
 }

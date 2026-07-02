@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import {
   fetchLiquidEntries,
   sumLiquid,
@@ -243,7 +243,7 @@ export default function LiquidAssetsPage() {
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
-              <p className="num tabular text-2xl sm:text-3xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
+              <p className="num tabular text-xl sm:text-3xl font-bold mt-2 leading-none" title={formatCurrency(total)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')}</p>
             </div>
             {([
@@ -256,7 +256,7 @@ export default function LiquidAssetsPage() {
               return (
                 <div key={c.id} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: c.color }}><CIcon className="size-3" />{c.label}</p>
-                  <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(c.val)}</p>
+                  <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(c.val)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(c.val)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{c.sub}</p>
                 </div>
               )

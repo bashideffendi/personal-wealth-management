@@ -14,6 +14,7 @@ import {
   type HouseholdGoal, type HouseholdActivity, type HouseholdNetWorth,
 } from '@/lib/household'
 
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -462,20 +463,20 @@ export default function FamilyPage() {
 
       {/* Hero — Lingkar Keluarga (data REAL) */}
       <section className="s-card overflow-hidden grid sm:grid-cols-[1.6fr_1fr_1fr]" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>
-        <div className="p-5 sm:p-6 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-4 sm:p-6 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow" style={{ color: 'var(--c-coral-ink)' }}>{t('family.family_circle')}</p>
-          <h2 className="mt-1.5 text-xl sm:text-2xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
-          <p className="text-[13px] mt-2" style={{ color: 'var(--ink-muted)' }}>{members.length} {t('family.active_members')} · {t('family.created_on')} {formatDate(new Date(household.created_at))}</p>
+          <h2 className="mt-1 text-lg sm:text-xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
+          <p className="text-[13px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{members.length} {t('family.active_members')} · {t('family.created_on')} {formatDate(new Date(household.created_at))}</p>
         </div>
-        <div className="p-5 sm:p-6 border-t sm:border-t-0 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-4 sm:p-6 border-t sm:border-t-0 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.members')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{members.length}<span className="text-base font-medium" style={{ color: 'var(--ink-soft)' }}> / {household.max_seats}</span></p>
-          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{household.max_seats - members.length} {t('family.seats_remaining')}</p>
+          <p className="num font-bold mt-1.5 leading-none" style={{ fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{members.length}<span className="text-base font-medium" style={{ color: 'var(--ink-soft)' }}> / {household.max_seats}</span></p>
+          <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>{household.max_seats - members.length} {t('family.seats_remaining')}</p>
         </div>
-        <div className="p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-4 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.invitations')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 20, color: invitations.length > 0 ? 'var(--c-amber-ink)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
-          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? t('family.awaiting_acceptance') : t('family.none_pending')}</p>
+          <p className="num font-bold mt-1.5 leading-none" style={{ fontSize: 20, color: invitations.length > 0 ? 'var(--c-amber-ink)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
+          <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? t('family.awaiting_acceptance') : t('family.none_pending')}</p>
         </div>
       </section>
 
@@ -822,23 +823,17 @@ export default function FamilyPage() {
 }
 
 // ───────────────────────────────────────────────────────────
-// Header — pola seragam (eyebrow + judul serif + subtitle + aksi)
+// Header — pola QuietPageHeader (judul 20px + ⓘ tooltip + aksi)
 // ───────────────────────────────────────────────────────────
 
 function FamilyHeader({ action }: { action?: ReactNode }) {
   const t = useT()
   return (
-    <header className="flex items-start justify-between gap-4 flex-wrap">
-      <div className="max-w-xl">
-        <h1 className="text-[20px] font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
-          {t('family.header_title')}
-        </h1>
-        <p className="text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-          {t('family.header_subtitle')}
-        </p>
-      </div>
-      {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}
-    </header>
+    <QuietPageHeader
+      title={t('family.header_title')}
+      info={t('family.header_subtitle')}
+      actions={action}
+    />
   )
 }
 

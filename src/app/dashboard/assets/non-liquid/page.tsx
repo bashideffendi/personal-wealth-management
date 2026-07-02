@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import type { AssetNonLiquid } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -404,7 +404,7 @@ export default function NonLiquidAssetsPage() {
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.market_value_now')}</p>
-              <p className="num tabular text-2xl sm:text-3xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
+              <p className="num tabular text-xl sm:text-3xl font-bold mt-2 leading-none" title={formatCurrency(total)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                 {t('assets_nonliquid.initial_capital')} <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
                 <span className="num font-semibold" style={{ color: totalDelta >= 0 ? MINT_INK : CORAL_INK }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
@@ -417,7 +417,7 @@ export default function NonLiquidAssetsPage() {
               return (
                 <div key={cat} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].ink }}><CatIcon className="size-3" />{CAT[cat].label}</p>
-                  <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</p>
+                  <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(s.cur)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(s.cur)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                     {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? MINT_INK : CORAL_INK }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}
                   </p>

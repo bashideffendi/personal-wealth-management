@@ -371,23 +371,22 @@ export default function ProfilePage() {
             background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
           }}
         />
-        <div className="relative p-6 sm:p-7">
+        <div className="relative p-5 sm:p-7">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'var(--on-hero-mut)' }}
           >
             {t('profile.eyebrow')}
           </p>
-          <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-4">
+          <div className="mt-2 flex items-end justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
               <div
-                className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold"
+                className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-2xl font-bold text-[20px] sm:text-[28px]"
                 style={{
                   background: 'var(--c-primary)',
                   color: 'var(--c-primary-foreground)',
                   fontFamily: 'var(--font-sans)',
                   fontWeight: 800,
-                  fontSize: 28,
                   letterSpacing: '-0.04em',
                   lineHeight: 1,
                   boxShadow: 'var(--card-shadow)',
@@ -397,9 +396,8 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h1
-                  className="font-bold"
+                  className="font-bold text-[22px] sm:text-[28px]"
                   style={{
-                    fontSize: 'clamp(28px, 4vw, 40px)',
                     color: 'var(--on-hero)',
                     letterSpacing: '-0.035em',
                   }}
@@ -409,7 +407,7 @@ export default function ProfilePage() {
                 <p className="text-sm mt-0.5" style={{ color: 'var(--on-hero-mut)' }}>
                   {user.email}
                 </p>
-                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <span
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
                     style={{
@@ -423,14 +421,14 @@ export default function ProfilePage() {
                     {subscription?.status === 'trialing' && ` (${t('profile.plan_trial')})`}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--on-hero-mut)' }}>
-                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''}
+                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''} · {today}
                   </span>
                 </div>
               </div>
             </div>
             <Link
               href="/dashboard/pricing"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition hover:opacity-90"
               style={{
                 background: 'var(--c-primary)',
                 color: 'var(--c-primary-foreground)',
@@ -441,7 +439,6 @@ export default function ProfilePage() {
               {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? t('profile.cta_upgrade') : t('profile.cta_manage_sub')}
             </Link>
           </div>
-          <p className="text-xs mt-3" style={{ color: 'var(--on-hero-mut)' }}>{today}</p>
         </div>
       </section>
 
@@ -457,7 +454,7 @@ export default function ProfilePage() {
               <p className="text-sm text-muted-foreground mt-0.5">
                 {t('profile.ai_credits_desc')}
               </p>
-              <p className="mt-3 text-2xl font-bold tabular-nums">
+              <p className="mt-3 text-xl font-bold tabular-nums">
                 {profile.ai_credits.toLocaleString('id-ID')}
                 <span className="text-sm font-normal text-muted-foreground ml-1">{t('profile.ai_credits_unit')}</span>
               </p>
@@ -476,11 +473,11 @@ export default function ProfilePage() {
 
       {/* Tabs section */}
       <Tabs defaultValue="preferensi" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="preferensi"><User className="size-3.5 mr-1.5" />{t('profile.tab_preferences')}</TabsTrigger>
-          <TabsTrigger value="keamanan"><Shield className="size-3.5 mr-1.5" />{t('profile.tab_security')}</TabsTrigger>
-          <TabsTrigger value="notifikasi"><Bell className="size-3.5 mr-1.5" />{t('profile.tab_notifications')}</TabsTrigger>
-          <TabsTrigger value="data"><Database className="size-3.5 mr-1.5" />{t('profile.tab_data')}</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto no-scrollbar">
+          <TabsTrigger value="preferensi" className="shrink-0"><User className="size-3.5 mr-1.5" />{t('profile.tab_preferences')}</TabsTrigger>
+          <TabsTrigger value="keamanan" className="shrink-0"><Shield className="size-3.5 mr-1.5" />{t('profile.tab_security')}</TabsTrigger>
+          <TabsTrigger value="notifikasi" className="shrink-0"><Bell className="size-3.5 mr-1.5" />{t('profile.tab_notifications')}</TabsTrigger>
+          <TabsTrigger value="data" className="shrink-0"><Database className="size-3.5 mr-1.5" />{t('profile.tab_data')}</TabsTrigger>
         </TabsList>
 
         {/* PREFERENSI */}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import YahooFinance from 'yahoo-finance2'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -193,8 +194,18 @@ export default async function StockResearchPage({ params }: RouteProps) {
 
   return (
     <div className="space-y-5">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm flex-wrap" style={{ color: 'var(--ink-muted)' }}>
+      {/* Breadcrumb — mobile: back-link tunggal ke screener Research (route
+          sama dgn level "Saham", deep-link ?tab=research); desktop (sm+):
+          trail 3 level seperti semula. Pola dual-render sm:hidden/hidden sm:flex. */}
+      <nav className="sm:hidden" style={{ color: 'var(--ink-muted)' }}>
+        <Link
+          href="/dashboard/assets/investment/stock?tab=research"
+          className="inline-flex items-center gap-1.5 text-xs font-medium rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-[var(--surface-2)]"
+        >
+          <ArrowLeft className="size-3.5" /> Research
+        </Link>
+      </nav>
+      <nav className="hidden sm:flex items-center gap-1.5 text-sm flex-wrap" style={{ color: 'var(--ink-muted)' }}>
         <Link href="/dashboard/assets/investment" className="hover:underline">Investasi</Link>
         <span style={{ color: 'var(--ink-soft)' }}>›</span>
         <Link href="/dashboard/assets/investment/stock" className="hover:underline">Saham</Link>

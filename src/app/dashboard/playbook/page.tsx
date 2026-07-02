@@ -4,28 +4,18 @@ import Link from 'next/link'
 import { ChevronRight, Sparkles } from 'lucide-react'
 import { PLAYBOOKS } from '@/lib/playbooks'
 import { playbookIcon } from '@/components/playbook/icons'
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { useT } from '@/lib/i18n/context'
 
 export default function PlaybookIndexPage() {
   const t = useT()
   return (
     <div className="space-y-6">
-      <header>
-        <div className="flex items-center gap-2 mb-1.5">
-          <div
-            className="size-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary-ink)' }}
-          >
-            <Sparkles className="size-4" />
-          </div>
-          <span className="eyebrow" style={{ color: 'var(--c-primary-ink)' }}>
-            Playbook
-          </span>
-        </div>
-        <h1 className="t-h1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-          {t('playbook.title')}
-        </h1>
-      </header>
+      <QuietPageHeader
+        title={t('playbook.title')}
+        info={t('playbook.subtitle')}
+        icon={Sparkles}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {PLAYBOOKS.map((p) => {

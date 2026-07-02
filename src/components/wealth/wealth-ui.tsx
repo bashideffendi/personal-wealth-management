@@ -1,16 +1,19 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { InfoTip } from '@/components/ui/info-tip'
 
 /**
- * Header serif buat halaman Kekayaan (Net Worth / Aset / Utang / Dana Darurat).
- * Eyebrow uppercase + judul serif (Instrument Serif via --font-display, momen
- * personality) + subtitle + slot actions kanan. Token Klunting, BUKAN krem/indigo.
+ * Header buat halaman Kekayaan (Net Worth / Aset / Utang / Dana Darurat).
+ * Kompak ala QuietPageHeader: eyebrow kecil + judul ~20px (--font-display,
+ * weight 600) + subtitle jadi ⓘ InfoTip (bukan paragraf permanen) + slot
+ * actions kanan. Token Klunting, BUKAN krem/indigo.
  */
 export function WealthHeader({
   eyebrow, title, subtitle, children,
 }: {
   eyebrow?: string
   title: string
+  /** Deskripsi panjang — dirender sebagai ⓘ InfoTip di samping judul. */
   subtitle?: string
   children?: ReactNode
 }) {
@@ -22,15 +25,15 @@ export function WealthHeader({
             {eyebrow}
           </p>
         )}
-        <h1
-          className="mt-1 text-3xl sm:text-4xl leading-tight"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}
-        >
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-sm mt-1.5 max-w-2xl" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
-        )}
+        <div className="mt-1 flex items-center gap-2 min-w-0">
+          <h1
+            className="tracking-tight truncate"
+            style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}
+          >
+            {title}
+          </h1>
+          {subtitle && <span className="shrink-0"><InfoTip text={subtitle} /></span>}
+        </div>
       </div>
       {children && <div className="flex items-center gap-2 shrink-0">{children}</div>}
     </div>
@@ -43,28 +46,30 @@ export function WealthHeader({
  * jadi gak ada judul dobel. Glow halus + hierarki kuat = kesan premium.
  */
 export function WealthHero({
-  eyebrow, title, headline, secondary = [], actions, accent = '#8b4fb0',
+  eyebrow, title, headline, headlineTitle, secondary = [], actions, accent = '#8b4fb0',
 }: {
   eyebrow?: string
   title: string
   headline: { label: string; value: string; sub?: ReactNode; color?: string }
+  /** Nominal full digit buat atribut title di angka headline (pas value-nya compact). */
+  headlineTitle?: string
   secondary?: { label: string; value: ReactNode; color?: string }[]
   actions?: ReactNode
   accent?: string
 }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl p-6 sm:p-7 bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)]">
+    <section className="relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)]">
       <div className="absolute pointer-events-none" style={{ top: -110, right: -70, width: 340, height: 340, borderRadius: '50%', background: `radial-gradient(circle, ${accent}1F, transparent 65%)` }} />
       <div className="relative flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           {eyebrow && <p className="text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>{eyebrow}</p>}
-          <h1 className="mt-0.5 text-2xl sm:text-3xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</h1>
+          <h1 className="mt-0.5 tracking-tight leading-tight" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{title}</h1>
         </div>
         {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
       </div>
       <div className="relative mt-5">
         <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{headline.label}</p>
-        <p className="num tabular font-bold leading-none mt-1.5 whitespace-nowrap" style={{ fontSize: 'clamp(34px,5vw,52px)', letterSpacing: '-0.03em', color: headline.color ?? 'var(--ink)' }}>{headline.value}</p>
+        <p className="num tabular font-bold leading-none mt-1.5 whitespace-nowrap" title={headlineTitle} style={{ fontSize: 'clamp(26px,5vw,34px)', letterSpacing: '-0.03em', color: headline.color ?? 'var(--ink)' }}>{headline.value}</p>
         {headline.sub && <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>{headline.sub}</p>}
       </div>
       {secondary.length > 0 && (

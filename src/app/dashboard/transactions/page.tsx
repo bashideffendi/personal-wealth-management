@@ -48,7 +48,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal } from 'lucide-react'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -441,6 +442,9 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState<string>('')
   // Quick-add inline row is hidden by default; the toolbar "+ Tambah" toggles it.
   const [showQuickAdd, setShowQuickAdd] = useState(false)
+  // Mobile chrome: filter grid collapsed by default; aksi sekunder toolbar masuk sheet "⋯".
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [actionsSheetOpen, setActionsSheetOpen] = useState(false)
   // Form "Tambah Cepat" muncul di bawah filter — scroll ke tengah pas dibuka
   // biar user gak ketinggalan / harus scroll cari sendiri.
   const quickAddRef = useRef<HTMLDivElement>(null)
@@ -907,20 +911,26 @@ export default function TransactionsPage() {
         info={t('transactions.page_subtitle')}
         actions={
           <>
-            {/* Quick actions — visible buttons (no overflow), incl. frequently-used Transfer */}
-            <Link href="/dashboard/transactions/import">
-              <Button variant="outline" size="sm">
-                <Sparkles className="size-4" data-icon="inline-start" /> {t('transactions.import_ai')}
+            {/* Quick actions — desktop: tombol terlihat semua; mobile: masuk sheet "⋯"
+                (5 tombol wrap 2-3 baris di 375px = toolbar web, bukan app-bar). */}
+            <div className="hidden sm:contents">
+              <Link href="/dashboard/transactions/import">
+                <Button variant="outline" size="sm">
+                  <Sparkles className="size-4" data-icon="inline-start" /> {t('transactions.import_ai')}
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                <Upload className="size-4" data-icon="inline-start" /> {t('transactions.import_csv')}
               </Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-              <Upload className="size-4" data-icon="inline-start" /> {t('transactions.import_csv')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
-              <Download className="size-4" data-icon="inline-start" /> {t('transactions.export_csv')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
-              <ArrowLeftRight className="size-4" data-icon="inline-start" /> {t('transactions.transfer')}
+              <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
+                <Download className="size-4" data-icon="inline-start" /> {t('transactions.export_csv')}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
+                <ArrowLeftRight className="size-4" data-icon="inline-start" /> {t('transactions.transfer')}
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" className="sm:hidden" aria-label={t('transactions.actions_sheet_title')} onClick={() => setActionsSheetOpen(true)}>
+              <MoreHorizontal className="size-4" />
             </Button>
 
             {/* Primary — toggles the inline quick-add row above the table */}
@@ -934,6 +944,32 @@ export default function TransactionsPage() {
           </>
         }
       />
+
+      {/* Sheet aksi sekunder (mobile) — isi = tombol yang di desktop tampil di header */}
+      <BottomSheet open={actionsSheetOpen} onOpenChange={setActionsSheetOpen} title={t('transactions.actions_sheet_title')}>
+        <div className="pb-2">
+          {[
+            { icon: Sparkles, label: t('transactions.import_ai'), onClick: () => { setActionsSheetOpen(false); window.location.href = '/dashboard/transactions/import' } },
+            { icon: Upload, label: t('transactions.import_csv'), onClick: () => { setActionsSheetOpen(false); setImportOpen(true) } },
+            { icon: Download, label: t('transactions.export_csv'), onClick: () => { setActionsSheetOpen(false); exportCSV(filteredTransactions) }, disabled: filteredTransactions.length === 0 },
+            { icon: ArrowLeftRight, label: t('transactions.transfer'), onClick: () => { setActionsSheetOpen(false); setTransferDialogOpen(true) } },
+          ].map((a, i) => (
+            <button
+              key={a.label}
+              type="button"
+              disabled={a.disabled}
+              onClick={a.onClick}
+              className="w-full flex items-center gap-3 px-2 text-left disabled:opacity-40"
+              style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+            >
+              <span className="grid place-items-center size-8 rounded-lg shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                <a.icon className="size-4" />
+              </span>
+              <span className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>{a.label}</span>
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
 
       {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
       {!loading && filteredTransactions.length > 0 && (() => {
@@ -983,18 +1019,33 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Search + filters — satu card: search di atas, filter di bawahnya */}
+      {/* Search + filters — satu card: search di atas, filter di bawahnya.
+          Mobile: grid filter collapsed (panel 4 dropdown makan setengah layar) —
+          toggle lewat tombol "Filter (n)" di samping search. Desktop: selalu tampil. */}
       <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <div className="relative">
-          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('transactions.search_placeholder')}
-            className="h-9 w-full pl-9 text-sm"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('transactions.search_placeholder')}
+              className="h-9 w-full pl-9 text-sm"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="sm:hidden h-9 shrink-0"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            <SlidersHorizontal className="size-4" data-icon="inline-start" />
+            {t('transactions.filter_button')}
+            {activeFilterCount > 0 && <span className="num">({activeFilterCount})</span>}
+          </Button>
         </div>
-        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 mt-3">
+        <div className={`${filtersOpen ? 'grid' : 'hidden sm:grid'} w-full grid-cols-2 gap-3 sm:grid-cols-4 mt-3`}>
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />

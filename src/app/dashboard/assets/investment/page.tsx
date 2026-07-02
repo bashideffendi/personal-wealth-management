@@ -359,10 +359,14 @@ export default function InvestmentOverviewPage() {
             <CalmModeToggle />
             <Link
               href="/dashboard/assets/investment/stock?tab=dividen"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+              aria-label={t('investment.dividend_history')}
+              title={t('investment.dividend_history')}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
               style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
             >
-              <History className="size-3.5" /> {t('investment.dividend_history')}
+              <History className="size-3.5" />
+              {/* Mobile <sm: icon-only biar muat 1 baris bareng "Tambah holding" */}
+              <span className="hidden sm:inline">{t('investment.dividend_history')}</span>
             </Link>
             <div className="relative" ref={addRef}>
               <button
