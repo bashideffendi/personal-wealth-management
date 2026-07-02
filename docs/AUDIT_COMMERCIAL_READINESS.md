@@ -68,18 +68,20 @@ Metode: 7 auditor paralel per-dimensi (baca file asli) → verifikasi adversaria
 
   → Semua temuan keamanan yang bergantung status prod: **CLOSED**. Security posture efektif naik (~80 → ~88).
 
-**Sprint 2 — integritas data (butuh migrasi + swap kode berurutan):**
-- RPC `adjust_account_balance`/`adjust_card_balance` (increment atomik) → swap semua write saldo client.
-- Idempoten `idx-research/generate` (insert-on-conflict claim) → cegah double-charge.
+**Sprint 2 — integritas data → ✅ SELESAI (2026-07-02):**
+- ✅ RPC `adjust_account_balance`/`adjust_credit_card_balance` (migrasi 059, ownership-safe) + `src/lib/data/balances.ts` (fallback-compat) → 8 situs write saldo di-swap. Race lost-update ditutup.
+- ✅ Idempoten `idx-research/generate` (migrasi 060 claim table + finally-release) → double-charge dicegah.
 
-**Sprint 3 — test + reliability:**
-- Unit test jalur uang (consumeAICredits/refund/threshold reminder).
-- Guard idempoten cron (kolom `last_reminded_at`) + batch fetch email.
-- Pertimbangkan limiter terdistribusi (Upstash) untuk endpoint AI.
+**Sprint 3 — test + reliability → ✅ SELESAI (2026-07-02):**
+- ✅ Unit test jalur uang (`ai-credits.test.ts` + `reminders.test.ts`, 256 test) + extract `reminders.ts` pure.
+- ✅ Cron idempoten via migrasi 061 `reminder_log` (PK user+threshold+tanggal) → anti email dobel.
+- ✅ `/api/health` (uptime monitor). ✅ delete-account tutup tabel orphan (xp_events/achievements).
+- ✅ Shared AI client `src/lib/ai/client.ts` (dedup 6 route). — Limiter terdistribusi (Upstash) = post-launch.
 
-**Sprint 4 — komersial:**
-- Wire checkout + webhook billing (verifikasi signature + idempotency key) yang menulis `subscriptions`.
-- accept_invitation `FOR UPDATE`; refund berbasis ledger.
+**Sprint 4 — komersial + scale (POST-LAUNCH, di-defer):**
+- ✅ Payment scaffold Xendit GATED (checkout+webhook+activation) — nunggu NIB (lihat `BILLING_XENDIT_READINESS.md`).
+- ⏳ **#122 (satu-satunya sisa audit, POST-LAUNCH):** SSE streaming AI + server-pagination transaksi + i18n landing/auth. **Sengaja belum dikerjain** — semuanya perf/skala/i18n yang (a) nol benefit di pra-launch ~0 user, (b) pagination = refactor berisiko di god-file transactions 1800-baris, (c) SSE ke research route berisiko nyenggol logika kredit/klaim/cache yang baru di-harden (bisa re-introduce double-charge). Kerjain per-item di sesi fokus **pas mulai scale / targetin pasar EN**, bukan sekarang.
+- ⏳ accept_invitation `FOR UPDATE`; refund berbasis ledger (low, post-launch).
 
 ## 10 improvement ROI tertinggi
 
