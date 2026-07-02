@@ -59,10 +59,14 @@ Metode: 7 auditor paralel per-dimensi (baca file asli) → verifikasi adversaria
 
 ## Roadmap remediasi
 
-**Sprint 1 — verifikasi prod (WAJIB sebelum tenang):**
-- Apply migrasi **057** (subscriptions + price_history) di Supabase SQL Editor.
-- Verifikasi 026/052/055 sudah ter-apply: `pg_policies` subscriptions = SELECT-only; `pg_proc` refund/consume/reset EXECUTE dicabut dari `authenticated`.
-- Pastikan `SUPABASE_SERVICE_ROLE_KEY` ter-set di Vercel prod + preview.
+**Sprint 1 — verifikasi prod → ✅ SELESAI & TERVERIFIKASI (2026-07-02):**
+- ✅ Migrasi **057** ter-apply ("Success, no rows returned").
+- ✅ `subscriptions` grant untuk `authenticated`/`anon` = SELECT saja (tanpa INSERT/UPDATE/DELETE) → revenue-bypass tertutup.
+- ✅ `price_history` grant = SELECT saja → cache-poisoning tertutup.
+- ✅ `has_function_privilege('authenticated', ...)` untuk refund/consume/reset kredit = **false** semua (026 ter-apply) → self-refill tertutup.
+- ✅ `SUPABASE_SERVICE_ROLE_KEY` ter-set di Vercel (Production + Preview); `CRON_SECRET` ter-set; tidak ada secret ber-prefix `NEXT_PUBLIC_`.
+
+  → Semua temuan keamanan yang bergantung status prod: **CLOSED**. Security posture efektif naik (~80 → ~88).
 
 **Sprint 2 — integritas data (butuh migrasi + swap kode berurutan):**
 - RPC `adjust_account_balance`/`adjust_card_balance` (increment atomik) → swap semua write saldo client.
