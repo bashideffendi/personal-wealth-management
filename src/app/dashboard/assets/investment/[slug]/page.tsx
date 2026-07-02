@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatPercent } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/utils'
 import { INVESTMENT_SUBCATS, INVESTMENT_SLUG_TO_CATEGORY, FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment, Quote } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -433,7 +433,7 @@ export default function InvestmentCategoryPage() {
             background: `radial-gradient(circle, ${up ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
           }}
         />
-        <div className="relative p-6 sm:p-8">
+        <div className="relative p-5 sm:p-6">
         <Link
           href="/dashboard/assets/investment"
           className="inline-flex items-center gap-1.5 text-xs font-medium mb-4 rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-white/10"
@@ -483,12 +483,13 @@ export default function InvestmentCategoryPage() {
           <p
             className="num tabular font-bold leading-none whitespace-nowrap"
             style={{
-              fontSize: 'clamp(40px, 6vw, 64px)',
+              fontSize: 'clamp(26px, 5vw, 34px)',
               color: 'var(--on-hero)',
               letterSpacing: '-0.04em',
             }}
+            title={formatCurrency(totals.market)}
           >
-            {formatCurrency(totals.market)}
+            {formatCompactCurrency(totals.market)}
           </p>
           {totals.invested > 0 && (
             <span
@@ -618,11 +619,12 @@ export default function InvestmentCategoryPage() {
             Untung-Rugi/Hari Ini). "Hari Ini" cuma real buat kelas ber-harga
             live (saham & kripto); sisanya "—". */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MiniStat label={t('investment_detail.stat_value')} value={formatCurrency(totals.market)} glow="glow-violet" />
-          <MiniStat label={t('investment_detail.stat_invested')} value={formatCurrency(totals.invested)} glow="glow-indigo" />
+          <MiniStat label={t('investment_detail.stat_value')} value={formatCompactCurrency(totals.market)} title={formatCurrency(totals.market)} glow="glow-violet" />
+          <MiniStat label={t('investment_detail.stat_invested')} value={formatCompactCurrency(totals.invested)} title={formatCurrency(totals.invested)} glow="glow-indigo" />
           <MiniStat
             label={t('investment_detail.stat_profit_loss')}
-            value={`${formatCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
+            value={`${formatCompactCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
+            title={formatCurrency(totals.pl)}
             glow={up ? 'glow-emerald' : 'glow-rose'}
             accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
           />
@@ -630,9 +632,10 @@ export default function InvestmentCategoryPage() {
             label={t('investment_detail.stat_today')}
             value={
               todayPL
-                ? `${todayPL.value >= 0 ? '+' : ''}${formatCurrency(todayPL.value)}  ·  ${todayPL.pct >= 0 ? '+' : ''}${todayPL.pct.toFixed(2)}%`
+                ? `${todayPL.value >= 0 ? '+' : ''}${formatCompactCurrency(todayPL.value)}  ·  ${todayPL.pct >= 0 ? '+' : ''}${todayPL.pct.toFixed(2)}%`
                 : '—'
             }
+            title={todayPL ? formatCurrency(todayPL.value) : undefined}
             glow={todayPL ? (todayPL.value >= 0 ? 'glow-emerald' : 'glow-rose') : undefined}
             accent={todayPL ? (todayPL.value >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)') : undefined}
           />
@@ -1261,17 +1264,19 @@ function Td({ children, className = '', style }: { children: React.ReactNode; cl
 }
 
 function MiniStat({
-  label, value, glow, accent,
+  label, value, glow, accent, title,
 }: {
   label: string
   value: string
   glow?: string
   accent?: string
+  /** Full digit buat hover — angka display-nya compact */
+  title?: string
 }) {
   return (
     <div className={`s-card p-4 ${glow ?? ''}`}>
       <p className="eyebrow">{label}</p>
-      <p className="num text-xl mt-2 tabular font-bold" style={{ color: accent ?? 'var(--ink)' }}>
+      <p className="num mt-2 tabular font-bold" style={{ fontSize: 19, color: accent ?? 'var(--ink)' }} title={title}>
         {value}
       </p>
     </div>

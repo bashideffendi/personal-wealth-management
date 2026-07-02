@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account, AllocationPurpose } from '@/types'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
@@ -381,9 +381,10 @@ export default function AccountsPage() {
             <>
               <p
                 className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
-                style={{ color: 'var(--on-hero)', fontSize: 'clamp(36px, 5vw, 56px)', letterSpacing: '-0.04em' }}
+                title={formatCurrency(totalBalance)}
+                style={{ color: 'var(--on-hero)', fontSize: 'clamp(24px, 5vw, 30px)', letterSpacing: '-0.04em' }}
               >
-                {formatCurrency(totalBalance)}
+                {formatCompactCurrency(totalBalance)}
               </p>
               <p className="text-sm mt-3" style={{ color: 'var(--on-hero-mut)' }}>
                 {t('accounts.total_balance_from')} {accounts.length} {t('accounts.accounts_word')} · {today}

@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { TrendingUp, TrendingDown } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
 const EquityArea = dynamic(() => import('./investment-charts').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
@@ -61,7 +61,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
   const hasHistory = snapshots.length >= 8
 
   return (
-    <section className="s-card p-6 sm:p-8">
+    <section className="s-card p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="eyebrow">
@@ -71,9 +71,10 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           <div className="mt-2 flex flex-wrap items-end gap-3">
             <p
               className="num tabular font-bold leading-none whitespace-nowrap"
-              style={{ color: 'var(--ink)', fontSize: 'clamp(34px, 5vw, 54px)', letterSpacing: '-0.035em' }}
+              style={{ color: 'var(--ink)', fontSize: 'clamp(26px, 5vw, 34px)', letterSpacing: '-0.035em' }}
+              title={formatCurrency(totals.market)}
             >
-              {formatCurrency(totals.market)}
+              {formatCompactCurrency(totals.market)}
             </p>
             <span
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"

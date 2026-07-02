@@ -18,7 +18,7 @@
 
 import { useMemo } from 'react'
 import { TrendingDown, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
 import { occurrencesInRange, toLocalISO } from '@/lib/recurrence'
 
@@ -256,18 +256,21 @@ export function CashFlowForecast({
         <div className="grid grid-cols-3 gap-3 text-[11px]">
           <Stat
             label="Sekarang"
-            value={formatCurrency(liquidBalance)}
+            value={formatCompactCurrency(liquidBalance)}
+            title={formatCurrency(liquidBalance)}
             color="var(--ink)"
           />
           <Stat
             label="Akhir 30h"
-            value={formatCurrency(endBalance)}
+            value={formatCompactCurrency(endBalance)}
+            title={formatCurrency(endBalance)}
             color={endBalance < liquidBalance ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)'}
             icon={endBalance < liquidBalance ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />}
           />
           <Stat
             label="Terendah"
-            value={formatCurrency(minPoint?.balance ?? liquidBalance)}
+            value={formatCompactCurrency(minPoint?.balance ?? liquidBalance)}
+            title={formatCurrency(minPoint?.balance ?? liquidBalance)}
             color={minPoint && minPoint.balance < safetyBuffer ? accentColorInk : 'var(--ink)'}
             sub={minPoint?.balance !== undefined && minPoint.balance < liquidBalance
               ? `H+${forecast.indexOf(minPoint)}`
@@ -347,19 +350,22 @@ export function CashFlowForecast({
 }
 
 function Stat({
-  label, value, color, icon, sub,
+  label, value, color, icon, sub, title,
 }: {
   label: string
   value: string
   color: string
   icon?: React.ReactNode
   sub?: string
+  /** Full digit — hover/long-press tetap bisa lihat nominal utuh */
+  title?: string
 }) {
   return (
     <div>
       <p style={{ color: 'var(--ink-soft)' }}>{label}</p>
       <p
         className="num font-bold mt-0.5 inline-flex items-center gap-1"
+        title={title}
         style={{ color, fontSize: 14 }}
       >
         {icon}

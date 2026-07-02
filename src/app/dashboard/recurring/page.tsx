@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { isExpired, nextRunDate, occurrencesInRange, startOfToday, type RecurLike } from '@/lib/recurrence'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import {
   INCOME_CATEGORIES, EXPENSE_CATEGORIES, SAVING_CATEGORIES, INVESTMENT_CATEGORIES,
 } from '@/lib/constants'
@@ -231,10 +231,10 @@ export default function RecurringPage() {
   const totalSetahun = perBulan * 12 + perMinggu * 52 + perTahun + perHari * 365
 
   const stats = [
-    { label: t('recurring.stat_per_month'), value: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: tint(VIOLET, 12) },
-    { label: t('recurring.stat_per_week'), value: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: tint(AMBER, 12) },
-    { label: t('recurring.stat_per_year'), value: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: tint(MINT, 12) },
-    { label: t('recurring.stat_total_year'), value: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: tint(VIOLET, 12) },
+    { label: t('recurring.stat_per_month'), value: formatCompactCurrency(perBulan), full: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: tint(VIOLET, 12) },
+    { label: t('recurring.stat_per_week'), value: formatCompactCurrency(perMinggu), full: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: tint(AMBER, 12) },
+    { label: t('recurring.stat_per_year'), value: formatCompactCurrency(perTahun), full: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: tint(MINT, 12) },
+    { label: t('recurring.stat_total_year'), value: formatCompactCurrency(totalSetahun), full: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: tint(VIOLET, 12) },
   ]
 
   // Kalender 30 hari: amount per tanggal
@@ -309,7 +309,7 @@ export default function RecurringPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
-                    <p className="num tabular text-2xl font-bold mt-1.5 whitespace-nowrap" style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="num tabular text-[19px] font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
                     <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}><s.icon className="size-4" style={{ color: s.color }} /></div>

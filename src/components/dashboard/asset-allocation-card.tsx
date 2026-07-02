@@ -9,7 +9,7 @@
 
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
 export function AssetAllocationCard({
@@ -29,8 +29,8 @@ export function AssetAllocationCard({
       <div className="flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <p className="eyebrow">{t('asset_alloc.title')}</p>
-          <p className="num tabular mt-1 truncate" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)' }}>
-            {formatCurrency(net)}
+          <p className="num tabular mt-1 truncate" title={formatCurrency(net)} style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)' }}>
+            {formatCompactCurrency(net)}
           </p>
           <p className="text-[11px]" style={{ color: 'var(--text-mute)' }}>{t('asset_alloc.net')}</p>
         </div>

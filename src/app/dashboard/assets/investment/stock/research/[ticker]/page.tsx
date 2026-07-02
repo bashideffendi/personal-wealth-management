@@ -205,12 +205,12 @@ export default async function StockResearchPage({ params }: RouteProps) {
       {/* Kartu ringkasan: identitas + harga (atas) · metrik valuasi (bawah) */}
       <header className="s-card overflow-hidden">
         {/* Atas — identitas + info emiten (kiri) · aksi (kanan) */}
-        <div className="p-6 sm:p-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="p-5 sm:p-6 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <StockLogo ticker={ticker} size={58} />
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="font-mono font-bold tracking-tight" style={{ fontSize: 32, lineHeight: 1, color: 'var(--ink)' }}>{ticker}</span>
+                <span className="font-mono font-bold tracking-tight" style={{ fontSize: 24, lineHeight: 1, color: 'var(--ink)' }}>{ticker}</span>
                 {verdict && (
                   <span
                     className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
@@ -252,11 +252,11 @@ export default async function StockResearchPage({ params }: RouteProps) {
         {/* Bawah — strip metrik valuasi */}
         <div className="border-t grid grid-cols-2 lg:grid-cols-4" style={{ borderColor: 'var(--border-soft)' }}>
           <div
-            className="p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r"
+            className="p-4 flex flex-col justify-center border-b lg:border-b-0 lg:border-r"
             style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
           >
           <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>Ringkasan AI · Equity Research</p>
-          <p className="text-3xl font-bold mt-1 leading-none" style={{ color: 'var(--c-mint-ink)' }}>
+          <p className="text-2xl font-bold mt-1 leading-none" style={{ color: 'var(--c-mint-ink)' }}>
             {fm.recommendation ? String(fm.recommendation).toUpperCase() : '—'}
           </p>
           {fm.conviction && (
@@ -266,25 +266,25 @@ export default async function StockResearchPage({ params }: RouteProps) {
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>Diperbarui {fm.generated}</p>
           )}
         </div>
-        <div className="p-5 flex flex-col justify-center border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-4 flex flex-col justify-center border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow">Fair Value</p>
-          <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
+          <p className="num tabular text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
             Rp {formatPrice(heroFairValue)}
           </p>
           {fm.fair_value_low && fm.fair_value_high && (
             <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>Research Rp {formatPrice(Number(fm.fair_value_low) || null)} – Rp {formatPrice(Number(fm.fair_value_high) || null)}</p>
           )}
         </div>
-        <div className="p-5 flex flex-col justify-center lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
+        <div className="p-4 flex flex-col justify-center lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow">Konsensus</p>
-          <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
+          <p className="num tabular text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
             {valuationV2?.undervaluedCount ?? '—'}/{totalMethods}
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>metode: undervalued</p>
         </div>
-        <div className="p-5 flex flex-col justify-center">
+        <div className="p-4 flex flex-col justify-center">
           <p className="eyebrow">Avg MoS</p>
-          <p className="num tabular text-2xl font-bold mt-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
+          <p className="num tabular text-xl font-bold mt-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
             {heroMoS != null ? `${isUp ? '+' : ''}${(heroMoS * 100).toFixed(1)}%` : '—'}
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuationV2?.methodsValid ?? '—'}/{totalMethods} valid</p>

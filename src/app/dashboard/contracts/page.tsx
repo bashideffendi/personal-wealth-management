@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import type { Contract, ContractCategory, ContractFrequency } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -157,11 +157,12 @@ export default function ContractsPage() {
   const monthlyCost = Math.round(active.reduce((s, c) => s + monthlyOf(c), 0))
 
   const big = formatCurrency
+  // Nominal stat compact ala kpi-card Beranda — full digit dipertahanin via title.
   const stats = [
-    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: 'var(--ink)', tint: 'var(--surface-2)' },
-    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: tint(AMBER, 10) },
-    { label: t('contracts.stat_coverage_total'), value: big(coverageTotal), sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: tint(VIOLET, 10) },
-    { label: t('contracts.stat_premium'), value: big(monthlyCost), sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: tint(MINT, 10) },
+    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, full: undefined as string | undefined, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: 'var(--ink)', tint: 'var(--surface-2)' },
+    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, full: undefined as string | undefined, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: tint(AMBER, 10) },
+    { label: t('contracts.stat_coverage_total'), value: formatCompactCurrency(coverageTotal), full: formatCurrency(coverageTotal) as string | undefined, sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: tint(VIOLET, 10) },
+    { label: t('contracts.stat_premium'), value: formatCompactCurrency(monthlyCost), full: formatCurrency(monthlyCost) as string | undefined, sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: tint(MINT, 10) },
   ]
 
   const visible = active
@@ -202,7 +203,7 @@ export default function ContractsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
-                    <p className="num tabular text-2xl font-bold mt-1.5 whitespace-nowrap" style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="num tabular text-[20px] font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
                     <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}><s.icon className="size-4" style={{ color: s.color }} /></div>

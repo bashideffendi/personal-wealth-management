@@ -178,7 +178,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
         <div>
           <p className="eyebrow">{t('price_chart.price')}</p>
           <p
-            className="num tabular text-3xl font-semibold leading-none mt-1.5"
+            className="num tabular text-2xl font-semibold leading-none mt-1.5"
             style={{ color: 'var(--ink)' }}
           >
             {lastPrice != null ? `${sym} ${fmtPrice(lastPrice, currency)}` : '—'}

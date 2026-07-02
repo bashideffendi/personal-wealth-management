@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { monthsShort } from '@/lib/i18n/dates'
@@ -994,8 +994,8 @@ export default function BudgetingPage() {
               </span>
               <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{c.label}</span>
             </div>
-            <p className="num tabular font-semibold mt-2" style={{ color: 'var(--ink)', fontSize: 20, letterSpacing: '-0.02em' }}>
-              {privacyHidden ? '••••••' : formatCurrency(c.value)}
+            <p className="num tabular font-semibold mt-2" title={privacyHidden ? undefined : formatCurrency(c.value)} style={{ color: 'var(--ink)', fontSize: 19, letterSpacing: '-0.02em' }}>
+              {privacyHidden ? '••••••' : formatCompactCurrency(c.value)}
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
           </div>

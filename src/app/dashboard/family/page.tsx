@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatDate, formatCurrency } from '@/lib/utils'
+import { formatDate, formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 import {
@@ -469,12 +469,12 @@ export default function FamilyPage() {
         </div>
         <div className="p-5 sm:p-6 border-t sm:border-t-0 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.members')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{members.length}<span className="text-base font-medium" style={{ color: 'var(--ink-soft)' }}> / {household.max_seats}</span></p>
+          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{members.length}<span className="text-base font-medium" style={{ color: 'var(--ink-soft)' }}> / {household.max_seats}</span></p>
           <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{household.max_seats - members.length} {t('family.seats_remaining')}</p>
         </div>
         <div className="p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'var(--border-soft)' }}>
           <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.invitations')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: invitations.length > 0 ? 'var(--c-amber-ink)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
+          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 20, color: invitations.length > 0 ? 'var(--c-amber-ink)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
           <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? t('family.awaiting_acceptance') : t('family.none_pending')}</p>
         </div>
       </section>
@@ -487,7 +487,7 @@ export default function FamilyPage() {
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.combined_net_worth')}</p>
               {(netWorth?.members_sharing ?? 0) > 0 ? (
                 <>
-                  <p className="num font-bold mt-2 leading-none" style={{ fontSize: 28, color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(netWorth?.combined_net_worth ?? 0)}</p>
+                  <p className="num font-bold mt-2 leading-none" title={formatCurrency(netWorth?.combined_net_worth ?? 0)} style={{ fontSize: 22, color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}>{formatCompactCurrency(netWorth?.combined_net_worth ?? 0)}</p>
                   <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>
                     {t('family.assets')} <span className="num">{formatCurrency(netWorth?.combined_assets ?? 0)}</span> · {t('family.debts')} <span className="num">{formatCurrency(netWorth?.combined_debts ?? 0)}</span>
                   </p>

@@ -125,7 +125,7 @@ function KprFeatured() {
   return (
     <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" >
       {/* Input (kiri, tinted) */}
-      <div className="p-6 sm:p-7" style={{ background: 'var(--surface-2)' }}>
+      <div className="p-5 sm:p-6" style={{ background: 'var(--surface-2)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
           <span className="size-7 rounded-lg grid place-items-center" style={{ background: tint(VIOLET, 10) }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
@@ -141,9 +141,9 @@ function KprFeatured() {
         </div>
       </div>
       {/* Result (kanan) */}
-      <div className="p-6 sm:p-7" style={{ background: 'var(--surface)' }}>
+      <div className="p-5 sm:p-6" style={{ background: 'var(--surface)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
-        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(34px,4.5vw,46px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
+        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(26px,4.5vw,36px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_monthly_for')} {tenor} {t('calculators.unit_years')}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
           <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
@@ -321,7 +321,7 @@ function PensionGapCalculator() {
         </div>
 
         <div className="mt-5 text-center p-4 rounded-lg" style={{ background: 'var(--surface-2)' }}>
-          <p className="num text-3xl font-bold leading-none" style={{ color: statusInk }}>
+          <p className="num text-2xl font-bold leading-none" style={{ color: statusInk }}>
             {result.replacementActual.toFixed(0)}%
           </p>
           <p className="text-xs mt-2" style={{ color: 'var(--ink-soft)' }}>

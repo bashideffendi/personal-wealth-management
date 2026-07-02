@@ -8,7 +8,7 @@ import {
   ReflectiveSpendingModal,
   shouldTriggerReflection,
 } from '@/components/reflective/reflective-spending-modal'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useCategoryOptions } from '@/lib/use-category-options'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { formatDateShort } from '@/lib/i18n/dates'
@@ -940,11 +940,12 @@ export default function TransactionsPage() {
         const inc = filteredTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const exp = filteredTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
+        // Angka compact ala kpi-card Beranda — full digit tetap kebaca via title.
         const stats = [
-          { label: t('transactions.summary_income'), dot: 'var(--c-mint)', Icon: ArrowDownToLine, val: formatCurrency(inc), color: 'var(--ink)' },
-          { label: t('transactions.summary_expense'), dot: 'var(--c-coral)', Icon: ArrowUpFromLine, val: formatCurrency(exp), color: 'var(--ink)' },
-          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
-          { label: t('transactions.summary_total_count'), dot: 'var(--c-violet)', Icon: Hash, val: String(filteredTransactions.length), color: 'var(--ink)' },
+          { label: t('transactions.summary_income'), dot: 'var(--c-mint)', Icon: ArrowDownToLine, val: formatCompactCurrency(inc), full: formatCurrency(inc) as string | undefined, color: 'var(--ink)' },
+          { label: t('transactions.summary_expense'), dot: 'var(--c-coral)', Icon: ArrowUpFromLine, val: formatCompactCurrency(exp), full: formatCurrency(exp) as string | undefined, color: 'var(--ink)' },
+          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCompactCurrency(Math.abs(net))}`, full: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}` as string | undefined, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
+          { label: t('transactions.summary_total_count'), dot: 'var(--c-violet)', Icon: Hash, val: String(filteredTransactions.length), full: undefined as string | undefined, color: 'var(--ink)' },
         ]
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
@@ -956,7 +957,7 @@ export default function TransactionsPage() {
                   </span>
                   <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
                 </div>
-                <p className="num tabular font-semibold mt-2" style={{ fontSize: 20, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
+                <p className="num tabular font-semibold mt-2" title={s.full} style={{ fontSize: 19, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
               </div>
             ))}
           </div>

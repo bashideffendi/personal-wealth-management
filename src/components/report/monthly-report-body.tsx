@@ -14,7 +14,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useT } from '@/lib/i18n/context'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Transaction } from '@/types'
@@ -465,7 +465,7 @@ export function MonthlyReportBody({
         <div className="s-card p-5 sm:p-6">
           <p className="eyebrow">{t('report.networth_eyebrow')}</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.networth_title')}</h3>
-          <p className="num font-bold mt-3" style={{ fontSize: 30, letterSpacing: '-0.03em', color: 'var(--ink)' }}>{formatCurrency(r.netWorth)}</p>
+          <p className="num font-bold mt-3" style={{ fontSize: 24, letterSpacing: '-0.03em', color: 'var(--ink)' }} title={formatCurrency(r.netWorth)}>{formatCompactCurrency(r.netWorth)}</p>
           <div className="mt-4 space-y-2">
             <Nw label={t('report.nw_liquid')} value={liquidTotal} />
             <Nw label={t('report.nw_investment')} value={investTotal} />
@@ -594,18 +594,19 @@ function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; v
   return (
     <div className="stat-tile">
       <div className="flex items-center justify-between"><p className="eyebrow">{label}</p><div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>{icon}</div></div>
-      <p className="num tabular font-bold mt-2" style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--ink)' }}><span className="sm:hidden">{formatCurrency(value)}</span><span className="hidden sm:inline">{formatCurrency(value)}</span></p>
+      <p className="num tabular font-bold mt-2" style={{ fontSize: 19, letterSpacing: '-0.025em', color: 'var(--ink)' }} title={formatCurrency(value)}>{formatCompactCurrency(value)}</p>
       {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint)' : 'var(--c-coral)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% {t('report.vs_last_month')}</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
     </div>
   )
 }
 
 function Mini({ label, value, text, color, signed }: { label: string; value?: number; text?: string; color: string; signed?: boolean }) {
+  const sign = signed && (value ?? 0) >= 0 ? '+' : signed && (value ?? 0) < 0 ? '−' : ''
   return (
     <div>
       <p className="t-cap" style={{ color: 'var(--text-mute)' }}>{label}</p>
-      <p className="num tabular font-bold mt-0.5" style={{ fontSize: 17, color }}>
-        {text != null ? text : `${signed && (value ?? 0) >= 0 ? '+' : signed && (value ?? 0) < 0 ? '−' : ''}${formatCurrency(Math.abs(value ?? 0))}`}
+      <p className="num tabular font-bold mt-0.5" style={{ fontSize: 17, color }} title={text != null ? undefined : `${sign}${formatCurrency(Math.abs(value ?? 0))}`}>
+        {text != null ? text : `${sign}${formatCompactCurrency(Math.abs(value ?? 0))}`}
       </p>
     </div>
   )

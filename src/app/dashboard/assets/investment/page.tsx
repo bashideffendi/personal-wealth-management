@@ -5,7 +5,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown } from 'lucide-react'
 import { CurrencyRates } from '@/components/investment/currency-rates'
@@ -419,8 +419,8 @@ export default function InvestmentOverviewPage() {
           </div>
           <div>
             <p className="eyebrow">{t('investment.rdn_cash')}</p>
-            <p className="num tabular text-2xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
-              {formatCurrency(rdnTotal)}
+            <p className="num tabular font-bold leading-tight" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(rdnTotal)}>
+              {formatCompactCurrency(rdnTotal)}
             </p>
           </div>
         </div>
@@ -595,7 +595,7 @@ export default function InvestmentOverviewPage() {
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
               <p className="eyebrow">{t('investment.dividend_6mo')}</p>
-              <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>{formatCurrency(dividen6Total)}</p>
+              <p className="num tabular font-bold mt-1" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(dividen6Total)}>{formatCompactCurrency(dividen6Total)}</p>
               {yieldOnCost != null && (
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {t('investment.yoc_label')} ~{yieldOnCost.toFixed(1).replace('.', ',')}% {t('investment.yoc_suffix')}
@@ -615,7 +615,8 @@ export default function InvestmentOverviewPage() {
             )}
           </div>
           {dividen6Total === 0 ? (
-            <div className="h-[160px] flex flex-col items-center justify-center text-center">
+            /* Empty state gak perlu nyewa tinggi chart 160px — padding wajar aja */
+            <div className="py-8 flex flex-col items-center justify-center text-center">
               <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('investment.dividend_empty')}</p>
               <Link href="/dashboard/assets/investment/stock?tab=dividen" className="text-xs mt-1 hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
                 {t('investment.record_dividend')} →

@@ -233,9 +233,10 @@ export default function NetWorthPage() {
         style={{ background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}>
         <div className="absolute pointer-events-none" style={{ top: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,95,211,0.20), transparent 65%)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, var(--hero-chip-pos-bg), transparent 65%)' }} />
-        <div className="relative p-6 sm:p-7 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative p-5 sm:p-6 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
-          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(40px,6vw,64px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}>{formatCurrency(netWorth)}</p>
+          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,40px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}>{formatCompactCurrency(netWorth)}</p>
+          <p className="num tabular text-[11px] mt-1.5" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
@@ -250,14 +251,14 @@ export default function NetWorthPage() {
             )}
           </div>
         </div>
-        <div className="relative p-6 sm:p-7 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative p-5 sm:p-6 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_assets')}</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: 'var(--hero-chip-pos-fg)' }}>{formatCurrency(totalAssets)}</p>
+          <p className="num tabular font-bold mt-2 leading-none" title={formatCurrency(totalAssets)} style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: 'var(--hero-chip-pos-fg)' }}>{formatCompactCurrency(totalAssets)}</p>
           <p className="text-[11px] mt-2" style={{ color: 'var(--on-hero-mut)' }}>{assetClasses.length} {t('networth.asset_classes')}</p>
         </div>
-        <div className="relative p-6 sm:p-7 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_debt')}</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--hero-chip-pos-fg)' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</p>
+          <p className="num tabular font-bold mt-2 leading-none" title={totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)} style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--hero-chip-pos-fg)' }}>{totalDebt > 0 ? `−${formatCompactCurrency(totalDebt)}` : formatCompactCurrency(0)}</p>
           <p className="text-[11px] mt-2" style={{ color: 'var(--on-hero-mut)' }}>{debtCount} {t('networth.active_debts')}</p>
         </div>
       </section>
@@ -413,7 +414,7 @@ function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, i
                 <span className="size-1.5 rounded-full shrink-0" style={{ background: c }} />
                 <p className="text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>{r.label}</p>
               </div>
-              <p className="num tabular font-bold mt-1.5 leading-none" style={{ fontSize: 26, color: c }}>{r.value}</p>
+              <p className="num tabular font-bold mt-1.5 leading-none" style={{ fontSize: 20, color: c }}>{r.value}</p>
               <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>{r.ideal}</p>
             </div>
           )

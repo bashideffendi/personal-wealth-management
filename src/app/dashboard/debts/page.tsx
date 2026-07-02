@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Debt, CreditCard as CreditCardRow } from '@/types'
 import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
@@ -298,7 +298,7 @@ export default function DebtsOverviewPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_remaining')}</p>
-              <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(totalRemaining)}</p>
+              <p className="num font-bold mt-2 leading-none" title={formatCurrency(totalRemaining)} style={{ fontSize: 20, color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCompactCurrency(totalRemaining)}</p>
               <p className="text-[12px] mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                 {t('debts.already_paid')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(totalPaid)}</span> {t('debts.of_principal')} <span className="num">{formatCurrency(totalPrincipal)}</span>
               </p>
@@ -322,7 +322,7 @@ export default function DebtsOverviewPage() {
 
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.monthly_payment')}</p>
-              <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{formatCurrency(totalMonthly)}</p>
+              <p className="num font-bold mt-2 leading-none" title={formatCurrency(totalMonthly)} style={{ fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{formatCompactCurrency(totalMonthly)}</p>
               <div className="mt-3 space-y-1.5 text-[12px]">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}><span className="size-2 rounded-full" style={{ background: 'var(--c-violet)' }} />{t('debts.long_term')}</span>
@@ -342,7 +342,7 @@ export default function DebtsOverviewPage() {
 
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.dti')}</p>
-              <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: dtiColor, letterSpacing: '-0.02em' }}>{dti != null ? `${dti.toFixed(1)}%` : '—'}</p>
+              <p className="num font-bold mt-2 leading-none" style={{ fontSize: 20, color: dtiColor, letterSpacing: '-0.02em' }}>{dti != null ? `${dti.toFixed(1)}%` : '—'}</p>
               <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{t('debts.of_monthly_income')}</p>
               <div className="mt-3 relative h-2 w-full rounded-full overflow-hidden" role="progressbar"
                 aria-valuenow={dti != null ? Math.round(dti) : 0} aria-valuemin={0} aria-valuemax={60}
