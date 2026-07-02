@@ -702,7 +702,7 @@ export default function DashboardPage() {
         greeting={`${t(`dashboard.${now.getHours() < 11 ? 'greet_morning' : now.getHours() < 15 ? 'greet_afternoon' : now.getHours() < 19 ? 'greet_evening' : 'greet_night'}`)}${userFirstName ? `, ${userFirstName}` : ''}`}
         todayLabel={new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
         netWorth={liquidTotal + nonLiquidTotal + investments.reduce((s, i) => s + (i.total_value || 0), 0) - debtTotal}
-        ytdPct={null}
+        trend={trendForHero}
         income={totals.income}
         expense={totals.expense}
         monthLabel={currentMonthYear}

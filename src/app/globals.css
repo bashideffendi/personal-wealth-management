@@ -1246,38 +1246,45 @@ body[data-calm="true"] [data-loss]:hover {
   body { overscroll-behavior-y: contain; }
 }
 
-/* ═══ F9 MOBILE SHELL — kanvas app-native (<md) ═══════════════════════════
-   Keputusan redesign 2026-07-02 (mockup lima layar di-approve user):
-   di HP kartu TANPA border/shadow — pemisahan datang dari kontras kanvas
-   (abu) vs permukaan (putih) + section header nempel kanvas, pola
-   grouped-list iOS/Revolut. Desktop & skin cartoon TIDAK berubah. */
+/* ═══ F9/F10 MOBILE SHELL — kanvas app-native (<md) ═══════════════════════
+   F9 (mockup approve 2026-07-02): kartu tanpa border, pemisahan dari kontras
+   kanvas abu vs permukaan putih. F10 (mockup approve 2026-07-02 sore):
+   + soft depth ala Budggt — bayangan lembut difus + radius 18 biar kartu
+   "ngambang" premium, bukan kotak datar. Desktop & skin cartoon TIDAK berubah. */
 @media (max-width: 767px) {
   :root:not([data-skin='cartoon']) {
     --bg: #eff0f4;
     --paper: #eff0f4;
     --bg-2: #e8e9ee;
-    --card-shadow: none;
-    --card-radius: 16px;
+    --card-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 8px 20px rgba(24, 24, 27, 0.07);
+    --card-radius: 18px;
   }
   :root.dark:not([data-skin='cartoon']) {
     --bg: #0b0b10;
     --paper: #0b0b10;
     --bg-2: #101016;
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px rgba(0, 0, 0, 0.45);
   }
   :root:not([data-skin='cartoon']) .s-card {
     border-color: transparent;
-    box-shadow: none;
+    box-shadow: var(--card-shadow);
   }
   :root:not([data-skin='cartoon']) .stat-tile {
     border-color: transparent;
-    box-shadow: none;
+    box-shadow: var(--card-shadow);
   }
-  /* Tile/kartu pola tailwind (rounded-xl|2xl + border) ikut borderless.
-     Border fungsional (input rounded-md/lg, chip rounded-full, border
-     berwarna via inline style) TIDAK kena — inline style menang. */
+  /* Tile/kartu pola tailwind (rounded-xl|2xl + border) ikut borderless +
+     bayangan lebih tipis (sering nested di dalam kartu). Border fungsional
+     (input rounded-md/lg, chip rounded-full, border berwarna via inline
+     style) TIDAK kena — inline style menang. */
   :root:not([data-skin='cartoon']) .rounded-xl.border,
   :root:not([data-skin='cartoon']) .rounded-2xl.border {
     border-color: transparent;
+    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 5px 14px rgba(24, 24, 27, 0.05);
+  }
+  :root.dark:not([data-skin='cartoon']) .rounded-xl.border,
+  :root.dark:not([data-skin='cartoon']) .rounded-2xl.border {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.35);
   }
   /* Section header nempel kanvas (dipakai layout mobile F9) */
   .m-sec {
