@@ -302,8 +302,19 @@ export default function RecurringPage() {
         </div>
       ) : (
         <>
+          {/* F10: pas kosong, 4 tile "Rp 0" mati di-hide di mobile — diganti
+              1 kartu ringkas (empty state di bawah yang cerita). */}
+          {items.length === 0 && stats.length > 0 && (
+            <div className="s-card px-4 py-3 flex items-center justify-between md:hidden">
+              <div>
+                <p className="text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>{stats[0].label}</p>
+                <p className="num tabular text-[18px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stats[0].value}</p>
+              </div>
+              <span className="text-[11.5px] rounded-full px-2.5 py-1" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{stats[0].sub}</span>
+            </div>
+          )}
           {/* Stat strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className={items.length === 0 ? 'hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3' : 'grid grid-cols-2 lg:grid-cols-4 gap-3'}>
             {stats.map((s) => (
               <div key={s.label} className="s-card p-4">
                 <div className="flex items-start justify-between gap-2">
@@ -342,11 +353,12 @@ export default function RecurringPage() {
           )}
 
           {items.length === 0 ? (
-            <div className="s-card p-12 text-center">
-              <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}><Repeat className="size-6" style={{ color: 'var(--ink-soft)' }} /></div>
-              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
-              <Button className="mt-4" onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
+            /* F10: empty state hangat — chip ikon tint brand, bukan abu datar */
+            <div className="s-card px-6 py-10 text-center">
+              <div className="size-16 rounded-[22px] grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><Repeat className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              <p className="text-[15px] font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
+              <p className="text-[12.5px] mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
+              <Button className="mt-4 rounded-full" onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
             </div>
           ) : (
             <>

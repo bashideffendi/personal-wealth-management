@@ -295,7 +295,20 @@ export function MobileHome({
       <div className="m-sec"><span>{t('dashboard.recent_transactions')}</span><Link href="/dashboard/transactions">{t('dashboard.see_all')}</Link></div>
       <section className="s-card px-3.5 py-1">
         {txs.length === 0 ? (
-          <p className="text-[12.5px] py-3.5 text-center" style={{ color: 'var(--ink-soft)' }}>{t('dashboard.sankey_empty')}</p>
+          <div className="py-5 text-center">
+            <span className="grid place-items-center size-10 rounded-[14px] mx-auto" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
+              <PencilLine className="size-[18px]" />
+            </span>
+            <p className="text-[12.5px] mt-2 max-w-[260px] mx-auto" style={{ color: 'var(--ink-muted)' }}>{t('dashboard.sankey_empty')}</p>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('klunting:quick-add'))}
+              className="mt-2.5 rounded-full px-3.5 py-1.5 text-[11.5px] font-medium active:opacity-70"
+              style={{ background: 'var(--ink)', color: 'var(--surface)' }}
+            >
+              {t('dashboard.qa_note')}
+            </button>
+          </div>
         ) : (
           txs.map((x, i) => (
             <div key={x.id} className="flex items-center gap-2.5 min-h-[50px]" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>

@@ -16,6 +16,7 @@ import type { Transaction, Account, CreditCard, CategorizationRule } from '@/typ
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
+import { categoryHue } from '@/lib/category-hue'
 import { adjustCardBalance } from '@/lib/data/balances'
 
 import { Button } from '@/components/ui/button'
@@ -1610,7 +1611,12 @@ export default function TransactionsPage() {
                           : tx.type === 'expense'
                             ? 'var(--c-coral-ink)'
                             : 'var(--ink)'
-                        const tint = TYPE_BADGE_STYLES[tx.type]
+                        // F10: chip ikon = hue KATEGORI (konsisten Beranda/Anggaran);
+                        // pemasukan tetap mint (semantik masuk lebih penting).
+                        const hue = categoryHue(tx.category)
+                        const tint = tx.type === 'income'
+                          ? { bg: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }
+                          : { bg: hue.soft, color: hue.ink }
                         return (
                           <div
                             key={tx.id}
