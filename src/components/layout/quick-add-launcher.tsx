@@ -347,10 +347,12 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     // Bump credit card outstanding if applicable
     const cc = cards.find((c) => c.id === form.account_id)
     if (cc && form.type === 'expense' && !error) {
-      await supabase
+      const { error: ccErr } = await supabase
         .from('credit_cards')
         .update({ current_balance: cc.current_balance + form.amount })
         .eq('id', cc.id)
+      // Jangan senyap: kalau saldo kartu gagal naik, kasih tau (samain jalur lain)
+      if (ccErr) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
     }
 
     setManualSaving(false)

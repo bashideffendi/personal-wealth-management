@@ -122,7 +122,10 @@ export function DashboardCustomizer() {
       {ready && hiddenCount > 0 && (
         <style
           dangerouslySetInnerHTML={{
-            __html: hidden.map((id) => `[data-block="${id}"]{display:none!important}`).join(''),
+            __html: hidden
+              .filter((id) => /^[a-z0-9_-]+$/i.test(id))
+              .map((id) => `[data-block="${id}"]{display:none!important}`)
+              .join(''),
           }}
         />
       )}

@@ -77,10 +77,13 @@ export async function consumeAICredits(
   })
 
   if (error) {
+    // Log detail di server; JANGAN bocorin error.message (nama RPC/kolom/skema)
+    // ke klien — cukup pesan generik.
+    console.error('[ai-credits] consume_ai_credits gagal:', userId, error.message)
     return {
       ok: false,
       status: 500,
-      error: 'Gagal mengecek kredit AI: ' + error.message,
+      error: 'Gagal memeriksa kredit AI. Coba lagi sebentar.',
     }
   }
 
