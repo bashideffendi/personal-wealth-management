@@ -977,10 +977,23 @@ export default function BudgetingPage() {
         }
       />
 
+      {/* Mobile (F9c): total tahunan jadi 1 baris teks kecil di kanvas — kartu
+          ringkasan bulanan baru ada di MobileBudgetingView, ini konteks setahun. */}
+      <p className="md:hidden text-[11.5px] px-1" style={{ color: 'var(--ink-soft)' }}>
+        {t('budgeting.annual')} · {t('budgeting.income')}{' '}
+        <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }} title={privacyHidden ? undefined : formatCurrency(totalIncomeYear)}>
+          {privacyHidden ? '••' : formatCompactCurrency(totalIncomeYear)}
+        </span>
+        {' · '}{t('budgeting.expense')}{' '}
+        <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }} title={privacyHidden ? undefined : formatCurrency(totalExpenseYear)}>
+          {privacyHidden ? '••' : formatCompactCurrency(totalExpenseYear)}
+        </span>
+      </p>
+
       {/* Summary — annual totals (sum of all 12 months). Neutral surface card +
           contained color accent (soft-tint icon box) so it stays selaras with the
           rest of the page; color lives in the chip, not the whole card. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[
           { label: t('budgeting.total_income'), value: totalIncomeYear, dot: 'var(--c-mint)', Icon: ArrowDownToLine, sub: t('budgeting.annual') },
           { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: 'var(--c-coral)', Icon: ArrowUpFromLine, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
@@ -1016,8 +1029,9 @@ export default function BudgetingPage() {
         const over = remaining < 0
         const hex = ok ? 'var(--c-mint)' : over ? 'var(--c-coral)' : 'var(--c-amber)'
         const amt = privacyHidden ? '••••••' : formatCurrency(Math.abs(remaining))
+        // Mobile: strip over-alokasi ramping dirender MobileBudgetingView (per bulan terpilih)
         return (
-          <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
+          <div className="hidden md:flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
             {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
             <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
               <span className="font-semibold">{shortMonths[bMonth - 1]}</span>{' — '}
@@ -1048,6 +1062,7 @@ export default function BudgetingPage() {
             visibleSaving={leafSaving}
             visibleInvestment={leafInvestment}
             getValue={getValue}
+            actuals={actuals}
             onCellChange={handleCellBlur}
           />
         </div>

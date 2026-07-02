@@ -156,6 +156,10 @@ function NavDropdown({
  * NAV_ITEMS (longest prefix match) dgn fallback document.title yang
  * di-set QuietPageHeader ("X · Klunting").
  */
+// Root tab bottom-bar (selain Beranda) — dibuka via tab, bukan drill-down →
+// tanpa tombol back (judul saja). Subroute di bawahnya tetap dapet back.
+const TAB_ROOTS = ['/dashboard/transactions', '/dashboard/budgeting', '/dashboard/more']
+
 function MobileAppBar({ pathname }: { pathname: string }) {
   const { t } = useI18n()
   const router = useRouter()
@@ -181,6 +185,8 @@ function MobileAppBar({ pathname }: { pathname: string }) {
 
   if (pathname === '/dashboard') return null
 
+  const isTabRoot = TAB_ROOTS.includes(pathname)
+
   const matched = flat
     .filter((it) => it.href !== '/dashboard' && matchesPath(pathname, it.href))
     .sort((a, b) => b.href.length - a.href.length)[0]
@@ -201,16 +207,18 @@ function MobileAppBar({ pathname }: { pathname: string }) {
         paddingTop: 'env(safe-area-inset-top)',
       }}
     >
-      <div className="flex items-center gap-1 px-2" style={{ height: 48 }}>
-        <button
-          type="button"
-          onClick={goBack}
-          aria-label="Kembali"
-          className="grid place-items-center size-9 rounded-full transition-colors active:bg-[var(--surface-2)]"
-          style={{ color: 'var(--ink)' }}
-        >
-          <ArrowLeft className="size-5" />
-        </button>
+      <div className={`flex items-center gap-1 ${isTabRoot ? 'px-4' : 'px-2'}`} style={{ height: 48 }}>
+        {!isTabRoot && (
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label="Kembali"
+            className="grid place-items-center size-9 rounded-full transition-colors active:bg-[var(--surface-2)]"
+            style={{ color: 'var(--ink)' }}
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+        )}
         <h1 className="text-[17px] font-semibold truncate" style={{ color: 'var(--ink)', letterSpacing: '-0.01em', fontFamily: 'var(--font-display)' }}>
           {title}
         </h1>

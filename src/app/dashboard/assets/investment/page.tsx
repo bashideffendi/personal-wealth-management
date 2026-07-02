@@ -412,8 +412,14 @@ export default function InvestmentOverviewPage() {
         snapshots={snapshots}
       />
 
-      {/* Kas di RDN / RDI — kartu PUTIH, chip krem + logo bank, tombol "+" selalu ada */}
-      <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+      {/* Kas di RDN / RDI — kartu PUTIH, chip krem + logo bank, tombol "+" selalu ada.
+          F9 mobile: label pindah ke .m-sec di kanvas (+ link Kelola), eyebrow & link dalam kartu disembunyikan. */}
+      <div>
+        <div className="m-sec md:hidden">
+          <span>{t('investment.rdn_cash')}</span>
+          <Link href="/dashboard/accounts">{t('investment.manage')} ›</Link>
+        </div>
+        <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-3 shrink-0">
           <div
             className="size-11 rounded-xl flex items-center justify-center shrink-0"
@@ -422,7 +428,7 @@ export default function InvestmentOverviewPage() {
             <Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
           </div>
           <div>
-            <p className="eyebrow">{t('investment.rdn_cash')}</p>
+            <p className="eyebrow max-md:hidden">{t('investment.rdn_cash')}</p>
             <p className="num tabular font-bold leading-tight" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(rdnTotal)}>
               {formatCompactCurrency(rdnTotal)}
             </p>
@@ -459,23 +465,40 @@ export default function InvestmentOverviewPage() {
         </div>
         <Link
           href="/dashboard/accounts"
-          className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
+          className="text-xs font-medium max-md:hidden md:inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
           style={{ color: 'var(--c-mint-ink)' }}
         >
           {t('investment.manage')} <ArrowUpRight className="size-3.5" />
         </Link>
+        </div>
       </div>
 
-      <AssetClassCards byClass={byClass} byCategory={byCategory} />
+      {/* F9 mobile: header "Kelas Aset" (sudah di kanvas dalam komponen) di-restyle
+          jadi rupa .m-sec — 13px/600 ink, non-uppercase. `!` wajib: .eyebrow
+          unlayered di globals ngalahin utilities tanpa important. Desktop tetap. */}
+      <div className="max-md:[&_.eyebrow]:text-[13px]! max-md:[&_.eyebrow]:font-semibold! max-md:[&_.eyebrow]:normal-case! max-md:[&_.eyebrow]:tracking-normal! max-md:[&_.eyebrow]:text-[color:var(--ink)]! max-md:[&>div>div:first-child]:mb-1.5">
+        <AssetClassCards byClass={byClass} byCategory={byCategory} />
+      </div>
 
       {/* Currency rates — konteks FX, diturunkan dari slot #2: duit user dulu,
-          kurs belakangan. */}
-      <CurrencyRates />
+          kurs belakangan. F9 mobile: judul pindah ke .m-sec kanvas; eyebrow
+          dalam kartu disembunyikan (subtitle jam update + refresh tetap). */}
+      <div>
+        <div className="m-sec md:hidden"><span>{t('investment.fx_title')}</span></div>
+        <div className="max-md:[&_.eyebrow]:hidden">
+          <CurrencyRates />
+        </div>
+      </div>
 
-      {/* Alokasi donut + Kinerja per kelas */}
+      {/* Alokasi donut + Kinerja per kelas.
+          F9 mobile: judul tiap kartu pindah ke .m-sec di kanvas (marginTop 0
+          inline — margin .m-sec gak collapse di dalam grid cell); header
+          dalam kartu jadi desktop-only. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
-          <div className="mb-4">
+        <div className="lg:col-span-2 flex flex-col">
+          <div className="m-sec md:hidden" style={{ marginTop: 0 }}><span>{t('investment.portfolio_composition')}</span></div>
+          <div className="s-card p-5 sm:p-6 flex-1 flex flex-col">
+          <div className="mb-4 max-md:hidden">
             <p className="eyebrow">{t('investment.allocation')}</p>
             <h2 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
               {t('investment.portfolio_composition')}
@@ -530,10 +553,16 @@ export default function InvestmentOverviewPage() {
               </div>
             </>
           )}
+          </div>
         </div>
 
-        <div className="s-card p-5 sm:p-6 lg:col-span-3 flex flex-col">
-          <div className="flex items-start justify-between gap-2 mb-4">
+        <div className="lg:col-span-3 flex flex-col">
+          <div className="m-sec md:hidden" style={{ marginTop: 0 }}>
+            <span>{t('investment.return_per_class')}</span>
+            <span className="text-[11px] font-normal" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
+          </div>
+          <div className="s-card p-5 sm:p-6 flex-1 flex flex-col">
+          <div className="flex items-start justify-between gap-2 mb-4 max-md:hidden">
             <div>
               <p className="eyebrow">{t('investment.performance')}</p>
               <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.return_per_class')}</h2>
@@ -583,22 +612,37 @@ export default function InvestmentOverviewPage() {
               })()}
             </div>
           )}
+          </div>
         </div>
       </div>
 
       <WatchlistTargetChip />
 
-      <HoldingTable enriched={enriched} quotes={quotes} />
+      {/* F9 mobile: judul "Daftar Holding" pindah ke .m-sec kanvas; eyebrow+h2
+          dalam kartu disembunyikan (wedge summary + tab pill tetap). Gate
+          enriched.length menjiplak guard internal HoldingTable biar .m-sec
+          gak yatim pas komponen return null. */}
+      {enriched.length > 0 && (
+        <div>
+          <div className="m-sec md:hidden"><span>{t('investment.holding_list')}</span></div>
+          <div className="max-md:[&_.eyebrow]:hidden max-md:[&_h2]:hidden">
+            <HoldingTable enriched={enriched} quotes={quotes} />
+          </div>
+        </div>
+      )}
 
       {/* Bottom row: Dividen 6 bulan + Dividen Terdekat (forward-looking —
           mengganti "Pergerakan Hari Ini" yang merender data day-change yang
           sama untuk ketiga kalinya di satu halaman). */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
-        {/* Dividen 6 bulan — real dari tabel dividends */}
-        <div className="s-card p-5 sm:p-6">
+        {/* Dividen 6 bulan — real dari tabel dividends.
+            F9 mobile: judul ke .m-sec kanvas, eyebrow dalam kartu md-only. */}
+        <div>
+          <div className="m-sec md:hidden" style={{ marginTop: 0 }}><span>{t('investment.dividend_6mo')}</span></div>
+          <div className="s-card p-5 sm:p-6">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <p className="eyebrow">{t('investment.dividend_6mo')}</p>
+              <p className="eyebrow max-md:hidden">{t('investment.dividend_6mo')}</p>
               <p className="num tabular font-bold mt-1" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(dividen6Total)}>{formatCompactCurrency(dividen6Total)}</p>
               {yieldOnCost != null && (
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
@@ -631,8 +675,12 @@ export default function InvestmentOverviewPage() {
               <DividendBar data={dividen6} />
             </div>
           )}
+          </div>
         </div>
 
+        {/* UpcomingDividends bisa return null (query internal) — .m-sec kanvas
+            gak bisa dipasang dari sini tanpa risiko header yatim; header
+            dalam kartunya dibiarkan (butuh edit upcoming-dividends.tsx). */}
         <UpcomingDividends enriched={enriched} />
       </div>
 

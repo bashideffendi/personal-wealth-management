@@ -971,6 +971,36 @@ export default function TransactionsPage() {
         </div>
       </BottomSheet>
 
+      {/* F9c: chip bulan (mobile) — ganti rentang cepat tanpa buka filter */}
+      <div className="md:hidden flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1 -mb-1">
+        {(() => {
+          const nowd = new Date()
+          const months = Array.from({ length: 6 }, (_, i) => new Date(nowd.getFullYear(), nowd.getMonth() - i, 1))
+          const isMonth = (d: Date) => !!dateRange
+            && dateRange.from.getFullYear() === d.getFullYear() && dateRange.from.getMonth() === d.getMonth() && dateRange.from.getDate() === 1
+            && dateRange.to.getFullYear() === d.getFullYear() && dateRange.to.getMonth() === d.getMonth()
+          const chip = (active: boolean) => ({ background: active ? 'var(--ink)' : 'var(--surface)', color: active ? 'var(--surface)' : 'var(--ink-muted)' })
+          return (
+            <>
+              <button type="button" onClick={() => setDateRange(null)} className="shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-medium" style={chip(!dateRange)}>
+                {t('transactions.chip_all')}
+              </button>
+              {months.map((d) => (
+                <button
+                  key={d.toISOString()}
+                  type="button"
+                  onClick={() => setDateRange({ from: new Date(d.getFullYear(), d.getMonth(), 1), to: new Date(d.getFullYear(), d.getMonth() + 1, 0) })}
+                  className="shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-medium"
+                  style={chip(isMonth(d))}
+                >
+                  {d.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', ...(d.getFullYear() !== nowd.getFullYear() ? { year: '2-digit' as const } : {}) })}
+                </button>
+              ))}
+            </>
+          )
+        })()}
+      </div>
+
       {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
       {!loading && filteredTransactions.length > 0 && (() => {
         const inc = filteredTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
@@ -984,19 +1014,27 @@ export default function TransactionsPage() {
           { label: t('transactions.summary_total_count'), dot: 'var(--c-violet)', Icon: Hash, val: String(filteredTransactions.length), full: undefined as string | undefined, color: 'var(--ink)' },
         ]
         return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {stats.map((s) => (
-              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                <div className="flex items-center gap-2.5">
-                  <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
-                    <s.Icon className="size-4" />
-                  </span>
-                  <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+          <>
+            {/* Mobile (F9c): ringkasan 1 baris di kanvas — bukan 4 kartu */}
+            <p className="md:hidden text-[11.5px] px-1 -mb-1" style={{ color: 'var(--ink-soft)' }}>
+              {t('transactions.summary_income')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }} title={formatCurrency(inc)}>{formatCompactCurrency(inc)}</span>
+              {' · '}{t('transactions.summary_expense')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }} title={formatCurrency(exp)}>{formatCompactCurrency(exp)}</span>
+              {' · '}{filteredTransactions.length} {t('transactions.summary_total_count').toLowerCase()}
+            </p>
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {stats.map((s) => (
+                <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
+                      <s.Icon className="size-4" />
+                    </span>
+                    <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+                  </div>
+                  <p className="num tabular font-semibold mt-2" title={s.full} style={{ fontSize: 19, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
                 </div>
-                <p className="num tabular font-semibold mt-2" title={s.full} style={{ fontSize: 19, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )
       })()}
 
@@ -1537,60 +1575,87 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {/* Mobile: baris-compact (1 kartu + hairline divider, ala Stockbit).
+          {/* Mobile (F9c): grouped per HARI — header tanggal + net harian nempel
+              kanvas, baris dalam kartu per hari (pola app keuangan native).
               Tap baris = edit; tombol hapus kecil di kanan (stopPropagation). */}
-          <div
-            className="md:hidden rounded-xl border overflow-hidden"
-            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-          >
-            {filteredTransactions.map((tx, i) => {
-              // AA-contrast ink variants; saving/investment stay neutral.
-              const amountColor = tx.type === 'income'
-                ? 'var(--c-mint-ink)'
-                : tx.type === 'expense'
-                  ? 'var(--c-coral-ink)'
-                  : 'var(--ink)'
-              const tint = TYPE_BADGE_STYLES[tx.type]
-              return (
-                <div
-                  key={tx.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openEditDialog(tx)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditDialog(tx) } }}
-                  aria-label={`${t('transactions.edit')}: ${tx.description || tx.category}`}
-                  className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)] cursor-pointer"
-                  style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
-                >
-                  <div
-                    className="grid place-items-center shrink-0"
-                    style={{ width: 30, height: 30, borderRadius: 8, background: tint.bg, color: tint.color }}
-                  >
-                    <CategoryIcon category={tx.category} className="size-[15px]" />
+          <div className="md:hidden">
+            {(() => {
+              const byDate = new Map<string, typeof filteredTransactions>()
+              for (const tx of filteredTransactions) {
+                const arr = byDate.get(tx.date)
+                if (arr) arr.push(tx)
+                else byDate.set(tx.date, [tx])
+              }
+              const dates = [...byDate.keys()].sort((a, b) => (a < b ? 1 : -1))
+              return dates.map((date) => {
+                const items = byDate.get(date)!
+                const net = items.reduce((s, x) => s + (x.type === 'income' ? x.amount : x.type === 'expense' ? -x.amount : 0), 0)
+                return (
+                  <div key={date}>
+                    <div className="flex items-baseline justify-between px-1 mt-3 mb-1.5">
+                      <span className="text-[11.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+                        {new Date(`${date}T00:00:00`).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                      </span>
+                      {net !== 0 && (
+                        <span className="num tabular text-[11.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+                          {net > 0 ? '+' : '−'}{formatCompactCurrency(Math.abs(net))}
+                        </span>
+                      )}
+                    </div>
+                    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                      {items.map((tx, i) => {
+                        // AA-contrast ink variants; saving/investment stay neutral.
+                        const amountColor = tx.type === 'income'
+                          ? 'var(--c-mint-ink)'
+                          : tx.type === 'expense'
+                            ? 'var(--c-coral-ink)'
+                            : 'var(--ink)'
+                        const tint = TYPE_BADGE_STYLES[tx.type]
+                        return (
+                          <div
+                            key={tx.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openEditDialog(tx)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditDialog(tx) } }}
+                            aria-label={`${t('transactions.edit')}: ${tx.description || tx.category}`}
+                            className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)] cursor-pointer"
+                            style={{ minHeight: 54, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                          >
+                            <div
+                              className="grid place-items-center shrink-0"
+                              style={{ width: 30, height: 30, borderRadius: 8, background: tint.bg, color: tint.color }}
+                            >
+                              <CategoryIcon category={tx.category} className="size-[15px]" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                                {tx.description || tx.category}
+                              </p>
+                              <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                                {tx.category} · {getAccountName(tx.account_id)}
+                              </p>
+                            </div>
+                            <p className="num text-[14px] font-semibold tabular-nums leading-tight shrink-0" style={{ color: amountColor }}>
+                              {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
+                              aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`}
+                              className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                              style={{ color: 'var(--ink-soft)' }}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
-                      {tx.description || tx.category}
-                    </p>
-                    <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                      {formatDateShort(tx.date, locale)} · {tx.category} · {getAccountName(tx.account_id)}
-                    </p>
-                  </div>
-                  <p className="num text-[14px] font-semibold tabular-nums leading-tight shrink-0" style={{ color: amountColor }}>
-                    {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
-                    aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`}
-                    className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
-                    style={{ color: 'var(--ink-soft)' }}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                </div>
-              )
-            })}
+                )
+              })
+            })()}
           </div>
         </>
       )}

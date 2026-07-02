@@ -4,6 +4,11 @@
  * PortfolioHero — total value + equity curve (demoted until history exists)
  * + sub-stats. Extracted from the investment hub monolith; chart-range state
  * lives HERE so toggling a range never re-renders the rest of the page.
+ *
+ * F9 (mobile <md): dual-render — desktop keeps the s-card hero utuh; mobile
+ * renders angka langsung di KANVAS (tanpa kartu): total 24px compact + chip
+ * pill %, subline untung/rugi full digit + jumlah institusi, sparkline tipis
+ * (EquityArea, hanya saat history ≥8 snapshot), lalu chip periode pill.
  */
 
 import { useMemo, useState } from 'react'
@@ -61,7 +66,70 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
   const hasHistory = snapshots.length >= 8
 
   return (
-    <section className="s-card p-5 sm:p-6">
+    <>
+      {/* ── Mobile <md — angka di KANVAS, tanpa kartu (F9 mockup) ── */}
+      <section className="md:hidden" aria-label={t('investment.total_value')}>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <p
+            className="num tabular font-semibold leading-none"
+            style={{ fontSize: 24, letterSpacing: '-0.02em', color: 'var(--ink)' }}
+            title={formatCurrency(totals.market)}
+          >
+            {formatCompactCurrency(totals.market)}
+          </p>
+          <span
+            className="num inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+            data-loss={up ? undefined : 'true'}
+            style={{
+              background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+              color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
+            }}
+          >
+            {up ? '+' : ''}{totals.plPct.toFixed(2)}%
+          </span>
+        </div>
+        <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <span
+            className="num tabular font-semibold"
+            data-loss={up ? undefined : 'true'}
+            style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+          >
+            {up ? '+' : ''}{formatCurrency(totals.pl)}
+          </span>{' '}
+          {t('investment.since_inception')}
+          {institutionCount > 0 ? ` · ${institutionCount} ${t('investment.institutions')}` : ''}
+        </p>
+        {/* Sparkline tipis — ikut demotion rule desktop (baru render ≥8 snapshot) */}
+        {hasHistory && chartData.length >= 2 && (
+          <div className="mt-3" data-loss={up ? undefined : 'true'} style={{ height: 52 }}>
+            <EquityArea data={chartData} up={up} />
+          </div>
+        )}
+        {hasHistory && (
+          <div className="mt-2.5 flex gap-1.5">
+            {CHART_RANGES.map((r) => {
+              const active = chartRange === r.key
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setChartRange(r.key)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition"
+                  style={active
+                    ? { background: 'var(--ink)', color: 'var(--surface)' }
+                    : { background: 'var(--surface)', color: 'var(--ink-muted)' }}
+                >
+                  {r.key === 'all' ? t('investment.range_all') : r.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ── Desktop md+ — kartu hero existing, utuh ── */}
+      <section className="s-card p-5 sm:p-6 hidden md:block">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="eyebrow">
@@ -187,7 +255,8 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
         />
         <HeroStat label={t('investment.stat_dividend_ytd')} value={formatCurrency(dividenYtd)} />
       </div>
-    </section>
+      </section>
+    </>
   )
 }
 
