@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Settings2, X, Eye, EyeOff, RotateCcw } from 'lucide-react'
+import { Settings2, X, Eye, EyeOff, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loadUiPrefs, saveUiPref, DASHBOARD_LAYOUT_VERSION } from '@/lib/ui-prefs'
 import { useT } from '@/lib/i18n/context'
@@ -63,7 +63,15 @@ function readHidden(): string[] {
   }
 }
 
-export function DashboardCustomizer() {
+export function DashboardCustomizer({
+  order,
+  onMove,
+}: {
+  /** Urutan block aktif (dari page). Kalau ada, list di-sort ikut ini + tombol ↑/↓ muncul. */
+  order?: string[]
+  /** Geser block satu langkah. Dipakai reorder di mobile (grip handle drag = lg-only). */
+  onMove?: (id: string, dir: -1 | 1) => void
+}) {
   const t = useT()
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
@@ -173,29 +181,60 @@ export function DashboardCustomizer() {
               <strong> {t('dashboard_customizer.modal_desc_strong')}</strong>{t('dashboard_customizer.modal_desc_2')}
             </p>
             <div className="space-y-1.5">
-              {DASHBOARD_BLOCKS.map((b) => {
+              {(order
+                ? [...DASHBOARD_BLOCKS].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+                : DASHBOARD_BLOCKS
+              ).map((b, i, arr) => {
                 const on = !hidden.includes(b.id)
                 return (
-                  <button
+                  <div
                     key={b.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggle(b.id)}
-                    className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition"
+                    className="w-full flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition"
                     style={{
                       background: on ? 'var(--c-primary-soft)' : 'var(--surface-2)',
                       border: '1px solid var(--line)',
                     }}
                   >
-                    <span className="t-sm" style={{ color: on ? 'var(--ink)' : 'var(--text-mute)' }}>
-                      {t(`dashboard_customizer.${b.labelKey}`)}
-                    </span>
-                    {on ? (
-                      <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary-ink)' }} />
-                    ) : (
-                      <EyeOff className="size-4 shrink-0" style={{ color: 'var(--text-mute)' }} />
+                    {order && onMove && (
+                      <span className="flex flex-col shrink-0">
+                        <button
+                          type="button"
+                          aria-label={`${t('dashboard_customizer.move_up')}: ${t(`dashboard_customizer.${b.labelKey}`)}`}
+                          disabled={i === 0}
+                          onClick={() => onMove(b.id, -1)}
+                          className="grid size-6 place-items-center rounded disabled:opacity-30"
+                          style={{ color: 'var(--text-mute)' }}
+                        >
+                          <ChevronUp className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`${t('dashboard_customizer.move_down')}: ${t(`dashboard_customizer.${b.labelKey}`)}`}
+                          disabled={i === arr.length - 1}
+                          onClick={() => onMove(b.id, 1)}
+                          className="grid size-6 place-items-center rounded disabled:opacity-30"
+                          style={{ color: 'var(--text-mute)' }}
+                        >
+                          <ChevronDown className="size-4" />
+                        </button>
+                      </span>
                     )}
-                  </button>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggle(b.id)}
+                      className="flex-1 flex items-center justify-between gap-3 py-1 text-left min-w-0"
+                    >
+                      <span className="t-sm truncate" style={{ color: on ? 'var(--ink)' : 'var(--text-mute)' }}>
+                        {t(`dashboard_customizer.${b.labelKey}`)}
+                      </span>
+                      {on ? (
+                        <Eye className="size-4 shrink-0" style={{ color: 'var(--c-primary-ink)' }} />
+                      ) : (
+                        <EyeOff className="size-4 shrink-0" style={{ color: 'var(--text-mute)' }} />
+                      )}
+                    </button>
+                  </div>
                 )
               })}
             </div>

@@ -13,7 +13,9 @@
  * di-drag, sel-nya tetap di tempat tapi jadi dropzone dashed yg redup; visual yg
  * gerak = <DragOverlay> (di page.tsx) yg ngambang di atas semua lewat portal.
  *
- * Cuma grip handle (muncul pas hover, kanan-atas) yg narik.
+ * Cuma grip handle (muncul pas hover, kanan-atas) yg narik. Handle desktop-only
+ * (lg:) — di mobile dia numpuk di atas chip/aksi header kartu; reorder mobile
+ * lewat tombol ↑/↓ di DashboardCustomizer ("Atur").
  */
 
 import type { CSSProperties, ReactNode } from 'react'
@@ -73,7 +75,7 @@ export function SortableSection({
         {...listeners}
         aria-label="Tarik untuk pindah posisi kartu"
         title="Tarik untuk pindah posisi"
-        className="absolute top-2 right-2 z-20 grid size-7 place-items-center rounded-lg border opacity-100 lg:opacity-0 transition lg:group-hover:opacity-100 focus-visible:opacity-100 cursor-grab active:cursor-grabbing touch-none"
+        className="absolute top-2 right-2 z-20 hidden lg:grid size-7 place-items-center rounded-lg border lg:opacity-0 transition lg:group-hover:opacity-100 focus-visible:opacity-100 cursor-grab active:cursor-grabbing touch-none"
         style={{ background: 'var(--surface)', borderColor: 'var(--line)', color: 'var(--text-mute)' }}
       >
         <GripVertical className="size-4" />

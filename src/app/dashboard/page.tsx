@@ -213,6 +213,15 @@ export default function DashboardPage() {
     const r = e.active.rect.current.initial
     if (r) setDragSize({ w: r.width, h: r.height })
   }
+  function commitOrder(next: string[]) {
+    orderTouched.current = true
+    setBlockOrder(next)
+    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
+    })()
+  }
   function handleBlockDragEnd(e: DragEndEvent) {
     setActiveId(null)
     setDragSize(null)
@@ -222,14 +231,15 @@ export default function DashboardPage() {
     const oldI = blockOrder.indexOf(active.id as string)
     const newI = blockOrder.indexOf(over.id as string)
     if (oldI < 0 || newI < 0) return
-    const next = arrayMove(blockOrder, oldI, newI)
-    orderTouched.current = true
-    setBlockOrder(next)
-    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
-    })()
+    commitOrder(arrayMove(blockOrder, oldI, newI))
+  }
+  // Reorder tanpa drag — dipakai tombol ↑/↓ di customizer (grip handle = lg-only,
+  // di mobile dia ketutup/nutupin chip header kartu).
+  function moveBlock(id: string, dir: -1 | 1) {
+    const oldI = blockOrder.indexOf(id)
+    const newI = oldI + dir
+    if (oldI < 0 || newI < 0 || newI >= blockOrder.length) return
+    commitOrder(arrayMove(blockOrder, oldI, newI))
   }
 
   async function fetchData() {
@@ -710,7 +720,7 @@ export default function DashboardPage() {
               {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          <DashboardCustomizer />
+          <DashboardCustomizer order={blockOrder} onMove={moveBlock} />
         </div>
       </div>
 

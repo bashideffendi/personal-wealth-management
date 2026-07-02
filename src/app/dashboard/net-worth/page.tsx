@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
 import { projectNetWorth } from '@/lib/net-worth-projection'
@@ -521,7 +521,7 @@ function ChangeStat({ label, change }: { label: string; change: { delta: number;
   return (
     <div>
       <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
-      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1" style={{ color }}><Icon className="size-3.5" />{positive ? '+' : ''}{formatCurrency(change.delta)}</p>
+      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1 min-w-0" title={`${positive ? '+' : ''}${formatCurrency(change.delta)}`} style={{ color }}><Icon className="size-3.5 shrink-0" />{positive ? '+' : ''}{formatCompactCurrency(change.delta)}</p>
       <p className="text-[11px] mt-0.5" style={{ color }}>{positive ? '+' : ''}{change.pct.toFixed(1)}%</p>
     </div>
   )

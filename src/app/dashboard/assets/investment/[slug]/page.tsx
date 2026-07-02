@@ -540,15 +540,15 @@ export default function InvestmentCategoryPage() {
         )}
 
         <TabsContent value="holdings" className="space-y-6 mt-6">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs sm:text-sm" style={{ color: 'var(--ink-muted)' }}>
           {(category === 'stock' || category === 'crypto' || category === 'gold')
             ? (quotesUpdatedAt
                 ? `${t('investment_detail.price_updated_at')} ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${category === 'gold' ? t('investment_detail.gold_price_note') : t('investment_detail.price_not_realtime_suffix')}`
                 : category === 'gold' ? t('investment_detail.gold_price_note') : t('investment_detail.price_not_realtime'))
             : `${t('investment_detail.manage_positions')} ${subcat.label.toLowerCase()}.`}
         </p>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {/* View toggle — Card / List. Hidden when no positions yet. */}
           {items.length > 0 && (
             <div

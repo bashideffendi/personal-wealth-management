@@ -1229,8 +1229,12 @@ export default function TransactionsPage() {
               {quickSaving ? <Loader2 className="size-3.5 animate-spin" /> : <><Plus className="size-3.5" />{t('transactions.save')}</>}
             </Button>
           </form>
-          <p className="text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
+          {/* Tip shortcut keyboard cuma relevan di desktop; di HP arahkan ke tombol +. */}
+          <p className="hidden sm:block text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
             {t('transactions.quick_add_tip_prefix')} <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>{isMac ? '⌘K' : 'Ctrl K'}</kbd> {t('transactions.quick_add_tip_suffix')}
+          </p>
+          <p className="sm:hidden text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
+            {t('transactions.quick_add_tip_mobile')}
           </p>
         </div>
       )}

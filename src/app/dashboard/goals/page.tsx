@@ -502,7 +502,9 @@ export default function GoalsPage() {
                           </Button>
                         ) : (
                           <Button variant="outline" size="sm" className="rounded-full text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
-                            {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
+                            <span className="sm:hidden">{t('goals.deposit_short')}</span>
+                            <span className="hidden sm:inline">{t('goals.deposit_now')}</span>
+                            <ArrowRight className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>

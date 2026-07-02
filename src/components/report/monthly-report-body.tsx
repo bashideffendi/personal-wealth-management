@@ -344,7 +344,14 @@ export function MonthlyReportBody({
       <div data-report-block="aliran" className="s-card p-4 sm:p-6">
         <p className="eyebrow">{t('report.flow_eyebrow')}</p>
         <h3 className="t-h2 mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>{t('report.flow_title')} — {MONTHS[month - 1]}</h3>
-        <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage={t('report.flow_empty')} />
+        {/* Dual render per breakpoint (pola sama dgn dashboard): tanpa `compact`,
+            margin label desktop 130px×2 ngabisin lebar 375px → label numpuk. */}
+        <div className="hidden md:block">
+          <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage={t('report.flow_empty')} />
+        </div>
+        <div className="md:hidden">
+          <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} compact height={Math.max(300, Math.min(420, 60 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 30))} emptyMessage={t('report.flow_empty')} />
+        </div>
       </div>
 
       {/* 6 month + shifts */}

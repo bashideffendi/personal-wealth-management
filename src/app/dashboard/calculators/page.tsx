@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -102,7 +102,8 @@ function KprFeatured() {
   const total = monthly * n
   const bungaTotal = Math.max(0, total - principal)
   const pokokPct = total > 0 ? (principal / total) * 100 : 0
-  const jt = formatCurrency
+  // Grid 3 kolom di mobile gak muat full digit miliaran (angka saling nabrak) → compact.
+  const jt = formatCompactCurrency
 
   async function makeGoal() {
     setCreating(true)
