@@ -47,6 +47,8 @@ const DELETE_ORDER = [
   'household_activities',
   'subscriptions',
   'ai_credit_ledger',
+  'xp_events',
+  'achievements',
   'household_members',
 ] as const
 

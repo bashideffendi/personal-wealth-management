@@ -17,8 +17,8 @@ export const maxDuration = 300
  * ⚠️ REVIEWABLE SCAFFOLD — verify before scheduling:
  *  - Assumes subscription.status 'trialing' marks a trial and 'active' a paid
  *    sub (both used elsewhere in the app), and `expires_at` = period/trial end.
- *  - Dedup is by EXACT-date match: a once-daily run fires each threshold exactly
- *    once, so no extra column is needed. If the cron can run >1×/day, add a guard.
+ *  - Idempoten via tabel reminder_log (PK user+threshold+tanggal): cron retry
+ *    atau re-run >1×/hari TIDAK mengirim email dobel (migrasi 061).
  *  - Needs env: SUPABASE_SERVICE_ROLE_KEY (scan all users) + CRON_SECRET +
  *    RESEND_API_KEY (kalau absen, email lib no-op dan run-nya cuma log).
  *  - Scheduled di vercel.json: daily 02:00 UTC ≈ 09:00 WIB. Vercel ngirim
@@ -85,6 +85,18 @@ export async function GET(request: Request) {
     const expDay = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
     const days = reminderDaysLeft(s.expires_at, now)
     if (!shouldRemind(days)) continue
+
+    // Idempotency: dedup per (user, threshold, tanggal) → cron retry/re-run gak
+    // kirim email dobel. Best-effort: kalau tabel belum ada (migrasi 061) → skip guard.
+    const kind = s.status === 'trialing' ? 'trial' : 'renewal'
+    const { data: logRows, error: logErr } = await admin
+      .from('reminder_log')
+      .upsert(
+        { user_id: s.user_id, kind, threshold: days, sent_on: now.toISOString().slice(0, 10) },
+        { onConflict: 'user_id,threshold,sent_on', ignoreDuplicates: true },
+      )
+      .select('user_id')
+    if (!logErr && (logRows?.length ?? 0) === 0) continue
 
     const { data: u } = await admin.auth.admin.getUserById(s.user_id)
     const email = u?.user?.email
