@@ -32,6 +32,7 @@ export default defineConfig({
         'src/lib/invest/fifo.ts',
         'src/lib/invest/piotroski.ts',
         'src/lib/invest/reverse-dcf.ts',
+        'src/lib/reminders.ts',
       ],
       thresholds: {
         perFile: true,

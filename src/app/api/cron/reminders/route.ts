@@ -5,6 +5,7 @@ import {
   sendRenewalReminderEmail,
   sendTrialEndingEmail,
 } from '@/lib/email'
+import { REMINDER_THRESHOLDS, reminderDaysLeft, shouldRemind } from '@/lib/reminders'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -25,7 +26,6 @@ export const maxDuration = 300
  */
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://klunting.com'
-const THRESHOLDS = [14, 3, 0]
 
 export async function GET(request: Request) {
   // Only Vercel Cron (or a caller with the secret) may trigger this.
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 
   // Subs expiring within the widest threshold window.
   const horizon = new Date()
-  horizon.setDate(horizon.getDate() + Math.max(...THRESHOLDS) + 1)
+  horizon.setDate(horizon.getDate() + Math.max(...REMINDER_THRESHOLDS) + 1)
   const { data: subs, error } = await admin
     .from('subscriptions')
     .select('user_id, plan_id, status, expires_at')
@@ -71,7 +71,6 @@ export async function GET(request: Request) {
   }
 
   const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
   let sent = 0
   const results: Array<{ days: number; type: string; ok: boolean }> = []
@@ -84,8 +83,8 @@ export async function GET(request: Request) {
   }>) {
     const exp = new Date(s.expires_at)
     const expDay = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
-    const days = Math.round((expDay.getTime() - today.getTime()) / 86_400_000)
-    if (!THRESHOLDS.includes(days)) continue
+    const days = reminderDaysLeft(s.expires_at, now)
+    if (!shouldRemind(days)) continue
 
     const { data: u } = await admin.auth.admin.getUserById(s.user_id)
     const email = u?.user?.email
