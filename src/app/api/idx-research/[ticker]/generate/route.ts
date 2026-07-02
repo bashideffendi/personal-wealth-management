@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
@@ -129,14 +129,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     dividends,
   })
 
-  const client = new Anthropic()
+  const client = anthropic()
 
   let markdown = ''
   let inputTokens = 0
   let outputTokens = 0
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: AI_MODEL,
       max_tokens: MAX_OUTPUT_TOKENS,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         frontmatter: fm,
         generated_at: new Date().toISOString(),
         generated_by: user.id,
-        model: 'claude-haiku-4-5',
+        model: AI_MODEL,
         input_tokens: inputTokens,
         output_tokens: outputTokens,
       },
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     content: markdown,
     frontmatter: fm,
     generated_at: new Date().toISOString(),
-    model: 'claude-haiku-4-5',
+    model: AI_MODEL,
     cached: false,
     credits_remaining: credit.remaining,
   })

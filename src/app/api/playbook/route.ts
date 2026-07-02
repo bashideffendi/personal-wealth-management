@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
 import { rateLimit } from '@/lib/rate-limit'
@@ -162,11 +163,11 @@ export async function POST(request: NextRequest) {
     'Susun rencana terpersonalisasi: hitung target total, sisa yang kurang, setoran bulanan, estimasi selesai, milestone bertahap, tips konkret, dan hal yang perlu diperhatikan. Pakai angka user.',
   )
 
-  const client = new Anthropic()
+  const client = anthropic()
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: AI_MODEL,
       max_tokens: 2400,
       system: SYSTEM_PROMPT,
       tools: [
