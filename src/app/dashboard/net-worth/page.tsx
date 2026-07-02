@@ -182,13 +182,15 @@ export default function NetWorthPage() {
   const projAccent = nwStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'
   const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month), netWorth: p.netWorth })), [projection])
 
+  // F10: komposisi pakai keluarga 4 warna logo (teal/coral/biru/ungu) + abu
+  // netral — buang amber/ink liar biar konsisten sama chart lain.
   const assetClasses = useMemo(() => ([
     { label: t('networth.class_investment'), value: data.longTermInvestment, color: 'var(--c-violet)' },
     { label: t('networth.class_cash'), value: data.cashAndEquivalent, color: 'var(--c-mint)' },
-    { label: t('networth.class_property'), value: data.property, color: 'var(--c-amber)' },
-    { label: t('networth.class_vehicle'), value: data.vehicle, color: 'var(--ink)' },
+    { label: t('networth.class_property'), value: data.property, color: 'var(--c-blue)' },
+    { label: t('networth.class_vehicle'), value: data.vehicle, color: 'var(--c-coral)' },
     { label: t('networth.class_personal_item'), value: data.personalItem, color: 'var(--ink-soft)' },
-    { label: t('networth.class_receivable'), value: data.receivable, color: 'var(--c-mint-ink)' },
+    { label: t('networth.class_receivable'), value: data.receivable, color: 'var(--c-blue-ink)' },
   ].filter((c) => c.value > 0)), [data, t])
 
   const heroStats = useMemo(() => {

@@ -96,7 +96,7 @@ interface SankeyNodeData {
   kind?: FlowKind
 }
 
-function makeRenderNode(compact: boolean) {
+function makeRenderNode(compact: boolean, leftCount: number) {
   const labelMax = compact ? 16 : 26
   const fontMain = compact ? 10 : 11.5
   const fontSub = compact ? 9 : 10
@@ -118,9 +118,12 @@ function makeRenderNode(compact: boolean) {
     payload: SankeyNodeData
     containerWidth: number
   }) {
-    const { x, y, width, height, payload, containerWidth } = props
+    const { x, y, width, height, payload, index } = props
     const kind: FlowKind = payload.kind ?? 'income'
-    const isLeft = x < containerWidth / 2
+    // Sisi ditentukan dari INDEKS node (kiri = income duluan di array), bukan
+    // containerWidth — containerWidth bisa undefined/0 di render awal
+    // (monthly report) → label kiri ke-anchor 'end' di tepi & kepotong (bug SS2).
+    const isLeft = index < leftCount
     // Label DI DALAM chart: kiri → kanan node (pangkal pita), kanan → kiri node.
     const labelX = isLeft ? x + width + gap : x - gap
     const anchor = isLeft ? 'start' : 'end'
@@ -265,7 +268,7 @@ export function MoneyFlowSankey({
     })
 
     if (links.length === 0) return null
-    return { data: { nodes, links }, total }
+    return { data: { nodes, links }, total, leftCount: balancedIncome.length }
   }, [income, outflow, surplusLabel, deficitLabel])
 
   if (!built) {
@@ -282,7 +285,7 @@ export function MoneyFlowSankey({
     ? { top: 8, right: 10, bottom: 8, left: 10 }
     : { top: 12, right: 14, bottom: 12, left: 14 }
 
-  const renderNode = makeRenderNode(compact)
+  const renderNode = makeRenderNode(compact, built.leftCount)
   const renderLink = makeRenderLink(built.total)
 
   return (

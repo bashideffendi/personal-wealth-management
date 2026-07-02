@@ -37,21 +37,24 @@ const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_
 const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 // Likuiditas tier (perkiraan dari jenis aset — model belum simpan per-aset).
+// F10: warna tier = gradasi makna "makin lama cair makin ungu→coral",
+// keluarga brand (amber dibuang).
 type Tier = 'instan' | 't1' | 't30' | 't90'
 const TIER_META: Record<Tier, { label: string; bar: string }> = {
   instan: { label: 'Instan', bar: MINT },
-  t1:     { label: 'T+1',    bar: VIOLET },
-  t30:    { label: 'T+30',   bar: AMBER },
+  t1:     { label: 'T+1',    bar: 'var(--c-blue)' },
+  t30:    { label: 'T+30',   bar: VIOLET },
   t90:    { label: 'T+60–90', bar: CORAL },
 }
 const TIER_ORDER: Tier[] = ['instan', 't1', 't30', 't90']
 
-// Perkiraan jenis · likuiditas berdasarkan tipe.
+// Perkiraan jenis · likuiditas berdasarkan tipe. F10: 4 keluarga warna logo —
+// tabungan teal, RDN/reksa dana biru-ungu (investasi), kas biru, e-wallet abu.
 const TYPE_META: Record<string, { jenis: string; tier: Tier; icon: LucideIcon; color: string }> = {
   bank:           { jenis: 'Tabungan',   tier: 'instan', icon: Landmark,   color: MINT },
   investment:     { jenis: 'Reksa Dana', tier: 't1',     icon: TrendingUp, color: VIOLET },
-  rdn:            { jenis: 'RDN',        tier: 't1',     icon: TrendingUp, color: 'var(--ink)' },
-  cash:           { jenis: 'Kas',        tier: 'instan', icon: Banknote,   color: AMBER },
+  rdn:            { jenis: 'RDN',        tier: 't1',     icon: TrendingUp, color: 'var(--c-blue)' },
+  cash:           { jenis: 'Kas',        tier: 'instan', icon: Banknote,   color: 'var(--c-blue-ink)' },
   digital_wallet: { jenis: 'E-Wallet',   tier: 'instan', icon: Smartphone, color: 'var(--ink-soft)' },
   receivable:     { jenis: 'Piutang',    tier: 't30',    icon: HandCoins,  color: CORAL },
 }
@@ -289,16 +292,19 @@ export default function LiquidAssetsPage() {
                   <button key={j} onClick={() => setFilter(j)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === j ? 'var(--ink)' : 'var(--surface-2)', color: filter === j ? 'var(--surface)' : 'var(--ink-muted)' }}>{j}</button>
                 ))}
               </div>
-              <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
+              {/* F10: toggle tabel = desktop-only — tabel 5 kolom kepotong di
+                  layar sempit (bug SS2), mobile selalu kartu grouped */}
+              <div className="hidden md:flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
                 <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_liquid.view_card')} aria-label={t('assets_liquid.view_card')}><LayoutGrid className="size-4" /></button>
                 <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_liquid.view_table')} aria-label={t('assets_liquid.view_table')}><List className="size-4" /></button>
               </div>
             </div>
           </div>
 
-          {/* Data — Tabel (datar, sortable) atau Kartu (grouped per jenis) */}
-          {view === 'table' ? (
-            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
+          {/* Data — Tabel (datar, sortable, md+) atau Kartu (grouped per jenis).
+              Mobile: selalu kartu (tabel di-hide, lihat komentar toggle). */}
+          {view === 'table' && (
+            <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
@@ -342,8 +348,9 @@ export default function LiquidAssetsPage() {
                 </tbody>
               </table>
             </div>
-          ) : (
-            <div className="space-y-8">
+          )}
+          {/* Kartu grouped: selalu di mobile; di md+ cuma pas view=card */}
+          <div className={view === 'table' ? 'space-y-8 md:hidden' : 'space-y-8'}>
               {typesPresent.map((typeKey) => {
                 const list = visible.filter((e) => e.type === typeKey)
                 if (!list.length) return null
@@ -366,8 +373,7 @@ export default function LiquidAssetsPage() {
                   </section>
                 )
               })}
-            </div>
-          )}
+          </div>
 
           {/* Footnote */}
           <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>

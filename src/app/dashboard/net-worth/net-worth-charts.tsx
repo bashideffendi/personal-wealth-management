@@ -7,7 +7,7 @@
  */
 
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ComposedChart, Area, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
@@ -23,7 +23,9 @@ export function ProjectionChart({ data, accent }: { data: Array<{ label: string;
         <YAxis tickFormatter={(v) => formatCompactCurrency(Number(v))} tick={{ fontSize: 10, fill: 'var(--ink-soft)' }} width={62} tickLine={false} axisLine={false} />
         <Tooltip formatter={(v) => formatCurrency(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }} />
         <ReferenceLine y={0} stroke="var(--border)" />
-        <Line type="monotone" dataKey="netWorth" name={t('networth.net_worth')} stroke={accent} strokeWidth={2} dot={false} />
+        {/* F10: area lembut di bawah garis — proyeksi gak lagi garis sendirian
+            di grid kosong */}
+        <Area type="monotone" dataKey="netWorth" name={t('networth.net_worth')} stroke={accent} strokeWidth={2} fill={accent} fillOpacity={0.08} dot={false} activeDot={{ r: 4 }} />
       </ComposedChart>
     </ResponsiveContainer>
   )
@@ -34,10 +36,8 @@ export function HistoryChart({ data }: { data: Array<{ date: string; rawDate: st
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ComposedChart data={data} margin={{ top: 10, right: 8, bottom: 0, left: 8 }}>
-        <defs>
-          <linearGradient id="g-assets" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--c-mint)" stopOpacity={0.85} /><stop offset="100%" stopColor="var(--c-mint)" stopOpacity={0.55} /></linearGradient>
-          <linearGradient id="g-debts" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="var(--c-coral)" stopOpacity={0.85} /><stop offset="100%" stopColor="var(--c-coral)" stopOpacity={0.55} /></linearGradient>
-        </defs>
+        {/* F10: fill SOLID warna brand — gradasi opacity lama bikin bar butek
+            kecoklatan di kanvas terang + noise. Utang solid coral biar tegas. */}
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
         <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
         <XAxis dataKey="date" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
@@ -54,9 +54,11 @@ export function HistoryChart({ data }: { data: Array<{ date: string; rawDate: st
             </div>
           )
         }} />
-        <Bar dataKey="assets" name={t('networth.assets')} fill="url(#g-assets)" stackId="a" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="debts" name={t('networth.debt')} fill="url(#g-debts)" stackId="a" radius={[0, 0, 4, 4]} />
-        <Line type="monotone" dataKey="net" name={t('networth.net_worth')} stroke="var(--c-violet)" strokeWidth={2.5} dot={{ r: 3, fill: 'var(--c-violet)', stroke: 'var(--surface)', strokeWidth: 2 }} activeDot={{ r: 5 }} />
+        <Bar dataKey="assets" name={t('networth.assets')} fill="var(--c-mint)" stackId="a" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="debts" name={t('networth.debt')} fill="var(--c-coral)" stackId="a" radius={[0, 0, 4, 4]} />
+        {/* dot per titik dibuang — data mingguan bikin polka-dot rame; garis
+            bersih + activeDot pas di-tap aja */}
+        <Line type="monotone" dataKey="net" name={t('networth.net_worth')} stroke="var(--c-violet)" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
       </ComposedChart>
     </ResponsiveContainer>
   )
