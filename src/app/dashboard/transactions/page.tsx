@@ -17,6 +17,7 @@ import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
+import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
 import { adjustCardBalance } from '@/lib/data/balances'
 
 import { Button } from '@/components/ui/button'
@@ -436,6 +437,9 @@ export default function TransactionsPage() {
 
   // Filter state
   const [dateRange, setDateRange] = useState<DateRange>(null)
+  // F12: kalender mobile — bulan yang dilihat + hari terpilih (filter list).
+  const [calMonth, setCalMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1) })
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [filterAccount, setFilterAccount] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
@@ -858,6 +862,27 @@ export default function TransactionsPage() {
     return true
   }), [transactions, dateRange, filterAccount, filterType, filterCategory, filterTag, deferredSearch])
 
+  // F12: data kalender mobile — net per hari + total bulan yang dilihat.
+  // Dari SEMUA transaksi (independen filter); Transfer & saving/investment
+  // di-skip dari sel (ikut konvensi ringkasan masuk/keluar).
+  const calData = useMemo(() => {
+    const ym = `${calMonth.getFullYear()}-${String(calMonth.getMonth() + 1).padStart(2, '0')}`
+    const perDay = new Map<string, number>()
+    let income = 0
+    let expense = 0
+    for (const tx of transactions) {
+      if (tx.category === 'Transfer' || !tx.date.startsWith(ym)) continue
+      if (tx.type === 'income') {
+        income += tx.amount
+        perDay.set(tx.date, (perDay.get(tx.date) ?? 0) + tx.amount)
+      } else if (tx.type === 'expense') {
+        expense += tx.amount
+        perDay.set(tx.date, (perDay.get(tx.date) ?? 0) - tx.amount)
+      }
+    }
+    return { perDay, income, expense }
+  }, [transactions, calMonth])
+
   // Daftar kategori filter — diturunkan dari tree user (induk + subkategori).
   const allTags = Array.from(new Set(transactions.flatMap((t) => t.tags ?? []))).sort((a, b) =>
     a.localeCompare(b, 'id'),
@@ -972,34 +997,24 @@ export default function TransactionsPage() {
         </div>
       </BottomSheet>
 
-      {/* F9c: chip bulan (mobile) — ganti rentang cepat tanpa buka filter */}
-      <div className="md:hidden flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1 -mb-1">
-        {(() => {
-          const nowd = new Date()
-          const months = Array.from({ length: 6 }, (_, i) => new Date(nowd.getFullYear(), nowd.getMonth() - i, 1))
-          const isMonth = (d: Date) => !!dateRange
-            && dateRange.from.getFullYear() === d.getFullYear() && dateRange.from.getMonth() === d.getMonth() && dateRange.from.getDate() === 1
-            && dateRange.to.getFullYear() === d.getFullYear() && dateRange.to.getMonth() === d.getMonth()
-          const chip = (active: boolean) => ({ background: active ? 'var(--ink)' : 'var(--surface)', color: active ? 'var(--surface)' : 'var(--ink-muted)' })
-          return (
-            <>
-              <button type="button" onClick={() => setDateRange(null)} className="shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-medium" style={chip(!dateRange)}>
-                {t('transactions.chip_all')}
-              </button>
-              {months.map((d) => (
-                <button
-                  key={d.toISOString()}
-                  type="button"
-                  onClick={() => setDateRange({ from: new Date(d.getFullYear(), d.getMonth(), 1), to: new Date(d.getFullYear(), d.getMonth() + 1, 0) })}
-                  className="shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-medium"
-                  style={chip(isMonth(d))}
-                >
-                  {d.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', ...(d.getFullYear() !== nowd.getFullYear() ? { year: '2-digit' as const } : {}) })}
-                </button>
-              ))}
-            </>
-          )
-        })()}
+      {/* F12: kalender bulan ala Budget (mobile) — gantiin chip bulan F9c.
+          Kalender = lensa (gak nyentuh dateRange); tap tanggal → list di
+          bawah difilter ke hari itu. Data sel dari SEMUA transaksi. */}
+      <div className="md:hidden">
+        <MobileMonthCalendar
+          monthDate={calMonth}
+          data={calData}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
+          onPrev={() => { setSelectedDay(null); setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1)) }}
+          onNext={() => { setSelectedDay(null); setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1)) }}
+          locale={locale}
+          labels={{
+            income: t('transactions.summary_income'),
+            expense: t('transactions.summary_expense'),
+            net: t('transactions.summary_net_cashflow'),
+          }}
+        />
       </div>
 
       {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
@@ -1016,12 +1031,8 @@ export default function TransactionsPage() {
         ]
         return (
           <>
-            {/* Mobile (F9c): ringkasan 1 baris di kanvas — bukan 4 kartu */}
-            <p className="md:hidden text-[11.5px] px-1 -mb-1" style={{ color: 'var(--ink-soft)' }}>
-              {t('transactions.summary_income')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }} title={formatCurrency(inc)}>{formatCompactCurrency(inc)}</span>
-              {' · '}{t('transactions.summary_expense')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }} title={formatCurrency(exp)}>{formatCompactCurrency(exp)}</span>
-              {' · '}{filteredTransactions.length} {t('transactions.summary_total_count').toLowerCase()}
-            </p>
+            {/* F12: ringkasan mobile pindah ke footer kalender — di sini
+                cuma versi desktop */}
             <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
               {stats.map((s) => (
                 <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
@@ -1587,7 +1598,17 @@ export default function TransactionsPage() {
                 if (arr) arr.push(tx)
                 else byDate.set(tx.date, [tx])
               }
-              const dates = [...byDate.keys()].sort((a, b) => (a < b ? 1 : -1))
+              // F12: tap tanggal di kalender → cuma hari itu yang tampil.
+              const dates = [...byDate.keys()]
+                .filter((d) => !selectedDay || d === selectedDay)
+                .sort((a, b) => (a < b ? 1 : -1))
+              if (dates.length === 0) {
+                return (
+                  <p className="text-[12.5px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>
+                    {t('transactions.empty_title')}
+                  </p>
+                )
+              }
               return dates.map((date) => {
                 const items = byDate.get(date)!
                 const net = items.reduce((s, x) => s + (x.type === 'income' ? x.amount : x.type === 'expense' ? -x.amount : 0), 0)

@@ -71,7 +71,8 @@ export default async function DashboardLayout({
     >
       <TopNav user={user} />
       <main
-        className="flex-1 pt-6 md:pt-7 pb-24 md:pb-16"
+        // pb mobile = clearance dock floating (bottom 10px + dock 64px + napas) + safe-area
+        className="flex-1 pt-6 md:pt-7 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16"
         style={{ background: 'var(--bg)' }}
       >
         {/* px di div mx-auto ini (bukan di <main>) biar persis kayak container

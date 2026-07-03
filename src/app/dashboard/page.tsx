@@ -698,17 +698,21 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-4">
       {/* F9: mobile = Beranda baru (6 modul, mockup approved); desktop = bento
           existing utuh di dalam wrapper hidden md:contents. */}
+      {/* F12: Beranda ala Budget app — grid kategori bulan terpilih; navigasi
+          bulan pakai state periode halaman (sama dgn picker desktop). */}
       <MobileHome
-        greeting={`${t(`dashboard.${now.getHours() < 11 ? 'greet_morning' : now.getHours() < 15 ? 'greet_afternoon' : now.getHours() < 19 ? 'greet_evening' : 'greet_night'}`)}${userFirstName ? `, ${userFirstName}` : ''}`}
-        todayLabel={new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+        month={selectedMonth}
+        year={selectedYear}
+        onPrevMonth={() => {
+          if (selectedMonth === 1) { setSelectedMonth(12); setSelectedYear(selectedYear - 1) }
+          else setSelectedMonth(selectedMonth - 1)
+        }}
+        onNextMonth={() => {
+          if (selectedMonth === 12) { setSelectedMonth(1); setSelectedYear(selectedYear + 1) }
+          else setSelectedMonth(selectedMonth + 1)
+        }}
         netWorth={liquidTotal + nonLiquidTotal + investments.reduce((s, i) => s + (i.total_value || 0), 0) - debtTotal}
-        trend={trendForHero}
-        income={totals.income}
-        expense={totals.expense}
-        monthLabel={currentMonthYear}
-        budget={budgetProgress}
         transactions={monthTransactions}
-        investment={investmentSummary ?? null}
       />
       <div className="hidden md:contents">
       {/* flex-col + gap = ritme sama kayak space-y-6, tapi `order` bisa dipakai

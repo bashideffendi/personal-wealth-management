@@ -5,7 +5,9 @@
  * 4 tab + FAB tengah. Tab "Lainnya" = Link ke /dashboard/more (layar
  * settings-style F9, ganti MoreSheet) → bottom-tab + halaman Lainnya
  * nge-cover SEMUA destinasi, jadi top-nav bisa di-slim di mobile.
- * Aktif = aksen teal (underline + warna), tap-target ≥44, safe-area inset.
+ * Style: DOCK GELAP FLOATING ala app Budget iOS — pill #1c1c22 (sama di
+ * dark mode), margin 14px, bottom 10px + safe-area. Aktif = ikon dibungkus
+ * pill mint soft + label mint; FAB tengah lingkaran putih. Tap-target ≥44.
  */
 
 import Link from 'next/link'
@@ -45,17 +47,17 @@ export function BottomTabBar() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t"
+      className="md:hidden fixed z-30 mx-auto max-w-md rounded-[24px]"
       style={{
-        background: 'color-mix(in srgb, var(--surface) 92%, transparent)',
-        borderColor: 'var(--border)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        left: 14,
+        right: 14,
+        bottom: 'calc(10px + env(safe-area-inset-bottom))',
+        background: '#1c1c22',
+        boxShadow: '0 10px 30px rgba(0,0,0,.25)',
       }}
       aria-label={t('bottom_tab.nav_label')}
     >
-      <div className="grid grid-cols-5 items-end h-16 max-w-md mx-auto px-2">
+      <div className="grid grid-cols-5 items-center h-16 px-2">
         {LEFT.map((tab) => (
           <TabLink key={tab.href} tab={tab} active={isActive(pathname, tab.href)} />
         ))}
@@ -65,11 +67,11 @@ export function BottomTabBar() {
           <button
             type="button"
             onClick={openQuickAdd}
-            className="relative -translate-y-3 size-14 rounded-full flex items-center justify-center transition active:scale-95"
+            className="size-[46px] rounded-full flex items-center justify-center transition active:scale-95"
             style={{
-              background: 'var(--c-primary)',
-              color: 'var(--c-primary-foreground)',
-              boxShadow: '0 6px 16px -4px rgba(24,24,27,0.30)',
+              background: '#fff',
+              color: '#18181b',
+              boxShadow: '0 4px 10px rgba(0,0,0,.25)',
             }}
             aria-label={t('bottom_tab.add_transaction')}
           >
@@ -85,24 +87,6 @@ export function BottomTabBar() {
   )
 }
 
-function ActiveDot() {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: 16,
-        height: 2,
-        borderRadius: '0 0 2px 2px',
-        background: 'var(--accent, var(--c-mint))',
-      }}
-    />
-  )
-}
-
 function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
   const Icon = tab.icon
   const t = useT()
@@ -110,14 +94,20 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
     <Link
       href={tab.href}
       aria-current={active ? 'page' : undefined}
-      className="flex flex-col items-center justify-center gap-0.5 h-full pt-2 pb-1 transition-colors relative"
-      style={{ color: active ? 'var(--ink)' : 'var(--ink-soft)' }}
+      className="flex flex-col items-center justify-center gap-0.5 h-full py-1.5 transition-colors"
+      style={{ color: active ? '#3ad3a8' : '#8e8e98' }}
     >
-      <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
-      <span className={cn('text-[10px] leading-tight', active && 'font-semibold')}>
+      {/* Ikon dibungkus pill kecil — mint soft kalau aktif (dock selalu gelap,
+          jadi warna hardcoded, bukan token tema) */}
+      <span
+        className="flex items-center justify-center rounded-full px-3.5 py-[3px] transition-colors"
+        style={{ background: active ? 'rgba(23,184,144,.18)' : 'transparent' }}
+      >
+        <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
+      </span>
+      <span className={cn('text-[10px] leading-tight', active && 'font-medium')}>
         {t(tab.labelKey)}
       </span>
-      {active && <ActiveDot />}
     </Link>
   )
 }

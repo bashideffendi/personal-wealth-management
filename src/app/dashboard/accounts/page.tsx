@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
+import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account, AllocationPurpose } from '@/types'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
@@ -33,6 +34,7 @@ import {
 import {
   Pencil, Trash2, Plus, Loader2, Wallet, Star, Layers,
   LayoutGrid, List, ArrowDownLeft, ArrowUpRight,
+  Eye, EyeOff, LineChart, ChevronRight,
 } from 'lucide-react'
 import { AccountAllocationsDialog } from '@/components/accounts/allocations-dialog'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
@@ -86,7 +88,7 @@ type AllocationSummary = {
 export default function AccountsPage() {
   const supabase = createClient()
   const qc = useQueryClient()
-  const { hidden: privacyHidden } = usePrivacy()
+  const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy()
   const t = useT()
 
   const [allocAccount, setAllocAccount] = useState<Account | null>(null)
@@ -183,9 +185,65 @@ export default function AccountsPage() {
   const activityByAccount = useMemo(() => pageQuery.data?.activityByAccount ?? {}, [pageQuery.data])
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['accounts-page'] })
+    qc.invalidateQueries({ queryKey: ['accounts-networth-lite'] }) // hero mobile
     qc.invalidateQueries({ queryKey: ['liquid-assets'] }) // saldo akun = aset likuid
     qc.invalidateQueries({ queryKey: ['net-worth'] })
     qc.invalidateQueries({ queryKey: ['debts-page'] }) // rasio utang pakai likuid
+  }
+
+  // ── Kekayaan bersih ringkas (hero + grup mobile) ─────────────────────────
+  // Komponen DISAMAKAN dengan halaman Net Worth biar angkanya konsisten:
+  // aset = fetchLiquidEntries + assets_non_liquid.current_value +
+  //        investments.total_value; kewajiban = debts.remaining (aktif) +
+  //        credit_cards.current_balance (aktif).
+  const nwLite = useQuery({
+    queryKey: ['accounts-networth-lite'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [liquidEntries, nlqRes, invRes, debtRes, ccRes] = await Promise.all([
+        fetchLiquidEntries(supabase, user.id, { strict: true }),
+        supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
+        supabase.from('investments').select('id, name, category, quantity, avg_cost, total_value').eq('user_id', user.id),
+        supabase.from('debts').select('remaining').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('credit_cards').select('id, name, last_four, current_balance').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
+      ])
+      if (nlqRes.error) throw nlqRes.error
+      if (debtRes.error) throw debtRes.error
+
+      type InvRow = { id: string; name: string | null; category: string; quantity: number; avg_cost: number; total_value: number }
+      type CardRow = { id: string; name: string; last_four: string | null; current_balance: number }
+      const nonLiquid = (nlqRes.data ?? []) as { category: string; current_value: number }[]
+      const investments = (invRes.data ?? []) as InvRow[]
+      const cards = (ccRes.data ?? []) as CardRow[]
+
+      const invTotal = investments.reduce((s, i) => s + (i.total_value || 0), 0)
+      const ccTotal = cards.reduce((s, c) => s + (c.current_balance || 0), 0)
+      const debtTotal = ((debtRes.data ?? []) as { remaining: number }[]).reduce((s, d) => s + (d.remaining || 0), 0)
+      const assets = sumLiquid(liquidEntries)
+        + nonLiquid.reduce((s, a) => s + (a.current_value || 0), 0)
+        + invTotal
+      const liabilities = debtTotal + ccTotal
+      return {
+        assets,
+        liabilities,
+        netWorth: assets - liabilities,
+        invTotal,
+        ccTotal,
+        cards,
+        topHoldings: [...investments].sort((a, b) => (b.total_value || 0) - (a.total_value || 0)).slice(0, 5),
+      }
+    },
+  })
+  const nw = nwLite.data
+
+  // Label kategori investasi — pakai key assets.cat_* yang sudah ada.
+  const invCatKey: Record<string, string> = {
+    stock: 'assets.cat_stock', mutual_fund: 'assets.cat_mutual_fund', crypto: 'assets.cat_crypto',
+    gold: 'assets.cat_gold', bond: 'assets.cat_bond', sbn: 'assets.cat_sbn',
+    time_deposit: 'assets.cat_time_deposit', forex: 'assets.cat_forex', p2p: 'assets.cat_p2p',
+    pension: 'assets.cat_pension', business: 'assets.cat_business',
   }
 
   function openAddDialog() {
@@ -360,9 +418,60 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Dark gradient hero — intentionally always-dark (theme-independent) */}
+      {/* ═══ MOBILE (<md): hero teal ala Budget — kekayaan bersih ═══ */}
       <section
-        className="relative overflow-hidden rounded-3xl"
+        className="md:hidden rounded-[20px] px-5 pt-3.5 pb-5"
+        style={{ background: '#128a6d', boxShadow: '0 10px 24px rgba(18,138,109,.28)' }}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={togglePrivacy}
+            aria-label={privacyHidden ? t('budgeting.show') : t('budgeting.hide')}
+            className="size-8 -ml-1.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'rgba(255,255,255,.85)' }}
+          >
+            {privacyHidden ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+          </button>
+          <p className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,.92)' }}>{t('networth.net_worth')}</p>
+          <Link
+            href="/dashboard/net-worth"
+            aria-label={t('networth.net_worth')}
+            className="size-8 -mr-1.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'rgba(255,255,255,.85)' }}
+          >
+            <LineChart className="size-[18px]" />
+          </Link>
+        </div>
+        {nw ? (
+          <p
+            className="num tabular text-center font-bold mt-1.5 whitespace-nowrap"
+            style={{ color: '#FFFFFF', fontSize: 'clamp(22px, 7vw, 27px)', letterSpacing: '-0.02em', lineHeight: 1.15 }}
+          >
+            {formatCurrency(nw.netWorth)}
+          </p>
+        ) : (
+          <div className="mx-auto mt-2.5 h-[27px] w-44 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,.22)' }} />
+        )}
+        <div className="mt-3.5 grid grid-cols-2 gap-3">
+          <div className="text-center">
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.assets')}</p>
+            <p className="num tabular text-[14px] font-semibold mt-0.5" title={nw ? formatCurrency(nw.assets) : undefined} style={{ color: '#FFFFFF' }}>
+              {nw ? formatCompactCurrency(nw.assets) : '—'}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.debt')}</p>
+            <p className="num tabular text-[14px] font-semibold mt-0.5" title={nw ? formatCurrency(nw.liabilities) : undefined} style={{ color: '#ffd9cf' }}>
+              {nw ? formatCompactCurrency(nw.liabilities) : '—'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Dark gradient hero — intentionally always-dark (theme-independent). Desktop only. */}
+      <section
+        className="relative overflow-hidden rounded-3xl hidden md:block"
         style={{
           background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
           color: 'var(--on-hero)',
@@ -409,9 +518,9 @@ export default function AccountsPage() {
         </div>
       </section>
 
-      {/* Toolbar: label + view toggle + add */}
+      {/* Toolbar: label + view toggle + add — desktop only (mobile: grup di bawah) */}
       {!loading && accounts.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('accounts.list_label')}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
@@ -441,9 +550,119 @@ export default function AccountsPage() {
           </p>
           <Button onClick={openAddDialog} className="mt-5"><Plus className="size-4" data-icon="inline-start" /> {t('accounts.create_first')}</Button>
         </div>
-      ) : view === 'table' ? (
-        /* ─── TABLE VIEW ─── */
-        <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
+      ) : (
+        <>
+        {/* ═══ MOBILE (<md): grup list ala Budget — Akun / Kartu Kredit / Investasi ═══ */}
+        <div className="md:hidden space-y-3">
+          {/* a. Akun — data existing, restyle grup */}
+          <section className="s-card overflow-hidden pb-1">
+            <div className="flex items-center justify-between pl-4 pr-2.5 pt-3 pb-1">
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.col_account')}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="num tabular text-[13px] font-semibold" title={formatCurrency(totalBalance)} style={{ color: 'var(--c-mint-ink)' }}>
+                  {formatCompactCurrency(totalBalance)}
+                </p>
+                <button
+                  type="button"
+                  onClick={openAddDialog}
+                  aria-label={t('accounts.add_account')}
+                  className="size-7 grid place-items-center rounded-full active:opacity-70"
+                  style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                >
+                  <Plus className="size-4" />
+                </button>
+              </div>
+            </div>
+            {accounts.map((a, i) => (
+              <div key={a.id} className="flex items-center gap-3 px-4" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                <InstitutionLogo accountName={a.name} size={30} shape="circle" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13.5px] font-medium truncate leading-tight inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+                    {a.name?.trim() || t('accounts.unnamed_account')}
+                    {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
+                  </p>
+                  <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                    {ACCOUNT_TYPES[a.type as AccountType] ?? a.type}
+                  </p>
+                </div>
+                <p className="num tabular text-[13.5px] font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(a.current_balance ?? 0)}
+                </p>
+              </div>
+            ))}
+          </section>
+
+          {/* b. Kartu Kredit — dari query lite */}
+          {nw && nw.cards.length > 0 && (
+            <section className="s-card overflow-hidden pb-1">
+              <Link href="/dashboard/credit-cards" className="flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70">
+                <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-coral-ink)' }}>
+                  {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
+                </p>
+                <p className="num tabular text-[13px] font-semibold" title={formatCurrency(nw.ccTotal)} style={{ color: 'var(--c-coral-ink)' }}>
+                  {t('networth.debt')} {formatCompactCurrency(nw.ccTotal)}
+                </p>
+              </Link>
+              {nw.cards.map((c, i) => (
+                <div key={c.id} className="flex items-center gap-3 px-4" style={{ minHeight: 50, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                  <InstitutionLogo accountName={c.name} size={30} shape="circle" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                    {(c.last_four ?? '').trim() !== '' && (
+                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four}</p>
+                    )}
+                  </div>
+                  <p className="num tabular text-[13.5px] font-semibold leading-tight shrink-0" style={{ color: (c.current_balance || 0) > 0 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>
+                    {(c.current_balance || 0) > 0 ? `−${formatCurrency(c.current_balance)}` : formatCurrency(0)}
+                  </p>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* c. Investasi — top-5 holdings by nilai */}
+          {nw && nw.topHoldings.length > 0 && (
+            <section className="s-card overflow-hidden pb-1">
+              <Link href="/dashboard/assets/investment" className="flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70">
+                <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-violet-ink)' }}>
+                  {t('assets.investments')} <ChevronRight className="size-3.5" />
+                </p>
+                <p className="num tabular text-[13px] font-semibold" title={formatCurrency(nw.invTotal)} style={{ color: 'var(--c-violet-ink)' }}>
+                  {formatCompactCurrency(nw.invTotal)}
+                </p>
+              </Link>
+              {nw.topHoldings.map((h, i) => {
+                const catLabel = t(invCatKey[h.category] ?? 'assets.investments')
+                const cost = (h.quantity || 0) * (h.avg_cost || 0)
+                const pl = cost > 0 ? (((h.total_value || 0) - cost) / cost) * 100 : null
+                return (
+                  <div key={h.id} className="flex items-center gap-3 px-4" style={{ minHeight: 50, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13.5px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                        {h.name?.trim() || catLabel}
+                      </p>
+                      <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{catLabel}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                        {formatCurrency(h.total_value || 0)}
+                      </p>
+                      {pl !== null && (
+                        <p className="num tabular text-[11px] font-medium leading-tight mt-0.5" style={{ color: pl >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                          {pl >= 0 ? '+' : ''}{pl.toFixed(1)}%
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </section>
+          )}
+        </div>
+
+        {view === 'table' ? (
+        /* ─── TABLE VIEW (md+) ─── */
+        <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
@@ -484,37 +703,9 @@ export default function AccountsPage() {
             </tbody>
           </table>
         </div>
-      ) : (
-        /* ─── CARD VIEW ─── */
-        <>
-        {/* Mobile: baris-compact (1 kartu + hairline divider, ala Stockbit) */}
-        <div className="sm:hidden rounded-xl border overflow-hidden" style={{ borderColor: 'var(--outline)', background: 'var(--surface)' }}>
-          {accounts.map((a, i) => {
-            const allocsM = allocationsByAccount[a.id] ?? []
-            const allocatedM = allocsM.reduce((s, x) => s + x.amount, 0)
-            const freeM = (a.current_balance ?? 0) - allocatedM
-            const typeLabelM = ACCOUNT_TYPES[a.type as AccountType] ?? a.type
-            return (
-              <div key={a.id} className="flex items-center gap-3 px-3.5" style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
-                <InstitutionLogo accountName={a.name} size={30} shape="circle" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-medium truncate leading-tight inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
-                    {a.name?.trim() || t('accounts.unnamed_account')}
-                    {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
-                  </p>
-                  <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                    {typeLabelM}{allocatedM > 0 ? ` · ${t('accounts.free')} ${formatCurrency(freeM)}` : ''}
-                  </p>
-                </div>
-                <p className="num tabular text-[14px] font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
-                  {formatCurrency(a.current_balance ?? 0)}
-                </p>
-              </div>
-            )
-          })}
-        </div>
-        {/* sm+: kartu kaya (alokasi + aktivitas 30h) */}
-        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-3">
+        ) : (
+        /* ─── CARD VIEW (md+): kartu kaya (alokasi + aktivitas 30h) ─── */
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3">
           {accounts.map((a) => {
             const allocs = allocationsByAccount[a.id] ?? []
             const totalAllocated = allocs.reduce((s, x) => s + x.amount, 0)
@@ -568,6 +759,7 @@ export default function AccountsPage() {
             )
           })}
         </div>
+        )}
         </>
       )}
 
