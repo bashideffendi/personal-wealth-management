@@ -477,7 +477,7 @@ export default function CreditCardsPage() {
               <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> {t('credit_cards.of_total_limit')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>
               </p>
-              <div className="mt-4 flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
+              <div className="mt-4 hidden md:flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
                 <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: utilInk }} />
                 <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                   {t('credit_cards.advice_prefix')} <strong style={{ color: 'var(--ink)' }}>{t('credit_cards.advice_below_30')}</strong>. {t('credit_cards.advice_you_are')} <strong style={{ color: utilInk }}>{utilZone}</strong>.
@@ -487,7 +487,9 @@ export default function CreditCardsPage() {
           </div>
 
           {/* Bunga berbunga — wake-up call kalau cuma bayar minimum (pakai bunga kartu) */}
-          <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label={t('credit_cards.total_credit_card')} />
+          <div className="hidden md:block">
+            <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label={t('credit_cards.total_credit_card')} />
+          </div>
 
           {/* Riwayat pembayaran */}
           <div className="s-card overflow-hidden">

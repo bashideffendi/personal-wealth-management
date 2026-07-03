@@ -521,14 +521,18 @@ export default function InvestmentOverviewPage() {
             </div>
           ) : (
             <>
-              <div className="relative" style={{ height: 180 }}>
+              {/* F11: donut TETAP (informatif) tapi proporsional di HP —
+                  tinggi diciutkan + angka tengah compact (full digit kelebaran
+                  buat lubang donut di layar sempit; full tetap via title). */}
+              <div className="relative h-[150px] md:h-[180px]">
                 <AllocationDonut data={donut} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                     {donut.length} {t('investment.classes')}
                   </p>
-                  <p className="num tabular text-base font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-                    {formatCurrency(totals.market)}
+                  <p className="num tabular text-base font-semibold leading-tight" title={formatCurrency(totals.market)} style={{ color: 'var(--ink)' }}>
+                    <span className="md:hidden">{formatCompactCurrency(totals.market)}</span>
+                    <span className="hidden md:inline">{formatCurrency(totals.market)}</span>
                   </p>
                 </div>
               </div>

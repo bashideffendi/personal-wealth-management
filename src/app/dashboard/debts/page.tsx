@@ -269,7 +269,7 @@ export default function DebtsOverviewPage() {
           <h1 className="text-[20px] font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
             {t('debts.page_title')}
           </h1>
-          <p className="text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <p className="hidden md:block text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
             {t('debts.page_subtitle')}
           </p>
         </div>
@@ -364,7 +364,7 @@ export default function DebtsOverviewPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.high_interest_title')}</p>
-                <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                <p className="hidden md:block text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                   {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet-ink)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
                 </p>
               </div>
@@ -526,10 +526,10 @@ export default function DebtsOverviewPage() {
                 {t('debts.payoff_strategy')}
                 <EduTip topic="debt-strategy" side="bottom" />
               </p>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('debts.payoff_strategy_subtitle')}</p>
+              <p className="hidden md:block text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('debts.payoff_strategy_subtitle')}</p>
             </div>
             {/* Rekomendasi tradeoff eksplisit */}
-            <div className="mb-3 flex items-start gap-2.5 rounded-xl p-3.5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
+            <div className="mb-3 hidden md:flex items-start gap-2.5 rounded-xl p-3.5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
@@ -580,7 +580,7 @@ export default function DebtsOverviewPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.speed_up_payoff')}</p>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
+                <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
                   {t('debts.speed_up_prefix')} <span className="capitalize font-medium" style={{ color: 'var(--ink)' }}>{tlStrategy}</span>{t('debts.speed_up_suffix')}
                 </p>
               </div>
@@ -734,8 +734,8 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
         </div>
         <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months)}</span>
       </div>
-      <p className="mt-3 text-[15px] leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
-      <p className="text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
+      <p className="hidden md:block mt-3 text-[15px] leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
+      <p className="hidden md:block text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
       {savedNote && (
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface)', color: accent }}>
           <Zap className="size-3" /> {savedNote}

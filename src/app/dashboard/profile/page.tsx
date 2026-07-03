@@ -560,7 +560,7 @@ export default function ProfilePage() {
             <div>
               <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />Tema tampilan</Label>
               <SkinPicker />
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="hidden md:block text-xs text-muted-foreground mt-2">
                 Default <strong>Bersih</strong> (redesign baru). <strong>Cartoon</strong> = tampilan lawas (emas/dongeng), opsional.
               </p>
             </div>
@@ -614,7 +614,7 @@ export default function ProfilePage() {
                 <Shield className="size-4 mt-0.5 text-muted-foreground" />
                 <div>
                   <h3 className="font-semibold">{t('profile.pin_lock_title')}</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <p className="hidden md:block text-sm text-muted-foreground mt-0.5">
                     {t('profile.pin_lock_desc')}
                   </p>
                 </div>
@@ -675,7 +675,7 @@ export default function ProfilePage() {
                   <Shield className="size-4 mt-0.5 text-muted-foreground" />
                   <div>
                     <h3 className="font-semibold">{t('profile.biometric_title')}</h3>
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="hidden md:block text-sm text-muted-foreground mt-0.5">
                       {t('profile.biometric_desc')}
                     </p>
                   </div>
@@ -732,7 +732,7 @@ export default function ProfilePage() {
           </section>
 
           <section className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 25%, transparent)' }}>
-            <p className="text-sm" style={{ color: 'var(--c-amber-ink)' }}>
+            <p className="hidden md:block text-sm" style={{ color: 'var(--c-amber-ink)' }}>
               {t('profile.push_notice_prefix')} <strong>{t('profile.push_notice_bold')}</strong> {t('profile.push_notice_suffix')}
             </p>
           </section>
@@ -745,7 +745,7 @@ export default function ProfilePage() {
               <Download className="size-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
                 <h3 className="font-semibold">{t('profile.export_title')}</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="hidden md:block text-sm text-muted-foreground mt-0.5">
                   {t('profile.export_desc')}
                 </p>
                 <div className="mt-3">
@@ -769,7 +769,7 @@ export default function ProfilePage() {
               <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />
               <div className="flex-1">
                 <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{t('profile.danger_zone_title')}</h3>
-                <p className="text-sm mt-1" style={{ color: 'var(--c-coral-ink)' }}>
+                <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--c-coral-ink)' }}>
                   {t('profile.danger_zone_prefix')} <strong>{t('profile.danger_zone_bold')}</strong>.
                 </p>
                 <Button
@@ -783,7 +783,7 @@ export default function ProfilePage() {
                 </Button>
 
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'color-mix(in srgb, var(--c-coral) 20%, transparent)' }}>
-                  <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('profile.delete_account_desc')}</p>
+                  <p className="hidden md:block text-sm" style={{ color: 'var(--ink-muted)' }}>{t('profile.delete_account_desc')}</p>
                   <div className="mt-3"><DeleteAccountButton /></div>
                 </div>
               </div>

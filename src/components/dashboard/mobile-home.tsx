@@ -14,7 +14,7 @@
  * mobile — rumahnya di halaman masing-masing. Desktop tetap bento penuh.
  */
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Search, Bell, Eye, EyeOff, PencilLine, ArrowLeftRight, Upload, FileText,
@@ -60,27 +60,8 @@ export function MobileHome({
 
   const money = (n: number) => (hidden ? 'Rp ••••' : formatCompactCurrency(n))
 
-  // Sparkline hero: kumulatif disintesis mundur dari net worth sekarang
-  // (resep sama dengan NetWorthHero desktop) — cukup buat bentuk tren.
-  const spark = useMemo(() => {
-    if (trend.length < 3) return null
-    let running = netWorth
-    const vals: number[] = []
-    for (let i = trend.length - 1; i >= 0; i--) {
-      vals.unshift(running)
-      running -= trend[i].net
-    }
-    const min = Math.min(...vals)
-    const max = Math.max(...vals)
-    const range = max - min || 1
-    const W = 92
-    const H = 34
-    const points = vals
-      .map((v, i) => `${((i / (vals.length - 1)) * W).toFixed(1)},${(H - 3 - ((v - min) / range) * (H - 6)).toFixed(1)}`)
-      .join(' ')
-    return { points, up: vals[vals.length - 1] >= vals[0], W, H }
-  }, [trend, netWorth])
-
+  // F11: sparkline DIBUANG (ronde-6 user: grafik net worth gak perlu di HP —
+  // Budget/Lunch Money cuma nampilin angka). Delta bulan ini via pill cukup.
   const monthDelta = trend.length > 0 ? trend[trend.length - 1].net : 0
 
   const txs = [...transactions]
@@ -151,49 +132,27 @@ export function MobileHome({
             {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
         </div>
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            <p
-              className="num tabular font-semibold leading-none mt-1"
-              title={hidden ? undefined : formatCurrency(netWorth)}
-              style={{ fontSize: 27, letterSpacing: '-0.02em', color: 'var(--on-hero, #fff)' }}
-            >
-              {money(netWorth)}
-            </p>
-            {monthDelta !== 0 && (
-              <span
-                className="num inline-flex items-center gap-1 mt-2 rounded-full px-2.5 py-1 text-[11px] font-medium"
-                style={{
-                  background: monthDelta >= 0
-                    ? 'color-mix(in srgb, var(--c-mint) 16%, transparent)'
-                    : 'color-mix(in srgb, var(--c-coral) 18%, transparent)',
-                  color: monthDelta >= 0 ? '#3ad3a8' : '#ff9a85',
-                }}
-              >
-                {monthDelta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                {monthDelta >= 0 ? '+' : '−'}{hidden ? '••' : formatCompactCurrency(Math.abs(monthDelta)).replace('Rp ', 'Rp')} {t('dashboard.month_summary').toLowerCase()}
-              </span>
-            )}
-          </div>
-          {spark && (
-            <svg
-              width={spark.W}
-              height={spark.H}
-              viewBox={`0 0 ${spark.W} ${spark.H}`}
-              className="shrink-0 mb-0.5"
-              aria-hidden="true"
-            >
-              <polyline
-                points={spark.points}
-                fill="none"
-                stroke={spark.up ? '#3ad3a8' : '#ff9a85'}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
-        </div>
+        <p
+          className="num tabular font-semibold leading-none mt-1"
+          title={hidden ? undefined : formatCurrency(netWorth)}
+          style={{ fontSize: 27, letterSpacing: '-0.02em', color: 'var(--on-hero, #fff)' }}
+        >
+          {money(netWorth)}
+        </p>
+        {monthDelta !== 0 && (
+          <span
+            className="num inline-flex items-center gap-1 mt-2 rounded-full px-2.5 py-1 text-[11px] font-medium"
+            style={{
+              background: monthDelta >= 0
+                ? 'color-mix(in srgb, var(--c-mint) 16%, transparent)'
+                : 'color-mix(in srgb, var(--c-coral) 18%, transparent)',
+              color: monthDelta >= 0 ? '#3ad3a8' : '#ff9a85',
+            }}
+          >
+            {monthDelta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+            {monthDelta >= 0 ? '+' : '−'}{hidden ? '••' : formatCompactCurrency(Math.abs(monthDelta)).replace('Rp ', 'Rp')} {t('dashboard.month_summary').toLowerCase()}
+          </span>
+        )}
         <div className="mt-3.5 grid grid-cols-4 gap-1 text-center">
           {actions.map((a) => {
             const inner = (

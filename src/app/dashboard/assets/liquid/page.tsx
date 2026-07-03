@@ -224,7 +224,7 @@ export default function LiquidAssetsPage() {
           <AlertTriangle className="size-5 shrink-0 mt-0.5" style={{ color: AMBER_INK }} />
           <div className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>
             <p className="font-medium">{t('assets_liquid.dup_title')}</p>
-            <p className="mt-1" style={{ color: 'var(--ink-muted)' }}>
+            <p className="hidden md:block md:mt-1" style={{ color: 'var(--ink-muted)' }}>
               {t('assets_liquid.dup_desc_before')}
               <span className="font-semibold"> {duplicates.map((d) => d.name).join(', ')}</span>.
               {' '}{t('assets_liquid.dup_desc_after')}
@@ -376,7 +376,7 @@ export default function LiquidAssetsPage() {
           </div>
 
           {/* Footnote */}
-          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             {t('assets_liquid.footnote')} <Link href="/dashboard/accounts" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('assets_liquid.footnote_link')}</Link>
           </p>
 

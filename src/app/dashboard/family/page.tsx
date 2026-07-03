@@ -405,14 +405,14 @@ export default function FamilyPage() {
             <Home className="size-7" style={{ color: 'var(--surface)' }} />
           </div>
           <h2 className="text-xl sm:text-2xl" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('family.empty_title')}</h2>
-          <p className="mt-2 max-w-md mx-auto text-sm" style={{ color: 'var(--ink-muted)' }}>
+          <p className="hidden md:block mt-2 max-w-md mx-auto text-sm" style={{ color: 'var(--ink-muted)' }}>
             {t('family.empty_desc')}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button onClick={() => setCreateDialogOpen(true)}><Home className="size-4" /> {t('family.create_household')}</Button>
             <Link href="/dashboard/pricing" className="text-sm inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.view_family_plan')}</Link>
           </div>
-          <p className="mt-5 text-xs" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block mt-5 text-xs" style={{ color: 'var(--ink-soft)' }}>
             {t('family.empty_invite_prefix')} <code className="rounded px-1 py-0.5" style={{ background: 'var(--surface-2)' }}>/dashboard/join/…</code> {t('family.empty_invite_suffix')}
           </p>
         </div>
@@ -428,7 +428,7 @@ export default function FamilyPage() {
                 <span className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('family.step_label')} {i + 1}</span>
               </div>
               <p className="font-semibold" style={{ color: 'var(--ink)' }}>{step.title}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
+              <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
             </div>
           ))}
         </div>
@@ -661,7 +661,7 @@ export default function FamilyPage() {
       {/* Yang Dibagikan */}
       <section className="s-card p-5">
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.whats_shared')}</p>
-        <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.whats_shared_desc')}</p>
+        <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.whats_shared_desc')}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl p-4" style={{ background: 'var(--c-mint-soft)' }}>
             <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--c-mint-ink)' }}><Check className="size-3.5" /> {t('family.shared')}</p>
@@ -695,12 +695,12 @@ export default function FamilyPage() {
             <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('family.danger_zone')}</p>
             {isUserOwner ? (
               <>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.disband_desc')}</p>
+                <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.disband_desc')}</p>
                 <Button variant="destructive" size="sm" className="mt-3" onClick={deleteHousehold}><Trash2 className="size-4" /> {t('family.disband_household')}</Button>
               </>
             ) : (
               <>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.leave_desc')}</p>
+                <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.leave_desc')}</p>
                 <Button variant="destructive" size="sm" className="mt-3" onClick={() => setLeaveDialogOpen(true)}><LogOut className="size-4" /> {t('family.leave_household')}</Button>
               </>
             )}

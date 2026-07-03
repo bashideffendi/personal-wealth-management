@@ -22,7 +22,7 @@ export function InvestmentDisclaimer({
   return (
     <div
       role="note"
-      className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-[11px] leading-relaxed ${className}`}
+      className={`hidden md:flex items-start gap-2 rounded-lg border px-3 py-2 text-[11px] leading-relaxed ${className}`}
       style={{
         background: 'var(--c-amber-soft)',
         borderColor: 'color-mix(in srgb, var(--c-amber) 28%, transparent)',

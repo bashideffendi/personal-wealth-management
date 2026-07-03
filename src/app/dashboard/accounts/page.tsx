@@ -436,7 +436,7 @@ export default function AccountsPage() {
         <div className="rounded-xl border-2 border-dashed p-10 text-center" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
           <Wallet className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
           <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.empty_title')}</h3>
-          <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
+          <p className="hidden md:block md:mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
             {t('accounts.empty_desc')}
           </p>
           <Button onClick={openAddDialog} className="mt-5"><Plus className="size-4" data-icon="inline-start" /> {t('accounts.create_first')}</Button>
@@ -579,7 +579,7 @@ export default function AccountsPage() {
       />
 
       {!loading && accounts.length > 0 && (
-        <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-xs" style={{ color: 'var(--ink-soft)' }}>
           {t('accounts.footer_note')}{' '}
           <Link href="/dashboard/assets/liquid" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('accounts.footer_liquidity')}</Link>
           {' · '}

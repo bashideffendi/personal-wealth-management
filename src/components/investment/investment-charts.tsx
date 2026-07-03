@@ -43,7 +43,9 @@ export const AllocationDonut = memo(function AllocationDonut({ data }: { data: A
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
-        <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="transparent">
+        {/* F11: radius persentase — ikut tinggi container (150px mobile /
+            180px desktop) tanpa kepotong, proporsi lubang tetap ~69% */}
+        <Pie data={data} cx="50%" cy="50%" innerRadius="62%" outerRadius="90%" paddingAngle={3} dataKey="value" stroke="transparent">
           {data.map((entry, i) => (
             <Cell key={i} fill={entry.color} />
           ))}

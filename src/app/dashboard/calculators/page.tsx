@@ -365,14 +365,14 @@ function PensionGapCalculator() {
               {t('calculators.bpjs_to_close_gap')}
             </p>
             {result.taxSaving > 0 && (
-              <p className="text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>
+              <p className="hidden md:block text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>
                 {t('calculators.bpjs_tax_bonus_prefix')} {formatCurrency(result.deductibleAmount)}{t('calculators.bpjs_tax_bonus_suffix')} ±{formatCurrency(result.taxSaving)}{t('calculators.bpjs_tax_bonus_note')}
               </p>
             )}
           </div>
         )}
 
-        <p className="text-[10px] mt-4" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-[10px] mt-4" style={{ color: 'var(--ink-soft)' }}>
           {t('calculators.bpjs_disclaimer')}
         </p>
       </div>
@@ -444,7 +444,7 @@ function FireCalculator() {
         </div>
         <div className="mt-4 pt-4 border-t" >
           <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint-ink)" />
-          <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
             {t('calculators.fire_summary_prefix')} <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>{t('calculators.fire_summary_mid')} {result.yearsToRetire} {t('calculators.fire_summary_years_at')} {annualReturn}{t('calculators.fire_summary_return_suffix')} {retireAge}.
           </p>
         </div>

@@ -275,7 +275,8 @@ export default function NetWorthPage() {
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="max-w-md">
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_projection')}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('networth.debt_free_projection_desc')}</p>
+              {/* F11: deskripsi panjang desktop-only — HP cukup label + angka */}
+              <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('networth.debt_free_projection_desc')}</p>
             </div>
             <div className="flex gap-1.5 shrink-0">
               {(['snowball', 'avalanche'] as const).map((s) => (
@@ -291,10 +292,11 @@ export default function NetWorthPage() {
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(projection.endNetWorth)}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
-              <div className="mt-4" style={{ height: 200 }}>
+              {/* F11: grafik proyeksi + footnote = desktop-only */}
+              <div className="mt-4 hidden md:block" style={{ height: 200 }}>
                 <ProjectionChart data={projChartData} accent={projAccent} />
               </div>
-              <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
+              <p className="hidden md:block mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
             </>
           ) : (
             <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber-ink)' }}>{t('networth.projection_not_feasible')}</p>
@@ -482,7 +484,8 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.history')}</p>
           <h3 className="text-lg mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('networth.history_heading')}</h3>
         </div>
-        <div className="flex items-center gap-1.5">
+        {/* F11: chips periode cuma relevan buat chart → desktop-only */}
+        <div className="hidden md:flex items-center gap-1.5">
           {(['3m', '6m', '12m', 'all'] as const).map((p) => (
             <button key={p} type="button" onClick={() => onPeriodChange(p)} className="text-[11px] font-medium px-2.5 py-1 rounded-md transition"
               style={{ background: period === p ? 'var(--ink)' : 'var(--surface-2)', color: period === p ? 'var(--surface)' : 'var(--ink-muted)' }}>
@@ -500,9 +503,14 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
         </div>
       ) : (
         <>
-          <HistoryChart data={chartData} />
+          {/* F11: grafik riwayat = desktop-only (ronde-6: di HP net worth itu
+              ANGKA yang dicek, bukan grafik yang dianalisis — pola Budget/LM).
+              Mobile langsung ke 3 angka delta di bawah. */}
+          <div className="hidden md:block">
+            <HistoryChart data={chartData} />
+          </div>
           {stats && (
-            <div className="mt-5 pt-4 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="mt-1 md:mt-5 md:pt-4 md:border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
               <ChangeStat label={t('networth.vs_last_month')} change={stats.vs1mo} />
               <ChangeStat label={t('networth.vs_3_months_ago')} change={stats.vs3mo} />
               <ChangeStat label={t('networth.ytd_start_of_year')} change={stats.vsYtd} />

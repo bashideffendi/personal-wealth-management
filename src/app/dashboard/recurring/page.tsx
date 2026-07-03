@@ -495,7 +495,7 @@ export default function RecurringPage() {
                     {suggestions.length > 0 ? suggestions.map((s, i) => (
                       <div key={i} className="rounded-xl p-3" style={{ background: 'var(--surface-2)' }}>
                         <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</p>
-                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
+                        <p className="hidden md:block text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
                       </div>
                     )) : <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('recurring.no_suggestions')}</p>}
                   </div>
