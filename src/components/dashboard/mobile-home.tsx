@@ -20,28 +20,35 @@ import { ChevronLeft, ChevronRight, Bell, Eye, EyeOff, ChevronRightIcon } from '
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/lib/constants'
+import { SUB_SEP } from '@/lib/budget-categories'
 import { monthLong } from '@/lib/i18n/dates'
 import { useI18n } from '@/lib/i18n/context'
 import type { Transaction } from '@/types'
 
-const MAX_CARDS = 9
+interface CatSum { category: string; amount: number }
 
-interface CatSum { category: string; amount: number; other?: boolean }
-
-function groupByCategory(txs: Transaction[], type: 'expense' | 'income', otherLabel: string): CatSum[] {
-  const map = new Map<string, number>()
+/**
+ * Kartu kategori ala Budget: SEMUA kategori kanonik selalu tampil (Rp0
+ * pun tampil — bulan kosong tetap keliatan hidup, ronde-8 user bingung
+ * "tidak ada card card"), urutan kanonik tetap; kategori custom user
+ * yang ada nominalnya nyusul di belakang (sort desc). Sub "Induk::Sub"
+ * di-roll-up ke induknya.
+ */
+function buildCards(txs: Transaction[], type: 'expense' | 'income', canonical: readonly string[]): CatSum[] {
+  const amounts = new Map<string, number>(canonical.map((c) => [c, 0]))
+  const extras = new Map<string, number>()
   for (const x of txs) {
     if (x.type !== type || x.category === 'Transfer') continue
-    map.set(x.category, (map.get(x.category) ?? 0) + x.amount)
+    const sep = x.category.indexOf(SUB_SEP)
+    const cat = sep === -1 ? x.category : x.category.slice(0, sep)
+    if (amounts.has(cat)) amounts.set(cat, (amounts.get(cat) ?? 0) + x.amount)
+    else extras.set(cat, (extras.get(cat) ?? 0) + x.amount)
   }
-  const sorted: CatSum[] = [...map.entries()]
-    .map(([category, amount]) => ({ category, amount }))
-    .sort((a, b) => b.amount - a.amount)
-  if (sorted.length <= MAX_CARDS) return sorted
-  const head = sorted.slice(0, MAX_CARDS - 1)
-  const rest = sorted.slice(MAX_CARDS - 1).reduce((s, c) => s + c.amount, 0)
-  head.push({ category: otherLabel, amount: rest, other: true })
-  return head
+  return [
+    ...canonical.map((category) => ({ category, amount: amounts.get(category) ?? 0 })),
+    ...[...extras.entries()].map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount),
+  ]
 }
 
 export function MobileHome({
@@ -63,29 +70,29 @@ export function MobileHome({
   const [hidden, setHidden] = useState(false)
   const money = (n: number) => (hidden ? '••••' : formatCompactCurrency(n))
 
-  const otherLabel = locale === 'en' ? 'Others' : 'Lainnya'
-  const expenseCats = groupByCategory(transactions, 'expense', otherLabel)
-  const incomeCats = groupByCategory(transactions, 'income', otherLabel)
+  const expenseCats = buildCards(transactions, 'expense', EXPENSE_CATEGORIES)
+  const incomeCats = buildCards(transactions, 'income', INCOME_CATEGORIES)
   const totalExpense = expenseCats.reduce((s, c) => s + c.amount, 0)
   const totalIncome = incomeCats.reduce((s, c) => s + c.amount, 0)
 
   const renderGrid = (cats: CatSum[]) => (
     <div className="grid grid-cols-3 gap-2">
       {cats.map((c) => {
-        const hue = c.other ? null : categoryHue(c.category)
+        const hue = categoryHue(c.category)
+        const empty = c.amount === 0
         return (
           <Link
             key={c.category}
             href="/dashboard/transactions"
             className="rounded-[16px] px-2 py-3 text-center active:opacity-70 transition-opacity"
-            style={{ background: c.other ? 'var(--surface-2)' : hue!.soft }}
+            style={{ background: hue.soft, opacity: empty ? 0.72 : 1 }}
           >
-            <span className="block text-[11.5px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+            <span className="block text-[11.5px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>
               {c.category}
             </span>
             <span
               className="grid place-items-center size-[34px] rounded-full mx-auto my-2"
-              style={{ background: c.other ? 'var(--ink-soft)' : hue!.bar, color: '#fff' }}
+              style={{ background: hue.bar, color: '#fff' }}
             >
               <CategoryIcon category={c.category} className="size-4" />
             </span>
@@ -147,9 +154,7 @@ export function MobileHome({
           {hidden ? 'Rp ••••' : formatCompactCurrency(totalExpense)}
         </b>
       </p>
-      {expenseCats.length === 0 ? (
-        <p className="text-[12px] text-center py-4" style={{ color: 'var(--ink-soft)' }}>—</p>
-      ) : renderGrid(expenseCats)}
+      {renderGrid(expenseCats)}
 
       {/* 3 ── Pemasukan */}
       <p className="text-center text-[13.5px] pt-4 pb-2.5" style={{ color: 'var(--ink-soft)' }}>
@@ -158,9 +163,7 @@ export function MobileHome({
           {hidden ? 'Rp ••••' : formatCompactCurrency(totalIncome)}
         </b>
       </p>
-      {incomeCats.length === 0 ? (
-        <p className="text-[12px] text-center py-4" style={{ color: 'var(--ink-soft)' }}>—</p>
-      ) : renderGrid(incomeCats)}
+      {renderGrid(incomeCats)}
 
       {/* 4 ── Kekayaan bersih — satu baris ala Lunch Money */}
       <Link
