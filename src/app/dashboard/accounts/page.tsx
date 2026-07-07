@@ -747,6 +747,16 @@ export default function AccountsPage() {
                 )
               })}
             </tbody>
+            <tfoot>
+              <tr className="border-t" style={{ borderColor: 'var(--outline)', background: 'var(--surface-2)' }}>
+                <td colSpan={4} className="px-4 py-3 text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                  {t('transactions.total')}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="num tabular font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(totalBalance)}</span>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         ) : (

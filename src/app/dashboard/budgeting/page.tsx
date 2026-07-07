@@ -524,6 +524,11 @@ export default function BudgetingPage() {
   const leafSaving = leafKeys(tree.saving)
   const leafInvestment = leafKeys(tree.investment)
 
+  // Empty-state: total kategori aktif semua tipe = 0 (user baru / semua kategori
+  // dinonaktifkan). leafKeys udah nge-skip kategori nonaktif.
+  const noActiveCategories =
+    leafIncome.length + leafExpense.length + leafSaving.length + leafInvestment.length === 0
+
   // Peta target per leaf (`${type}::${leafKey}` → CatTarget) buat view Bulan.
   const leafTargets = useMemo(() => {
     const m: Record<string, CatTarget> = {}
@@ -1122,6 +1127,7 @@ export default function BudgetingPage() {
       {/* Summary — annual totals (sum of all 12 months). Neutral surface card +
           contained color accent (soft-tint icon box) so it stays selaras with the
           rest of the page; color lives in the chip, not the whole card. */}
+      {!(treeLoaded && noActiveCategories) && (
       <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[
           { label: t('budgeting.total_income'), value: totalIncomeYear, dot: 'var(--c-mint)', Icon: ArrowDownToLine, sub: t('budgeting.annual') },
@@ -1143,6 +1149,7 @@ export default function BudgetingPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Zero-based nudge — remaining-to-allocate for the CURRENT (or focused) month.
           People budget monthly (salary is monthly), so this is per-month, not annual. */}
@@ -1199,7 +1206,29 @@ export default function BudgetingPage() {
           />
         </div>
 
-        {/* Desktop: title + month-header strip + per-section standalone cards */}
+        {/* Desktop empty-state — kategori aktif = 0 (user baru / semua nonaktif):
+            kartu arahan gantiin toolbar + grid. Mobile <md gak disentuh —
+            MobileBudgetingView di atas tetap render seperti biasa. */}
+        {noActiveCategories ? (
+          <div className="s-card hidden md:flex flex-col items-center text-center py-16 px-8">
+            <div className="size-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--surface-2)' }}>
+              <PiggyBank className="size-7" style={{ color: 'var(--ink-muted)' }} />
+            </div>
+            <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
+              {locale === 'id' ? 'Belum ada anggaran' : 'No budget yet'}
+            </h3>
+            <p className="text-sm max-w-xs mb-5" style={{ color: 'var(--ink-muted)' }}>
+              {locale === 'id'
+                ? 'Atur kategori & alokasi bulananmu di sini — mulai dengan menambah kategori pemasukan dan pengeluaran.'
+                : 'Set up your categories & monthly allocations here — start by adding income and expense categories.'}
+            </p>
+            <Button onClick={() => setManagerOpen(true)}>
+              <FolderTree className="h-4 w-4" data-icon="inline-start" />
+              {t('budgeting.manage_categories')}
+            </Button>
+          </div>
+        ) : (
+        /* Desktop: title + month-header strip + per-section standalone cards */
         <div className="hidden md:block space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
             <div className="min-w-0">
@@ -1369,6 +1398,7 @@ export default function BudgetingPage() {
           </>
           )}
         </div>
+        )}
       </>
       )}
 

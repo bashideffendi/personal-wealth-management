@@ -675,7 +675,7 @@ export default function InvestmentOverviewPage() {
               </Link>
             </div>
           ) : (
-            <div style={{ height: 160 }}>
+            <div className="h-[160px] xl:h-[220px]">
               <DividendBar data={dividen6} />
             </div>
           )}

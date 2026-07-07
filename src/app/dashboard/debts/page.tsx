@@ -387,7 +387,7 @@ export default function DebtsOverviewPage() {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                  <tr className="text-[10px] uppercase tracking-wide md:bg-[var(--surface-2)] md:text-[11px] md:tracking-wider md:border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
                     <th scope="col" className="text-left font-medium px-4 py-2.5">{t('debts.col_debt')}</th>
                     <th scope="col" className="text-left font-medium px-3 py-2.5">{t('debts.col_type')}</th>
                     <th scope="col" className="text-right font-medium px-3 py-2.5">{t('debts.col_remaining_principal')}</th>

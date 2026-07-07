@@ -294,7 +294,7 @@ export default function NetWorthPage() {
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
               {/* F11: grafik proyeksi + footnote = desktop-only */}
-              <div className="mt-4 hidden md:block" style={{ height: 200 }}>
+              <div className="mt-4 hidden md:block h-[200px] md:h-[260px] xl:h-[300px]">
                 <ProjectionChart data={projChartData} accent={projAccent} />
               </div>
               <p className="hidden md:block mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>

@@ -190,7 +190,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           "curve" reads worse than no curve). Until then the slot earns its
           keep with Modal vs Nilai Sekarang, computable from day one.
           data-loss saat turun: Calm Mode ikut menyamarkan kurva merah. */}
-      <div className="mt-4" data-loss={up ? undefined : 'true'} style={{ height: 150 }}>
+      <div className="mt-4 h-[150px] md:h-[200px] xl:h-[240px]" data-loss={up ? undefined : 'true'}>
         {!hasHistory ? (
           <div className="h-full rounded-xl px-5 flex flex-col justify-center gap-3" style={{ background: 'var(--surface-2)' }}>
             {(() => {

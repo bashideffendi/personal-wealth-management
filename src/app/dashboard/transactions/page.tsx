@@ -2598,7 +2598,7 @@ export default function TransactionsPage() {
                 {t('transactions.csv_preview_prefix')} {importRows.length} {t('transactions.csv_preview_suffix')}
               </p>
               <div className="text-xs">
-                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 font-semibold border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}>
+                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 text-[11px] uppercase tracking-wider font-medium border-b bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                   <div className="col-span-1">✓</div>
                   <div className="col-span-2">{t('transactions.col_date')}</div>
                   <div className="col-span-4 sm:col-span-3">{t('transactions.col_description')}</div>
@@ -2607,7 +2607,7 @@ export default function TransactionsPage() {
                   <div className="col-span-1 sm:col-span-2 text-right">{t('transactions.col_amount')}</div>
                 </div>
                 {importRows.map((r, i) => (
-                  <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center" style={{ borderColor: 'var(--outline)' }}>
+                  <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center hover:bg-[var(--surface-2)] transition-colors" style={{ borderColor: 'var(--outline)' }}>
                     <div className="col-span-1">
                       <input
                         type="checkbox"
