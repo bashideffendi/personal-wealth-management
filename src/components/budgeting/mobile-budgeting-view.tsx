@@ -82,15 +82,18 @@ function AllocationDonut({
   const r = (size - strokeWidth) / 2
   const c = 2 * Math.PI * r
   const center = size / 2
-  let acc = 0
+  // Offset kumulatif per segmen tanpa mutasi closure saat render (React
+  // Compiler immutability) — offset = jumlah frac segmen-segmen sebelumnya.
+  const offsets = segments.map((_, i) =>
+    segments.slice(0, i).reduce((s, sg) => s + Math.max(0, sg.frac), 0),
+  )
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0" aria-hidden>
       <circle cx={center} cy={center} r={r} fill="none" stroke="var(--surface-2)" strokeWidth={strokeWidth} />
       <g transform={`rotate(-90 ${center} ${center})`}>
-        {segments.map((seg) => {
+        {segments.map((seg, i) => {
           const len = Math.max(0, seg.frac) * c
-          const offset = -acc * c
-          acc += Math.max(0, seg.frac)
+          const offset = -offsets[i] * c
           if (len <= 0) return null
           return (
             <circle

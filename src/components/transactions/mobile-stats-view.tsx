@@ -106,12 +106,12 @@ export function MobileStatsView({
   const R = 40
   const SW = 13
   const C = 2 * Math.PI * R
-  let acc = 0
-  const slices = stats.catRows.map((row) => {
-    const start = acc
-    acc += row.share
-    return { ...row, start }
-  })
+  // Offset kumulatif per slice tanpa mutasi closure saat render (React
+  // Compiler immutability) — start = jumlah share slice-slice sebelumnya.
+  const slices = stats.catRows.map((row, i) => ({
+    ...row,
+    start: stats.catRows.slice(0, i).reduce((s, r) => s + r.share, 0),
+  }))
 
   return (
     <div className="space-y-4">
