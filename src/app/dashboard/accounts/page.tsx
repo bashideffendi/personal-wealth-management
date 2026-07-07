@@ -906,72 +906,113 @@ export default function AccountsPage() {
             />
           </div>
           ) : (
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="acc-name">{t('accounts.field_name')}</Label>
-                {!editingId && (
-                  <button
-                    type="button"
-                    onClick={stepBack}
-                    className="text-[11px] font-medium hover:underline"
-                    style={{ color: 'var(--c-mint-ink)' }}
-                  >
-                    {locale === 'id' ? 'Pilih dari daftar' : 'Pick from list'}
-                  </button>
-                )}
+          /* Step form — settings-row ala Budget: label kiri (mint-ink kecil) +
+             kontrol kanan, dikelompokkan dalam kartu. PRESENTASI SAJA —
+             state, handler, validasi, dan id input (#acc-name/#acc-balance
+             dipakai fokus antar-step) tidak berubah. */
+          <div className="grid gap-3 py-2">
+            {/* Grup identitas: institusi terpilih + nama + jenis.
+                Tanpa overflow-hidden: dropdown InstitutionSearch absolut,
+                jangan ke-clip kartu. */}
+            <div className="s-card">
+              {/* Baris institusi — avatar read-only, sekadar konfirmasi pilihan */}
+              <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52 }}>
+                <span className="text-[13px] font-medium shrink-0" style={{ color: 'var(--c-mint-ink)' }}>
+                  {locale === 'id' ? 'Institusi' : 'Institution'}
+                </span>
+                <span className="flex items-center gap-2.5 min-w-0">
+                  {!editingId && (
+                    <button
+                      type="button"
+                      onClick={stepBack}
+                      className="text-[11px] font-medium hover:underline"
+                      style={{ color: 'var(--c-mint-ink)' }}
+                    >
+                      {locale === 'id' ? 'Pilih dari daftar' : 'Pick from list'}
+                    </button>
+                  )}
+                  <InstitutionLogo accountName={form.name} size={30} shape="circle" />
+                </span>
               </div>
-              <InstitutionSearch
-                id="acc-name"
-                value={form.name}
-                onTextChange={(text) => setForm({ ...form, name: text })}
-                onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
-                placeholder={t('accounts.field_name_placeholder')}
-              />
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
+
+              {/* Baris nama */}
+              <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
+                <Label htmlFor="acc-name" className="text-[13px] shrink-0" style={{ color: 'var(--c-mint-ink)' }}>
+                  {t('accounts.field_name')}
+                </Label>
+                <div className="flex-1 min-w-0">
+                  <InstitutionSearch
+                    id="acc-name"
+                    value={form.name}
+                    onTextChange={(text) => setForm({ ...form, name: text })}
+                    onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
+                    placeholder={t('accounts.field_name_placeholder')}
+                  />
+                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
+                </div>
+              </div>
+
+              {/* Baris jenis */}
+              <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
+                <Label className="text-[13px] shrink-0" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.field_type')}</Label>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
+                  <SelectTrigger className="max-w-[60%]">
+                    <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k) => (<SelectItem key={k} value={k}>{ACCOUNT_TYPES[k]}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="grid gap-1.5">
-              <Label>{t('accounts.field_type')}</Label>
-              <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k) => (<SelectItem key={k} value={k}>{ACCOUNT_TYPES[k]}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Grup nilai: nomor rekening + saldo awal */}
+            <div className="s-card">
+              <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52 }}>
+                <Label htmlFor="acc-number" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--c-mint-ink)' }}>
+                  {t('accounts.field_number')}
+                  <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
+                </Label>
+                <Input
+                  id="acc-number"
+                  value={form.account_number}
+                  onChange={(e) => setForm({ ...form, account_number: e.target.value })}
+                  placeholder={t('accounts.field_number_placeholder')}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="flex-1 min-w-0 text-right tabular"
+                />
+              </div>
 
-            <div className="grid gap-1.5">
-              <Label htmlFor="acc-number">
-                {t('accounts.field_number')}
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
-              </Label>
-              <Input
-                id="acc-number"
-                value={form.account_number}
-                onChange={(e) => setForm({ ...form, account_number: e.target.value })}
-                placeholder={t('accounts.field_number_placeholder')}
-                inputMode="numeric"
-                autoComplete="off"
-              />
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label htmlFor="acc-balance">
-                {t('accounts.field_starting_balance')}
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
-              </Label>
-              <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" />
+              <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
+                <Label htmlFor="acc-balance" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--c-mint-ink)' }}>
+                  {t('accounts.field_starting_balance')}
+                  <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
+                </Label>
+                {/* tabular saja (bukan .num — .num ikut ke-blur privacy mode) */}
+                <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" className="flex-1 min-w-0 text-right tabular" />
+              </div>
             </div>
           </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('accounts.cancel')}</Button>
+            {/* Step form di mobile: simpan = pill full-width ala Budget "Confirm";
+               Batal disembunyikan (<sm) — tutup lewat X / swipe sheet. Handler
+               simpan tetap handleSave yang sama. Desktop tidak berubah. */}
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              className={(editingId || addStep === 'form') ? 'hidden sm:inline-flex' : undefined}
+            >
+              {t('accounts.cancel')}
+            </Button>
             {(editingId || addStep === 'form') && (
-              <Button onClick={handleSave} disabled={saving}>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full h-11 rounded-full text-[15px] font-semibold sm:w-auto sm:h-8 sm:rounded-lg sm:text-sm sm:font-medium"
+              >
                 {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
                 {editingId ? t('accounts.save') : t('accounts.add')}
               </Button>
