@@ -43,6 +43,7 @@ import {
   Camera,
   MessageSquareText,
   PenLine,
+  ArrowLeftRight,
   Loader2,
   Check,
   ChevronLeft,
@@ -375,6 +376,22 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     }, 320)
   }
 
+  function openTransfer() {
+    setOpen(false)
+    if (window.location.pathname === '/dashboard/transactions') {
+      // Sudah di halaman Transaksi — cukup dispatch event, dialog transfer
+      // di page.tsx yang buka. Delay 320ms sama dgn openCommandPalette biar
+      // focus trap sheet vs dialog gak bentrok saat animasi close.
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('klunting:open-transfer'))
+      }, 320)
+    } else {
+      // Belum di halaman Transaksi — navigasi bawa param; page.tsx baca
+      // transfer=1 on mount, buka dialog, lalu bersihkan param.
+      router.push('/dashboard/transactions?transfer=1')
+    }
+  }
+
   // ─── Render ────────────────────────────────────────────────────
 
   return (
@@ -418,6 +435,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
               onPickReceipt={pickFile}
               onPickAI={openCommandPalette}
               onPickManual={() => setMode('manual')}
+              onPickTransfer={openTransfer}
               scanError={scanError}
             />
           )}
@@ -459,11 +477,13 @@ function MenuView({
   onPickReceipt,
   onPickAI,
   onPickManual,
+  onPickTransfer,
   scanError,
 }: {
   onPickReceipt: () => void
   onPickAI: () => void
   onPickManual: () => void
+  onPickTransfer: () => void
   scanError: string | null
 }) {
   const t = useT()
@@ -494,6 +514,15 @@ function MenuView({
       tint: 'var(--ink-muted)',
       bg: 'var(--surface-2)',
       onSelect: onPickManual,
+    },
+    {
+      key: 'transfer',
+      icon: ArrowLeftRight,
+      title: t('transactions.transfer'),
+      body: t('transactions.transfer_desc'),
+      tint: 'var(--c-blue-ink)',
+      bg: 'var(--c-blue-soft)',
+      onSelect: onPickTransfer,
     },
   ] as const
 

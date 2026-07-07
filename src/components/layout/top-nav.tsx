@@ -15,8 +15,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Search, Bell, ChevronDown, ArrowLeft,
+  Search, Bell, ChevronDown, ArrowLeft, Eye, EyeOff,
 } from 'lucide-react'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
@@ -230,6 +231,7 @@ function MobileAppBar({ pathname }: { pathname: string }) {
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname()
   const { t } = useI18n()
+  const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy()
   const navLabel = (it: NavItem) => (it.titleKey ? t(it.titleKey) : it.label)
   const [scrolled, setScrolled] = useState(false)
   const [isMac, setIsMac] = useState(false)
@@ -351,6 +353,21 @@ export function TopNav({ user }: TopNavProps) {
             <div className="hidden sm:block">
               <AICreditsBadge />
             </div>
+
+            {/* Privacy mode — global hide-numbers toggle (ghost button) */}
+            <button
+              type="button"
+              onClick={togglePrivacy}
+              className="hidden md:grid place-items-center transition-colors"
+              style={{ width: 38, height: 38, borderRadius: 12, background: 'transparent', color: 'var(--text-2)' }}
+              aria-label={privacyHidden ? 'Tampilkan angka' : 'Sembunyikan angka'}
+              aria-pressed={privacyHidden}
+              title={privacyHidden ? 'Tampilkan angka' : 'Sembunyikan angka'}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              {privacyHidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
 
             <button
               className="relative hidden md:grid place-items-center"

@@ -364,6 +364,30 @@ export default function TransactionsPage() {
   })
   const [transferSaving, setTransferSaving] = useState(false)
 
+  // Quick access transfer dari FAB (QuickAddLauncher):
+  // (a) event 'klunting:open-transfer' — dipakai kalau user sudah di halaman ini;
+  // (b) param ?transfer=1 — dipakai kalau FAB navigasi ke sini dulu. Param
+  //     dibersihkan via history.replaceState (pola sama dgn PWA shortcut
+  //     quickadd=1) biar refresh gak re-buka dialog & gak butuh Suspense
+  //     boundary useSearchParams.
+  useEffect(() => {
+    function onOpenTransfer() {
+      setTransferDialogOpen(true)
+    }
+    window.addEventListener('klunting:open-transfer', onOpenTransfer)
+
+    const sp = new URLSearchParams(window.location.search)
+    if (sp.get('transfer') === '1') {
+      setTransferDialogOpen(true)
+      sp.delete('transfer')
+      const newQs = sp.toString()
+      const newUrl = window.location.pathname + (newQs ? `?${newQs}` : '') + window.location.hash
+      window.history.replaceState({}, '', newUrl)
+    }
+
+    return () => window.removeEventListener('klunting:open-transfer', onOpenTransfer)
+  }, [])
+
   async function saveTransfer() {
     if (!transferForm.from_account_id || !transferForm.to_account_id || transferForm.amount <= 0) return
     if (transferForm.from_account_id === transferForm.to_account_id) { toast.error(t('transactions.toast_same_account')); return }

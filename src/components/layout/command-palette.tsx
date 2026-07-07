@@ -6,8 +6,8 @@
  * Linear-style: grouped results, icons, recent items, smart quick actions.
  * Open via global keyboard shortcut or by clicking the Search button in header.
  *
- * Phase 1.3.A — UI enhancement (this file).
- * Phase 1.3.B (TODO) — Natural-language transaction parsing via Claude Haiku.
+ * Termasuk AI quick-add: query yang mengandung angka bisa di-parse jadi
+ * transaksi via /api/parse-transaction (preview dulu, lalu simpan).
  */
 
 import { useEffect, useMemo, useState } from 'react'

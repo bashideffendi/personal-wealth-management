@@ -18,7 +18,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, ChevronDown, Bell, ChevronRight as ChevRight, Target } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Eye, EyeOff, ChevronRight as ChevRight, Target } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
@@ -26,6 +26,7 @@ import { MobileQuickEntry } from '@/components/dashboard/mobile-quick-entry'
 import { SUB_SEP } from '@/lib/budget-categories'
 import { monthLong } from '@/lib/i18n/dates'
 import { useI18n } from '@/lib/i18n/context'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 import type { Transaction } from '@/types'
 
 interface BudgetRow { category: string; budget: number; actual: number; pct: number }
@@ -64,6 +65,7 @@ export function MobileHome({
   budgetKeys: string[]
 }) {
   const { t, locale } = useI18n()
+  const { hidden, toggle } = usePrivacy()
   const [entry, setEntry] = useState<{ category: string; type: 'expense' | 'income'; budget: number; spent: number; subs: string[] } | null>(null)
 
   // ── Kartu pengeluaran: dianggarkan ∪ ber-transaksi, rollup ke induk ──
@@ -194,11 +196,13 @@ export function MobileHome({
           )}
           <button
             type="button"
-            aria-label="Notifikasi"
+            onClick={toggle}
+            aria-label={hidden ? 'Tampilkan angka' : 'Sembunyikan angka'}
+            aria-pressed={hidden}
             className="grid place-items-center size-[30px] rounded-full active:opacity-60"
             style={{ background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(24,24,27,0.05)' }}
           >
-            <Bell className="size-[14px]" />
+            {hidden ? <EyeOff className="size-[14px]" /> : <Eye className="size-[14px]" />}
           </button>
         </div>
       </div>

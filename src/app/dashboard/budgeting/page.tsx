@@ -51,7 +51,10 @@ function setBodyUserSelect(v: string) {
   if (typeof document !== 'undefined') document.body.style.userSelect = v
 }
 
-const YEAR_OPTIONS = ['2024', '2025', '2026']
+// Opsi tahun ter-derive dari tahun berjalan (lalu/ini/depan) — dihitung sekali
+// saat module load, bukan per render.
+const THIS_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = [THIS_YEAR - 1, THIS_YEAR, THIS_YEAR + 1].map(String)
 
 interface BudgetMap {
   [key: string]: number // key = `${type}|${category}|${month}`
