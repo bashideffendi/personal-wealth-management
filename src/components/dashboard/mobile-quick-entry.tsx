@@ -25,6 +25,7 @@ import { X, Check, Delete, Wallet, CalendarDays, StickyNote, ArrowUpRight } from
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { subKey } from '@/lib/budget-categories'
+import { monthShort } from '@/lib/i18n/dates'
 import { useI18n } from '@/lib/i18n/context'
 import { enqueue, isNetworkError } from '@/lib/offline-queue'
 
@@ -221,7 +222,9 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
         </label>
         <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <CalendarDays className="size-3.5" />
-          {date === todayIso() ? 'Hari ini' : new Date(`${date}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+          {date === todayIso()
+            ? (locale === 'id' ? 'Hari ini' : 'Today')
+            : (() => { const d = new Date(`${date}T00:00:00`); return `${d.getDate()} ${monthShort(d.getMonth(), locale)}` })()}
           <input type="date" aria-label="Tanggal" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="absolute inset-0 opacity-0" />
         </label>
         <button type="button" onClick={() => setNoteOpen((v) => !v)} className="shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
