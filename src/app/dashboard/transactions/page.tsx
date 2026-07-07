@@ -471,6 +471,32 @@ export default function TransactionsPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterTag, setFilterTag] = useState<string>('all')
   const [search, setSearch] = useState<string>('')
+  // Deep-link pencarian dari command palette (⌘K), pola sama dgn ?transfer=1:
+  // (a) event 'klunting:search-transactions' — dipakai kalau user sudah di
+  //     halaman ini (router.push ke route sama gak nge-remount, effect on-mount
+  //     gak jalan lagi);
+  // (b) param ?q=<term> — dipakai kalau palette navigasi ke sini dulu. Param
+  //     dibersihkan via history.replaceState biar refresh gak nge-lock
+  //     pencarian & gak butuh Suspense boundary useSearchParams.
+  useEffect(() => {
+    function onPaletteSearch(e: Event) {
+      const q = (e as CustomEvent<string>).detail
+      if (q) setSearch(q)
+    }
+    window.addEventListener('klunting:search-transactions', onPaletteSearch)
+
+    const sp = new URLSearchParams(window.location.search)
+    const q = sp.get('q')
+    if (q) {
+      setSearch(q)
+      sp.delete('q')
+      const newQs = sp.toString()
+      const newUrl = window.location.pathname + (newQs ? `?${newQs}` : '') + window.location.hash
+      window.history.replaceState({}, '', newUrl)
+    }
+
+    return () => window.removeEventListener('klunting:search-transactions', onPaletteSearch)
+  }, [])
   // Quick-add inline row is hidden by default; the toolbar "+ Tambah" toggles it.
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   // Mobile chrome: filter grid collapsed by default; aksi sekunder toolbar masuk sheet "⋯".

@@ -52,6 +52,11 @@ const TYPE_ACCENT: Record<string, string> = {
 }
 const accentFor = (t: string) => TYPE_ACCENT[t] ?? 'var(--ink-soft)'
 
+// Keputusan audit #8: grup "Akun" di mobile = akun PEMBAYARAN saja.
+// RDN & investasi dikecualikan dari list (aksesnya lewat baris "Investasi"
+// di bawah grup Kartu Kredit); desktop tetap menampilkan semua tipe.
+const PAYMENT_ACCOUNT_TYPES = new Set<string>(['bank', 'cash', 'digital_wallet'])
+
 // Allocation pill colors — token-based so the text stays legible in dark mode
 // (the old hardcoded dark hex on a translucent bg was invisible in dark).
 const ALLOC_PILL: Record<AllocationPurpose, { bg: string; fg: string }> = {
@@ -368,6 +373,12 @@ export default function AccountsPage() {
 
   const today = formatDate(new Date())
   const totalBalance = accounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0)
+  // Grup "Akun" mobile: hanya akun pembayaran; subtotal header ikut yang difilter.
+  const paymentAccounts = useMemo(
+    () => accounts.filter((a) => PAYMENT_ACCOUNT_TYPES.has(a.type)),
+    [accounts],
+  )
+  const paymentBalance = paymentAccounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0)
   const totals30d = useMemo(() => {
     let inSum = 0, outSum = 0
     for (const v of Object.values(activityByAccount)) { inSum += v.inSum; outSum += v.outSum }
@@ -572,12 +583,12 @@ export default function AccountsPage() {
               <p className="text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.col_account')}</p>
               <span className="flex items-center gap-1">
                 <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
-                  Bal. {formatCurrency(totalBalance)}
+                  Bal. {formatCurrency(paymentBalance)}
                 </p>
                 <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['accounts'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
               </span>
             </button>
-            {!collapsed['accounts'] && accounts.map((a, i) => {
+            {!collapsed['accounts'] && paymentAccounts.map((a, i) => {
               const masked = maskAccountNumber(a.account_number, privacyHidden)
               return (
               <div key={a.id} className="flex items-center gap-3 px-4" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>

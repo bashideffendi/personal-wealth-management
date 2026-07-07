@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { formatRupiahPlain } from '@/lib/utils'
+import { formatRupiahPlain, formatCompactCurrency } from '@/lib/utils'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
 import {
   Search, ArrowRight, Sparkles, Receipt, Wallet, Target, Calculator,
@@ -22,12 +22,13 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
+import { CategoryIcon } from '@/components/transactions/category-icon'
 
 const RECENT_KEY = 'pwm-recent-pages'
 const RECENT_LIMIT = 3
 
-type ItemKind = 'page' | 'action' | 'recent' | 'ai'
+type ItemKind = 'page' | 'action' | 'recent' | 'ai' | 'tx'
 
 interface PaletteItem {
   id: string
@@ -37,6 +38,16 @@ interface PaletteItem {
   breadcrumb?: string   // section path (e.g. "Kekayaan")
   kind: ItemKind
   icon?: React.ReactNode
+  trailing?: React.ReactNode // node kanan (mis. nominal transaksi)
+}
+
+// Shared match rule — dipakai render grup nav DAN guard pencarian transaksi.
+function matchesPalette(item: PaletteItem, q: string): boolean {
+  return (
+    !q ||
+    item.label.toLowerCase().includes(q) ||
+    (item.breadcrumb?.toLowerCase().includes(q) ?? false)
+  )
 }
 
 // ─── Flatten NAV_ITEMS into searchable list ──────────────────────
@@ -94,6 +105,26 @@ function buildQuickActions(t: (path: string) => string): PaletteItem[] {
   ]
 }
 
+// ─── Pencarian transaksi (⌘K → hasil "Transaksi") ────────────────
+
+interface TxHit {
+  id: string
+  date: string
+  description: string | null
+  category: string
+  amount: number
+  type: 'income' | 'expense' | 'saving' | 'investment'
+}
+
+/** Tanggal singkat: "7 Jul" (tahun berjalan) / "7 Jul 25" (tahun lain). */
+function shortTxDate(dateStr: string, locale: string): string {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = '2-digit'
+  return new Intl.DateTimeFormat(locale === 'id' ? 'id-ID' : 'en-GB', opts).format(d)
+}
+
 // ─── Component ───────────────────────────────────────────────────
 
 interface ParsedTransaction {
@@ -120,11 +151,16 @@ export function CommandPalette() {
   const [recentHrefs, setRecentHrefs] = useState<string[]>([])
   const [aiState, setAiState] = useState<AIState>({ kind: 'idle' })
   const [isMac, setIsMac] = useState(false)
+  // Pencarian transaksi pasif (≥3 huruf, non-nav) — debounced 300ms.
+  const [txHits, setTxHits] = useState<TxHit[]>([])
+  const [txLoading, setTxLoading] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) }, [])
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
   const t = useT()
+  const { locale } = useI18n()
 
   const allPages = useMemo(() => flatten(NAV_ITEMS), [])
   const quickActions = useMemo(() => buildQuickActions(t), [t])
@@ -159,13 +195,64 @@ export function CommandPalette() {
     if (pathname.startsWith('/dashboard')) pushRecent(pathname)
   }, [pathname])
 
+  // Ambil user id sekali saat palette pertama dibuka — filter pencarian transaksi.
+  useEffect(() => {
+    if (!open || userId) return
+    let cancelled = false
+    supabase.auth.getUser().then(({ data }: { data: { user: { id: string } | null } }) => {
+      if (!cancelled) setUserId(data.user?.id ?? null)
+    })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, userId])
+
+  // ─── Pencarian transaksi (pasif, debounced ~300ms) ────────────
+  // Jalan hanya saat query ≥3 karakter DAN gak match nav/aksi apa pun,
+  // jadi gak ganggu navigasi. AI quick-add tetap butuh aksi eksplisit
+  // (pilih item "AI" / auto-trigger voice) — pencarian ini cuma nampilin
+  // hasil, gak pernah manggil parse.
+  useEffect(() => {
+    const q = query.trim()
+    const ql = q.toLowerCase()
+    const navMatched =
+      allPages.some((p) => matchesPalette(p, ql)) ||
+      quickActions.some((a) => matchesPalette(a, ql))
+    if (!open || q.length < 3 || navMatched) {
+      setTxHits([])
+      setTxLoading(false)
+      return
+    }
+    let cancelled = false
+    setTxLoading(true)
+    const timer = setTimeout(async () => {
+      // Sanitasi: % dan _ itu wildcard ILIKE; koma & kurung mecahin sintaks or() PostgREST.
+      const term = q.replace(/[%_,()]/g, ' ').replace(/\s+/g, ' ').trim()
+      if (!term || !userId) {
+        if (!cancelled) { setTxHits([]); setTxLoading(false) }
+        return
+      }
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('id, date, description, category, amount, type')
+        .eq('user_id', userId)
+        .or(`description.ilike.%${term}%,category.ilike.%${term}%`)
+        .order('date', { ascending: false })
+        .limit(8)
+      if (cancelled) return
+      setTxHits(error ? [] : ((data ?? []) as TxHit[]))
+      setTxLoading(false)
+    }, 300)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, open, userId, allPages, quickActions])
+
   // ─── Filter logic ─────────────────────────────────────────────
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const matches = (item: PaletteItem) =>
-      !q ||
-      item.label.toLowerCase().includes(q) ||
-      (item.breadcrumb?.toLowerCase().includes(q) ?? false)
+    const matches = (item: PaletteItem) => matchesPalette(item, q)
 
     // Recent (only when no query) — resolve href to page object
     const recent = !q
@@ -192,13 +279,52 @@ export function CommandPalette() {
       })
     }
 
+    // Hasil pencarian transaksi — klik/Enter deep-link ke halaman Transaksi
+    // dengan ?q= (page baca param → isi kolom cari → bersihin URL).
+    const txItems: PaletteItem[] = txHits.map((tx) => ({
+      id: `tx:${tx.id}`,
+      label: tx.description || tx.category,
+      breadcrumb: shortTxDate(tx.date, locale),
+      kind: 'tx' as const,
+      icon: <CategoryIcon category={tx.category} className="size-4" />,
+      trailing: (
+        <span
+          className="shrink-0 text-xs font-semibold tabular-nums"
+          style={{
+            color:
+              tx.type === 'expense'
+                ? 'var(--c-coral-ink)'
+                : tx.type === 'income'
+                  ? 'var(--c-mint-ink)'
+                  : 'var(--ink-muted)',
+          }}
+        >
+          {formatCompactCurrency(tx.amount)}
+        </span>
+      ),
+      onSelect: () => {
+        const term = query.trim()
+        if (pathname === '/dashboard/transactions') {
+          // Udah di halaman transaksi — push ke route sama gak nge-remount,
+          // jadi kirim event (pola sama dgn 'klunting:open-transfer').
+          window.dispatchEvent(
+            new CustomEvent('klunting:search-transactions', { detail: term })
+          )
+        } else {
+          router.push('/dashboard/transactions?q=' + encodeURIComponent(term))
+        }
+        setOpen(false)
+      },
+    }))
+
     return [
       { key: 'recent', label: t('command_palette.group_recent'), items: recent },
       { key: 'ai', label: t('command_palette.group_ai'), items: aiItems },
       { key: 'pages', label: t('command_palette.group_pages'), items: pages },
       { key: 'actions', label: t('command_palette.group_actions'), items: actions },
+      { key: 'tx', label: t('transactions.page_title'), items: txItems },
     ].filter((g) => g.items.length > 0)
-  }, [query, allPages, quickActions, recentHrefs, router, t])
+  }, [query, allPages, quickActions, recentHrefs, txHits, locale, pathname, router, t])
 
   // Flat list for keyboard navigation
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
@@ -437,7 +563,7 @@ export function CommandPalette() {
         {/* Results — only when AI is idle */}
         {aiState.kind === 'idle' && (
         <div className="max-h-[60vh] overflow-y-auto py-2 sidebar-nav-scroll">
-          {flatItems.length === 0 ? (
+          {flatItems.length === 0 && !txLoading ? (
             <div className="py-10 px-6 text-center">
               <Search
                 className="size-8 mx-auto mb-3 opacity-30"
@@ -467,7 +593,8 @@ export function CommandPalette() {
               </div>
             </div>
           ) : (
-            (() => {
+            <>
+            {(() => {
               let renderIdx = 0
               return groups.map((group) => (
                 <div key={group.key} className="mb-1">
@@ -528,6 +655,7 @@ export function CommandPalette() {
                             </span>
                           )}
                         </span>
+                        {item.trailing}
                         {isSelected && (
                           <CornerDownLeft
                             className="size-3.5 shrink-0"
@@ -539,7 +667,20 @@ export function CommandPalette() {
                   })}
                 </div>
               ))
-            })()
+            })()}
+            {/* Loading kecil pencarian transaksi */}
+            {txLoading && (
+              <div className="px-4 py-2 flex items-center gap-2">
+                <Loader2
+                  className="size-3 animate-spin shrink-0"
+                  style={{ color: 'var(--ink-soft)' }}
+                />
+                <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                  {locale === 'id' ? 'Mencari transaksi…' : 'Searching transactions…'}
+                </span>
+              </div>
+            )}
+            </>
           )}
         </div>
         )}
