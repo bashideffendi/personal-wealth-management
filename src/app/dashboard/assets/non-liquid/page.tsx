@@ -395,9 +395,18 @@ export default function NonLiquidAssetsPage() {
           <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : items.length === 0 ? (
-        <div className="s-card p-12 text-center">
+        <div className="s-card flex flex-col items-center p-12 text-center">
+          <div
+            className="size-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'var(--surface-2)' }}
+          >
+            <Home className="size-10" style={{ color: 'var(--ink-soft)' }} />
+          </div>
           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('assets_nonliquid.empty_title')}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.empty_desc')}</p>
+          <Button className="mt-4" onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+            <Plus className="h-4 w-4" /> {t('assets_nonliquid.add_asset')}
+          </Button>
         </div>
       ) : (
         <>

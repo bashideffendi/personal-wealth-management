@@ -417,6 +417,9 @@ export default function GoalsPage() {
           <p className="text-sm max-w-xs" style={{ color: 'var(--ink-muted)' }}>
             {t('goals.empty_desc')}
           </p>
+          <Button className="mt-4" onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+            <Plus className="h-4 w-4" /> {t('goals.new_goal')}
+          </Button>
         </div>
       ) : (
         <>

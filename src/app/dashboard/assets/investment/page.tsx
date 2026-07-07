@@ -21,7 +21,7 @@ import { WatchlistTargetChip } from '@/components/investment/watchlist-target-ch
 import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
 import { FX_FALLBACK_USDIDR, INVESTMENT_SUBCATS } from '@/lib/constants'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the route's initial JS (loads on chart mount).
 const AllocationDonut = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
@@ -57,7 +57,7 @@ const NO_SNAPSHOTS: { snapshot_date: string; market_value: number }[] = []
 const NO_QUOTES: Record<string, LiveQuote> = {}
 
 export default function InvestmentOverviewPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
 
   // Menu "Tambah Holding" — pilih kelas aset dulu (investasi bukan cuma saham),
@@ -323,6 +323,63 @@ export default function InvestmentOverviewPage() {
     return basis > 0 ? (trailing / basis) * 100 : null
   }, [dividends, enriched])
 
+  // Header quiet dipakai dua branch (empty-state & normal) — CTA "Tambah
+  // holding" (dropdown kelas aset) tetap tersedia di keduanya.
+  const pageHeader = (
+    <QuietPageHeader
+      title={t('investment.title')}
+      info={t('investment.subtitle')}
+      actions={
+        <>
+          <CalmModeToggle />
+          <Link
+            href="/dashboard/assets/investment/stock?tab=dividen"
+            aria-label={t('investment.dividend_history')}
+            title={t('investment.dividend_history')}
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+          >
+            <History className="size-3.5" />
+            {/* Mobile <sm: icon-only biar muat 1 baris bareng "Tambah holding" */}
+            <span className="hidden sm:inline">{t('investment.dividend_history')}</span>
+          </Link>
+          <div className="relative" ref={addRef}>
+            <button
+              type="button"
+              onClick={() => setAddOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={addOpen}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
+              style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
+            >
+              <Plus className="size-3.5" /> {t('investment.add_holding')} <ChevronDown className="size-3" style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
+            </button>
+            {addOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border py-1.5 z-50 max-h-[60vh] overflow-y-auto"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
+              >
+                {INVESTMENT_SUBCATS.map((sc) => (
+                  <Link
+                    key={sc.slug}
+                    role="menuitem"
+                    href={`/dashboard/assets/investment/${sc.slug}?add=1`}
+                    onClick={() => setAddOpen(false)}
+                    className="block px-3.5 py-2 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {sc.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      }
+    />
+  )
+
   if (overview.isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -348,61 +405,49 @@ export default function InvestmentOverviewPage() {
     )
   }
 
+  // Empty state user baru — belum ada holding sama sekali: satu kartu ajakan
+  // menggantikan grid KPI Rp 0 + pesan pucat tersebar. Header quiet tetap
+  // dirender supaya CTA "Tambah holding" existing tetap tersedia.
+  if (items.length === 0) {
+    return (
+      <div className="space-y-6">
+        {pageHeader}
+        <div className="s-card p-8 sm:p-10 flex flex-col items-center text-center">
+          <div
+            className="size-12 rounded-2xl flex items-center justify-center mb-3"
+            style={{ background: 'var(--info-bg)' }}
+          >
+            <TrendingUp className="size-6" style={{ color: 'var(--info)' }} />
+          </div>
+          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+            {locale === 'id' ? 'Mulai portofolio investasimu' : 'Start your investment portfolio'}
+          </p>
+          <p className="text-xs mt-1 max-w-sm" style={{ color: 'var(--ink-muted)' }}>
+            {t('investment.allocation_empty_desc')}
+          </p>
+          {/* Mekanisme sama dengan dropdown header: langsung ke form tambah per kelas aset */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 max-w-md">
+            {INVESTMENT_SUBCATS.map((sc) => (
+              <Link
+                key={sc.slug}
+                href={`/dashboard/assets/investment/${sc.slug}?add=1`}
+                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}
+              >
+                <Plus className="size-3" style={{ color: 'var(--ink-soft)' }} />
+                {sc.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Quiet header — selaras Transaksi/Anggaran; identitas angka tetap di hero */}
-      <QuietPageHeader
-        title={t('investment.title')}
-        info={t('investment.subtitle')}
-        actions={
-          <>
-            <CalmModeToggle />
-            <Link
-              href="/dashboard/assets/investment/stock?tab=dividen"
-              aria-label={t('investment.dividend_history')}
-              title={t('investment.dividend_history')}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
-            >
-              <History className="size-3.5" />
-              {/* Mobile <sm: icon-only biar muat 1 baris bareng "Tambah holding" */}
-              <span className="hidden sm:inline">{t('investment.dividend_history')}</span>
-            </Link>
-            <div className="relative" ref={addRef}>
-              <button
-                type="button"
-                onClick={() => setAddOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={addOpen}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
-                style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
-              >
-                <Plus className="size-3.5" /> {t('investment.add_holding')} <ChevronDown className="size-3" style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
-              </button>
-              {addOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border py-1.5 z-50 max-h-[60vh] overflow-y-auto"
-                  style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
-                >
-                  {INVESTMENT_SUBCATS.map((sc) => (
-                    <Link
-                      key={sc.slug}
-                      role="menuitem"
-                      href={`/dashboard/assets/investment/${sc.slug}?add=1`}
-                      onClick={() => setAddOpen(false)}
-                      className="block px-3.5 py-2 text-xs font-medium transition hover:bg-[var(--surface-2)]"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      {sc.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        }
-      />
+      {pageHeader}
 
       <PortfolioHero
         totals={totals}
