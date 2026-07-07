@@ -1,54 +1,45 @@
 'use client'
 
 /**
- * MobileHome — Beranda mobile F12: redesign total ala app "Budget" iOS
- * (mockup di-approve 2026-07-03). Menggantikan Beranda 6-modul F9/F10.
+ * MobileHome — Beranda mobile F13 ala app "Budget" iOS (review user 2026-07-07
+ * + mockup di-approve).
  *
- * STRUKTUR (jangan ditambah-tambah):
- *   1. Header: logo mark kecil · navigator bulan ‹ › · eye + bell
- *   2. "Pengeluaran Rp X"  → grid 3 kolom kartu pastel per kategori
- *   3. "Pemasukan Rp X"    → grid sama
- *   4. Baris kekayaan bersih (1 baris, link ke /net-worth) — pola
- *      "Est. Net Worth" Lunch Money; grafik & modul lain TIDAK ada di HP.
- * Tap kartu kategori → halaman Transaksi. Aksi tambah = FAB dock.
- * Desktop tetap bento penuh (komponen ini md:hidden dari pemanggil).
+ * STRUKTUR:
+ *   1. Header 2 baris: logo kecil center → [profil] ‹ Bulan › [%+bell]
+ *      (bulan BENAR-BENAR center, panah rapat — kritik review ronde-9)
+ *   2. "Pengeluaran Rp X" → grid 3 kolom kartu pastel; kartu = kategori yang
+ *      DIANGGARKAN bulan itu ∪ kategori ber-transaksi (bukan taksonomi statis);
+ *      ikon bulat solid dapat RING progress terpakai-vs-anggaran ala Budget.
+ *   3. "Pemasukan Rp X" → grid kategori pemasukan aktif.
+ *   4. Baris kekayaan bersih (1 baris → /net-worth).
+ * Tap kartu → MobileQuickEntry (input realisasi + sub + sisa budget).
+ * Kosong total → empty state ala Budget (bukan grid Rp0).
  */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Bell, Eye, EyeOff, ChevronRightIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Bell, ChevronRight as ChevRight, Target } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/lib/constants'
+import { MobileQuickEntry } from '@/components/dashboard/mobile-quick-entry'
 import { SUB_SEP } from '@/lib/budget-categories'
 import { monthLong } from '@/lib/i18n/dates'
 import { useI18n } from '@/lib/i18n/context'
 import type { Transaction } from '@/types'
 
-interface CatSum { category: string; amount: number }
+interface BudgetRow { category: string; budget: number; actual: number; pct: number }
 
-/**
- * Kartu kategori ala Budget: SEMUA kategori kanonik selalu tampil (Rp0
- * pun tampil — bulan kosong tetap keliatan hidup, ronde-8 user bingung
- * "tidak ada card card"), urutan kanonik tetap; kategori custom user
- * yang ada nominalnya nyusul di belakang (sort desc). Sub "Induk::Sub"
- * di-roll-up ke induknya.
- */
-function buildCards(txs: Transaction[], type: 'expense' | 'income', canonical: readonly string[]): CatSum[] {
-  const amounts = new Map<string, number>(canonical.map((c) => [c, 0]))
-  const extras = new Map<string, number>()
-  for (const x of txs) {
-    if (x.type !== type || x.category === 'Transfer') continue
-    const sep = x.category.indexOf(SUB_SEP)
-    const cat = sep === -1 ? x.category : x.category.slice(0, sep)
-    if (amounts.has(cat)) amounts.set(cat, (amounts.get(cat) ?? 0) + x.amount)
-    else extras.set(cat, (extras.get(cat) ?? 0) + x.amount)
-  }
-  return [
-    ...canonical.map((category) => ({ category, amount: amounts.get(category) ?? 0 })),
-    ...[...extras.entries()].map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount),
-  ]
+interface Card {
+  category: string
+  amount: number
+  budget: number
+  ringPct: number | null
+}
+
+const rootOf = (cat: string) => {
+  const i = cat.indexOf(SUB_SEP)
+  return i === -1 ? cat : cat.slice(0, i)
 }
 
 export function MobileHome({
@@ -58,6 +49,8 @@ export function MobileHome({
   onNextMonth,
   netWorth,
   transactions,
+  budget,
+  budgetKeys,
 }: {
   month: number
   year: number
@@ -65,81 +58,138 @@ export function MobileHome({
   onNextMonth: () => void
   netWorth: number
   transactions: Transaction[]
+  /** rollup induk (expense) bulan terpilih: {category, budget, actual, pct} */
+  budget: BudgetRow[]
+  /** leaf key budget expense (komposit `Induk › Sub`) — bahan chip sub */
+  budgetKeys: string[]
 }) {
   const { t, locale } = useI18n()
-  const [hidden, setHidden] = useState(false)
-  const money = (n: number) => (hidden ? '••••' : formatCompactCurrency(n))
+  const [entry, setEntry] = useState<{ category: string; type: 'expense' | 'income'; budget: number; spent: number; subs: string[] } | null>(null)
 
-  const expenseCats = buildCards(transactions, 'expense', EXPENSE_CATEGORIES)
-  const incomeCats = buildCards(transactions, 'income', INCOME_CATEGORIES)
-  const totalExpense = expenseCats.reduce((s, c) => s + c.amount, 0)
-  const totalIncome = incomeCats.reduce((s, c) => s + c.amount, 0)
+  // ── Kartu pengeluaran: dianggarkan ∪ ber-transaksi, rollup ke induk ──
+  const { expenseCards, incomeCards, totalExpense, totalIncome } = useMemo(() => {
+    const spentByRoot = new Map<string, number>()
+    const incomeByRoot = new Map<string, number>()
+    for (const x of transactions) {
+      if (x.category === 'Transfer') continue
+      const root = rootOf(x.category)
+      if (x.type === 'expense') spentByRoot.set(root, (spentByRoot.get(root) ?? 0) + x.amount)
+      else if (x.type === 'income') incomeByRoot.set(root, (incomeByRoot.get(root) ?? 0) + x.amount)
+    }
+    const byCat = new Map<string, Card>()
+    for (const b of budget) {
+      byCat.set(b.category, {
+        category: b.category,
+        amount: spentByRoot.get(b.category) ?? 0,
+        budget: b.budget,
+        ringPct: b.budget > 0 ? Math.min(((spentByRoot.get(b.category) ?? 0) / b.budget) * 100, 100) : null,
+      })
+    }
+    for (const [root, amount] of spentByRoot) {
+      if (!byCat.has(root)) byCat.set(root, { category: root, amount, budget: 0, ringPct: null })
+    }
+    const expenseCards = [...byCat.values()].sort((a, b) => (b.budget - a.budget) || (b.amount - a.amount))
+    const incomeCards: Card[] = [...incomeByRoot.entries()]
+      .map(([category, amount]) => ({ category, amount, budget: 0, ringPct: null }))
+      .sort((a, b) => b.amount - a.amount)
+    const totalExpense = [...spentByRoot.values()].reduce((s, v) => s + v, 0)
+    const totalIncome = [...incomeByRoot.values()].reduce((s, v) => s + v, 0)
+    return { expenseCards, incomeCards, totalExpense, totalIncome }
+  }, [transactions, budget])
 
-  const renderGrid = (cats: CatSum[]) => (
-    <div className="grid grid-cols-3 gap-2">
-      {cats.map((c) => {
-        const hue = categoryHue(c.category)
-        const empty = c.amount === 0
-        return (
-          <Link
-            key={c.category}
-            href="/dashboard/transactions"
-            className="rounded-[16px] px-2 py-3 text-center active:opacity-70 transition-opacity"
-            style={{ background: hue.soft, opacity: empty ? 0.72 : 1 }}
-          >
-            <span className="block text-[11.5px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>
-              {c.category}
-            </span>
-            <span
-              className="grid place-items-center size-[34px] rounded-full mx-auto my-2"
-              style={{ background: hue.bar, color: '#fff' }}
-            >
-              <CategoryIcon category={c.category} className="size-4" />
-            </span>
-            <span className="num tabular block text-[12.5px] font-semibold" title={hidden ? undefined : formatCurrency(c.amount)} style={{ color: 'var(--ink)' }}>
-              {money(c.amount)}
-            </span>
-          </Link>
-        )
-      })}
-    </div>
-  )
+  const usagePct = totalIncome > 0 ? Math.round((totalExpense / totalIncome) * 100) : null
+
+  const subsFor = (parent: string) =>
+    budgetKeys.filter((k) => k.startsWith(parent + SUB_SEP)).map((k) => k.slice(parent.length + SUB_SEP.length))
+
+  const openEntry = (c: Card, type: 'expense' | 'income') =>
+    setEntry({ category: c.category, type, budget: c.budget, spent: c.amount, subs: type === 'expense' ? subsFor(c.category) : [] })
+
+  const renderCard = (c: Card, type: 'expense' | 'income') => {
+    const hue = categoryHue(c.category)
+    const over = c.budget > 0 && c.amount > c.budget
+    const ringColor = over ? 'var(--c-coral)' : hue.bar
+    const CIRC = 2 * Math.PI * 19
+    return (
+      <button
+        key={c.category}
+        type="button"
+        onClick={() => openEntry(c, type)}
+        className="rounded-[16px] px-2 py-3 text-center active:opacity-70 transition-opacity"
+        style={{ background: hue.soft }}
+      >
+        <span className="block text-[11.5px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>
+          {c.category}
+        </span>
+        <span className="relative grid place-items-center size-[44px] mx-auto my-1.5">
+          {c.ringPct != null && (
+            <svg width="44" height="44" viewBox="0 0 44 44" className="absolute inset-0" aria-hidden="true">
+              <circle cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeOpacity="0.25" strokeWidth="2.5" />
+              <circle
+                cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeWidth="2.5"
+                strokeDasharray={`${(c.ringPct / 100) * CIRC} ${CIRC}`} strokeLinecap="round"
+                transform="rotate(-90 22 22)"
+              />
+            </svg>
+          )}
+          <span className="grid place-items-center size-[34px] rounded-full" style={{ background: hue.bar, color: '#fff' }}>
+            <CategoryIcon category={c.category} className="size-4" />
+          </span>
+        </span>
+        <span className="num tabular block text-[12.5px] font-semibold" title={formatCurrency(c.amount)} style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}>
+          {formatCompactCurrency(c.amount)}
+        </span>
+      </button>
+    )
+  }
+
+  const empty = expenseCards.length === 0 && incomeCards.length === 0
 
   return (
     <div className="md:hidden">
-      {/* 1 ── Header: logo · ‹ bulan › · eye + bell */}
-      <div className="flex items-center justify-between pt-1.5 pb-3 px-0.5">
-        <svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" className="shrink-0">
+      {/* 1a ── Logo kecil di atas-center (ala "Budget" di status area) */}
+      <div className="flex items-center justify-center gap-1.5 pt-1 pb-2">
+        <svg width="16" height="16" viewBox="0 0 100 100" aria-hidden="true" className="shrink-0">
           <rect x="35" y="3" width="30" height="30" rx="9" fill="#17b890" />
           <rect x="3" y="35" width="30" height="30" rx="9" fill="#f0664f" />
           <rect x="67" y="35" width="30" height="30" rx="9" fill="#5d6fe0" />
           <rect x="35" y="67" width="30" height="30" rx="9" fill="#8b4fb0" />
         </svg>
-        <div className="flex items-center gap-2.5">
-          <button type="button" onClick={onPrevMonth} aria-label="Bulan sebelumnya" className="grid place-items-center size-8 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
-            <ChevronLeft className="size-4" />
+        <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 12.5, letterSpacing: '-0.01em', color: 'var(--ink)' }}>klunting</span>
+      </div>
+
+      {/* 1b ── [profil] ‹ Bulan › [% + bell] — sisi fixed-width biar bulan
+          center optik beneran (kritik review: bulan gak center, panah kejauhan) */}
+      <div className="flex items-center pb-3.5 px-0.5">
+        <div className="w-[76px] flex justify-start">
+          <Link
+            href="/dashboard/profile"
+            aria-label="Profil"
+            className="grid place-items-center size-[30px] rounded-full text-[11px] font-semibold"
+            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+          >
+            B
+          </Link>
+        </div>
+        <div className="flex-1 flex items-center justify-center gap-1.5">
+          <button type="button" onClick={onPrevMonth} aria-label="Bulan sebelumnya" className="grid place-items-center size-7 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
+            <ChevronLeft className="size-[15px]" />
           </button>
-          <span className="text-[15px] font-semibold min-w-[110px] text-center" style={{ color: 'var(--ink)' }}>
+          <span className="text-[15px] font-semibold text-center" style={{ color: 'var(--ink)' }}>
             {monthLong(month - 1, locale)} {year}
           </span>
-          <button type="button" onClick={onNextMonth} aria-label="Bulan berikutnya" className="grid place-items-center size-8 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
-            <ChevronRight className="size-4" />
+          <button type="button" onClick={onNextMonth} aria-label="Bulan berikutnya" className="grid place-items-center size-7 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
+            <ChevronRight className="size-[15px]" />
           </button>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setHidden((v) => !v)}
-            aria-label={hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo'}
-            className="grid place-items-center size-8 rounded-full active:opacity-60"
-            style={{ background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(24,24,27,0.05)' }}
-          >
-            {hidden ? <EyeOff className="size-[14px]" /> : <Eye className="size-[14px]" />}
-          </button>
+        <div className="w-[76px] flex justify-end items-center gap-1.5">
+          {usagePct != null && (
+            <span className="num text-[11px] font-medium" style={{ color: usagePct > 100 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>{usagePct}%</span>
+          )}
           <button
             type="button"
             aria-label="Notifikasi"
-            className="grid place-items-center size-8 rounded-full active:opacity-60"
+            className="grid place-items-center size-[30px] rounded-full active:opacity-60"
             style={{ background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 1px 2px rgba(24,24,27,0.05)' }}
           >
             <Bell className="size-[14px]" />
@@ -147,23 +197,54 @@ export function MobileHome({
         </div>
       </div>
 
-      {/* 2 ── Pengeluaran */}
-      <p className="text-center text-[13.5px] pb-2.5" style={{ color: 'var(--ink-soft)' }}>
-        {t('budgeting.expense')}{' '}
-        <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }} title={hidden ? undefined : formatCurrency(totalExpense)}>
-          {hidden ? 'Rp ••••' : formatCompactCurrency(totalExpense)}
-        </b>
-      </p>
-      {renderGrid(expenseCats)}
+      {empty ? (
+        /* Empty state ala Budget: ilustrasi pudar + ajakan, bukan grid Rp0 */
+        <div className="text-center pt-14 pb-10">
+          <div className="flex justify-center gap-3 opacity-35" aria-hidden="true">
+            {(['Makanan', 'Transportasi', 'Tagihan', 'Belanja'] as const).map((c) => (
+              <span key={c} className="grid place-items-center size-11 rounded-full" style={{ background: categoryHue(c).soft, color: categoryHue(c).ink }}>
+                <CategoryIcon category={c} className="size-5" />
+              </span>
+            ))}
+          </div>
+          <p className="text-[13px] mt-5" style={{ color: 'var(--ink-soft)' }}>{t('dashboard.no_budget')}</p>
+          <Link
+            href="/dashboard/budgeting"
+            className="inline-flex items-center gap-1.5 mt-3.5 rounded-full px-4 py-2 text-[12.5px] font-medium"
+            style={{ background: 'var(--ink)', color: 'var(--surface)' }}
+          >
+            <Target className="size-3.5" /> {t('nav.budgeting')}
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* 2 ── Pengeluaran */}
+          <p className="text-center text-[13.5px] pb-2.5" style={{ color: 'var(--ink-soft)' }}>
+            {t('budgeting.expense')}{' '}
+            <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }} title={formatCurrency(totalExpense)}>
+              {formatCompactCurrency(totalExpense)}
+            </b>
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {expenseCards.map((c) => renderCard(c, 'expense'))}
+          </div>
 
-      {/* 3 ── Pemasukan */}
-      <p className="text-center text-[13.5px] pt-4 pb-2.5" style={{ color: 'var(--ink-soft)' }}>
-        {t('budgeting.income')}{' '}
-        <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }} title={hidden ? undefined : formatCurrency(totalIncome)}>
-          {hidden ? 'Rp ••••' : formatCompactCurrency(totalIncome)}
-        </b>
-      </p>
-      {renderGrid(incomeCats)}
+          {/* 3 ── Pemasukan */}
+          <p className="text-center text-[13.5px] pt-4 pb-2.5" style={{ color: 'var(--ink-soft)' }}>
+            {t('budgeting.income')}{' '}
+            <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }} title={formatCurrency(totalIncome)}>
+              {formatCompactCurrency(totalIncome)}
+            </b>
+          </p>
+          {incomeCards.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {incomeCards.map((c) => renderCard(c, 'income'))}
+            </div>
+          ) : (
+            <p className="text-[11.5px] text-center py-3" style={{ color: 'var(--ink-soft)' }}>—</p>
+          )}
+        </>
+      )}
 
       {/* 4 ── Kekayaan bersih — satu baris ala Lunch Money */}
       <Link
@@ -173,12 +254,25 @@ export function MobileHome({
       >
         <span className="text-[12.5px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth')}</span>
         <span className="flex items-center gap-1">
-          <span className="num tabular text-[13.5px] font-semibold" title={hidden ? undefined : formatCurrency(netWorth)} style={{ color: 'var(--ink)' }}>
-            {hidden ? 'Rp ••••' : formatCompactCurrency(netWorth)}
+          <span className="num tabular text-[13.5px] font-semibold" title={formatCurrency(netWorth)} style={{ color: 'var(--ink)' }}>
+            {formatCompactCurrency(netWorth)}
           </span>
-          <ChevronRightIcon className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
+          <ChevRight className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
         </span>
       </Link>
+
+      {/* Input cepat — jantung pola Budget */}
+      {entry && (
+        <MobileQuickEntry
+          open={entry != null}
+          onOpenChange={(v) => { if (!v) setEntry(null) }}
+          category={entry.category}
+          type={entry.type}
+          budget={entry.budget}
+          spent={entry.spent}
+          subs={entry.subs}
+        />
+      )}
     </div>
   )
 }

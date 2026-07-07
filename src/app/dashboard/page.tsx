@@ -713,6 +713,8 @@ export default function DashboardPage() {
         }}
         netWorth={liquidTotal + nonLiquidTotal + investments.reduce((s, i) => s + (i.total_value || 0), 0) - debtTotal}
         transactions={monthTransactions}
+        budget={budgetProgress}
+        budgetKeys={monthBudgets.filter((b) => b.type === 'expense' && b.amount > 0).map((b) => b.category)}
       />
       <div className="hidden md:contents">
       {/* flex-col + gap = ritme sama kayak space-y-6, tapi `order` bisa dipakai
