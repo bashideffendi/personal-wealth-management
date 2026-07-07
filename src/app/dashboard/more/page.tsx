@@ -18,8 +18,8 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, Landmark, Coins, Gem, TrendingUp, Target, HandCoins, CreditCard,
-  Umbrella, Repeat, FileText, Calculator, Home, Compass, UserCircle, Bell,
-  ChevronRight, type LucideIcon,
+  Umbrella, Repeat, FileText, Calculator, Home, Compass, UserCircle, Palette,
+  Bell, ChevronRight, type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -72,6 +72,8 @@ const OTHER: Row[] = [
   { href: '/dashboard/family',   titleKey: 'nav.family',   icon: Home,       tint: 'coral' },
   { href: '/dashboard/playbook', titleKey: 'nav.playbook', icon: Compass,    tint: 'blue' },
   { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle, tint: 'violet' },
+  // Tampilan gak ada di NAV_ITEMS — pinjam key profile.appearance_title existing.
+  { href: '/dashboard/appearance', titleKey: 'profile.appearance_title', icon: Palette, tint: 'mint' },
 ]
 
 // Baris "Notifikasi" + toggle Web Push — gaya baris menu existing (chip ikon +
