@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { isExpired, nextRunDate, occurrencesInRange, parseISODate, startOfToday, type RecurLike } from '@/lib/recurrence'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -29,6 +29,7 @@ import {
 import { toast } from 'sonner'
 import { useI18n } from '@/lib/i18n/context'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ProviderCatalog } from '@/components/recurring/provider-catalog'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
@@ -102,6 +103,16 @@ const klasOf = (r: RecurringTransaction): Klas =>
       : 'rutin'
 
 const dmyy = (d: Date, dloc: string) => d.toLocaleDateString(dloc, { day: 'numeric', month: 'short', year: '2-digit' })
+
+/** Pilih wadah detail: BottomSheet (<md) vs Sheet kanan (≥md). SSR-safe, default false. */
+const MD_QUERY = '(min-width: 768px)'
+const subscribeMd = (cb: () => void) => {
+  const mq = window.matchMedia(MD_QUERY)
+  mq.addEventListener('change', cb)
+  return () => mq.removeEventListener('change', cb)
+}
+const useIsMdUp = () =>
+  useSyncExternalStore(subscribeMd, () => window.matchMedia(MD_QUERY).matches, () => false)
 
 /* ===== Mobile Budget-style (F14): 4 tab (3 klasifikasi + Kontrak) + avatar inisial ===== */
 type MTab = Klas | 'kontrak'
@@ -404,6 +415,78 @@ export default function RecurringPage() {
     else if (mtab === 'kontrak') router.push('/dashboard/contracts')
     else openAdd()
   }
+
+  // Wadah detail: <md BottomSheet (persis lama), ≥md Sheet kanan ala AnggaranMonthDrawer
+  const isMdUp = useIsMdUp()
+
+  // Konten detail — SATU sumber, dirender di dua wadah (BottomSheet mobile / Sheet kanan desktop)
+  const detailBody = detailItem && detailData ? (
+    <div className="px-1 pb-2 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="num tabular text-[22px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+          <p className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
+          <button
+            type="button"
+            className="rounded-full px-3.5 py-1.5 text-[12px] font-medium"
+            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+            onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}
+          >Edit</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 text-center rounded-xl px-3.5 py-3" style={{ background: 'var(--surface-2)' }}>
+        <div>
+          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Total</p>
+          <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)}</p>
+        </div>
+        <div>
+          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Transactions' : 'Transaksi'}</p>
+          <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{detailData.paidCount}</p>
+        </div>
+      </div>
+
+      <div className="flex w-fit mx-auto rounded-full p-1" style={{ background: 'var(--surface-2)' }}>
+        {([['paid', locale === 'en' ? 'Paid' : 'Terbayar'], ['upcoming', locale === 'en' ? 'Upcoming' : 'Mendatang']] as const).map(([k, lbl]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setDetailTab(k)}
+            className="rounded-full px-5 py-1.5 text-[12px] font-medium transition-colors"
+            style={{
+              background: detailTab === k ? 'var(--surface)' : 'transparent',
+              color: detailTab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
+              boxShadow: detailTab === k ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >{lbl}</button>
+        ))}
+      </div>
+
+      <div>
+        {detailList.map((d, i) => {
+          const av = avatarStyle(detailItem.name, detailItem.category)
+          return (
+            <div key={i} className="flex items-center gap-3" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+              <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: av.bg }}>
+                <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
+              </div>
+              <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
+              <div className="text-right shrink-0">
+                <p className="num tabular text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+                <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d, dloc)}</p>
+              </div>
+            </div>
+          )
+        })}
+        {detailList.length === 0 && (
+          <p className="text-[12px] text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
+        )}
+      </div>
+    </div>
+  ) : null
 
   return (
     <div className="space-y-6">
@@ -836,76 +919,40 @@ export default function RecurringPage() {
         onManual={() => { setCatalogOpen(false); openAdd({ type: 'expense', category: 'Langganan', frequency: 'monthly' }) }}
       />
 
-      {/* F13f: detail item (bottom sheet) */}
-      <BottomSheet open={!!detailItem} onOpenChange={(o) => { if (!o) setDetailId(null) }} title={detailItem?.name ?? ''}>
-        {detailItem && detailData && (
-          <div className="px-1 pb-2 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="num tabular text-[22px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
-                <p className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
-                <button
-                  type="button"
-                  className="rounded-full px-3.5 py-1.5 text-[12px] font-medium"
-                  style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
-                  onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}
-                >Edit</button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 text-center rounded-xl px-3.5 py-3" style={{ background: 'var(--surface-2)' }}>
-              <div>
-                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Total</p>
-                <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)}</p>
-              </div>
-              <div>
-                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Transactions' : 'Transaksi'}</p>
-                <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{detailData.paidCount}</p>
-              </div>
-            </div>
-
-            <div className="flex w-fit mx-auto rounded-full p-1" style={{ background: 'var(--surface-2)' }}>
-              {([['paid', locale === 'en' ? 'Paid' : 'Terbayar'], ['upcoming', locale === 'en' ? 'Upcoming' : 'Mendatang']] as const).map(([k, lbl]) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setDetailTab(k)}
-                  className="rounded-full px-5 py-1.5 text-[12px] font-medium transition-colors"
-                  style={{
-                    background: detailTab === k ? 'var(--surface)' : 'transparent',
-                    color: detailTab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
-                    boxShadow: detailTab === k ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                  }}
-                >{lbl}</button>
-              ))}
-            </div>
-
-            <div>
-              {detailList.map((d, i) => {
+      {/* F13f: detail item — <md bottom sheet (persis lama), ≥md sheet sisi kanan (idiom desktop, pola AnggaranMonthDrawer) */}
+      {isMdUp ? (
+        <Sheet open={!!detailItem} onOpenChange={(o) => { if (!o) setDetailId(null) }}>
+          <SheetContent
+            side="right"
+            className="!max-w-[480px] w-[480px] overflow-y-auto p-0 gap-0 border-0"
+            style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-lg)' }}
+          >
+            <SheetHeader
+              className="px-5 py-4 border-b sticky top-0 z-10"
+              style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}
+            >
+              {detailItem && (() => {
                 const av = avatarStyle(detailItem.name, detailItem.category)
                 return (
-                  <div key={i} className="flex items-center gap-3" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
-                    <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: av.bg }}>
+                  <div className="flex items-center gap-3 min-w-0 pr-8">
+                    <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
                       <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
                     </div>
-                    <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
-                    <div className="text-right shrink-0">
-                      <p className="num tabular text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
-                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d, dloc)}</p>
-                    </div>
+                    <SheetTitle className="text-[16px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                      {detailItem.name}
+                    </SheetTitle>
                   </div>
                 )
-              })}
-              {detailList.length === 0 && (
-                <p className="text-[12px] text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
-              )}
-            </div>
-          </div>
-        )}
-      </BottomSheet>
+              })()}
+            </SheetHeader>
+            <div className="px-4 py-4">{detailBody}</div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <BottomSheet open={!!detailItem} onOpenChange={(o) => { if (!o) setDetailId(null) }} title={detailItem?.name ?? ''}>
+          {detailBody}
+        </BottomSheet>
+      )}
     </div>
   )
 }

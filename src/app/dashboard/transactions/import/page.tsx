@@ -354,7 +354,7 @@ export default function ImportMutasiPage() {
   // ─── Render ────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-4xl mx-auto py-6 space-y-5">
+    <div className="max-w-4xl lg:max-w-6xl mx-auto py-6 space-y-5">
       {/* Back link */}
       <Link
         href="/dashboard/transactions"
@@ -774,7 +774,7 @@ function PreviewStage({
                     value={r.type}
                     onValueChange={(v) => v && onUpdate(r.id, { type: v as TxType })}
                   >
-                    <SelectTrigger className="h-8 text-xs w-[110px]">
+                    <SelectTrigger className="h-8 text-xs w-[110px] lg:w-[130px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -795,7 +795,7 @@ function PreviewStage({
                       })
                     }
                   >
-                    <SelectTrigger className="h-8 text-xs w-[140px]">
+                    <SelectTrigger className="h-8 text-xs w-[140px] lg:w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

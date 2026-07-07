@@ -323,7 +323,7 @@ export default function MorePage() {
   ]
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto md:max-w-4xl">
       {/* Judul auto-hidden di mobile; document.title "Lainnya · Klunting" kepakai MobileAppBar */}
       <QuietPageHeader title={t('nav.section.secondary')} />
 
@@ -335,10 +335,10 @@ export default function MorePage() {
       >
         <Link
           href="/dashboard/profile"
-          className="flex flex-col items-center px-3.5 pt-5 pb-4 transition-opacity active:opacity-70"
+          className="flex flex-col items-center px-3.5 pt-5 pb-4 transition-opacity active:opacity-70 md:flex-row md:gap-4 md:px-5 md:pt-5 md:pb-3"
         >
           <span
-            className="grid place-items-center size-16 rounded-full text-[22px] font-bold"
+            className="grid place-items-center size-16 rounded-full text-[22px] font-bold md:size-14 md:text-[20px] shrink-0"
             style={{
               background: 'var(--c-mint-soft)',
               color: 'var(--c-mint-ink)',
@@ -348,26 +348,31 @@ export default function MorePage() {
           >
             {initial}
           </span>
-          <span
-            className="mt-2.5 inline-flex items-center gap-0.5 max-w-full text-[15px] font-semibold"
-            style={{ color: 'var(--ink)' }}
-          >
-            <span className="truncate">{name}</span>
-            <ChevronRight className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-          </span>
-          {me?.email && (
-            <span className="mt-0.5 max-w-full truncate text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
-              {me.email}
+          <span className="flex flex-col items-center max-w-full min-w-0 md:items-start md:flex-1">
+            <span
+              className="mt-2.5 inline-flex items-center gap-0.5 max-w-full text-[15px] font-semibold md:mt-0 md:text-[16px]"
+              style={{ color: 'var(--ink)' }}
+            >
+              <span className="truncate">{name}</span>
+              <ChevronRight className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
             </span>
-          )}
+            {me?.email && (
+              <span className="mt-0.5 max-w-full truncate text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
+                {me.email}
+              </span>
+            )}
+          </span>
         </Link>
-        <div className="grid grid-cols-3 px-3.5 pb-4 pt-1 text-center">
+        <div className="grid grid-cols-3 px-3.5 pb-4 pt-1 text-center md:flex md:gap-2.5 md:px-5 md:pb-4 md:pt-0 md:text-left">
           {stats.map((s) => (
-            <div key={s.label} className="min-w-0">
-              <div className="num text-[22px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+            <div
+              key={s.label}
+              className="min-w-0 md:flex md:items-baseline md:gap-1.5 md:rounded-full md:border md:border-[var(--border-soft)] md:bg-[var(--surface)] md:px-3.5 md:py-1.5"
+            >
+              <div className="num text-[22px] font-bold leading-tight md:text-[15px]" style={{ color: 'var(--ink)' }}>
                 {s.num}
               </div>
-              <div className="mt-0.5 truncate text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+              <div className="mt-0.5 truncate text-[12px] md:mt-0" style={{ color: 'var(--ink-soft)' }}>
                 {s.label}
               </div>
             </div>
@@ -375,9 +380,15 @@ export default function MorePage() {
         </div>
       </section>
 
-      <Group rows={MONEY} />
-      <Group rows={withValues(AUTOMATION)} />
-      <Group rows={withValues(OTHER)} trailing={<NotificationRow />} />
+      {/* ≥md: dua kolom seimbang (MONEY kiri, AUTOMATION+OTHER kanan);
+          <md wrapper display:block → stack 1 kolom persis seperti semula */}
+      <div className="md:grid md:grid-cols-2 md:gap-x-6 md:items-start">
+        <Group rows={MONEY} />
+        <div>
+          <Group rows={withValues(AUTOMATION)} />
+          <Group rows={withValues(OTHER)} trailing={<NotificationRow />} />
+        </div>
+      </div>
     </div>
   )
 }

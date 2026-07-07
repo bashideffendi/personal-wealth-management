@@ -51,7 +51,7 @@ export default function AppearancePage() {
   ]
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto md:max-w-3xl">
       {/* Judul auto-hidden di mobile; document.title kepakai MobileAppBar */}
       <QuietPageHeader title={t('profile.appearance_title')} />
 
@@ -60,7 +60,43 @@ export default function AppearancePage() {
         title={t('profile.theme_mode_label')}
         hint={id ? 'Terang, gelap, atau ikut sistem perangkat.' : 'Light, dark, or follow your device.'}
       />
-      <section className="s-card overflow-hidden md:mt-0">
+      {/* ≥md: 3 kartu berdampingan (ikon + label + badge centang di yang aktif) */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-3">
+        {options.map((opt) => {
+          const Icon = opt.icon
+          const active = mode === opt.value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setMode(opt.value)}
+              aria-pressed={active}
+              className="s-card relative flex flex-col items-center gap-2.5 px-3 py-5 text-center transition-colors active:bg-[var(--surface-2)]"
+              style={active ? { boxShadow: 'inset 0 0 0 2px var(--c-mint-ink)' } : undefined}
+            >
+              <span
+                className="grid place-items-center size-[36px] rounded-[10px]"
+                style={{ background: `var(--c-${opt.tint}-soft)`, color: `var(--c-${opt.tint}-ink)` }}
+              >
+                <Icon className="size-[19px]" />
+              </span>
+              <span className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>
+                {opt.label}
+              </span>
+              {active && (
+                <span
+                  className="absolute top-2 right-2 grid place-items-center size-[20px] rounded-full"
+                  style={{ background: 'var(--c-mint-ink)', color: '#fff' }}
+                  aria-hidden
+                >
+                  <Check className="size-[13px]" strokeWidth={3} />
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+      <section className="s-card overflow-hidden md:hidden">
         {options.map((opt, i) => {
           const Icon = opt.icon
           const active = mode === opt.value
@@ -99,44 +135,51 @@ export default function AppearancePage() {
         })}
       </section>
 
-      {/* GAYA — skin existing (Bersih/Cartoon), beda dari mode terang/gelap */}
-      <SectionLabel
-        title={t('profile.skin_label')}
-        hint={
-          id
-            ? 'Gaya visual app (Bersih/Cartoon) — terpisah dari mode terang/gelap di atas.'
-            : 'App visual style (Bersih/Cartoon) — separate from light/dark mode above.'
-        }
-      />
-      <SkinPicker />
-
-      {/* PRATINJAU — 1 kartu contoh transaksi (ala section "Style" Budget).
-          Pakai token CSS, jadi otomatis ikut mode+skin terpilih. */}
-      <SectionLabel
-        title={id ? 'Pratinjau' : 'Preview'}
-        hint={id ? 'Contoh tampilan transaksi dengan pilihanmu.' : 'Sample transaction with your choices.'}
-      />
-      <section className="s-card overflow-hidden" aria-hidden>
-        <div className="flex items-center gap-2.5 px-3.5 min-h-[58px]">
-          <span
-            className="grid place-items-center size-[32px] rounded-[8px] shrink-0"
-            style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
-          >
-            <CategoryIcon category="Makanan" className="size-[17px]" />
-          </span>
-          <span className="flex-1 min-w-0">
-            <span className="block text-[15px] font-medium truncate" style={{ color: 'var(--ink)' }}>
-              {id ? 'Makanan' : 'Food'}
-            </span>
-            <span className="block text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
-              {id ? 'Contoh transaksi' : 'Sample transaction'}
-            </span>
-          </span>
-          <span className="num text-[15px] font-semibold shrink-0" style={{ color: 'var(--c-coral-ink)' }}>
-            -Rp 25.000
-          </span>
+      {/* ≥md: Gaya & Pratinjau berdampingan; <md wrapper display:block → stack semula */}
+      <div className="md:grid md:grid-cols-2 md:gap-x-6 md:items-start">
+        <div>
+          {/* GAYA — skin existing (Bersih/Cartoon), beda dari mode terang/gelap */}
+          <SectionLabel
+            title={t('profile.skin_label')}
+            hint={
+              id
+                ? 'Gaya visual app (Bersih/Cartoon) — terpisah dari mode terang/gelap di atas.'
+                : 'App visual style (Bersih/Cartoon) — separate from light/dark mode above.'
+            }
+          />
+          <SkinPicker />
         </div>
-      </section>
+
+        <div>
+          {/* PRATINJAU — 1 kartu contoh transaksi (ala section "Style" Budget).
+              Pakai token CSS, jadi otomatis ikut mode+skin terpilih. */}
+          <SectionLabel
+            title={id ? 'Pratinjau' : 'Preview'}
+            hint={id ? 'Contoh tampilan transaksi dengan pilihanmu.' : 'Sample transaction with your choices.'}
+          />
+          <section className="s-card overflow-hidden" aria-hidden>
+            <div className="flex items-center gap-2.5 px-3.5 min-h-[58px]">
+              <span
+                className="grid place-items-center size-[32px] rounded-[8px] shrink-0"
+                style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
+              >
+                <CategoryIcon category="Makanan" className="size-[17px]" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[15px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+                  {id ? 'Makanan' : 'Food'}
+                </span>
+                <span className="block text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
+                  {id ? 'Contoh transaksi' : 'Sample transaction'}
+                </span>
+              </span>
+              <span className="num text-[15px] font-semibold shrink-0" style={{ color: 'var(--c-coral-ink)' }}>
+                -Rp 25.000
+              </span>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   )
 }

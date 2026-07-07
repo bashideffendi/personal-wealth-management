@@ -814,7 +814,7 @@ export default function DashboardPage() {
           desain. dense bikin card kecil ngisi celah di sebelah card tinggi (mis.
           3 card kecil numpuk di kanan kalender). Urutan/visibility via CSS order +
           data-block. items-stretch + h-full → card ngisi penuh selnya. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[132px] lg:[grid-auto-flow:row_dense] items-stretch">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[132px] lg:[grid-auto-flow:row_dense] items-stretch">
 
       {/* Akun & Saldo — "di mana duitku" (widget #1 ala Monarch) */}
       <SortableSection id="akun" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
@@ -832,7 +832,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="md:col-span-2 lg:row-span-3">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -843,7 +843,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Skor Kesehatan Finansial — skor + breakdown 7-indikator (2 kolom) */}
-      <SortableSection id="kesehatan" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="kesehatan" order={blockOrder} overflow="fit-static" className="md:col-span-2 lg:row-span-3">
         <FinancialHealthCard
           part="score"
           result={fhsResult}
@@ -873,7 +873,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-4">
+      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="md:col-span-2 lg:col-span-3 lg:row-span-4">
         <div className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3 shrink-0">
           <div>
@@ -979,7 +979,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
-      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="md:col-span-2 lg:row-span-3">
         <RecentTransactions transactions={monthTransactions} />
       </SortableSection>
       <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
@@ -995,7 +995,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Activity calendar (per-card, span 2) */}
-      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
+      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="md:col-span-2 lg:row-span-4">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
         <div className="s-card p-4 sm:p-5 h-full">
           <div className="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
@@ -1198,7 +1198,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Insights & Alerts */}
-      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="md:col-span-2 lg:row-span-3">
         <InsightsPanel
           part="alerts"
           monthTransactions={monthTransactions}
@@ -1210,7 +1210,7 @@ export default function DashboardPage() {
         />
       </SortableSection>
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
-      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
+      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="md:col-span-2 lg:row-span-4">
         <div className="s-card p-4 sm:p-5 h-full">
           <div className="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
             <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>

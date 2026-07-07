@@ -16,9 +16,19 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import {
+  Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
+} from '@/components/ui/table'
 import { Plus, Loader2, Receipt, Trash2, BadgeDollarSign, CalendarDays } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { useI18n } from '@/lib/i18n/context'
+
+// Label kategori utang — sinkron dengan CAT di halaman Utang
+const DEBT_CAT_LABEL: Record<Debt['category'], { id: string; en: string }> = {
+  consumer: { id: 'Konsumtif', en: 'Consumer' },
+  cash_loan: { id: 'Pinjaman Tunai', en: 'Cash Loan' },
+  long_term: { id: 'Jangka Panjang', en: 'Long Term' },
+}
 
 interface DebtPayment {
   id: string
@@ -158,7 +168,9 @@ export default function DebtPaymentsPage() {
               <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.empty_subtitle')}</p>
             </div>
           ) : (
-            <div className="s-card overflow-hidden">
+            <>
+            {/* Mobile: row-list (tetap, tanpa perubahan) */}
+            <div className="s-card overflow-hidden md:hidden">
               <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {payments.map((p) => {
                   const d = debts.find((x) => x.id === p.debt_id)
@@ -185,6 +197,68 @@ export default function DebtPaymentsPage() {
                 })}
               </div>
             </div>
+
+            {/* ≥md: tabel riwayat pembayaran */}
+            <div className="s-card overflow-hidden hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow style={{ borderColor: 'var(--border-soft)' }}>
+                    <TableHead className="px-5 text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                      {locale === 'en' ? 'Date' : 'Tanggal'}
+                    </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                      {locale === 'en' ? 'Debt' : 'Utang'}
+                    </TableHead>
+                    <TableHead className="text-right text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                      {locale === 'en' ? 'Amount' : 'Jumlah'}
+                    </TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                      {locale === 'en' ? 'Notes' : 'Catatan'}
+                    </TableHead>
+                    <TableHead className="w-12 px-5">
+                      <span className="sr-only">{t('debts_payments.delete_aria')}</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((p) => {
+                    const d = debts.find((x) => x.id === p.debt_id)
+                    return (
+                      <TableRow key={p.id} className="group" style={{ borderColor: 'var(--border-soft)' }}>
+                        <TableCell className="px-5 whitespace-nowrap text-sm" style={{ color: 'var(--ink-muted)' }}>
+                          {new Date(p.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </TableCell>
+                        <TableCell>
+                          <p className="font-semibold" style={{ color: 'var(--ink)' }}>{d?.name ?? '—'}</p>
+                          {d && (
+                            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                              {locale === 'en' ? DEBT_CAT_LABEL[d.category]?.en : DEBT_CAT_LABEL[d.category]?.id}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(p.amount)}</span>
+                        </TableCell>
+                        <TableCell className="max-w-[280px]">
+                          <p className="truncate text-sm" style={{ color: 'var(--ink-muted)' }}>{p.notes || '—'}</p>
+                        </TableCell>
+                        <TableCell className="px-5 text-right">
+                          <Button
+                            variant="ghost" size="icon-sm"
+                            className="opacity-0 group-hover:opacity-100 transition"
+                            aria-label={t('debts_payments.delete_aria')}
+                            onClick={() => removePayment(p)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            </>
           )}
         </>
       )}
