@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { rateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
@@ -105,8 +106,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Body harus JSON' }, { status: 400 })
   }
 
-  // Charge 2 credits only AFTER body is validated
-  const credit = await consumeAICredits(supabase, user.id, 'insights')
+  // Charge 2 credits only AFTER body is validated.
+  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
+  // proteksi abuse tetap lewat rateLimit di atas.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'insights')
+    : { ok: true }
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
   }

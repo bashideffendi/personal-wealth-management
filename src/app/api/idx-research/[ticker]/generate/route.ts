@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { rateLimit } from '@/lib/rate-limit'
 import {
   getStock,
@@ -110,8 +111,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   } catch { /* guard best-effort — lanjut tanpa klaim */ }
 
   try {
-  // Charge credits sebelum panggil Claude
-  const credit = await consumeAICredits(supabase, user.id, 'stock_research')
+  // Charge credits sebelum panggil Claude.
+  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
+  // proteksi abuse tetap lewat rateLimit di atas.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'stock_research')
+    : { ok: true }
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
   }

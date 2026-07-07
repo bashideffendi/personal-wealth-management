@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import {
   formatRupiah,
   sendRenewalReminderEmail,
@@ -39,6 +40,12 @@ export async function GET(request: Request) {
   // cron preview kirim email ke user beneran. [reliability-6]
   if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production') {
     return NextResponse.json({ ok: true, skipped: `disabled on VERCEL_ENV=${process.env.VERCEL_ENV}` })
+  }
+
+  // Billing beku (src/lib/billing-flag.ts) → email trial/renewal gak relevan.
+  // Balas 200 (bukan error) supaya cron Vercel gak dianggap gagal.
+  if (!BILLING_ENABLED) {
+    return NextResponse.json({ ok: true, skipped: 'billing frozen (NEXT_PUBLIC_BILLING_ENABLED != 1)' })
   }
 
   const admin = createAdminClient()

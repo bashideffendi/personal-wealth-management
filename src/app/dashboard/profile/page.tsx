@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
@@ -408,6 +409,8 @@ export default function ProfilePage() {
                   {user.email}
                 </p>
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  {/* Billing beku (src/lib/billing-flag.ts) → label paket disembunyikan */}
+                  {BILLING_ENABLED && (
                   <span
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
                     style={{
@@ -420,12 +423,15 @@ export default function ProfilePage() {
                     {t('profile.plan_prefix')} {planLabel}
                     {subscription?.status === 'trialing' && ` (${t('profile.plan_trial')})`}
                   </span>
+                  )}
                   <span className="text-xs" style={{ color: 'var(--on-hero-mut)' }}>
                     {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''} · {today}
                   </span>
                 </div>
               </div>
             </div>
+            {/* Billing beku → tombol upgrade/kelola langganan disembunyikan */}
+            {BILLING_ENABLED && (
             <Link
               href="/dashboard/pricing"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition hover:opacity-90"
@@ -438,11 +444,13 @@ export default function ProfilePage() {
               <Crown className="size-4" />
               {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? t('profile.cta_upgrade') : t('profile.cta_manage_sub')}
             </Link>
+            )}
           </div>
         </div>
       </section>
 
-      {/* AI Credits card */}
+      {/* AI Credits card — beku selama billing OFF (metering kredit dilewati) */}
+      {BILLING_ENABLED && (
       <div className="rounded-xl border p-5" style={{ background: 'var(--c-violet-soft)', borderColor: 'color-mix(in srgb, var(--c-violet) 22%, transparent)' }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
@@ -470,6 +478,7 @@ export default function ProfilePage() {
           </Link>
         </div>
       </div>
+      )}
 
       {/* Tabs section */}
       <Tabs defaultValue="preferensi" className="w-full">

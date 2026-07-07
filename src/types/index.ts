@@ -263,6 +263,10 @@ export interface RecurringTransaction {
   start_date: string
   end_date: string | null
   last_run_date: string | null
+  /** Watermark idempotensi cron auto-post (migrasi 062) — occurrence terakhir yang sudah di-post. */
+  last_posted_date: string | null
+  /** Opt-in auto-post harian via /api/cron/post-recurring (migrasi 062). */
+  auto_post: boolean
   is_active: boolean
   notes: string
   created_at: string

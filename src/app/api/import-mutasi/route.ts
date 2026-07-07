@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { rateLimit } from '@/lib/rate-limit'
 import {
   EXPENSE_CATEGORIES,
@@ -136,7 +137,11 @@ export async function POST(request: NextRequest) {
 
   // Charge credits up-front. Bulk import = 5 credits (vs 1 for single receipt).
   // We could meter per-token but flat fee keeps the UX predictable.
-  const credit = await consumeAICredits(supabase, user.id, 'mutasi_import')
+  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
+  // proteksi abuse tetap lewat rateLimit di atas.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'mutasi_import')
+    : { ok: true }
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
   }

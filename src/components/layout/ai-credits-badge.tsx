@@ -14,6 +14,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { Zap, ChevronRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
@@ -45,6 +46,9 @@ export function AICreditsBadge() {
   }, [])
 
   useEffect(() => {
+    // Billing beku (src/lib/billing-flag.ts): badge tidak dirender & tidak
+    // perlu fetch status kredit sama sekali.
+    if (!BILLING_ENABLED) return
     void fetchStatus()
     // Listen for AI call events so badge refreshes after consuming
     const handler = () => { void fetchStatus() }
@@ -52,7 +56,7 @@ export function AICreditsBadge() {
     return () => window.removeEventListener('pwm:ai-credits-changed', handler)
   }, [fetchStatus])
 
-  if (!status) return null
+  if (!BILLING_ENABLED || !status) return null
 
   const pct = status.cap > 0 ? (status.current / status.cap) * 100 : 0
   const low = pct < 20

@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase/client'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import {
   UserCircle, Crown, LogOut, Sun, Moon, Monitor, ChevronDown,
 } from 'lucide-react'
@@ -135,9 +136,12 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
             <MenuItem onClick={() => go('/dashboard/profile')} icon={UserCircle}>
               Profil
             </MenuItem>
-            <MenuItem onClick={() => go('/dashboard/pricing')} icon={Crown}>
-              Paket Langganan
-            </MenuItem>
+            {/* Billing beku (src/lib/billing-flag.ts) → menu paket disembunyikan */}
+            {BILLING_ENABLED && (
+              <MenuItem onClick={() => go('/dashboard/pricing')} icon={Crown}>
+                Paket Langganan
+              </MenuItem>
+            )}
           </div>
 
           <div className="py-1 border-t" style={{ borderColor: 'var(--border-soft)' }}>

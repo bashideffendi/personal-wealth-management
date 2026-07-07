@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { billingEnabled, isPaidPlan } from '@/lib/billing/config'
 import { verifyXenditCallback, activateSubscription } from '@/lib/billing/xendit'
 import { sendPaymentSuccessEmail, sendPaymentFailedEmail, formatRupiah } from '@/lib/email'
@@ -37,6 +38,11 @@ function computeExpiry(period: string): string {
 }
 
 export async function POST(req: Request) {
+  // Billing beku (src/lib/billing-flag.ts) → route ini dianggap tidak ada.
+  // Guard early-return; kode handler di bawah sengaja DISIMPAN buat nanti.
+  if (!BILLING_ENABLED) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
   if (!billingEnabled()) {
     return NextResponse.json({ error: 'Billing belum aktif' }, { status: 503 })
   }

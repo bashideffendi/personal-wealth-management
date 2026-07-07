@@ -72,13 +72,14 @@ interface FormState {
   start_date: string
   end_date: string
   is_active: boolean
+  auto_post: boolean
   notes: string
 }
 const EMPTY: FormState = {
   id: null, name: '', type: 'expense', category: 'Langganan',
   amount: 0, account_id: '', frequency: 'monthly', day_of_period: 1,
   start_date: new Date().toISOString().split('T')[0], end_date: '',
-  is_active: true, notes: '',
+  is_active: true, auto_post: false, notes: '',
 }
 
 const DAY = 86_400_000
@@ -199,11 +200,19 @@ export default function RecurringPage() {
       amount: form.amount, account_id: form.account_id || null,
       frequency: form.frequency, day_of_period: form.day_of_period,
       start_date: form.start_date, end_date: form.end_date || null,
-      is_active: form.is_active, notes: form.notes,
+      is_active: form.is_active, auto_post: form.auto_post, notes: form.notes,
     }
-    const { error } = form.id
-      ? await supabase.from('recurring_transactions').update(payload).eq('id', form.id)
-      : await supabase.from('recurring_transactions').insert(payload)
+    const run = (p: Record<string, unknown>) =>
+      form.id
+        ? supabase.from('recurring_transactions').update(p).eq('id', form.id)
+        : supabase.from('recurring_transactions').insert(p)
+    let { error } = await run(payload)
+    // Graceful pre-migrasi 062: kolom auto_post belum ada di DB → retry tanpa
+    // field itu biar simpan tetap jalan (toggle efektif setelah migrasi).
+    if (error && /auto_post/.test(error.message)) {
+      const { auto_post: _skip, ...withoutAutoPost } = payload
+      ;({ error } = await run(withoutAutoPost))
+    }
     setSaving(false)
     if (error) { toast.error(t('common.mutation_failed')); return }
     setDialogOpen(false)
@@ -239,7 +248,8 @@ export default function RecurringPage() {
     setForm({
       id: r.id, name: r.name, type: r.type, category: r.category, amount: r.amount,
       account_id: r.account_id ?? '', frequency: r.frequency, day_of_period: r.day_of_period,
-      start_date: r.start_date, end_date: r.end_date ?? '', is_active: r.is_active, notes: r.notes,
+      start_date: r.start_date, end_date: r.end_date ?? '', is_active: r.is_active,
+      auto_post: r.auto_post ?? false, notes: r.notes,
     })
     setDialogOpen(true)
   }
@@ -509,6 +519,7 @@ export default function RecurringPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {r.auto_post && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>auto</span>}
                         <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(r.amount)}</p>
                         <span className="size-1.5 rounded-full" style={{ background: r.is_active ? 'var(--c-mint)' : 'var(--c-amber)' }} />
                       </div>
@@ -770,6 +781,11 @@ export default function RecurringPage() {
               <div className="grid gap-1.5"><Label>{t('recurring.field_start')}</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
               <div className="grid gap-1.5"><Label>{t('recurring.field_end')}</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
             </div>
+            {/* Auto-post via cron harian (label lokal inline — messages.ts gak disentuh) */}
+            <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
+              <input type="checkbox" checked={form.auto_post} onChange={(e) => setForm({ ...form, auto_post: e.target.checked })} className="h-4 w-4" />
+              {locale === 'en' ? 'Auto-record on due date' : 'Auto-catat saat jatuh tempo'}
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('recurring.cancel')}</Button>

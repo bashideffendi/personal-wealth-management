@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { billingEnabled, isPaidPlan, PLAN_PRICES } from '@/lib/billing/config'
 import { createXenditInvoice } from '@/lib/billing/xendit'
 import { rateLimit } from '@/lib/rate-limit'
@@ -14,6 +15,12 @@ export const runtime = 'nodejs'
  * user_id + plan_id + period ditanam ke metadata invoice → dibaca balik webhook.
  */
 export async function POST(req: Request) {
+  // Billing beku (src/lib/billing-flag.ts) → route ini dianggap tidak ada.
+  // Guard early-return; kode handler di bawah sengaja DISIMPAN buat nanti.
+  if (!BILLING_ENABLED) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
