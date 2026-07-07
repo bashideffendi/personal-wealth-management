@@ -176,7 +176,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
       <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm border-collapse" style={{ minWidth: 760 }}>
           <thead>
-            <tr style={{ background: 'var(--surface-3)' }}>
+            <tr style={{ background: 'var(--surface-2)' }}>
               <th scope="col" className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_sym')}</th>
               <th scope="col" className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_name')}</th>
               <th scope="col" className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_lot_unit')}</th>

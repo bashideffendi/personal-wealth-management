@@ -711,12 +711,12 @@ export default function AccountsPage() {
         <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_account')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_type')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_number')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_activity_30')}</th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-medium">{t('accounts.col_balance')}</th>
+              <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)', background: 'var(--surface-2)' }}>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_account')}</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_type')}</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_number')}</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_activity_30')}</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_balance')}</th>
               </tr>
             </thead>
             <tbody>
@@ -739,7 +739,7 @@ export default function AccountsPage() {
                     <td className="px-3 py-3">{renderActivity(a)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-3">
-                        <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">{renderRowActions(a)}</div>
+                        <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">{renderRowActions(a)}</div>
                         <span className="num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_balance ?? 0)}</span>
                       </div>
                     </td>
@@ -774,7 +774,7 @@ export default function AccountsPage() {
                           )}
                         </p>
                       </div>
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">{renderRowActions(a)}</div>
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">{renderRowActions(a)}</div>
                     </div>
                   </div>
                 </div>

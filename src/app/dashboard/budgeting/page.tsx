@@ -570,7 +570,7 @@ export default function BudgetingPage() {
     const ownerNode = tree[type].find((c) => c.name === (isSub ? rootCategory(categoryKey) : categoryKey))
     const dotColor = ownerNode?.color ?? accent
     return (
-      <tr key={`${type}-${categoryKey}`} className="group" style={{ background: bg }}>
+      <tr key={`${type}-${categoryKey}`} className="group" style={{ backgroundColor: bg }}>
         <th
           scope="row"
           className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs text-left bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
@@ -671,7 +671,7 @@ export default function BudgetingPage() {
   function renderRollupRow(type: BudgetType, node: CatNode) {
     const keys = node.subs.map((s) => subKey(node.name, s.name))
     return (
-      <tr key={`${type}-rollup-${node.id}`} className="group" style={{ background: tint(type, 8) }}>
+      <tr key={`${type}-rollup-${node.id}`} className="group" style={{ backgroundColor: tint(type, 8) }}>
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={node.name} style={{ color: 'var(--ink)' }}>
           <span className="mr-1.5 inline-grid size-4 place-items-center align-middle" style={{ color: node.color ?? KIND_COLOR[type].hex }}>
             {node.icon ? (
@@ -968,7 +968,7 @@ export default function BudgetingPage() {
     const color = KIND_COLOR[kind]
     const isCollapsed = collapsed[kind]
     return (
-      <tr style={{ background: tint(kind, 14) }}>
+      <tr style={{ backgroundColor: tint(kind, 14) }}>
         <td
           colSpan={13}
           className="sticky left-0 z-10 border-b border-[color:var(--border)] p-0 bg-inherit"
@@ -1287,10 +1287,13 @@ export default function BudgetingPage() {
           {isCurrentYearActive && (
             <style dangerouslySetInnerHTML={{ __html: `.budget-grid td:nth-child(${currentMonth + 1}){background-color:color-mix(in srgb, var(--c-primary) 5%, transparent)!important}` }} />
           )}
-          <div className="overflow-x-auto pb-2">
+          {/* Desktop-only row hover: background-image overlay composes over any
+              semantic backgroundColor tint without overriding it. */}
+          <style dangerouslySetInnerHTML={{ __html: `@media (min-width: 768px){.budget-grid tbody tr:hover > td, .budget-grid tbody tr:hover > th { background-image: linear-gradient(color-mix(in srgb, var(--ink) 5%, transparent) 0 0); }}` }} />
+          <div className="overflow-x-auto xl:overflow-visible pb-2">
             <div className="space-y-3 min-w-[1040px]">
               {/* Month-label header strip */}
-              <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
+              <div className="overflow-hidden rounded-xl border xl:sticky xl:top-0 xl:z-30" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                 <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '160px' }} />

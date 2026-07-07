@@ -404,7 +404,7 @@ export default function DebtsOverviewPage() {
                     const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
                     const tenor = isRevolving(d.type) ? t('debts.revolving') : (d.monthly_payment > 0 ? `± ${Math.ceil(d.remaining / d.monthly_payment)} ${t('debts.months')}` : '—')
                     return (
-                      <tr key={d.id} className="group border-t align-top" style={{ borderColor: 'var(--border-soft)' }}>
+                      <tr key={d.id} className="group border-t align-top transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-start gap-3 min-w-0">
                             <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: tint(meta.color, 10) }}>
@@ -783,7 +783,7 @@ function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: stri
   const fill = `color-mix(in srgb, ${accent} 12%, transparent)`
   return (
     <div className="mt-4">
-      <div className="relative" role="img" aria-label={t('debts.timeline_chart_aria')} style={{ height: 140 }}>
+      <div className="relative h-[140px] md:h-[180px] xl:h-[220px]" role="img" aria-label={t('debts.timeline_chart_aria')}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
           <polygon points={`0,100 ${pts} 100,100`} fill={fill} />
           <polyline points={pts} fill="none" stroke={accent} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />

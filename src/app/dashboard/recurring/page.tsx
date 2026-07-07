@@ -715,7 +715,7 @@ export default function RecurringPage() {
                 <div className={visible.length === 0 ? 'hidden' : 'overflow-x-auto hidden md:block'}>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                      <tr className="text-[11px] uppercase tracking-wider border-b" style={{ color: 'var(--ink-soft)', background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}>
                         <th className="text-left font-medium px-4 py-2.5">{t('recurring.col_name')}</th>
                         <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_category')}</th>
                         <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_frequency')}</th>
@@ -734,7 +734,7 @@ export default function RecurringPage() {
                         const days = next ? Math.round((next.getTime() - today0.getTime()) / DAY) : 0
                         const urgent = r.is_active && !ended && next != null && days <= 3
                         return (
-                          <tr key={r.id} className="group border-t align-middle" style={{ borderColor: 'var(--border-soft)' }}>
+                          <tr key={r.id} className="group border-t align-middle transition-colors hover:bg-[var(--surface-2)] cursor-pointer" style={{ borderColor: 'var(--border-soft)' }}>
                             <td className="px-4 py-3">
                               {/* F13f: tap area nama = buka detail (aksi lain di kolom kanan tetap) */}
                               <button type="button" onClick={(e) => { e.stopPropagation(); openDetail(r) }} className="flex items-center gap-3 min-w-0 w-full text-left cursor-pointer">

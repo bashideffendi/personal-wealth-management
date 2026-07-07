@@ -1348,7 +1348,7 @@ export default function TransactionsPage() {
             {activeFilterCount > 0 && <span className="num">({activeFilterCount})</span>}
           </Button>
         </div>
-        <div className={`${filtersOpen ? 'grid' : 'hidden sm:grid'} w-full grid-cols-2 gap-3 sm:grid-cols-4 mt-3`}>
+        <div className={`${filtersOpen ? 'grid' : 'hidden sm:grid'} w-full grid-cols-2 gap-3 sm:grid-cols-4 ${allTags.length > 0 ? 'xl:grid-cols-5' : ''} mt-3`}>
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
@@ -2601,10 +2601,10 @@ export default function TransactionsPage() {
                 <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 font-semibold border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}>
                   <div className="col-span-1">✓</div>
                   <div className="col-span-2">{t('transactions.col_date')}</div>
-                  <div className="col-span-4">{t('transactions.col_description')}</div>
+                  <div className="col-span-4 sm:col-span-3">{t('transactions.col_description')}</div>
                   <div className="col-span-2">{t('transactions.col_type_category')}</div>
                   <div className="col-span-2">{t('transactions.col_account')}</div>
-                  <div className="col-span-1 text-right">{t('transactions.col_amount')}</div>
+                  <div className="col-span-1 sm:col-span-2 text-right">{t('transactions.col_amount')}</div>
                 </div>
                 {importRows.map((r, i) => (
                   <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center" style={{ borderColor: 'var(--outline)' }}>
@@ -2622,7 +2622,7 @@ export default function TransactionsPage() {
                       />
                     </div>
                     <div className="col-span-2 num">{r.date}</div>
-                    <div className="col-span-4 truncate">{r.description}</div>
+                    <div className="col-span-4 sm:col-span-3 truncate">{r.description}</div>
                     <div className="col-span-2">
                       <span className="text-[10px] px-1 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{r.type}</span>
                       {' '}{r.category}
@@ -2642,7 +2642,7 @@ export default function TransactionsPage() {
                         {creditCards.map((c) => <option key={c.id} value={c.id}>{t('transactions.credit_prefix')} · {c.name}</option>)}
                       </select>
                     </div>
-                    <div className="col-span-1 text-right num tabular">{formatCurrency(r.amount)}</div>
+                    <div className="col-span-1 sm:col-span-2 text-right num tabular whitespace-nowrap">{formatCurrency(r.amount)}</div>
                   </div>
                 ))}
               </div>

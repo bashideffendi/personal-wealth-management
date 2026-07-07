@@ -353,10 +353,6 @@ export default function ContractsPage() {
                           </p>
                         </div>
                         <span className="hidden sm:inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
-                        <div className="hidden md:block text-right w-24 shrink-0">
-                          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('contracts.col_remaining')}</p>
-                          <p className="num text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{humanizeSisa(c.end_date, today)}</p>
-                        </div>
                         <div className="text-right shrink-0">
                           {c.cost ? <><p className="num tabular-nums text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
                         </div>

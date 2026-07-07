@@ -79,9 +79,12 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
         )}
       </div>
       {/* List baris ringkas (watchlist-style) — 1 kartu + divider, bukan kartu
-          gede per kelas. ~52px/baris: icon + nama/posisi · nilai/% kanan. */}
-      <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        {visibleCards.map((c, i) => {
+          gede per kelas. ~52px/baris: icon + nama/posisi · nilai/% kanan.
+          Desktop lg: dibelah 2 kolom biar section gak jadi menara tinggi. */}
+      <div className="rounded-xl border overflow-hidden lg:grid lg:grid-cols-2 lg:divide-x lg:divide-[color:var(--border-soft)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        {[visibleCards.slice(0, Math.ceil(visibleCards.length / 2)), visibleCards.slice(Math.ceil(visibleCards.length / 2))].map((col, colIdx) => col.length > 0 && (
+        <div key={colIdx}>
+        {col.map((c, i) => {
           const data = c.d ?? { invested: 0, market: 0, count: 0 }
           const pl = data.market - data.invested
           const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
@@ -89,12 +92,15 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
           const hasPosition = data.count > 0
           const color = ASSET_CLASS_META[c.classKey].color
           const CardIcon = c.Icon
+          // Baris pertama kolom-2: butuh divider saat stacked (mobile/md),
+          // hilang di lg saat kolom berdampingan (divide-x yang misahin).
+          const isCol2First = colIdx === 1 && i === 0
           return (
             <Link
               key={c.key}
               href={c.href}
-              className="flex items-center gap-3 px-3.5 transition-colors hover:bg-[var(--surface-2)]"
-              style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+              className={`flex items-center gap-3 px-3.5 transition-colors hover:bg-[var(--surface-2)]${isCol2First ? ' border-t lg:border-t-0' : ''}`}
+              style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : undefined, borderTopColor: isCol2First ? 'var(--border-soft)' : undefined }}
             >
               <div
                 className="grid place-items-center shrink-0"
@@ -123,6 +129,8 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
             </Link>
           )
         })}
+        </div>
+        ))}
       </div>
     </div>
   )
