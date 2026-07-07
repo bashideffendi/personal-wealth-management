@@ -635,15 +635,22 @@ export default function GoalsPage() {
                 <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{archivedOpen ? '−' : '+'}</span>
               </button>
               {archivedOpen && (
-                <div className="mt-3">
+                <div className="mt-3 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-3">
                   {archivedGoals.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--outline)' }}>
-                      <div className="min-w-0">
+                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 max-md:border-b max-md:last:border-0 md:border md:rounded-lg md:px-3 md:py-2.5" style={{ borderColor: 'var(--outline)' }}>
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                        <p className="num text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="num text-[11px] md:hidden" style={{ color: 'var(--ink-soft)' }}>
                           {formatCurrency(g.current_amount)} / {formatCurrency(g.target_amount)}
                         </p>
                       </div>
+                      <p
+                        className="num tabular-nums text-[12px] text-right shrink-0 hidden md:block"
+                        style={{ color: 'var(--ink-soft)' }}
+                        title={`${formatCurrency(g.current_amount)} / ${formatCurrency(g.target_amount)}`}
+                      >
+                        {formatCompactCurrency(g.current_amount)} / {formatCompactCurrency(g.target_amount)}
+                      </p>
                       <div className="flex gap-0.5 shrink-0">
                         <Button variant="ghost" size="icon-sm" aria-label={t('goals.unarchive')} onClick={() => setActive(g.id, true)}>
                           <RotateCcw className="h-3.5 w-3.5" />

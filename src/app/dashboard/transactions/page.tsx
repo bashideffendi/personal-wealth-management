@@ -2639,7 +2639,7 @@ export default function TransactionsPage() {
                           next[i] = { ...r, account_id: e.target.value }
                           setImportRows(next)
                         }}
-                        className="text-xs w-full bg-transparent"
+                        className="text-xs w-full bg-transparent md:h-7 md:rounded-lg md:border md:border-input md:pl-2 md:pr-1 md:outline-none md:transition-[color,box-shadow,border-color] md:hover:border-ring/60 md:focus-visible:border-ring md:focus-visible:ring-3 md:focus-visible:ring-ring/50"
                         aria-label={`${t('transactions.col_account')}: ${r.description}`}
                       >
                         {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

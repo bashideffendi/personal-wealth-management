@@ -1018,7 +1018,7 @@ export default function BudgetingPage() {
       <div className="overflow-hidden rounded-xl border" style={{ background: 'color-mix(in srgb, var(--ink) 4%, var(--surface))', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
         <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '160px' }} />
+            <col className="w-[160px] xl:w-[240px]" />
             {shortMonths.map((m) => <col key={m} />)}
           </colgroup>
           <tbody>
@@ -1327,7 +1327,7 @@ export default function BudgetingPage() {
               <div className="overflow-hidden rounded-xl border xl:sticky xl:top-0 xl:z-30" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                 <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
-                    <col style={{ width: '160px' }} />
+                    <col className="w-[160px] xl:w-[240px]" />
                     {shortMonths.map((m) => <col key={m} />)}
                   </colgroup>
                   <thead>
@@ -1379,7 +1379,7 @@ export default function BudgetingPage() {
                 <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                   <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
-                      <col style={{ width: '160px' }} />
+                      <col className="w-[160px] xl:w-[240px]" />
                       {shortMonths.map((m) => <col key={m} />)}
                     </colgroup>
                     <tbody>

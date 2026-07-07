@@ -295,7 +295,7 @@ export default function DebtsOverviewPage() {
       ) : (
         <>
           {/* 3 stat card ringkasan */}
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_remaining')}</p>
               <p className="num font-bold mt-2 leading-none" title={formatCurrency(totalRemaining)} style={{ fontSize: 20, color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCompactCurrency(totalRemaining)}</p>
@@ -612,7 +612,7 @@ export default function DebtsOverviewPage() {
           </div>
 
           {/* Pembayaran mendatang + Rasio */}
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid gap-3 md:gap-4 lg:grid-cols-2">
             <div className="s-card p-5">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.upcoming_payments')}</p>

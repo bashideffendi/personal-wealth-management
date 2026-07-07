@@ -306,7 +306,7 @@ export default function NetWorthPage() {
       )}
 
       {/* Rincian aset & liabilitas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--c-mint-ink)' }}>{t('networth.asset_breakdown')}</p>
           <div className="mt-4 space-y-4">
@@ -355,7 +355,7 @@ export default function NetWorthPage() {
       </div>
 
       {/* Komposisi + Rasio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_composition')}</p>
           {totalAssets > 0 ? (

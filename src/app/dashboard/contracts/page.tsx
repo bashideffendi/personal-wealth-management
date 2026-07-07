@@ -369,15 +369,15 @@ export default function ContractsPage() {
 
               {/* Timeline tanggal kunci */}
               {timeline.length > 0 && (
-                <div className="s-card p-5">
+                <div className="s-card p-5 md:p-4">
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.timeline_title')}</p>
                   <p className="text-base mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{expiring.length} {t('contracts.timeline_subtitle')}</p>
-                  <div className="mt-2">
+                  <div className="mt-2 lg:grid lg:grid-cols-2 lg:gap-x-6">
                     {timeline.map((c, i) => {
                       const st = getStatus(c, today)
                       const color = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : MINT_INK
                       return (
-                        <div key={c.id} className="flex items-start gap-4 py-2.5" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                        <div key={c.id} className={`flex items-start gap-4 py-2.5${i ? ' border-t' : ''}${i === 1 ? ' lg:border-t-0' : ''}`} style={{ borderColor: 'var(--border-soft)' }}>
                           <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date, locale)}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
