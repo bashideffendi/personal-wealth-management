@@ -288,7 +288,7 @@ export function MobileBudgetingView({
     return (
       <div
         key={cat}
-        className="py-2"
+        className="py-2.5"
         style={{ borderTop: opts.border ? '1px solid var(--border-soft)' : 'none' }}
       >
         <div className="flex items-center justify-between gap-2 min-h-[24px]">
@@ -329,11 +329,7 @@ export function MobileBudgetingView({
               title={pillTitle(plan, act)}
             >
               <span
-                className={`num tabular rounded-full ${
-                  opts.sub
-                    ? 'px-2 py-0.5 text-[11.5px] font-medium'
-                    : 'px-2.5 py-1 text-[12.5px] font-semibold'
-                }`}
+                className="num tabular rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
                 style={{ background: 'var(--surface-2)', color: pillColor(type, plan, act) }}
               >
                 {pillText(plan, act)}
@@ -341,7 +337,7 @@ export function MobileBudgetingView({
             </button>
           )}
         </div>
-        {plan > 0 && (
+        {view === 'remain' && plan > 0 && (
           <div
             className="mt-1.5 h-[3px] overflow-hidden rounded-full"
             style={{ background: 'var(--surface-2)' }}
@@ -376,7 +372,7 @@ export function MobileBudgetingView({
     const hue = categoryHue(root)
     return (
       <div
-        className="flex min-h-[24px] items-center justify-between gap-2 py-2"
+        className="flex min-h-[24px] items-center justify-between gap-2 py-2.5"
         style={{ borderTop: opts.border ? '1px solid var(--border-soft)' : 'none' }}
       >
         <button
@@ -584,7 +580,7 @@ export function MobileBudgetingView({
           const secActual = actualTotal(section.key)
           return (
             <section key={section.key} className="s-card px-3.5 py-1">
-              <div className="flex min-h-[24px] items-center justify-between gap-2 py-2">
+              <div className="flex min-h-[24px] items-center justify-between gap-2 py-2.5">
                 <p className="text-[12.5px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
                   {t(section.labelKey)}
                 </p>

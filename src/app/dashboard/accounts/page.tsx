@@ -468,8 +468,8 @@ export default function AccountsPage() {
             type="button"
             onClick={togglePrivacy}
             aria-label={privacyHidden ? t('budgeting.show') : t('budgeting.hide')}
-            className="size-8 -ml-1.5 grid place-items-center rounded-full active:opacity-70"
-            style={{ color: 'rgba(255,255,255,.85)' }}
+            className="size-9 -ml-1.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'rgba(255,255,255,.85)', background: 'rgba(255,255,255,.16)' }}
           >
             {privacyHidden ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
           </button>
@@ -477,8 +477,8 @@ export default function AccountsPage() {
           <Link
             href="/dashboard/net-worth"
             aria-label={t('networth.net_worth')}
-            className="size-8 -mr-1.5 grid place-items-center rounded-full active:opacity-70"
-            style={{ color: 'rgba(255,255,255,.85)' }}
+            className="size-9 -mr-1.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'rgba(255,255,255,.85)', background: 'rgba(255,255,255,.16)' }}
           >
             <LineChart className="size-[18px]" />
           </Link>
@@ -486,7 +486,7 @@ export default function AccountsPage() {
         {nw ? (
           <p
             className="num tabular text-center font-bold mt-1.5 whitespace-nowrap"
-            style={{ color: '#FFFFFF', fontSize: 'clamp(22px, 7vw, 27px)', letterSpacing: '-0.02em', lineHeight: 1.15 }}
+            style={{ color: '#FFFFFF', fontSize: 'clamp(28px, 8.5vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1.15 }}
           >
             {formatCurrency(nw.netWorth)}
           </p>
@@ -496,13 +496,13 @@ export default function AccountsPage() {
         <div className="mt-3.5 grid grid-cols-2 gap-3">
           <div className="text-center">
             <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.assets')}</p>
-            <p className="num tabular text-[14px] font-semibold mt-0.5" style={{ color: '#FFFFFF' }}>
+            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: '#FFFFFF' }}>
               {nw ? formatCurrency(nw.assets) : '—'}
             </p>
           </div>
           <div className="text-center">
             <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.debt')}</p>
-            <p className="num tabular text-[14px] font-semibold mt-0.5" style={{ color: '#ffd9cf' }}>
+            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: '#ffd9cf' }}>
               {nw ? formatCurrency(nw.liabilities) : '—'}
             </p>
           </div>
@@ -600,8 +600,8 @@ export default function AccountsPage() {
               type="button"
               onClick={openAddDialog}
               aria-label={t('accounts.add_account')}
-              className="size-8 grid place-items-center rounded-full active:opacity-70"
-              style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+              className="size-9 grid place-items-center rounded-full active:opacity-70"
+              style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
             >
               <Plus className="size-4" />
             </button>
@@ -651,7 +651,7 @@ export default function AccountsPage() {
               <div className="flex items-center justify-between pl-4 pt-3 pb-1">
                 {/* Nav ke halaman kartu pindah ke teks judul; chevron kanan = collapse list */}
                 <Link href="/dashboard/credit-cards" className="active:opacity-70">
-                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-coral-ink)' }}>
+                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-mint-ink)' }}>
                     {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
                   </p>
                 </Link>
@@ -664,7 +664,7 @@ export default function AccountsPage() {
                   <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-coral-ink)' }}>
                     {t('networth.debt')} {formatCurrency(nw.ccTotal)}
                   </p>
-                  <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-coral-ink)' }} />
+                  <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
                 </button>
               </div>
               {!collapsed['cards'] && nw.cards.map((c, i) => (
@@ -677,7 +677,7 @@ export default function AccountsPage() {
                     )}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: (c.current_balance || 0) > 0 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>
+                    <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                       {(c.current_balance || 0) > 0 ? formatCurrency(-(c.current_balance || 0)) : formatCurrency(0)}
                     </p>
                     {(c.credit_limit || 0) > 0 && (

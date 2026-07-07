@@ -198,7 +198,7 @@ function Group({ rows, trailing }: { rows: Row[]; trailing?: React.ReactNode }) 
             </span>
             {row.value && (
               <span
-                className="text-[13px] shrink-0"
+                className="text-[14px] shrink-0"
                 style={{ color: row.valueTone === 'danger' ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}
               >
                 {row.value}
@@ -361,16 +361,13 @@ export default function MorePage() {
             </span>
           )}
         </Link>
-        <div
-          className="grid grid-cols-3 px-3.5 py-3 text-center"
-          style={{ borderTop: '1px solid var(--border-soft)' }}
-        >
+        <div className="grid grid-cols-3 px-3.5 pb-4 pt-1 text-center">
           {stats.map((s) => (
             <div key={s.label} className="min-w-0">
-              <div className="num text-[18px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+              <div className="num text-[22px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
                 {s.num}
               </div>
-              <div className="mt-0.5 truncate text-[10.5px]" style={{ color: 'var(--ink-soft)' }}>
+              <div className="mt-0.5 truncate text-[12px]" style={{ color: 'var(--ink-soft)' }}>
                 {s.label}
               </div>
             </div>

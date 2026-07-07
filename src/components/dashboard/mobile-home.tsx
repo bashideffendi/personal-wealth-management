@@ -124,16 +124,16 @@ export function MobileHome({
           {c.category}
         </span>
         <span className="relative grid place-items-center size-[44px] mx-auto my-1.5">
-          {c.ringPct != null && (
-            <svg width="44" height="44" viewBox="0 0 44 44" className="absolute inset-0" aria-hidden="true">
-              <circle cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeOpacity="0.25" strokeWidth="2.5" />
+          <svg width="44" height="44" viewBox="0 0 44 44" className="absolute inset-0" aria-hidden="true">
+            <circle cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeOpacity="0.25" strokeWidth="2.5" />
+            {c.ringPct != null && (
               <circle
                 cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeWidth="2.5"
                 strokeDasharray={`${(c.ringPct / 100) * CIRC} ${CIRC}`} strokeLinecap="round"
                 transform="rotate(-90 22 22)"
               />
-            </svg>
-          )}
+            )}
+          </svg>
           <span className="grid place-items-center size-[34px] rounded-full" style={{ background: hue.bar, color: '#fff' }}>
             <CategoryIcon category={c.category} className="size-4" />
           </span>

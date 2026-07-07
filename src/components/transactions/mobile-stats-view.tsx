@@ -65,7 +65,7 @@ const TrendsLineChart = dynamic(
       }) {
         return (
           <ResponsiveContainer width="100%" height={170}>
-            <LineChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
+            <LineChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
               <XAxis
                 dataKey="day"
                 interval="preserveStartEnd"
@@ -75,7 +75,14 @@ const TrendsLineChart = dynamic(
                 axisLine={{ stroke: 'var(--border-soft)' }}
                 tickFormatter={pad2}
               />
-              <YAxis hide />
+              <YAxis
+                width={44}
+                fontSize={10}
+                tick={{ fill: 'var(--ink-muted)' }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => formatCompactCurrency(Number(v) || 0).replace('Rp ', '')}
+              />
               <Tooltip
                 formatter={fmtValue}
                 labelFormatter={(label) => pad2(Number(label))}
@@ -86,8 +93,8 @@ const TrendsLineChart = dynamic(
                   fontSize: 12,
                 }}
               />
-              <Line type="monotone" dataKey="expense" name={expenseName} stroke="var(--c-coral)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="income" name={incomeName} stroke="var(--c-mint)" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="expense" name={expenseName} stroke="var(--c-coral)" strokeWidth={2} dot={{ r: 2, strokeWidth: 0, fill: 'var(--c-coral)' }} />
+              <Line type="monotone" dataKey="income" name={incomeName} stroke="var(--c-mint)" strokeWidth={2} dot={{ r: 2, strokeWidth: 0, fill: 'var(--c-mint)' }} />
             </LineChart>
           </ResponsiveContainer>
         )
@@ -276,9 +283,9 @@ export function MobileStatsView({
 
   // Geometri donut — stroke circle + dasharray per slice, mulai jam 12.
   const CX = 90
-  const CY = 65
-  const R = 40
-  const SW = 13
+  const CY = 78
+  const R = 52
+  const SW = 26
   const C = 2 * Math.PI * R
   // Offset kumulatif per slice tanpa mutasi closure saat render (React
   // Compiler immutability) — start = jumlah share slice-slice sebelumnya.
@@ -384,7 +391,7 @@ export function MobileStatsView({
           <>
             {/* Donut polos — tanpa angka di tengah, callout slice terbesar */}
             <div className="flex justify-center mt-3">
-              <svg viewBox="0 0 180 130" width="216" height="156" role="img" aria-label={t('transactions.col_category')}>
+              <svg viewBox="0 0 180 156" width="280" height="242" className="max-w-full" role="img" aria-label={t('transactions.col_category')}>
                 <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--surface-2)" strokeWidth={SW} />
                 {slices.map((s) => (
                   <circle

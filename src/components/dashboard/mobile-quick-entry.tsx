@@ -159,7 +159,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
           <X className="size-[17px]" />
         </button>
         <span className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>{category}</span>
-        <Link href="/dashboard/transactions" aria-label={t('nav.transactions')} onClick={() => onOpenChange(false)} className="grid place-items-center size-8 rounded-full" style={{ color: 'var(--c-mint-ink)' }}>
+        <Link href="/dashboard/transactions" aria-label={t('nav.transactions')} onClick={() => onOpenChange(false)} className="grid place-items-center size-9 rounded-full" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
           <ArrowUpRight className="size-[16px]" />
         </Link>
       </div>
@@ -207,7 +207,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
 
       {/* Meta chips: akun · tanggal · catatan */}
       <div className="flex gap-1.5 items-center pb-2.5 flex-wrap">
-        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}>
+        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <Wallet className="size-3.5" />
           {accounts.find((a) => a.id === accountId)?.name ?? t('quickadd.pick_account_first')}
           <select
@@ -219,12 +219,12 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
             {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </label>
-        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}>
+        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <CalendarDays className="size-3.5" />
           {date === todayIso() ? 'Hari ini' : new Date(`${date}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
           <input type="date" aria-label="Tanggal" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="absolute inset-0 opacity-0" />
         </label>
-        <button type="button" onClick={() => setNoteOpen((v) => !v)} className="shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}>
+        <button type="button" onClick={() => setNoteOpen((v) => !v)} className="shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <StickyNote className="size-3.5" />
           {note ? note.slice(0, 14) + (note.length > 14 ? '…' : '') : t('quickadd.note_label')}
         </button>
@@ -242,29 +242,29 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
 
       {/* Numpad — layout kalkulator ala Budget: 7-8-9 di atas, kolom kanan ⌫,
           baris bawah [Rp]-0-000-✓ (✓ coral satu sel pojok kanan-bawah) */}
-      <div className="mt-auto grid grid-cols-4 gap-1.5 rounded-[16px] p-2 -mx-1" style={{ background: 'var(--bg-2)' }}>
+      <div className="mt-auto grid grid-cols-4 gap-1.5 -mx-1 pb-1">
         {(['7', '8', '9'] as const).map((d) => (
-          <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>{d}</button>
+          <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>{d}</button>
         ))}
-        <button type="button" onClick={backspace} aria-label="Hapus" className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}><Delete className="size-[18px] mx-auto" /></button>
+        <button type="button" onClick={backspace} aria-label="Hapus" className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--c-mint-ink)' }}><Delete className="size-[18px] mx-auto" /></button>
         {(['4', '5', '6'] as const).map((d) => (
-          <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>{d}</button>
+          <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>{d}</button>
         ))}
         <span aria-hidden="true" />
         {(['1', '2', '3'] as const).map((d) => (
-          <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>{d}</button>
+          <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>{d}</button>
         ))}
         <span aria-hidden="true" />
         <span aria-hidden="true" className="grid place-items-center text-[15px] font-medium select-none" style={{ color: 'var(--ink-soft)' }}>Rp</span>
-        <button type="button" onClick={() => press('0')} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>0</button>
-        <button type="button" onClick={() => press('000')} className={`${keyBtn} text-[13px]`} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>000</button>
+        <button type="button" onClick={() => press('0')} className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>0</button>
+        <button type="button" onClick={() => press('000')} className={`${keyBtn} text-[13px]`} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>000</button>
         <button
           type="button"
           onClick={() => void save()}
           disabled={saving}
           aria-label={t('common.save')}
           className="rounded-[12px] grid place-items-center active:opacity-70 transition-opacity disabled:opacity-40"
-          style={{ background: 'var(--c-coral)', color: '#fff' }}
+          style={{ background: 'var(--c-coral)', color: 'var(--c-mint-ink)' }}
         >
           <Check className="size-6" />
         </button>

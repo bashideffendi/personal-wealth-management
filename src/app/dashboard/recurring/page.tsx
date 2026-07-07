@@ -459,7 +459,6 @@ export default function RecurringPage() {
                   }}
                 >
                   <span className="truncate">{MTAB_LABELS[k]}</span>
-                  {mtabCounts[k] > 0 && <span className="num tabular text-[10px] shrink-0" style={{ color: 'var(--ink-soft)' }}>{mtabCounts[k]}</span>}
                 </button>
               ))}
             </div>
@@ -845,45 +844,63 @@ export default function RecurringPage() {
                 <p className="num tabular text-[22px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
                 <p className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
               </div>
-              <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
+                <button
+                  type="button"
+                  className="rounded-full px-3.5 py-1.5 text-[12px] font-medium"
+                  style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+                  onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}
+                >Edit</button>
+              </div>
             </div>
 
-            <div className="rounded-xl px-3.5 py-3 flex items-center justify-between gap-3" style={{ background: 'var(--surface-2)' }}>
-              <p className="text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{locale === 'en' ? 'Total paid' : 'Total terbayar'}</p>
-              <p className="num tabular text-[14px] font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)} <span className="text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>· {detailData.paidCount}×</span></p>
+            <div className="grid grid-cols-2 text-center rounded-xl px-3.5 py-3" style={{ background: 'var(--surface-2)' }}>
+              <div>
+                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Total</p>
+                <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)}</p>
+              </div>
+              <div>
+                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Transactions' : 'Transaksi'}</p>
+                <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{detailData.paidCount}</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 rounded-lg p-1" style={{ background: 'var(--surface-2)' }}>
+            <div className="flex w-fit mx-auto rounded-full p-1" style={{ background: 'var(--surface-2)' }}>
               {([['paid', locale === 'en' ? 'Paid' : 'Terbayar'], ['upcoming', locale === 'en' ? 'Upcoming' : 'Mendatang']] as const).map(([k, lbl]) => (
                 <button
                   key={k}
                   type="button"
                   onClick={() => setDetailTab(k)}
-                  className="rounded-md py-1.5 text-[12px] font-medium transition-colors"
+                  className="rounded-full px-5 py-1.5 text-[12px] font-medium transition-colors"
                   style={{
                     background: detailTab === k ? 'var(--surface)' : 'transparent',
-                    color: detailTab === k ? 'var(--ink)' : 'var(--ink-muted)',
-                    boxShadow: detailTab === k ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                    color: detailTab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
+                    boxShadow: detailTab === k ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                   }}
                 >{lbl}</button>
               ))}
             </div>
 
             <div>
-              {detailList.map((d, i) => (
-                <div key={i} className="flex items-center justify-between py-2" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
-                  <span className="num text-[13px]" style={{ color: 'var(--ink-muted)' }}>{dmyy(d)}</span>
-                  <span className="num tabular text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</span>
-                </div>
-              ))}
+              {detailList.map((d, i) => {
+                const av = avatarStyle(detailItem.name, detailItem.category)
+                return (
+                  <div key={i} className="flex items-center gap-3" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                    <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: av.bg }}>
+                      <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
+                    </div>
+                    <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
+                    <div className="text-right shrink-0">
+                      <p className="num tabular text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d)}</p>
+                    </div>
+                  </div>
+                )
+              })}
               {detailList.length === 0 && (
                 <p className="text-[12px] text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
               )}
-            </div>
-
-            <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => setDetailId(null)}>{locale === 'en' ? 'Close' : 'Tutup'}</Button>
-              <Button className="flex-1" onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}><Pencil className="h-4 w-4" /> Edit</Button>
             </div>
           </div>
         )}
