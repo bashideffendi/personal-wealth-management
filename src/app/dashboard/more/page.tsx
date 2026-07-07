@@ -16,12 +16,13 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, Landmark, Coins, Gem, TrendingUp, Target, HandCoins, CreditCard,
-  Umbrella, Repeat, FileClock, FileText, Calculator, Home, Compass, UserCircle,
+  Umbrella, Repeat, FileText, Calculator, Home, Compass, UserCircle,
   ChevronRight, type LucideIcon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { fetchActiveHousehold } from '@/lib/household'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 type Tint = 'blue' | 'violet' | 'mint' | 'coral'
 
@@ -30,8 +31,11 @@ interface Row {
   /** i18n key nav.* — sama persis dgn NAV_ITEMS */
   titleKey: string
   icon: LucideIcon
-  /** Aksen brand (grup Uang saja) — tanpa tint = chip netral surface-2 */
+  /** Aksen brand per baris (ala Budget) — rotasi 4 tint */
   tint?: Tint
+  /** Status/nilai inline rata kanan sebelum chevron (ala Budget) */
+  value?: string
+  valueTone?: 'muted' | 'danger'
 }
 
 // Grup Uang — aksen brand kecil di chip ikon (blue=struktur, mint=aset,
@@ -48,17 +52,17 @@ const MONEY: Row[] = [
   { href: '/dashboard/emergency-fund',     titleKey: 'nav.emergency_fund',    icon: Umbrella,   tint: 'mint' },
 ]
 
+// Kontrak gak listed lagi di sini — rumahnya sekarang tab Kontrak di /dashboard/recurring.
 const AUTOMATION: Row[] = [
-  { href: '/dashboard/recurring',      titleKey: 'nav.recurring',      icon: Repeat },
-  { href: '/dashboard/contracts',      titleKey: 'nav.contracts',      icon: FileClock },
-  { href: '/dashboard/monthly-report', titleKey: 'nav.monthly_report', icon: FileText },
-  { href: '/dashboard/calculators',    titleKey: 'nav.calculators',    icon: Calculator },
+  { href: '/dashboard/recurring',      titleKey: 'nav.recurring',      icon: Repeat,     tint: 'blue' },
+  { href: '/dashboard/monthly-report', titleKey: 'nav.monthly_report', icon: FileText,   tint: 'violet' },
+  { href: '/dashboard/calculators',    titleKey: 'nav.calculators',    icon: Calculator, tint: 'mint' },
 ]
 
 const OTHER: Row[] = [
-  { href: '/dashboard/family',   titleKey: 'nav.family',   icon: Home },
-  { href: '/dashboard/playbook', titleKey: 'nav.playbook', icon: Compass },
-  { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle },
+  { href: '/dashboard/family',   titleKey: 'nav.family',   icon: Home,       tint: 'coral' },
+  { href: '/dashboard/playbook', titleKey: 'nav.playbook', icon: Compass,    tint: 'blue' },
+  { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle, tint: 'violet' },
 ]
 
 // Label paket — mirror PLAN_LABEL di /dashboard/profile (slug legacy ikut).
@@ -67,47 +71,50 @@ const PLAN_LABEL: Record<string, string> = {
   solo: 'Solo', pro: 'Pro', family: 'Family',
 }
 
-function Group({ label, rows }: { label: string; rows: Row[] }) {
-  const t = useT()
+// Tanpa label section (ala Budget) — grup dipisah murni oleh jarak antar kartu.
+function Group({ rows }: { rows: Row[] }) {
+  const { t } = useI18n()
   return (
-    <>
-      {/* Kelas utility mirror .m-sec (yang cuma ada <md) biar desktop sama */}
-      <div className="m-sec mx-0.5 mt-3.5 mb-1.5 flex items-baseline justify-between gap-2 text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-        <span>{label}</span>
-      </div>
-      <section className="s-card overflow-hidden">
-        {rows.map((row, i) => {
-          const Icon = row.icon
-          return (
-            <Link
-              key={row.href}
-              href={row.href}
-              className="flex items-center gap-2.5 px-3.5 min-h-[50px] transition-colors active:bg-[var(--surface-2)]"
-              style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+    <section className="s-card overflow-hidden mt-3.5">
+      {rows.map((row, i) => {
+        const Icon = row.icon
+        return (
+          <Link
+            key={row.href}
+            href={row.href}
+            className="flex items-center gap-2.5 px-3.5 min-h-[54px] transition-colors active:bg-[var(--surface-2)]"
+            style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+          >
+            <span
+              className="grid place-items-center size-[32px] rounded-[8px] shrink-0"
+              style={{
+                background: `var(--c-${row.tint ?? 'blue'}-soft)`,
+                color: `var(--c-${row.tint ?? 'blue'}-ink)`,
+              }}
             >
+              <Icon className="size-[17px]" />
+            </span>
+            <span className="text-[15px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+              {t(row.titleKey)}
+            </span>
+            {row.value && (
               <span
-                className="grid place-items-center size-[30px] rounded-[9px] shrink-0"
-                style={{
-                  background: row.tint ? `var(--c-${row.tint}-soft)` : 'var(--surface-2)',
-                  color: row.tint ? `var(--c-${row.tint}-ink)` : 'var(--ink-soft)',
-                }}
+                className="text-[13px] shrink-0"
+                style={{ color: row.valueTone === 'danger' ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}
               >
-                <Icon className="size-[15px]" />
+                {row.value}
               </span>
-              <span className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
-                {t(row.titleKey)}
-              </span>
-              <ChevronRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-            </Link>
-          )
-        })}
-      </section>
-    </>
+            )}
+            <ChevronRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
+          </Link>
+        )
+      })}
+    </section>
   )
 }
 
 export default function MorePage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
 
   // Identitas ringan buat kartu profil — best-effort, gagal fetch tetap render.
@@ -137,6 +144,53 @@ export default function MorePage() {
       return { email: user.email ?? '', fullName, planId }
     },
   })
+
+  // Status inline per baris (ala Budget) — best-effort, gagal fetch baris tetap polos.
+  const { data: meta } = useQuery({
+    queryKey: ['more-row-meta'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
+      let recurringActive: number | null = null
+      try {
+        const r = await supabase
+          .from('recurring_transactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+        recurringActive = r.count ?? null
+      } catch { /* best-effort */ }
+      let familyName: string | null = null
+      try {
+        familyName = (await fetchActiveHousehold(supabase, user.id))?.name ?? null
+      } catch { /* best-effort */ }
+      return { recurringActive, familyName }
+    },
+  })
+
+  // Bulan laporan terakhir = bulan lalu (laporan bulan berjalan belum lengkap).
+  const lastMonth = new Date()
+  lastMonth.setDate(1)
+  lastMonth.setMonth(lastMonth.getMonth() - 1)
+  const lastMonthLabel = lastMonth.toLocaleDateString(
+    locale === 'id' ? 'id-ID' : 'en-US',
+    { month: 'short', year: 'numeric' },
+  )
+
+  const rowValue: Record<string, Pick<Row, 'value' | 'valueTone'>> = {
+    '/dashboard/monthly-report': { value: lastMonthLabel },
+  }
+  if (typeof meta?.recurringActive === 'number') {
+    rowValue['/dashboard/recurring'] = {
+      value: `${meta.recurringActive} ${locale === 'id' ? 'aktif' : 'active'}`,
+    }
+  }
+  if (meta) {
+    rowValue['/dashboard/family'] = { value: meta.familyName || 'Solo' }
+  }
+  const withValues = (rows: Row[]): Row[] =>
+    rows.map((row) => (rowValue[row.href] ? { ...row, ...rowValue[row.href] } : row))
 
   const name = me?.fullName?.trim() || t('profile.default_name')
   const initial = (me?.fullName?.trim() || me?.email || 'K').slice(0, 1).toUpperCase()
@@ -171,9 +225,9 @@ export default function MorePage() {
         <ChevronRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
       </Link>
 
-      <Group label="Uang" rows={MONEY} />
-      <Group label="Otomatisasi" rows={AUTOMATION} />
-      <Group label={t('nav.section.secondary')} rows={OTHER} />
+      <Group rows={MONEY} />
+      <Group rows={withValues(AUTOMATION)} />
+      <Group rows={withValues(OTHER)} />
     </div>
   )
 }

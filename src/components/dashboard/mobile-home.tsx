@@ -18,7 +18,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Bell, ChevronRight as ChevRight, Target } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Bell, ChevronRight as ChevRight, Target } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
@@ -115,10 +115,10 @@ export function MobileHome({
         key={c.category}
         type="button"
         onClick={() => openEntry(c, type)}
-        className="rounded-[16px] px-2 py-3 text-center active:opacity-70 transition-opacity"
+        className="rounded-[20px] px-1.5 py-4 text-center active:opacity-70 transition-opacity"
         style={{ background: hue.soft }}
       >
-        <span className="block text-[11.5px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>
+        <span className="block text-[12px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>
           {c.category}
         </span>
         <span className="relative grid place-items-center size-[44px] mx-auto my-1.5">
@@ -136,14 +136,20 @@ export function MobileHome({
             <CategoryIcon category={c.category} className="size-4" />
           </span>
         </span>
-        <span className="num tabular block text-[12.5px] font-semibold" title={formatCurrency(c.amount)} style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}>
-          {formatCompactCurrency(c.amount)}
+        <span
+          className="num tabular block font-semibold break-all"
+          style={{ fontSize: c.amount >= 1_000_000_000 ? 11.5 : 12, color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}
+        >
+          {formatCurrency(c.amount)}
         </span>
       </button>
     )
   }
 
   const empty = expenseCards.length === 0 && incomeCards.length === 0
+
+  const now = new Date()
+  const isCurrentMonth = month - 1 === now.getMonth() && year === now.getFullYear()
 
   return (
     <div className="md:hidden">
@@ -165,10 +171,10 @@ export function MobileHome({
           <Link
             href="/dashboard/profile"
             aria-label="Profil"
-            className="grid place-items-center size-[30px] rounded-full text-[11px] font-semibold"
-            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+            className="inline-flex items-center gap-0.5 text-[15px] font-semibold"
+            style={{ color: 'var(--c-mint-ink)' }}
           >
-            B
+            BD <ChevronDown className="size-3" />
           </Link>
         </div>
         <div className="flex-1 flex items-center justify-center gap-1.5">
@@ -176,7 +182,7 @@ export function MobileHome({
             <ChevronLeft className="size-[15px]" />
           </button>
           <span className="text-[15px] font-semibold text-center" style={{ color: 'var(--ink)' }}>
-            {monthLong(month - 1, locale)} {year}
+            {isCurrentMonth ? t('common.this_month') : `${monthLong(month - 1, locale)} ${year}`}
           </span>
           <button type="button" onClick={onNextMonth} aria-label="Bulan berikutnya" className="grid place-items-center size-7 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
             <ChevronRight className="size-[15px]" />
@@ -200,18 +206,25 @@ export function MobileHome({
       {empty ? (
         /* Empty state ala Budget: ilustrasi pudar + ajakan, bukan grid Rp0 */
         <div className="text-center pt-14 pb-10">
-          <div className="flex justify-center gap-3 opacity-35" aria-hidden="true">
-            {(['Makanan', 'Transportasi', 'Tagihan', 'Belanja'] as const).map((c) => (
-              <span key={c} className="grid place-items-center size-11 rounded-full" style={{ background: categoryHue(c).soft, color: categoryHue(c).ink }}>
-                <CategoryIcon category={c} className="size-5" />
-              </span>
-            ))}
+          <div className="relative h-[110px] w-[130px] mx-auto opacity-40" aria-hidden="true">
+            <span className="absolute top-0 left-2" style={{ color: categoryHue('Makanan').ink }}>
+              <CategoryIcon category="Makanan" className="size-11" />
+            </span>
+            <span className="absolute top-1 right-0 rotate-6" style={{ color: categoryHue('Transportasi').ink }}>
+              <CategoryIcon category="Transportasi" className="size-11" />
+            </span>
+            <span className="absolute bottom-0 left-6 -rotate-3" style={{ color: categoryHue('Tagihan').ink }}>
+              <CategoryIcon category="Tagihan" className="size-11" />
+            </span>
+            <span className="absolute bottom-1 right-4 rotate-2" style={{ color: categoryHue('Belanja').ink }}>
+              <CategoryIcon category="Belanja" className="size-11" />
+            </span>
           </div>
           <p className="text-[13px] mt-5" style={{ color: 'var(--ink-soft)' }}>{t('dashboard.no_budget')}</p>
           <Link
             href="/dashboard/budgeting"
             className="inline-flex items-center gap-1.5 mt-3.5 rounded-full px-4 py-2 text-[12.5px] font-medium"
-            style={{ background: 'var(--ink)', color: 'var(--surface)' }}
+            style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
           >
             <Target className="size-3.5" /> {t('nav.budgeting')}
           </Link>
@@ -219,29 +232,35 @@ export function MobileHome({
       ) : (
         <>
           {/* 2 ── Pengeluaran */}
-          <p className="text-center text-[13.5px] pb-2.5" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-center text-[16px] pb-3" style={{ color: 'var(--ink-soft)' }}>
             {t('budgeting.expense')}{' '}
-            <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }} title={formatCurrency(totalExpense)}>
-              {formatCompactCurrency(totalExpense)}
-            </b>
+            <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
+              {formatCurrency(totalExpense)}
+            </b>{' '}
+            <span className="inline-grid place-items-center size-5 rounded-full align-middle" style={{ background: 'var(--c-mint-soft)' }} aria-hidden="true">
+              <ChevronDown className="size-3" style={{ color: 'var(--c-mint-ink)' }} />
+            </span>
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {expenseCards.map((c) => renderCard(c, 'expense'))}
           </div>
 
-          {/* 3 ── Pemasukan */}
-          <p className="text-center text-[13.5px] pt-4 pb-2.5" style={{ color: 'var(--ink-soft)' }}>
-            {t('budgeting.income')}{' '}
-            <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }} title={formatCurrency(totalIncome)}>
-              {formatCompactCurrency(totalIncome)}
-            </b>
-          </p>
-          {incomeCards.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              {incomeCards.map((c) => renderCard(c, 'income'))}
-            </div>
-          ) : (
-            <p className="text-[11.5px] text-center py-3" style={{ color: 'var(--ink-soft)' }}>—</p>
+          {/* 3 ── Pemasukan — disembunyikan total kalau gak ada kartu (ala Budget) */}
+          {incomeCards.length > 0 && (
+            <>
+              <p className="text-center text-[16px] pt-4 pb-3" style={{ color: 'var(--ink-soft)' }}>
+                {t('budgeting.income')}{' '}
+                <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(totalIncome)}
+                </b>{' '}
+                <span className="inline-grid place-items-center size-5 rounded-full align-middle" style={{ background: 'var(--c-mint-soft)' }} aria-hidden="true">
+                  <ChevronDown className="size-3" style={{ color: 'var(--c-mint-ink)' }} />
+                </span>
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {incomeCards.map((c) => renderCard(c, 'income'))}
+              </div>
+            </>
           )}
         </>
       )}

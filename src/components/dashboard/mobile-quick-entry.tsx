@@ -120,7 +120,10 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
   const keyBtn = 'rounded-[12px] py-3 text-center text-[17px] font-medium active:opacity-60 transition-opacity'
 
   return (
-    <BottomSheet open={open} onOpenChange={onOpenChange} title={category} hideTitle>
+    <BottomSheet open={open} onOpenChange={onOpenChange} title={category} hideTitle className="h-[92dvh]">
+      {/* Konten full-height: angka dapet flex-1 di tengah, numpad kedorong ke bawah.
+          minHeight ngikutin maxHeight sheet (88dvh) minus handle+padding sheet. */}
+      <div className="flex flex-col" style={{ minHeight: 'calc(88dvh - 64px)' }}>
       {/* Header: X · kategori · lompat ke Transaksi */}
       <div className="flex items-center justify-between px-1 pb-1">
         <button type="button" onClick={() => onOpenChange(false)} aria-label={t('common.close')} className="grid place-items-center size-8 rounded-full" style={{ color: 'var(--ink)' }}>
@@ -132,21 +135,23 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
         </Link>
       </div>
 
-      {/* Angka besar */}
-      <p className="num tabular text-center font-medium py-5" style={{ fontSize: amount >= 10_000_000 ? 34 : 42, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-        {formatCurrency(amount)}
-      </p>
+      {/* Angka besar — dominan, whitespace luas (flex-1 dorong sisa ke bawah) */}
+      <div className="flex-1 grid place-items-center min-h-[120px]">
+        <p className="num tabular text-center font-medium" style={{ fontSize: amount >= 10_000_000 ? 40 : 56, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
+          {formatCurrency(amount)}
+        </p>
+      </div>
 
       {/* Strip anggaran live — ikut nominal yang lagi diketik */}
       {budget > 0 && (
-        <div className="flex justify-between rounded-[12px] px-3.5 py-2 mb-2.5" style={{ background: remaining < 0 ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)' }}>
+        <div className="flex justify-between -mx-3 px-4 py-2.5 mb-2.5" style={{ background: remaining < 0 ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)' }}>
           <span>
-            <b className="num tabular text-[13px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{formatCompactCurrency(spent + amount)}</b>
-            <span className="block text-[10px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{spentPct.toFixed(0)}% {t('safe_card.spent').toLowerCase()}</span>
+            <b className="num tabular text-[17px] font-bold" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{formatCompactCurrency(spent + amount)}</b>
+            <span className="block text-[12px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{spentPct.toFixed(0)}% {t('safe_card.spent').toLowerCase()}</span>
           </span>
           <span className="text-right">
-            <b className="num tabular text-[13px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{remaining < 0 ? '−' : ''}{formatCompactCurrency(Math.abs(remaining))}</b>
-            <span className="block text-[10px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{t('month_budget.stat_remaining')}</span>
+            <b className="num tabular text-[17px] font-bold" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{remaining < 0 ? '−' : ''}{formatCompactCurrency(Math.abs(remaining))}</b>
+            <span className="block text-[12px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{t('month_budget.stat_remaining')}</span>
           </span>
         </div>
       )}
@@ -206,30 +211,35 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
         />
       )}
 
-      {/* Numpad */}
-      <div className="grid grid-cols-4 gap-1.5 rounded-[16px] p-2 -mx-1" style={{ background: 'var(--bg-2)' }}>
-        {(['1', '2', '3'] as const).map((d) => (
+      {/* Numpad — layout kalkulator ala Budget: 7-8-9 di atas, kolom kanan ⌫,
+          baris bawah [Rp]-0-000-✓ (✓ coral satu sel pojok kanan-bawah) */}
+      <div className="mt-auto grid grid-cols-4 gap-1.5 rounded-[16px] p-2 -mx-1" style={{ background: 'var(--bg-2)' }}>
+        {(['7', '8', '9'] as const).map((d) => (
           <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>{d}</button>
         ))}
         <button type="button" onClick={backspace} aria-label="Hapus" className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}><Delete className="size-[18px] mx-auto" /></button>
         {(['4', '5', '6'] as const).map((d) => (
           <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>{d}</button>
         ))}
-        <button type="button" onClick={() => press('000')} className={`${keyBtn} text-[13px]`} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>000</button>
-        {(['7', '8', '9'] as const).map((d) => (
+        <span aria-hidden="true" />
+        {(['1', '2', '3'] as const).map((d) => (
           <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>{d}</button>
         ))}
+        <span aria-hidden="true" />
+        <span aria-hidden="true" className="grid place-items-center text-[15px] font-medium select-none" style={{ color: 'var(--ink-soft)' }}>Rp</span>
+        <button type="button" onClick={() => press('0')} className={keyBtn} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>0</button>
+        <button type="button" onClick={() => press('000')} className={`${keyBtn} text-[13px]`} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>000</button>
         <button
           type="button"
           onClick={() => void save()}
           disabled={saving}
           aria-label={t('common.save')}
-          className="row-span-2 rounded-[12px] grid place-items-center active:opacity-70 transition-opacity disabled:opacity-40"
-          style={{ background: 'var(--c-mint)', color: '#fff' }}
+          className="rounded-[12px] grid place-items-center active:opacity-70 transition-opacity disabled:opacity-40"
+          style={{ background: 'var(--c-coral)', color: '#fff' }}
         >
           <Check className="size-6" />
         </button>
-        <button type="button" onClick={() => press('0')} className={`${keyBtn} col-span-3`} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>0</button>
+      </div>
       </div>
     </BottomSheet>
   )

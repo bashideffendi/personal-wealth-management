@@ -12,11 +12,12 @@
  *   2. Strip coral ramping kalau rencana alokasi > rencana pendapatan
  *      (over-alokasi) — pengganti banner gede desktop.
  *   3. List kategori per tipe — header .m-sec nempel kanvas, baris ~48px:
- *      nama kiri 12.5px, angka 11px kanan, bar tipis 5px di bawah baris.
- *      Induk yang punya sub jadi COLLAPSIBLE (default expand, chevron).
- *   4. Toggle floating "Rencana | Sisa" (pill gelap ala dock) di atas dock:
- *      mode Sisa mengganti angka kanan baris jadi (anggaran − realisasi),
- *      negatif = coral; bar tetap.
+ *      nama kiri 12.5px, nominal kanan SATU angka di pill abu (detail
+ *      act/plan pindah ke title). Induk yang punya sub jadi COLLAPSIBLE
+ *      (default expand, chevron nempel di samping nama).
+ *   4. Toggle floating "Rencana | Sisa" (pill terang translucent) di atas
+ *      dock: mode Sisa mengganti angka kanan baris jadi (anggaran −
+ *      realisasi), negatif = coral.
  *
  * Edit nominal TETAP bisa (canonical input = prinsip produk): tap angka di
  * kanan baris leaf → NumberInput compact autofocus, commit saat blur/Enter.
@@ -222,38 +223,27 @@ export function MobileBudgetingView({
 
   return (
     <div className="pb-12">
-      {/* Month switcher */}
-      <div
-        className="flex items-center justify-between rounded-xl border px-3 py-2.5"
-        style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}
-      >
+      {/* Month switcher — baris header ramping ala Budget: chevron polos
+          mengapit nama bulan, tanpa kartu/border */}
+      <div className="flex items-center justify-center gap-3 py-1">
         <button
           type="button"
           onClick={prev}
-          className="flex size-9 items-center justify-center rounded-lg transition active:scale-95"
-          style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+          className="p-2 active:opacity-60"
           aria-label={t('mobile_budget.prev_month')}
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className="size-4" style={{ color: 'var(--ink-soft)' }} />
         </button>
-
-        <div className="text-center">
-          <p className="text-[11px] uppercase tracking-wide font-medium" style={{ color: 'var(--ink-soft)' }}>
-            {t('mobile_budget.month')}
-          </p>
-          <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-            {monthLong(month - 1, locale)} {year}
-          </p>
-        </div>
-
+        <p className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+          {monthLong(month - 1, locale)} {year}
+        </p>
         <button
           type="button"
           onClick={next}
-          className="flex size-9 items-center justify-center rounded-lg transition active:scale-95"
-          style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+          className="p-2 active:opacity-60"
           aria-label={t('mobile_budget.next_month')}
         >
-          <ChevronRight className="size-4" />
+          <ChevronRight className="size-4" style={{ color: 'var(--ink-soft)' }} />
         </button>
       </div>
 
@@ -274,13 +264,20 @@ export function MobileBudgetingView({
             </p>
             <p
               className="num tabular font-semibold mt-0.5"
-              style={{ fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink)' }}
-              title={full(allocated)}
+              style={{ fontSize: 27, letterSpacing: '-0.02em', color: 'var(--ink)' }}
             >
-              {compact(allocated)}
+              {privacyHidden ? 'Rp ••••' : formatCurrency(allocated)}
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }} title={full(perDay)}>
-              ~{compact(perDay)} {locale === 'id' ? 'per hari' : 'per day'}
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+              ~{privacyHidden
+                ? 'Rp ••••'
+                : new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(perDay)}{' '}
+              {locale === 'id' ? 'per hari' : 'per day'}
             </p>
           </div>
         </div>
@@ -291,7 +288,7 @@ export function MobileBudgetingView({
           <div className="mt-3 pt-1.5" style={{ borderTop: '1px solid var(--border-soft)' }}>
             {donutParents.map((p) => {
               const hue = categoryHue(p.name)
-              const share = expenseAlloc > 0 ? Math.round((p.amount / expenseAlloc) * 100) : 0
+              const share = expenseAlloc > 0 ? (p.amount / expenseAlloc) * 100 : 0
               return (
                 <div key={p.name} className="flex items-center gap-2 py-1.5">
                   <span
@@ -300,18 +297,19 @@ export function MobileBudgetingView({
                   >
                     <CategoryIcon category={p.name} className="size-[13px]" />
                   </span>
-                  <p className="flex-1 min-w-0 text-[12.5px] font-medium truncate" style={{ color: 'var(--ink)' }} title={p.name}>
-                    {p.name}
-                  </p>
-                  <span className="num tabular text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
-                    {share}%
+                  <span className="flex-1 min-w-0 flex items-baseline gap-2">
+                    <p className="text-[12.5px] font-medium truncate" style={{ color: 'var(--ink)' }} title={p.name}>
+                      {p.name}
+                    </p>
+                    <span className="num tabular text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
+                      {share.toFixed(2).replace('.', ',')}%
+                    </span>
                   </span>
                   <span
-                    className="num tabular text-[12px] font-medium shrink-0 min-w-[64px] text-right"
+                    className="num tabular text-[12px] font-medium shrink-0 min-w-[88px] text-right"
                     style={{ color: 'var(--ink)' }}
-                    title={full(p.amount)}
                   >
-                    {compact(p.amount)}
+                    {privacyHidden ? '••••' : formatCurrency(p.amount)}
                   </span>
                 </div>
               )
@@ -356,7 +354,6 @@ export function MobileBudgetingView({
           const plan = getValue(section.key, cat, month)
           const act = actualOf(section.key, cat)
           const remain = plan - act
-          const pct = plan > 0 ? (act / plan) * 100 : 0
           const overRow = section.key === 'expense' && plan > 0 && act > plan
           const sepIdx = cat.indexOf(SUB_SEP)
           const isSub = sepIdx !== -1
@@ -402,38 +399,35 @@ export function MobileBudgetingView({
                   <button
                     type="button"
                     onClick={() => setEditing({ key: rowKey, value: plan })}
-                    className="num tabular text-[11px] shrink-0 active:opacity-60 transition-opacity"
-                    style={{ color: 'var(--ink-soft)' }}
+                    className="shrink-0 active:opacity-60 transition-opacity"
                     title={
                       privacyHidden
                         ? undefined
-                        : view === 'remain'
-                          ? formatCurrency(remain)
-                          : `${formatCurrency(act)} / ${formatCurrency(plan)}`
+                        : `${formatCurrency(act)} / ${formatCurrency(plan)}`
                     }
                   >
-                    {view === 'remain' ? (
-                      <b className="font-semibold" style={{ color: remain < 0 ? 'var(--c-coral-ink)' : 'var(--ink)' }}>
-                        {remain < 0 ? '−' : ''}
-                        {digitsOf(Math.abs(remain))}
-                      </b>
-                    ) : (
-                      <>
-                        <b className="font-semibold" style={{ color: overRow ? 'var(--c-coral-ink)' : 'var(--ink)' }}>
-                          {digitsOf(act)}
-                        </b>
-                        {' / '}
-                        {digitsOf(plan)}
-                      </>
-                    )}
+                    <span
+                      className="num tabular rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+                      style={{
+                        background: 'var(--surface-2)',
+                        color:
+                          view === 'remain'
+                            ? remain < 0
+                              ? 'var(--c-coral-ink)'
+                              : 'var(--ink)'
+                            : overRow
+                              ? 'var(--c-coral-ink)'
+                              : 'var(--ink)',
+                      }}
+                    >
+                      {view === 'remain'
+                        ? `${remain < 0 ? '−' : ''}${digitsOf(Math.abs(remain))}`
+                        : privacyHidden
+                          ? 'Rp ••••'
+                          : formatCurrency(plan)}
+                    </span>
                   </button>
                 )}
-              </div>
-              <div className="mt-1.5 h-[5px] rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }} aria-hidden>
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${Math.min(pct, 100)}%`, background: overRow ? 'var(--c-coral)' : hue.bar }}
-                />
               </div>
             </div>
           )
@@ -462,7 +456,6 @@ export function MobileBudgetingView({
                 const gPlan = g.cats.reduce((s, c) => s + getValue(section.key, c, month), 0)
                 const gAct = g.cats.reduce((s, c) => s + actualOf(section.key, c), 0)
                 const gRemain = gPlan - gAct
-                const gPct = gPlan > 0 ? (gAct / gPlan) * 100 : 0
                 const gOver = section.key === 'expense' && gPlan > 0 && gAct > gPlan
                 const hue = categoryHue(g.root)
                 return (
@@ -485,45 +478,36 @@ export function MobileBudgetingView({
                           <span className="text-[12.5px] font-medium truncate" style={{ color: 'var(--ink)' }} title={g.root}>
                             {g.root}
                           </span>
-                        </span>
-                        <span className="flex items-center gap-1 shrink-0">
-                          <span
-                            className="num tabular text-[11px]"
-                            style={{ color: 'var(--ink-soft)' }}
-                            title={
-                              privacyHidden
-                                ? undefined
-                                : view === 'remain'
-                                  ? formatCurrency(gRemain)
-                                  : `${formatCurrency(gAct)} / ${formatCurrency(gPlan)}`
-                            }
-                          >
-                            {view === 'remain' ? (
-                              <b className="font-semibold" style={{ color: gRemain < 0 ? 'var(--c-coral-ink)' : 'var(--ink)' }}>
-                                {gRemain < 0 ? '−' : ''}
-                                {digitsOf(Math.abs(gRemain))}
-                              </b>
-                            ) : (
-                              <>
-                                <b className="font-semibold" style={{ color: gOver ? 'var(--c-coral-ink)' : 'var(--ink)' }}>
-                                  {digitsOf(gAct)}
-                                </b>
-                                {' / '}
-                                {digitsOf(gPlan)}
-                              </>
-                            )}
-                          </span>
                           <ChevronDown
-                            className="size-3.5 transition-transform"
+                            className="size-3.5 shrink-0 transition-transform"
                             style={{ color: 'var(--ink-soft)', transform: isOpen ? 'rotate(180deg)' : 'none' }}
                           />
                         </span>
-                      </span>
-                      <span className="block mt-1.5 h-[5px] rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }} aria-hidden>
                         <span
-                          className="block h-full rounded-full"
-                          style={{ width: `${Math.min(gPct, 100)}%`, background: gOver ? 'var(--c-coral)' : hue.bar }}
-                        />
+                          className="num tabular shrink-0 rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+                          style={{
+                            background: 'var(--surface-2)',
+                            color:
+                              view === 'remain'
+                                ? gRemain < 0
+                                  ? 'var(--c-coral-ink)'
+                                  : 'var(--ink)'
+                                : gOver
+                                  ? 'var(--c-coral-ink)'
+                                  : 'var(--ink)',
+                          }}
+                          title={
+                            privacyHidden
+                              ? undefined
+                              : `${formatCurrency(gAct)} / ${formatCurrency(gPlan)}`
+                          }
+                        >
+                          {view === 'remain'
+                            ? `${gRemain < 0 ? '−' : ''}${digitsOf(Math.abs(gRemain))}`
+                            : privacyHidden
+                              ? 'Rp ••••'
+                              : formatCurrency(gPlan)}
+                        </span>
                       </span>
                     </button>
                     {isOpen && g.cats.map((cat) => renderRow(cat, true))}
@@ -544,7 +528,11 @@ export function MobileBudgetingView({
       >
         <div
           className="pointer-events-auto flex items-center rounded-full p-1"
-          style={{ background: '#1c1c22', boxShadow: '0 10px 30px rgba(0,0,0,.25)' }}
+          style={{
+            background: 'rgba(244,244,246,0.92)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 6px 20px rgba(0,0,0,.12)',
+          }}
         >
           {(['plan', 'remain'] as const).map((v) => (
             <button
@@ -553,7 +541,11 @@ export function MobileBudgetingView({
               onClick={() => setView(v)}
               aria-pressed={view === v}
               className="rounded-full px-4 py-1.5 text-[12px] font-medium transition-colors"
-              style={view === v ? { background: '#fff', color: '#18181b' } : { background: 'transparent', color: '#8e8e98' }}
+              style={
+                view === v
+                  ? { background: 'transparent', color: 'var(--c-teal-ink, #2a9d8f)', fontWeight: 600 }
+                  : { color: 'var(--ink-soft)' }
+              }
             >
               {v === 'plan' ? t('budgeting.mode_plan') : t('mobile_budget.remaining')}
             </button>

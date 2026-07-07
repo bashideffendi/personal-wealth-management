@@ -34,7 +34,7 @@ import {
 import {
   Pencil, Trash2, Plus, Loader2, Wallet, Star, Layers,
   LayoutGrid, List, ArrowDownLeft, ArrowUpRight,
-  Eye, EyeOff, LineChart, ChevronRight,
+  Eye, EyeOff, LineChart, ChevronRight, ChevronDown,
 } from 'lucide-react'
 import { AccountAllocationsDialog } from '@/components/accounts/allocations-dialog'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
@@ -102,6 +102,9 @@ export default function AccountsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const [view, setView] = useState<'card' | 'table'>('card')
+  // Collapse per grup di list mobile (accounts / cards)
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const toggleGroup = (key: string) => setCollapsed((c) => ({ ...c, [key]: !c[key] }))
 
   useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem('pwm.accounts.view') : null
@@ -208,12 +211,12 @@ export default function AccountsPage() {
         // Total investasi tetap di-fetch: dibutuhkan buat angka kekayaan bersih di hero.
         supabase.from('investments').select('total_value').eq('user_id', user.id),
         supabase.from('debts').select('remaining').eq('user_id', user.id).eq('is_active', true),
-        supabase.from('credit_cards').select('id, name, last_four, current_balance').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
+        supabase.from('credit_cards').select('id, name, last_four, current_balance, credit_limit').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
       ])
       if (nlqRes.error) throw nlqRes.error
       if (debtRes.error) throw debtRes.error
 
-      type CardRow = { id: string; name: string; last_four: string | null; current_balance: number }
+      type CardRow = { id: string; name: string; last_four: string | null; current_balance: number; credit_limit: number | null }
       const nonLiquid = (nlqRes.data ?? []) as { category: string; current_value: number }[]
       const investments = (invRes.data ?? []) as { total_value: number }[]
       const cards = (ccRes.data ?? []) as CardRow[]
@@ -447,14 +450,14 @@ export default function AccountsPage() {
         <div className="mt-3.5 grid grid-cols-2 gap-3">
           <div className="text-center">
             <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.assets')}</p>
-            <p className="num tabular text-[14px] font-semibold mt-0.5" title={nw ? formatCurrency(nw.assets) : undefined} style={{ color: '#FFFFFF' }}>
-              {nw ? formatCompactCurrency(nw.assets) : '—'}
+            <p className="num tabular text-[14px] font-semibold mt-0.5" style={{ color: '#FFFFFF' }}>
+              {nw ? formatCurrency(nw.assets) : '—'}
             </p>
           </div>
           <div className="text-center">
             <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.debt')}</p>
-            <p className="num tabular text-[14px] font-semibold mt-0.5" title={nw ? formatCurrency(nw.liabilities) : undefined} style={{ color: '#ffd9cf' }}>
-              {nw ? formatCompactCurrency(nw.liabilities) : '—'}
+            <p className="num tabular text-[14px] font-semibold mt-0.5" style={{ color: '#ffd9cf' }}>
+              {nw ? formatCurrency(nw.liabilities) : '—'}
             </p>
           </div>
         </div>
@@ -545,26 +548,38 @@ export default function AccountsPage() {
         <>
         {/* ═══ MOBILE (<md): grup list ala Budget — Akun / Kartu Kredit + link Investasi ═══ */}
         <div className="md:hidden space-y-3">
-          {/* a. Akun — data existing, restyle grup */}
+          {/* Tambah akun — tombol dipindah keluar header grup (referensi: aksi di top bar, bukan di grup) */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={openAddDialog}
+              aria-label={t('accounts.add_account')}
+              className="size-8 grid place-items-center rounded-full active:opacity-70"
+              style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+
+          {/* a. Akun — data existing, restyle grup (header = toggle collapse) */}
           <section className="s-card overflow-hidden pb-1">
-            <div className="flex items-center justify-between pl-4 pr-2.5 pt-3 pb-1">
+            <button
+              type="button"
+              onClick={() => toggleGroup('accounts')}
+              aria-expanded={!collapsed['accounts']}
+              className="w-full flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70"
+            >
               <p className="text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.col_account')}</p>
-              <div className="flex items-center gap-1.5">
-                <p className="num tabular text-[13px] font-semibold" title={formatCurrency(totalBalance)} style={{ color: 'var(--c-mint-ink)' }}>
-                  {formatCompactCurrency(totalBalance)}
+              <span className="flex items-center gap-1">
+                <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+                  Bal. {formatCurrency(totalBalance)}
                 </p>
-                <button
-                  type="button"
-                  onClick={openAddDialog}
-                  aria-label={t('accounts.add_account')}
-                  className="size-7 grid place-items-center rounded-full active:opacity-70"
-                  style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-                >
-                  <Plus className="size-4" />
-                </button>
-              </div>
-            </div>
-            {accounts.map((a, i) => (
+                <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['accounts'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
+              </span>
+            </button>
+            {!collapsed['accounts'] && accounts.map((a, i) => {
+              const masked = maskAccountNumber(a.account_number, privacyHidden)
+              return (
               <div key={a.id} className="flex items-center gap-3 px-4" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
                 <InstitutionLogo accountName={a.name} size={30} shape="circle" />
                 <div className="min-w-0 flex-1">
@@ -572,29 +587,41 @@ export default function AccountsPage() {
                     {a.name?.trim() || t('accounts.unnamed_account')}
                     {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
                   </p>
-                  <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                    {ACCOUNT_TYPES[a.type as AccountType] ?? a.type}
+                  <p className={`text-[11px] truncate leading-tight mt-0.5 ${masked ? 'num' : ''}`} style={{ color: 'var(--ink-soft)' }}>
+                    {masked ?? (ACCOUNT_TYPES[a.type as AccountType] ?? a.type)}
                   </p>
                 </div>
                 <p className="num tabular text-[13.5px] font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(a.current_balance ?? 0)}
                 </p>
               </div>
-            ))}
+              )
+            })}
           </section>
 
           {/* b. Kartu Kredit — dari query lite */}
           {nw && nw.cards.length > 0 && (
             <section className="s-card overflow-hidden pb-1">
-              <Link href="/dashboard/credit-cards" className="flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70">
-                <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-coral-ink)' }}>
-                  {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
-                </p>
-                <p className="num tabular text-[13px] font-semibold" title={formatCurrency(nw.ccTotal)} style={{ color: 'var(--c-coral-ink)' }}>
-                  {t('networth.debt')} {formatCompactCurrency(nw.ccTotal)}
-                </p>
-              </Link>
-              {nw.cards.map((c, i) => (
+              <div className="flex items-center justify-between pl-4 pt-3 pb-1">
+                {/* Nav ke halaman kartu pindah ke teks judul; chevron kanan = collapse list */}
+                <Link href="/dashboard/credit-cards" className="active:opacity-70">
+                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-coral-ink)' }}>
+                    {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
+                  </p>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup('cards')}
+                  aria-expanded={!collapsed['cards']}
+                  className="flex items-center gap-1 pl-3 pr-4 py-1 active:opacity-70"
+                >
+                  <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-coral-ink)' }}>
+                    {t('networth.debt')} {formatCurrency(nw.ccTotal)}
+                  </p>
+                  <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-coral-ink)' }} />
+                </button>
+              </div>
+              {!collapsed['cards'] && nw.cards.map((c, i) => (
                 <div key={c.id} className="flex items-center gap-3 px-4" style={{ minHeight: 50, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
                   <InstitutionLogo accountName={c.name} size={30} shape="circle" />
                   <div className="min-w-0 flex-1">
@@ -603,9 +630,16 @@ export default function AccountsPage() {
                       <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four}</p>
                     )}
                   </div>
-                  <p className="num tabular text-[13.5px] font-semibold leading-tight shrink-0" style={{ color: (c.current_balance || 0) > 0 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>
-                    {(c.current_balance || 0) > 0 ? `−${formatCurrency(c.current_balance)}` : formatCurrency(0)}
-                  </p>
+                  <div className="text-right shrink-0">
+                    <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: (c.current_balance || 0) > 0 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>
+                      {(c.current_balance || 0) > 0 ? formatCurrency(-(c.current_balance || 0)) : formatCurrency(0)}
+                    </p>
+                    {(c.credit_limit || 0) > 0 && (
+                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        avl. {formatCurrency(Math.max(0, (c.credit_limit || 0) - (c.current_balance || 0)))}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </section>
@@ -618,8 +652,8 @@ export default function AccountsPage() {
                 <p className="text-[13px] font-semibold" style={{ color: 'var(--c-violet-ink)' }}>
                   {t('assets.investments')}
                 </p>
-                <p className="num tabular text-[13px] font-semibold inline-flex items-center gap-0.5" title={formatCurrency(nw.invTotal)} style={{ color: 'var(--c-violet-ink)' }}>
-                  {formatCompactCurrency(nw.invTotal)} <ChevronRight className="size-3.5" />
+                <p className="num tabular text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-violet-ink)' }}>
+                  {formatCurrency(nw.invTotal)} <ChevronRight className="size-3.5" />
                 </p>
               </Link>
             </section>
