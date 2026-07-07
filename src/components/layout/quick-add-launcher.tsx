@@ -916,7 +916,7 @@ function ManualForm({
               value={form.type}
               onValueChange={(v) => v && setType(v as TxType)}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-label={t('quickadd.type')}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -933,7 +933,7 @@ function ManualForm({
               value={form.category}
               onValueChange={(v) => v && setForm({ ...form, category: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-label={t('quickadd.category')}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -953,8 +953,9 @@ function ManualForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label>{t('quickadd.amount')}</Label>
+            <Label htmlFor="qa-amount">{t('quickadd.amount')}</Label>
             <Input
+              id="qa-amount"
               type="number"
               min={0}
               value={form.amount || ''}
@@ -966,8 +967,9 @@ function ManualForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>{t('quickadd.date')}</Label>
+            <Label htmlFor="qa-date">{t('quickadd.date')}</Label>
             <Input
+              id="qa-date"
               type="date"
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
@@ -981,7 +983,7 @@ function ManualForm({
             value={form.account_id}
             onValueChange={(v) => setForm({ ...form, account_id: v ?? '' })}
           >
-            <SelectTrigger>
+            <SelectTrigger aria-label={t('quickadd.account_or_card')}>
               <SelectValue placeholder={t('quickadd.pick_account')} />
             </SelectTrigger>
             <SelectContent>
@@ -1000,8 +1002,9 @@ function ManualForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>{t('quickadd.description')}</Label>
+          <Label htmlFor="qa-description">{t('quickadd.description')}</Label>
           <Input
+            id="qa-description"
             value={form.description}
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })

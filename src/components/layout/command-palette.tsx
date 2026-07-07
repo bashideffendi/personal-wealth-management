@@ -511,6 +511,7 @@ export function CommandPalette() {
 
           <input
             autoFocus
+            aria-label={t('command_palette.search_placeholder')}
             value={speech.listening && speech.interim ? `${query} ${speech.interim}`.trim() : query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onInputKey}

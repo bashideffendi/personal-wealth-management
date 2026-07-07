@@ -1333,6 +1333,7 @@ export default function TransactionsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('transactions.search_placeholder')}
+              aria-label={t('transactions.search_placeholder')}
               className="h-9 w-full pl-9 text-sm"
             />
           </div>
@@ -1355,9 +1356,9 @@ export default function TransactionsPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_account')}</label>
+          <label id="flt-account-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_account')}</label>
           <Select value={filterAccount} onValueChange={(v) => setFilterAccount(v ?? 'all')}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger aria-labelledby="flt-account-label" className="w-full">
               <SelectValue placeholder={t('transactions.all_accounts')}>
                 {(v) => v === 'all'
                   ? t('transactions.all_accounts')
@@ -1384,9 +1385,9 @@ export default function TransactionsPage() {
 
 
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_type')}</label>
+          <label id="flt-type-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_type')}</label>
           <Select value={filterType} onValueChange={(v) => { setFilterType(v ?? 'all'); setFilterCategory('all') }}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger aria-labelledby="flt-type-label" className="w-full">
               <SelectValue placeholder={t('transactions.all_types')}>
                 {(v) => v === 'all' ? t('transactions.all_types') : (v in TYPE_LABEL_KEYS ? t(TYPE_LABEL_KEYS[v as TransactionType]) : v)}
               </SelectValue>
@@ -1400,9 +1401,9 @@ export default function TransactionsPage() {
           </Select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_category')}</label>
+          <label id="flt-category-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_category')}</label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? 'all')}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger aria-labelledby="flt-category-label" className="w-full">
               <SelectValue placeholder={t('transactions.all_categories')}>
                 {(v) => v === 'all' ? t('transactions.all_categories') : v}
               </SelectValue>
@@ -1419,9 +1420,9 @@ export default function TransactionsPage() {
         </div>
         {allTags.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_tag')}</label>
+            <label id="flt-tag-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_tag')}</label>
             <Select value={filterTag} onValueChange={(v) => setFilterTag(v ?? 'all')}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger aria-labelledby="flt-tag-label" className="w-full">
                 <SelectValue placeholder={t('transactions.all_tags')}>
                   {(v) => (v === 'all' ? t('transactions.all_tags') : v)}
                 </SelectValue>
@@ -1492,6 +1493,7 @@ export default function TransactionsPage() {
               type="date"
               value={quickForm.date}
               onChange={(e) => setQuickForm({ ...quickForm, date: e.target.value })}
+              aria-label={t('transactions.label_date')}
               className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0"
             />
             {/* Account */}
@@ -1499,7 +1501,7 @@ export default function TransactionsPage() {
               value={quickForm.account_id}
               onValueChange={(v) => setQuickForm({ ...quickForm, account_id: v ?? '' })}
             >
-              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger aria-label={t('transactions.account')} className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder={t('transactions.account')}>
                   {(v) => {
                     const acc = accounts.find((a) => a.id === v)
@@ -1528,7 +1530,7 @@ export default function TransactionsPage() {
               value={quickForm.type}
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
-              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger aria-label={t('transactions.filter_type')} className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder={t('transactions.filter_type')}>
                   {(v) => v in TYPE_LABEL_KEYS ? t(TYPE_LABEL_KEYS[v as TransactionType]) : t('transactions.filter_type')}
                 </SelectValue>
@@ -1544,7 +1546,7 @@ export default function TransactionsPage() {
               value={quickForm.category}
               onValueChange={(v) => setQuickForm({ ...quickForm, category: v ?? '' })}
             >
-              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger aria-label={t('transactions.filter_category')} className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder={t('transactions.filter_category')}>
                   {(v) => v || t('transactions.filter_category')}
                 </SelectValue>
@@ -1566,6 +1568,7 @@ export default function TransactionsPage() {
               value={quickForm.description}
               onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
               placeholder={t('transactions.description_optional')}
+              aria-label={t('transactions.col_description')}
               className="h-9 col-span-2 sm:col-span-2 min-w-0"
             />
             {/* Amount */}
@@ -1573,6 +1576,7 @@ export default function TransactionsPage() {
               value={quickForm.amount}
               onChange={(n) => setQuickForm({ ...quickForm, amount: n })}
               placeholder={t('transactions.amount')}
+              aria-label={t('transactions.amount')}
               className="h-9 w-full col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
             />
             {/* Submit */}
@@ -2693,16 +2697,16 @@ export default function TransactionsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label>{t('transactions.amount_rp')}</Label>
-                <NumberInput value={transferForm.amount} onChange={(n) => setTransferForm({ ...transferForm, amount: n })} placeholder="0" />
+                <NumberInput value={transferForm.amount} onChange={(n) => setTransferForm({ ...transferForm, amount: n })} placeholder="0" aria-label={t('transactions.amount_rp')} />
               </div>
               <div className="grid gap-1.5">
                 <Label>{t('transactions.label_date')}</Label>
-                <Input type="date" value={transferForm.date} onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })} />
+                <Input type="date" value={transferForm.date} onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })} aria-label={t('transactions.label_date')} />
               </div>
             </div>
             <div className="grid gap-1.5">
               <Label>{t('transactions.notes')}</Label>
-              <Input value={transferForm.notes} onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })} />
+              <Input value={transferForm.notes} onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })} aria-label={t('transactions.notes')} />
             </div>
           </div>
           <DialogFooter>

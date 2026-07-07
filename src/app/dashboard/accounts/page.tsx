@@ -712,11 +712,11 @@ export default function AccountsPage() {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)', background: 'var(--surface-2)' }}>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_account')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_type')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_number')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_activity_30')}</th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_balance')}</th>
+                <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_account')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_type')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_number')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_activity_30')}</th>
+                <th scope="col" className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_balance')}</th>
               </tr>
             </thead>
             <tbody>

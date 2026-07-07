@@ -825,6 +825,7 @@ export default function BudgetingPage() {
                   else if (e.key === 'Escape') { setAddingSubTo(null); setNewSubInline('') }
                 }}
                 onBlur={() => void addSubInline(kind, node.name)}
+                aria-label={t('budgeting.new_subcategory_placeholder')}
                 placeholder={t('budgeting.new_subcategory_placeholder')}
                 className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
                 style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
@@ -853,6 +854,7 @@ export default function BudgetingPage() {
                 }
               }}
               onBlur={() => addCategoryInline(kind)}
+              aria-label={t('budgeting.new_category_placeholder')}
               placeholder={t('budgeting.new_category_placeholder')}
               className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
               style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}

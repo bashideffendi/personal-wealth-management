@@ -730,7 +730,7 @@ export default function DashboardPage() {
             kebaca sebagai kontrol, bukan nyatu sama kanvas. Scope: widget bulanan. */}
         <div className="flex items-center gap-2">
           <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-            <SelectTrigger className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
+            <SelectTrigger aria-label={t('dashboard.month_placeholder')} className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
               <SelectValue placeholder={t('dashboard.month_placeholder')}>{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -738,7 +738,7 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
           <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-            <SelectTrigger className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
+            <SelectTrigger aria-label={t('dashboard.year_placeholder')} className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
               <SelectValue placeholder={t('dashboard.year_placeholder')}>{(v) => v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
