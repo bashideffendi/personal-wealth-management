@@ -109,6 +109,9 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
   // Receipt flow state
   const [previewData, setPreviewData] = useState<ReceiptData | null>(null)
+  // File asli foto struk — dipertahankan setelah parse biar bisa diupload ke
+  // Storage sebagai lampiran transaksi (jangan dibuang setelah OCR).
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   const [savingReceipt, setSavingReceipt] = useState(false)
 
@@ -195,6 +198,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     const t = setTimeout(() => {
       setMode('menu')
       setPreviewData(null)
+      setReceiptFile(null)
       setScanError(null)
       setForm({
         date: new Date().toISOString().split('T')[0],
@@ -238,6 +242,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       }
       const data = json.data as ReceiptData
       setPreviewData(data)
+      setReceiptFile(file) // simpan file asli buat diupload saat save
       setMode('preview')
     } catch (err) {
       setScanError(err instanceof Error ? err.message : t('quickadd.scan_failed'))
@@ -287,7 +292,28 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       })
       return
     }
-    const { error } = await supabase.from('transactions').insert({
+    // Upload foto struk asli ke bucket privat 'receipts' (infra migrasi 011,
+    // pola sama dgn manual-add di transactions/page.tsx) — path disimpan di
+    // kolom receipt_url. Best-effort: gagal upload ≠ gagal simpan.
+    let receiptPath: string | null = null
+    if (receiptFile) {
+      const ext =
+        receiptFile.type === 'image/png' ? 'png'
+        : receiptFile.type === 'image/webp' ? 'webp'
+        : receiptFile.type === 'image/gif' ? 'gif'
+        : 'jpg'
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('receipts')
+        .upload(path, receiptFile, { contentType: receiptFile.type || 'image/jpeg', upsert: false })
+      if (upErr) {
+        console.warn('[quick-add] Upload struk gagal — transaksi disimpan tanpa lampiran:', upErr.message)
+      } else {
+        receiptPath = path
+      }
+    }
+
+    const payload: Record<string, unknown> = {
       user_id: user.id,
       date: previewData.date,
       account_id: acc.id,
@@ -295,7 +321,20 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       category: previewData.category,
       description: previewData.description || previewData.merchant,
       amount: previewData.total,
-    })
+    }
+    if (receiptPath) payload.receipt_url = receiptPath
+
+    let { error } = await supabase.from('transactions').insert(payload)
+    // Graceful pre-migrasi: kolom receipt_url belum ada di DB → retry tanpa
+    // lampiran biar simpan tetap jalan (tiru pola auto_post di recurring/page.tsx).
+    if (
+      error && payload.receipt_url &&
+      (error.code === '42703' || /receipt_url/i.test(error.message ?? ''))
+    ) {
+      console.warn('[quick-add] Kolom receipt_url belum tersedia — simpan tanpa lampiran:', error.message)
+      delete payload.receipt_url
+      ;({ error } = await supabase.from('transactions').insert(payload))
+    }
     setSavingReceipt(false)
     if (error) {
       toast.error(t('quickadd.save_failed'), { description: error.message })
@@ -447,6 +486,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
               saving={savingReceipt}
               onBack={() => {
                 setPreviewData(null)
+                setReceiptFile(null)
                 setMode('menu')
               }}
               onSave={saveReceipt}

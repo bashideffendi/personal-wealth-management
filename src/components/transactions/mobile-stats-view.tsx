@@ -10,6 +10,8 @@
  *      + footer Pengeluaran pill / Pemasukan (ala referensi Budget).
  *   4. Statistik Kategori — bar per kategori: badge persen + nominal penuh
  *      + jumlah trx + progress bar tipis.
+ *   5. Tag — expense per tag (multi-tag dijumlahkan ke tiap tag), top-6 desc;
+ *      kartu cuma render kalau ada transaksi expense ber-tag bulan itu.
  *
  * Terima transaksi yang SUDAH difilter ke bulan aktif; agregasi internal
  * pakai useMemo. Rollup subkategori ke induk via rootCategory (SUB_SEP) —
@@ -249,6 +251,29 @@ export function MobileStatsView({
     return rows
   }, [transactions])
 
+  // Agregasi expense per TAG (kartu 5): satu transaksi bisa multi-tag →
+  // nominalnya dijumlahkan ke tiap tag-nya. share = porsi dari total nominal
+  // ter-tag (denominatornya ikut dobel buat multi-tag — relatif antar-tag,
+  // bukan porsi total expense). 'Transfer' di-skip konsisten agregasi lain.
+  const tagRows = useMemo(() => {
+    const byTag: Record<string, number> = {}
+    let total = 0
+    for (const tx of transactions) {
+      if (tx.type !== 'expense' || tx.category === 'Transfer') continue
+      if (!tx.tags?.length) continue
+      for (const raw of tx.tags) {
+        const name = raw.trim()
+        if (!name) continue
+        byTag[name] = (byTag[name] || 0) + tx.amount
+        total += tx.amount
+      }
+    }
+    return Object.entries(byTag)
+      .map(([name, amount]) => ({ name, amount, share: total > 0 ? amount / total : 0 }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 6)
+  }, [transactions])
+
   // Geometri donut — stroke circle + dasharray per slice, mulai jam 12.
   const CX = 90
   const CY = 65
@@ -452,6 +477,41 @@ export function MobileStatsView({
           </div>
         )}
       </div>
+
+      {/* ── Kartu 5: Tag — expense per tag, cuma muncul kalau ada yang ber-tag ── */}
+      {tagRows.length > 0 && (
+        <div className="s-card s-card-pad">
+          <h3 className="t-h2" style={{ color: 'var(--ink)' }}>{t('transactions.filter_tag')}</h3>
+          <div className="mt-3 space-y-3">
+            {tagRows.map((row) => (
+              <div key={row.name}>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="rounded-full px-2 py-[2px] text-[11px] font-medium truncate"
+                    style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                  >
+                    {row.name}
+                  </span>
+                  <span className="flex-1" />
+                  <span
+                    className="num tabular text-[12.5px] font-semibold shrink-0"
+                    title={formatCurrency(row.amount)}
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {formatCompactCurrency(row.amount)}
+                  </span>
+                </div>
+                <div className="mt-1.5 rounded-full overflow-hidden" style={{ height: 3, background: 'var(--surface-2)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.min(row.share * 100, 100)}%`, background: 'var(--c-coral)' }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

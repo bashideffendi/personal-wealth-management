@@ -293,6 +293,17 @@ export default function TransactionsPage() {
     setExtracting(false)
   }
 
+  // Lampiran struk transaksi lama — bucket 'receipts' privat, jadi buka lewat
+  // signed URL berumur 1 jam di tab baru (path storage yang disimpan, bukan URL).
+  async function openReceiptAttachment(path: string) {
+    const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 3600)
+    if (error || !data?.signedUrl) {
+      toast.error(locale === 'id' ? 'Gagal membuka struk' : 'Failed to open receipt')
+      return
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
   async function handleReceiptUpload(file: File) {
     if (!file.type.startsWith('image/')) {
       setExtractError(t('transactions.error_not_image'))
@@ -1851,6 +1862,23 @@ export default function TransactionsPage() {
                 )}
               </div>
             )}
+
+            {/* Lampiran struk (mode edit) — tampil kalau transaksi punya foto tersimpan */}
+            {editingId && (() => {
+              const receiptPath = transactions.find((x) => x.id === editingId)?.receipt_url
+              if (!receiptPath) return null
+              return (
+                <button
+                  type="button"
+                  onClick={() => void openReceiptAttachment(receiptPath)}
+                  className="inline-flex w-fit items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                  style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+                >
+                  <ScanLine className="size-3.5" />
+                  {locale === 'id' ? 'Lihat struk' : 'View receipt'}
+                </button>
+              )
+            })()}
 
             {/* Date */}
             <div className="grid gap-1.5">

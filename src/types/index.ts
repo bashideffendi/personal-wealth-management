@@ -55,6 +55,8 @@ export interface Transaction {
   created_at: string
   goal_id?: string | null
   tags?: string[]
+  /** Path Storage lampiran struk di bucket privat 'receipts' (migrasi 011) — bukan public URL. */
+  receipt_url?: string | null
 }
 
 export interface CategorizationRule {

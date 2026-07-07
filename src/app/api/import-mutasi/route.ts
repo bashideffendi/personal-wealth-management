@@ -11,6 +11,7 @@ import {
   SAVING_CATEGORIES,
   INVESTMENT_CATEGORIES,
 } from '@/lib/constants'
+import { matchCategorizationRule, type MatchableRule } from '@/lib/categorization-rules'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -265,10 +266,48 @@ export async function POST(request: NextRequest) {
     // ai-5: kalau AI nemu 0 transaksi valid, user gak dapet hasil apa-apa →
     // balikin kreditnya (refund di-clamp server-side, gak bisa over-grant).
     // Ini success-path (gak ada error) jadi gak bentrok sama refund di catch.
-    const parsed = toolUseBlock.input as { transactions?: unknown[] }
+    const parsed = toolUseBlock.input as {
+      transactions?: Array<{
+        description?: unknown
+        type?: unknown
+        category?: unknown
+        rule_applied?: boolean
+      }>
+    }
     const txCount = Array.isArray(parsed.transactions) ? parsed.transactions.length : 0
     if (txCount === 0) {
       await refundAICredits(supabase, user.id, 'mutasi_import')
+    }
+
+    // LEARN-FROM-CORRECTION (baca): rules user MENANG di atas kategori AI.
+    // Match = description contains match_text (case-insensitive, priority desc)
+    // — semantik sama dengan applyRules di transactions page. Rule cuma
+    // meng-override CATEGORY, bukan type (arah debit/kredit itu fakta bank),
+    // jadi hanya rule yang setipe + kategorinya valid buat tipe itu yang dipakai.
+    if (txCount > 0) {
+      const { data: rules } = await supabase
+        .from('categorization_rules')
+        .select('match_text, type, category, priority')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+      if (rules && rules.length > 0) {
+        const validCategories: Record<string, readonly string[]> = {
+          expense: EXPENSE_CATEGORIES,
+          income: INCOME_CATEGORIES,
+        }
+        for (const tx of parsed.transactions ?? []) {
+          if (typeof tx.description !== 'string' || typeof tx.type !== 'string') continue
+          const rule = matchCategorizationRule(tx.description, rules as MatchableRule[])
+          if (
+            rule &&
+            rule.type === tx.type &&
+            (validCategories[tx.type] ?? []).includes(rule.category)
+          ) {
+            tx.category = rule.category
+            tx.rule_applied = true
+          }
+        }
+      }
     }
 
     return NextResponse.json({

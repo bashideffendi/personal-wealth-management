@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { normalizeRulePattern } from '@/lib/categorization-rules'
 import { toast } from 'sonner'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
 import { formatCurrency } from '@/lib/utils'
@@ -53,6 +54,8 @@ interface ParsedTx {
   category: string
   confidence: 'high' | 'medium' | 'low'
   is_transfer: boolean
+  // Diisi server kalau kategori datang dari categorization_rules user (bukan AI)
+  rule_applied?: boolean
 }
 
 interface ImportResponse {
@@ -68,6 +71,7 @@ interface PreviewRow extends ParsedTx {
   id: string             // local row id (random)
   selected: boolean
   isDuplicate: boolean   // matched existing transaction
+  originalCategory: string // kategori hasil server (rule/AI) — buat deteksi koreksi user
 }
 
 type Stage = 'input' | 'processing' | 'preview' | 'importing' | 'done'
@@ -176,6 +180,7 @@ export default function ImportMutasiPage() {
           // duplikat di-uncheck juga
           selected: !t.is_transfer && !isDup,
           isDuplicate: isDup,
+          originalCategory: t.category,
         }
       })
 
@@ -256,12 +261,86 @@ export default function ImportMutasiPage() {
       return
     }
 
+    // LEARN-FROM-CORRECTION (tulis): baris yang kategorinya DIUBAH user di
+    // preview → jadi rule, biar import berikutnya langsung bener. Non-fatal:
+    // kalau gagal, import tetap dianggap sukses.
+    try {
+      await learnRulesFromCorrections(user.id, toInsert)
+    } catch (err) {
+      console.warn('[import] gagal simpan categorization rules:', err)
+    }
+
     setImportStats({
       inserted: toInsert.length,
       skipped: rows.length - toInsert.length,
     })
     setStage('done')
     toast.success(`${toInsert.length} ${t('import_tx.toast_recorded')}`)
+  }
+
+  /**
+   * Kumpulkan koreksi kategori user (category ≠ originalCategory) → simpan ke
+   * categorization_rules. Pattern = description dinormalisasi (lowercase, trim,
+   * buang angka/tanggal trailing). Baris yang TIDAK dikoreksi tidak ditulis.
+   *
+   * Skema categorization_rules gak punya unique constraint di (user_id,
+   * match_text), jadi upsert-nya app-level: select dulu → update yang ada
+   * (by id) / insert yang belum ada. Priority 1 biar menang atas rule default.
+   */
+  async function learnRulesFromCorrections(userId: string, imported: PreviewRow[]) {
+    const corrections = new Map<string, { type: TxType; category: string }>()
+    for (const r of imported) {
+      if (r.category === r.originalCategory) continue
+      const pattern = normalizeRulePattern(r.description)
+      if (!pattern) continue
+      corrections.set(pattern, { type: r.type, category: r.category }) // duplikat pattern: koreksi terakhir menang
+    }
+    if (corrections.size === 0) return
+
+    const { data: existing, error: selErr } = await supabase
+      .from('categorization_rules')
+      .select('id, match_text, type, category')
+      .eq('user_id', userId)
+    if (selErr) throw selErr
+
+    const byPattern = new Map<string, { id: string; type: string; category: string }>()
+    for (const rule of (existing ?? []) as Array<{ id: string; match_text: string; type: string; category: string }>) {
+      byPattern.set(rule.match_text.trim().toLowerCase(), rule)
+    }
+
+    const inserts: Array<{
+      user_id: string
+      match_text: string
+      type: TxType
+      category: string
+      priority: number
+      is_active: boolean
+    }> = []
+    for (const [pattern, { type, category }] of corrections) {
+      const found = byPattern.get(pattern)
+      if (found) {
+        if (found.category !== category || found.type !== type) {
+          await supabase
+            .from('categorization_rules')
+            .update({ category, type, is_active: true })
+            .eq('id', found.id)
+            .eq('user_id', userId)
+        }
+      } else {
+        inserts.push({
+          user_id: userId,
+          match_text: pattern,
+          type,
+          category,
+          priority: 1,
+          is_active: true,
+        })
+      }
+    }
+    if (inserts.length > 0) {
+      const { error: rulesErr } = await supabase.from('categorization_rules').insert(inserts)
+      if (rulesErr) throw rulesErr
+    }
   }
 
   function updateRow(id: string, patch: Partial<PreviewRow>) {
@@ -680,11 +759,13 @@ function PreviewStage({
                     onChange={(e) => onUpdate(r.id, { description: e.target.value })}
                     className="h-8 text-xs"
                   />
-                  {(r.is_transfer || r.isDuplicate || r.confidence === 'low') && (
+                  {(r.is_transfer || r.isDuplicate || r.confidence === 'low' || r.rule_applied) && (
                     <div className="mt-1 flex gap-1 flex-wrap">
                       {r.is_transfer && <Tag color="var(--sky-600)" bg="var(--sky-100)">{t('import_tx.tag_transfer')}</Tag>}
                       {r.isDuplicate && <Tag color="var(--amber-700)" bg="var(--amber-100)">{t('import_tx.tag_duplicate')}</Tag>}
                       {r.confidence === 'low' && <Tag color="var(--c-coral)" bg="var(--c-coral-soft)">{t('import_tx.tag_low_confidence')}</Tag>}
+                      {/* Kategori dari categorization_rules user, bukan tebakan AI */}
+                      {r.rule_applied && <Tag color="var(--c-mint-ink)" bg="var(--c-mint-soft)">Rule</Tag>}
                     </div>
                   )}
                 </td>
@@ -705,7 +786,14 @@ function PreviewStage({
                 <td className="px-3 py-2">
                   <Select
                     value={r.category}
-                    onValueChange={(v) => v && onUpdate(r.id, { category: v })}
+                    onValueChange={(v) =>
+                      // Badge "Rule" cuma valid selama kategori masih punya rule —
+                      // begitu user override, lepas flag-nya
+                      v && onUpdate(r.id, {
+                        category: v,
+                        rule_applied: r.rule_applied && v === r.originalCategory,
+                      })
+                    }
                   >
                     <SelectTrigger className="h-8 text-xs w-[140px]">
                       <SelectValue />
