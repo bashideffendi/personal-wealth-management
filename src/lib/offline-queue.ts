@@ -109,18 +109,21 @@ export function isNetworkError(err: unknown): boolean {
   return /failed to fetch|fetch failed|load failed|networkerror|network request failed|network error|err_internet/i.test(msg)
 }
 
-// Guard biar flush dari interval + event 'online' gak jalan barengan.
+// Guard biar flush dari interval + event 'online' gak jalan barengan (dalam SATU tab).
 let flushing = false
 
-/**
- * Coba insert semua item pending ke tabel transactions; item yang sukses
- * dihapus dari antrian. Kalau ketemu error jaringan, berhenti (masih offline —
- * sisanya dicoba lagi nanti). Error non-jaringan: item dibiarkan, lanjut item
- * berikutnya (satu item busuk gak boleh nyumbat antrian).
- */
-export async function flushQueue(
-  supabase: SupabaseLike,
-): Promise<{ flushed: number; remaining: number }> {
+export interface FlushResult {
+  flushed: number
+  remaining: number
+  /** true kalau flush di-skip karena tab lain lagi megang lock lintas-tab. */
+  skipped?: boolean
+}
+
+/** Nama lock Web Locks — satu nama dipakai semua tab origin ini. */
+const FLUSH_LOCK_NAME = 'klunting-offline-flush'
+
+/** Isi flush sebenarnya — dipanggil setelah lolos lock lintas-tab (atau fallback). */
+async function doFlush(supabase: SupabaseLike): Promise<FlushResult> {
   if (flushing) return { flushed: 0, remaining: readStore().length }
   flushing = true
   let flushed = 0
@@ -134,6 +137,7 @@ export async function flushQueue(
         error = { message: err instanceof Error ? err.message : String(err) }
       }
       if (!error) {
+        // Hapus dari antrian HANYA setelah insert sukses.
         removeQueued(item.localId)
         flushed++
       } else if (isNetworkError(error)) {
@@ -145,4 +149,32 @@ export async function flushQueue(
     flushing = false
   }
   return { flushed, remaining: readStore().length }
+}
+
+/**
+ * Coba insert semua item pending ke tabel transactions; item yang sukses
+ * dihapus dari antrian. Kalau ketemu error jaringan, berhenti (masih offline —
+ * sisanya dicoba lagi nanti). Error non-jaringan: item dibiarkan, lanjut item
+ * berikutnya (satu item busuk gak boleh nyumbat antrian).
+ *
+ * Anti double-insert LINTAS-TAB: guard `flushing` cuma hidup per-tab (module
+ * scope), jadi dua tab bisa flush antrian localStorage yang sama barengan →
+ * transaksi dobel. Web Locks API kasih mutex lintas-tab se-origin: cuma satu
+ * tab yang dapat lock `klunting-offline-flush`. `ifAvailable: true` bikin tab
+ * lain SKIP (bukan ngantri) — antriannya toh sama, biar tab pemegang lock yang
+ * beresin, tab lain coba lagi di interval berikutnya.
+ */
+export async function flushQueue(supabase: SupabaseLike): Promise<FlushResult> {
+  if (typeof navigator !== 'undefined' && navigator.locks) {
+    const result: FlushResult = await navigator.locks.request(
+      FLUSH_LOCK_NAME,
+      { ifAvailable: true },
+      async (lock): Promise<FlushResult> =>
+        lock ? doFlush(supabase) : { flushed: 0, remaining: readStore().length, skipped: true },
+    )
+    return result
+  }
+  // Fallback browser tanpa Web Locks: jalan seperti biasa —
+  // guard `flushing` di atas tetap jadi lapis anti-overlap dalam satu tab.
+  return doFlush(supabase)
 }

@@ -34,7 +34,9 @@ import {
 import {
   Pencil, Trash2, Plus, Loader2, Wallet, Star, Layers,
   LayoutGrid, List, ArrowDownLeft, ArrowUpRight,
-  Eye, EyeOff, LineChart, ChevronRight, ChevronDown,
+  Eye, EyeOff, LineChart, ChevronRight, ChevronDown, ChevronLeft,
+  Banknote, Landmark, Smartphone, Briefcase, TrendingUp,
+  type LucideIcon,
 } from 'lucide-react'
 import { AccountAllocationsDialog } from '@/components/accounts/allocations-dialog'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
@@ -53,6 +55,18 @@ const TYPE_ACCENT: Record<string, string> = {
   investment: 'var(--info)',
 }
 const accentFor = (t: string) => TYPE_ACCENT[t] ?? 'var(--ink-soft)'
+
+// Step-0 dialog tambah (ala Budget "pilih tipe dulu"): ikon lingkaran +
+// warna lembut per jenis akun. Tipe berinstitusi (di CATALOG_TYPES) lanjut
+// ke picker katalog; sisanya (kas/investasi) langsung ke form.
+const CATALOG_TYPES = new Set<string>(['bank', 'digital_wallet', 'rdn'])
+const TYPE_META: Record<AccountType, { icon: LucideIcon; bg: string; fg: string }> = {
+  cash:           { icon: Banknote,   bg: 'var(--c-amber-soft)',  fg: 'var(--c-amber-ink)' },
+  bank:           { icon: Landmark,   bg: 'var(--c-mint-soft)',   fg: 'var(--c-mint-ink)' },
+  digital_wallet: { icon: Smartphone, bg: 'var(--c-violet-soft)', fg: 'var(--c-violet-ink)' },
+  rdn:            { icon: Briefcase,  bg: 'var(--info-bg)',       fg: 'var(--info)' },
+  investment:     { icon: TrendingUp, bg: 'var(--info-bg)',       fg: 'var(--info)' },
+}
 
 // Keputusan audit #8: grup "Akun" di mobile = akun PEMBAYARAN saja.
 // RDN & investasi dikecualikan dari list (aksesnya lewat baris "Investasi"
@@ -107,8 +121,9 @@ export default function AccountsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  // Langkah pilih institusi (katalog) — hanya di flow TAMBAH, bukan edit.
-  const [pickStep, setPickStep] = useState(false)
+  // Langkah flow TAMBAH (bukan edit): 'type' (pilih jenis, ala Budget) →
+  // 'institution' (katalog, hanya tipe berinstitusi) → 'form'.
+  const [addStep, setAddStep] = useState<'type' | 'institution' | 'form'>('type')
 
   const [view, setView] = useState<'card' | 'table'>('card')
   // Collapse per grup di list mobile (accounts / cards)
@@ -252,8 +267,22 @@ export default function AccountsPage() {
   function openAddDialog() {
     setEditingId(null)
     setForm(emptyForm)
-    setPickStep(true)
+    setAddStep('type')
     setDialogOpen(true)
+  }
+
+  /** Step-0: pilih jenis → tipe berinstitusi ke picker, sisanya langsung form. */
+  function chooseType(k: AccountType) {
+    setForm((f) => ({ ...f, type: k }))
+    if (CATALOG_TYPES.has(k)) { setAddStep('institution'); return }
+    setAddStep('form')
+    setTimeout(() => document.getElementById('acc-name')?.focus(), 80)
+  }
+
+  /** Back antar langkah tambah: form → (institusi | jenis), institusi → jenis. */
+  function stepBack() {
+    if (addStep === 'form' && CATALOG_TYPES.has(form.type)) setAddStep('institution')
+    else setAddStep('type')
   }
 
   function openEditDialog(acc: Account) {
@@ -264,7 +293,7 @@ export default function AccountsPage() {
       starting_balance: acc.starting_balance,
       account_number: acc.account_number ?? '',
     })
-    setPickStep(false)
+    setAddStep('form')
     setDialogOpen(true)
   }
 
@@ -803,33 +832,75 @@ export default function AccountsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              {/* Back antar step (tambah saja) menggantikan tile ikon — slot sama, layout stabil */}
+              {!editingId && addStep !== 'type' ? (
+                <button
+                  type="button"
+                  onClick={stepBack}
+                  aria-label={locale === 'id' ? 'Kembali' : 'Back'}
+                  className="size-10 rounded-xl grid place-items-center shrink-0 active:opacity-70"
+                  style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+              ) : (
+                <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              )}
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? t('accounts.dialog_edit_title') : t('accounts.dialog_add_title')}</DialogTitle>
                 <DialogDescription>
                   {editingId
                     ? t('accounts.dialog_edit_desc')
-                    : pickStep
-                      ? (locale === 'id' ? 'Pilih institusi, atau ketik manual.' : 'Pick an institution, or type manually.')
-                      : t('accounts.dialog_add_desc')}
+                    : addStep === 'type'
+                      ? (locale === 'id' ? 'Pilih jenis akun dulu.' : 'Pick the account type first.')
+                      : addStep === 'institution'
+                        ? (locale === 'id' ? 'Pilih institusi, atau ketik manual.' : 'Pick an institution, or type manually.')
+                        : t('accounts.dialog_add_desc')}
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          {!editingId && pickStep ? (
-          /* Langkah 1 (tambah saja): pilih institusi dari katalog */
+          {!editingId && addStep === 'type' ? (
+          /* Langkah 0 (tambah saja): pilih jenis akun — baris ~52px + ikon lingkaran */
+          <div className="py-2">
+            <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+              {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k, i) => {
+                const meta = TYPE_META[k]
+                const Icon = meta.icon
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => chooseType(k)}
+                    className="w-full flex items-center gap-3 px-3 text-left hover:bg-[var(--surface-2)] active:opacity-70 transition"
+                    style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                  >
+                    <span className="size-[30px] rounded-full grid place-items-center shrink-0" style={{ background: meta.bg, color: meta.fg }}>
+                      <Icon className="size-4" />
+                    </span>
+                    <span className="flex-1 min-w-0 text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
+                      {ACCOUNT_TYPES[k]}
+                    </span>
+                    <ChevronRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          ) : !editingId && addStep === 'institution' ? (
+          /* Langkah 1 (tambah saja): pilih institusi — katalog terkunci ke jenis terpilih */
           <div className="py-2">
             <InstitutionPicker
-              initialType={(form.type === 'digital_wallet' || form.type === 'rdn' ? form.type : 'bank') as BankCatalogType}
+              type={(CATALOG_TYPES.has(form.type) ? form.type : 'bank') as BankCatalogType}
               onPick={(item) => {
                 setForm({ ...form, name: item.name, type: item.type as AccountType })
-                setPickStep(false)
+                setAddStep('form')
                 // Nama + tipe sudah keisi → langsung ke saldo.
                 setTimeout(() => document.getElementById('acc-balance')?.focus(), 80)
               }}
               onManual={() => {
-                setPickStep(false)
+                setAddStep('form')
                 setTimeout(() => document.getElementById('acc-name')?.focus(), 80)
               }}
             />
@@ -842,7 +913,7 @@ export default function AccountsPage() {
                 {!editingId && (
                   <button
                     type="button"
-                    onClick={() => setPickStep(true)}
+                    onClick={stepBack}
                     className="text-[11px] font-medium hover:underline"
                     style={{ color: 'var(--c-mint-ink)' }}
                   >
@@ -899,7 +970,7 @@ export default function AccountsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('accounts.cancel')}</Button>
-            {!(pickStep && !editingId) && (
+            {(editingId || addStep === 'form') && (
               <Button onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
                 {editingId ? t('accounts.save') : t('accounts.add')}

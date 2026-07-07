@@ -1,7 +1,7 @@
 /**
  * Katalog ringan institusi keuangan Indonesia — dipakai langkah
  * "pilih institusi" di dialog tambah akun (versi ringan dari picker
- * bank ala app Budget: search + list berlogo, tanpa index A-Z).
+ * bank ala app Budget: search + list berlogo + grup huruf A-Z).
  *
  * SELARAS dengan src/lib/indonesian-institutions.ts (sumber logo):
  *   - `logoBrand` (default = `name`) nunjuk ke `brand` di katalog itu,

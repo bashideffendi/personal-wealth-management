@@ -2,8 +2,10 @@
 
 /**
  * Langkah "pilih institusi" di dialog tambah akun — versi ringan picker
- * bank ala app Budget (search + list berlogo). Mobile/bottom-sheet friendly:
- * list scroll internal, tap target ≥44px, teks pendek.
+ * bank ala app Budget (search + list berlogo + grup huruf A-Z sticky).
+ * Jenis akun sudah dipilih di langkah sebelumnya, jadi list terkunci
+ * ke satu grup (tanpa chips). Mobile/bottom-sheet friendly: list scroll
+ * internal & tinggi (isi sheet), tap target ≥44px, teks pendek.
  *
  * Logo: reuse InstitutionLogo untuk brand yang punya ticker IDX
  * (aset /stock-logos sudah ada); sisanya lingkaran inisial pakai warna
@@ -22,18 +24,12 @@ import { InstitutionLogo } from './institution-logo'
 import { useI18n } from '@/lib/i18n/context'
 
 interface Props {
-  /** Grup awal — ngikut type di form kalau relevan */
-  initialType?: BankCatalogType
+  /** Grup katalog — dari jenis akun yang dipilih di langkah sebelumnya */
+  type: BankCatalogType
   onPick: (item: BankCatalogItem) => void
   /** Skip katalog — lanjut ke form dengan nama bebas */
   onManual: () => void
 }
-
-const GROUPS: { type: BankCatalogType; label: string }[] = [
-  { type: 'bank', label: 'Bank' },
-  { type: 'digital_wallet', label: 'E-Wallet' },
-  { type: 'rdn', label: 'RDN' },
-]
 
 function CatalogAvatar({ item, size = 30 }: { item: BankCatalogItem; size?: number }) {
   const inst = catalogInstitution(item)
@@ -63,13 +59,25 @@ function CatalogAvatar({ item, size = 30 }: { item: BankCatalogItem; size?: numb
   )
 }
 
-export function InstitutionPicker({ initialType = 'bank', onPick, onManual }: Props) {
+export function InstitutionPicker({ type, onPick, onManual }: Props) {
   const { locale } = useI18n()
-  const [group, setGroup] = useState<BankCatalogType>(initialType)
   const [query, setQuery] = useState('')
 
-  const searching = query.trim().length > 0
-  const results = useMemo(() => filterCatalog(query, group), [query, group])
+  // Kelompok per huruf awal (sort A-Z; non-huruf → '#') — index ala Budget.
+  const sections = useMemo(() => {
+    const items = filterCatalog(query, type)
+      .filter((i) => i.type === type)
+      .sort((a, b) => a.name.localeCompare(b.name))
+    const map = new Map<string, BankCatalogItem[]>()
+    for (const item of items) {
+      const first = (item.name[0] ?? '').toUpperCase()
+      const letter = /[A-Z]/.test(first) ? first : '#'
+      const bucket = map.get(letter)
+      if (bucket) bucket.push(item)
+      else map.set(letter, [item])
+    }
+    return [...map.entries()]
+  }, [query, type])
 
   return (
     <div className="grid gap-2.5">
@@ -86,57 +94,43 @@ export function InstitutionPicker({ initialType = 'bank', onPick, onManual }: Pr
         />
       </div>
 
-      {/* Chips grup — pas searching, hasil lintas grup */}
-      {!searching && (
-        <div className="flex gap-1.5">
-          {GROUPS.map((g) => {
-            const active = g.type === group
-            return (
-              <button
-                key={g.type}
-                type="button"
-                onClick={() => setGroup(g.type)}
-                className="h-7 px-3 rounded-full text-[12px] font-medium transition active:opacity-70"
-                style={{
-                  background: active ? 'var(--ink)' : 'var(--surface-2)',
-                  color: active ? 'var(--surface)' : 'var(--ink-muted)',
-                }}
-              >
-                {g.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* List institusi */}
+      {/* List institusi — grup per huruf awal, header sticky */}
       <div
-        className="rounded-lg border overflow-y-auto overscroll-contain max-h-[38vh] sm:max-h-64"
+        className="rounded-lg border overflow-y-auto overscroll-contain max-h-[55vh] min-h-[35vh] sm:min-h-0 sm:max-h-64"
         style={{ borderColor: 'var(--border)' }}
       >
-        {results.length === 0 ? (
+        {sections.length === 0 ? (
           <p className="px-3 py-4 text-[12px] text-center" style={{ color: 'var(--ink-soft)' }}>
             {locale === 'id' ? 'Nggak ketemu — ketik manual aja.' : 'No match — type it manually.'}
           </p>
         ) : (
-          results.map((item, i) => (
-            <button
-              key={item.name}
-              type="button"
-              onClick={() => onPick(item)}
-              className="w-full flex items-center gap-3 px-3 text-left hover:bg-[var(--surface-2)] active:opacity-70 transition"
-              style={{ minHeight: 44, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
-            >
-              <CatalogAvatar item={item} />
-              <span className="flex-1 min-w-0 text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
-                {item.name}
-              </span>
-              {searching && (
-                <span className="text-[10px] uppercase tracking-wide shrink-0" style={{ color: 'var(--ink-soft)' }}>
-                  {GROUPS.find((g) => g.type === item.type)?.label}
-                </span>
-              )}
-            </button>
+          sections.map(([letter, items], si) => (
+            <div key={letter}>
+              <div
+                className="sticky top-0 z-10 px-3 pt-1.5 pb-0.5 text-[11px] font-semibold"
+                style={{
+                  background: 'var(--surface)',
+                  color: 'var(--c-mint-ink)',
+                  borderTop: si ? '1px solid var(--border-soft)' : 'none',
+                }}
+              >
+                {letter}
+              </div>
+              {items.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => onPick(item)}
+                  className="w-full flex items-center gap-3 px-3 text-left hover:bg-[var(--surface-2)] active:opacity-70 transition"
+                  style={{ minHeight: 44 }}
+                >
+                  <CatalogAvatar item={item} />
+                  <span className="flex-1 min-w-0 text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
+                    {item.name}
+                  </span>
+                </button>
+              ))}
+            </div>
           ))
         )}
       </div>
