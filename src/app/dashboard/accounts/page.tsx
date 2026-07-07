@@ -9,7 +9,7 @@ import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account, AllocationPurpose } from '@/types'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -39,6 +39,8 @@ import {
 import { AccountAllocationsDialog } from '@/components/accounts/allocations-dialog'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { InstitutionSearch } from '@/components/accounts/institution-search'
+import { InstitutionPicker } from '@/components/accounts/institution-picker'
+import type { BankCatalogType } from '@/lib/bank-catalog'
 
 type AccountType = keyof typeof ACCOUNT_TYPES
 
@@ -94,7 +96,7 @@ export default function AccountsPage() {
   const supabase = createClient()
   const qc = useQueryClient()
   const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy()
-  const t = useT()
+  const { t, locale } = useI18n()
 
   const [allocAccount, setAllocAccount] = useState<Account | null>(null)
 
@@ -105,6 +107,8 @@ export default function AccountsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  // Langkah pilih institusi (katalog) — hanya di flow TAMBAH, bukan edit.
+  const [pickStep, setPickStep] = useState(false)
 
   const [view, setView] = useState<'card' | 'table'>('card')
   // Collapse per grup di list mobile (accounts / cards)
@@ -248,6 +252,7 @@ export default function AccountsPage() {
   function openAddDialog() {
     setEditingId(null)
     setForm(emptyForm)
+    setPickStep(true)
     setDialogOpen(true)
   }
 
@@ -259,6 +264,7 @@ export default function AccountsPage() {
       starting_balance: acc.starting_balance,
       account_number: acc.account_number ?? '',
     })
+    setPickStep(false)
     setDialogOpen(true)
   }
 
@@ -803,16 +809,49 @@ export default function AccountsPage() {
                 <DialogDescription>
                   {editingId
                     ? t('accounts.dialog_edit_desc')
-                    : t('accounts.dialog_add_desc')}
+                    : pickStep
+                      ? (locale === 'id' ? 'Pilih institusi, atau ketik manual.' : 'Pick an institution, or type manually.')
+                      : t('accounts.dialog_add_desc')}
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
+          {!editingId && pickStep ? (
+          /* Langkah 1 (tambah saja): pilih institusi dari katalog */
+          <div className="py-2">
+            <InstitutionPicker
+              initialType={(form.type === 'digital_wallet' || form.type === 'rdn' ? form.type : 'bank') as BankCatalogType}
+              onPick={(item) => {
+                setForm({ ...form, name: item.name, type: item.type as AccountType })
+                setPickStep(false)
+                // Nama + tipe sudah keisi → langsung ke saldo.
+                setTimeout(() => document.getElementById('acc-balance')?.focus(), 80)
+              }}
+              onManual={() => {
+                setPickStep(false)
+                setTimeout(() => document.getElementById('acc-name')?.focus(), 80)
+              }}
+            />
+          </div>
+          ) : (
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="acc-name">{t('accounts.field_name')}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="acc-name">{t('accounts.field_name')}</Label>
+                {!editingId && (
+                  <button
+                    type="button"
+                    onClick={() => setPickStep(true)}
+                    className="text-[11px] font-medium hover:underline"
+                    style={{ color: 'var(--c-mint-ink)' }}
+                  >
+                    {locale === 'id' ? 'Pilih dari daftar' : 'Pick from list'}
+                  </button>
+                )}
+              </div>
               <InstitutionSearch
+                id="acc-name"
                 value={form.name}
                 onTextChange={(text) => setForm({ ...form, name: text })}
                 onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
@@ -856,13 +895,16 @@ export default function AccountsPage() {
               <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" />
             </div>
           </div>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('accounts.cancel')}</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              {editingId ? t('accounts.save') : t('accounts.add')}
-            </Button>
+            {!(pickStep && !editingId) && (
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
+                {editingId ? t('accounts.save') : t('accounts.add')}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
