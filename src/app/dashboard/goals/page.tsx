@@ -26,7 +26,7 @@ import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { RingProgress } from '@/components/ui/ring-progress'
 import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import {
   computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
   categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString, monthsUntil,
@@ -126,7 +126,7 @@ const STATUS_TONE: Record<'ok' | 'risk' | 'overdue' | 'done', { bg: string; ink:
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
 
 export default function GoalsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -515,7 +515,7 @@ export default function GoalsPage() {
                           {/* Status = teks berwarna di meta (per mockup), bukan pill. */}
                           <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                             {g.deadline
-                              ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
+                              ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', year: 'numeric' })}`
                               : (categoryLabel(g.category) ?? g.category)}
                             {status && (
                               <>

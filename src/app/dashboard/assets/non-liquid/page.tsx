@@ -22,7 +22,7 @@ import {
 import { LeafletMap } from '@/components/map/map-client'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
 import { depreciate, METODE_LABEL, type MetodePenyusutan } from '@/lib/depreciation'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
 const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
@@ -51,8 +51,8 @@ const PLACEHOLDERS: Record<Category, { name: string; note: string }> = {
   personal_item: { name: 'mis. Rolex Submariner',     note: 'mis. box & surat lengkap, kondisi mint' },
 }
 
-const monthYear = (d: string | null) =>
-  d ? new Date(d).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : '—'
+const monthYear = (d: string | null, locale: string) =>
+  d ? new Date(d).toLocaleDateString(locale, { month: 'short', year: 'numeric' }) : '—'
 
 interface AssetDetails {
   // kendaraan
@@ -102,7 +102,8 @@ const EMPTY: FormState = {
 }
 
 export default function NonLiquidAssetsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -306,7 +307,7 @@ export default function NonLiquidAssetsPage() {
           <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
         </div>
         <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--outline)' }}>
-          <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
+          <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date, dloc)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
           {hasMap && (
             <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
               {t('assets_nonliquid.open_maps')} <ExternalLink className="h-3 w-3" />
@@ -503,7 +504,7 @@ export default function NonLiquidAssetsPage() {
                           </div>
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{tipe}</td>
-                        <td className="px-3 py-3 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
+                        <td className="px-3 py-3 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date, dloc)}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{ageYears > 0 ? `${ageYears.toFixed(1)} ${t('assets_nonliquid.unit_years')}` : '—'}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
                         <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>

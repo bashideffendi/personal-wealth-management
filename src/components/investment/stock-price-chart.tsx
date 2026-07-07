@@ -9,7 +9,7 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 // Range buttons, in display order. Yahoo-form ticker handled server-side.
 const RANGES = ['1D', '1W', '1M', '3M', 'YTD', '1Y', '3Y', '5Y'] as const
@@ -53,7 +53,7 @@ function fmtPrice(value: number, currency: 'IDR' | 'USD'): string {
 }
 
 export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chartApi = 'stock', sourceLabel }: StockPriceChartProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const [range, setRange] = useState<RangeKey>('1D')
   const [points, setPoints] = useState<ChartPoint[]>([])
   const [meta, setMeta] = useState<ChartMeta | null>(null)
@@ -166,7 +166,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
         hour12: false,
       }) + ' WIB'
     }
-    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
   const hasData = data.length >= 2

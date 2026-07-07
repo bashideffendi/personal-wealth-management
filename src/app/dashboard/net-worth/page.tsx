@@ -11,7 +11,7 @@ import type { PayoffDebt } from '@/lib/debt-payoff'
 import dynamic from 'next/dynamic'
 import { Loader2, TrendingUp, TrendingDown, RefreshCw, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the net-worth route's initial JS (loads on chart mount).
 const ProjectionChart = dynamic(
@@ -36,11 +36,11 @@ interface NetWorthData {
   longTermDebt: number
 }
 
-const todayLong = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+const todayLong = (dloc: string) => new Date().toLocaleDateString(dloc, { day: 'numeric', month: 'long', year: 'numeric' })
 
-function nwMonthLabel(monthsAhead: number): string {
+function nwMonthLabel(monthsAhead: number, dloc: string): string {
   const d = new Date(); d.setMonth(d.getMonth() + monthsAhead)
-  return d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' })
+  return d.toLocaleDateString(dloc, { month: 'short', year: '2-digit' })
 }
 function ccMinPaymentNW(balance: number): number {
   if (balance <= 0) return 0
@@ -68,7 +68,8 @@ function snapshotDelta(snapshots: NetWorthSnapshot[], target: Date): { delta: nu
 
 export default function NetWorthPage() {
   const supabase = createClient()
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const qc = useQueryClient()
   const [period, setPeriod] = useState<'3m' | '6m' | '12m' | 'all'>('12m')
   const [nwStrategy, setNwStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
@@ -180,7 +181,7 @@ export default function NetWorthPage() {
   const isPositive = netWorth >= 0
   const projection = useMemo(() => projectNetWorth(totalAssets, payoffDebts, nwStrategy), [totalAssets, payoffDebts, nwStrategy])
   const projAccent = nwStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'
-  const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month), netWorth: p.netWorth })), [projection])
+  const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month, dloc), netWorth: p.netWorth })), [projection, dloc])
 
   // F10: komposisi pakai keluarga 4 warna logo (teal/coral/biru/ungu) + abu
   // netral — buang amber/ink liar biar konsisten sama chart lain.
@@ -218,7 +219,7 @@ export default function NetWorthPage() {
       {/* Slim header — judul gak diulang (ada di hero card di bawah) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
-          {t('networth.eyebrow')} · {todayLong}
+          {t('networth.eyebrow')} · {todayLong(dloc)}
         </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => document.getElementById('nw-history')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
@@ -288,7 +289,7 @@ export default function NetWorthPage() {
           {projection.feasible ? (
             <>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months, dloc)}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(projection.endNetWorth)}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
@@ -452,7 +453,8 @@ interface HistoryProps {
 }
 
 function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const filtered = useMemo(() => {
     if (period === 'all' || snapshots.length === 0) return snapshots
     const now = new Date()
@@ -471,9 +473,9 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
   }, [snapshots])
 
   const chartData = useMemo(() => filtered.map((s) => ({
-    date: new Date(s.snapshot_date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+    date: new Date(s.snapshot_date).toLocaleDateString(dloc, { month: 'short', day: 'numeric' }),
     rawDate: s.snapshot_date, assets: s.total_assets, debts: -s.total_debts, net: s.net_worth,
-  })), [filtered])
+  })), [filtered, dloc])
 
   const periodLabels = { '3m': t('networth.period_3m'), '6m': t('networth.period_6m'), '12m': t('networth.period_12m'), all: t('networth.period_all') }
 

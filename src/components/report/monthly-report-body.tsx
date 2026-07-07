@@ -13,7 +13,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { useT } from '@/lib/i18n/context'
+import { useI18n, useT } from '@/lib/i18n/context'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
@@ -46,7 +46,7 @@ export function MonthlyReportBody({
   month: number
   variant?: 'screen' | 'print'
 }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const now = new Date()
   const pageQuery = useQuery({
@@ -252,7 +252,7 @@ export function MonthlyReportBody({
   }
 
   const surplusWord = r.surplus >= 0 ? t('report.word_surplus') : t('report.word_deficit')
-  const generatedAt = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const generatedAt = now.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
   const nextMonthLabel = MONTHS[month % 12]
   const topUp = r.shifts.find((s) => s.delta > 0)
   const topDown = r.shifts.find((s) => s.delta < 0)
@@ -556,7 +556,7 @@ export function MonthlyReportBody({
           <div className="mt-3 flex flex-col">
             {r.top_expenses.map((tx, i) => (
               <div key={i} className="flex items-center gap-3 py-2.5" style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                <span className="num shrink-0 w-11 text-[11px]" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                <span className="num shrink-0 w-11 text-[11px]" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}</span>
                 <span className="flex-1 min-w-0">
                   <span className="block truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</span>
                   <span className="block truncate text-[11px]" style={{ color: 'var(--text-mute)' }}>{tx.category}</span>

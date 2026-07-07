@@ -695,7 +695,7 @@ function PreviewView({
   onBack: () => void
   onSave: () => void
 }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const typeLabel: Record<TxType, string> = {
     income: t('quickadd.type_income'),
     expense: t('quickadd.type_expense'),
@@ -764,7 +764,7 @@ function PreviewView({
             {data.category}
           </span>
           <span style={{ color: 'var(--ink-muted)' }}>
-            {new Date(data.date).toLocaleDateString('id-ID', {
+            {new Date(data.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', {
               day: 'numeric',
               month: 'short',
               year: 'numeric',

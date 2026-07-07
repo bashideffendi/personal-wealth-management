@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import type { Contract, ContractCategory, ContractFrequency } from '@/types'
@@ -79,10 +79,10 @@ function humanizeSisa(iso: string, today: Date): string {
   return `${d} hari`
 }
 const monthlyOf = (c: Contract) => !c.cost || !c.frequency ? 0 : c.frequency === 'monthly' ? c.cost : c.frequency === 'quarterly' ? c.cost / 3 : c.frequency === 'yearly' ? c.cost / 12 : 0
-const fullDate = (iso: string) => new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+const fullDate = (iso: string, locale: string) => new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 
 export default function ContractsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -306,7 +306,7 @@ export default function ContractsPage() {
                       const color = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : MINT_INK
                       return (
                         <div key={c.id} className="flex items-start gap-4 py-2.5" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
-                          <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date)}</span>
+                          <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date, locale)}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
                             <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>

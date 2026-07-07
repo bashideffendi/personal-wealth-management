@@ -21,6 +21,7 @@ import { TrendingDown, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
 import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
 import { occurrencesInRange, toLocalISO } from '@/lib/recurrence'
+import { useI18n } from '@/lib/i18n/context'
 
 interface RecurringItem {
   name: string
@@ -131,6 +132,7 @@ export function CashFlowForecast({
   safetyBuffer = 500_000,
   daysAhead = 30,
 }: Props) {
+  const { locale } = useI18n()
   const forecast = useMemo(
     () => buildForecast(liquidBalance, recurringItems, contracts, daysAhead),
     [liquidBalance, recurringItems, contracts, daysAhead],
@@ -323,7 +325,7 @@ export function CashFlowForecast({
             {eventDays.slice(0, 4).map((p) => (
               <div key={p.iso} className="flex items-center gap-1.5">
                 <span className="num font-medium" style={{ color: 'var(--ink-soft)' }}>
-                  {p.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                  {p.date.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}
                 </span>
                 <span className="truncate max-w-[100px]" style={{ color: 'var(--ink)' }}>
                   {p.events[0].name}

@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 const EquityArea = dynamic(() => import('./investment-charts').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
@@ -36,7 +36,7 @@ export interface PortfolioHeroProps {
 }
 
 export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, snapshots }: PortfolioHeroProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const [chartRange, setChartRange] = useState<ChartRangeKey>('all')
   const up = totals.pl >= 0
 
@@ -57,10 +57,10 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
       pts = pts.filter(([d]) => d >= cutStr)
     }
     return pts.map(([date, value]) => ({
-      label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+      label: new Date(date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' }),
       value,
     }))
-  }, [snapshots, totals.market, chartRange])
+  }, [snapshots, totals.market, chartRange, locale])
 
   // Equity curve only earns its slot once there's real history to draw.
   const hasHistory = snapshots.length >= 8

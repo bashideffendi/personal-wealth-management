@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
 
 export function ProjectionChart({ data, accent }: { data: Array<{ label: string; netWorth: number }>; accent: string }) {
   const t = useT()
@@ -32,7 +32,7 @@ export function ProjectionChart({ data, accent }: { data: Array<{ label: string;
 }
 
 export function HistoryChart({ data }: { data: Array<{ date: string; rawDate: string; assets: number; debts: number; net: number }> }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ComposedChart data={data} margin={{ top: 10, right: 8, bottom: 0, left: 8 }}>
@@ -47,7 +47,7 @@ export function HistoryChart({ data }: { data: Array<{ date: string; rawDate: st
           const p = payload[0].payload as { rawDate: string; assets: number; debts: number; net: number }
           return (
             <div className="rounded-md border px-3 py-2 text-xs shadow-[var(--card-shadow)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
-              <p className="font-semibold mb-1.5">{new Date(p.rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p className="font-semibold mb-1.5">{new Date(p.rawDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="num tabular flex justify-between gap-3"><span style={{ color: 'var(--c-mint-ink)' }}>● {t('networth.assets')}</span><span>{formatCurrency(p.assets)}</span></p>
               <p className="num tabular flex justify-between gap-3"><span style={{ color: 'var(--c-coral-ink)' }}>● {t('networth.debt')}</span><span>{formatCurrency(Math.abs(p.debts))}</span></p>
               <p className="num tabular flex justify-between gap-3 font-semibold mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-soft)' }}><span style={{ color: 'var(--c-violet-ink)' }}>● {t('networth.net_worth')}</span><span>{formatCurrency(p.net)}</span></p>

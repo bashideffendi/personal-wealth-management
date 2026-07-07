@@ -10,7 +10,7 @@ import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Debt, CreditCard as CreditCardRow } from '@/types'
 import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import { EduTip } from '@/components/edu/edu-tip'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -82,10 +82,10 @@ function nextDueISO(dateStr: string): string {
   return Number.isFinite(day) ? ccNextDueISO(day) : dateStr
 }
 
-function payoffDate(months: number): string {
+function payoffDate(months: number, locale: string): string {
   if (months <= 0 || months >= 600) return '—'
   const d = new Date(); d.setMonth(d.getMonth() + months)
-  return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', year: 'numeric' })
 }
 function daysUntil(d: string): number {
   if (!d) return Infinity
@@ -106,7 +106,7 @@ const emptyForm = {
 }
 
 export default function DebtsOverviewPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -311,7 +311,7 @@ export default function DebtsOverviewPage() {
                 <Flag className="size-3.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
                 {tlResult.feasible && tlResult.months > 0 && tlResult.months < 600 ? (
                   <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-muted)' }}>
-                    {t('debts.debt_free_by')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(tlResult.months)}</span>
+                    {t('debts.debt_free_by')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(tlResult.months, locale)}</span>
                     <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} ${t('debts.years')}` : `${tlResult.months} ${t('debts.months')}`} {t('debts.to_go')}</span>
                   </p>
                 ) : (
@@ -447,7 +447,7 @@ export default function DebtsOverviewPage() {
                         </td>
                         <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>
                           {tenor}
-                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_lower')} {payoffDate(tlResult.perDebt[d.id] ?? 0)}</p>}
+                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_lower')} {payoffDate(tlResult.perDebt[d.id] ?? 0, locale)}</p>}
                         </td>
                       </tr>
                     )
@@ -533,7 +533,7 @@ export default function DebtsOverviewPage() {
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
-                  <><span style={{ color: 'var(--c-violet-ink)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth)}</span>.</>
+                  <><span style={{ color: 'var(--c-violet-ink)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth, locale)}</span>.</>
                 ) : (
                   <>{t('debts.tradeoff_similar')}</>
                 )}
@@ -559,8 +559,8 @@ export default function DebtsOverviewPage() {
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_timeline')}</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
-                  {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>{t('debts.consumer_debt_free')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(consumerFreeMonth)}</span> · </>)}
-                  {t('debts.all_paid_off')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate(tlResult.months)}</span>
+                  {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>{t('debts.consumer_debt_free')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(consumerFreeMonth, locale)}</span> · </>)}
+                  {t('debts.all_paid_off')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate(tlResult.months, locale)}</span>
                 </p>
               </div>
               <div className="flex gap-1.5">
@@ -605,7 +605,7 @@ export default function DebtsOverviewPage() {
               <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(extraPayment)}</span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.now_paid_off')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months)}</p></div>
+              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.now_paid_off')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months, locale)}</p></div>
               <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.faster')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} ${t('debts.months')}` : '—'}</p></div>
               <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.interest_saved')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCurrency(Math.round(interestSaved)) : '—'}</p></div>
             </div>
@@ -627,7 +627,7 @@ export default function DebtsOverviewPage() {
                     <div key={d.id} className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="size-9 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: urgent ? 'var(--c-coral-soft)' : 'var(--surface-2)' }}>
-                          <span className="text-[8px] uppercase leading-none" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>{d.due_date ? new Date(d.due_date).toLocaleDateString('id-ID', { month: 'short' }) : '—'}</span>
+                          <span className="text-[8px] uppercase leading-none" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>{d.due_date ? new Date(d.due_date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short' }) : '—'}</span>
                           <span className="text-sm font-bold leading-none num" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink)' }}>{d.due_date ? new Date(d.due_date).getDate() : ''}</span>
                         </div>
                         <div className="min-w-0">
@@ -714,7 +714,7 @@ export default function DebtsOverviewPage() {
 function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }: {
   strategy: 'snowball' | 'avalanche'; result: PayoffResult; debts: Debt[]; accent: string; accentSoft: string; savedNote?: string
 }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const isSnow = strategy === 'snowball'
   const title = isSnow ? 'Snowball' : 'Avalanche'
   const desc = isSnow
@@ -732,7 +732,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>{t('debts.strategy')}</p>
           <h3 className="text-[18px] font-semibold leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
         </div>
-        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months)}</span>
+        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months, locale)}</span>
       </div>
       <p className="hidden md:block mt-3 text-[15px] leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
       <p className="hidden md:block text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
@@ -761,7 +761,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
         })}
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: `1px solid color-mix(in srgb, ${accent} 28%, transparent)` }}>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_payoff')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months)}</p></div>
+        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_payoff')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months, locale)}</p></div>
         <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_interest')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
         <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.character')}</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
       </div>
@@ -771,7 +771,7 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
 }
 
 function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: string }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const tl = result.timeline
   if (tl.length < 2) return <p className="mt-4 text-sm" style={{ color: 'var(--ink-soft)' }}>{t('debts.timeline_not_available')}</p>
   const maxM = tl[tl.length - 1].month
@@ -806,7 +806,7 @@ function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: stri
           {result.events.slice(0, 6).map((e) => (
             <span key={`leg-${e.name}-${e.month}`} className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px]" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
               <span className="size-1.5 rounded-full" style={{ background: accent }} />
-              {e.name} {t('debts.paid_off_lower')} · <span className="num">{payoffDate(e.month)}</span>
+              {e.name} {t('debts.paid_off_lower')} · <span className="num">{payoffDate(e.month, locale)}</span>
             </span>
           ))}
         </div>

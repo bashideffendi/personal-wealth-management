@@ -89,7 +89,7 @@ const isoDaysAgo = (days: number) => new Date(Date.now() - days * DAY).toISOStri
 // dashboard) — lihat src/lib/recurrence.ts.
 const occurrencesIn30 = (r: RecurLike) => occurrencesInRange(r, startOfToday(), 30)
 
-const dmy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+const dmy = (d: Date, dloc: string) => d.toLocaleDateString(dloc, { day: 'numeric', month: 'short' })
 
 /** Ekuivalen bulanan buat agregasi lintas frekuensi. */
 const monthlyEq = (r: RecurringTransaction) => r.frequency === 'monthly' ? r.amount : r.frequency === 'weekly' ? r.amount * 52 / 12 : r.frequency === 'yearly' ? r.amount / 12 : r.amount * 365 / 12
@@ -101,7 +101,7 @@ const klasOf = (r: RecurringTransaction): Klas =>
     : r.end_date && r.type === 'expense' ? 'cicilan'
       : 'rutin'
 
-const dmyy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })
+const dmyy = (d: Date, dloc: string) => d.toLocaleDateString(dloc, { day: 'numeric', month: 'short', year: '2-digit' })
 
 /* ===== Mobile Budget-style (F14): 4 tab (3 klasifikasi + Kontrak) + avatar inisial ===== */
 type MTab = Klas | 'kontrak'
@@ -119,6 +119,7 @@ function avatarStyle(name: string, category: string): { bg: string; fg: string }
 
 export default function RecurringPage() {
   const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const KLAS_LABELS: Record<Klas, string> = locale === 'en'
     ? { rutin: 'Repeat', cicilan: 'Installment', langganan: 'Subscription' }
     : { rutin: 'Rutin', cicilan: 'Cicilan', langganan: 'Langganan' }
@@ -343,7 +344,7 @@ export default function RecurringPage() {
     if (biggest) out.push({ title: `${biggest.name} ${t('recurring.sug_biggest_title_suffix')}`, body: `${formatCurrency(Math.round(monthlyEq(biggest)))}${t('recurring.per_month_short')} (${(monthlyEq(biggest) / Math.max(1, breakdownTotal) * 100).toFixed(0)}% ${t('recurring.sug_biggest_body_suffix')}).` })
     const yearlyBig = payments.filter((r) => r.frequency === 'yearly')[0]
     const yNext = yearlyBig ? nextRunDate(yearlyBig) : null
-    if (yearlyBig && yNext) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(yNext)}.` })
+    if (yearlyBig && yNext) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(yNext, dloc)}.` })
     return out.slice(0, 3)
   }, [payments, breakdownTotal, t])
 
@@ -486,7 +487,7 @@ export default function RecurringPage() {
                         <div className="min-w-0 flex-1">
                           <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
                           <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                            {label} · {locale === 'en' ? 'renews' : 'perpanjang'} {dmy(new Date(c.end_date))}
+                            {label} · {locale === 'en' ? 'renews' : 'perpanjang'} {dmy(new Date(c.end_date), dloc)}
                           </p>
                         </div>
                         <p className="num tabular text-[13px] font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
@@ -514,7 +515,7 @@ export default function RecurringPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
                         <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                          {FREQ_LABELS[r.frequency]} · {next ? dmy(next) : '—'}
+                          {FREQ_LABELS[r.frequency]} · {next ? dmy(next, dloc) : '—'}
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -573,7 +574,7 @@ export default function RecurringPage() {
                   const has = d.amount > 0
                   const isToday = i === 0
                   return (
-                    <div key={i} className="shrink-0 rounded-lg border grid content-between text-center" title={has ? `${dmy(d.date)} · ${formatCurrency(d.amount)}` : dmy(d.date)}
+                    <div key={i} className="shrink-0 rounded-lg border grid content-between text-center" title={has ? `${dmy(d.date, dloc)} · ${formatCurrency(d.amount)}` : dmy(d.date, dloc)}
                       style={{ width: 46, height: 56, padding: 6, borderColor: isToday ? 'var(--ink)' : has ? tint(VIOLET, 33) : 'var(--border-soft)', background: has ? tint(VIOLET, 6) : 'var(--surface)' }}>
                       <span className="num text-[13px] font-semibold" style={{ color: isToday ? 'var(--ink)' : has ? VIOLET_INK : 'var(--ink-soft)' }}>{d.date.getDate()}</span>
                       {has && <span className="num text-[8.5px] leading-tight" style={{ color: VIOLET_INK }}>{d.amount >= 1e6 ? `${(d.amount / 1e6).toFixed(1)}jt` : `${Math.round(d.amount / 1e3)}k`}</span>}
@@ -665,7 +666,7 @@ export default function RecurringPage() {
                             <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{FREQ_LABELS[r.frequency]}</span></td>
                             <td className="px-3 py-3 text-[13px] truncate" style={{ color: 'var(--ink-muted)' }}>{acc?.name ?? '—'}</td>
                             <td className="px-3 py-3 text-right">
-                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next) : '—'}</p>
+                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next, dloc) : '—'}</p>
                               <p className="num text-[10px]" style={{ color: urgent ? CORAL_INK : 'var(--ink-soft)' }}>{ended ? t('recurring.badge_ended') : r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
@@ -893,7 +894,7 @@ export default function RecurringPage() {
                     <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
                     <div className="text-right shrink-0">
                       <p className="num tabular text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
-                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d)}</p>
+                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d, dloc)}</p>
                     </div>
                   </div>
                 )

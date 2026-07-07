@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, Loader2, Receipt, Trash2, BadgeDollarSign, CalendarDays } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 interface DebtPayment {
   id: string
@@ -29,7 +29,7 @@ interface DebtPayment {
 }
 
 export default function DebtPaymentsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -146,7 +146,7 @@ export default function DebtPaymentsPage() {
               </div>
               <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(thisMonth)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
-                {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                {new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'long', year: 'numeric' })}
               </p>
             </div>
           </div>
