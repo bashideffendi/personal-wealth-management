@@ -128,6 +128,9 @@ export default function BudgetingPage() {
 
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
+  // Des tahun sebelumnya (key `${type}|${category}`) — sumber "Salin bulan lalu"
+  // saat bulan terpilih Januari; di-fetch bareng fetchBudgets.
+  const [prevDecBudgets, setPrevDecBudgets] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(noCollapsed)
 
@@ -241,11 +244,20 @@ export default function BudgetingPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data, error } = await supabase
-        .from('budgets')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('year', Number(selectedYear))
+      const [{ data, error }, decRes] = await Promise.all([
+        supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('year', Number(selectedYear)),
+        // Des tahun-1 — sumber "Salin bulan lalu" untuk Januari.
+        supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('year', Number(selectedYear) - 1)
+          .eq('month', 12),
+      ])
       if (error) {
         // Jangan render grid kosong seolah anggaran tahun ini blank.
         toast.error(t('common.load_failed'))
@@ -260,6 +272,11 @@ export default function BudgetingPage() {
         }
       }
       setBudgets(map)
+      const decMap: Record<string, number> = {}
+      for (const b of (decRes.data ?? []) as Budget[]) {
+        decMap[`${b.type}|${b.category}`] = b.amount
+      }
+      setPrevDecBudgets(decMap)
       loadMonthlyActuals(supabase, user.id, selectedYear).then(setActuals)
       setLoading(false)
     },
@@ -374,6 +391,90 @@ export default function BudgetingPage() {
 
   function getValue(type: string, category: string, month: number) {
     return budgets[budgetKey(type, category, month)] ?? 0
+  }
+
+  // ---- Salin anggaran bulan lalu (reuse ringan, tanpa skema baru) ----
+
+  // Semua entri ≠0 (type, category, amount) satu bulan, di-parse dari BudgetMap.
+  // Aman walau category mengandung '|': type gak pernah ber-'|' (separator
+  // pertama) dan month selalu di belakang separator terakhir.
+  function monthEntries(month: number) {
+    const out: { type: BudgetType; category: string; amount: number }[] = []
+    for (const [k, v] of Object.entries(budgets)) {
+      if (!v) continue
+      const lastSep = k.lastIndexOf('|')
+      if (Number(k.slice(lastSep + 1)) !== month) continue
+      const firstSep = k.indexOf('|')
+      out.push({ type: k.slice(0, firstSep) as BudgetType, category: k.slice(firstSep + 1, lastSep), amount: v })
+    }
+    return out
+  }
+
+  // Sumber salinan untuk bulan target: bulan sebelumnya di tahun yang sama,
+  // atau Des tahun-1 (dari prevDecBudgets) kalau targetnya Januari.
+  function prevMonthEntries(targetMonth: number) {
+    if (targetMonth === 1) {
+      return Object.entries(prevDecBudgets)
+        .filter(([, v]) => v !== 0)
+        .map(([k, amount]) => {
+          const i = k.indexOf('|')
+          return { type: k.slice(0, i) as BudgetType, category: k.slice(i + 1), amount }
+        })
+    }
+    return monthEntries(targetMonth - 1)
+  }
+
+  function monthAllocTotal(month: number) {
+    return monthEntries(month).reduce((s, e) => s + e.amount, 0)
+  }
+
+  function prevMonthAllocTotal(targetMonth: number) {
+    return prevMonthEntries(targetMonth).reduce((s, e) => s + e.amount, 0)
+  }
+
+  // Salin SEMUA anggaran bulan lalu (semua tipe) ke bulan target — batch upsert
+  // dgn optimistic update + rollback, pola sama persis dgn fillRange.
+  async function copyFromPrevMonth(targetMonth: number) {
+    const source = prevMonthEntries(targetMonth)
+    if (!source.length) return
+    if (monthAllocTotal(targetMonth) > 0) {
+      const label = shortMonths[targetMonth - 1]
+      const ok = window.confirm(
+        locale === 'id'
+          ? `${label} sudah ada isinya. Timpa dengan anggaran bulan lalu?`
+          : `${label} already has values. Overwrite with last month's budget?`,
+      )
+      if (!ok) return
+    }
+    const prevValues: Record<string, number> = {}
+    for (const e of source) {
+      const k = budgetKey(e.type, e.category, targetMonth)
+      prevValues[k] = budgets[k] ?? 0
+    }
+    setBudgets((prev) => {
+      const next = { ...prev }
+      for (const e of source) next[budgetKey(e.type, e.category, targetMonth)] = e.amount
+      return next
+    })
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    const rows = source.map((e) => ({
+      user_id: user.id,
+      year: Number(year),
+      month: targetMonth,
+      type: e.type,
+      category: e.category,
+      amount: e.amount,
+    }))
+    const { error } = await supabase.from('budgets').upsert(rows, { onConflict: 'user_id,year,month,type,category' })
+    if (error) {
+      setBudgets((prev) => ({ ...prev, ...prevValues }))
+      toast.error(t('common.mutation_failed'))
+    } else {
+      toast.success(locale === 'id' ? 'Anggaran bulan lalu disalin' : "Last month's budget copied")
+    }
   }
 
   // Year-grid "Rencana / Realisasi" toggle. In Realisasi mode the grid — and every
@@ -964,6 +1065,31 @@ export default function BudgetingPage() {
         info={t('budgeting.subtitle')}
         actions={
           <>
+            {(() => {
+              // Target salin = bulan yang lagi "aktif" (logika sama dgn banner
+              // zero-based): view Bulan → focusMonth; view Tahun → bulan berjalan.
+              const bMonth = viewMode === 'month' ? focusMonth : isCurrentYearActive ? currentMonth : 1
+              const prevEmpty = prevMonthAllocTotal(bMonth) === 0
+              const prevLabel = bMonth === 1 ? `${shortMonths[11]} ${Number(year) - 1}` : shortMonths[bMonth - 2]
+              return (
+                <Button
+                  variant="outline"
+                  className="hidden md:inline-flex"
+                  disabled={loading || prevEmpty}
+                  onClick={() => void copyFromPrevMonth(bMonth)}
+                  title={
+                    prevEmpty
+                      ? locale === 'id' ? `Anggaran ${prevLabel} kosong` : `${prevLabel} budget is empty`
+                      : locale === 'id'
+                        ? `Salin anggaran ${prevLabel} → ${shortMonths[bMonth - 1]}`
+                        : `Copy ${prevLabel} budget → ${shortMonths[bMonth - 1]}`
+                  }
+                >
+                  <Copy className="h-4 w-4" data-icon="inline-start" />
+                  {locale === 'id' ? 'Salin bulan lalu' : 'Copy last month'}
+                </Button>
+              )
+            })()}
             <Button onClick={() => setManagerOpen(true)}>
               <FolderTree className="h-4 w-4" data-icon="inline-start" />
               {t('budgeting.manage_categories')}
@@ -1067,6 +1193,9 @@ export default function BudgetingPage() {
             getValue={getValue}
             actuals={actuals}
             onCellChange={handleCellBlur}
+            monthAllocTotal={monthAllocTotal}
+            prevMonthAllocTotal={prevMonthAllocTotal}
+            onCopyPrevMonth={copyFromPrevMonth}
           />
         </div>
 

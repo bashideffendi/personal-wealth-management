@@ -30,7 +30,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, Info } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Copy, Info } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { NumberInput } from '@/components/ui/number-input'
 import { CategoryIcon } from '@/components/transactions/category-icon'
@@ -52,6 +52,12 @@ interface MobileBudgetingViewProps {
   /** Realisasi per `${type}::${category}::${month}` dari loadMonthlyActuals. */
   actuals: Record<string, number>
   onCellChange: (type: BudgetType, category: string, month: number, value: number) => void | Promise<void>
+  /** Total semua nilai anggaran (semua tipe) satu bulan — deteksi bulan kosong. */
+  monthAllocTotal: (month: number) => number
+  /** Total anggaran bulan sebelumnya (Jan → Des tahun-1, dihitung halaman). */
+  prevMonthAllocTotal: (month: number) => number
+  /** Salin semua anggaran bulan lalu ke bulan ini (batch upsert di halaman). */
+  onCopyPrevMonth: (month: number) => void | Promise<void>
 }
 
 // labelKey → i18n (Pendapatan/Pengeluaran/Tabungan/Investasi ikut locale)
@@ -143,6 +149,9 @@ export function MobileBudgetingView({
   getValue,
   actuals,
   onCellChange,
+  monthAllocTotal,
+  prevMonthAllocTotal,
+  onCopyPrevMonth,
 }: MobileBudgetingViewProps) {
   const { t, locale } = useI18n()
   const { hidden: privacyHidden } = usePrivacy()
@@ -153,6 +162,9 @@ export function MobileBudgetingView({
 
   // Edit inline satu baris: tap angka → NumberInput, commit saat blur.
   const [editing, setEditing] = useState<{ key: string; value: number } | null>(null)
+
+  // Guard anti double-tap saat batch upsert "Salin dari bulan lalu" jalan.
+  const [copying, setCopying] = useState(false)
 
   // Toggle floating "Rencana | Sisa": plan = "realisasi / anggaran" (existing),
   // remain = angka kanan jadi sisa (anggaran − realisasi).
@@ -423,6 +435,38 @@ export function MobileBudgetingView({
           <ChevronRight className="size-4" style={{ color: 'var(--ink-soft)' }} />
         </button>
       </div>
+
+      {/* Salin dari bulan lalu — HANYA saat bulan terpilih kosong total.
+          Setelah tersalin (optimistic), total > 0 → baris ini hilang sendiri. */}
+      {monthAllocTotal(month) === 0 && (() => {
+        const prevEmpty = prevMonthAllocTotal(month) === 0
+        return (
+          <div className="flex flex-col items-center gap-1 pt-1">
+            <button
+              type="button"
+              disabled={prevEmpty || copying}
+              onClick={async () => {
+                setCopying(true)
+                try {
+                  await onCopyPrevMonth(month)
+                } finally {
+                  setCopying(false)
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-opacity active:opacity-70 disabled:opacity-45"
+              style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
+            >
+              <Copy className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
+              {locale === 'id' ? 'Salin dari bulan lalu' : 'Copy from last month'}
+            </button>
+            {prevEmpty && (
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                {locale === 'id' ? 'Bulan lalu juga kosong' : 'Last month is empty too'}
+              </p>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Kartu ringkasan ala Budget — F13d: donut multi-segmen share alokasi
           induk expense + total alokasi bulan + list ringkas per induk */}

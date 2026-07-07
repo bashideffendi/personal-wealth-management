@@ -5,6 +5,7 @@ import { QuickAddLauncher } from '@/components/layout/quick-add-launcher'
 import { CommandPalette } from '@/components/layout/command-palette'
 import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
 import { InstallPrompt } from '@/components/layout/install-prompt'
+import { OfflineSync } from '@/components/layout/offline-sync'
 
 /**
  * Dashboard layout — fintech top-nav shell.
@@ -92,6 +93,8 @@ export default async function DashboardLayout({
       <CommandPalette />
       <BottomTabBar />
       <InstallPrompt />
+      {/* Penyapu antrian transaksi offline — flush on mount/online/60s */}
+      <OfflineSync />
     </div>
   )
 }

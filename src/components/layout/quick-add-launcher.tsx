@@ -14,9 +14,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { enqueue, isNetworkError } from '@/lib/offline-queue'
 import { useCategoryOptions } from '@/lib/use-category-options'
 import { adjustCardBalance } from '@/lib/data/balances'
 import type { Account, CreditCard } from '@/types'
@@ -98,7 +99,7 @@ interface QuickAddLauncherProps {
 }
 
 export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const router = useRouter()
   const supabase = createClient()
   const { firstOf } = useCategoryOptions()
@@ -368,22 +369,36 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       return
     }
     setManualSaving(true)
+    // getUser() butuh network — saat offline balikannya null. Fallback ke
+    // session lokal (getSession baca storage, gak fetch) biar entri offline
+    // tetap bisa diantre dengan user_id yang benar.
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) {
+    let userId: string | null = user?.id ?? null
+    if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession()
+      userId = session?.user?.id ?? null
+    }
+    if (!userId) {
       setManualSaving(false)
       return
     }
-    const { error } = await supabase.from('transactions').insert({
-      user_id: user.id,
+    const payload = {
+      user_id: userId,
       date: form.date,
       account_id: form.account_id,
       type: form.type,
       category: form.category,
       description: form.description,
       amount: form.amount,
-    })
+    }
+    let error: { message?: string } | null = null
+    try {
+      ;({ error } = await supabase.from('transactions').insert(payload))
+    } catch (err) {
+      error = { message: err instanceof Error ? err.message : String(err) }
+    }
 
     // Bump credit card outstanding if applicable
     const cc = cards.find((c) => c.id === form.account_id)
@@ -395,6 +410,23 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
     setManualSaving(false)
     if (error) {
+      // Gagal karena jaringan → antre offline, tanpa error merah & tanpa
+      // dispatch 'klunting:data-changed' (belum ada di DB — hindari data hantu).
+      if (isNetworkError(error) && enqueue(payload)) {
+        toast.info(
+          locale === 'id' ? 'Tersimpan offline, akan disinkron saat online' : 'Saved offline, will sync when online',
+        )
+        // Bump saldo kartu kredit gak ikut diantre — kasih tau biar gak senyap.
+        if (cc && form.type === 'expense') {
+          toast.warning(
+            locale === 'id'
+              ? 'Saldo kartu kredit tidak diperbarui otomatis untuk transaksi offline. Cek halaman Kartu Kredit setelah online.'
+              : 'Credit card balance is not auto-updated for offline transactions. Check the Credit Cards page once online.',
+          )
+        }
+        setOpen(false)
+        return
+      }
       toast.error(t('quickadd.save_failed'), { description: error.message })
       return
     }

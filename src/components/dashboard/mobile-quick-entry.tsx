@@ -25,7 +25,8 @@ import { X, Check, Delete, Wallet, CalendarDays, StickyNote, ArrowUpRight } from
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { subKey } from '@/lib/budget-categories'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
+import { enqueue, isNetworkError } from '@/lib/offline-queue'
 
 interface QuickEntryProps {
   open: boolean
@@ -46,7 +47,7 @@ const todayIso = () => {
 }
 
 export function MobileQuickEntry({ open, onOpenChange, category, type, budget, spent, subs }: QuickEntryProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const [amount, setAmount] = useState(0)
   const [sub, setSub] = useState<string | null>(null)
@@ -98,20 +99,48 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
     if (amount <= 0) { toast.error(t('quickadd.amount_gt_zero')); return }
     if (!accountId) { toast.error(t('quickadd.pick_account_first')); return }
     setSaving(true)
+    // getUser() butuh network — saat offline balikannya null. Fallback ke
+    // session lokal (getSession baca storage, gak fetch) biar entri offline
+    // tetap bisa diantre dengan user_id yang benar.
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setSaving(false); return }
+    let userId: string | null = user?.id ?? null
+    if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession()
+      userId = session?.user?.id ?? null
+    }
+    if (!userId) { setSaving(false); return }
     const cat = sub ? subKey(category, sub) : category
-    const { error } = await supabase.from('transactions').insert({
-      user_id: user.id,
+    const payload = {
+      user_id: userId,
       date,
       account_id: accountId,
       type,
       category: cat,
       description: note,
       amount,
-    })
+    }
+    let error: { message?: string } | null = null
+    try {
+      ;({ error } = await supabase.from('transactions').insert(payload))
+    } catch (err) {
+      error = { message: err instanceof Error ? err.message : String(err) }
+    }
     setSaving(false)
-    if (error) { toast.error(t('quickadd.save_failed'), { description: error.message }); return }
+    if (error) {
+      // Gagal karena jaringan → antre offline, JANGAN error merah. Sengaja
+      // TANPA dispatch 'klunting:data-changed': transaksi belum ada di DB,
+      // refetch cuma bikin angka "hantu" yang hilang lagi. Toast cukup.
+      if (isNetworkError(error) && enqueue(payload)) {
+        toast.info(
+          locale === 'id' ? 'Tersimpan offline, akan disinkron saat online' : 'Saved offline, will sync when online',
+          { description: `${cat} · ${formatCurrency(amount)}` },
+        )
+        onOpenChange(false)
+        return
+      }
+      toast.error(t('quickadd.save_failed'), { description: error.message })
+      return
+    }
     toast.success(t('quickadd.saved'), { description: `${cat} · ${formatCurrency(amount)}` })
     onOpenChange(false)
     window.dispatchEvent(new CustomEvent('klunting:data-changed'))
