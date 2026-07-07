@@ -205,17 +205,17 @@ export default function AccountsPage() {
       const [liquidEntries, nlqRes, invRes, debtRes, ccRes] = await Promise.all([
         fetchLiquidEntries(supabase, user.id, { strict: true }),
         supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
-        supabase.from('investments').select('id, name, category, quantity, avg_cost, total_value').eq('user_id', user.id),
+        // Total investasi tetap di-fetch: dibutuhkan buat angka kekayaan bersih di hero.
+        supabase.from('investments').select('total_value').eq('user_id', user.id),
         supabase.from('debts').select('remaining').eq('user_id', user.id).eq('is_active', true),
         supabase.from('credit_cards').select('id, name, last_four, current_balance').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
       ])
       if (nlqRes.error) throw nlqRes.error
       if (debtRes.error) throw debtRes.error
 
-      type InvRow = { id: string; name: string | null; category: string; quantity: number; avg_cost: number; total_value: number }
       type CardRow = { id: string; name: string; last_four: string | null; current_balance: number }
       const nonLiquid = (nlqRes.data ?? []) as { category: string; current_value: number }[]
-      const investments = (invRes.data ?? []) as InvRow[]
+      const investments = (invRes.data ?? []) as { total_value: number }[]
       const cards = (ccRes.data ?? []) as CardRow[]
 
       const invTotal = investments.reduce((s, i) => s + (i.total_value || 0), 0)
@@ -232,19 +232,10 @@ export default function AccountsPage() {
         invTotal,
         ccTotal,
         cards,
-        topHoldings: [...investments].sort((a, b) => (b.total_value || 0) - (a.total_value || 0)).slice(0, 5),
       }
     },
   })
   const nw = nwLite.data
-
-  // Label kategori investasi — pakai key assets.cat_* yang sudah ada.
-  const invCatKey: Record<string, string> = {
-    stock: 'assets.cat_stock', mutual_fund: 'assets.cat_mutual_fund', crypto: 'assets.cat_crypto',
-    gold: 'assets.cat_gold', bond: 'assets.cat_bond', sbn: 'assets.cat_sbn',
-    time_deposit: 'assets.cat_time_deposit', forex: 'assets.cat_forex', p2p: 'assets.cat_p2p',
-    pension: 'assets.cat_pension', business: 'assets.cat_business',
-  }
 
   function openAddDialog() {
     setEditingId(null)
@@ -552,7 +543,7 @@ export default function AccountsPage() {
         </div>
       ) : (
         <>
-        {/* ═══ MOBILE (<md): grup list ala Budget — Akun / Kartu Kredit / Investasi ═══ */}
+        {/* ═══ MOBILE (<md): grup list ala Budget — Akun / Kartu Kredit + link Investasi ═══ */}
         <div className="md:hidden space-y-3">
           {/* a. Akun — data existing, restyle grup */}
           <section className="s-card overflow-hidden pb-1">
@@ -620,42 +611,17 @@ export default function AccountsPage() {
             </section>
           )}
 
-          {/* c. Investasi — top-5 holdings by nilai */}
-          {nw && nw.topHoldings.length > 0 && (
-            <section className="s-card overflow-hidden pb-1">
-              <Link href="/dashboard/assets/investment" className="flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70">
-                <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-violet-ink)' }}>
-                  {t('assets.investments')} <ChevronRight className="size-3.5" />
+          {/* c. Investasi — 1 baris link ringkas; list holdings ada di halamannya sendiri */}
+          {nw && (
+            <section className="s-card overflow-hidden">
+              <Link href="/dashboard/assets/investment" className="flex items-center justify-between px-4 py-3 active:opacity-70">
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--c-violet-ink)' }}>
+                  {t('assets.investments')}
                 </p>
-                <p className="num tabular text-[13px] font-semibold" title={formatCurrency(nw.invTotal)} style={{ color: 'var(--c-violet-ink)' }}>
-                  {formatCompactCurrency(nw.invTotal)}
+                <p className="num tabular text-[13px] font-semibold inline-flex items-center gap-0.5" title={formatCurrency(nw.invTotal)} style={{ color: 'var(--c-violet-ink)' }}>
+                  {formatCompactCurrency(nw.invTotal)} <ChevronRight className="size-3.5" />
                 </p>
               </Link>
-              {nw.topHoldings.map((h, i) => {
-                const catLabel = t(invCatKey[h.category] ?? 'assets.investments')
-                const cost = (h.quantity || 0) * (h.avg_cost || 0)
-                const pl = cost > 0 ? (((h.total_value || 0) - cost) / cost) * 100 : null
-                return (
-                  <div key={h.id} className="flex items-center gap-3 px-4" style={{ minHeight: 50, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13.5px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
-                        {h.name?.trim() || catLabel}
-                      </p>
-                      <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{catLabel}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-                        {formatCurrency(h.total_value || 0)}
-                      </p>
-                      {pl !== null && (
-                        <p className="num tabular text-[11px] font-medium leading-tight mt-0.5" style={{ color: pl >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
-                          {pl >= 0 ? '+' : ''}{pl.toFixed(1)}%
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
             </section>
           )}
         </div>

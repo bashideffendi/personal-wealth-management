@@ -18,6 +18,8 @@ import { RangePicker, type DateRange } from '@/components/transactions/range-pic
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
 import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
+import { MobileStatsView } from '@/components/transactions/mobile-stats-view'
+import { monthLong } from '@/lib/i18n/dates'
 import { adjustCardBalance } from '@/lib/data/balances'
 
 import { Button } from '@/components/ui/button'
@@ -450,6 +452,9 @@ export default function TransactionsPage() {
   // Mobile chrome: filter grid collapsed by default; aksi sekunder toolbar masuk sheet "⋯".
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false)
+  // F13c: toggle Catatan|Statistik ala app Budget (Record|Stats) — mobile only.
+  // 'stats' hide kalender+search+list, tampilkan MobileStatsView bulan aktif.
+  const [mobileView, setMobileView] = useState<'record' | 'stats'>('record')
   // Form "Tambah Cepat" muncul di bawah filter — scroll ke tengah pas dibuka
   // biar user gak ketinggalan / harus scroll cari sendiri.
   const quickAddRef = useRef<HTMLDivElement>(null)
@@ -883,6 +888,13 @@ export default function TransactionsPage() {
     return { perDay, income, expense }
   }, [transactions, calMonth])
 
+  // F13c: transaksi bulan kalender aktif — input MobileStatsView (agregasi
+  // per kategori dihitung internal komponen; Transfer di-skip di sana).
+  const statsMonthTx = useMemo(() => {
+    const ym = `${calMonth.getFullYear()}-${String(calMonth.getMonth() + 1).padStart(2, '0')}`
+    return transactions.filter((tx) => tx.date.startsWith(ym))
+  }, [transactions, calMonth])
+
   // Daftar kategori filter — diturunkan dari tree user (induk + subkategori).
   const allTags = Array.from(new Set(transactions.flatMap((t) => t.tags ?? []))).sort((a, b) =>
     a.localeCompare(b, 'id'),
@@ -1000,7 +1012,7 @@ export default function TransactionsPage() {
       {/* F12: kalender bulan ala Budget (mobile) — gantiin chip bulan F9c.
           Kalender = lensa (gak nyentuh dateRange); tap tanggal → list di
           bawah difilter ke hari itu. Data sel dari SEMUA transaksi. */}
-      <div className="md:hidden">
+      <div className={mobileView === 'stats' ? 'hidden' : 'md:hidden'}>
         <MobileMonthCalendar
           monthDate={calMonth}
           data={calData}
@@ -1016,6 +1028,17 @@ export default function TransactionsPage() {
           }}
         />
       </div>
+
+      {/* F13c: panel Statistik (mobile) — gantiin kalender+search+list pas
+          toggle di posisi Statistik. Data = bulan kalender aktif (calMonth). */}
+      {mobileView === 'stats' && !loading && !loadError && (
+        <div className="md:hidden">
+          <MobileStatsView
+            transactions={statsMonthTx}
+            monthLabel={`${monthLong(calMonth.getMonth(), locale)} ${calMonth.getFullYear()}`}
+          />
+        </div>
+      )}
 
       {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
       {!loading && filteredTransactions.length > 0 && (() => {
@@ -1072,7 +1095,7 @@ export default function TransactionsPage() {
       {/* Search + filters — satu card: search di atas, filter di bawahnya.
           Mobile: grid filter collapsed (panel 4 dropdown makan setengah layar) —
           toggle lewat tombol "Filter (n)" di samping search. Desktop: selalu tampil. */}
-      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+      <div className={`rounded-xl border p-3 ${mobileView === 'stats' ? 'hidden md:block' : ''}`} style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="flex gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
@@ -1396,7 +1419,8 @@ export default function TransactionsPage() {
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
-        <div className="s-card flex flex-col items-center text-center py-16 px-8">
+        // (di mobile mode Statistik: hide — panel stats punya empty message sendiri)
+        <div className={`s-card ${mobileView === 'stats' ? 'hidden md:flex' : 'flex'} flex-col items-center text-center py-16 px-8`}>
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--surface-2)' }}
@@ -1589,8 +1613,9 @@ export default function TransactionsPage() {
 
           {/* Mobile (F9c): grouped per HARI — header tanggal + net harian nempel
               kanvas, baris dalam kartu per hari (pola app keuangan native).
-              Tap baris = edit; tombol hapus kecil di kanan (stopPropagation). */}
-          <div className="md:hidden">
+              Tap baris = edit; tombol hapus kecil di kanan (stopPropagation).
+              F13c: di mode Statistik list di-hide (diganti MobileStatsView). */}
+          <div className={mobileView === 'stats' ? 'hidden' : 'md:hidden'}>
             {(() => {
               const byDate = new Map<string, typeof filteredTransactions>()
               for (const tx of filteredTransactions) {
@@ -2164,6 +2189,41 @@ export default function TransactionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* F13c: toggle Catatan|Statistik ala app Budget — pill floating di atas
+          dock (dock z-30, bottom 10+safe-area, tinggi 64 → pill di ~88px).
+          z-40 = di atas konten, di bawah dialog/sheet (z-50). Mobile only.
+          Label: gak ada key i18n yang pas ("Catatan"/"Statistik" standalone)
+          → literal locale ternary, JANGAN nambah key ke messages.ts. */}
+      <div
+        className="md:hidden fixed left-1/2 -translate-x-1/2 z-40 flex items-center rounded-full p-1"
+        style={{
+          bottom: 'calc(88px + env(safe-area-inset-bottom))',
+          background: 'var(--surface)',
+          border: '1px solid var(--border-soft)',
+          boxShadow: '0 4px 14px rgba(24,24,27,.10)',
+        }}
+        role="group"
+        aria-label={`${locale === 'en' ? 'Record' : 'Catatan'} | ${locale === 'en' ? 'Stats' : 'Statistik'}`}
+      >
+        {([
+          ['record', locale === 'en' ? 'Record' : 'Catatan'],
+          ['stats', locale === 'en' ? 'Stats' : 'Statistik'],
+        ] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setMobileView(v)}
+            aria-pressed={mobileView === v}
+            className="rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition-colors"
+            style={mobileView === v
+              ? { background: 'var(--ink)', color: 'var(--surface)' }
+              : { color: 'var(--ink-soft)' }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

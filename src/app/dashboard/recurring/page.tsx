@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { isExpired, nextRunDate, occurrencesInRange, startOfToday, type RecurLike } from '@/lib/recurrence'
+import { isExpired, nextRunDate, occurrencesInRange, parseISODate, startOfToday, type RecurLike } from '@/lib/recurrence'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
@@ -24,7 +24,9 @@ import {
   Home, Zap, Film, Shield, TrendingUp, Repeat, Wallet, CalendarClock, type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { ProviderCatalog } from '@/components/recurring/provider-catalog'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 type Freq = 'daily' | 'weekly' | 'monthly' | 'yearly'
@@ -88,8 +90,20 @@ const dmy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 
 /** Ekuivalen bulanan buat agregasi lintas frekuensi. */
 const monthlyEq = (r: RecurringTransaction) => r.frequency === 'monthly' ? r.amount : r.frequency === 'weekly' ? r.amount * 52 / 12 : r.frequency === 'yearly' ? r.amount / 12 : r.amount * 365 / 12
 
+/** F13f: klasifikasi DERIVED (tanpa migrasi DB) buat tab Rutin|Cicilan|Langganan. */
+type Klas = 'rutin' | 'cicilan' | 'langganan'
+const klasOf = (r: RecurringTransaction): Klas =>
+  (r.category ?? '').includes('Langganan') ? 'langganan'
+    : r.end_date && r.type === 'expense' ? 'cicilan'
+      : 'rutin'
+
+const dmyy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })
+
 export default function RecurringPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const KLAS_LABELS: Record<Klas, string> = locale === 'en'
+    ? { rutin: 'Repeat', cicilan: 'Installment', langganan: 'Subscription' }
+    : { rutin: 'Rutin', cicilan: 'Cicilan', langganan: 'Langganan' }
   const TYPE_LABELS: Record<TxType, string> = {
     income: t('recurring.type_income'), expense: t('recurring.type_expense'),
     saving: t('recurring.type_saving'), investment: t('recurring.type_investment'),
@@ -104,6 +118,11 @@ export default function RecurringPage() {
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState<'all' | Freq>('all')
+  // F13f: tab klasifikasi + katalog provider + detail sheet
+  const [tab, setTab] = useState<Klas>('rutin')
+  const [catalogOpen, setCatalogOpen] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const [detailTab, setDetailTab] = useState<'paid' | 'upcoming'>('paid')
 
   // Deteksi dari riwayat
   const [detectOpen, setDetectOpen] = useState(false)
@@ -278,7 +297,42 @@ export default function RecurringPage() {
     return out.slice(0, 3)
   }, [payments, breakdownTotal, t])
 
-  const visible = filter === 'all' ? items : items.filter((r) => r.frequency === filter)
+  // F13f: tab klasifikasi memfilter list; filter frekuensi existing digabung
+  const klasCounts = useMemo(() => {
+    const c: Record<Klas, number> = { rutin: 0, cicilan: 0, langganan: 0 }
+    for (const r of items) c[klasOf(r)]++
+    return c
+  }, [items])
+  const visible = items.filter((r) => klasOf(r) === tab && (filter === 'all' || r.frequency === filter))
+
+  // F13f: detail item (bottom sheet)
+  const detailItem = useMemo(() => items.find((r) => r.id === detailId) ?? null, [items, detailId])
+  const detailData = useMemo(() => {
+    if (!detailItem) return null
+    const t0 = startOfToday()
+    const startD = parseISODate(detailItem.start_date)
+    // Terbayar = occurrence dari start_date s.d. hari ini (inklusif)
+    const past = startD && startD <= t0
+      ? occurrencesInRange(detailItem, startD, Math.round((t0.getTime() - startD.getTime()) / DAY)).filter((d) => d.getTime() <= t0.getTime())
+      : []
+    return {
+      paidCount: past.length,
+      totalPaid: past.length * detailItem.amount,
+      paidList: past.slice(-12).reverse(),
+      upcoming: occurrencesInRange(detailItem, t0, 365).slice(0, 12),
+    }
+  }, [detailItem])
+  const detailList = detailData ? (detailTab === 'paid' ? detailData.paidList : detailData.upcoming) : []
+
+  function openDetail(r: RecurringTransaction) {
+    setDetailTab('paid')
+    setDetailId(r.id)
+  }
+  // Tab Langganan: tombol tambah buka katalog provider dulu
+  function handleAdd() {
+    if (tab === 'langganan') setCatalogOpen(true)
+    else openAdd()
+  }
 
   return (
     <div className="space-y-6">
@@ -289,7 +343,7 @@ export default function RecurringPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={detectFromHistory}><Search className="h-4 w-4" /> {t('recurring.check_history')}</Button>
-          <Button onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
         </div>
       </div>
 
@@ -362,6 +416,26 @@ export default function RecurringPage() {
             </div>
           ) : (
             <>
+              {/* F13f: segmented Rutin | Cicilan | Langganan (derived, tanpa migrasi) */}
+              <div className="grid grid-cols-3 gap-1 rounded-xl p-1" style={{ background: 'var(--surface-2)' }}>
+                {(['rutin', 'cicilan', 'langganan'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setTab(k)}
+                    className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12.5px] font-medium transition-colors"
+                    style={{
+                      background: tab === k ? 'var(--surface)' : 'transparent',
+                      color: tab === k ? 'var(--ink)' : 'var(--ink-muted)',
+                      boxShadow: tab === k ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                    }}
+                  >
+                    {KLAS_LABELS[k]}
+                    <span className="num tabular text-[10px] min-w-[18px] px-1 py-px rounded-full" style={{ background: tab === k ? 'var(--surface-2)' : tint('var(--ink)', 6), color: 'var(--ink-soft)' }}>{klasCounts[k]}</span>
+                  </button>
+                ))}
+              </div>
+
               {/* Tabel */}
               <div className="s-card overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
@@ -373,7 +447,10 @@ export default function RecurringPage() {
                     ))}
                   </div>
                 </div>
-                <div className="overflow-x-auto hidden md:block">
+                {visible.length === 0 && (
+                  <p className="text-[12px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'No items in this tab' : 'Belum ada item di tab ini'}</p>
+                )}
+                <div className={visible.length === 0 ? 'hidden' : 'overflow-x-auto hidden md:block'}>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
@@ -397,13 +474,14 @@ export default function RecurringPage() {
                         return (
                           <tr key={r.id} className="group border-t align-middle" style={{ borderColor: 'var(--border-soft)' }}>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-3 min-w-0">
+                              {/* F13f: tap area nama = buka detail (aksi lain di kolom kanan tetap) */}
+                              <button type="button" onClick={(e) => { e.stopPropagation(); openDetail(r) }} className="flex items-center gap-3 min-w-0 w-full text-left cursor-pointer">
                                 <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10), opacity: r.is_active ? 1 : 0.5 }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                                 <div className="min-w-0">
                                   <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}</p>
                                   <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{TYPE_LABELS[r.type]}{r.notes ? ` · ${r.notes}` : ''}</p>
                                 </div>
-                              </div>
+                              </button>
                             </td>
                             <td className="px-3 py-3 text-[13px]" style={{ color: 'var(--ink-muted)' }}>{r.category}</td>
                             <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{FREQ_LABELS[r.frequency]}</span></td>
@@ -427,7 +505,7 @@ export default function RecurringPage() {
                     </tbody>
                   </table>
                 </div>
-                {/* Mobile: baris-compact (1 baris + hairline; tap = edit) */}
+                {/* Mobile: baris-compact (1 baris + hairline; tap = detail, edit dari detail) */}
                 <div className="md:hidden">
                   {visible.map((r, i) => {
                     const meta = catMeta(r.category)
@@ -440,7 +518,7 @@ export default function RecurringPage() {
                       <button
                         type="button"
                         key={r.id}
-                        onClick={() => openEdit(r)}
+                        onClick={() => openDetail(r)}
                         className="w-full text-left flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)]"
                         style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none', opacity: r.is_active ? 1 : 0.6 }}
                       >
@@ -601,6 +679,67 @@ export default function RecurringPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* F13f: katalog provider langganan */}
+      <ProviderCatalog
+        open={catalogOpen}
+        onOpenChange={setCatalogOpen}
+        onPick={(p) => { setCatalogOpen(false); openAdd({ name: p.name, category: p.category, type: 'expense', frequency: 'monthly' }) }}
+        onManual={() => { setCatalogOpen(false); openAdd({ type: 'expense', category: 'Langganan', frequency: 'monthly' }) }}
+      />
+
+      {/* F13f: detail item (bottom sheet) */}
+      <BottomSheet open={!!detailItem} onOpenChange={(o) => { if (!o) setDetailId(null) }} title={detailItem?.name ?? ''}>
+        {detailItem && detailData && (
+          <div className="px-1 pb-2 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="num tabular text-[22px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+                <p className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
+              </div>
+              <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
+            </div>
+
+            <div className="rounded-xl px-3.5 py-3 flex items-center justify-between gap-3" style={{ background: 'var(--surface-2)' }}>
+              <p className="text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{locale === 'en' ? 'Total paid' : 'Total terbayar'}</p>
+              <p className="num tabular text-[14px] font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)} <span className="text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>· {detailData.paidCount}×</span></p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1 rounded-lg p-1" style={{ background: 'var(--surface-2)' }}>
+              {([['paid', locale === 'en' ? 'Paid' : 'Terbayar'], ['upcoming', locale === 'en' ? 'Upcoming' : 'Mendatang']] as const).map(([k, lbl]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setDetailTab(k)}
+                  className="rounded-md py-1.5 text-[12px] font-medium transition-colors"
+                  style={{
+                    background: detailTab === k ? 'var(--surface)' : 'transparent',
+                    color: detailTab === k ? 'var(--ink)' : 'var(--ink-muted)',
+                    boxShadow: detailTab === k ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                  }}
+                >{lbl}</button>
+              ))}
+            </div>
+
+            <div>
+              {detailList.map((d, i) => (
+                <div key={i} className="flex items-center justify-between py-2" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                  <span className="num text-[13px]" style={{ color: 'var(--ink-muted)' }}>{dmyy(d)}</span>
+                  <span className="num tabular text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</span>
+                </div>
+              ))}
+              {detailList.length === 0 && (
+                <p className="text-[12px] text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setDetailId(null)}>{locale === 'en' ? 'Close' : 'Tutup'}</Button>
+              <Button className="flex-1" onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}><Pencil className="h-4 w-4" /> Edit</Button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   )
 }
