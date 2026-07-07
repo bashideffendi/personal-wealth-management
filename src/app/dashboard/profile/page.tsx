@@ -250,10 +250,35 @@ export default function ProfilePage() {
     toast.success(t('profile.toast_password_updated'))
   }
 
-  // Handler toggle/jam pengingat harian DIHAPUS 2026-07: preferensi
-  // daily_reminder_* tersimpan di profiles tapi belum ada delivery sama sekali
-  // (api/cron/reminders = email renewal langganan, bukan pengingat catat).
-  // Kolom DB + mapping state di atas dibiarkan; balikin UI-nya pas push jalan.
+  // Pengingat catat harian — delivery via push /api/cron/push-reminders
+  // (1x sehari sore); jam custom (daily_reminder_time) disimpan tapi belum
+  // dipakai cron — pengiriman per-jam menyusul.
+  async function toggleDailyReminder(enabled: boolean) {
+    if (!profile || !user) return
+    setProfile({ ...profile, daily_reminder_enabled: enabled })
+    const { error } = await supabase
+      .from('profiles')
+      .update({ daily_reminder_enabled: enabled })
+      .eq('id', user.id)
+    if (error) {
+      setProfile({ ...profile, daily_reminder_enabled: !enabled })
+      toast.error(t('profile.toast_update_failed'), { description: error.message })
+    }
+  }
+
+  async function updateReminderTime(time: string) {
+    if (!profile || !user) return
+    const prev = profile.daily_reminder_time
+    setProfile({ ...profile, daily_reminder_time: time })
+    const { error } = await supabase
+      .from('profiles')
+      .update({ daily_reminder_time: time })
+      .eq('id', user.id)
+    if (error) {
+      setProfile({ ...profile, daily_reminder_time: prev })
+      toast.error(t('profile.toast_update_failed'), { description: error.message })
+    }
+  }
 
   // PIN is now managed device-side via LockProvider (see hook below).
   // Server-side `profiles.pin_hash` is left untouched but no longer the
@@ -686,20 +711,41 @@ export default function ProfilePage() {
 
         {/* NOTIFIKASI */}
         <TabsContent value="notifikasi" className="space-y-6 mt-6">
-          {/* Toggle + jam pengingat disembunyikan: preferensi kesimpen tapi
-              delivery-nya belum ada — jangan pajang kontrol yang gak ngapa-ngapain. */}
-          <section className="s-card s-card-pad">
-            <div className="flex items-start gap-2">
-              <Bell className="size-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <h3 className="font-semibold">{t('profile.daily_reminder_title')}</h3>
-                <p className="text-sm mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+          <section className="s-card s-card-pad space-y-4">
+            <div className="flex items-start justify-between flex-wrap gap-3">
+              <div className="flex items-start gap-2">
+                <Bell className="size-4 mt-0.5 text-muted-foreground" />
+                <div>
+                  <h3 className="font-semibold">{t('profile.daily_reminder_title')}</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {t('profile.daily_reminder_desc')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleDailyReminder(!profile.daily_reminder_enabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${profile.daily_reminder_enabled ? 'bg-[var(--c-mint)]' : 'bg-muted'}`}
+              >
+                <span className={`inline-block h-4 w-4 rounded-full bg-white transition ${profile.daily_reminder_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            {profile.daily_reminder_enabled && (
+              <div className="grid gap-1.5 sm:max-w-xs">
+                <Label htmlFor="reminder-time">{t('profile.reminder_time_label')}</Label>
+                <Input
+                  id="reminder-time"
+                  type="time"
+                  value={profile.daily_reminder_time}
+                  onChange={(e) => updateReminderTime(e.target.value)}
+                />
+                <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
                   {locale === 'id'
-                    ? 'Pengingat harian nyusul bareng notifikasi push.'
-                    : 'Daily reminders are coming along with push notifications.'}
+                    ? 'Saat ini dikirim 1x sehari sore — jam custom menyusul.'
+                    : 'Currently sent once a day in the evening — custom time coming soon.'}
                 </p>
               </div>
-            </div>
+            )}
           </section>
 
           <section className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 25%, transparent)' }}>

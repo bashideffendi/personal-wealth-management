@@ -14,14 +14,22 @@
  */
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, Landmark, Coins, Gem, TrendingUp, Target, HandCoins, CreditCard,
-  Umbrella, Repeat, FileText, Calculator, Home, Compass, UserCircle,
+  Umbrella, Repeat, FileText, Calculator, Home, Compass, UserCircle, Bell,
   ChevronRight, type LucideIcon,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { fetchActiveHousehold } from '@/lib/household'
+import {
+  isPushSupported,
+  getActivePushSubscription,
+  registerPushSubscription,
+  unregisterPushSubscription,
+} from '@/lib/push-client'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { useI18n } from '@/lib/i18n/context'
 
@@ -66,8 +74,102 @@ const OTHER: Row[] = [
   { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle, tint: 'violet' },
 ]
 
+// Baris "Notifikasi" + toggle Web Push — gaya baris menu existing (chip ikon +
+// label + kontrol kanan). Disembunyikan total kalau browser gak support push.
+// State ON = ada subscription aktif device ini (izin granted + getSubscription).
+function NotificationRow() {
+  const { locale } = useI18n()
+  const [supported, setSupported] = useState(false)
+  const [enabled, setEnabled] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (!isPushSupported()) return
+    setSupported(true)
+    getActivePushSubscription()
+      .then((sub) => setEnabled(!!sub))
+      .catch(() => {})
+  }, [])
+
+  if (!supported) return null
+
+  const label = locale === 'id' ? 'Notifikasi' : 'Notifications'
+
+  const onToggle = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      if (enabled) {
+        await unregisterPushSubscription()
+        setEnabled(false)
+      } else {
+        const result = await registerPushSubscription()
+        if (result.ok) {
+          setEnabled(true)
+        } else {
+          const msg =
+            result.reason === 'denied'
+              ? locale === 'id'
+                ? 'Izin notifikasi ditolak di browser'
+                : 'Notification permission denied'
+              : (('message' in result && result.message) ||
+                (locale === 'id' ? 'Gagal mengaktifkan notifikasi' : 'Failed to enable notifications'))
+          toast.error(msg)
+        }
+      }
+    } catch {
+      toast.error(locale === 'id' ? 'Gagal mengubah notifikasi' : 'Failed to update notifications')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="flex items-center gap-2.5 px-3.5 min-h-[54px]"
+      style={{ borderTop: '1px solid var(--border-soft)' }}
+    >
+      <span
+        className="grid place-items-center size-[32px] rounded-[8px] shrink-0"
+        style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+      >
+        <Bell className="size-[17px]" />
+      </span>
+      <span className="text-[15px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+        {label}
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={label}
+        disabled={busy}
+        onClick={onToggle}
+        className="relative shrink-0 rounded-full transition-colors disabled:opacity-60"
+        style={{
+          width: 44,
+          height: 26,
+          background: enabled ? 'var(--c-mint-ink)' : 'var(--surface-2)',
+          border: '1px solid var(--border-soft)',
+        }}
+      >
+        <span
+          className="absolute top-1/2 -translate-y-1/2 rounded-full transition-all"
+          style={{
+            left: enabled ? 20 : 2,
+            width: 20,
+            height: 20,
+            background: '#fff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+          }}
+        />
+      </button>
+    </div>
+  )
+}
+
 // Tanpa label section (ala Budget) — grup dipisah murni oleh jarak antar kartu.
-function Group({ rows }: { rows: Row[] }) {
+function Group({ rows, trailing }: { rows: Row[]; trailing?: React.ReactNode }) {
   const { t } = useI18n()
   return (
     <section className="s-card overflow-hidden mt-3.5">
@@ -104,6 +206,7 @@ function Group({ rows }: { rows: Row[] }) {
           </Link>
         )
       })}
+      {trailing}
     </section>
   )
 }
@@ -275,7 +378,7 @@ export default function MorePage() {
 
       <Group rows={MONEY} />
       <Group rows={withValues(AUTOMATION)} />
-      <Group rows={withValues(OTHER)} />
+      <Group rows={withValues(OTHER)} trailing={<NotificationRow />} />
     </div>
   )
 }
