@@ -11,10 +11,13 @@
  *      (kartu yang sama) list ringkas per induk: chip ikon + % share + nominal.
  *   2. Strip coral ramping kalau rencana alokasi > rencana pendapatan
  *      (over-alokasi) — pengganti banner gede desktop.
- *   3. List kategori per tipe — header .m-sec nempel kanvas, baris ~48px:
- *      nama kiri 12.5px, nominal kanan SATU angka di pill abu (detail
- *      act/plan pindah ke title). Induk yang punya sub jadi COLLAPSIBLE
- *      (default expand, chevron nempel di samping nama).
+ *   3. List ala Budget: TIAP kategori induk EXPENSE = KARTU s-card SENDIRI —
+ *      header kartu = chip ikon hue + nama (+chevron collapse kalau ber-sub)
+ *      + nominal di PILL abu kanan (compact + detail act/plan di title);
+ *      sub-item = baris di dalam kartu (pill lebih kecil). Induk tanpa sub =
+ *      kartu satu baris. Income/saving/investment digabung SATU kartu per
+ *      tipe (header label tipe + total pill) biar halaman gak kepanjangan.
+ *      Tiap baris leaf punya bar realisasi tipis di bawahnya (info act/plan).
  *   4. Toggle floating "Rencana | Sisa" (pill terang translucent) di atas
  *      dock: mode Sisa mengganti angka kanan baris jadi (anggaran −
  *      realisasi), negatif = coral.
@@ -58,6 +61,22 @@ const SECTIONS: { key: BudgetType; labelKey: string }[] = [
   { key: 'saving',     labelKey: 'budgeting.saving' },
   { key: 'investment', labelKey: 'budgeting.investment' },
 ]
+
+/**
+ * Kelompokkan leaf berurutan: sub-sub (SUB_SEP) satu induk jadi satu grup
+ * collapsible; induk tanpa sub = grup ber-root null berisi satu leaf.
+ */
+function buildGroups(cats: string[]): { root: string | null; cats: string[] }[] {
+  const groups: { root: string | null; cats: string[] }[] = []
+  for (const cat of cats) {
+    const i = cat.indexOf(SUB_SEP)
+    const root = i === -1 ? null : cat.slice(0, i)
+    const last = groups[groups.length - 1]
+    if (root !== null && last && last.root === root) last.cats.push(cat)
+    else groups.push({ root, cats: [cat] })
+  }
+  return groups
+}
 
 interface DonutSegment {
   key: string
@@ -204,8 +223,24 @@ export function MobileBudgetingView({
 
   const compact = (n: number) => (privacyHidden ? 'Rp ••••' : formatCompactCurrency(n))
   const full = (n: number) => (privacyHidden ? undefined : formatCurrency(n))
-  // Baris list: full digit tanpa "Rp" (Rp implisit, jaga density 11px).
-  const digitsOf = (n: number) => (privacyHidden ? '••••' : Math.round(n).toLocaleString('id-ID'))
+
+  // Nominal pill (konvensi compact + title full): plan mode = rencana (over
+  // expense = coral-ink), remain mode = sisa anggaran−realisasi (negatif =
+  // coral-ink + −).
+  const pillText = (plan: number, act: number) =>
+    view === 'remain'
+      ? `${plan - act < 0 ? '−' : ''}${compact(Math.abs(plan - act))}`
+      : compact(plan)
+  const pillColor = (type: BudgetType, plan: number, act: number) =>
+    view === 'remain'
+      ? plan - act < 0
+        ? 'var(--c-coral-ink)'
+        : 'var(--ink)'
+      : type === 'expense' && plan > 0 && act > plan
+        ? 'var(--c-coral-ink)'
+        : 'var(--ink)'
+  const pillTitle = (plan: number, act: number) =>
+    privacyHidden ? undefined : `${formatCurrency(act)} / ${formatCurrency(plan)}`
 
   function prev() {
     setMonth((m) => (m === 1 ? 12 : m - 1))
@@ -219,6 +254,148 @@ export function MobileBudgetingView({
     const v = editing.value
     setEditing(null)
     if (v !== getValue(type, cat, month)) void onCellChange(type, cat, month, v)
+  }
+
+  // Baris leaf (induk tanpa sub, atau sub-item dalam kartu induknya) — nama
+  // kiri, nominal pill kanan yang bisa di-TAP untuk edit (NumberInput compact,
+  // commit blur/Enter), plus bar realisasi tipis di bawah baris.
+  const renderLeafRow = (
+    type: BudgetType,
+    cat: string,
+    opts: { border: boolean; sub: boolean },
+  ) => {
+    const plan = getValue(type, cat, month)
+    const act = actualOf(type, cat)
+    const overRow = type === 'expense' && plan > 0 && act > plan
+    const sepIdx = cat.indexOf(SUB_SEP)
+    const label = sepIdx === -1 ? cat : cat.slice(sepIdx + SUB_SEP.length)
+    // F10: hue kategori — sub ikut hue induknya biar satu keluarga.
+    const hue = categoryHue(sepIdx === -1 ? cat : cat.slice(0, sepIdx))
+    const rowKey = `${type}|${cat}`
+    const isEditing = editing?.key === rowKey
+    return (
+      <div
+        key={cat}
+        className="py-2"
+        style={{ borderTop: opts.border ? '1px solid var(--border-soft)' : 'none' }}
+      >
+        <div className="flex items-center justify-between gap-2 min-h-[24px]">
+          <span className="flex items-center gap-2 min-w-0">
+            {!opts.sub && (
+              <span
+                className="grid place-items-center size-6 rounded-[8px] shrink-0"
+                style={{ background: hue.soft, color: hue.ink }}
+              >
+                <CategoryIcon category={label} className="size-[13px]" />
+              </span>
+            )}
+            <p
+              className={`${opts.sub ? 'text-[12px]' : 'text-[12.5px]'} font-medium truncate`}
+              style={{ color: 'var(--ink)' }}
+              title={cat}
+            >
+              {label}
+            </p>
+          </span>
+          {isEditing ? (
+            <NumberInput
+              autoFocus
+              value={editing.value}
+              onChange={(n) => setEditing({ key: rowKey, value: n })}
+              onBlur={() => commitEdit(type, cat)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+              }}
+              placeholder="0"
+              className="h-8 w-[110px] shrink-0 text-right text-[13px]"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditing({ key: rowKey, value: plan })}
+              className="shrink-0 active:opacity-60 transition-opacity"
+              title={pillTitle(plan, act)}
+            >
+              <span
+                className={`num tabular rounded-full ${
+                  opts.sub
+                    ? 'px-2 py-0.5 text-[11.5px] font-medium'
+                    : 'px-2.5 py-1 text-[12.5px] font-semibold'
+                }`}
+                style={{ background: 'var(--surface-2)', color: pillColor(type, plan, act) }}
+              >
+                {pillText(plan, act)}
+              </span>
+            </button>
+          )}
+        </div>
+        {plan > 0 && (
+          <div
+            className="mt-1.5 h-[3px] overflow-hidden rounded-full"
+            style={{ background: 'var(--surface-2)' }}
+            aria-hidden
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.min(100, (act / plan) * 100)}%`,
+                background: overRow ? 'var(--c-coral-ink)' : hue.bar,
+              }}
+            />
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Header grup induk ber-sub: button collapse (chip + nama + chevron) dan
+  // pill rollup adalah SIBLING (bukan button dalam button) — angka induk =
+  // jumlah sub, bukan tempat edit.
+  const renderGroupHeader = (
+    type: BudgetType,
+    root: string,
+    cats: string[],
+    opts: { border: boolean },
+  ) => {
+    const gKey = `${type}|${root}`
+    const isOpen = expanded.has(gKey)
+    const gPlan = cats.reduce((s, c) => s + getValue(type, c, month), 0)
+    const gAct = cats.reduce((s, c) => s + actualOf(type, c), 0)
+    const hue = categoryHue(root)
+    return (
+      <div
+        className="flex min-h-[24px] items-center justify-between gap-2 py-2"
+        style={{ borderTop: opts.border ? '1px solid var(--border-soft)' : 'none' }}
+      >
+        <button
+          type="button"
+          onClick={() => toggleExpanded(gKey)}
+          aria-expanded={isOpen}
+          className="flex flex-1 items-center gap-2 min-w-0 text-left active:opacity-70 transition-opacity"
+        >
+          <span
+            className="grid place-items-center size-6 rounded-[8px] shrink-0"
+            style={{ background: hue.soft, color: hue.ink }}
+          >
+            <CategoryIcon category={root} className="size-[13px]" />
+          </span>
+          <span className="text-[12.5px] font-semibold truncate" style={{ color: 'var(--ink)' }} title={root}>
+            {root}
+          </span>
+          <ChevronDown
+            className="size-3.5 shrink-0 transition-transform"
+            style={{ color: 'var(--ink-soft)', transform: isOpen ? 'rotate(180deg)' : 'none' }}
+          />
+        </button>
+        <span
+          className="num tabular shrink-0 rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+          style={{ background: 'var(--surface-2)', color: pillColor(type, gPlan, gAct) }}
+          title={pillTitle(gPlan, gAct)}
+        >
+          {pillText(gPlan, gAct)}
+        </span>
+      </div>
+    )
   }
 
   return (
@@ -331,193 +508,66 @@ export function MobileBudgetingView({
         </div>
       )}
 
-      {/* List kategori per tipe — section header nempel kanvas (.m-sec) */}
-      {SECTIONS.map((section) => {
-        const cats = visibleByType[section.key]
-        if (cats.length === 0) return null
-        const secPlan = planTotal(section.key)
-        const secActual = actualTotal(section.key)
-
-        // Kelompokkan leaf berurutan: sub-sub satu induk jadi satu grup
-        // collapsible (header induk rollup + chevron); induk tanpa sub = leaf.
-        const groups: { root: string | null; cats: string[] }[] = []
-        for (const cat of cats) {
-          const i = cat.indexOf(SUB_SEP)
-          const root = i === -1 ? null : cat.slice(0, i)
-          const last = groups[groups.length - 1]
-          if (root !== null && last && last.root === root) last.cats.push(cat)
-          else groups.push({ root, cats: [cat] })
-        }
-
-        // Baris leaf (induk tanpa sub, atau subkategori) — tap angka = edit.
-        const renderRow = (cat: string, withBorder: boolean) => {
-          const plan = getValue(section.key, cat, month)
-          const act = actualOf(section.key, cat)
-          const remain = plan - act
-          const overRow = section.key === 'expense' && plan > 0 && act > plan
-          const sepIdx = cat.indexOf(SUB_SEP)
-          const isSub = sepIdx !== -1
-          const label = isSub ? cat.slice(sepIdx + SUB_SEP.length) : cat
-          // F10: hue kategori — sub ikut hue induknya biar satu keluarga.
-          const hue = categoryHue(isSub ? cat.slice(0, sepIdx) : cat)
-          const rowKey = `${section.key}|${cat}`
-          const isEditing = editing?.key === rowKey
+      {/* List ala Budget — expense: TIAP kategori induk = kartu sendiri;
+          income/saving/investment: SATU kartu per tipe di bawahnya */}
+      <div className="mt-3 space-y-2.5">
+        {buildGroups(visibleExpense).map((g) => {
+          // Induk tanpa sub = kartu satu baris (angka tetap editable).
+          if (g.root === null) {
+            return (
+              <section key={`expense|${g.cats[0]}`} className="s-card px-3.5 py-1">
+                {renderLeafRow('expense', g.cats[0], { border: false, sub: false })}
+              </section>
+            )
+          }
+          // Induk ber-sub = kartu dengan header collapse + baris sub di dalam.
+          const gKey = `expense|${g.root}`
           return (
-            <div key={cat} className="py-2" style={{ borderTop: withBorder ? '1px solid var(--border-soft)' : 'none' }}>
-              <div className="flex items-center justify-between gap-2 min-h-[24px]">
-                <span className="flex items-center gap-2 min-w-0">
-                  {!isSub && (
-                    <span
-                      className="grid place-items-center size-6 rounded-[8px] shrink-0"
-                      style={{ background: hue.soft, color: hue.ink }}
-                    >
-                      <CategoryIcon category={label} className="size-[13px]" />
-                    </span>
-                  )}
-                  <p
-                    className="text-[12.5px] font-medium truncate"
-                    style={{ color: isSub ? 'var(--ink-muted)' : 'var(--ink)' }}
-                    title={cat}
-                  >
-                    {isSub && <span className="mr-1 opacity-40">└</span>}
-                    {label}
-                  </p>
-                </span>
-                {isEditing ? (
-                  <NumberInput
-                    autoFocus
-                    value={editing.value}
-                    onChange={(n) => setEditing({ key: rowKey, value: n })}
-                    onBlur={() => commitEdit(section.key, cat)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') e.currentTarget.blur()
-                    }}
-                    placeholder="0"
-                    className="h-8 w-[110px] shrink-0 text-right text-[13px]"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setEditing({ key: rowKey, value: plan })}
-                    className="shrink-0 active:opacity-60 transition-opacity"
-                    title={
-                      privacyHidden
-                        ? undefined
-                        : `${formatCurrency(act)} / ${formatCurrency(plan)}`
-                    }
-                  >
-                    <span
-                      className="num tabular rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
-                      style={{
-                        background: 'var(--surface-2)',
-                        color:
-                          view === 'remain'
-                            ? remain < 0
-                              ? 'var(--c-coral-ink)'
-                              : 'var(--ink)'
-                            : overRow
-                              ? 'var(--c-coral-ink)'
-                              : 'var(--ink)',
-                      }}
-                    >
-                      {view === 'remain'
-                        ? `${remain < 0 ? '−' : ''}${digitsOf(Math.abs(remain))}`
-                        : privacyHidden
-                          ? 'Rp ••••'
-                          : formatCurrency(plan)}
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
+            <section key={gKey} className="s-card px-3.5 py-1">
+              {renderGroupHeader('expense', g.root, g.cats, { border: false })}
+              {expanded.has(gKey) &&
+                g.cats.map((cat) => renderLeafRow('expense', cat, { border: true, sub: true }))}
+            </section>
           )
-        }
+        })}
 
-        return (
-          <div key={section.key}>
-            <div className="m-sec">
-              <span>{t(section.labelKey)}</span>
-              <span
-                className="num tabular text-[11.5px] font-medium"
-                style={{ color: 'var(--ink-soft)' }}
-                title={privacyHidden ? undefined : `${formatCurrency(secActual)} / ${formatCurrency(secPlan)}`}
-              >
-                {compact(secActual)} / {compact(secPlan)}
-              </span>
-            </div>
-            <section className="s-card px-3.5 py-1">
-              {groups.map((g, gi) => {
-                if (g.root === null) return renderRow(g.cats[0], gi > 0)
-
-                // Grup induk ber-sub: header rollup collapsible (bukan tempat
-                // edit — angka induk = jumlah sub, edit tetap di baris sub).
+        {/* Kompromi anti-kepanjangan: tipe non-expense masing-masing SATU
+            kartu — header label tipe + total pill, isi baris kategori */}
+        {SECTIONS.filter((s) => s.key !== 'expense').map((section) => {
+          const cats = visibleByType[section.key]
+          if (cats.length === 0) return null
+          const secPlan = planTotal(section.key)
+          const secActual = actualTotal(section.key)
+          return (
+            <section key={section.key} className="s-card px-3.5 py-1">
+              <div className="flex min-h-[24px] items-center justify-between gap-2 py-2">
+                <p className="text-[12.5px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                  {t(section.labelKey)}
+                </p>
+                <span
+                  className="num tabular shrink-0 rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+                  style={{ background: 'var(--surface-2)', color: pillColor(section.key, secPlan, secActual) }}
+                  title={pillTitle(secPlan, secActual)}
+                >
+                  {pillText(secPlan, secActual)}
+                </span>
+              </div>
+              {buildGroups(cats).map((g) => {
+                if (g.root === null)
+                  return renderLeafRow(section.key, g.cats[0], { border: true, sub: false })
                 const gKey = `${section.key}|${g.root}`
-                const isOpen = expanded.has(gKey)
-                const gPlan = g.cats.reduce((s, c) => s + getValue(section.key, c, month), 0)
-                const gAct = g.cats.reduce((s, c) => s + actualOf(section.key, c), 0)
-                const gRemain = gPlan - gAct
-                const gOver = section.key === 'expense' && gPlan > 0 && gAct > gPlan
-                const hue = categoryHue(g.root)
                 return (
                   <div key={gKey}>
-                    <button
-                      type="button"
-                      onClick={() => toggleExpanded(gKey)}
-                      aria-expanded={isOpen}
-                      className="block w-full py-2 text-left active:opacity-70 transition-opacity"
-                      style={{ borderTop: gi > 0 ? '1px solid var(--border-soft)' : 'none' }}
-                    >
-                      <span className="flex items-center justify-between gap-2 min-h-[24px]">
-                        <span className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="grid place-items-center size-6 rounded-[8px] shrink-0"
-                            style={{ background: hue.soft, color: hue.ink }}
-                          >
-                            <CategoryIcon category={g.root} className="size-[13px]" />
-                          </span>
-                          <span className="text-[12.5px] font-medium truncate" style={{ color: 'var(--ink)' }} title={g.root}>
-                            {g.root}
-                          </span>
-                          <ChevronDown
-                            className="size-3.5 shrink-0 transition-transform"
-                            style={{ color: 'var(--ink-soft)', transform: isOpen ? 'rotate(180deg)' : 'none' }}
-                          />
-                        </span>
-                        <span
-                          className="num tabular shrink-0 rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
-                          style={{
-                            background: 'var(--surface-2)',
-                            color:
-                              view === 'remain'
-                                ? gRemain < 0
-                                  ? 'var(--c-coral-ink)'
-                                  : 'var(--ink)'
-                                : gOver
-                                  ? 'var(--c-coral-ink)'
-                                  : 'var(--ink)',
-                          }}
-                          title={
-                            privacyHidden
-                              ? undefined
-                              : `${formatCurrency(gAct)} / ${formatCurrency(gPlan)}`
-                          }
-                        >
-                          {view === 'remain'
-                            ? `${gRemain < 0 ? '−' : ''}${digitsOf(Math.abs(gRemain))}`
-                            : privacyHidden
-                              ? 'Rp ••••'
-                              : formatCurrency(gPlan)}
-                        </span>
-                      </span>
-                    </button>
-                    {isOpen && g.cats.map((cat) => renderRow(cat, true))}
+                    {renderGroupHeader(section.key, g.root, g.cats, { border: true })}
+                    {expanded.has(gKey) &&
+                      g.cats.map((cat) => renderLeafRow(section.key, cat, { border: true, sub: true }))}
                   </div>
                 )
               })}
             </section>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
 
       {/* Toggle floating "Rencana | Sisa" ala Budget — pill gelap (samain dock,
           warna hardcoded bukan token) fixed di atas dock; md+ ke-hide bareng

@@ -2,11 +2,13 @@
 
 /**
  * MobileStatsView — panel "Statistik" halaman Transaksi (F13c, mobile-only).
- * Muncul saat toggle Catatan|Statistik di posisi Statistik; isi 3 kartu:
- *   1. Sankey aliran uang bulan kalender aktif + footer Pengeluaran/Pemasukan.
- *   2. Kategori — donut polos (tanpa angka tengah) + callout slice terbesar
+ * Muncul saat toggle Catatan|Statistik di posisi Statistik; isi 4 kartu:
+ *   1. Tren — line chart harian (pengeluaran coral vs pemasukan mint) sepanjang
+ *      bulan aktif + footer Pengeluaran pill soft / Pemasukan (ala Budget).
+ *   2. Sankey aliran uang bulan kalender aktif + footer Pengeluaran/Pemasukan.
+ *   3. Kategori — donut polos (tanpa angka tengah) + callout slice terbesar
  *      + footer Pengeluaran pill / Pemasukan (ala referensi Budget).
- *   3. Statistik Kategori — bar per kategori: badge persen + nominal penuh
+ *   4. Statistik Kategori — bar per kategori: badge persen + nominal penuh
  *      + jumlah trx + progress bar tipis.
  *
  * Terima transaksi yang SUDAH difilter ke bulan aktif; agregasi internal
@@ -34,6 +36,70 @@ const MoneyFlowSankey = dynamic(
   },
 )
 
+interface TrendPoint {
+  day: number     // tanggal 1..daysInMonth
+  expense: number // total pengeluaran hari itu (bukan kumulatif)
+  income: number  // total pemasukan hari itu
+}
+
+// Line chart Tren — recharts di-load lazy juga (pola sama Sankey di atas);
+// komponen dirakit di dalam factory karena sub-komponen recharts (Line/XAxis)
+// gak bisa di-dynamic satu-satu.
+const TrendsLineChart = dynamic(
+  () =>
+    import('recharts').then((m) => {
+      const { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } = m
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fmtValue = (value: any) => formatCompactCurrency(Number(value) || 0)
+      const pad2 = (d: number) => String(d).padStart(2, '0')
+      function Chart({
+        data,
+        expenseName,
+        incomeName,
+      }: {
+        data: TrendPoint[]
+        expenseName: string
+        incomeName: string
+      }) {
+        return (
+          <ResponsiveContainer width="100%" height={170}>
+            <LineChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
+              <XAxis
+                dataKey="day"
+                interval="preserveStartEnd"
+                fontSize={10}
+                tick={{ fill: 'var(--ink-muted)' }}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--border-soft)' }}
+                tickFormatter={pad2}
+              />
+              <YAxis hide />
+              <Tooltip
+                formatter={fmtValue}
+                labelFormatter={(label) => pad2(Number(label))}
+                contentStyle={{
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: '8px',
+                  fontSize: 12,
+                }}
+              />
+              <Line type="monotone" dataKey="expense" name={expenseName} stroke="var(--c-coral)" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="income" name={incomeName} stroke="var(--c-mint)" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        )
+      }
+      return Chart
+    }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse rounded-lg" style={{ height: 170, background: 'var(--surface-2)' }} aria-hidden="true" />
+    ),
+  },
+)
+
 interface CatRow {
   name: string
   amount: number
@@ -44,22 +110,30 @@ interface CatRow {
 
 const OTHERS_BAR = 'color-mix(in srgb, var(--ink) 22%, transparent)'
 
-/** Footer total ala Budget: Pengeluaran pill coral solid + Pemasukan mint. */
+/** Footer total ala Budget: Pengeluaran pill coral (solid, atau soft via prop) + Pemasukan mint. */
 function TotalsFooter({
   totalIncome,
   totalExpense,
   incomeLabel,
   expenseLabel,
+  softPill = false,
 }: {
   totalIncome: number
   totalExpense: number
   incomeLabel: string
   expenseLabel: string
+  /** true = pill bg coral-soft + teks coral-ink (kartu Tren). */
+  softPill?: boolean
 }) {
   return (
     <div className="grid grid-cols-2 gap-3 mt-3 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
       <div>
-        <span className="inline-block rounded-full px-2 py-[3px] text-[10px] font-semibold" style={{ background: 'var(--c-coral)', color: '#fff' }}>
+        <span
+          className="inline-block rounded-full px-2 py-[3px] text-[10px] font-semibold"
+          style={softPill
+            ? { background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }
+            : { background: 'var(--c-coral)', color: '#fff' }}
+        >
           {expenseLabel}
         </span>
         <p
@@ -151,6 +225,30 @@ export function MobileStatsView({
     }
   }, [transactions, t])
 
+  // Data line chart Tren: nilai HARIAN (bukan kumulatif) per tanggal 1..akhir
+  // bulan aktif. Bulan diambil dari tanggal transaksi (props sudah difilter
+  // ke bulan kalender aktif); 'Transfer' di-skip konsisten sama agregasi lain.
+  const trend = useMemo<TrendPoint[]>(() => {
+    if (transactions.length === 0) return []
+    const ref = transactions[0].date // 'YYYY-MM-DD'
+    const y = Number(ref.slice(0, 4))
+    const mo = Number(ref.slice(5, 7))
+    const daysInMonth = new Date(y, mo, 0).getDate()
+    const rows: TrendPoint[] = Array.from({ length: daysInMonth }, (_, i) => ({
+      day: i + 1,
+      expense: 0,
+      income: 0,
+    }))
+    for (const tx of transactions) {
+      if (tx.category === 'Transfer') continue
+      const d = Number(tx.date.slice(8, 10))
+      if (!Number.isFinite(d) || d < 1 || d > daysInMonth) continue
+      if (tx.type === 'expense') rows[d - 1].expense += tx.amount
+      else if (tx.type === 'income') rows[d - 1].income += tx.amount
+    }
+    return rows
+  }, [transactions])
+
   // Geometri donut — stroke circle + dasharray per slice, mulai jam 12.
   const CX = 90
   const CY = 65
@@ -188,7 +286,32 @@ export function MobileStatsView({
 
   return (
     <div className="space-y-4">
-      {/* ── Kartu 1: Sankey aliran uang + footer total ───────────── */}
+      {/* ── Kartu 1: Tren — line harian pengeluaran vs pemasukan ── */}
+      <div className="s-card s-card-pad">
+        <h3 className="t-h2" style={{ color: 'var(--ink)' }}>
+          {locale === 'id' ? 'Tren' : 'Trends'}
+        </h3>
+        {trend.length === 0 ? emptyMsg : (
+          <>
+            <div className="mt-2">
+              <TrendsLineChart
+                data={trend}
+                expenseName={t('transactions.summary_expense')}
+                incomeName={t('transactions.summary_income')}
+              />
+            </div>
+            <TotalsFooter
+              totalIncome={stats.totalIncome}
+              totalExpense={stats.totalExpense}
+              incomeLabel={t('transactions.summary_income')}
+              expenseLabel={t('transactions.summary_expense')}
+              softPill
+            />
+          </>
+        )}
+      </div>
+
+      {/* ── Kartu 2: Sankey aliran uang + footer total ───────────── */}
       <div className="s-card s-card-pad">
         <p className="eyebrow">{monthLabel}</p>
         <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('dashboard.money_flow')}</h3>
@@ -209,7 +332,7 @@ export function MobileStatsView({
         />
       </div>
 
-      {/* ── Kartu 2: Kategori (donut polos + callout + footer) ───── */}
+      {/* ── Kartu 3: Kategori (donut polos + callout + footer) ───── */}
       <div className="s-card s-card-pad">
         <div className="flex items-center justify-between gap-3">
           <h3 className="t-h2" style={{ color: 'var(--ink)' }}>{t('transactions.col_category')}</h3>
@@ -288,7 +411,7 @@ export function MobileStatsView({
         )}
       </div>
 
-      {/* ── Kartu 3: Statistik Kategori (bar per kategori) ───────── */}
+      {/* ── Kartu 4: Statistik Kategori (bar per kategori) ───────── */}
       <div className="s-card s-card-pad">
         <h3 className="t-h2" style={{ color: 'var(--ink)' }}>
           {locale === 'id' ? 'Statistik Kategori' : 'Category Stats'}

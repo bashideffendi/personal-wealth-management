@@ -2,7 +2,8 @@
 
 /**
  * Lainnya — layar nav sekunder mobile gaya iOS Settings (F9, mockup approved
- * 2026-07-02). Kartu profil di atas + grouped list (.m-sec label nempel kanvas,
+ * 2026-07-02). Kartu profil hero ala Budget di atas (avatar center + 3 statistik)
+ * + grouped list (.m-sec label nempel kanvas,
  * s-card borderless berisi baris 50px). Menggantikan MoreSheet sebagai rumah
  * semua destinasi di luar 3 tab utama — dibuka dari tab "Lainnya" BottomTabBar.
  *
@@ -65,12 +66,6 @@ const OTHER: Row[] = [
   { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle, tint: 'violet' },
 ]
 
-// Label paket — mirror PLAN_LABEL di /dashboard/profile (slug legacy ikut).
-const PLAN_LABEL: Record<string, string> = {
-  basic: 'Basic', full: 'Full Service',
-  solo: 'Solo', pro: 'Pro', family: 'Family',
-}
-
 // Tanpa label section (ala Budget) — grup dipisah murni oleh jarak antar kartu.
 function Group({ rows }: { rows: Row[] }) {
   const { t } = useI18n()
@@ -117,9 +112,9 @@ export default function MorePage() {
   const { t, locale } = useI18n()
   const supabase = createClient()
 
-  // Identitas ringan buat kartu profil — best-effort, gagal fetch tetap render.
+  // Identitas + statistik kartu hero — best-effort, gagal fetch tetap render.
   const { data: me } = useQuery({
-    queryKey: ['more-profile'],
+    queryKey: ['more-hero'],
     staleTime: 60 * 1000,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -129,19 +124,28 @@ export default function MorePage() {
         const p = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
         fullName = (p.data?.full_name as string | null) ?? ''
       } catch { /* best-effort */ }
-      let planId: string | null = null
+      let txCount: number | null = null
       try {
-        const s = await supabase
-          .from('subscriptions')
-          .select('plan_id')
+        const r = await supabase
+          .from('transactions')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .in('status', ['active', 'trialing'])
-          .order('started_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        planId = (s.data?.plan_id as string | null) ?? null
-      } catch { /* pra-migration */ }
-      return { email: user.email ?? '', fullName, planId }
+        txCount = r.count ?? null
+      } catch { /* best-effort */ }
+      let accountCount: number | null = null
+      try {
+        const r = await supabase
+          .from('accounts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+        accountCount = r.count ?? null
+      } catch { /* best-effort */ }
+      // days dihitung DI SINI (queryFn) — Date.now() di render dilarang
+      // React Compiler (impure function during render).
+      const days = user.created_at
+        ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000)
+        : null
+      return { email: user.email ?? '', fullName, txCount, accountCount, days }
     },
   })
 
@@ -194,36 +198,80 @@ export default function MorePage() {
 
   const name = me?.fullName?.trim() || t('profile.default_name')
   const initial = (me?.fullName?.trim() || me?.email || 'K').slice(0, 1).toUpperCase()
-  const planLabel = (me?.planId && PLAN_LABEL[me.planId]) || 'Basic'
+
+  // 3 statistik hero (ala Budget) — angka besar + label pendek.
+  const nf = new Intl.NumberFormat(locale === 'id' ? 'id-ID' : 'en-US')
+  const days = me?.days ?? null
+  const stats = [
+    {
+      num: typeof me?.txCount === 'number' ? nf.format(me.txCount) : '–',
+      label: locale === 'id' ? 'Transaksi' : 'Transactions',
+    },
+    {
+      num: typeof me?.accountCount === 'number' ? nf.format(me.accountCount) : '–',
+      label: locale === 'id' ? 'Akun' : 'Accounts',
+    },
+    {
+      num: days !== null ? nf.format(days) : '–',
+      label: locale === 'id' ? 'Hari' : 'Days',
+    },
+  ]
 
   return (
     <div className="max-w-md mx-auto">
       {/* Judul auto-hidden di mobile; document.title "Lainnya · Klunting" kepakai MobileAppBar */}
       <QuietPageHeader title={t('nav.section.secondary')} />
 
-      {/* Kartu profil */}
-      <Link
-        href="/dashboard/profile"
-        className="s-card flex items-center gap-3 px-3.5 py-3 transition-colors active:bg-[var(--surface-2)] md:mt-4"
-        style={{ display: 'flex' }}
+      {/* Kartu profil hero (ala Budget) — avatar center + 3 statistik,
+          tint gradasi mint sangat halus biar playful tanpa rame */}
+      <section
+        className="s-card overflow-hidden md:mt-4"
+        style={{ background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 62%)' }}
       >
-        <span
-          className="grid place-items-center size-[38px] rounded-full shrink-0 text-[15px] font-semibold"
-          style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
-          aria-hidden
+        <Link
+          href="/dashboard/profile"
+          className="flex flex-col items-center px-3.5 pt-5 pb-4 transition-opacity active:opacity-70"
         >
-          {initial}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold truncate leading-tight" style={{ color: 'var(--ink)' }}>
-            {name}
+          <span
+            className="grid place-items-center size-16 rounded-full text-[22px] font-bold"
+            style={{
+              background: 'var(--c-mint-soft)',
+              color: 'var(--c-mint-ink)',
+              boxShadow: '0 0 0 3px var(--surface)',
+            }}
+            aria-hidden
+          >
+            {initial}
           </span>
-          <span className="block text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-            {me?.email ? `${me.email} · ` : ''}{t('profile.plan_prefix')} {planLabel}
+          <span
+            className="mt-2.5 inline-flex items-center gap-0.5 max-w-full text-[15px] font-semibold"
+            style={{ color: 'var(--ink)' }}
+          >
+            <span className="truncate">{name}</span>
+            <ChevronRight className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
           </span>
-        </span>
-        <ChevronRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-      </Link>
+          {me?.email && (
+            <span className="mt-0.5 max-w-full truncate text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
+              {me.email}
+            </span>
+          )}
+        </Link>
+        <div
+          className="grid grid-cols-3 px-3.5 py-3 text-center"
+          style={{ borderTop: '1px solid var(--border-soft)' }}
+        >
+          {stats.map((s) => (
+            <div key={s.label} className="min-w-0">
+              <div className="num text-[18px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                {s.num}
+              </div>
+              <div className="mt-0.5 truncate text-[10.5px]" style={{ color: 'var(--ink-soft)' }}>
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <Group rows={MONEY} />
       <Group rows={withValues(AUTOMATION)} />
