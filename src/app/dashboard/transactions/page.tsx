@@ -52,7 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { toast } from 'sonner'
 
@@ -611,6 +611,8 @@ export default function TransactionsPage() {
     setForm({ ...emptyForm, account_id: picked?.id ?? '' })
     setTagDraft('')
     setAccountSource(picked?.source ?? null)
+    setNewSplitOn(false)
+    setNewSplitRows(emptyNewSplitRows())
     resetReceipt()
     setDialogOpen(true)
   }
@@ -628,9 +630,134 @@ export default function TransactionsPage() {
     })
     setTagDraft('')
     setAccountSource(null)
+    setNewSplitOn(false)
     resetReceipt()
     setDialogOpen(true)
   }
+
+  // ─── Pecah transaksi (split) ────────────────────────────────
+  // 1 transaksi dipecah ke beberapa kategori: baris pertama nge-UPDATE
+  // transaksi asli (id/struk/created_at kepertahan), sisanya INSERT baru;
+  // semua bagian share satu split_group_id (migrasi 064). Total pecahan
+  // WAJIB = jumlah asli, makanya saldo kartu kredit gak perlu di-adjust
+  // (akun/tipe/total gak berubah). Label pakai literal locale ternary —
+  // JANGAN nambah key ke messages.ts.
+  const [splitDialogOpen, setSplitDialogOpen] = useState(false)
+  const [splitRows, setSplitRows] = useState<{ category: string; amount: number }[]>([])
+  const [splitSaving, setSplitSaving] = useState(false)
+  const splitSourceTx = editingId ? transactions.find((x) => x.id === editingId) ?? null : null
+
+  function openSplitDialog() {
+    if (!splitSourceTx) return
+    // Baris 1 prefilled kategori + jumlah TERSIMPAN — user tinggal mindahin
+    // sebagian ke baris berikutnya sampai "Sisa" nol.
+    setSplitRows([
+      { category: splitSourceTx.category, amount: splitSourceTx.amount },
+      { category: '', amount: 0 },
+    ])
+    setDialogOpen(false) // tutup dialog edit — hindari dialog numpuk
+    setSplitDialogOpen(true)
+  }
+
+  function closeSplitDialog() {
+    setSplitDialogOpen(false)
+    setDialogOpen(true) // batal → balik ke dialog edit
+  }
+
+  const splitAllocated = splitRows.reduce((s, r) => s + r.amount, 0)
+  const splitRemaining = (splitSourceTx?.amount ?? 0) - splitAllocated
+  const splitValid =
+    !!splitSourceTx &&
+    splitRows.length >= 2 &&
+    splitRows.every((r) => r.category && r.amount > 0) &&
+    splitRemaining === 0
+
+  async function saveSplit() {
+    const tx = splitSourceTx
+    if (!tx || !splitValid) return
+    setSplitSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setSplitSaving(false); return }
+
+    const groupId = crypto.randomUUID()
+    const base: Record<string, unknown> = {
+      user_id: user.id,
+      date: tx.date,
+      account_id: tx.account_id,
+      type: tx.type,
+      description: tx.description,
+    }
+    const householdId = (tx as { household_id?: string | null }).household_id
+    if (householdId) base.household_id = householdId
+    if (tx.tags?.length) base.tags = tx.tags
+
+    // INSERT bagian 2..N dulu, UPDATE transaksi asli (bagian 1) TERAKHIR:
+    // kalau insert gagal → belum ada yang berubah; kalau update gagal →
+    // hapus lagi baris yang barusan di-insert (best-effort rollback).
+    const missingCol = (e: { code?: string; message?: string | null } | null) =>
+      !!e && (e.code === '42703' || /column .*split_group_id.* does not exist/i.test(e.message ?? ''))
+    const buildInserts = (withGroup: boolean) =>
+      splitRows.slice(1).map((r) => ({
+        ...base,
+        category: r.category,
+        amount: r.amount,
+        ...(withGroup ? { split_group_id: groupId } : {}),
+      }))
+    let groupLinked = true
+    let { data: insData, error: insErr } = await supabase
+      .from('transactions').insert(buildInserts(true)).select('id')
+    // Kolom belum ada (pre-migrasi 064) → retry tanpa split_group_id, biar
+    // fitur tetap jalan; bagian pecahan cuma gak saling ter-link (pola sama
+    // dgn retry tags pre-migrasi 038 di actuallySave).
+    if (missingCol(insErr)) {
+      groupLinked = false
+      ;({ data: insData, error: insErr } = await supabase
+        .from('transactions').insert(buildInserts(false)).select('id'))
+    }
+    if (insErr) {
+      setSplitSaving(false)
+      toast.error(locale === 'id' ? 'Gagal memecah transaksi' : 'Failed to split transaction', { description: insErr.message })
+      return
+    }
+    const insertedIds = ((insData ?? []) as { id: string }[]).map((d) => d.id)
+
+    const updPayload: Record<string, unknown> = { category: splitRows[0].category, amount: splitRows[0].amount }
+    if (groupLinked) updPayload.split_group_id = groupId
+    const { error: updErr } = await supabase.from('transactions').update(updPayload).eq('id', tx.id)
+    if (updErr) {
+      if (insertedIds.length) await supabase.from('transactions').delete().in('id', insertedIds)
+      setSplitSaving(false)
+      toast.error(locale === 'id' ? 'Gagal memecah transaksi' : 'Failed to split transaction', { description: updErr.message })
+      return
+    }
+
+    setSplitSaving(false)
+    setSplitDialogOpen(false) // sukses: dialog edit GAK dibuka lagi
+    toast.success(locale === 'id'
+      ? `Transaksi dipecah jadi ${splitRows.length} bagian`
+      : `Transaction split into ${splitRows.length} parts`)
+    fetchData()
+  }
+
+  // ─── Split saat TAMBAH (add-dialog) ─────────────────────────
+  // Toggle "Bagi ke beberapa kategori" di dialog tambah: user isi TOTAL di
+  // field Jumlah + beberapa baris {kategori, nominal, catatan opsional}.
+  // Tiap baris disimpan sebagai transaksi PENUH yang share split_group_id
+  // (migrasi 064) — jadi agregasi/anggaran/stats existing otomatis benar
+  // tanpa diubah. Label literal locale ternary (JANGAN nambah key messages.ts).
+  const emptyNewSplitRows = () => [
+    { category: '', amount: 0, description: '' },
+    { category: '', amount: 0, description: '' },
+  ]
+  const [newSplitOn, setNewSplitOn] = useState(false)
+  const [newSplitRows, setNewSplitRows] = useState<{ category: string; amount: number; description: string }[]>(emptyNewSplitRows)
+  const newSplitAllocated = newSplitRows.reduce((s, r) => s + r.amount, 0)
+  const newSplitRemaining = form.amount - newSplitAllocated
+  const newSplitReady =
+    newSplitRows.length >= 2 &&
+    newSplitRows.every((r) => r.category && r.amount > 0) &&
+    form.amount > 0 &&
+    newSplitRemaining === 0
 
   // Reflective spending (Kakeibo) — anti-impulse modal for big expenses
   const [reflectionOpen, setReflectionOpen] = useState(false)
@@ -641,12 +768,20 @@ export default function TransactionsPage() {
       toast.error(t('transactions.toast_pick_account'))
       return
     }
-    if (!form.category) {
+    const splittingNew = newSplitOn && !editingId
+    if (!splittingNew && !form.category) {
       toast.error(t('transactions.toast_pick_category'))
       return
     }
     if (!form.amount || form.amount <= 0) {
       toast.error(t('transactions.toast_amount_positive'))
+      return
+    }
+    if (splittingNew && !newSplitReady) {
+      // Tombol simpan harusnya udah disabled — toast ini backstop.
+      toast.error(locale === 'id'
+        ? 'Lengkapi baris split — jumlah semua potongan harus sama dengan total.'
+        : 'Complete the split rows — all parts must add up to the total.')
       return
     }
 
@@ -698,31 +833,65 @@ export default function TransactionsPage() {
     const pendingTag = tagDraft.trim().replace(/,+$/, '').trim()
     const tags = pendingTag && !form.tags.includes(pendingTag) ? [...form.tags, pendingTag] : form.tags
 
-    const payload: Record<string, unknown> = {
-      user_id: user.id,
-      date: form.date,
-      account_id: form.account_id,
-      type: form.type,
-      category: form.category,
-      description: form.description,
-      amount: form.amount,
-    }
-    if (receiptPath) payload.receipt_url = receiptPath
-    if (householdId && !editingId) payload.household_id = householdId
-    if (tags.length) payload.tags = tags
+    let saveErr: { code?: string; message?: string } | null = null
 
-    const saveTx = () =>
-      editingId
-        ? supabase.from('transactions').update(payload).eq('id', editingId)
-        : supabase.from('transactions').insert(payload)
-    let { error: saveErr } = await saveTx()
-    // Retry tanpa tags HANYA kalau errornya kolom-belum-ada (pre-migrasi 038),
-    // bukan SEMUA error — biar tag user gak ke-buang diam-diam pas error lain (RLS/network).
-    const isMissingTagsCol = !!saveErr && !!payload.tags &&
-      (saveErr.code === '42703' || /column .*tags.* does not exist/i.test(saveErr.message ?? ''))
-    if (isMissingTagsCol) {
-      delete payload.tags
+    if (newSplitOn && !editingId) {
+      // SPLIT SAAT TAMBAH: satu belanja → N baris transaksi biasa (kategori +
+      // nominal per potongan; date/akun/tipe sama) yang share split_group_id.
+      const groupId = crypto.randomUUID()
+      const buildRows = (withGroup: boolean) =>
+        newSplitRows.map((r, i) => {
+          const row: Record<string, unknown> = {
+            user_id: user.id,
+            date: form.date,
+            account_id: form.account_id,
+            type: form.type,
+            category: r.category,
+            description: r.description || form.description,
+            amount: r.amount,
+            ...(withGroup ? { split_group_id: groupId } : {}),
+          }
+          // Lampiran struk cuma di potongan pertama (satu foto = satu belanja).
+          if (receiptPath && i === 0) row.receipt_url = receiptPath
+          if (householdId) row.household_id = householdId
+          if (tags.length) row.tags = tags
+          return row
+        })
+      ;({ error: saveErr } = await supabase.from('transactions').insert(buildRows(true)))
+      // Graceful pre-migrasi 064: kolom split_group_id belum ada (42703) →
+      // fallback insert TANPA grup — potongan tetap kesimpan sebagai transaksi
+      // terpisah, cuma gak ter-link (tiru pola auto_post di recurring/page.tsx).
+      if (saveErr && (saveErr.code === '42703' || /column .*split_group_id.* does not exist/i.test(saveErr.message ?? ''))) {
+        console.warn('[transactions] Kolom split_group_id belum ada (pre-migrasi 064) — simpan tanpa grup split:', saveErr.message)
+        ;({ error: saveErr } = await supabase.from('transactions').insert(buildRows(false)))
+      }
+    } else {
+      const payload: Record<string, unknown> = {
+        user_id: user.id,
+        date: form.date,
+        account_id: form.account_id,
+        type: form.type,
+        category: form.category,
+        description: form.description,
+        amount: form.amount,
+      }
+      if (receiptPath) payload.receipt_url = receiptPath
+      if (householdId && !editingId) payload.household_id = householdId
+      if (tags.length) payload.tags = tags
+
+      const saveTx = () =>
+        editingId
+          ? supabase.from('transactions').update(payload).eq('id', editingId)
+          : supabase.from('transactions').insert(payload)
       ;({ error: saveErr } = await saveTx())
+      // Retry tanpa tags HANYA kalau errornya kolom-belum-ada (pre-migrasi 038),
+      // bukan SEMUA error — biar tag user gak ke-buang diam-diam pas error lain (RLS/network).
+      const isMissingTagsCol = !!saveErr && !!payload.tags &&
+        (saveErr.code === '42703' || /column .*tags.* does not exist/i.test(saveErr.message ?? ''))
+      if (isMissingTagsCol) {
+        delete payload.tags
+        ;({ error: saveErr } = await saveTx())
+      }
     }
 
     if (saveErr) {
@@ -1611,6 +1780,16 @@ export default function TransactionsPage() {
                           </TableCell>
                           <TableCell className="text-[13px]" style={{ color: 'var(--ink)' }}>
                             {tx.description}
+                            {/* Penanda hasil Pecah Transaksi (migrasi 064) */}
+                            {tx.split_group_id && (
+                              <span
+                                className="ml-2 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium align-middle"
+                                style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}
+                                title={locale === 'id' ? 'Bagian dari transaksi yang dipecah' : 'Part of a split transaction'}
+                              >
+                                <Split className="size-2.5" /> {locale === 'id' ? 'Pecahan' : 'Split'}
+                              </span>
+                            )}
                             {tx.tags && tx.tags.length > 0 && (
                               <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
                                 {tx.tags.slice(0, 2).map((tg) => (
@@ -1743,9 +1922,18 @@ export default function TransactionsPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                                {tx.split_group_id && (
+                                  <span className="mr-1 inline-flex items-center rounded-full px-1.5 align-middle text-[9px] font-semibold uppercase" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                                    {locale === 'id' ? 'Pecahan' : 'Split'}
+                                  </span>
+                                )}
                                 {tx.description || tx.category}
                               </p>
                               <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                                {/* Ikon kecil = bagian dari transaksi yang dipecah */}
+                                {tx.split_group_id && (
+                                  <Split className="size-3 inline align-[-2px] mr-1" aria-hidden style={{ color: 'var(--c-violet)' }} />
+                                )}
                                 {tx.category} · {getAccountName(tx.account_id)}
                               </p>
                             </div>
@@ -1880,6 +2068,23 @@ export default function TransactionsPage() {
               )
             })()}
 
+            {/* Info split (mode edit) — transaksi ini bagian dari satu belanja
+                yang dipecah; edit di sini cuma nyentuh potongan yang dipilih. */}
+            {editingId && splitSourceTx?.split_group_id && (
+              <div
+                className="flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs"
+                style={{ background: 'var(--c-violet-soft)', borderColor: 'color-mix(in srgb, var(--c-violet) 30%, transparent)', color: 'var(--c-violet-ink)' }}
+              >
+                <Split className="size-3.5 shrink-0" />
+                {(() => {
+                  const parts = transactions.filter((x) => x.split_group_id === splitSourceTx.split_group_id).length
+                  return locale === 'id'
+                    ? `Bagian dari transaksi yang dipecah (${parts} potongan) — edit ini cuma mengubah potongan yang dipilih.`
+                    : `Part of a split transaction (${parts} parts) — editing only changes this part.`
+                })()}
+              </div>
+            )}
+
             {/* Date */}
             <div className="grid gap-1.5">
               <Label htmlFor="tx-date">{t('transactions.label_date')}</Label>
@@ -1985,7 +2190,11 @@ export default function TransactionsPage() {
                       key={ty}
                       type="button"
                       aria-pressed={active}
-                      onClick={() => setForm({ ...form, type: ty, category: '' })}
+                      onClick={() => {
+                        setForm({ ...form, type: ty, category: '' })
+                        // Kategori baris split ikut di-reset — opsi kategori beda per tipe.
+                        setNewSplitRows((rows) => rows.map((r) => ({ ...r, category: '' })))
+                      }}
                       className="rounded-lg border py-2 text-xs font-semibold transition-colors"
                       style={active
                         ? { background: c.bg, color: c.color, borderColor: c.color }
@@ -1998,33 +2207,128 @@ export default function TransactionsPage() {
               </div>
             </div>
 
-            {/* Category */}
-            <div className="grid gap-1.5">
-              <Label id="tx-category-label">{t('transactions.label_category')}</Label>
-              <Select
-                value={form.category}
-                onValueChange={(v) => setForm({ ...form, category: v ?? '' })}
+            {/* Split toggle (mode tambah) — bagi 1 belanja ke beberapa kategori.
+                Affordance jelas: tombol ber-border + aria-pressed + status teks.
+                Label literal locale ternary (JANGAN nambah key messages.ts). */}
+            {!editingId && (
+              <button
+                type="button"
+                aria-pressed={newSplitOn}
+                onClick={() => setNewSplitOn((v) => !v)}
+                className="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors"
+                style={newSplitOn
+                  ? { background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)', borderColor: 'var(--c-violet-ink)' }
+                  : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--outline)' }}
               >
-                <SelectTrigger className="w-full" aria-labelledby="tx-category-label">
-                  <SelectValue placeholder={t('transactions.select_category')}>
-                    {(v) => v || t('transactions.select_category')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {optionsForType(form.type).map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.depth > 0 ? (
-                        <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>
-                          ↳ {o.label}
-                        </span>
-                      ) : (
-                        o.label
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <Split className="size-4 shrink-0" />
+                {locale === 'id' ? 'Bagi ke beberapa kategori' : 'Split across categories'}
+                <span className="ml-auto font-normal">
+                  {newSplitOn ? (locale === 'id' ? 'Aktif' : 'On') : (locale === 'id' ? 'Nonaktif' : 'Off')}
+                </span>
+              </button>
+            )}
+
+            {/* Category — di mode split diganti editor baris {kategori, nominal,
+                catatan}; tiap baris jadi transaksi sendiri yang share grup split. */}
+            {!(newSplitOn && !editingId) ? (
+              <div className="grid gap-1.5">
+                <Label id="tx-category-label">{t('transactions.label_category')}</Label>
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => setForm({ ...form, category: v ?? '' })}
+                >
+                  <SelectTrigger className="w-full" aria-labelledby="tx-category-label">
+                    <SelectValue placeholder={t('transactions.select_category')}>
+                      {(v) => v || t('transactions.select_category')}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {optionsForType(form.type).map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.depth > 0 ? (
+                          <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>
+                            ↳ {o.label}
+                          </span>
+                        ) : (
+                          o.label
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="grid gap-2 rounded-lg border p-2.5" style={{ borderColor: 'var(--outline)', background: 'var(--surface-2)' }}>
+                {newSplitRows.map((r, i) => (
+                  <div key={i} className="grid gap-1.5 rounded-lg border p-2" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={r.category}
+                        onValueChange={(v) => setNewSplitRows((rows) => rows.map((x, j) => (j === i ? { ...x, category: v ?? '' } : x)))}
+                      >
+                        <SelectTrigger className="h-9 flex-1 min-w-0 text-sm" aria-label={`${t('transactions.label_category')} ${i + 1}`}>
+                          <SelectValue placeholder={t('transactions.select_category')}>
+                            {(v) => v || t('transactions.select_category')}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {optionsForType(form.type).map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.depth > 0 ? (
+                                <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                              ) : (
+                                o.label
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <NumberInput
+                        value={r.amount}
+                        onChange={(n) => setNewSplitRows((rows) => rows.map((x, j) => (j === i ? { ...x, amount: n } : x)))}
+                        placeholder="0"
+                        aria-label={`${t('transactions.label_amount')} ${i + 1}`}
+                        className="h-9 w-28 shrink-0 text-right tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewSplitRows((rows) => rows.filter((_, j) => j !== i))}
+                        disabled={newSplitRows.length <= 2}
+                        className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-[var(--surface-2)] disabled:opacity-30"
+                        style={{ color: 'var(--ink-soft)' }}
+                        aria-label={`${locale === 'id' ? 'Hapus baris' : 'Remove row'} ${i + 1}`}
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                    <Input
+                      value={r.description}
+                      onChange={(e) => setNewSplitRows((rows) => rows.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)))}
+                      placeholder={t('transactions.description_optional')}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => setNewSplitRows((rows) => [...rows, { category: '', amount: 0, description: '' }])}
+                >
+                  <Plus className="size-3.5" data-icon="inline-start" /> {locale === 'id' ? 'Tambah baris' : 'Add row'}
+                </Button>
+                {/* Sisa vs total (field Jumlah di bawah) — live; nol + total>0 = balance */}
+                <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: newSplitRemaining === 0 && form.amount > 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)' }}>
+                  <span className="font-medium" style={{ color: newSplitRemaining === 0 && form.amount > 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                    {locale === 'id' ? 'Sisa dari total' : 'Remaining of total'}
+                  </span>
+                  <span className="num font-bold tabular-nums" style={{ color: newSplitRemaining === 0 && form.amount > 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                    {newSplitRemaining < 0 ? '−' : ''}{formatCurrency(Math.abs(newSplitRemaining))}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div className="grid gap-1.5">
@@ -2075,9 +2379,29 @@ export default function TransactionsPage() {
               />
             </div>
 
-            {/* Amount — prominent */}
+            {/* Amount — prominent. Mode edit: tombol kecil "Pecah" (split ke
+                beberapa kategori). Transfer di-skip — legnya berpasangan. */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-amount">{t('transactions.label_amount')}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="tx-amount">
+                  {t('transactions.label_amount')}
+                  {/* Mode split: field ini = TOTAL belanja yang dibagi ke baris-baris */}
+                  {newSplitOn && !editingId && (
+                    <span className="ml-1 font-normal" style={{ color: 'var(--ink-soft)' }}>(Total)</span>
+                  )}
+                </Label>
+                {editingId && splitSourceTx && form.category !== 'Transfer' && (
+                  <button
+                    type="button"
+                    onClick={openSplitDialog}
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+                    style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+                    title={locale === 'id' ? 'Pecah transaksi ini ke beberapa kategori' : 'Split this transaction into several categories'}
+                  >
+                    <Split className="size-3.5" /> {locale === 'id' ? 'Pecah' : 'Split'}
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</span>
                 <NumberInput
@@ -2098,10 +2422,136 @@ export default function TransactionsPage() {
             <Button
               className=""
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || (newSplitOn && !editingId && !newSplitReady)}
             >
               {saving && <Loader2 className="size-4 animate-spin mr-1" />}
               {editingId ? t('transactions.save') : t('transactions.add')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pecah Transaksi — 1 transaksi → beberapa kategori, semua bagian share
+          split_group_id (migrasi 064). Dibuka dari dialog edit; batal/ESC balik
+          ke dialog edit. Label literal locale ternary (JANGAN ke messages.ts). */}
+      <Dialog open={splitDialogOpen} onOpenChange={(o) => { if (o) setSplitDialogOpen(true); else closeSplitDialog() }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-violet-soft)' }}>
+                <Split className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+                  {locale === 'id' ? 'Pecah transaksi' : 'Split transaction'}
+                </DialogTitle>
+                <DialogDescription>
+                  {locale === 'id'
+                    ? 'Bagi satu transaksi ke beberapa kategori. Total semua bagian harus sama dengan jumlah asli.'
+                    : 'Divide one transaction into several categories. All parts must add up to the original amount.'}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {splitSourceTx && (
+            <div className="grid gap-3 py-2 px-0.5 max-h-[65dvh] overflow-y-auto">
+              {/* Ringkasan transaksi asal — jumlah TERSIMPAN jadi acuan total */}
+              <div className="flex items-center justify-between rounded-lg border px-3 py-2" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
+                <div className="min-w-0 text-xs">
+                  <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>
+                    {splitSourceTx.description || splitSourceTx.category}
+                  </p>
+                  <p style={{ color: 'var(--ink-soft)' }}>
+                    {formatDateShort(splitSourceTx.date, locale)} · {getAccountName(splitSourceTx.account_id)}
+                  </p>
+                </div>
+                <p className="num text-sm font-bold tabular-nums shrink-0 ml-3" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(splitSourceTx.amount)}
+                </p>
+              </div>
+
+              {/* Baris pecahan: kategori + jumlah + hapus (min. 2 baris) */}
+              {splitRows.map((r, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Select
+                    value={r.category}
+                    onValueChange={(v) => {
+                      const next = [...splitRows]
+                      next[i] = { ...r, category: v ?? '' }
+                      setSplitRows(next)
+                    }}
+                  >
+                    <SelectTrigger className="h-9 flex-1 min-w-0 text-sm" aria-label={`${locale === 'id' ? 'Kategori bagian' : 'Part category'} ${i + 1}`}>
+                      <SelectValue placeholder={t('transactions.select_category')}>
+                        {(v) => v || t('transactions.select_category')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {optionsForType(splitSourceTx.type).map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.depth > 0 ? (
+                            <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                          ) : (
+                            o.label
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <NumberInput
+                    value={r.amount}
+                    onChange={(n) => {
+                      const next = [...splitRows]
+                      next[i] = { ...r, amount: n }
+                      setSplitRows(next)
+                    }}
+                    placeholder="0"
+                    aria-label={`${locale === 'id' ? 'Jumlah bagian' : 'Part amount'} ${i + 1}`}
+                    className="h-9 w-28 shrink-0 text-right tabular-nums"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSplitRows(splitRows.filter((_, j) => j !== i))}
+                    disabled={splitRows.length <= 2}
+                    className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-[var(--surface-2)] disabled:opacity-30"
+                    style={{ color: 'var(--ink-soft)' }}
+                    aria-label={`${locale === 'id' ? 'Hapus baris' : 'Remove row'} ${i + 1}`}
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => setSplitRows([...splitRows, { category: '', amount: 0 }])}
+              >
+                <Plus className="size-3.5" data-icon="inline-start" /> {locale === 'id' ? 'Tambah baris' : 'Add row'}
+              </Button>
+
+              {/* Sisa alokasi — nol = siap disimpan (mint), selain itu coral */}
+              <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: splitRemaining === 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)' }}>
+                <span className="font-medium" style={{ color: splitRemaining === 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  {locale === 'id' ? 'Sisa' : 'Remaining'}
+                </span>
+                <span className="num font-bold tabular-nums" style={{ color: splitRemaining === 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  {splitRemaining < 0 ? '−' : ''}{formatCurrency(Math.abs(splitRemaining))}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeSplitDialog} disabled={splitSaving}>
+              {t('transactions.cancel')}
+            </Button>
+            <Button onClick={() => void saveSplit()} disabled={splitSaving || !splitValid}>
+              {splitSaving && <Loader2 className="size-4 animate-spin mr-1" />}
+              {locale === 'id' ? 'Pecah' : 'Split'}
             </Button>
           </DialogFooter>
         </DialogContent>

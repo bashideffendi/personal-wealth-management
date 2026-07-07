@@ -57,6 +57,8 @@ export interface Transaction {
   tags?: string[]
   /** Path Storage lampiran struk di bucket privat 'receipts' (migrasi 011) — bukan public URL. */
   receipt_url?: string | null
+  /** Penanda hasil "Pecah Transaksi" (migrasi 064) — semua bagian pecahan share satu uuid. NULL = transaksi biasa. */
+  split_group_id?: string | null
 }
 
 export interface CategorizationRule {
