@@ -77,15 +77,15 @@ const skel = (h: number, w?: number) => (
   <div className="animate-pulse rounded-lg" style={{ height: h, width: w, background: 'var(--surface-2)' }} aria-hidden="true" />
 )
 const MoneyFlowSankey = dynamic(
-  () => import('@/components/dashboard/money-flow-sankey').then((m) => m.MoneyFlowSankey),
+  () => import('@/components/charts/chart-modules').then((m) => m.MoneyFlowSankey),
   { ssr: false, loading: () => skel(300) },
 )
 const MonthlyFlowChart = dynamic(
-  () => import('@/components/dashboard/dashboard-charts').then((m) => m.MonthlyFlowChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.MonthlyFlowChart),
   { ssr: false, loading: () => skel(260) },
 )
 const InvestmentPie = dynamic(
-  () => import('@/components/dashboard/dashboard-charts').then((m) => m.InvestmentPie),
+  () => import('@/components/charts/chart-modules').then((m) => m.InvestmentPie),
   { ssr: false, loading: () => skel(120, 120) },
 )
 

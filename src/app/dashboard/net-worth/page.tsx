@@ -16,11 +16,11 @@ import { useT, useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the net-worth route's initial JS (loads on chart mount).
 const ProjectionChart = dynamic(
-  () => import('./net-worth-charts').then((m) => m.ProjectionChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.ProjectionChart),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: '100%', background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 const HistoryChart = dynamic(
-  () => import('./net-worth-charts').then((m) => m.HistoryChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.HistoryChart),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 300, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 

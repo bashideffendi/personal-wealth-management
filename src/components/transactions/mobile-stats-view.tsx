@@ -29,7 +29,7 @@ import type { FlowKind } from '@/components/dashboard/money-flow-sankey'
 
 // Recharts cuma ke-load pas panel Statistik dibuka (pola dashboard/page.tsx).
 const MoneyFlowSankey = dynamic(
-  () => import('@/components/dashboard/money-flow-sankey').then((m) => m.MoneyFlowSankey),
+  () => import('@/components/charts/chart-modules').then((m) => m.MoneyFlowSankey),
   {
     ssr: false,
     loading: () => (

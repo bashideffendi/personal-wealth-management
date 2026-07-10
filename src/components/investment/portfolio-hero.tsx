@@ -17,7 +17,7 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n/context'
 
-const EquityArea = dynamic(() => import('./investment-charts').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const EquityArea = dynamic(() => import('@/components/charts/chart-modules').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
 const CHART_RANGES = [
   { key: '1B', label: '1B', days: 30 },

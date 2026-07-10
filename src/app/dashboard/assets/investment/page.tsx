@@ -24,8 +24,8 @@ import { FX_FALLBACK_USDIDR, INVESTMENT_SUBCATS } from '@/lib/constants'
 import { useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the route's initial JS (loads on chart mount).
-const AllocationDonut = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
-const DividendBar = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const AllocationDonut = dynamic(() => import('@/components/charts/chart-modules').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const DividendBar = dynamic(() => import('@/components/charts/chart-modules').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 

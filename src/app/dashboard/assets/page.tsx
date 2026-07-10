@@ -15,11 +15,11 @@ import dynamic from 'next/dynamic'
 
 // Defer recharts out of the assets route's initial JS (loads on chart mount).
 const AllocationPie = dynamic(
-  () => import('./assets-charts').then((m) => m.AllocationPie),
+  () => import('@/components/charts/chart-modules').then((m) => m.AllocationPie),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 220, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 const NonLiquidBar = dynamic(
-  () => import('./assets-charts').then((m) => m.NonLiquidBar),
+  () => import('@/components/charts/chart-modules').then((m) => m.NonLiquidBar),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 260, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 

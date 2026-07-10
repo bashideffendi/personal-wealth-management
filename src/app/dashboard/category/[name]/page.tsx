@@ -11,7 +11,7 @@ import dynamic from 'next/dynamic'
 import { useT } from '@/lib/i18n/context'
 
 const CategoryBarChart = dynamic(
-  () => import('./category-chart').then((m) => m.CategoryBarChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.CategoryBarChart),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 200, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 

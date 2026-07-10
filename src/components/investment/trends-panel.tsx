@@ -15,7 +15,7 @@ import { useT } from '@/lib/i18n/context'
 // mounts, not on the research page's initial hydration. Skeleton matches the
 // 140px chart height to avoid layout shift.
 const MetricLineChart = dynamic(
-  () => import('./metric-line-chart').then((m) => m.MetricLineChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.MetricLineChart),
   {
     ssr: false,
     loading: () => (

@@ -11,7 +11,7 @@
 import dynamic from 'next/dynamic'
 
 export const StockPriceChart = dynamic(
-  () => import('./stock-price-chart').then((m) => m.StockPriceChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.StockPriceChart),
   {
     ssr: false,
     loading: () => (

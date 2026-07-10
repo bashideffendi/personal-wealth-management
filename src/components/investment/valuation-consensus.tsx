@@ -32,7 +32,7 @@ import { MethodInfoDialog } from './method-info-dialog'
 // Defer recharts: fetched only when the Valuasi tab renders the bar chart, not
 // on the research page's initial hydration. Skeleton matches the 300px height.
 const ValuationBars = dynamic(
-  () => import('./valuation-bars').then((m) => m.ValuationBars),
+  () => import('@/components/charts/chart-modules').then((m) => m.ValuationBars),
   {
     ssr: false,
     loading: () => (
