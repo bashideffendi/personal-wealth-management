@@ -13,8 +13,8 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { useT } from '@/lib/i18n/context'
-import { formatCurrency } from '@/lib/utils'
+import { useI18n, useT } from '@/lib/i18n/context'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Transaction } from '@/types'
@@ -46,7 +46,7 @@ export function MonthlyReportBody({
   month: number
   variant?: 'screen' | 'print'
 }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const now = new Date()
   const pageQuery = useQuery({
@@ -252,7 +252,7 @@ export function MonthlyReportBody({
   }
 
   const surplusWord = r.surplus >= 0 ? t('report.word_surplus') : t('report.word_deficit')
-  const generatedAt = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const generatedAt = now.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
   const nextMonthLabel = MONTHS[month % 12]
   const topUp = r.shifts.find((s) => s.delta > 0)
   const topDown = r.shifts.find((s) => s.delta < 0)
@@ -344,7 +344,14 @@ export function MonthlyReportBody({
       <div data-report-block="aliran" className="s-card p-4 sm:p-6">
         <p className="eyebrow">{t('report.flow_eyebrow')}</p>
         <h3 className="t-h2 mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>{t('report.flow_title')} — {MONTHS[month - 1]}</h3>
-        <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage={t('report.flow_empty')} />
+        {/* Dual render per breakpoint (pola sama dgn dashboard): tanpa `compact`,
+            margin label desktop 130px×2 ngabisin lebar 375px → label numpuk. */}
+        <div className="hidden md:block">
+          <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage={t('report.flow_empty')} />
+        </div>
+        <div className="md:hidden">
+          <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} compact height={Math.max(300, Math.min(420, 60 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 30))} emptyMessage={t('report.flow_empty')} />
+        </div>
       </div>
 
       {/* 6 month + shifts */}
@@ -458,7 +465,7 @@ export function MonthlyReportBody({
         <div className="s-card p-5 sm:p-6">
           <p className="eyebrow">{t('report.networth_eyebrow')}</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.networth_title')}</h3>
-          <p className="num font-bold mt-3" style={{ fontSize: 30, letterSpacing: '-0.03em', color: 'var(--ink)' }}>{formatCurrency(r.netWorth)}</p>
+          <p className="num font-bold mt-3" style={{ fontSize: 24, letterSpacing: '-0.03em', color: 'var(--ink)' }} title={formatCurrency(r.netWorth)}>{formatCompactCurrency(r.netWorth)}</p>
           <div className="mt-4 space-y-2">
             <Nw label={t('report.nw_liquid')} value={liquidTotal} />
             <Nw label={t('report.nw_investment')} value={investTotal} />
@@ -520,7 +527,7 @@ export function MonthlyReportBody({
             r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral-ink)' }} />, title: `${topUp.name} ${t('report.dir_up_word')}`, sub: `+${formatCurrency(topUp.delta)} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
           ].filter(Boolean).slice(0, 3).map((h, i) => {
             const item = h as { icon: React.ReactNode; title: string; sub: string }
-            return <div key={i} className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}><div className="mb-1.5">{item.icon}</div><p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</p><p className="t-cap mt-0.5" style={{ color: 'var(--text-mute)' }}>{item.sub}</p></div>
+            return <div key={i} className="rounded-xl p-3.5" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}><div className="mb-1.5">{item.icon}</div><p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</p><p className="t-cap mt-0.5" style={{ color: 'var(--text-mute)' }}>{item.sub}</p></div>
           })}
         </div>
       </div>
@@ -546,20 +553,17 @@ export function MonthlyReportBody({
         <div data-report-block="top10" className="s-card p-5 sm:p-6">
           <p className="eyebrow">{t('report.top_eyebrow')}</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.top_title')}</h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full t-sm">
-              <thead><tr className="text-left eyebrow" style={{ color: 'var(--text-mute)' }}><th className="pb-2 font-medium">{t('report.col_date')}</th><th className="pb-2 font-medium">{t('report.col_description')}</th><th className="pb-2 font-medium">{t('report.col_category')}</th><th className="pb-2 font-medium text-right">{t('report.col_amount')}</th></tr></thead>
-              <tbody>
-                {r.top_expenses.map((tx, i) => (
-                  <tr key={i} style={{ borderTop: '1px solid var(--line)' }}>
-                    <td className="py-2 t-cap num" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</td>
-                    <td className="py-2" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</td>
-                    <td className="py-2 t-cap" style={{ color: 'var(--text-mute)' }}>{tx.category}</td>
-                    <td className="py-2 text-right num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-3 flex flex-col">
+            {r.top_expenses.map((tx, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5" style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                <span className="num shrink-0 w-11 text-[11px]" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</span>
+                  <span className="block truncate text-[11px]" style={{ color: 'var(--text-mute)' }}>{tx.category}</span>
+                </span>
+                <span className="num font-semibold shrink-0 text-[13.5px]" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -590,18 +594,19 @@ function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; v
   return (
     <div className="stat-tile">
       <div className="flex items-center justify-between"><p className="eyebrow">{label}</p><div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>{icon}</div></div>
-      <p className="num tabular font-bold mt-2" style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--ink)' }}><span className="sm:hidden">{formatCurrency(value)}</span><span className="hidden sm:inline">{formatCurrency(value)}</span></p>
+      <p className="num tabular font-bold mt-2" style={{ fontSize: 19, letterSpacing: '-0.025em', color: 'var(--ink)' }} title={formatCurrency(value)}>{formatCompactCurrency(value)}</p>
       {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint)' : 'var(--c-coral)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% {t('report.vs_last_month')}</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
     </div>
   )
 }
 
 function Mini({ label, value, text, color, signed }: { label: string; value?: number; text?: string; color: string; signed?: boolean }) {
+  const sign = signed && (value ?? 0) >= 0 ? '+' : signed && (value ?? 0) < 0 ? '−' : ''
   return (
     <div>
       <p className="t-cap" style={{ color: 'var(--text-mute)' }}>{label}</p>
-      <p className="num tabular font-bold mt-0.5" style={{ fontSize: 17, color }}>
-        {text != null ? text : `${signed && (value ?? 0) >= 0 ? '+' : signed && (value ?? 0) < 0 ? '−' : ''}${formatCurrency(Math.abs(value ?? 0))}`}
+      <p className="num tabular font-bold mt-0.5" style={{ fontSize: 17, color }} title={text != null ? undefined : `${sign}${formatCurrency(Math.abs(value ?? 0))}`}>
+        {text != null ? text : `${sign}${formatCompactCurrency(Math.abs(value ?? 0))}`}
       </p>
     </div>
   )

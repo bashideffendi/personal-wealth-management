@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, getMonthName } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { MobileHome } from '@/components/dashboard/mobile-home'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid, sumCashEquivalent } from '@/lib/liquid'
 import { isExpired, occurrencesInRange } from '@/lib/recurrence'
@@ -165,6 +167,8 @@ export default function DashboardPage() {
   // Drag overlay — visual yg gerak pas drag (bukan kartu in-place). dragSize =
   // footprint kartu sumber biar preview-nya seukuran aslinya.
   const [activeId, setActiveId] = useState<string | null>(null)
+  // Sheet sankey penuh (mobile) — kartu Beranda cuma ringkasan in/out/sisa.
+  const [sankeySheetOpen, setSankeySheetOpen] = useState(false)
   const [dragSize, setDragSize] = useState<{ w: number; h: number } | null>(null)
   const [dragHtml, setDragHtml] = useState<string>('')
   const dragSensors = useSensors(
@@ -213,6 +217,15 @@ export default function DashboardPage() {
     const r = e.active.rect.current.initial
     if (r) setDragSize({ w: r.width, h: r.height })
   }
+  function commitOrder(next: string[]) {
+    orderTouched.current = true
+    setBlockOrder(next)
+    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
+    })()
+  }
   function handleBlockDragEnd(e: DragEndEvent) {
     setActiveId(null)
     setDragSize(null)
@@ -222,14 +235,15 @@ export default function DashboardPage() {
     const oldI = blockOrder.indexOf(active.id as string)
     const newI = blockOrder.indexOf(over.id as string)
     if (oldI < 0 || newI < 0) return
-    const next = arrayMove(blockOrder, oldI, newI)
-    orderTouched.current = true
-    setBlockOrder(next)
-    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
-    })()
+    commitOrder(arrayMove(blockOrder, oldI, newI))
+  }
+  // Reorder tanpa drag — dipakai tombol ↑/↓ di customizer (grip handle = lg-only,
+  // di mobile dia ketutup/nutupin chip header kartu).
+  function moveBlock(id: string, dir: -1 | 1) {
+    const oldI = blockOrder.indexOf(id)
+    const newI = oldI + dir
+    if (oldI < 0 || newI < 0 || newI >= blockOrder.length) return
+    commitOrder(arrayMove(blockOrder, oldI, newI))
   }
 
   async function fetchData() {
@@ -681,21 +695,42 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
+      {/* F9: mobile = Beranda baru (6 modul, mockup approved); desktop = bento
+          existing utuh di dalam wrapper hidden md:contents. */}
+      {/* F12: Beranda ala Budget app — grid kategori bulan terpilih; navigasi
+          bulan pakai state periode halaman (sama dgn picker desktop). */}
+      <MobileHome
+        month={selectedMonth}
+        year={selectedYear}
+        onPrevMonth={() => {
+          if (selectedMonth === 1) { setSelectedMonth(12); setSelectedYear(selectedYear - 1) }
+          else setSelectedMonth(selectedMonth - 1)
+        }}
+        onNextMonth={() => {
+          if (selectedMonth === 12) { setSelectedMonth(1); setSelectedYear(selectedYear + 1) }
+          else setSelectedMonth(selectedMonth + 1)
+        }}
+        netWorth={liquidTotal + nonLiquidTotal + investments.reduce((s, i) => s + (i.total_value || 0), 0) - debtTotal}
+        transactions={monthTransactions}
+        budget={budgetProgress}
+        budgetKeys={monthBudgets.filter((b) => b.type === 'expense' && b.amount > 0).map((b) => b.category)}
+      />
+      <div className="hidden md:contents">
       {/* flex-col + gap = ritme sama kayak space-y-6, tapi `order` bisa dipakai
           DashboardCustomizer buat reorder section (data-block) tanpa ngerombak DOM.
           Section fixed (hero/health/forecast/period) gak punya order → tetap di atas. */}
       {/* Greeting + tombol Atur Dashboard (custom show/hide section) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         {/* Sapaan ikut jam (ID: "Pagi, Bashid" per mockup) — bukan "Hi" hardcode. */}
-        <h1 className="t-h1" style={{ color: 'var(--ink)' }}>
+        <h1 className="font-semibold tracking-tight truncate" style={{ fontSize: 18, color: 'var(--ink)', letterSpacing: '-0.01em' }}>
           {t(`dashboard.${now.getHours() < 11 ? 'greet_morning' : now.getHours() < 15 ? 'greet_afternoon' : now.getHours() < 19 ? 'greet_evening' : 'greet_night'}`)}{userFirstName ? `, ${userFirstName}` : ''}
         </h1>
         {/* Period selector — top-right (konvensi). Surface bg + border supaya
             kebaca sebagai kontrol, bukan nyatu sama kanvas. Scope: widget bulanan. */}
         <div className="flex items-center gap-2">
           <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-            <SelectTrigger className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
+            <SelectTrigger aria-label={t('dashboard.month_placeholder')} className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
               <SelectValue placeholder={t('dashboard.month_placeholder')}>{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -703,14 +738,14 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
           <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-            <SelectTrigger className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
+            <SelectTrigger aria-label={t('dashboard.year_placeholder')} className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
               <SelectValue placeholder={t('dashboard.year_placeholder')}>{(v) => v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {yearOptions.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          <DashboardCustomizer />
+          <DashboardCustomizer order={blockOrder} onMove={moveBlock} />
         </div>
       </div>
 
@@ -779,7 +814,7 @@ export default function DashboardPage() {
           desain. dense bikin card kecil ngisi celah di sebelah card tinggi (mis.
           3 card kecil numpuk di kanan kalender). Urutan/visibility via CSS order +
           data-block. items-stretch + h-full → card ngisi penuh selnya. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:auto-rows-[132px] lg:[grid-auto-flow:row_dense] items-stretch">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[132px] lg:[grid-auto-flow:row_dense] items-stretch">
 
       {/* Akun & Saldo — "di mana duitku" (widget #1 ala Monarch) */}
       <SortableSection id="akun" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
@@ -797,7 +832,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 2.3 — AI-generated personalized insights */}
-      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="ai-insights" order={blockOrder} overflow="fit-static" className="md:col-span-2 lg:row-span-3">
         <AIInsightsCard
           monthTransactions={monthTransactions}
           yearTransactions={yearTransactions}
@@ -808,7 +843,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Skor Kesehatan Finansial — skor + breakdown 7-indikator (2 kolom) */}
-      <SortableSection id="kesehatan" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="kesehatan" order={blockOrder} overflow="fit-static" className="md:col-span-2 lg:row-span-3">
         <FinancialHealthCard
           part="score"
           result={fhsResult}
@@ -838,7 +873,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Phase 9 — Money Flow Sankey: Pemasukan ↔ Penggunaan (bipartite) */}
-      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="lg:col-span-3 lg:row-span-4">
+      <SortableSection id="aliran" order={blockOrder} overflow="fill-chart" className="md:col-span-2 lg:col-span-3 lg:row-span-4">
         <div className="s-card p-4 sm:p-6">
         <div className="mb-3 sm:mb-4 flex items-start justify-between flex-wrap gap-3 shrink-0">
           <div>
@@ -847,8 +882,8 @@ export default function DashboardPage() {
               {t('dashboard.money_flow_sub')}
             </p>
           </div>
-          {/* Legend — wraps on narrow screens */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          {/* Legend — ikut grouping sankey (nabung+investasi = satu grup violet) */}
+          <div className="hidden md:flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-mint)' }} />
               {t('dashboard.kpi_income')}
@@ -858,18 +893,15 @@ export default function DashboardPage() {
               {t('dashboard.kpi_expense')}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-amber)' }} />
-              {t('dashboard.saving')}
-            </span>
-            <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-violet)' }} />
-              {t('dashboard.investment')}
+              {t('dashboard.saving')} + {t('dashboard.investment')}
             </span>
           </div>
         </div>
 
-        {/* Two renders so we can tune layout per breakpoint without media queries
-            inside the chart itself. Tailwind hides the inactive one. */}
+        {/* Desktop: sankey inline. Mobile: kartu RINGKAS (in/out/sisa + bar) yang
+            nge-tap buka sheet sankey penuh — keputusan review: thumbnail bukan
+            tempat sankey; layar penuh khusus ala Stockbit. */}
         <div className="hidden md:flex md:flex-1 md:min-h-0 md:flex-col">
           <MoneyFlowSankey
             income={sankeyData.income}
@@ -879,19 +911,75 @@ export default function DashboardPage() {
           />
         </div>
         <div className="md:hidden">
-          <MoneyFlowSankey
-            income={sankeyData.income}
-            outflow={sankeyData.outflow}
-            compact
-            height={Math.max(300, Math.min(420, 60 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 30))}
-            emptyMessage={t('dashboard.sankey_empty')}
-          />
+          {(() => {
+            const totalIn = sankeyData.income.reduce((s, c) => s + c.amount, 0)
+            const exp = sankeyData.outflow.filter((c) => c.kind === 'expense').reduce((s, c) => s + c.amount, 0)
+            const sav = sankeyData.outflow.filter((c) => c.kind === 'saving' || c.kind === 'investment').reduce((s, c) => s + c.amount, 0)
+            const totalOut = sankeyData.outflow.reduce((s, c) => s + c.amount, 0)
+            if (totalIn === 0 && totalOut === 0) {
+              return (
+                <p className="text-[13px] text-center py-4" style={{ color: 'var(--ink-soft)' }}>
+                  {t('dashboard.sankey_empty')}
+                </p>
+              )
+            }
+            const base = Math.max(totalIn, totalOut)
+            const sisa = Math.max(0, totalIn - totalOut)
+            const pct = (v: number) => `${(v / base) * 100}%`
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  {[
+                    { label: t('dashboard.sankey_in'), val: totalIn, color: 'var(--c-mint-ink)' },
+                    { label: t('dashboard.sankey_out'), val: totalOut, color: 'var(--c-coral-ink)' },
+                    { label: t('dashboard.sankey_left'), val: sisa, color: 'var(--ink)' },
+                  ].map((s) => (
+                    <div key={s.label} className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{s.label}</p>
+                      <p className="num tabular text-[14px] font-semibold mt-0.5" title={formatCurrency(s.val)} style={{ color: s.color }}>
+                        {formatCompactCurrency(s.val)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2.5 flex h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }} aria-hidden>
+                  {exp > 0 && <span style={{ width: pct(exp), background: 'var(--c-coral)' }} />}
+                  {sav > 0 && <span style={{ width: pct(sav), background: 'var(--c-violet)' }} />}
+                  {sisa > 0 && <span style={{ width: pct(sisa), background: 'color-mix(in srgb, var(--ink) 22%, transparent)' }} />}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSankeySheetOpen(true)}
+                  className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border py-2 text-[13px] font-medium transition-colors active:bg-[var(--surface-2)]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--ink)' }}
+                >
+                  {t('dashboard.sankey_view_full')} →
+                </button>
+              </>
+            )
+          })()}
+          <BottomSheet
+            open={sankeySheetOpen}
+            onOpenChange={setSankeySheetOpen}
+            title={t('dashboard.money_flow')}
+            description={t('dashboard.money_flow_sub')}
+          >
+            <div className="px-1 pb-2">
+              <MoneyFlowSankey
+                income={sankeyData.income}
+                outflow={sankeyData.outflow}
+                compact
+                height={Math.max(420, Math.min(560, 80 + Math.max(sankeyData.income.length, sankeyData.outflow.length) * 52))}
+                emptyMessage={t('dashboard.sankey_empty')}
+              />
+            </div>
+          </BottomSheet>
         </div>
         </div>
       </SortableSection>
 
       {/* Phase 2.1 + 3.1 — Recent Transactions · Upcoming Bills · Goals (per-card) */}
-      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="transaksi" order={blockOrder} overflow="scroll-list" className="md:col-span-2 lg:row-span-3">
         <RecentTransactions transactions={monthTransactions} />
       </SortableSection>
       <SortableSection id="tagihan" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
@@ -907,16 +995,15 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Activity calendar (per-card, span 2) */}
-      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
+      <SortableSection id="kalender" order={blockOrder} overflow="fill-chart" className="md:col-span-2 lg:row-span-4">
         {/* Transactions calendar — 7-col month grid, colored by net activity */}
-        <div className="s-card p-5 sm:p-6 h-full">
-          <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
-            <div>
-              <p className="eyebrow">{t('dashboard.activity_this_month')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
-                {MONTHS[selectedMonth - 1]} {selectedYear}
-              </h3>
-            </div>
+        <div className="s-card p-4 sm:p-5 h-full">
+          <div className="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
+            {/* Eyebrow-only (ala Stockbit) — bulan+tahun digabung ke eyebrow
+                biar konteks periode gak hilang pas t-h2 dibuang. */}
+            <p className="eyebrow">
+              {t('dashboard.activity_this_month')} · {MONTHS[selectedMonth - 1]} {selectedYear}
+            </p>
             <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded" style={{ background: 'var(--c-mint)' }} />
@@ -972,7 +1059,7 @@ export default function DashboardPage() {
                     font so amounts fit inside. */}
                 <div className="grid grid-cols-7 gap-1 flex-1 auto-rows-fr min-h-0">
                   {days.map((d, i) => {
-                    if (d.day === null) return <div key={`pad-${i}`} className="min-h-[38px]" />
+                    if (d.day === null) return <div key={`pad-${i}`} className="min-h-[32px]" />
                     const isToday = isCurrentMonth && d.day === todayDay
                     const hasIncome = d.income > 0
                     const hasExpense = d.expense > 0
@@ -1008,10 +1095,12 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={d.day}
-                        className="min-h-[38px] rounded-md relative flex flex-col items-start justify-between p-1 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
+                        className="min-h-[32px] rounded-md relative flex flex-col items-start justify-between px-1 py-0.5 sm:p-1.5 transition hover:scale-[1.04] hover:z-10 cursor-default overflow-hidden"
                         style={{
-                          background: bg || 'var(--surface-2)',
-                          border: isToday ? '2px solid var(--c-mint)' : '1px solid var(--border-soft)',
+                          // Borderless: tint = penanda aktivitas (sel kosong polos),
+                          // cuma "hari ini" yang dapet ring mint.
+                          background: bg,
+                          border: isToday ? '2px solid var(--c-mint)' : 'none',
                         }}
                         title={tooltipParts.join(' · ')}
                       >
@@ -1026,10 +1115,20 @@ export default function DashboardPage() {
                           <div className="w-full text-right leading-none">
                             {hasIncome && hasExpense ? (
                               <>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+                                {/* Mobile: 1 baris net aja — 2 baris bikin SEMUA baris
+                                    kalender (auto-rows-fr) ikut melar. Detail tetap ada
+                                    di tooltip + breakdown per-hari. */}
+                                <p
+                                  className="sm:hidden num tabular text-[9px] font-semibold"
+                                  style={{ color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+                                >
+                                  {net >= 0 ? '+' : '−'}
+                                  {tight(net)}
+                                </p>
+                                <p className="hidden sm:block num tabular text-[9px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                                   +{tight(d.income)}
                                 </p>
-                                <p className="num tabular text-[8px] sm:text-[9px] font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
+                                <p className="hidden sm:block num tabular text-[9px] font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
                                   −{tight(d.expense)}
                                 </p>
                               </>
@@ -1057,15 +1156,12 @@ export default function DashboardPage() {
 
       {/* Budget Progress (per-card, span 1) */}
       <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
-        <div className="s-card p-6 h-full">
-          <div className="mb-4">
+        <div className="s-card p-4 sm:p-5 h-full">
+          <div className="mb-3">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>
-            <h3 className="t-h2 mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-              {t('dashboard.expense_categories')}
-            </h3>
           </div>
           {budgetProgress.length === 0 ? (
-            <div className="flex h-[200px] items-center justify-center text-center text-sm px-4" style={{ color: 'var(--ink-soft)' }}>
+            <div className="flex items-center justify-center text-center text-sm px-4 py-6" style={{ color: 'var(--ink-soft)' }}>
               <span>
                 {t('dashboard.no_budget')}.{' '}
                 <a href="/dashboard/budgeting" className="inline-flex items-center gap-1 font-medium" style={{ color: 'var(--c-mint-ink)' }}>
@@ -1102,7 +1198,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Insights & Alerts */}
-      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="lg:col-span-2 lg:row-span-3">
+      <SortableSection id="insights" order={blockOrder} overflow="fit-static" className="md:col-span-2 lg:row-span-3">
         <InsightsPanel
           part="alerts"
           monthTransactions={monthTransactions}
@@ -1114,15 +1210,10 @@ export default function DashboardPage() {
         />
       </SortableSection>
       {/* Yearly cash flow — income vs expense twin bars (per-card, span 2) */}
-      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="lg:col-span-2 lg:row-span-4">
-        <div className="s-card p-6 h-full">
-          <div className="mb-4 flex items-end justify-between flex-wrap gap-3 shrink-0">
-            <div>
-              <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>
-                {t('dashboard.income_vs_expense')}
-              </h3>
-            </div>
+      <SortableSection id="arus-tahunan" order={blockOrder} overflow="fill-chart" className="md:col-span-2 lg:row-span-4">
+        <div className="s-card p-4 sm:p-5 h-full">
+          <div className="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
+            <p className="eyebrow">{t('dashboard.cashflow_yearly')}</p>
             {/* Surplus/Deficit chip per mockup line 168 */}
             {(() => {
               const yearIncome = monthlyData.reduce((s, m) => s + m.income, 0)
@@ -1149,13 +1240,8 @@ export default function DashboardPage() {
       {/* Investment allocation donut (per-card, span 1) */}
       <SortableSection id="portofolio" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-4">
         <div className="s-card p-5 sm:p-6 flex flex-col h-full">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="eyebrow">{t('dashboard.portfolio')}</p>
-              <h3 className="t-h2 mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-                {t('dashboard.investment_allocation')}
-              </h3>
-            </div>
+          <div className="flex items-center justify-between gap-3">
+            <p className="eyebrow">{t('dashboard.portfolio')}</p>
             <Link
               href="/dashboard/assets/investment"
               className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
@@ -1166,10 +1252,10 @@ export default function DashboardPage() {
           </div>
 
           {investmentPieData.length === 0 ? (
-            <div className="flex flex-1 min-h-[240px] flex-col items-center justify-center text-center px-6">
-              <div className="size-14 rounded-2xl flex items-center justify-center mb-3"
+            <div className="flex flex-1 flex-col items-center justify-center text-center px-6 py-6">
+              <div className="size-10 rounded-xl flex items-center justify-center mb-2"
                 style={{ background: 'var(--c-violet-soft)' }}>
-                <TrendingUp className="size-7" style={{ color: 'var(--c-violet-ink)' }} />
+                <TrendingUp className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                 {t('dashboard.no_investment')}
@@ -1344,6 +1430,7 @@ export default function DashboardPage() {
         ) : null}
       </DragOverlay>
       </DndContext>
+      </div>
 
     </div>
   )

@@ -15,6 +15,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 
 export const AI_COSTS = {
   receipt_scan: 5,
@@ -77,10 +78,13 @@ export async function consumeAICredits(
   })
 
   if (error) {
+    // Log detail di server; JANGAN bocorin error.message (nama RPC/kolom/skema)
+    // ke klien — cukup pesan generik.
+    console.error('[ai-credits] consume_ai_credits gagal:', userId, error.message)
     return {
       ok: false,
       status: 500,
-      error: 'Gagal mengecek kredit AI: ' + error.message,
+      error: 'Gagal memeriksa kredit AI. Coba lagi sebentar.',
     }
   }
 
@@ -122,6 +126,10 @@ export async function refundAICredits(
   userId: string,
   costKey: AICostKey,
 ): Promise<void> {
+  // Billing beku (src/lib/billing-flag.ts): consume dilewati di endpoint,
+  // jadi refund juga no-op — jangan nambah kredit yang gak pernah dipotong.
+  if (!BILLING_ENABLED) return
+
   const amount = AI_COSTS[costKey]
   try {
     const privileged = createAdminClient() ?? supabase

@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import {
   formatRupiah,
   sendRenewalReminderEmail,
   sendTrialEndingEmail,
 } from '@/lib/email'
+import { REMINDER_THRESHOLDS, reminderDaysLeft, shouldRemind } from '@/lib/reminders'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -16,8 +18,8 @@ export const maxDuration = 300
  * ⚠️ REVIEWABLE SCAFFOLD — verify before scheduling:
  *  - Assumes subscription.status 'trialing' marks a trial and 'active' a paid
  *    sub (both used elsewhere in the app), and `expires_at` = period/trial end.
- *  - Dedup is by EXACT-date match: a once-daily run fires each threshold exactly
- *    once, so no extra column is needed. If the cron can run >1×/day, add a guard.
+ *  - Idempoten via tabel reminder_log (PK user+threshold+tanggal): cron retry
+ *    atau re-run >1×/hari TIDAK mengirim email dobel (migrasi 061).
  *  - Needs env: SUPABASE_SERVICE_ROLE_KEY (scan all users) + CRON_SECRET +
  *    RESEND_API_KEY (kalau absen, email lib no-op dan run-nya cuma log).
  *  - Scheduled di vercel.json: daily 02:00 UTC ≈ 09:00 WIB. Vercel ngirim
@@ -25,7 +27,6 @@ export const maxDuration = 300
  */
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://klunting.com'
-const THRESHOLDS = [14, 3, 0]
 
 export async function GET(request: Request) {
   // Only Vercel Cron (or a caller with the secret) may trigger this.
@@ -39,6 +40,12 @@ export async function GET(request: Request) {
   // cron preview kirim email ke user beneran. [reliability-6]
   if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production') {
     return NextResponse.json({ ok: true, skipped: `disabled on VERCEL_ENV=${process.env.VERCEL_ENV}` })
+  }
+
+  // Billing beku (src/lib/billing-flag.ts) → email trial/renewal gak relevan.
+  // Balas 200 (bukan error) supaya cron Vercel gak dianggap gagal.
+  if (!BILLING_ENABLED) {
+    return NextResponse.json({ ok: true, skipped: 'billing frozen (NEXT_PUBLIC_BILLING_ENABLED != 1)' })
   }
 
   const admin = createAdminClient()
@@ -59,7 +66,7 @@ export async function GET(request: Request) {
 
   // Subs expiring within the widest threshold window.
   const horizon = new Date()
-  horizon.setDate(horizon.getDate() + Math.max(...THRESHOLDS) + 1)
+  horizon.setDate(horizon.getDate() + Math.max(...REMINDER_THRESHOLDS) + 1)
   const { data: subs, error } = await admin
     .from('subscriptions')
     .select('user_id, plan_id, status, expires_at')
@@ -71,7 +78,6 @@ export async function GET(request: Request) {
   }
 
   const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
   let sent = 0
   const results: Array<{ days: number; type: string; ok: boolean }> = []
@@ -84,8 +90,20 @@ export async function GET(request: Request) {
   }>) {
     const exp = new Date(s.expires_at)
     const expDay = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
-    const days = Math.round((expDay.getTime() - today.getTime()) / 86_400_000)
-    if (!THRESHOLDS.includes(days)) continue
+    const days = reminderDaysLeft(s.expires_at, now)
+    if (!shouldRemind(days)) continue
+
+    // Idempotency: dedup per (user, threshold, tanggal) → cron retry/re-run gak
+    // kirim email dobel. Best-effort: kalau tabel belum ada (migrasi 061) → skip guard.
+    const kind = s.status === 'trialing' ? 'trial' : 'renewal'
+    const { data: logRows, error: logErr } = await admin
+      .from('reminder_log')
+      .upsert(
+        { user_id: s.user_id, kind, threshold: days, sent_on: now.toISOString().slice(0, 10) },
+        { onConflict: 'user_id,threshold,sent_on', ignoreDuplicates: true },
+      )
+      .select('user_id')
+    if (!logErr && (logRows?.length ?? 0) === 0) continue
 
     const { data: u } = await admin.auth.admin.getUserById(s.user_id)
     const email = u?.user?.email

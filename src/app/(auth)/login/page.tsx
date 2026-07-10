@@ -110,7 +110,7 @@ export default function LoginPage() {
     return (
       <>
         <div className="text-center mb-8">
-          <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
+          <h1 className="font-bold tracking-tight text-[22px] sm:text-[28px]" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>
             Verifikasi <span style={SERIF}>2 langkah.</span>
           </h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masukin kode 6 digit dari app authenticator kamu.</p>
@@ -144,7 +144,7 @@ export default function LoginPage() {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.025em' }}>
+        <h1 className="font-bold tracking-tight text-[22px] sm:text-[28px]" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>
           Selamat datang <span style={SERIF}>kembali.</span>
         </h1>
         <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masuk untuk melanjutkan.</p>

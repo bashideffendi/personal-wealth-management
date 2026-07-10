@@ -14,8 +14,7 @@
  *   net       → emerald (positive) atau coral (negative)
  */
 
-import { useT } from '@/lib/i18n/context'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency } from '@/lib/utils'
 import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, ArrowLeftRight,
   TrendingUp, TrendingDown,
@@ -48,8 +47,7 @@ const TONE_MAP: Record<NonNullable<KpiCardProps['kind']>, {
   net: { icon: 'var(--c-mint)', iconBg: 'var(--c-mint-soft)' },
 }
 
-export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
-  const t = useT()
+export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
   const k = kind ?? 'net'
 
   // Delta chip = perubahan REAL vs bulan lalu (bukan dekorasi statis). Panah =
@@ -69,46 +67,30 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
     : ICON_MAP[k]
 
   return (
-    <article className="stat-tile">
-      <div className="flex items-start gap-3">
-        {/* Icon box */}
+    <article className="stat-tile flex flex-col">
+      {/* Header: ikon + label + chip Δ — di baris ini boleh sempit */}
+      <div className="flex items-center gap-2.5">
         <div
           className="grid place-items-center shrink-0"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
+            width: 30,
+            height: 30,
+            borderRadius: 9,
             background: tone.iconBg,
             color: tone.icon,
           }}
         >
-          <IconCmp className="size-4" />
+          <IconCmp className="size-[15px]" />
         </div>
-
-        {/* Label + value */}
-        <div className="min-w-0 flex-1">
-          <p
-            className="text-[11px] font-medium leading-tight"
-            style={{ color: 'var(--ink-muted)' }}
-          >
-            {label}
-          </p>
-          <p
-            className="num tabular font-bold mt-1 leading-tight truncate"
-            style={{
-              fontSize: 22,
-              color: 'var(--ink)',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            {formatCurrency(value)}
-          </p>
-        </div>
-
-        {/* Delta chip top-right — perubahan vs bulan lalu (real, bukan statis) */}
+        <p
+          className="text-[11px] font-medium leading-tight flex-1 min-w-0 line-clamp-2"
+          style={{ color: 'var(--ink-muted)' }}
+        >
+          {label}
+        </p>
         {showDelta && (
           <span
-            className={`delta-chip ${deltaGood ? 'delta-chip-positive' : 'delta-chip-negative'}`}
+            className={`delta-chip shrink-0 ${deltaGood ? 'delta-chip-positive' : 'delta-chip-negative'}`}
             title="Perubahan vs bulan lalu"
           >
             {deltaUp ? <TrendingUp className="size-2.5" /> : <TrendingDown className="size-2.5" />}
@@ -117,12 +99,16 @@ export function KpiCard({ label, value, note, deltaPct, kind }: KpiCardProps) {
         )}
       </div>
 
-      {/* Note bottom */}
+      {/* Angka — BARIS PENUH sendiri (gak ke-squeeze ikon/chip) */}
       <p
-        className="text-[11px] mt-2.5"
-        style={{ color: 'var(--ink-soft)' }}
+        className="num tabular font-bold mt-auto pt-2.5 leading-tight truncate"
+        style={{
+          fontSize: 19,
+          color: 'var(--ink)',
+          letterSpacing: '-0.02em',
+        }}
       >
-        {note ?? t('dashboard.current_month')}
+        {formatCompactCurrency(value)}
       </p>
     </article>
   )

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { needsStepUp } from '@/lib/auth-guard'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -77,6 +78,10 @@ export async function GET() {
   } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  // 2FA step-up: kalau user enroll 2FA tapi sesi masih AAL1, tolak ekspor data.
+  if (await needsStepUp(supabase)) {
+    return NextResponse.json({ error: 'Selesaikan verifikasi 2FA dulu untuk mengekspor data.' }, { status: 403 })
   }
 
   const data: Record<string, unknown> = {}

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -46,9 +46,7 @@ export default function CalculatorsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="min-w-0">
-        <p className="eyebrow mb-1.5">{CALCS.length} {t('calculators.eyebrow_quick_tools')}</p>
-        <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
-        <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--ink-muted)' }}>{t('calculators.page_subtitle')}</p>
+        <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
       </div>
 
       {/* Featured calculator */}
@@ -61,13 +59,24 @@ export default function CalculatorsPage() {
        <ZakatCalculator />}
 
       {/* Calculator gallery */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {CALCS.filter((c) => c.key !== selected).map((c) => (
-          <button key={c.key} type="button" onClick={() => pick(c.key)} className="s-card p-5 text-left transition hover:border-[var(--ink)]" >
-            <div className="size-10 rounded-xl grid place-items-center" style={{ background: tint(c.color, 10) }}><c.icon className="size-5" style={{ color: c.ink }} /></div>
-            <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
-            <p className="text-[13px] mt-1 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t(`calculators.${c.descKey}`)}</p>
-            <span className="inline-flex items-center gap-1 text-[13px] font-semibold mt-3" style={{ color: c.ink }}>{t('calculators.open_calculator')} <ArrowRight className="size-3.5" /></span>
+      {/* Galeri kalkulator — baris-compact (1 kartu + hairline divider) */}
+      <div className="rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        {CALCS.filter((c) => c.key !== selected).map((c, i) => (
+          <button
+            key={c.key}
+            type="button"
+            onClick={() => pick(c.key)}
+            className="w-full text-left flex items-center gap-3 px-3.5 transition-colors hover:bg-[var(--surface-2)]"
+            style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+          >
+            <div className="size-[30px] rounded-lg grid place-items-center shrink-0" style={{ background: tint(c.color, 10) }}>
+              <c.icon className="size-[15px]" style={{ color: c.ink }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
+              <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t(`calculators.${c.descKey}`)}</p>
+            </div>
+            <ArrowRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
           </button>
         ))}
       </div>
@@ -93,7 +102,8 @@ function KprFeatured() {
   const total = monthly * n
   const bungaTotal = Math.max(0, total - principal)
   const pokokPct = total > 0 ? (principal / total) * 100 : 0
-  const jt = formatCurrency
+  // Grid 3 kolom di mobile gak muat full digit miliaran (angka saling nabrak) → compact.
+  const jt = formatCompactCurrency
 
   async function makeGoal() {
     setCreating(true)
@@ -115,7 +125,7 @@ function KprFeatured() {
   return (
     <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" >
       {/* Input (kiri, tinted) */}
-      <div className="p-6 sm:p-7" style={{ background: 'var(--surface-2)' }}>
+      <div className="p-5 sm:p-6" style={{ background: 'var(--surface-2)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
           <span className="size-7 rounded-lg grid place-items-center" style={{ background: tint(VIOLET, 10) }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
@@ -131,9 +141,9 @@ function KprFeatured() {
         </div>
       </div>
       {/* Result (kanan) */}
-      <div className="p-6 sm:p-7" style={{ background: 'var(--surface)' }}>
+      <div className="p-5 sm:p-6" style={{ background: 'var(--surface)' }}>
         <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
-        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(34px,4.5vw,46px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
+        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(26px,4.5vw,36px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_monthly_for')} {tenor} {t('calculators.unit_years')}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
           <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
@@ -311,7 +321,7 @@ function PensionGapCalculator() {
         </div>
 
         <div className="mt-5 text-center p-4 rounded-lg" style={{ background: 'var(--surface-2)' }}>
-          <p className="num text-5xl font-bold leading-none" style={{ color: statusInk }}>
+          <p className="num text-2xl font-bold leading-none" style={{ color: statusInk }}>
             {result.replacementActual.toFixed(0)}%
           </p>
           <p className="text-xs mt-2" style={{ color: 'var(--ink-soft)' }}>
@@ -355,14 +365,14 @@ function PensionGapCalculator() {
               {t('calculators.bpjs_to_close_gap')}
             </p>
             {result.taxSaving > 0 && (
-              <p className="text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>
+              <p className="hidden md:block text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>
                 {t('calculators.bpjs_tax_bonus_prefix')} {formatCurrency(result.deductibleAmount)}{t('calculators.bpjs_tax_bonus_suffix')} ±{formatCurrency(result.taxSaving)}{t('calculators.bpjs_tax_bonus_note')}
               </p>
             )}
           </div>
         )}
 
-        <p className="text-[10px] mt-4" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-[10px] mt-4" style={{ color: 'var(--ink-soft)' }}>
           {t('calculators.bpjs_disclaimer')}
         </p>
       </div>
@@ -434,7 +444,7 @@ function FireCalculator() {
         </div>
         <div className="mt-4 pt-4 border-t" >
           <ResultRow label={t('calculators.save_per_month')} v={result.monthlySave} big accent="var(--c-mint-ink)" />
-          <p className="text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block text-xs mt-3" style={{ color: 'var(--ink-soft)' }}>
             {t('calculators.fire_summary_prefix')} <span className="num font-semibold">{formatCurrency(result.monthlySave)}</span>{t('calculators.fire_summary_mid')} {result.yearsToRetire} {t('calculators.fire_summary_years_at')} {annualReturn}{t('calculators.fire_summary_return_suffix')} {retireAge}.
           </p>
         </div>

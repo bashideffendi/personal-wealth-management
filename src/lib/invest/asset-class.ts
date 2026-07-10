@@ -29,20 +29,24 @@ export function assetClassKey(inv: Pick<Investment, 'category' | 'currency'>): A
  * in investment-visual.ts was retired after it diverged for 9/11 classes).
  * No red/coral family here on purpose: red is reserved app-wide for LOSS,
  * so an asset class must never wear it (Obligasi used to be #D2495A).
+ *
+ * F10: 12 kelas diturunkan dari keluarga warna logo (teal/biru/ungu — coral
+ * tetap haram di sini) + emas muted (afordansi "Emas") + netral. Hex literal
+ * dipertahankan (dipakai konteks non-CSS-var, lihat F0c).
  */
 export const ASSET_CLASS_META: Record<AssetClassKey, { label: string; color: string }> = {
-  stock_idx:    { label: 'Saham IHSG', color: '#129B69' },
-  stock_us:     { label: 'Saham US',   color: '#2D89BC' },
-  mutual_fund:  { label: 'Reksa Dana', color: '#7C5FD3' },
-  crypto:       { label: 'Crypto',     color: '#F97316' },
-  gold:         { label: 'Emas',       color: '#EAB308' },
-  bond:         { label: 'Obligasi',   color: '#3B82F6' },
-  sbn:          { label: 'SBN Ritel',  color: '#6366F1' },
-  time_deposit: { label: 'Deposito',   color: '#14B8A6' },
-  forex:        { label: 'Valas',      color: '#06B6D4' },
-  p2p:          { label: 'P2P Lending', color: '#EC4899' },
-  pension:      { label: 'Dana Pensiun', color: '#64748B' },
-  business:     { label: 'Bisnis',     color: '#8F5E06' },
+  stock_idx:    { label: 'Saham IHSG', color: '#17b890' },
+  stock_us:     { label: 'Saham US',   color: '#5d6fe0' },
+  mutual_fund:  { label: 'Reksa Dana', color: '#8b4fb0' },
+  crypto:       { label: 'Crypto',     color: '#6d3a92' },
+  gold:         { label: 'Emas',       color: '#C89B3C' },
+  bond:         { label: 'Obligasi',   color: '#8B97F0' },
+  sbn:          { label: 'SBN Ritel',  color: '#4350C2' },
+  time_deposit: { label: 'Deposito',   color: '#0F6E56' },
+  forex:        { label: 'Valas',      color: '#5DCAA5' },
+  p2p:          { label: 'P2P Lending', color: '#B07FD6' },
+  pension:      { label: 'Dana Pensiun', color: '#6B7280' },
+  business:     { label: 'Bisnis',     color: '#3F3F46' },
 }
 
 /** Stable display order (matches the donut/kinerja legend). */

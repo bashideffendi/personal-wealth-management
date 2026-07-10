@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { needsStepUp } from '@/lib/auth-guard'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -46,6 +47,8 @@ const DELETE_ORDER = [
   'household_activities',
   'subscriptions',
   'ai_credit_ledger',
+  'xp_events',
+  'achievements',
   'household_members',
 ] as const
 
@@ -55,6 +58,10 @@ export async function POST() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // 2FA step-up: hapus akun = ireversibel; kalau enroll 2FA tapi sesi AAL1, tolak.
+  if (await needsStepUp(supabase)) {
+    return NextResponse.json({ error: 'Selesaikan verifikasi 2FA dulu untuk menghapus akun.' }, { status: 403 })
+  }
 
   const admin = createAdminClient()
   const db = admin ?? supabase

@@ -4,13 +4,18 @@
  * PortfolioHero — total value + equity curve (demoted until history exists)
  * + sub-stats. Extracted from the investment hub monolith; chart-range state
  * lives HERE so toggling a range never re-renders the rest of the page.
+ *
+ * F9 (mobile <md): dual-render — desktop keeps the s-card hero utuh; mobile
+ * renders angka langsung di KANVAS (tanpa kartu): total 24px compact + chip
+ * pill %, subline untung/rugi full digit + jumlah institusi, sparkline tipis
+ * (EquityArea, hanya saat history ≥8 snapshot), lalu chip periode pill.
  */
 
 import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { TrendingUp, TrendingDown } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n/context'
 
 const EquityArea = dynamic(() => import('./investment-charts').then((m) => m.EquityArea), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
@@ -31,7 +36,7 @@ export interface PortfolioHeroProps {
 }
 
 export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, snapshots }: PortfolioHeroProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const [chartRange, setChartRange] = useState<ChartRangeKey>('all')
   const up = totals.pl >= 0
 
@@ -52,16 +57,79 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
       pts = pts.filter(([d]) => d >= cutStr)
     }
     return pts.map(([date, value]) => ({
-      label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+      label: new Date(date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' }),
       value,
     }))
-  }, [snapshots, totals.market, chartRange])
+  }, [snapshots, totals.market, chartRange, locale])
 
   // Equity curve only earns its slot once there's real history to draw.
   const hasHistory = snapshots.length >= 8
 
   return (
-    <section className="s-card p-6 sm:p-8">
+    <>
+      {/* ── Mobile <md — angka di KANVAS, tanpa kartu (F9 mockup) ── */}
+      <section className="md:hidden" aria-label={t('investment.total_value')}>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <p
+            className="num tabular font-semibold leading-none"
+            style={{ fontSize: 24, letterSpacing: '-0.02em', color: 'var(--ink)' }}
+            title={formatCurrency(totals.market)}
+          >
+            {formatCompactCurrency(totals.market)}
+          </p>
+          <span
+            className="num inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+            data-loss={up ? undefined : 'true'}
+            style={{
+              background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
+              color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
+            }}
+          >
+            {up ? '+' : ''}{totals.plPct.toFixed(2)}%
+          </span>
+        </div>
+        <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+          <span
+            className="num tabular font-semibold"
+            data-loss={up ? undefined : 'true'}
+            style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+          >
+            {up ? '+' : ''}{formatCurrency(totals.pl)}
+          </span>{' '}
+          {t('investment.since_inception')}
+          {institutionCount > 0 ? ` · ${institutionCount} ${t('investment.institutions')}` : ''}
+        </p>
+        {/* Sparkline tipis — ikut demotion rule desktop (baru render ≥8 snapshot) */}
+        {hasHistory && chartData.length >= 2 && (
+          <div className="mt-3" data-loss={up ? undefined : 'true'} style={{ height: 52 }}>
+            <EquityArea data={chartData} up={up} />
+          </div>
+        )}
+        {hasHistory && (
+          <div className="mt-2.5 flex gap-1.5">
+            {CHART_RANGES.map((r) => {
+              const active = chartRange === r.key
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setChartRange(r.key)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition"
+                  style={active
+                    ? { background: 'var(--ink)', color: 'var(--surface)' }
+                    : { background: 'var(--surface)', color: 'var(--ink-muted)' }}
+                >
+                  {r.key === 'all' ? t('investment.range_all') : r.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ── Desktop md+ — kartu hero existing, utuh ── */}
+      <section className="s-card p-5 sm:p-6 hidden md:block">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="eyebrow">
@@ -71,9 +139,10 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           <div className="mt-2 flex flex-wrap items-end gap-3">
             <p
               className="num tabular font-bold leading-none whitespace-nowrap"
-              style={{ color: 'var(--ink)', fontSize: 'clamp(34px, 5vw, 54px)', letterSpacing: '-0.035em' }}
+              style={{ color: 'var(--ink)', fontSize: 'clamp(26px, 5vw, 34px)', letterSpacing: '-0.035em' }}
+              title={formatCurrency(totals.market)}
             >
-              {formatCurrency(totals.market)}
+              {formatCompactCurrency(totals.market)}
             </p>
             <span
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
@@ -121,7 +190,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           "curve" reads worse than no curve). Until then the slot earns its
           keep with Modal vs Nilai Sekarang, computable from day one.
           data-loss saat turun: Calm Mode ikut menyamarkan kurva merah. */}
-      <div className="mt-4" data-loss={up ? undefined : 'true'} style={{ height: 150 }}>
+      <div className="mt-4 h-[150px] md:h-[200px] xl:h-[240px]" data-loss={up ? undefined : 'true'}>
         {!hasHistory ? (
           <div className="h-full rounded-xl px-5 flex flex-col justify-center gap-3" style={{ background: 'var(--surface-2)' }}>
             {(() => {
@@ -186,7 +255,8 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
         />
         <HeroStat label={t('investment.stat_dividend_ytd')} value={formatCurrency(dividenYtd)} />
       </div>
-    </section>
+      </section>
+    </>
   )
 }
 

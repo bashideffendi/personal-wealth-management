@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
+import { adjustCardBalance, adjustAccountBalance } from '@/lib/data/balances'
 import type { Account, CreditCard as CreditCardType, CreditCardPayment } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -222,10 +223,8 @@ export default function CreditCardsPage() {
     // tercatat tapi saldo gak berubah (yg bikin reversal over-credit pas dihapus).
     const card = cards.find((x) => x.id === payForm.card_id)
     if (card) {
-      const { error: cardErr } = await supabase.from('credit_cards')
-        .update({ current_balance: Math.max(0, card.current_balance - payForm.amount) })
-        .eq('id', card.id)
-      if (cardErr) {
+      const { ok: cardOk } = await adjustCardBalance(supabase, card.id, -payForm.amount, card.current_balance, true)
+      if (!cardOk) {
         await supabase.from('credit_card_payments').delete().eq('id', paymentId)
         setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
       }
@@ -236,10 +235,8 @@ export default function CreditCardsPage() {
     if (payForm.from_account_id) {
       const acc = accounts.find((a) => a.id === payForm.from_account_id)
       if (acc) {
-        const { error: accErr } = await supabase.from('accounts')
-          .update({ current_balance: acc.current_balance - payForm.amount })
-          .eq('id', acc.id)
-        if (accErr) {
+        const { ok: accOk } = await adjustAccountBalance(supabase, acc.id, -payForm.amount, acc.current_balance)
+        if (!accOk) {
           // rollback: balikin saldo kartu + hapus payment row (all-or-nothing)
           if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance }).eq('id', card.id)
           await supabase.from('credit_card_payments').delete().eq('id', paymentId)
@@ -258,14 +255,14 @@ export default function CreditCardsPage() {
     if (delErr) { toast.error(t('common.delete_failed')); return }
     const card = cards.find((x) => x.id === p.card_id)
     if (card) {
-      const { error } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + p.amount }).eq('id', card.id)
-      if (error) toast.error(t('common.mutation_failed'))
+      const { ok } = await adjustCardBalance(supabase, card.id, p.amount, card.current_balance)
+      if (!ok) toast.error(t('common.mutation_failed'))
     }
     if (p.from_account_id) {
       const acc = accounts.find((a) => a.id === p.from_account_id)
       if (acc) {
-        const { error } = await supabase.from('accounts').update({ current_balance: acc.current_balance + p.amount }).eq('id', acc.id)
-        if (error) toast.error(t('common.mutation_failed'))
+        const { ok } = await adjustAccountBalance(supabase, acc.id, p.amount, acc.current_balance)
+        if (!ok) toast.error(t('common.mutation_failed'))
       }
     }
     refresh()
@@ -308,10 +305,11 @@ export default function CreditCardsPage() {
   const payCard = cards.find((c) => c.id === payForm.card_id)
   const dueSoon = dueList.filter((d) => d.days <= 7)
 
-  const stats: { label: string; value: string; sub: string; icon: LucideIcon; color: string; tint: string }[] = [
-    { label: t('credit_cards.stat_total_limit'), value: formatCurrency(totals.limit), sub: `${t('credit_cards.stat_from_n_cards_prefix')} ${totals.count} ${t('credit_cards.cards_unit')}`, icon: CreditCard, color: 'var(--ink-soft)', tint: 'var(--surface-2)' },
-    { label: t('credit_cards.stat_total_used'), value: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% ${t('credit_cards.stat_of_limit_suffix')}`, icon: ArrowUpRight, color: CORAL, tint: tint(CORAL, 10) },
-    { label: t('credit_cards.stat_available_limit'), value: formatCurrency(totals.available), sub: t('credit_cards.stat_ready_to_use'), icon: CheckCircle2, color: MINT, tint: tint(MINT, 10) },
+  // `full` = angka full digit buat tooltip (title) — display pakai compact.
+  const stats: { label: string; value: string; full?: string; sub: string; icon: LucideIcon; color: string; tint: string }[] = [
+    { label: t('credit_cards.stat_total_limit'), value: formatCompactCurrency(totals.limit), full: formatCurrency(totals.limit), sub: `${t('credit_cards.stat_from_n_cards_prefix')} ${totals.count} ${t('credit_cards.cards_unit')}`, icon: CreditCard, color: 'var(--ink-soft)', tint: 'var(--surface-2)' },
+    { label: t('credit_cards.stat_total_used'), value: formatCompactCurrency(totals.outstanding), full: formatCurrency(totals.outstanding), sub: `${totals.utilization.toFixed(0)}% ${t('credit_cards.stat_of_limit_suffix')}`, icon: ArrowUpRight, color: CORAL, tint: tint(CORAL, 10) },
+    { label: t('credit_cards.stat_available_limit'), value: formatCompactCurrency(totals.available), full: formatCurrency(totals.available), sub: t('credit_cards.stat_ready_to_use'), icon: CheckCircle2, color: MINT, tint: tint(MINT, 10) },
     { label: t('credit_cards.stat_nearest_due'), value: nearest ? formatDate(nearest.due.toISOString()) : '—', sub: nearest ? `${nearest.days} ${t('credit_cards.days_left_suffix')}` : t('credit_cards.no_bills'), icon: CalendarClock, color: AMBER, tint: tint(AMBER, 10) },
   ]
 
@@ -320,13 +318,9 @@ export default function CreditCardsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{totals.count} {t('credit_cards.active_cards_suffix')}</p>
-          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4vw, 38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+          <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
             {t('credit_cards.title')}
           </h1>
-          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>
-            {t('credit_cards.subtitle')}
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={() => openPayCard()} disabled={active.length === 0}>
@@ -365,7 +359,7 @@ export default function CreditCardsPage() {
                     <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
                       <span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}
                     </p>
-                    <p className="num tabular text-2xl font-bold mt-1.5 whitespace-nowrap" style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="num tabular font-bold mt-1.5 whitespace-nowrap" title={s.full} style={{ fontSize: 19, color: 'var(--ink)' }}>{s.value}</p>
                     <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}>
@@ -479,11 +473,11 @@ export default function CreditCardsPage() {
 
             <div className="s-card p-5" style={{ background: `color-mix(in srgb, ${utilColor} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${utilColor} 25%, var(--border-soft))` }}>
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: utilInk }}>{t('credit_cards.utilization_rate')}</p>
-              <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 52, color: utilInk, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
+              <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 24, color: utilInk, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
               <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> {t('credit_cards.of_total_limit')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>
               </p>
-              <div className="mt-4 flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
+              <div className="mt-4 hidden md:flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
                 <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: utilInk }} />
                 <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                   {t('credit_cards.advice_prefix')} <strong style={{ color: 'var(--ink)' }}>{t('credit_cards.advice_below_30')}</strong>. {t('credit_cards.advice_you_are')} <strong style={{ color: utilInk }}>{utilZone}</strong>.
@@ -493,7 +487,9 @@ export default function CreditCardsPage() {
           </div>
 
           {/* Bunga berbunga — wake-up call kalau cuma bayar minimum (pakai bunga kartu) */}
-          <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label={t('credit_cards.total_credit_card')} />
+          <div className="hidden md:block">
+            <CompoundDebtWarning balance={totals.outstanding} annualRate={blendedAnnualRate} label={t('credit_cards.total_credit_card')} />
+          </div>
 
           {/* Riwayat pembayaran */}
           <div className="s-card overflow-hidden">

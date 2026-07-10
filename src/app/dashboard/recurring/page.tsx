@@ -1,14 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { isExpired, nextRunDate, occurrencesInRange, startOfToday, type RecurLike } from '@/lib/recurrence'
+import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useRouter } from 'next/navigation'
+import { isExpired, nextRunDate, occurrencesInRange, parseISODate, startOfToday, type RecurLike } from '@/lib/recurrence'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import {
   INCOME_CATEGORIES, EXPENSE_CATEGORIES, SAVING_CATEGORIES, INVESTMENT_CATEGORIES,
 } from '@/lib/constants'
-import type { Account, RecurringTransaction } from '@/types'
+import { SUBSCRIPTION_PROVIDERS, providerInitials } from '@/lib/subscription-providers'
+import { categoryHue } from '@/lib/category-hue'
+import type { Account, Contract, RecurringTransaction } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
@@ -21,10 +24,13 @@ import {
 } from '@/components/ui/select'
 import {
   Plus, Pencil, Trash2, Loader2, Play, Pause, Search, Sparkles, Check,
-  Home, Zap, Film, Shield, TrendingUp, Repeat, Wallet, CalendarClock, type LucideIcon,
+  Home, Zap, Film, Shield, TrendingUp, Repeat, Wallet, CalendarClock, FileClock, type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { ProviderCatalog } from '@/components/recurring/provider-catalog'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 type Freq = 'daily' | 'weekly' | 'monthly' | 'yearly'
@@ -67,13 +73,14 @@ interface FormState {
   start_date: string
   end_date: string
   is_active: boolean
+  auto_post: boolean
   notes: string
 }
 const EMPTY: FormState = {
   id: null, name: '', type: 'expense', category: 'Langganan',
   amount: 0, account_id: '', frequency: 'monthly', day_of_period: 1,
   start_date: new Date().toISOString().split('T')[0], end_date: '',
-  is_active: true, notes: '',
+  is_active: true, auto_post: false, notes: '',
 }
 
 const DAY = 86_400_000
@@ -83,13 +90,50 @@ const isoDaysAgo = (days: number) => new Date(Date.now() - days * DAY).toISOStri
 // dashboard) — lihat src/lib/recurrence.ts.
 const occurrencesIn30 = (r: RecurLike) => occurrencesInRange(r, startOfToday(), 30)
 
-const dmy = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+const dmy = (d: Date, dloc: string) => d.toLocaleDateString(dloc, { day: 'numeric', month: 'short' })
 
 /** Ekuivalen bulanan buat agregasi lintas frekuensi. */
 const monthlyEq = (r: RecurringTransaction) => r.frequency === 'monthly' ? r.amount : r.frequency === 'weekly' ? r.amount * 52 / 12 : r.frequency === 'yearly' ? r.amount / 12 : r.amount * 365 / 12
 
+/** F13f: klasifikasi DERIVED (tanpa migrasi DB) buat tab Rutin|Cicilan|Langganan. */
+type Klas = 'rutin' | 'cicilan' | 'langganan'
+const klasOf = (r: RecurringTransaction): Klas =>
+  (r.category ?? '').includes('Langganan') ? 'langganan'
+    : r.end_date && r.type === 'expense' ? 'cicilan'
+      : 'rutin'
+
+const dmyy = (d: Date, dloc: string) => d.toLocaleDateString(dloc, { day: 'numeric', month: 'short', year: '2-digit' })
+
+/** Pilih wadah detail: BottomSheet (<md) vs Sheet kanan (≥md). SSR-safe, default false. */
+const MD_QUERY = '(min-width: 768px)'
+const subscribeMd = (cb: () => void) => {
+  const mq = window.matchMedia(MD_QUERY)
+  mq.addEventListener('change', cb)
+  return () => mq.removeEventListener('change', cb)
+}
+const useIsMdUp = () =>
+  useSyncExternalStore(subscribeMd, () => window.matchMedia(MD_QUERY).matches, () => false)
+
+/* ===== Mobile Budget-style (F14): 4 tab (3 klasifikasi + Kontrak) + avatar inisial ===== */
+type MTab = Klas | 'kontrak'
+/** Kolom minimal dari tabel contracts buat list mobile (CRUD tetap di /dashboard/contracts). */
+type ContractLite = Pick<Contract, 'id' | 'name' | 'category' | 'provider' | 'cost' | 'end_date' | 'is_archived'>
+const CONTRACT_COLS = 'id, name, category, provider, cost, end_date, is_archived'
+const PROVIDER_COLOR = new Map(SUBSCRIPTION_PROVIDERS.map((p) => [p.name.toLowerCase(), p.color]))
+/** Avatar ala Budget: warna provider kalau nama match katalog, else hue kategori. */
+function avatarStyle(name: string, category: string): { bg: string; fg: string } {
+  const pc = PROVIDER_COLOR.get(name.trim().toLowerCase())
+  if (pc) return { bg: pc, fg: '#fff' }
+  const h = categoryHue(category)
+  return { bg: h.soft, fg: h.ink }
+}
+
 export default function RecurringPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
+  const KLAS_LABELS: Record<Klas, string> = locale === 'en'
+    ? { rutin: 'Repeat', cicilan: 'Installment', langganan: 'Subscription' }
+    : { rutin: 'Rutin', cicilan: 'Cicilan', langganan: 'Langganan' }
   const TYPE_LABELS: Record<TxType, string> = {
     income: t('recurring.type_income'), expense: t('recurring.type_expense'),
     saving: t('recurring.type_saving'), investment: t('recurring.type_investment'),
@@ -100,10 +144,18 @@ export default function RecurringPage() {
   }
   const supabase = createClient()
   const qc = useQueryClient()
+  const router = useRouter()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState<'all' | Freq>('all')
+  // F13f: tab klasifikasi + katalog provider + detail sheet
+  const [tab, setTab] = useState<Klas>('rutin')
+  // F14: tab mobile terpisah (4 tab, termasuk Kontrak) — desktop tetap 3 tab
+  const [mtab, setMtab] = useState<MTab>('rutin')
+  const [catalogOpen, setCatalogOpen] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const [detailTab, setDetailTab] = useState<'paid' | 'upcoming'>('paid')
 
   // Deteksi dari riwayat
   const [detectOpen, setDetectOpen] = useState(false)
@@ -131,6 +183,26 @@ export default function RecurringPage() {
   const accounts = pageQuery.data?.accounts ?? []
   const refresh = () => qc.invalidateQueries({ queryKey: ['recurring'] })
 
+  // F14: kontrak digabung ke layar Berulang (tab Kontrak di mobile) — query terpisah
+  const contractsQuery = useQuery({
+    queryKey: ['recurring-contracts'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const { data, error } = await supabase.from('contracts')
+        .select(CONTRACT_COLS)
+        .eq('user_id', user.id)
+        .order('end_date', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as ContractLite[]
+    },
+  })
+  const contracts = useMemo(
+    () => (contractsQuery.data ?? []).filter((c) => !c.is_archived),
+    [contractsQuery.data],
+  )
+
   async function save() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -140,11 +212,19 @@ export default function RecurringPage() {
       amount: form.amount, account_id: form.account_id || null,
       frequency: form.frequency, day_of_period: form.day_of_period,
       start_date: form.start_date, end_date: form.end_date || null,
-      is_active: form.is_active, notes: form.notes,
+      is_active: form.is_active, auto_post: form.auto_post, notes: form.notes,
     }
-    const { error } = form.id
-      ? await supabase.from('recurring_transactions').update(payload).eq('id', form.id)
-      : await supabase.from('recurring_transactions').insert(payload)
+    const run = (p: Record<string, unknown>) =>
+      form.id
+        ? supabase.from('recurring_transactions').update(p).eq('id', form.id)
+        : supabase.from('recurring_transactions').insert(p)
+    let { error } = await run(payload)
+    // Graceful pre-migrasi 062: kolom auto_post belum ada di DB → retry tanpa
+    // field itu biar simpan tetap jalan (toggle efektif setelah migrasi).
+    if (error && /auto_post/.test(error.message)) {
+      const { auto_post: _skip, ...withoutAutoPost } = payload
+      ;({ error } = await run(withoutAutoPost))
+    }
     setSaving(false)
     if (error) { toast.error(t('common.mutation_failed')); return }
     setDialogOpen(false)
@@ -180,7 +260,8 @@ export default function RecurringPage() {
     setForm({
       id: r.id, name: r.name, type: r.type, category: r.category, amount: r.amount,
       account_id: r.account_id ?? '', frequency: r.frequency, day_of_period: r.day_of_period,
-      start_date: r.start_date, end_date: r.end_date ?? '', is_active: r.is_active, notes: r.notes,
+      start_date: r.start_date, end_date: r.end_date ?? '', is_active: r.is_active,
+      auto_post: r.auto_post ?? false, notes: r.notes,
     })
     setDialogOpen(true)
   }
@@ -231,10 +312,10 @@ export default function RecurringPage() {
   const totalSetahun = perBulan * 12 + perMinggu * 52 + perTahun + perHari * 365
 
   const stats = [
-    { label: t('recurring.stat_per_month'), value: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: tint(VIOLET, 12) },
-    { label: t('recurring.stat_per_week'), value: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: tint(AMBER, 12) },
-    { label: t('recurring.stat_per_year'), value: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: tint(MINT, 12) },
-    { label: t('recurring.stat_total_year'), value: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: tint(VIOLET, 12) },
+    { label: t('recurring.stat_per_month'), value: formatCompactCurrency(perBulan), full: formatCurrency(perBulan), sub: `${byFreq('monthly').length} ${t('recurring.item')}`, icon: Repeat, color: VIOLET, tint: tint(VIOLET, 12) },
+    { label: t('recurring.stat_per_week'), value: formatCompactCurrency(perMinggu), full: formatCurrency(perMinggu), sub: `${byFreq('weekly').length} ${t('recurring.item')}`, icon: Repeat, color: AMBER, tint: tint(AMBER, 12) },
+    { label: t('recurring.stat_per_year'), value: formatCompactCurrency(perTahun), full: formatCurrency(perTahun), sub: `${byFreq('yearly').length} ${t('recurring.item')}`, icon: Shield, color: MINT, tint: tint(MINT, 12) },
+    { label: t('recurring.stat_total_year'), value: formatCompactCurrency(totalSetahun), full: formatCurrency(totalSetahun), sub: t('recurring.estimate'), icon: CalendarClock, color: VIOLET, tint: tint(VIOLET, 12) },
   ]
 
   // Kalender 30 hari: amount per tanggal
@@ -274,24 +355,162 @@ export default function RecurringPage() {
     if (biggest) out.push({ title: `${biggest.name} ${t('recurring.sug_biggest_title_suffix')}`, body: `${formatCurrency(Math.round(monthlyEq(biggest)))}${t('recurring.per_month_short')} (${(monthlyEq(biggest) / Math.max(1, breakdownTotal) * 100).toFixed(0)}% ${t('recurring.sug_biggest_body_suffix')}).` })
     const yearlyBig = payments.filter((r) => r.frequency === 'yearly')[0]
     const yNext = yearlyBig ? nextRunDate(yearlyBig) : null
-    if (yearlyBig && yNext) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(yNext)}.` })
+    if (yearlyBig && yNext) out.push({ title: `${yearlyBig.name} ${t('recurring.sug_yearly_title_suffix')}`, body: `${t('recurring.sug_yearly_set_aside')} ${formatCurrency(Math.round(yearlyBig.amount / 12))}${t('recurring.per_month_short')} ${t('recurring.sug_yearly_body_suffix')} ${dmy(yNext, dloc)}.` })
     return out.slice(0, 3)
   }, [payments, breakdownTotal, t])
 
-  const visible = filter === 'all' ? items : items.filter((r) => r.frequency === filter)
+  // F13f: tab klasifikasi memfilter list; filter frekuensi existing digabung
+  const klasCounts = useMemo(() => {
+    const c: Record<Klas, number> = { rutin: 0, cicilan: 0, langganan: 0 }
+    for (const r of items) c[klasOf(r)]++
+    return c
+  }, [items])
+  const visible = items.filter((r) => klasOf(r) === tab && (filter === 'all' || r.frequency === filter))
+
+  // F13f: detail item (bottom sheet)
+  const detailItem = useMemo(() => items.find((r) => r.id === detailId) ?? null, [items, detailId])
+  const detailData = useMemo(() => {
+    if (!detailItem) return null
+    const t0 = startOfToday()
+    const startD = parseISODate(detailItem.start_date)
+    // Terbayar = occurrence dari start_date s.d. hari ini (inklusif)
+    const past = startD && startD <= t0
+      ? occurrencesInRange(detailItem, startD, Math.round((t0.getTime() - startD.getTime()) / DAY)).filter((d) => d.getTime() <= t0.getTime())
+      : []
+    return {
+      paidCount: past.length,
+      totalPaid: past.length * detailItem.amount,
+      paidList: past.slice(-12).reverse(),
+      upcoming: occurrencesInRange(detailItem, t0, 365).slice(0, 12),
+    }
+  }, [detailItem])
+  const detailList = detailData ? (detailTab === 'paid' ? detailData.paidList : detailData.upcoming) : []
+
+  function openDetail(r: RecurringTransaction) {
+    setDetailTab('paid')
+    setDetailId(r.id)
+  }
+  // Tab Langganan: tombol tambah buka katalog provider dulu
+  function handleAdd() {
+    if (tab === 'langganan') setCatalogOpen(true)
+    else openAdd()
+  }
+
+  // ===== F14 mobile: label, count, list per tab (4 tab termasuk Kontrak) =====
+  const MTAB_LABELS: Record<MTab, string> = { ...KLAS_LABELS, kontrak: locale === 'en' ? 'Contract' : 'Kontrak' }
+  const mtabCounts: Record<MTab, number> = { ...klasCounts, kontrak: contracts.length }
+  const mVisible = mtab === 'kontrak' ? [] : items.filter((r) => klasOf(r) === mtab)
+  const CONTRACT_CAT_LABEL: Record<string, string> = locale === 'en'
+    ? { insurance: 'Insurance', loan: 'Loan', work: 'Work', property: 'Property', lease: 'Lease', subscription: 'Subscription', warranty: 'Warranty', other: 'Other' }
+    : { insurance: 'Asuransi', loan: 'Pinjaman', work: 'Pekerjaan', property: 'Properti', lease: 'Sewa', subscription: 'Langganan', warranty: 'Garansi', other: 'Lainnya' }
+  const MTAB_EMPTY: Record<MTab, { icon: LucideIcon; text: string; cta: string }> = {
+    rutin: { icon: Repeat, text: locale === 'en' ? 'No repeat items yet' : 'Belum ada transaksi rutin', cta: locale === 'en' ? 'Add' : 'Tambah' },
+    cicilan: { icon: CalendarClock, text: locale === 'en' ? 'No installments yet' : 'Belum ada cicilan', cta: locale === 'en' ? 'Add' : 'Tambah' },
+    langganan: { icon: Film, text: locale === 'en' ? 'No subscriptions yet' : 'Belum ada langganan', cta: locale === 'en' ? 'Browse' : 'Pilih' },
+    kontrak: { icon: FileClock, text: locale === 'en' ? 'No contracts yet' : 'Belum ada kontrak', cta: locale === 'en' ? 'Open' : 'Buka' },
+  }
+  // Tambah kontekstual ala header Budget: langganan→katalog, kontrak→halaman kontrak, else form
+  function handleMobileAdd() {
+    if (mtab === 'langganan') setCatalogOpen(true)
+    else if (mtab === 'kontrak') router.push('/dashboard/contracts')
+    else openAdd()
+  }
+
+  // Wadah detail: <md BottomSheet (persis lama), ≥md Sheet kanan ala AnggaranMonthDrawer
+  const isMdUp = useIsMdUp()
+
+  // Konten detail — SATU sumber, dirender di dua wadah (BottomSheet mobile / Sheet kanan desktop)
+  const detailBody = detailItem && detailData ? (
+    <div className="px-1 pb-2 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="num tabular text-[22px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+          <p className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
+          <button
+            type="button"
+            className="rounded-full px-3.5 py-1.5 text-[12px] font-medium"
+            style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+            onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}
+          >Edit</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 text-center rounded-xl px-3.5 py-3" style={{ background: 'var(--surface-2)' }}>
+        <div>
+          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Total</p>
+          <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)}</p>
+        </div>
+        <div>
+          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Transactions' : 'Transaksi'}</p>
+          <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{detailData.paidCount}</p>
+        </div>
+      </div>
+
+      <div className="flex w-fit mx-auto rounded-full p-1" style={{ background: 'var(--surface-2)' }}>
+        {([['paid', locale === 'en' ? 'Paid' : 'Terbayar'], ['upcoming', locale === 'en' ? 'Upcoming' : 'Mendatang']] as const).map(([k, lbl]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setDetailTab(k)}
+            className="rounded-full px-5 py-1.5 text-[12px] font-medium transition-colors"
+            style={{
+              background: detailTab === k ? 'var(--surface)' : 'transparent',
+              color: detailTab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
+              boxShadow: detailTab === k ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >{lbl}</button>
+        ))}
+      </div>
+
+      <div>
+        {detailList.map((d, i) => {
+          const av = avatarStyle(detailItem.name, detailItem.category)
+          return (
+            <div key={i} className="flex items-center gap-3" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+              <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: av.bg }}>
+                <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
+              </div>
+              <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
+              <div className="text-right shrink-0">
+                <p className="num tabular text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+                <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d, dloc)}</p>
+              </div>
+            </div>
+          )
+        })}
+        {detailList.length === 0 && (
+          <p className="text-[12px] text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
+        )}
+      </div>
+    </div>
+  ) : null
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{active.length} {t('recurring.active_count_suffix')}</p>
-          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('recurring.title')}</h1>
-          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>{t('recurring.subtitle')}</p>
+          <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('recurring.title')}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="hidden md:flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={detectFromHistory}><Search className="h-4 w-4" /> {t('recurring.check_history')}</Button>
-          <Button onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
+        </div>
+        {/* F14 mobile ala header Budget: deteksi (Sparkles) + tambah bulat tint mint */}
+        <div className="flex md:hidden items-center gap-2 shrink-0">
+          <button type="button" onClick={detectFromHistory} aria-label={t('recurring.check_history')}
+            className="size-9 rounded-full grid place-items-center active:opacity-70 transition-opacity"
+            style={{ background: 'var(--surface-2)' }}>
+            <Sparkles className="size-4" style={{ color: 'var(--ink-muted)' }} />
+          </button>
+          <button type="button" onClick={handleMobileAdd} aria-label={t('recurring.add_recurring')}
+            className="size-9 rounded-full grid place-items-center active:opacity-70 transition-opacity"
+            style={{ background: 'var(--c-mint-soft)' }}>
+            <Plus className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
+          </button>
         </div>
       </div>
 
@@ -304,14 +523,120 @@ export default function RecurringPage() {
         </div>
       ) : (
         <>
-          {/* Stat strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* ===== F14 MOBILE (<md): layar Recurring ala Budget — segmented pill 4 tab
+              (Rutin|Cicilan|Langganan|Kontrak) + 1 kartu list bersih. Kerangka lama
+              (stat tile, kalender, chip frekuensi, tabel) khusus desktop. ===== */}
+          <div className="md:hidden space-y-4">
+            {/* Segmented pill — persis pola Budget: container surface-2 rounded-full, aktif putih+shadow */}
+            <div className="grid grid-cols-4 gap-0.5 rounded-full p-1" style={{ background: 'var(--surface-2)' }}>
+              {(['rutin', 'cicilan', 'langganan', 'kontrak'] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setMtab(k)}
+                  className="flex items-center justify-center gap-1 rounded-full py-2 text-[12px] transition-colors min-w-0"
+                  style={{
+                    background: mtab === k ? 'var(--surface)' : 'transparent',
+                    color: mtab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
+                    fontWeight: mtab === k ? 500 : 400,
+                    boxShadow: mtab === k ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  }}
+                >
+                  <span className="truncate">{MTAB_LABELS[k]}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Satu kartu list bersih: avatar inisial + nama + subtitle, nominal + dot status kanan */}
+            <div className="s-card overflow-hidden">
+              {mtab === 'kontrak' ? (
+                contractsQuery.isLoading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
+                ) : contracts.length === 0 ? null : (
+                  contracts.map((c, i) => {
+                    const label = CONTRACT_CAT_LABEL[c.category] ?? c.category
+                    const av = avatarStyle(c.name, label)
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => router.push('/dashboard/contracts')}
+                        className="w-full text-left flex items-center gap-3 px-4 active:bg-[var(--surface-2)] transition-colors"
+                        style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                      >
+                        <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
+                          <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(c.name)}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                          <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                            {label} · {locale === 'en' ? 'renews' : 'perpanjang'} {dmy(new Date(c.end_date), dloc)}
+                          </p>
+                        </div>
+                        <p className="num tabular text-[13px] font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
+                          {c.cost ? formatCompactCurrency(c.cost) : '—'}
+                        </p>
+                      </button>
+                    )
+                  })
+                )
+              ) : (
+                mVisible.map((r, i) => {
+                  const av = avatarStyle(r.name, r.category)
+                  const next = nextRunDate(r)
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => openDetail(r)}
+                      className="w-full text-left flex items-center gap-3 px-4 active:bg-[var(--surface-2)] transition-colors"
+                      style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                    >
+                      <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
+                        <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(r.name)}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
+                        <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                          {FREQ_LABELS[r.frequency]} · {next ? dmy(next, dloc) : '—'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {r.auto_post && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>auto</span>}
+                        <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(r.amount)}</p>
+                        <span className="size-1.5 rounded-full" style={{ background: r.is_active ? 'var(--c-mint)' : 'var(--c-amber)' }} />
+                      </div>
+                    </button>
+                  )
+                })
+              )}
+              {/* Empty state per tab: 1 ikon tint + 1 kalimat + CTA kecil */}
+              {((mtab === 'kontrak' && !contractsQuery.isLoading && contracts.length === 0) || (mtab !== 'kontrak' && mVisible.length === 0)) && (() => {
+                const cfg = MTAB_EMPTY[mtab]
+                const EIcon = cfg.icon
+                return (
+                  <div className="px-6 py-10 text-center">
+                    <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}>
+                      <EIcon className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
+                    </div>
+                    <p className="text-[12.5px] mt-3" style={{ color: 'var(--ink-muted)' }}>{cfg.text}</p>
+                    <button type="button" onClick={handleMobileAdd}
+                      className="mt-3 text-[12px] font-medium rounded-full px-3.5 py-1.5"
+                      style={{ background: 'var(--surface-2)', color: 'var(--c-mint-ink)' }}>{cfg.cta}</button>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+
+          {/* Stat strip (desktop) */}
+          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3">
             {stats.map((s) => (
               <div key={s.label} className="s-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
-                    <p className="num tabular text-2xl font-bold mt-1.5 whitespace-nowrap" style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="num tabular text-[19px] font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
                     <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}><s.icon className="size-4" style={{ color: s.color }} /></div>
@@ -320,9 +645,9 @@ export default function RecurringPage() {
             ))}
           </div>
 
-          {/* Kalender 30 hari */}
+          {/* Kalender 30 hari (desktop) */}
           {payments.length > 0 && (
-            <div className="s-card p-4">
+            <div className="s-card p-4 hidden md:block">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.next_30_days')}</p>
                 <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('recurring.total')} {formatCurrency(calendar.reduce((s, d) => s + d.amount, 0))}</p>
@@ -332,7 +657,7 @@ export default function RecurringPage() {
                   const has = d.amount > 0
                   const isToday = i === 0
                   return (
-                    <div key={i} className="shrink-0 rounded-lg border grid content-between text-center" title={has ? `${dmy(d.date)} · ${formatCurrency(d.amount)}` : dmy(d.date)}
+                    <div key={i} className="shrink-0 rounded-lg border grid content-between text-center" title={has ? `${dmy(d.date, dloc)} · ${formatCurrency(d.amount)}` : dmy(d.date, dloc)}
                       style={{ width: 46, height: 56, padding: 6, borderColor: isToday ? 'var(--ink)' : has ? tint(VIOLET, 33) : 'var(--border-soft)', background: has ? tint(VIOLET, 6) : 'var(--surface)' }}>
                       <span className="num text-[13px] font-semibold" style={{ color: isToday ? 'var(--ink)' : has ? VIOLET_INK : 'var(--ink-soft)' }}>{d.date.getDate()}</span>
                       {has && <span className="num text-[8.5px] leading-tight" style={{ color: VIOLET_INK }}>{d.amount >= 1e6 ? `${(d.amount / 1e6).toFixed(1)}jt` : `${Math.round(d.amount / 1e3)}k`}</span>}
@@ -344,16 +669,37 @@ export default function RecurringPage() {
           )}
 
           {items.length === 0 ? (
-            <div className="s-card p-12 text-center">
-              <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}><Repeat className="size-6" style={{ color: 'var(--ink-soft)' }} /></div>
-              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
-              <Button className="mt-4" onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
+            /* F10: empty state hangat (desktop — mobile punya empty state per tab di atas) */
+            <div className="s-card px-6 py-10 text-center hidden md:block">
+              <div className="size-16 rounded-[22px] grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><Repeat className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              <p className="text-[15px] font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
+              <p className="text-[12.5px] mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
+              <Button className="mt-4 rounded-full" onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
             </div>
           ) : (
             <>
-              {/* Tabel */}
-              <div className="s-card overflow-hidden">
+              {/* F13f: segmented Rutin | Cicilan | Langganan (desktop — mobile pakai pill 4 tab di atas) */}
+              <div className="hidden md:grid grid-cols-3 gap-1 rounded-xl p-1" style={{ background: 'var(--surface-2)' }}>
+                {(['rutin', 'cicilan', 'langganan'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setTab(k)}
+                    className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12.5px] font-medium transition-colors"
+                    style={{
+                      background: tab === k ? 'var(--surface)' : 'transparent',
+                      color: tab === k ? 'var(--ink)' : 'var(--ink-muted)',
+                      boxShadow: tab === k ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                    }}
+                  >
+                    {KLAS_LABELS[k]}
+                    <span className="num tabular text-[10px] min-w-[18px] px-1 py-px rounded-full" style={{ background: tab === k ? 'var(--surface-2)' : tint('var(--ink)', 6), color: 'var(--ink-soft)' }}>{klasCounts[k]}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Tabel (desktop) */}
+              <div className="hidden md:block s-card overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.list_title')}</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -363,10 +709,13 @@ export default function RecurringPage() {
                     ))}
                   </div>
                 </div>
-                <div className="overflow-x-auto">
+                {visible.length === 0 && (
+                  <p className="text-[12px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'No items in this tab' : 'Belum ada item di tab ini'}</p>
+                )}
+                <div className={visible.length === 0 ? 'hidden' : 'overflow-x-auto hidden md:block'}>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                      <tr className="text-[11px] uppercase tracking-wider border-b" style={{ color: 'var(--ink-soft)', background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}>
                         <th className="text-left font-medium px-4 py-2.5">{t('recurring.col_name')}</th>
                         <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_category')}</th>
                         <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_frequency')}</th>
@@ -385,21 +734,22 @@ export default function RecurringPage() {
                         const days = next ? Math.round((next.getTime() - today0.getTime()) / DAY) : 0
                         const urgent = r.is_active && !ended && next != null && days <= 3
                         return (
-                          <tr key={r.id} className="group border-t align-middle" style={{ borderColor: 'var(--border-soft)' }}>
+                          <tr key={r.id} className="group border-t align-middle transition-colors hover:bg-[var(--surface-2)] cursor-pointer" style={{ borderColor: 'var(--border-soft)' }}>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-3 min-w-0">
+                              {/* F13f: tap area nama = buka detail (aksi lain di kolom kanan tetap) */}
+                              <button type="button" onClick={(e) => { e.stopPropagation(); openDetail(r) }} className="flex items-center gap-3 min-w-0 w-full text-left cursor-pointer">
                                 <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10), opacity: r.is_active ? 1 : 0.5 }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                                 <div className="min-w-0">
                                   <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}</p>
                                   <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{TYPE_LABELS[r.type]}{r.notes ? ` · ${r.notes}` : ''}</p>
                                 </div>
-                              </div>
+                              </button>
                             </td>
                             <td className="px-3 py-3 text-[13px]" style={{ color: 'var(--ink-muted)' }}>{r.category}</td>
                             <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{FREQ_LABELS[r.frequency]}</span></td>
                             <td className="px-3 py-3 text-[13px] truncate" style={{ color: 'var(--ink-muted)' }}>{acc?.name ?? '—'}</td>
                             <td className="px-3 py-3 text-right">
-                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next) : '—'}</p>
+                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next, dloc) : '—'}</p>
                               <p className="num text-[10px]" style={{ color: urgent ? CORAL_INK : 'var(--ink-soft)' }}>{ended ? t('recurring.badge_ended') : r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
@@ -419,8 +769,8 @@ export default function RecurringPage() {
                 </div>
               </div>
 
-              {/* Breakdown + Saran */}
-              <div className="grid gap-3 lg:grid-cols-2">
+              {/* Breakdown + Saran (desktop) */}
+              <div className="hidden md:grid gap-3 lg:grid-cols-2">
                 <div className="s-card p-5">
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.by_category')}</p>
                   {breakdown.length > 0 ? (
@@ -449,7 +799,7 @@ export default function RecurringPage() {
                     {suggestions.length > 0 ? suggestions.map((s, i) => (
                       <div key={i} className="rounded-xl p-3" style={{ background: 'var(--surface-2)' }}>
                         <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</p>
-                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
+                        <p className="hidden md:block text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
                       </div>
                     )) : <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('recurring.no_suggestions')}</p>}
                   </div>
@@ -514,6 +864,11 @@ export default function RecurringPage() {
               <div className="grid gap-1.5"><Label>{t('recurring.field_start')}</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
               <div className="grid gap-1.5"><Label>{t('recurring.field_end')}</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
             </div>
+            {/* Auto-post via cron harian (label lokal inline — messages.ts gak disentuh) */}
+            <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
+              <input type="checkbox" checked={form.auto_post} onChange={(e) => setForm({ ...form, auto_post: e.target.checked })} className="h-4 w-4" />
+              {locale === 'en' ? 'Auto-record on due date' : 'Auto-catat saat jatuh tempo'}
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('recurring.cancel')}</Button>
@@ -555,6 +910,49 @@ export default function RecurringPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* F13f: katalog provider langganan */}
+      <ProviderCatalog
+        open={catalogOpen}
+        onOpenChange={setCatalogOpen}
+        onPick={(p) => { setCatalogOpen(false); openAdd({ name: p.name, category: p.category, type: 'expense', frequency: 'monthly' }) }}
+        onManual={() => { setCatalogOpen(false); openAdd({ type: 'expense', category: 'Langganan', frequency: 'monthly' }) }}
+      />
+
+      {/* F13f: detail item — <md bottom sheet (persis lama), ≥md sheet sisi kanan (idiom desktop, pola AnggaranMonthDrawer) */}
+      {isMdUp ? (
+        <Sheet open={!!detailItem} onOpenChange={(o) => { if (!o) setDetailId(null) }}>
+          <SheetContent
+            side="right"
+            className="!max-w-[480px] w-[480px] overflow-y-auto p-0 gap-0 border-0"
+            style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-lg)' }}
+          >
+            <SheetHeader
+              className="px-5 py-4 border-b sticky top-0 z-10"
+              style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}
+            >
+              {detailItem && (() => {
+                const av = avatarStyle(detailItem.name, detailItem.category)
+                return (
+                  <div className="flex items-center gap-3 min-w-0 pr-8">
+                    <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
+                      <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
+                    </div>
+                    <SheetTitle className="text-[16px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                      {detailItem.name}
+                    </SheetTitle>
+                  </div>
+                )
+              })()}
+            </SheetHeader>
+            <div className="px-4 py-4">{detailBody}</div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <BottomSheet open={!!detailItem} onOpenChange={(o) => { if (!o) setDetailId(null) }} title={detailItem?.name ?? ''}>
+          {detailBody}
+        </BottomSheet>
+      )}
     </div>
   )
 }

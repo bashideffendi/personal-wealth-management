@@ -240,7 +240,7 @@ export function AnggaranMonthDrawer({
                 >
                   {t('anggaran_drawer.leftover_label')}{' '}
                   <strong
-                    style={{ color: leftover >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                    style={{ color: leftover >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                   >
                     {formatCurrency(leftover)}
                   </strong>{' '}
@@ -349,7 +349,7 @@ export function AnggaranMonthDrawer({
                               className="chip"
                               style={{
                                 background: 'var(--c-coral-soft)',
-                                color: 'var(--c-coral)',
+                                color: 'var(--c-coral-ink)',
                                 height: 18,
                                 fontSize: 9,
                                 padding: '0 6px',
@@ -498,7 +498,7 @@ function SummaryTile({
       </p>
       <p
         className="num tabular mt-0.5"
-        style={{ fontSize: 11, color: `var(--c-${tone})`, fontWeight: 700 }}
+        style={{ fontSize: 11, color: `var(--c-${tone}-ink)`, fontWeight: 700 }}
       >
         {isReference ? t('anggaran_drawer.reference') : `${pct.toFixed(0)}% ${t('anggaran_drawer.of_income')}`}
       </p>
@@ -522,7 +522,7 @@ function LegendItem({
       <span style={{ color: 'var(--text-2)' }}>{label}</span>
       <span
         className="num tabular ml-auto"
-        style={{ color: `var(--c-${tone})`, fontWeight: 700 }}
+        style={{ color: `var(--c-${tone}-ink)`, fontWeight: 700 }}
       >
         {pct.toFixed(0)}%
       </span>
@@ -546,10 +546,10 @@ function Rule50Row({
   const overTarget = delta > 5
   const status = onTrack ? 'on-track' : overTarget ? 'over' : 'under'
   const statusColor =
-    status === 'on-track' ? 'var(--c-mint)' :
-    status === 'over' && tone === 'coral' ? 'var(--c-coral)' :
-    status === 'under' && tone !== 'coral' ? 'var(--c-coral)' :
-    'var(--c-amber)'
+    status === 'on-track' ? 'var(--c-mint-ink)' :
+    status === 'over' && tone === 'coral' ? 'var(--c-coral-ink)' :
+    status === 'under' && tone !== 'coral' ? 'var(--c-coral-ink)' :
+    'var(--c-amber-ink)'
   const statusLabel =
     status === 'on-track' ? t('anggaran_drawer.status_on_track') :
     status === 'over' ? t('anggaran_drawer.status_over') :
@@ -579,7 +579,7 @@ function Rule50Row({
           style={{
             fontSize: 12,
             fontWeight: 700,
-            color: `var(--c-${tone})`,
+            color: `var(--c-${tone}-ink)`,
             minWidth: 38,
             textAlign: 'right',
           }}

@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { rateLimit } from '@/lib/rate-limit'
 import { getPlaybook } from '@/lib/playbooks'
 
@@ -122,8 +124,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Isi minimal satu angka dulu biar rencananya relevan.' }, { status: 400 })
   }
 
-  // Charge credits before generating
-  const credit = await consumeAICredits(supabase, user.id, 'playbook')
+  // Charge credits before generating.
+  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
+  // proteksi abuse tetap lewat rateLimit di atas.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'playbook')
+    : { ok: true }
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
   }
@@ -162,11 +168,11 @@ export async function POST(request: NextRequest) {
     'Susun rencana terpersonalisasi: hitung target total, sisa yang kurang, setoran bulanan, estimasi selesai, milestone bertahap, tips konkret, dan hal yang perlu diperhatikan. Pakai angka user.',
   )
 
-  const client = new Anthropic()
+  const client = anthropic()
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: AI_MODEL,
       max_tokens: 2400,
       system: SYSTEM_PROMPT,
       tools: [

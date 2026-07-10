@@ -196,7 +196,9 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Kontrak & Polis',     titleKey: 'nav.contracts',  href: '/dashboard/contracts',      icon: 'FileClock',        section: 'secondary' },
   { label: 'Kalkulator',      titleKey: 'nav.calculators',    href: '/dashboard/calculators',    icon: 'Calculator',       section: 'secondary' },
   { label: 'Playbook',        titleKey: 'nav.playbook',       href: '/dashboard/playbook',       icon: 'Compass',          section: 'secondary' },
-  { label: 'Aturan Kategori', titleKey: 'nav.rules',          href: '/dashboard/rules',          icon: 'Sparkles',         section: 'secondary' },
+  // "Aturan Kategori" (/dashboard/rules) DIHAPUS (2026-07-02): page + entri nav
+  // dibuang. Fitur categorization_rules (tabel + auto-kategori di transactions)
+  // TETAP jalan di background; cuma UI kelola rules yang hilang.
 
   // (Profile, Paket, Keluar are accessed via avatar dropdown in header)
   // (Stock Log + Dividen are tabs inside /dashboard/assets/investment/stock)

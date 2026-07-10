@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { rateLimit } from '@/lib/rate-limit'
 import {
   EXPENSE_CATEGORIES,
@@ -143,7 +145,11 @@ export async function POST(request: NextRequest) {
 
   // Charge AI credits BEFORE doing the (expensive) Vision call. If the user
   // is broke we want to fail fast without burning Anthropic budget.
-  const credit = await consumeAICredits(supabase, user.id, 'receipt_scan')
+  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
+  // proteksi abuse tetap lewat rateLimit di atas.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'receipt_scan')
+    : { ok: true }
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
   }
@@ -186,11 +192,11 @@ export async function POST(request: NextRequest) {
 
   const base64 = buffer.toString('base64')
 
-  const client = new Anthropic()
+  const client = anthropic()
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: AI_MODEL,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       tools: [

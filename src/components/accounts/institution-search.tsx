@@ -30,9 +30,11 @@ interface Props {
   placeholder?: string
   /** Limit catalog to these types (e.g. ['bank'] for credit-card issuers). */
   restrictTypes?: InstitutionType[]
+  /** Forwarded to the input — enables <Label htmlFor> + programmatic focus */
+  id?: string
 }
 
-export function InstitutionSearch({ value, onTextChange, onPick, placeholder, restrictTypes }: Props) {
+export function InstitutionSearch({ value, onTextChange, onPick, placeholder, restrictTypes, id }: Props) {
   const t = useT()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -85,6 +87,7 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
           style={{ color: 'var(--ink-soft)' }}
         />
         <input
+          id={id}
           value={value}
           onChange={(e) => {
             onTextChange(e.target.value)

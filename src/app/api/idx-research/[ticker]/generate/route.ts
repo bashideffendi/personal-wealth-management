@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { consumeAICredits, refundAICredits } from '@/lib/ai-credits'
+import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { rateLimit } from '@/lib/rate-limit'
 import {
   getStock,
@@ -80,8 +81,42 @@ export async function POST(request: NextRequest, context: RouteContext) {
     })
   }
 
-  // Charge credits sebelum panggil Claude
-  const credit = await consumeAICredits(supabase, user.id, 'stock_research')
+  // Idempotency guard — cegah double-charge kalau 2 request ticker sama barengan
+  // (double-click/retry). Best-effort: kalau tabel belum ada (migrasi 060 belum
+  // apply) / no service-role → skip guard (perilaku lama). Klaim di-release di finally.
+  const claimWriter = createAdminClient() ?? supabase
+  let claimActive = false
+  try {
+    await claimWriter
+      .from('research_generation_claims')
+      .delete()
+      .lt('claimed_at', new Date(Date.now() - 5 * 60_000).toISOString())
+    const { data: claimRows, error: claimErr } = await claimWriter
+      .from('research_generation_claims')
+      .upsert({ ticker, user_id: user.id }, { onConflict: 'ticker', ignoreDuplicates: true })
+      .select('ticker')
+    if (!claimErr && (claimRows?.length ?? 0) === 0) {
+      // Ticker ini lagi di-generate request lain → re-cek cache; kalau belum ada, minta tunggu.
+      const { data: c2 } = await supabase
+        .from('stock_research_cache')
+        .select('content, frontmatter, generated_at, model')
+        .eq('ticker', ticker)
+        .maybeSingle()
+      if (c2) {
+        return NextResponse.json({ ticker, content: c2.content, frontmatter: c2.frontmatter, generated_at: c2.generated_at, model: c2.model, cached: true })
+      }
+      return NextResponse.json({ error: 'Riset ticker ini lagi diproses, coba lagi sebentar.' }, { status: 409 })
+    }
+    claimActive = !claimErr
+  } catch { /* guard best-effort — lanjut tanpa klaim */ }
+
+  try {
+  // Charge credits sebelum panggil Claude.
+  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
+  // proteksi abuse tetap lewat rateLimit di atas.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'stock_research')
+    : { ok: true }
   if (!credit.ok) {
     return NextResponse.json({ error: credit.error }, { status: credit.status })
   }
@@ -99,14 +134,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     dividends,
   })
 
-  const client = new Anthropic()
+  const client = anthropic()
 
   let markdown = ''
   let inputTokens = 0
   let outputTokens = 0
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: AI_MODEL,
       max_tokens: MAX_OUTPUT_TOKENS,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
@@ -167,7 +202,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         frontmatter: fm,
         generated_at: new Date().toISOString(),
         generated_by: user.id,
-        model: 'claude-haiku-4-5',
+        model: AI_MODEL,
         input_tokens: inputTokens,
         output_tokens: outputTokens,
       },
@@ -185,10 +220,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
     content: markdown,
     frontmatter: fm,
     generated_at: new Date().toISOString(),
-    model: 'claude-haiku-4-5',
+    model: AI_MODEL,
     cached: false,
     credits_remaining: credit.remaining,
   })
+  } finally {
+    // Release klaim (kalau kita yang klaim) — lewat semua exit path di atas.
+    if (claimActive) {
+      try { await claimWriter.from('research_generation_claims').delete().eq('ticker', ticker) } catch { /* ignore */ }
+    }
+  }
 }
 
 function parseFrontmatter(md: string): Record<string, string | number> {

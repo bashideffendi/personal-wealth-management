@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useDeferredValue, Fragment } from 'react'
+import { useEffect, useState, useMemo, useDeferredValue, useRef, Fragment } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
@@ -8,7 +8,7 @@ import {
   ReflectiveSpendingModal,
   shouldTriggerReflection,
 } from '@/components/reflective/reflective-spending-modal'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useCategoryOptions } from '@/lib/use-category-options'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { formatDateShort } from '@/lib/i18n/dates'
@@ -16,6 +16,11 @@ import type { Transaction, Account, CreditCard, CategorizationRule } from '@/typ
 import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
+import { categoryHue } from '@/lib/category-hue'
+import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
+import { MobileStatsView } from '@/components/transactions/mobile-stats-view'
+import { monthLong } from '@/lib/i18n/dates'
+import { adjustCardBalance } from '@/lib/data/balances'
 
 import { Button } from '@/components/ui/button'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
@@ -47,7 +52,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split } from 'lucide-react'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -287,6 +293,17 @@ export default function TransactionsPage() {
     setExtracting(false)
   }
 
+  // Lampiran struk transaksi lama — bucket 'receipts' privat, jadi buka lewat
+  // signed URL berumur 1 jam di tab baru (path storage yang disimpan, bukan URL).
+  async function openReceiptAttachment(path: string) {
+    const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 3600)
+    if (error || !data?.signedUrl) {
+      toast.error(locale === 'id' ? 'Gagal membuka struk' : 'Failed to open receipt')
+      return
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
   async function handleReceiptUpload(file: File) {
     if (!file.type.startsWith('image/')) {
       setExtractError(t('transactions.error_not_image'))
@@ -357,6 +374,30 @@ export default function TransactionsPage() {
     notes: '',
   })
   const [transferSaving, setTransferSaving] = useState(false)
+
+  // Quick access transfer dari FAB (QuickAddLauncher):
+  // (a) event 'klunting:open-transfer' — dipakai kalau user sudah di halaman ini;
+  // (b) param ?transfer=1 — dipakai kalau FAB navigasi ke sini dulu. Param
+  //     dibersihkan via history.replaceState (pola sama dgn PWA shortcut
+  //     quickadd=1) biar refresh gak re-buka dialog & gak butuh Suspense
+  //     boundary useSearchParams.
+  useEffect(() => {
+    function onOpenTransfer() {
+      setTransferDialogOpen(true)
+    }
+    window.addEventListener('klunting:open-transfer', onOpenTransfer)
+
+    const sp = new URLSearchParams(window.location.search)
+    if (sp.get('transfer') === '1') {
+      setTransferDialogOpen(true)
+      sp.delete('transfer')
+      const newQs = sp.toString()
+      const newUrl = window.location.pathname + (newQs ? `?${newQs}` : '') + window.location.hash
+      window.history.replaceState({}, '', newUrl)
+    }
+
+    return () => window.removeEventListener('klunting:open-transfer', onOpenTransfer)
+  }, [])
 
   async function saveTransfer() {
     if (!transferForm.from_account_id || !transferForm.to_account_id || transferForm.amount <= 0) return
@@ -433,13 +474,56 @@ export default function TransactionsPage() {
 
   // Filter state
   const [dateRange, setDateRange] = useState<DateRange>(null)
+  // F12: kalender mobile — bulan yang dilihat + hari terpilih (filter list).
+  const [calMonth, setCalMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1) })
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [filterAccount, setFilterAccount] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterTag, setFilterTag] = useState<string>('all')
   const [search, setSearch] = useState<string>('')
+  // Deep-link pencarian dari command palette (⌘K), pola sama dgn ?transfer=1:
+  // (a) event 'klunting:search-transactions' — dipakai kalau user sudah di
+  //     halaman ini (router.push ke route sama gak nge-remount, effect on-mount
+  //     gak jalan lagi);
+  // (b) param ?q=<term> — dipakai kalau palette navigasi ke sini dulu. Param
+  //     dibersihkan via history.replaceState biar refresh gak nge-lock
+  //     pencarian & gak butuh Suspense boundary useSearchParams.
+  useEffect(() => {
+    function onPaletteSearch(e: Event) {
+      const q = (e as CustomEvent<string>).detail
+      if (q) setSearch(q)
+    }
+    window.addEventListener('klunting:search-transactions', onPaletteSearch)
+
+    const sp = new URLSearchParams(window.location.search)
+    const q = sp.get('q')
+    if (q) {
+      setSearch(q)
+      sp.delete('q')
+      const newQs = sp.toString()
+      const newUrl = window.location.pathname + (newQs ? `?${newQs}` : '') + window.location.hash
+      window.history.replaceState({}, '', newUrl)
+    }
+
+    return () => window.removeEventListener('klunting:search-transactions', onPaletteSearch)
+  }, [])
   // Quick-add inline row is hidden by default; the toolbar "+ Tambah" toggles it.
   const [showQuickAdd, setShowQuickAdd] = useState(false)
+  // Mobile chrome: filter grid collapsed by default; aksi sekunder toolbar masuk sheet "⋯".
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [actionsSheetOpen, setActionsSheetOpen] = useState(false)
+  // F13c: toggle Catatan|Statistik ala app Budget (Record|Stats) — mobile only.
+  // 'stats' hide kalender+search+list, tampilkan MobileStatsView bulan aktif.
+  const [mobileView, setMobileView] = useState<'record' | 'stats'>('record')
+  // Form "Tambah Cepat" muncul di bawah filter — scroll ke tengah pas dibuka
+  // biar user gak ketinggalan / harus scroll cari sendiri.
+  const quickAddRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!showQuickAdd) return
+    const id = setTimeout(() => quickAddRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
+    return () => clearTimeout(id)
+  }, [showQuickAdd])
   // Bulk edit + inline category (desktop table power features)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [inlineCatId, setInlineCatId] = useState<string | null>(null)
@@ -527,6 +611,8 @@ export default function TransactionsPage() {
     setForm({ ...emptyForm, account_id: picked?.id ?? '' })
     setTagDraft('')
     setAccountSource(picked?.source ?? null)
+    setNewSplitOn(false)
+    setNewSplitRows(emptyNewSplitRows())
     resetReceipt()
     setDialogOpen(true)
   }
@@ -544,9 +630,134 @@ export default function TransactionsPage() {
     })
     setTagDraft('')
     setAccountSource(null)
+    setNewSplitOn(false)
     resetReceipt()
     setDialogOpen(true)
   }
+
+  // ─── Pecah transaksi (split) ────────────────────────────────
+  // 1 transaksi dipecah ke beberapa kategori: baris pertama nge-UPDATE
+  // transaksi asli (id/struk/created_at kepertahan), sisanya INSERT baru;
+  // semua bagian share satu split_group_id (migrasi 064). Total pecahan
+  // WAJIB = jumlah asli, makanya saldo kartu kredit gak perlu di-adjust
+  // (akun/tipe/total gak berubah). Label pakai literal locale ternary —
+  // JANGAN nambah key ke messages.ts.
+  const [splitDialogOpen, setSplitDialogOpen] = useState(false)
+  const [splitRows, setSplitRows] = useState<{ category: string; amount: number }[]>([])
+  const [splitSaving, setSplitSaving] = useState(false)
+  const splitSourceTx = editingId ? transactions.find((x) => x.id === editingId) ?? null : null
+
+  function openSplitDialog() {
+    if (!splitSourceTx) return
+    // Baris 1 prefilled kategori + jumlah TERSIMPAN — user tinggal mindahin
+    // sebagian ke baris berikutnya sampai "Sisa" nol.
+    setSplitRows([
+      { category: splitSourceTx.category, amount: splitSourceTx.amount },
+      { category: '', amount: 0 },
+    ])
+    setDialogOpen(false) // tutup dialog edit — hindari dialog numpuk
+    setSplitDialogOpen(true)
+  }
+
+  function closeSplitDialog() {
+    setSplitDialogOpen(false)
+    setDialogOpen(true) // batal → balik ke dialog edit
+  }
+
+  const splitAllocated = splitRows.reduce((s, r) => s + r.amount, 0)
+  const splitRemaining = (splitSourceTx?.amount ?? 0) - splitAllocated
+  const splitValid =
+    !!splitSourceTx &&
+    splitRows.length >= 2 &&
+    splitRows.every((r) => r.category && r.amount > 0) &&
+    splitRemaining === 0
+
+  async function saveSplit() {
+    const tx = splitSourceTx
+    if (!tx || !splitValid) return
+    setSplitSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setSplitSaving(false); return }
+
+    const groupId = crypto.randomUUID()
+    const base: Record<string, unknown> = {
+      user_id: user.id,
+      date: tx.date,
+      account_id: tx.account_id,
+      type: tx.type,
+      description: tx.description,
+    }
+    const householdId = (tx as { household_id?: string | null }).household_id
+    if (householdId) base.household_id = householdId
+    if (tx.tags?.length) base.tags = tx.tags
+
+    // INSERT bagian 2..N dulu, UPDATE transaksi asli (bagian 1) TERAKHIR:
+    // kalau insert gagal → belum ada yang berubah; kalau update gagal →
+    // hapus lagi baris yang barusan di-insert (best-effort rollback).
+    const missingCol = (e: { code?: string; message?: string | null } | null) =>
+      !!e && (e.code === '42703' || /column .*split_group_id.* does not exist/i.test(e.message ?? ''))
+    const buildInserts = (withGroup: boolean) =>
+      splitRows.slice(1).map((r) => ({
+        ...base,
+        category: r.category,
+        amount: r.amount,
+        ...(withGroup ? { split_group_id: groupId } : {}),
+      }))
+    let groupLinked = true
+    let { data: insData, error: insErr } = await supabase
+      .from('transactions').insert(buildInserts(true)).select('id')
+    // Kolom belum ada (pre-migrasi 064) → retry tanpa split_group_id, biar
+    // fitur tetap jalan; bagian pecahan cuma gak saling ter-link (pola sama
+    // dgn retry tags pre-migrasi 038 di actuallySave).
+    if (missingCol(insErr)) {
+      groupLinked = false
+      ;({ data: insData, error: insErr } = await supabase
+        .from('transactions').insert(buildInserts(false)).select('id'))
+    }
+    if (insErr) {
+      setSplitSaving(false)
+      toast.error(locale === 'id' ? 'Gagal memecah transaksi' : 'Failed to split transaction', { description: insErr.message })
+      return
+    }
+    const insertedIds = ((insData ?? []) as { id: string }[]).map((d) => d.id)
+
+    const updPayload: Record<string, unknown> = { category: splitRows[0].category, amount: splitRows[0].amount }
+    if (groupLinked) updPayload.split_group_id = groupId
+    const { error: updErr } = await supabase.from('transactions').update(updPayload).eq('id', tx.id)
+    if (updErr) {
+      if (insertedIds.length) await supabase.from('transactions').delete().in('id', insertedIds)
+      setSplitSaving(false)
+      toast.error(locale === 'id' ? 'Gagal memecah transaksi' : 'Failed to split transaction', { description: updErr.message })
+      return
+    }
+
+    setSplitSaving(false)
+    setSplitDialogOpen(false) // sukses: dialog edit GAK dibuka lagi
+    toast.success(locale === 'id'
+      ? `Transaksi dipecah jadi ${splitRows.length} bagian`
+      : `Transaction split into ${splitRows.length} parts`)
+    fetchData()
+  }
+
+  // ─── Split saat TAMBAH (add-dialog) ─────────────────────────
+  // Toggle "Bagi ke beberapa kategori" di dialog tambah: user isi TOTAL di
+  // field Jumlah + beberapa baris {kategori, nominal, catatan opsional}.
+  // Tiap baris disimpan sebagai transaksi PENUH yang share split_group_id
+  // (migrasi 064) — jadi agregasi/anggaran/stats existing otomatis benar
+  // tanpa diubah. Label literal locale ternary (JANGAN nambah key messages.ts).
+  const emptyNewSplitRows = () => [
+    { category: '', amount: 0, description: '' },
+    { category: '', amount: 0, description: '' },
+  ]
+  const [newSplitOn, setNewSplitOn] = useState(false)
+  const [newSplitRows, setNewSplitRows] = useState<{ category: string; amount: number; description: string }[]>(emptyNewSplitRows)
+  const newSplitAllocated = newSplitRows.reduce((s, r) => s + r.amount, 0)
+  const newSplitRemaining = form.amount - newSplitAllocated
+  const newSplitReady =
+    newSplitRows.length >= 2 &&
+    newSplitRows.every((r) => r.category && r.amount > 0) &&
+    form.amount > 0 &&
+    newSplitRemaining === 0
 
   // Reflective spending (Kakeibo) — anti-impulse modal for big expenses
   const [reflectionOpen, setReflectionOpen] = useState(false)
@@ -557,12 +768,20 @@ export default function TransactionsPage() {
       toast.error(t('transactions.toast_pick_account'))
       return
     }
-    if (!form.category) {
+    const splittingNew = newSplitOn && !editingId
+    if (!splittingNew && !form.category) {
       toast.error(t('transactions.toast_pick_category'))
       return
     }
     if (!form.amount || form.amount <= 0) {
       toast.error(t('transactions.toast_amount_positive'))
+      return
+    }
+    if (splittingNew && !newSplitReady) {
+      // Tombol simpan harusnya udah disabled — toast ini backstop.
+      toast.error(locale === 'id'
+        ? 'Lengkapi baris split — jumlah semua potongan harus sama dengan total.'
+        : 'Complete the split rows — all parts must add up to the total.')
       return
     }
 
@@ -614,31 +833,65 @@ export default function TransactionsPage() {
     const pendingTag = tagDraft.trim().replace(/,+$/, '').trim()
     const tags = pendingTag && !form.tags.includes(pendingTag) ? [...form.tags, pendingTag] : form.tags
 
-    const payload: Record<string, unknown> = {
-      user_id: user.id,
-      date: form.date,
-      account_id: form.account_id,
-      type: form.type,
-      category: form.category,
-      description: form.description,
-      amount: form.amount,
-    }
-    if (receiptPath) payload.receipt_url = receiptPath
-    if (householdId && !editingId) payload.household_id = householdId
-    if (tags.length) payload.tags = tags
+    let saveErr: { code?: string; message?: string } | null = null
 
-    const saveTx = () =>
-      editingId
-        ? supabase.from('transactions').update(payload).eq('id', editingId)
-        : supabase.from('transactions').insert(payload)
-    let { error: saveErr } = await saveTx()
-    // Retry tanpa tags HANYA kalau errornya kolom-belum-ada (pre-migrasi 038),
-    // bukan SEMUA error — biar tag user gak ke-buang diam-diam pas error lain (RLS/network).
-    const isMissingTagsCol = !!saveErr && !!payload.tags &&
-      (saveErr.code === '42703' || /column .*tags.* does not exist/i.test(saveErr.message ?? ''))
-    if (isMissingTagsCol) {
-      delete payload.tags
+    if (newSplitOn && !editingId) {
+      // SPLIT SAAT TAMBAH: satu belanja → N baris transaksi biasa (kategori +
+      // nominal per potongan; date/akun/tipe sama) yang share split_group_id.
+      const groupId = crypto.randomUUID()
+      const buildRows = (withGroup: boolean) =>
+        newSplitRows.map((r, i) => {
+          const row: Record<string, unknown> = {
+            user_id: user.id,
+            date: form.date,
+            account_id: form.account_id,
+            type: form.type,
+            category: r.category,
+            description: r.description || form.description,
+            amount: r.amount,
+            ...(withGroup ? { split_group_id: groupId } : {}),
+          }
+          // Lampiran struk cuma di potongan pertama (satu foto = satu belanja).
+          if (receiptPath && i === 0) row.receipt_url = receiptPath
+          if (householdId) row.household_id = householdId
+          if (tags.length) row.tags = tags
+          return row
+        })
+      ;({ error: saveErr } = await supabase.from('transactions').insert(buildRows(true)))
+      // Graceful pre-migrasi 064: kolom split_group_id belum ada (42703) →
+      // fallback insert TANPA grup — potongan tetap kesimpan sebagai transaksi
+      // terpisah, cuma gak ter-link (tiru pola auto_post di recurring/page.tsx).
+      if (saveErr && (saveErr.code === '42703' || /column .*split_group_id.* does not exist/i.test(saveErr.message ?? ''))) {
+        console.warn('[transactions] Kolom split_group_id belum ada (pre-migrasi 064) — simpan tanpa grup split:', saveErr.message)
+        ;({ error: saveErr } = await supabase.from('transactions').insert(buildRows(false)))
+      }
+    } else {
+      const payload: Record<string, unknown> = {
+        user_id: user.id,
+        date: form.date,
+        account_id: form.account_id,
+        type: form.type,
+        category: form.category,
+        description: form.description,
+        amount: form.amount,
+      }
+      if (receiptPath) payload.receipt_url = receiptPath
+      if (householdId && !editingId) payload.household_id = householdId
+      if (tags.length) payload.tags = tags
+
+      const saveTx = () =>
+        editingId
+          ? supabase.from('transactions').update(payload).eq('id', editingId)
+          : supabase.from('transactions').insert(payload)
       ;({ error: saveErr } = await saveTx())
+      // Retry tanpa tags HANYA kalau errornya kolom-belum-ada (pre-migrasi 038),
+      // bukan SEMUA error — biar tag user gak ke-buang diam-diam pas error lain (RLS/network).
+      const isMissingTagsCol = !!saveErr && !!payload.tags &&
+        (saveErr.code === '42703' || /column .*tags.* does not exist/i.test(saveErr.message ?? ''))
+      if (isMissingTagsCol) {
+        delete payload.tags
+        ;({ error: saveErr } = await saveTx())
+      }
     }
 
     if (saveErr) {
@@ -666,8 +919,8 @@ export default function TransactionsPage() {
       if (delta === 0) continue
       const card = creditCards.find((c) => c.id === cardId)
       if (card) {
-        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
-        if (ccErr) ccSyncFailed = true
+        const { ok: ccOk } = await adjustCardBalance(supabase, cardId, delta, card.current_balance)
+        if (!ccOk) ccSyncFailed = true
       }
     }
 
@@ -687,8 +940,8 @@ export default function TransactionsPage() {
     if (tx && tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
       const card = creditCards.find((c) => c.id === tx.account_id)
       if (card) {
-        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance - tx.amount }).eq('id', card.id)
-        if (ccErr) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
+        const { ok: ccOk } = await adjustCardBalance(supabase, card.id, -tx.amount, card.current_balance)
+        if (!ccOk) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
       }
     }
     toast.success(t('transactions.toast_deleted'))
@@ -729,8 +982,8 @@ export default function TransactionsPage() {
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
       const card = creditCards.find((c) => c.id === cardId)
       if (card && delta !== 0) {
-        const { error: ccErr } = await supabase.from('credit_cards').update({ current_balance: card.current_balance + delta }).eq('id', cardId)
-        if (ccErr) ccSyncFailed = true
+        const { ok: ccOk } = await adjustCardBalance(supabase, cardId, delta, card.current_balance)
+        if (!ccOk) ccSyncFailed = true
       }
     }
     if (ccSyncFailed) toast.warning('Saldo kartu kredit gagal diperbarui untuk sebagian item. Cek di halaman Kartu Kredit.')
@@ -844,6 +1097,34 @@ export default function TransactionsPage() {
     return true
   }), [transactions, dateRange, filterAccount, filterType, filterCategory, filterTag, deferredSearch])
 
+  // F12: data kalender mobile — net per hari + total bulan yang dilihat.
+  // Dari SEMUA transaksi (independen filter); Transfer & saving/investment
+  // di-skip dari sel (ikut konvensi ringkasan masuk/keluar).
+  const calData = useMemo(() => {
+    const ym = `${calMonth.getFullYear()}-${String(calMonth.getMonth() + 1).padStart(2, '0')}`
+    const perDay = new Map<string, number>()
+    let income = 0
+    let expense = 0
+    for (const tx of transactions) {
+      if (tx.category === 'Transfer' || !tx.date.startsWith(ym)) continue
+      if (tx.type === 'income') {
+        income += tx.amount
+        perDay.set(tx.date, (perDay.get(tx.date) ?? 0) + tx.amount)
+      } else if (tx.type === 'expense') {
+        expense += tx.amount
+        perDay.set(tx.date, (perDay.get(tx.date) ?? 0) - tx.amount)
+      }
+    }
+    return { perDay, income, expense }
+  }, [transactions, calMonth])
+
+  // F13c: transaksi bulan kalender aktif — input MobileStatsView (agregasi
+  // per kategori dihitung internal komponen; Transfer di-skip di sana).
+  const statsMonthTx = useMemo(() => {
+    const ym = `${calMonth.getFullYear()}-${String(calMonth.getMonth() + 1).padStart(2, '0')}`
+    return transactions.filter((tx) => tx.date.startsWith(ym))
+  }, [transactions, calMonth])
+
   // Daftar kategori filter — diturunkan dari tree user (induk + subkategori).
   const allTags = Array.from(new Set(transactions.flatMap((t) => t.tags ?? []))).sort((a, b) =>
     a.localeCompare(b, 'id'),
@@ -898,20 +1179,26 @@ export default function TransactionsPage() {
         info={t('transactions.page_subtitle')}
         actions={
           <>
-            {/* Quick actions — visible buttons (no overflow), incl. frequently-used Transfer */}
-            <Link href="/dashboard/transactions/import">
-              <Button variant="outline" size="sm">
-                <Sparkles className="size-4" data-icon="inline-start" /> {t('transactions.import_ai')}
+            {/* Quick actions — desktop: tombol terlihat semua; mobile: masuk sheet "⋯"
+                (5 tombol wrap 2-3 baris di 375px = toolbar web, bukan app-bar). */}
+            <div className="hidden sm:contents">
+              <Link href="/dashboard/transactions/import">
+                <Button variant="outline" size="sm">
+                  <Sparkles className="size-4" data-icon="inline-start" /> {t('transactions.import_ai')}
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                <Upload className="size-4" data-icon="inline-start" /> {t('transactions.import_csv')}
               </Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-              <Upload className="size-4" data-icon="inline-start" /> {t('transactions.import_csv')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
-              <Download className="size-4" data-icon="inline-start" /> {t('transactions.export_csv')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
-              <ArrowLeftRight className="size-4" data-icon="inline-start" /> {t('transactions.transfer')}
+              <Button variant="outline" size="sm" onClick={() => exportCSV(filteredTransactions)} disabled={filteredTransactions.length === 0}>
+                <Download className="size-4" data-icon="inline-start" /> {t('transactions.export_csv')}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
+                <ArrowLeftRight className="size-4" data-icon="inline-start" /> {t('transactions.transfer')}
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" className="sm:hidden" aria-label={t('transactions.actions_sheet_title')} onClick={() => setActionsSheetOpen(true)}>
+              <MoreHorizontal className="size-4" />
             </Button>
 
             {/* Primary — toggles the inline quick-add row above the table */}
@@ -926,31 +1213,93 @@ export default function TransactionsPage() {
         }
       />
 
+      {/* Sheet aksi sekunder (mobile) — isi = tombol yang di desktop tampil di header */}
+      <BottomSheet open={actionsSheetOpen} onOpenChange={setActionsSheetOpen} title={t('transactions.actions_sheet_title')}>
+        <div className="pb-2">
+          {[
+            { icon: Sparkles, label: t('transactions.import_ai'), onClick: () => { setActionsSheetOpen(false); window.location.href = '/dashboard/transactions/import' } },
+            { icon: Upload, label: t('transactions.import_csv'), onClick: () => { setActionsSheetOpen(false); setImportOpen(true) } },
+            { icon: Download, label: t('transactions.export_csv'), onClick: () => { setActionsSheetOpen(false); exportCSV(filteredTransactions) }, disabled: filteredTransactions.length === 0 },
+            { icon: ArrowLeftRight, label: t('transactions.transfer'), onClick: () => { setActionsSheetOpen(false); setTransferDialogOpen(true) } },
+          ].map((a, i) => (
+            <button
+              key={a.label}
+              type="button"
+              disabled={a.disabled}
+              onClick={a.onClick}
+              className="w-full flex items-center gap-3 px-2 text-left disabled:opacity-40"
+              style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+            >
+              <span className="grid place-items-center size-8 rounded-lg shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                <a.icon className="size-4" />
+              </span>
+              <span className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>{a.label}</span>
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+
+      {/* F12: kalender bulan ala Budget (mobile) — gantiin chip bulan F9c.
+          Kalender = lensa (gak nyentuh dateRange); tap tanggal → list di
+          bawah difilter ke hari itu. Data sel dari SEMUA transaksi. */}
+      <div className={mobileView === 'stats' ? 'hidden' : 'md:hidden'}>
+        <MobileMonthCalendar
+          monthDate={calMonth}
+          data={calData}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
+          onPrev={() => { setSelectedDay(null); setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1)) }}
+          onNext={() => { setSelectedDay(null); setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1)) }}
+          locale={locale}
+          labels={{
+            income: t('transactions.summary_income'),
+            expense: t('transactions.summary_expense'),
+            net: t('transactions.summary_net_cashflow'),
+          }}
+        />
+      </div>
+
+      {/* F13c: panel Statistik (mobile) — gantiin kalender+search+list pas
+          toggle di posisi Statistik. Data = bulan kalender aktif (calMonth). */}
+      {mobileView === 'stats' && !loading && !loadError && (
+        <div className="md:hidden">
+          <MobileStatsView
+            transactions={statsMonthTx}
+            monthLabel={`${monthLong(calMonth.getMonth(), locale)} ${calMonth.getFullYear()}`}
+          />
+        </div>
+      )}
+
       {/* Ikhtisar — strip tipis (density-first), bukan 4 kartu gede */}
       {!loading && filteredTransactions.length > 0 && (() => {
         const inc = filteredTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const exp = filteredTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
         const net = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
+        // Angka compact ala kpi-card Beranda — full digit tetap kebaca via title.
         const stats = [
-          { label: t('transactions.summary_income'), dot: 'var(--c-mint)', Icon: ArrowDownToLine, val: formatCurrency(inc), color: 'var(--ink)' },
-          { label: t('transactions.summary_expense'), dot: 'var(--c-coral)', Icon: ArrowUpFromLine, val: formatCurrency(exp), color: 'var(--ink)' },
-          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}`, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
-          { label: t('transactions.summary_total_count'), dot: 'var(--c-violet)', Icon: Hash, val: String(filteredTransactions.length), color: 'var(--ink)' },
+          { label: t('transactions.summary_income'), dot: 'var(--c-mint)', Icon: ArrowDownToLine, val: formatCompactCurrency(inc), full: formatCurrency(inc) as string | undefined, color: 'var(--ink)' },
+          { label: t('transactions.summary_expense'), dot: 'var(--c-coral)', Icon: ArrowUpFromLine, val: formatCompactCurrency(exp), full: formatCurrency(exp) as string | undefined, color: 'var(--ink)' },
+          { label: t('transactions.summary_net_cashflow'), dot: net >= 0 ? 'var(--c-mint)' : 'var(--c-coral)', Icon: ArrowLeftRight, val: `${net >= 0 ? '+' : '−'}${formatCompactCurrency(Math.abs(net))}`, full: `${net >= 0 ? '+' : '−'}${formatCurrency(Math.abs(net))}` as string | undefined, color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' },
+          { label: t('transactions.summary_total_count'), dot: 'var(--c-violet)', Icon: Hash, val: String(filteredTransactions.length), full: undefined as string | undefined, color: 'var(--ink)' },
         ]
         return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {stats.map((s) => (
-              <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                <div className="flex items-center gap-2.5">
-                  <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
-                    <s.Icon className="size-4" />
-                  </span>
-                  <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+          <>
+            {/* F12: ringkasan mobile pindah ke footer kalender — di sini
+                cuma versi desktop */}
+            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {stats.map((s) => (
+                <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
+                      <s.Icon className="size-4" />
+                    </span>
+                    <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
+                  </div>
+                  <p className="num tabular font-semibold mt-2" title={s.full} style={{ fontSize: 19, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
                 </div>
-                <p className="num tabular font-semibold mt-2" style={{ fontSize: 20, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )
       })()}
 
@@ -973,27 +1322,43 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Search + filters — satu card: search di atas, filter di bawahnya */}
-      <div className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <div className="relative">
-          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('transactions.search_placeholder')}
-            className="h-9 w-full pl-9 text-sm"
-          />
+      {/* Search + filters — satu card: search di atas, filter di bawahnya.
+          Mobile: grid filter collapsed (panel 4 dropdown makan setengah layar) —
+          toggle lewat tombol "Filter (n)" di samping search. Desktop: selalu tampil. */}
+      <div className={`rounded-xl border p-3 ${mobileView === 'stats' ? 'hidden md:block' : ''}`} style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <div className="flex gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('transactions.search_placeholder')}
+              aria-label={t('transactions.search_placeholder')}
+              className="h-9 w-full pl-9 text-sm"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="sm:hidden h-9 shrink-0"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            <SlidersHorizontal className="size-4" data-icon="inline-start" />
+            {t('transactions.filter_button')}
+            {activeFilterCount > 0 && <span className="num">({activeFilterCount})</span>}
+          </Button>
         </div>
-        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 mt-3">
+        <div className={`${filtersOpen ? 'grid' : 'hidden sm:grid'} w-full grid-cols-2 gap-3 sm:grid-cols-4 ${allTags.length > 0 ? 'xl:grid-cols-5' : ''} mt-3`}>
         <div className="flex flex-col gap-1">
           <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_range')}</label>
           <RangePicker value={dateRange} onChange={setDateRange} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_account')}</label>
+          <label id="flt-account-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_account')}</label>
           <Select value={filterAccount} onValueChange={(v) => setFilterAccount(v ?? 'all')}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger aria-labelledby="flt-account-label" className="w-full">
               <SelectValue placeholder={t('transactions.all_accounts')}>
                 {(v) => v === 'all'
                   ? t('transactions.all_accounts')
@@ -1020,9 +1385,9 @@ export default function TransactionsPage() {
 
 
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_type')}</label>
+          <label id="flt-type-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_type')}</label>
           <Select value={filterType} onValueChange={(v) => { setFilterType(v ?? 'all'); setFilterCategory('all') }}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger aria-labelledby="flt-type-label" className="w-full">
               <SelectValue placeholder={t('transactions.all_types')}>
                 {(v) => v === 'all' ? t('transactions.all_types') : (v in TYPE_LABEL_KEYS ? t(TYPE_LABEL_KEYS[v as TransactionType]) : v)}
               </SelectValue>
@@ -1036,9 +1401,9 @@ export default function TransactionsPage() {
           </Select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_category')}</label>
+          <label id="flt-category-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_category')}</label>
           <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? 'all')}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger aria-labelledby="flt-category-label" className="w-full">
               <SelectValue placeholder={t('transactions.all_categories')}>
                 {(v) => v === 'all' ? t('transactions.all_categories') : v}
               </SelectValue>
@@ -1055,9 +1420,9 @@ export default function TransactionsPage() {
         </div>
         {allTags.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_tag')}</label>
+            <label id="flt-tag-label" className="eyebrow" style={{ fontSize: '0.625rem' }}>{t('transactions.filter_tag')}</label>
             <Select value={filterTag} onValueChange={(v) => setFilterTag(v ?? 'all')}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger aria-labelledby="flt-tag-label" className="w-full">
                 <SelectValue placeholder={t('transactions.all_tags')}>
                   {(v) => (v === 'all' ? t('transactions.all_tags') : v)}
                 </SelectValue>
@@ -1090,7 +1455,7 @@ export default function TransactionsPage() {
           Fast path: Tab between fields, Enter to submit. Full modal (struk OCR + tags)
           via the "Detail" button. */}
       {showQuickAdd && !loading && accounts.length + creditCards.length > 0 && (
-        <div className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--c-primary)' }}>
+        <div ref={quickAddRef} className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--accent, var(--c-mint))' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
             <Plus className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
@@ -1128,14 +1493,15 @@ export default function TransactionsPage() {
               type="date"
               value={quickForm.date}
               onChange={(e) => setQuickForm({ ...quickForm, date: e.target.value })}
-              className="h-9 col-span-1 sm:col-span-2 min-w-0"
+              aria-label={t('transactions.label_date')}
+              className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0"
             />
             {/* Account */}
             <Select
               value={quickForm.account_id}
               onValueChange={(v) => setQuickForm({ ...quickForm, account_id: v ?? '' })}
             >
-              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger aria-label={t('transactions.account')} className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder={t('transactions.account')}>
                   {(v) => {
                     const acc = accounts.find((a) => a.id === v)
@@ -1164,7 +1530,7 @@ export default function TransactionsPage() {
               value={quickForm.type}
               onValueChange={(v) => setQuickForm({ ...quickForm, type: (v ?? 'expense') as TransactionType, category: '' })}
             >
-              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger aria-label={t('transactions.filter_type')} className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder={t('transactions.filter_type')}>
                   {(v) => v in TYPE_LABEL_KEYS ? t(TYPE_LABEL_KEYS[v as TransactionType]) : t('transactions.filter_type')}
                 </SelectValue>
@@ -1180,7 +1546,7 @@ export default function TransactionsPage() {
               value={quickForm.category}
               onValueChange={(v) => setQuickForm({ ...quickForm, category: v ?? '' })}
             >
-              <SelectTrigger className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
+              <SelectTrigger aria-label={t('transactions.filter_category')} className="h-9 w-full text-sm col-span-1 sm:col-span-2 min-w-0">
                 <SelectValue placeholder={t('transactions.filter_category')}>
                   {(v) => v || t('transactions.filter_category')}
                 </SelectValue>
@@ -1202,6 +1568,7 @@ export default function TransactionsPage() {
               value={quickForm.description}
               onChange={(e) => setQuickForm({ ...quickForm, description: e.target.value })}
               placeholder={t('transactions.description_optional')}
+              aria-label={t('transactions.col_description')}
               className="h-9 col-span-2 sm:col-span-2 min-w-0"
             />
             {/* Amount */}
@@ -1209,6 +1576,7 @@ export default function TransactionsPage() {
               value={quickForm.amount}
               onChange={(n) => setQuickForm({ ...quickForm, amount: n })}
               placeholder={t('transactions.amount')}
+              aria-label={t('transactions.amount')}
               className="h-9 w-full col-span-2 sm:col-span-1 min-w-0 text-right tabular-nums"
             />
             {/* Submit */}
@@ -1220,8 +1588,12 @@ export default function TransactionsPage() {
               {quickSaving ? <Loader2 className="size-3.5 animate-spin" /> : <><Plus className="size-3.5" />{t('transactions.save')}</>}
             </Button>
           </form>
-          <p className="text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
+          {/* Tip shortcut keyboard cuma relevan di desktop; di HP arahkan ke tombol +. */}
+          <p className="hidden sm:block text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
             {t('transactions.quick_add_tip_prefix')} <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>{isMac ? '⌘K' : 'Ctrl K'}</kbd> {t('transactions.quick_add_tip_suffix')}
+          </p>
+          <p className="sm:hidden text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
+            {t('transactions.quick_add_tip_mobile')}
           </p>
         </div>
       )}
@@ -1281,7 +1653,8 @@ export default function TransactionsPage() {
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
-        <div className="s-card flex flex-col items-center text-center py-16 px-8">
+        // (di mobile mode Statistik: hide — panel stats punya empty message sendiri)
+        <div className={`s-card ${mobileView === 'stats' ? 'hidden md:flex' : 'flex'} flex-col items-center text-center py-16 px-8`}>
           <div
             className="size-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--surface-2)' }}
@@ -1411,6 +1784,16 @@ export default function TransactionsPage() {
                           </TableCell>
                           <TableCell className="text-[13px]" style={{ color: 'var(--ink)' }}>
                             {tx.description}
+                            {/* Penanda hasil Pecah Transaksi (migrasi 064) */}
+                            {tx.split_group_id && (
+                              <span
+                                className="ml-2 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium align-middle"
+                                style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}
+                                title={locale === 'id' ? 'Bagian dari transaksi yang dipecah' : 'Part of a split transaction'}
+                              >
+                                <Split className="size-2.5" /> {locale === 'id' ? 'Pecahan' : 'Split'}
+                              </span>
+                            )}
                             {tx.tags && tx.tags.length > 0 && (
                               <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
                                 {tx.tags.slice(0, 2).map((tg) => (
@@ -1472,75 +1855,112 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {/* Mobile: stacked card list */}
-          <div className="md:hidden space-y-2">
-            {filteredTransactions.map((tx) => {
-              // AA-contrast ink variants; saving/investment stay neutral (the chip
-              // already carries the color) — matches desktop, no more amber/sky split.
-              const amountColor = tx.type === 'income'
-                ? 'var(--c-mint-ink)'
-                : tx.type === 'expense'
-                  ? 'var(--c-coral-ink)'
-                  : 'var(--ink)'
-              return (
-                <div
-                  key={tx.id}
-                  className="rounded-xl border bg-[var(--surface)] p-3"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span
-                          className="chip"
-                          style={{
-                            background: TYPE_BADGE_STYLES[tx.type].bg,
-                            color: TYPE_BADGE_STYLES[tx.type].color,
-                            height: 20,
-                            fontSize: 10,
-                            padding: '0 8px',
-                          }}
-                        >
-                          {t(TYPE_LABEL_KEYS[tx.type])}
+          {/* Mobile (F9c): grouped per HARI — header tanggal + net harian nempel
+              kanvas, baris dalam kartu per hari (pola app keuangan native).
+              Tap baris = edit; tombol hapus kecil di kanan (stopPropagation).
+              F13c: di mode Statistik list di-hide (diganti MobileStatsView). */}
+          <div className={mobileView === 'stats' ? 'hidden' : 'md:hidden'}>
+            {(() => {
+              const byDate = new Map<string, typeof filteredTransactions>()
+              for (const tx of filteredTransactions) {
+                const arr = byDate.get(tx.date)
+                if (arr) arr.push(tx)
+                else byDate.set(tx.date, [tx])
+              }
+              // F12: tap tanggal di kalender → cuma hari itu yang tampil.
+              const dates = [...byDate.keys()]
+                .filter((d) => !selectedDay || d === selectedDay)
+                .sort((a, b) => (a < b ? 1 : -1))
+              if (dates.length === 0) {
+                return (
+                  <p className="text-[12.5px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>
+                    {t('transactions.empty_title')}
+                  </p>
+                )
+              }
+              return dates.map((date) => {
+                const items = byDate.get(date)!
+                const net = items.reduce((s, x) => s + (x.type === 'income' ? x.amount : x.type === 'expense' ? -x.amount : 0), 0)
+                return (
+                  <div key={date}>
+                    <div className="flex items-baseline justify-between px-1 mt-3 mb-1.5">
+                      <span className="text-[11.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+                        {new Date(`${date}T00:00:00`).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                      </span>
+                      {net !== 0 && (
+                        <span className="num tabular text-[11.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+                          {net > 0 ? '+' : '−'}{formatCompactCurrency(Math.abs(net))}
                         </span>
-                        <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-                          {formatDateShort(tx.date, locale)}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
-                        {tx.description || tx.category}
-                      </p>
-                      <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--ink-soft)' }}>
-                        {tx.category} · {getAccountName(tx.account_id)}
-                      </p>
+                      )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="num text-sm font-bold tabular-nums" style={{ color: amountColor }}>
-                        {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
-                      </p>
-                      <div className="mt-1 flex items-center justify-end gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => openEditDialog(tx)}
-                          className="text-[11px] inline-flex items-center gap-0.5 font-medium"
-                          style={{ color: 'var(--ink-muted)' }}
-                        >
-                          <Pencil className="size-3" /> {t('transactions.edit')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(tx.id)}
-                          className="text-[11px] inline-flex items-center gap-0.5 font-medium"
-                          style={{ color: 'var(--c-coral-ink)' }}
-                        >
-                          <Trash2 className="size-3" /> {t('transactions.delete')}
-                        </button>
-                      </div>
+                    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                      {items.map((tx, i) => {
+                        // AA-contrast ink variants; saving/investment stay neutral.
+                        const amountColor = tx.type === 'income'
+                          ? 'var(--c-mint-ink)'
+                          : tx.type === 'expense'
+                            ? 'var(--c-coral-ink)'
+                            : 'var(--ink)'
+                        // F10: chip ikon = hue KATEGORI (konsisten Beranda/Anggaran);
+                        // pemasukan tetap mint (semantik masuk lebih penting).
+                        const hue = categoryHue(tx.category)
+                        const tint = tx.type === 'income'
+                          ? { bg: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }
+                          : { bg: hue.soft, color: hue.ink }
+                        return (
+                          <div
+                            key={tx.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openEditDialog(tx)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditDialog(tx) } }}
+                            aria-label={`${t('transactions.edit')}: ${tx.description || tx.category}`}
+                            className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)] cursor-pointer"
+                            style={{ minHeight: 54, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                          >
+                            <div
+                              className="grid place-items-center shrink-0"
+                              style={{ width: 30, height: 30, borderRadius: 8, background: tint.bg, color: tint.color }}
+                            >
+                              <CategoryIcon category={tx.category} className="size-[15px]" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                                {tx.split_group_id && (
+                                  <span className="mr-1 inline-flex items-center rounded-full px-1.5 align-middle text-[9px] font-semibold uppercase" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                                    {locale === 'id' ? 'Pecahan' : 'Split'}
+                                  </span>
+                                )}
+                                {tx.description || tx.category}
+                              </p>
+                              <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                                {/* Ikon kecil = bagian dari transaksi yang dipecah */}
+                                {tx.split_group_id && (
+                                  <Split className="size-3 inline align-[-2px] mr-1" aria-hidden style={{ color: 'var(--c-violet)' }} />
+                                )}
+                                {tx.category} · {getAccountName(tx.account_id)}
+                              </p>
+                            </div>
+                            <p className="num text-[14px] font-semibold tabular-nums leading-tight shrink-0" style={{ color: amountColor }}>
+                              {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
+                              aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`}
+                              className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                              style={{ color: 'var(--ink-soft)' }}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })
+            })()}
           </div>
         </>
       )}
@@ -1635,6 +2055,40 @@ export default function TransactionsPage() {
               </div>
             )}
 
+            {/* Lampiran struk (mode edit) — tampil kalau transaksi punya foto tersimpan */}
+            {editingId && (() => {
+              const receiptPath = transactions.find((x) => x.id === editingId)?.receipt_url
+              if (!receiptPath) return null
+              return (
+                <button
+                  type="button"
+                  onClick={() => void openReceiptAttachment(receiptPath)}
+                  className="inline-flex w-fit items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                  style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+                >
+                  <ScanLine className="size-3.5" />
+                  {locale === 'id' ? 'Lihat struk' : 'View receipt'}
+                </button>
+              )
+            })()}
+
+            {/* Info split (mode edit) — transaksi ini bagian dari satu belanja
+                yang dipecah; edit di sini cuma nyentuh potongan yang dipilih. */}
+            {editingId && splitSourceTx?.split_group_id && (
+              <div
+                className="flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs"
+                style={{ background: 'var(--c-violet-soft)', borderColor: 'color-mix(in srgb, var(--c-violet) 30%, transparent)', color: 'var(--c-violet-ink)' }}
+              >
+                <Split className="size-3.5 shrink-0" />
+                {(() => {
+                  const parts = transactions.filter((x) => x.split_group_id === splitSourceTx.split_group_id).length
+                  return locale === 'id'
+                    ? `Bagian dari transaksi yang dipecah (${parts} potongan) — edit ini cuma mengubah potongan yang dipilih.`
+                    : `Part of a split transaction (${parts} parts) — editing only changes this part.`
+                })()}
+              </div>
+            )}
+
             {/* Date */}
             <div className="grid gap-1.5">
               <Label htmlFor="tx-date">{t('transactions.label_date')}</Label>
@@ -1687,7 +2141,7 @@ export default function TransactionsPage() {
                     {accountSource === 'ai' && (
                       <span
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                        style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet)' }}
+                        style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}
                       >
                         <Sparkles className="size-3" /> {t('transactions.source_ai')}
                       </span>
@@ -1740,7 +2194,11 @@ export default function TransactionsPage() {
                       key={ty}
                       type="button"
                       aria-pressed={active}
-                      onClick={() => setForm({ ...form, type: ty, category: '' })}
+                      onClick={() => {
+                        setForm({ ...form, type: ty, category: '' })
+                        // Kategori baris split ikut di-reset — opsi kategori beda per tipe.
+                        setNewSplitRows((rows) => rows.map((r) => ({ ...r, category: '' })))
+                      }}
                       className="rounded-lg border py-2 text-xs font-semibold transition-colors"
                       style={active
                         ? { background: c.bg, color: c.color, borderColor: c.color }
@@ -1753,33 +2211,128 @@ export default function TransactionsPage() {
               </div>
             </div>
 
-            {/* Category */}
-            <div className="grid gap-1.5">
-              <Label id="tx-category-label">{t('transactions.label_category')}</Label>
-              <Select
-                value={form.category}
-                onValueChange={(v) => setForm({ ...form, category: v ?? '' })}
+            {/* Split toggle (mode tambah) — bagi 1 belanja ke beberapa kategori.
+                Affordance jelas: tombol ber-border + aria-pressed + status teks.
+                Label literal locale ternary (JANGAN nambah key messages.ts). */}
+            {!editingId && (
+              <button
+                type="button"
+                aria-pressed={newSplitOn}
+                onClick={() => setNewSplitOn((v) => !v)}
+                className="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors"
+                style={newSplitOn
+                  ? { background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)', borderColor: 'var(--c-violet-ink)' }
+                  : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--outline)' }}
               >
-                <SelectTrigger className="w-full" aria-labelledby="tx-category-label">
-                  <SelectValue placeholder={t('transactions.select_category')}>
-                    {(v) => v || t('transactions.select_category')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {optionsForType(form.type).map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.depth > 0 ? (
-                        <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>
-                          ↳ {o.label}
-                        </span>
-                      ) : (
-                        o.label
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <Split className="size-4 shrink-0" />
+                {locale === 'id' ? 'Bagi ke beberapa kategori' : 'Split across categories'}
+                <span className="ml-auto font-normal">
+                  {newSplitOn ? (locale === 'id' ? 'Aktif' : 'On') : (locale === 'id' ? 'Nonaktif' : 'Off')}
+                </span>
+              </button>
+            )}
+
+            {/* Category — di mode split diganti editor baris {kategori, nominal,
+                catatan}; tiap baris jadi transaksi sendiri yang share grup split. */}
+            {!(newSplitOn && !editingId) ? (
+              <div className="grid gap-1.5">
+                <Label id="tx-category-label">{t('transactions.label_category')}</Label>
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => setForm({ ...form, category: v ?? '' })}
+                >
+                  <SelectTrigger className="w-full" aria-labelledby="tx-category-label">
+                    <SelectValue placeholder={t('transactions.select_category')}>
+                      {(v) => v || t('transactions.select_category')}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {optionsForType(form.type).map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.depth > 0 ? (
+                          <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>
+                            ↳ {o.label}
+                          </span>
+                        ) : (
+                          o.label
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="grid gap-2 rounded-lg border p-2.5" style={{ borderColor: 'var(--outline)', background: 'var(--surface-2)' }}>
+                {newSplitRows.map((r, i) => (
+                  <div key={i} className="grid gap-1.5 rounded-lg border p-2" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)' }}>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={r.category}
+                        onValueChange={(v) => setNewSplitRows((rows) => rows.map((x, j) => (j === i ? { ...x, category: v ?? '' } : x)))}
+                      >
+                        <SelectTrigger className="h-9 flex-1 min-w-0 text-sm" aria-label={`${t('transactions.label_category')} ${i + 1}`}>
+                          <SelectValue placeholder={t('transactions.select_category')}>
+                            {(v) => v || t('transactions.select_category')}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {optionsForType(form.type).map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.depth > 0 ? (
+                                <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                              ) : (
+                                o.label
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <NumberInput
+                        value={r.amount}
+                        onChange={(n) => setNewSplitRows((rows) => rows.map((x, j) => (j === i ? { ...x, amount: n } : x)))}
+                        placeholder="0"
+                        aria-label={`${t('transactions.label_amount')} ${i + 1}`}
+                        className="h-9 w-28 shrink-0 text-right tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewSplitRows((rows) => rows.filter((_, j) => j !== i))}
+                        disabled={newSplitRows.length <= 2}
+                        className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-[var(--surface-2)] disabled:opacity-30"
+                        style={{ color: 'var(--ink-soft)' }}
+                        aria-label={`${locale === 'id' ? 'Hapus baris' : 'Remove row'} ${i + 1}`}
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                    <Input
+                      value={r.description}
+                      onChange={(e) => setNewSplitRows((rows) => rows.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)))}
+                      placeholder={t('transactions.description_optional')}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => setNewSplitRows((rows) => [...rows, { category: '', amount: 0, description: '' }])}
+                >
+                  <Plus className="size-3.5" data-icon="inline-start" /> {locale === 'id' ? 'Tambah baris' : 'Add row'}
+                </Button>
+                {/* Sisa vs total (field Jumlah di bawah) — live; nol + total>0 = balance */}
+                <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: newSplitRemaining === 0 && form.amount > 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)' }}>
+                  <span className="font-medium" style={{ color: newSplitRemaining === 0 && form.amount > 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                    {locale === 'id' ? 'Sisa dari total' : 'Remaining of total'}
+                  </span>
+                  <span className="num font-bold tabular-nums" style={{ color: newSplitRemaining === 0 && form.amount > 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                    {newSplitRemaining < 0 ? '−' : ''}{formatCurrency(Math.abs(newSplitRemaining))}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div className="grid gap-1.5">
@@ -1830,9 +2383,29 @@ export default function TransactionsPage() {
               />
             </div>
 
-            {/* Amount — prominent */}
+            {/* Amount — prominent. Mode edit: tombol kecil "Pecah" (split ke
+                beberapa kategori). Transfer di-skip — legnya berpasangan. */}
             <div className="grid gap-1.5">
-              <Label htmlFor="tx-amount">{t('transactions.label_amount')}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="tx-amount">
+                  {t('transactions.label_amount')}
+                  {/* Mode split: field ini = TOTAL belanja yang dibagi ke baris-baris */}
+                  {newSplitOn && !editingId && (
+                    <span className="ml-1 font-normal" style={{ color: 'var(--ink-soft)' }}>(Total)</span>
+                  )}
+                </Label>
+                {editingId && splitSourceTx && form.category !== 'Transfer' && (
+                  <button
+                    type="button"
+                    onClick={openSplitDialog}
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+                    style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
+                    title={locale === 'id' ? 'Pecah transaksi ini ke beberapa kategori' : 'Split this transaction into several categories'}
+                  >
+                    <Split className="size-3.5" /> {locale === 'id' ? 'Pecah' : 'Split'}
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: 'var(--ink-soft)' }}>Rp</span>
                 <NumberInput
@@ -1853,10 +2426,136 @@ export default function TransactionsPage() {
             <Button
               className=""
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || (newSplitOn && !editingId && !newSplitReady)}
             >
               {saving && <Loader2 className="size-4 animate-spin mr-1" />}
               {editingId ? t('transactions.save') : t('transactions.add')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pecah Transaksi — 1 transaksi → beberapa kategori, semua bagian share
+          split_group_id (migrasi 064). Dibuka dari dialog edit; batal/ESC balik
+          ke dialog edit. Label literal locale ternary (JANGAN ke messages.ts). */}
+      <Dialog open={splitDialogOpen} onOpenChange={(o) => { if (o) setSplitDialogOpen(true); else closeSplitDialog() }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-violet-soft)' }}>
+                <Split className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+                  {locale === 'id' ? 'Pecah transaksi' : 'Split transaction'}
+                </DialogTitle>
+                <DialogDescription>
+                  {locale === 'id'
+                    ? 'Bagi satu transaksi ke beberapa kategori. Total semua bagian harus sama dengan jumlah asli.'
+                    : 'Divide one transaction into several categories. All parts must add up to the original amount.'}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {splitSourceTx && (
+            <div className="grid gap-3 py-2 px-0.5 max-h-[65dvh] overflow-y-auto">
+              {/* Ringkasan transaksi asal — jumlah TERSIMPAN jadi acuan total */}
+              <div className="flex items-center justify-between rounded-lg border px-3 py-2" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
+                <div className="min-w-0 text-xs">
+                  <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>
+                    {splitSourceTx.description || splitSourceTx.category}
+                  </p>
+                  <p style={{ color: 'var(--ink-soft)' }}>
+                    {formatDateShort(splitSourceTx.date, locale)} · {getAccountName(splitSourceTx.account_id)}
+                  </p>
+                </div>
+                <p className="num text-sm font-bold tabular-nums shrink-0 ml-3" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(splitSourceTx.amount)}
+                </p>
+              </div>
+
+              {/* Baris pecahan: kategori + jumlah + hapus (min. 2 baris) */}
+              {splitRows.map((r, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Select
+                    value={r.category}
+                    onValueChange={(v) => {
+                      const next = [...splitRows]
+                      next[i] = { ...r, category: v ?? '' }
+                      setSplitRows(next)
+                    }}
+                  >
+                    <SelectTrigger className="h-9 flex-1 min-w-0 text-sm" aria-label={`${locale === 'id' ? 'Kategori bagian' : 'Part category'} ${i + 1}`}>
+                      <SelectValue placeholder={t('transactions.select_category')}>
+                        {(v) => v || t('transactions.select_category')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {optionsForType(splitSourceTx.type).map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.depth > 0 ? (
+                            <span className="pl-3.5" style={{ color: 'var(--ink-muted)' }}>↳ {o.label}</span>
+                          ) : (
+                            o.label
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <NumberInput
+                    value={r.amount}
+                    onChange={(n) => {
+                      const next = [...splitRows]
+                      next[i] = { ...r, amount: n }
+                      setSplitRows(next)
+                    }}
+                    placeholder="0"
+                    aria-label={`${locale === 'id' ? 'Jumlah bagian' : 'Part amount'} ${i + 1}`}
+                    className="h-9 w-28 shrink-0 text-right tabular-nums"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSplitRows(splitRows.filter((_, j) => j !== i))}
+                    disabled={splitRows.length <= 2}
+                    className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-[var(--surface-2)] disabled:opacity-30"
+                    style={{ color: 'var(--ink-soft)' }}
+                    aria-label={`${locale === 'id' ? 'Hapus baris' : 'Remove row'} ${i + 1}`}
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => setSplitRows([...splitRows, { category: '', amount: 0 }])}
+              >
+                <Plus className="size-3.5" data-icon="inline-start" /> {locale === 'id' ? 'Tambah baris' : 'Add row'}
+              </Button>
+
+              {/* Sisa alokasi — nol = siap disimpan (mint), selain itu coral */}
+              <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ background: splitRemaining === 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)' }}>
+                <span className="font-medium" style={{ color: splitRemaining === 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  {locale === 'id' ? 'Sisa' : 'Remaining'}
+                </span>
+                <span className="num font-bold tabular-nums" style={{ color: splitRemaining === 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  {splitRemaining < 0 ? '−' : ''}{formatCurrency(Math.abs(splitRemaining))}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeSplitDialog} disabled={splitSaving}>
+              {t('transactions.cancel')}
+            </Button>
+            <Button onClick={() => void saveSplit()} disabled={splitSaving || !splitValid}>
+              {splitSaving && <Loader2 className="size-4 animate-spin mr-1" />}
+              {locale === 'id' ? 'Pecah' : 'Split'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1903,16 +2602,16 @@ export default function TransactionsPage() {
                 {t('transactions.csv_preview_prefix')} {importRows.length} {t('transactions.csv_preview_suffix')}
               </p>
               <div className="text-xs">
-                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 font-semibold border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}>
+                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 text-[11px] uppercase tracking-wider font-medium border-b bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                   <div className="col-span-1">✓</div>
                   <div className="col-span-2">{t('transactions.col_date')}</div>
-                  <div className="col-span-4">{t('transactions.col_description')}</div>
+                  <div className="col-span-4 sm:col-span-3">{t('transactions.col_description')}</div>
                   <div className="col-span-2">{t('transactions.col_type_category')}</div>
                   <div className="col-span-2">{t('transactions.col_account')}</div>
-                  <div className="col-span-1 text-right">{t('transactions.col_amount')}</div>
+                  <div className="col-span-1 sm:col-span-2 text-right">{t('transactions.col_amount')}</div>
                 </div>
                 {importRows.map((r, i) => (
-                  <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center" style={{ borderColor: 'var(--outline)' }}>
+                  <div key={i} className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1.5 border-b items-center hover:bg-[var(--surface-2)] transition-colors" style={{ borderColor: 'var(--outline)' }}>
                     <div className="col-span-1">
                       <input
                         type="checkbox"
@@ -1927,7 +2626,7 @@ export default function TransactionsPage() {
                       />
                     </div>
                     <div className="col-span-2 num">{r.date}</div>
-                    <div className="col-span-4 truncate">{r.description}</div>
+                    <div className="col-span-4 sm:col-span-3 truncate">{r.description}</div>
                     <div className="col-span-2">
                       <span className="text-[10px] px-1 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{r.type}</span>
                       {' '}{r.category}
@@ -1940,14 +2639,14 @@ export default function TransactionsPage() {
                           next[i] = { ...r, account_id: e.target.value }
                           setImportRows(next)
                         }}
-                        className="text-xs w-full bg-transparent"
+                        className="text-xs w-full bg-transparent md:h-7 md:rounded-lg md:border md:border-input md:pl-2 md:pr-1 md:outline-none md:transition-[color,box-shadow,border-color] md:hover:border-ring/60 md:focus-visible:border-ring md:focus-visible:ring-3 md:focus-visible:ring-ring/50"
                         aria-label={`${t('transactions.col_account')}: ${r.description}`}
                       >
                         {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         {creditCards.map((c) => <option key={c.id} value={c.id}>{t('transactions.credit_prefix')} · {c.name}</option>)}
                       </select>
                     </div>
-                    <div className="col-span-1 text-right num tabular">{formatCurrency(r.amount)}</div>
+                    <div className="col-span-1 sm:col-span-2 text-right num tabular whitespace-nowrap">{formatCurrency(r.amount)}</div>
                   </div>
                 ))}
               </div>
@@ -1998,16 +2697,16 @@ export default function TransactionsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label>{t('transactions.amount_rp')}</Label>
-                <NumberInput value={transferForm.amount} onChange={(n) => setTransferForm({ ...transferForm, amount: n })} placeholder="0" />
+                <NumberInput value={transferForm.amount} onChange={(n) => setTransferForm({ ...transferForm, amount: n })} placeholder="0" aria-label={t('transactions.amount_rp')} />
               </div>
               <div className="grid gap-1.5">
                 <Label>{t('transactions.label_date')}</Label>
-                <Input type="date" value={transferForm.date} onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })} />
+                <Input type="date" value={transferForm.date} onChange={(e) => setTransferForm({ ...transferForm, date: e.target.value })} aria-label={t('transactions.label_date')} />
               </div>
             </div>
             <div className="grid gap-1.5">
               <Label>{t('transactions.notes')}</Label>
-              <Input value={transferForm.notes} onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })} />
+              <Input value={transferForm.notes} onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })} aria-label={t('transactions.notes')} />
             </div>
           </div>
           <DialogFooter>
@@ -2022,6 +2721,41 @@ export default function TransactionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* F13c: toggle Catatan|Statistik ala app Budget — pill floating di atas
+          dock (dock z-30, bottom 10+safe-area, tinggi 64 → pill di ~88px).
+          z-40 = di atas konten, di bawah dialog/sheet (z-50). Mobile only.
+          Label: gak ada key i18n yang pas ("Catatan"/"Statistik" standalone)
+          → literal locale ternary, JANGAN nambah key ke messages.ts. */}
+      <div
+        className="md:hidden fixed left-1/2 -translate-x-1/2 z-40 flex items-center rounded-full p-1"
+        style={{
+          bottom: 'calc(88px + env(safe-area-inset-bottom))',
+          background: 'var(--surface)',
+          border: '1px solid var(--border-soft)',
+          boxShadow: '0 4px 14px rgba(24,24,27,.10)',
+        }}
+        role="group"
+        aria-label={`${locale === 'en' ? 'Record' : 'Catatan'} | ${locale === 'en' ? 'Stats' : 'Statistik'}`}
+      >
+        {([
+          ['record', locale === 'en' ? 'Record' : 'Catatan'],
+          ['stats', locale === 'en' ? 'Stats' : 'Statistik'],
+        ] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setMobileView(v)}
+            aria-pressed={mobileView === v}
+            className="rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition-colors"
+            style={mobileView === v
+              ? { background: 'var(--ink)', color: 'var(--surface)' }
+              : { color: 'var(--ink-soft)' }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

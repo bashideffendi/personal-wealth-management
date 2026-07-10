@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatPercent } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/utils'
 import { INVESTMENT_SUBCATS, INVESTMENT_SLUG_TO_CATEGORY, FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment, Quote } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -433,7 +433,7 @@ export default function InvestmentCategoryPage() {
             background: `radial-gradient(circle, ${up ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 113, 133, 0.16)'}, transparent 65%)`,
           }}
         />
-        <div className="relative p-6 sm:p-8">
+        <div className="relative p-5 sm:p-6">
         <Link
           href="/dashboard/assets/investment"
           className="inline-flex items-center gap-1.5 text-xs font-medium mb-4 rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-white/10"
@@ -483,12 +483,13 @@ export default function InvestmentCategoryPage() {
           <p
             className="num tabular font-bold leading-none whitespace-nowrap"
             style={{
-              fontSize: 'clamp(40px, 6vw, 64px)',
+              fontSize: 'clamp(26px, 5vw, 34px)',
               color: 'var(--on-hero)',
               letterSpacing: '-0.04em',
             }}
+            title={formatCurrency(totals.market)}
           >
-            {formatCurrency(totals.market)}
+            {formatCompactCurrency(totals.market)}
           </p>
           {totals.invested > 0 && (
             <span
@@ -540,19 +541,21 @@ export default function InvestmentCategoryPage() {
         )}
 
         <TabsContent value="holdings" className="space-y-6 mt-6">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs sm:text-sm" style={{ color: 'var(--ink-muted)' }}>
           {(category === 'stock' || category === 'crypto' || category === 'gold')
             ? (quotesUpdatedAt
                 ? `${t('investment_detail.price_updated_at')} ${quotesUpdatedAt.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${category === 'gold' ? t('investment_detail.gold_price_note') : t('investment_detail.price_not_realtime_suffix')}`
                 : category === 'gold' ? t('investment_detail.gold_price_note') : t('investment_detail.price_not_realtime'))
             : `${t('investment_detail.manage_positions')} ${subcat.label.toLowerCase()}.`}
         </p>
-        <div className="flex gap-2 items-center">
-          {/* View toggle — Card / List. Hidden when no positions yet. */}
+        <div className="flex gap-2 items-center flex-wrap">
+          {/* View toggle — Card / List. Hidden when no positions yet.
+              Desktop-only: di mobile kedua view render baris ringkas yang
+              sama (F8d density), jadi toggle-nya no-op di sana. */}
           {items.length > 0 && (
             <div
-              className="flex items-center rounded-md border overflow-hidden"
+              className="hidden md:flex items-center rounded-md border overflow-hidden"
               style={{ borderColor: 'var(--outline)' }}
             >
               <button
@@ -607,8 +610,8 @@ export default function InvestmentCategoryPage() {
           <Button variant="outline" onClick={() => void load()}>{t('common.retry')}</Button>
         </div>
       ) : items.length === 0 ? (
-        <div className="s-card p-12 text-center">
-          <p className="text-5xl">{subcat.emoji}</p>
+        <div className="s-card p-8 text-center">
+          <p className="text-3xl">{subcat.emoji}</p>
           <p className="mt-3 font-semibold">{t('investment_detail.empty_no_positions')} {subcat.label}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('investment_detail.empty_hint')}</p>
         </div>
@@ -618,11 +621,12 @@ export default function InvestmentCategoryPage() {
             Untung-Rugi/Hari Ini). "Hari Ini" cuma real buat kelas ber-harga
             live (saham & kripto); sisanya "—". */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MiniStat label={t('investment_detail.stat_value')} value={formatCurrency(totals.market)} glow="glow-violet" />
-          <MiniStat label={t('investment_detail.stat_invested')} value={formatCurrency(totals.invested)} glow="glow-indigo" />
+          <MiniStat label={t('investment_detail.stat_value')} value={formatCompactCurrency(totals.market)} title={formatCurrency(totals.market)} glow="glow-violet" />
+          <MiniStat label={t('investment_detail.stat_invested')} value={formatCompactCurrency(totals.invested)} title={formatCurrency(totals.invested)} glow="glow-indigo" />
           <MiniStat
             label={t('investment_detail.stat_profit_loss')}
-            value={`${formatCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
+            value={`${formatCompactCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
+            title={formatCurrency(totals.pl)}
             glow={up ? 'glow-emerald' : 'glow-rose'}
             accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
           />
@@ -630,18 +634,91 @@ export default function InvestmentCategoryPage() {
             label={t('investment_detail.stat_today')}
             value={
               todayPL
-                ? `${todayPL.value >= 0 ? '+' : ''}${formatCurrency(todayPL.value)}  ·  ${todayPL.pct >= 0 ? '+' : ''}${todayPL.pct.toFixed(2)}%`
+                ? `${todayPL.value >= 0 ? '+' : ''}${formatCompactCurrency(todayPL.value)}  ·  ${todayPL.pct >= 0 ? '+' : ''}${todayPL.pct.toFixed(2)}%`
                 : '—'
             }
+            title={todayPL ? formatCurrency(todayPL.value) : undefined}
             glow={todayPL ? (todayPL.value >= 0 ? 'glow-emerald' : 'glow-rose') : undefined}
             accent={todayPL ? (todayPL.value >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)') : undefined}
           />
         </div>
 
+        {/* ─── MOBILE LIST ─── F8d density: baris ringkas ~60px dalam SATU
+            kartu + divider hairline, dipakai KEDUA view (card/list) — tabel
+            12 kolom & grid kartu tinggal di desktop. Tap baris → edit posisi;
+            hapus = icon kecil kanan (stopPropagation), pola list transaksi. */}
+        <div className="s-card p-0 overflow-hidden md:hidden">
+          {enriched.map((e, idx) => {
+            const pos = e.pl >= 0
+            const tick = category === 'stock' && e.i.ticker
+              ? fromYahooTicker(e.i.ticker)
+              : category === 'crypto' && e.i.ticker
+                ? cryptoBase(e.i.ticker)
+                : (e.i.ticker ?? '')
+            return (
+              <div
+                key={e.i.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => openEdit(e.i)}
+                onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openEdit(e.i) } }}
+                aria-label={`${t('investment_detail.aria_edit_position')}: ${e.i.name}`}
+                className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)] cursor-pointer"
+                style={{ minHeight: 60, borderTop: idx ? '1px solid var(--border-soft)' : 'none' }}
+              >
+                {category === 'stock' ? (
+                  <StockLogo ticker={e.i.ticker} size={32} shape="circle" />
+                ) : category === 'crypto' ? (
+                  <CryptoLogo symbol={e.i.ticker} size={32} shape="circle" />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
+                  <p className="num tabular text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                    {tick ? `${tick} · ` : ''}{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</p>
+                  {e.invested > 0 && (
+                    <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                      {pos ? '+' : ''}{e.plPct.toFixed(2)}%
+                    </p>
+                  )}
+                </div>
+                {/* Akses riset/detail dari mobile (tap baris = edit) — tanpa ini
+                    deep-link riset cuma kejangkau dari tabel desktop. */}
+                {(showStockResearch || category === 'crypto') && e.i.ticker ? (
+                  <Link
+                    href={showStockResearch
+                      ? `/dashboard/assets/investment/stock/research/${fromYahooTicker(e.i.ticker)}`
+                      : `/dashboard/assets/investment/crypto/${cryptoBase(e.i.ticker)}`}
+                    onClick={(ev) => ev.stopPropagation()}
+                    aria-label={`Research: ${e.i.name}`}
+                    className="grid place-items-center size-7 rounded-md shrink-0 transition-colors active:bg-[var(--surface-2)]"
+                    style={{ color: 'var(--ink-soft)' }}
+                  >
+                    <FileSearch className="size-3.5" />
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={(ev) => { ev.stopPropagation(); remove(e.i.id) }}
+                  aria-label={`${t('investment_detail.aria_delete_position')}: ${e.i.name}`}
+                  className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                  style={{ color: 'var(--ink-soft)' }}
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
         {view === 'list' ? (
         // ─── LIST VIEW ─── shared by all categories. Logo column adapts:
         // stock → StockLogo, crypto → CryptoLogo, others → no logo cell.
-        <div className="space-y-4">
+        // Desktop-only — mobile pakai baris ringkas di atas.
+        <div className="hidden md:block space-y-4">
           <div className="s-card overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
@@ -773,8 +850,9 @@ export default function InvestmentCategoryPage() {
           </div>
         </div>
       ) : (
-        // Card list for non-stock categories
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        // Card list for non-stock categories — desktop-only, mobile pakai
+        // baris ringkas di atas (F8d density).
+        <div className="hidden gap-3 md:grid md:grid-cols-2 lg:grid-cols-3">
           {enriched.map((e) => {
             const pos = e.pl >= 0
             return (
@@ -1261,17 +1339,19 @@ function Td({ children, className = '', style }: { children: React.ReactNode; cl
 }
 
 function MiniStat({
-  label, value, glow, accent,
+  label, value, glow, accent, title,
 }: {
   label: string
   value: string
   glow?: string
   accent?: string
+  /** Full digit buat hover — angka display-nya compact */
+  title?: string
 }) {
   return (
     <div className={`s-card p-4 ${glow ?? ''}`}>
       <p className="eyebrow">{label}</p>
-      <p className="num text-xl mt-2 tabular font-bold" style={{ color: accent ?? 'var(--ink)' }}>
+      <p className="num mt-2 tabular font-bold" style={{ fontSize: 19, color: accent ?? 'var(--ink)' }} title={title}>
         {value}
       </p>
     </div>

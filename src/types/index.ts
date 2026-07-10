@@ -55,6 +55,10 @@ export interface Transaction {
   created_at: string
   goal_id?: string | null
   tags?: string[]
+  /** Path Storage lampiran struk di bucket privat 'receipts' (migrasi 011) — bukan public URL. */
+  receipt_url?: string | null
+  /** Penanda hasil "Pecah Transaksi" (migrasi 064) — semua bagian pecahan share satu uuid. NULL = transaksi biasa. */
+  split_group_id?: string | null
 }
 
 export interface CategorizationRule {
@@ -263,6 +267,10 @@ export interface RecurringTransaction {
   start_date: string
   end_date: string | null
   last_run_date: string | null
+  /** Watermark idempotensi cron auto-post (migrasi 062) — occurrence terakhir yang sudah di-post. */
+  last_posted_date: string | null
+  /** Opt-in auto-post harian via /api/cron/post-recurring (migrasi 062). */
+  auto_post: boolean
   is_active: boolean
   notes: string
   created_at: string

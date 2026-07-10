@@ -138,7 +138,8 @@ export function CurrencyRates() {
                   <p className="text-[13px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
                     {pair.code}
                   </p>
-                  <p className="text-[10.5px] leading-tight truncate" style={{ color: 'var(--ink-soft)' }}>
+                  {/* Nama panjang kepotong di tile mobile ("Malay…") → kode + nilai aja; nama muncul mulai sm */}
+                  <p className="hidden sm:block text-[10.5px] leading-tight truncate" style={{ color: 'var(--ink-soft)' }}>
                     {pair.name}
                   </p>
                 </div>

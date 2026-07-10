@@ -31,7 +31,7 @@ export function SafeToSpendCard({ income, spent, saved = 0, upcoming }: { income
 
   if (income === 0 && spent === 0) {
     return (
-      <article className="s-card h-full flex flex-col items-center justify-center text-center" style={{ padding: 24 }}>
+      <article className="s-card h-full flex flex-col items-center justify-center text-center" style={{ padding: 16 }}>
         <p className="eyebrow">{t('safe_card.title')}</p>
         <p className="text-sm mt-3" style={{ color: 'var(--text-mute)' }}>{t('safe_card.empty')}</p>
       </article>
@@ -39,11 +39,11 @@ export function SafeToSpendCard({ income, spent, saved = 0, upcoming }: { income
   }
 
   return (
-    <article className="s-card flex flex-col h-full" style={{ padding: 24 }}>
+    <article className="s-card flex flex-col h-full" style={{ padding: 16 }}>
       <p className="eyebrow shrink-0">{t('safe_card.title')}</p>
 
       <div className="flex-1 flex flex-col justify-center">
-        <p className="num tabular leading-none font-bold" style={{ fontSize: 42, letterSpacing: '-0.025em', color: numColor }}>
+        <p className="num tabular leading-none font-bold" style={{ fontSize: 24, letterSpacing: '-0.02em', color: numColor }}>
           {formatCurrency(safe)}
         </p>
         <p className="text-[13px] mt-2 font-medium" style={{ color: numColor }}>

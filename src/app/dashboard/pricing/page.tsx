@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useT } from '@/lib/i18n/context'
@@ -97,6 +99,9 @@ function perMonth(annual: number) {
 export default function PricingPage() {
   const t = useT()
   const [billing, setBilling] = useState<'annual' | 'monthly'>('annual')
+
+  // Billing beku (src/lib/billing-flag.ts) → halaman upgrade dianggap tidak ada.
+  if (!BILLING_ENABLED) notFound()
 
   function handleUpgrade(planId: string) {
     alert(

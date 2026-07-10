@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import {
   fetchLiquidEntries,
   sumLiquid,
@@ -37,21 +37,24 @@ const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_
 const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 // Likuiditas tier (perkiraan dari jenis aset — model belum simpan per-aset).
+// F10: warna tier = gradasi makna "makin lama cair makin ungu→coral",
+// keluarga brand (amber dibuang).
 type Tier = 'instan' | 't1' | 't30' | 't90'
 const TIER_META: Record<Tier, { label: string; bar: string }> = {
   instan: { label: 'Instan', bar: MINT },
-  t1:     { label: 'T+1',    bar: VIOLET },
-  t30:    { label: 'T+30',   bar: AMBER },
+  t1:     { label: 'T+1',    bar: 'var(--c-blue)' },
+  t30:    { label: 'T+30',   bar: VIOLET },
   t90:    { label: 'T+60–90', bar: CORAL },
 }
 const TIER_ORDER: Tier[] = ['instan', 't1', 't30', 't90']
 
-// Perkiraan jenis · likuiditas berdasarkan tipe.
+// Perkiraan jenis · likuiditas berdasarkan tipe. F10: 4 keluarga warna logo —
+// tabungan teal, RDN/reksa dana biru-ungu (investasi), kas biru, e-wallet abu.
 const TYPE_META: Record<string, { jenis: string; tier: Tier; icon: LucideIcon; color: string }> = {
   bank:           { jenis: 'Tabungan',   tier: 'instan', icon: Landmark,   color: MINT },
   investment:     { jenis: 'Reksa Dana', tier: 't1',     icon: TrendingUp, color: VIOLET },
-  rdn:            { jenis: 'RDN',        tier: 't1',     icon: TrendingUp, color: 'var(--ink)' },
-  cash:           { jenis: 'Kas',        tier: 'instan', icon: Banknote,   color: AMBER },
+  rdn:            { jenis: 'RDN',        tier: 't1',     icon: TrendingUp, color: 'var(--c-blue)' },
+  cash:           { jenis: 'Kas',        tier: 'instan', icon: Banknote,   color: 'var(--c-blue-ink)' },
   digital_wallet: { jenis: 'E-Wallet',   tier: 'instan', icon: Smartphone, color: 'var(--ink-soft)' },
   receivable:     { jenis: 'Piutang',    tier: 't30',    icon: HandCoins,  color: CORAL },
 }
@@ -179,7 +182,7 @@ export default function LiquidAssetsPage() {
     const Icon = m.icon
     const isAccount = e.source === 'account'
     return (
-      <div key={`${e.source}-${e.id}`} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] p-5 transition-all hover:border-[var(--ink)] hover:shadow-lg">
+      <div key={`${e.source}-${e.id}`} className="group relative overflow-hidden rounded-xl bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)] p-4 transition-all hover:border-[var(--ink)] hover:shadow-lg">
         {e.source === 'asset_liquid' && (
           <div className="absolute top-2.5 right-2.5 z-10 flex gap-0.5 rounded-lg p-0.5 opacity-0 shadow-[var(--card-shadow)] transition group-hover:opacity-100" style={{ background: 'var(--surface)' }}>
             <Button variant="ghost" size="icon-sm" onClick={() => { setForm({ id: e.id, name: e.name, type: e.type as FormState['type'], balance: e.balance }); setDialogOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -195,7 +198,7 @@ export default function LiquidAssetsPage() {
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.auto_from_account') : t('assets_liquid.source_manual')}</p>
           </div>
         </div>
-        <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</p>
+        <p className="num text-xl mt-2.5 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</p>
         <div className="mt-4 pt-3 border-t text-[11px]" style={{ borderColor: 'var(--outline)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>
             {TIER_META[m.tier].label}
@@ -221,7 +224,7 @@ export default function LiquidAssetsPage() {
           <AlertTriangle className="size-5 shrink-0 mt-0.5" style={{ color: AMBER_INK }} />
           <div className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>
             <p className="font-medium">{t('assets_liquid.dup_title')}</p>
-            <p className="mt-1" style={{ color: 'var(--ink-muted)' }}>
+            <p className="hidden md:block md:mt-1" style={{ color: 'var(--ink-muted)' }}>
               {t('assets_liquid.dup_desc_before')}
               <span className="font-semibold"> {duplicates.map((d) => d.name).join(', ')}</span>.
               {' '}{t('assets_liquid.dup_desc_after')}
@@ -243,7 +246,7 @@ export default function LiquidAssetsPage() {
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
-              <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
+              <p className="num tabular text-xl sm:text-3xl font-bold mt-2 leading-none" title={formatCurrency(total)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')}</p>
             </div>
             {([
@@ -256,7 +259,7 @@ export default function LiquidAssetsPage() {
               return (
                 <div key={c.id} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: c.color }}><CIcon className="size-3" />{c.label}</p>
-                  <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(c.val)}</p>
+                  <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(c.val)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(c.val)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{c.sub}</p>
                 </div>
               )
@@ -289,16 +292,19 @@ export default function LiquidAssetsPage() {
                   <button key={j} onClick={() => setFilter(j)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === j ? 'var(--ink)' : 'var(--surface-2)', color: filter === j ? 'var(--surface)' : 'var(--ink-muted)' }}>{j}</button>
                 ))}
               </div>
-              <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
+              {/* F10: toggle tabel = desktop-only — tabel 5 kolom kepotong di
+                  layar sempit (bug SS2), mobile selalu kartu grouped */}
+              <div className="hidden md:flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
                 <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_liquid.view_card')} aria-label={t('assets_liquid.view_card')}><LayoutGrid className="size-4" /></button>
                 <button type="button" onClick={() => changeView('table')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'table' ? 'var(--ink)' : 'var(--surface)', color: view === 'table' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_liquid.view_table')} aria-label={t('assets_liquid.view_table')}><List className="size-4" /></button>
               </div>
             </div>
           </div>
 
-          {/* Data — Tabel (datar, sortable) atau Kartu (grouped per jenis) */}
-          {view === 'table' ? (
-            <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
+          {/* Data — Tabel (datar, sortable, md+) atau Kartu (grouped per jenis).
+              Mobile: selalu kartu (tabel di-hide, lihat komentar toggle). */}
+          {view === 'table' && (
+            <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
@@ -342,8 +348,9 @@ export default function LiquidAssetsPage() {
                 </tbody>
               </table>
             </div>
-          ) : (
-            <div className="space-y-8">
+          )}
+          {/* Kartu grouped: selalu di mobile; di md+ cuma pas view=card */}
+          <div className={view === 'table' ? 'space-y-8 md:hidden' : 'space-y-8'}>
               {typesPresent.map((typeKey) => {
                 const list = visible.filter((e) => e.type === typeKey)
                 if (!list.length) return null
@@ -366,11 +373,10 @@ export default function LiquidAssetsPage() {
                   </section>
                 )
               })}
-            </div>
-          )}
+          </div>
 
           {/* Footnote */}
-          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
             {t('assets_liquid.footnote')} <Link href="/dashboard/accounts" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('assets_liquid.footnote_link')}</Link>
           </p>
 

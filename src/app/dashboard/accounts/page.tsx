@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
+import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account, AllocationPurpose } from '@/types'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -33,10 +34,15 @@ import {
 import {
   Pencil, Trash2, Plus, Loader2, Wallet, Star, Layers,
   LayoutGrid, List, ArrowDownLeft, ArrowUpRight,
+  Eye, EyeOff, LineChart, ChevronRight, ChevronDown, ChevronLeft,
+  Banknote, Landmark, Smartphone, Briefcase, TrendingUp,
+  type LucideIcon,
 } from 'lucide-react'
 import { AccountAllocationsDialog } from '@/components/accounts/allocations-dialog'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { InstitutionSearch } from '@/components/accounts/institution-search'
+import { InstitutionPicker } from '@/components/accounts/institution-picker'
+import type { BankCatalogType } from '@/lib/bank-catalog'
 
 type AccountType = keyof typeof ACCOUNT_TYPES
 
@@ -49,6 +55,23 @@ const TYPE_ACCENT: Record<string, string> = {
   investment: 'var(--info)',
 }
 const accentFor = (t: string) => TYPE_ACCENT[t] ?? 'var(--ink-soft)'
+
+// Step-0 dialog tambah (ala Budget "pilih tipe dulu"): ikon lingkaran +
+// warna lembut per jenis akun. Tipe berinstitusi (di CATALOG_TYPES) lanjut
+// ke picker katalog; sisanya (kas/investasi) langsung ke form.
+const CATALOG_TYPES = new Set<string>(['bank', 'digital_wallet', 'rdn'])
+const TYPE_META: Record<AccountType, { icon: LucideIcon; bg: string; fg: string }> = {
+  cash:           { icon: Banknote,   bg: 'var(--c-amber-soft)',  fg: 'var(--c-amber-ink)' },
+  bank:           { icon: Landmark,   bg: 'var(--c-mint-soft)',   fg: 'var(--c-mint-ink)' },
+  digital_wallet: { icon: Smartphone, bg: 'var(--c-violet-soft)', fg: 'var(--c-violet-ink)' },
+  rdn:            { icon: Briefcase,  bg: 'var(--info-bg)',       fg: 'var(--info)' },
+  investment:     { icon: TrendingUp, bg: 'var(--info-bg)',       fg: 'var(--info)' },
+}
+
+// Keputusan audit #8: grup "Akun" di mobile = akun PEMBAYARAN saja.
+// RDN & investasi dikecualikan dari list (aksesnya lewat baris "Investasi"
+// di bawah grup Kartu Kredit); desktop tetap menampilkan semua tipe.
+const PAYMENT_ACCOUNT_TYPES = new Set<string>(['bank', 'cash', 'digital_wallet'])
 
 // Allocation pill colors — token-based so the text stays legible in dark mode
 // (the old hardcoded dark hex on a translucent bg was invisible in dark).
@@ -86,8 +109,8 @@ type AllocationSummary = {
 export default function AccountsPage() {
   const supabase = createClient()
   const qc = useQueryClient()
-  const { hidden: privacyHidden } = usePrivacy()
-  const t = useT()
+  const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy()
+  const { t, locale } = useI18n()
 
   const [allocAccount, setAllocAccount] = useState<Account | null>(null)
 
@@ -98,8 +121,14 @@ export default function AccountsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  // Langkah flow TAMBAH (bukan edit): 'type' (pilih jenis, ala Budget) →
+  // 'institution' (katalog, hanya tipe berinstitusi) → 'form'.
+  const [addStep, setAddStep] = useState<'type' | 'institution' | 'form'>('type')
 
   const [view, setView] = useState<'card' | 'table'>('card')
+  // Collapse per grup di list mobile (accounts / cards)
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const toggleGroup = (key: string) => setCollapsed((c) => ({ ...c, [key]: !c[key] }))
 
   useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem('pwm.accounts.view') : null
@@ -183,15 +212,77 @@ export default function AccountsPage() {
   const activityByAccount = useMemo(() => pageQuery.data?.activityByAccount ?? {}, [pageQuery.data])
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['accounts-page'] })
+    qc.invalidateQueries({ queryKey: ['accounts-networth-lite'] }) // hero mobile
     qc.invalidateQueries({ queryKey: ['liquid-assets'] }) // saldo akun = aset likuid
     qc.invalidateQueries({ queryKey: ['net-worth'] })
     qc.invalidateQueries({ queryKey: ['debts-page'] }) // rasio utang pakai likuid
   }
 
+  // ── Kekayaan bersih ringkas (hero + grup mobile) ─────────────────────────
+  // Komponen DISAMAKAN dengan halaman Net Worth biar angkanya konsisten:
+  // aset = fetchLiquidEntries + assets_non_liquid.current_value +
+  //        investments.total_value; kewajiban = debts.remaining (aktif) +
+  //        credit_cards.current_balance (aktif).
+  const nwLite = useQuery({
+    queryKey: ['accounts-networth-lite'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('unauthenticated')
+      const [liquidEntries, nlqRes, invRes, debtRes, ccRes] = await Promise.all([
+        fetchLiquidEntries(supabase, user.id, { strict: true }),
+        supabase.from('assets_non_liquid').select('category, current_value').eq('user_id', user.id),
+        // Total investasi tetap di-fetch: dibutuhkan buat angka kekayaan bersih di hero.
+        supabase.from('investments').select('total_value').eq('user_id', user.id),
+        supabase.from('debts').select('remaining').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('credit_cards').select('id, name, last_four, current_balance, credit_limit').eq('user_id', user.id).eq('is_active', true).order('current_balance', { ascending: false }),
+      ])
+      if (nlqRes.error) throw nlqRes.error
+      if (debtRes.error) throw debtRes.error
+
+      type CardRow = { id: string; name: string; last_four: string | null; current_balance: number; credit_limit: number | null }
+      const nonLiquid = (nlqRes.data ?? []) as { category: string; current_value: number }[]
+      const investments = (invRes.data ?? []) as { total_value: number }[]
+      const cards = (ccRes.data ?? []) as CardRow[]
+
+      const invTotal = investments.reduce((s, i) => s + (i.total_value || 0), 0)
+      const ccTotal = cards.reduce((s, c) => s + (c.current_balance || 0), 0)
+      const debtTotal = ((debtRes.data ?? []) as { remaining: number }[]).reduce((s, d) => s + (d.remaining || 0), 0)
+      const assets = sumLiquid(liquidEntries)
+        + nonLiquid.reduce((s, a) => s + (a.current_value || 0), 0)
+        + invTotal
+      const liabilities = debtTotal + ccTotal
+      return {
+        assets,
+        liabilities,
+        netWorth: assets - liabilities,
+        invTotal,
+        ccTotal,
+        cards,
+      }
+    },
+  })
+  const nw = nwLite.data
+
   function openAddDialog() {
     setEditingId(null)
     setForm(emptyForm)
+    setAddStep('type')
     setDialogOpen(true)
+  }
+
+  /** Step-0: pilih jenis → tipe berinstitusi ke picker, sisanya langsung form. */
+  function chooseType(k: AccountType) {
+    setForm((f) => ({ ...f, type: k }))
+    if (CATALOG_TYPES.has(k)) { setAddStep('institution'); return }
+    setAddStep('form')
+    setTimeout(() => document.getElementById('acc-name')?.focus(), 80)
+  }
+
+  /** Back antar langkah tambah: form → (institusi | jenis), institusi → jenis. */
+  function stepBack() {
+    if (addStep === 'form' && CATALOG_TYPES.has(form.type)) setAddStep('institution')
+    else setAddStep('type')
   }
 
   function openEditDialog(acc: Account) {
@@ -202,6 +293,7 @@ export default function AccountsPage() {
       starting_balance: acc.starting_balance,
       account_number: acc.account_number ?? '',
     })
+    setAddStep('form')
     setDialogOpen(true)
   }
 
@@ -316,6 +408,12 @@ export default function AccountsPage() {
 
   const today = formatDate(new Date())
   const totalBalance = accounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0)
+  // Grup "Akun" mobile: hanya akun pembayaran; subtotal header ikut yang difilter.
+  const paymentAccounts = useMemo(
+    () => accounts.filter((a) => PAYMENT_ACCOUNT_TYPES.has(a.type)),
+    [accounts],
+  )
+  const paymentBalance = paymentAccounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0)
   const totals30d = useMemo(() => {
     let inSum = 0, outSum = 0
     for (const v of Object.values(activityByAccount)) { inSum += v.inSum; outSum += v.outSum }
@@ -360,9 +458,60 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Dark gradient hero — intentionally always-dark (theme-independent) */}
+      {/* ═══ MOBILE (<md): hero teal ala Budget — kekayaan bersih ═══ */}
       <section
-        className="relative overflow-hidden rounded-3xl"
+        className="md:hidden rounded-[20px] px-5 pt-3.5 pb-5"
+        style={{ background: '#128a6d', boxShadow: '0 10px 24px rgba(18,138,109,.28)' }}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={togglePrivacy}
+            aria-label={privacyHidden ? t('budgeting.show') : t('budgeting.hide')}
+            className="size-9 -ml-1.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'rgba(255,255,255,.85)', background: 'rgba(255,255,255,.16)' }}
+          >
+            {privacyHidden ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+          </button>
+          <p className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,.92)' }}>{t('networth.net_worth')}</p>
+          <Link
+            href="/dashboard/net-worth"
+            aria-label={t('networth.net_worth')}
+            className="size-9 -mr-1.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'rgba(255,255,255,.85)', background: 'rgba(255,255,255,.16)' }}
+          >
+            <LineChart className="size-[18px]" />
+          </Link>
+        </div>
+        {nw ? (
+          <p
+            className="num tabular text-center font-bold mt-1.5 whitespace-nowrap"
+            style={{ color: '#FFFFFF', fontSize: 'clamp(28px, 8.5vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1.15 }}
+          >
+            {formatCurrency(nw.netWorth)}
+          </p>
+        ) : (
+          <div className="mx-auto mt-2.5 h-[27px] w-44 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,.22)' }} />
+        )}
+        <div className="mt-3.5 grid grid-cols-2 gap-3">
+          <div className="text-center">
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.assets')}</p>
+            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: '#FFFFFF' }}>
+              {nw ? formatCurrency(nw.assets) : '—'}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.debt')}</p>
+            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: '#ffd9cf' }}>
+              {nw ? formatCurrency(nw.liabilities) : '—'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Dark gradient hero — intentionally always-dark (theme-independent). Desktop only. */}
+      <section
+        className="relative overflow-hidden rounded-3xl hidden md:block"
         style={{
           background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
           color: 'var(--on-hero)',
@@ -381,9 +530,10 @@ export default function AccountsPage() {
             <>
               <p
                 className="num tabular font-bold mt-3 leading-none whitespace-nowrap"
-                style={{ color: 'var(--on-hero)', fontSize: 'clamp(36px, 5vw, 56px)', letterSpacing: '-0.04em' }}
+                title={formatCurrency(totalBalance)}
+                style={{ color: 'var(--on-hero)', fontSize: 'clamp(24px, 5vw, 30px)', letterSpacing: '-0.04em' }}
               >
-                {formatCurrency(totalBalance)}
+                {formatCompactCurrency(totalBalance)}
               </p>
               <p className="text-sm mt-3" style={{ color: 'var(--on-hero-mut)' }}>
                 {t('accounts.total_balance_from')} {accounts.length} {t('accounts.accounts_word')} · {today}
@@ -408,9 +558,9 @@ export default function AccountsPage() {
         </div>
       </section>
 
-      {/* Toolbar: label + view toggle + add */}
+      {/* Toolbar: label + view toggle + add — desktop only (mobile: grup di bawah) */}
       {!loading && accounts.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('accounts.list_label')}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
@@ -435,22 +585,138 @@ export default function AccountsPage() {
         <div className="rounded-xl border-2 border-dashed p-10 text-center" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
           <Wallet className="size-12 mx-auto" style={{ color: 'var(--ink-soft)' }} />
           <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.empty_title')}</h3>
-          <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
+          <p className="hidden md:block md:mt-2 text-sm max-w-md mx-auto" style={{ color: 'var(--ink-muted)' }}>
             {t('accounts.empty_desc')}
           </p>
           <Button onClick={openAddDialog} className="mt-5"><Plus className="size-4" data-icon="inline-start" /> {t('accounts.create_first')}</Button>
         </div>
-      ) : view === 'table' ? (
-        /* ─── TABLE VIEW ─── */
-        <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
+      ) : (
+        <>
+        {/* ═══ MOBILE (<md): grup list ala Budget — Akun / Kartu Kredit + link Investasi ═══ */}
+        <div className="md:hidden space-y-3">
+          {/* Tambah akun — tombol dipindah keluar header grup (referensi: aksi di top bar, bukan di grup) */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={openAddDialog}
+              aria-label={t('accounts.add_account')}
+              className="size-9 grid place-items-center rounded-full active:opacity-70"
+              style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+
+          {/* a. Akun — data existing, restyle grup (header = toggle collapse) */}
+          <section className="s-card overflow-hidden pb-1">
+            <button
+              type="button"
+              onClick={() => toggleGroup('accounts')}
+              aria-expanded={!collapsed['accounts']}
+              className="w-full flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70"
+            >
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.col_account')}</p>
+              <span className="flex items-center gap-1">
+                <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+                  Bal. {formatCurrency(paymentBalance)}
+                </p>
+                <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['accounts'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
+              </span>
+            </button>
+            {!collapsed['accounts'] && paymentAccounts.map((a, i) => {
+              const masked = maskAccountNumber(a.account_number, privacyHidden)
+              return (
+              <div key={a.id} className="flex items-center gap-3 px-4" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                <InstitutionLogo accountName={a.name} size={30} shape="circle" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13.5px] font-medium truncate leading-tight inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+                    {a.name?.trim() || t('accounts.unnamed_account')}
+                    {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
+                  </p>
+                  <p className={`text-[11px] truncate leading-tight mt-0.5 ${masked ? 'num' : ''}`} style={{ color: 'var(--ink-soft)' }}>
+                    {masked ?? (ACCOUNT_TYPES[a.type as AccountType] ?? a.type)}
+                  </p>
+                </div>
+                <p className="num tabular text-[13.5px] font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
+                  {formatCurrency(a.current_balance ?? 0)}
+                </p>
+              </div>
+              )
+            })}
+          </section>
+
+          {/* b. Kartu Kredit — dari query lite */}
+          {nw && nw.cards.length > 0 && (
+            <section className="s-card overflow-hidden pb-1">
+              <div className="flex items-center justify-between pl-4 pt-3 pb-1">
+                {/* Nav ke halaman kartu pindah ke teks judul; chevron kanan = collapse list */}
+                <Link href="/dashboard/credit-cards" className="active:opacity-70">
+                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-mint-ink)' }}>
+                    {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
+                  </p>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup('cards')}
+                  aria-expanded={!collapsed['cards']}
+                  className="flex items-center gap-1 pl-3 pr-4 py-1 active:opacity-70"
+                >
+                  <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-coral-ink)' }}>
+                    {t('networth.debt')} {formatCurrency(nw.ccTotal)}
+                  </p>
+                  <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
+                </button>
+              </div>
+              {!collapsed['cards'] && nw.cards.map((c, i) => (
+                <div key={c.id} className="flex items-center gap-3 px-4" style={{ minHeight: 50, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+                  <InstitutionLogo accountName={c.name} size={30} shape="circle" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                    {(c.last_four ?? '').trim() !== '' && (
+                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                      {(c.current_balance || 0) > 0 ? formatCurrency(-(c.current_balance || 0)) : formatCurrency(0)}
+                    </p>
+                    {(c.credit_limit || 0) > 0 && (
+                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        avl. {formatCurrency(Math.max(0, (c.credit_limit || 0) - (c.current_balance || 0)))}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* c. Investasi — 1 baris link ringkas; list holdings ada di halamannya sendiri */}
+          {nw && (
+            <section className="s-card overflow-hidden">
+              <Link href="/dashboard/assets/investment" className="flex items-center justify-between px-4 py-3 active:opacity-70">
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--c-violet-ink)' }}>
+                  {t('assets.investments')}
+                </p>
+                <p className="num tabular text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-violet-ink)' }}>
+                  {formatCurrency(nw.invTotal)} <ChevronRight className="size-3.5" />
+                </p>
+              </Link>
+            </section>
+          )}
+        </div>
+
+        {view === 'table' ? (
+        /* ─── TABLE VIEW (md+) ─── */
+        <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_account')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_type')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_number')}</th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('accounts.col_activity_30')}</th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-medium">{t('accounts.col_balance')}</th>
+              <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)', background: 'var(--surface-2)' }}>
+                <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_account')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_type')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_number')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_activity_30')}</th>
+                <th scope="col" className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_balance')}</th>
               </tr>
             </thead>
             <tbody>
@@ -473,7 +739,7 @@ export default function AccountsPage() {
                     <td className="px-3 py-3">{renderActivity(a)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-3">
-                        <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100">{renderRowActions(a)}</div>
+                        <div className="flex gap-0.5 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">{renderRowActions(a)}</div>
                         <span className="num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_balance ?? 0)}</span>
                       </div>
                     </td>
@@ -481,11 +747,21 @@ export default function AccountsPage() {
                 )
               })}
             </tbody>
+            <tfoot>
+              <tr className="border-t" style={{ borderColor: 'var(--outline)', background: 'var(--surface-2)' }}>
+                <td colSpan={4} className="px-4 py-3 text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                  {t('transactions.total')}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="num tabular font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(totalBalance)}</span>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
-      ) : (
-        /* ─── CARD VIEW ─── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        ) : (
+        /* ─── CARD VIEW (md+): kartu kaya (alokasi + aktivitas 30h) ─── */
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3">
           {accounts.map((a) => {
             const allocs = allocationsByAccount[a.id] ?? []
             const totalAllocated = allocs.reduce((s, x) => s + x.amount, 0)
@@ -508,7 +784,7 @@ export default function AccountsPage() {
                           )}
                         </p>
                       </div>
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">{renderRowActions(a)}</div>
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">{renderRowActions(a)}</div>
                     </div>
                   </div>
                 </div>
@@ -539,6 +815,8 @@ export default function AccountsPage() {
             )
           })}
         </div>
+        )}
+        </>
       )}
 
       <AccountAllocationsDialog
@@ -549,7 +827,7 @@ export default function AccountsPage() {
       />
 
       {!loading && accounts.length > 0 && (
-        <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-xs" style={{ color: 'var(--ink-soft)' }}>
           {t('accounts.footer_note')}{' '}
           <Link href="/dashboard/assets/liquid" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('accounts.footer_liquidity')}</Link>
           {' · '}
@@ -564,72 +842,191 @@ export default function AccountsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              {/* Back antar step (tambah saja) menggantikan tile ikon — slot sama, layout stabil */}
+              {!editingId && addStep !== 'type' ? (
+                <button
+                  type="button"
+                  onClick={stepBack}
+                  aria-label={locale === 'id' ? 'Kembali' : 'Back'}
+                  className="size-10 rounded-xl grid place-items-center shrink-0 active:opacity-70"
+                  style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+              ) : (
+                <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}><Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              )}
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{editingId ? t('accounts.dialog_edit_title') : t('accounts.dialog_add_title')}</DialogTitle>
                 <DialogDescription>
                   {editingId
                     ? t('accounts.dialog_edit_desc')
-                    : t('accounts.dialog_add_desc')}
+                    : addStep === 'type'
+                      ? (locale === 'id' ? 'Pilih jenis akun dulu.' : 'Pick the account type first.')
+                      : addStep === 'institution'
+                        ? (locale === 'id' ? 'Pilih institusi, atau ketik manual.' : 'Pick an institution, or type manually.')
+                        : t('accounts.dialog_add_desc')}
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-1.5">
-              <Label htmlFor="acc-name">{t('accounts.field_name')}</Label>
-              <InstitutionSearch
-                value={form.name}
-                onTextChange={(text) => setForm({ ...form, name: text })}
-                onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
-                placeholder={t('accounts.field_name_placeholder')}
-              />
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label>{t('accounts.field_type')}</Label>
-              <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k) => (<SelectItem key={k} value={k}>{ACCOUNT_TYPES[k]}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label htmlFor="acc-number">
-                {t('accounts.field_number')}
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
-              </Label>
-              <Input
-                id="acc-number"
-                value={form.account_number}
-                onChange={(e) => setForm({ ...form, account_number: e.target.value })}
-                placeholder={t('accounts.field_number_placeholder')}
-                inputMode="numeric"
-                autoComplete="off"
-              />
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label htmlFor="acc-balance">
-                {t('accounts.field_starting_balance')}
-                <span className="text-xs font-normal ml-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
-              </Label>
-              <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" />
+          {!editingId && addStep === 'type' ? (
+          /* Langkah 0 (tambah saja): pilih jenis akun — baris ~52px + ikon lingkaran */
+          <div className="py-2">
+            <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+              {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k, i) => {
+                const meta = TYPE_META[k]
+                const Icon = meta.icon
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => chooseType(k)}
+                    className="w-full flex items-center gap-3 px-3 text-left hover:bg-[var(--surface-2)] active:opacity-70 transition"
+                    style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                  >
+                    <span className="size-[30px] rounded-full grid place-items-center shrink-0" style={{ background: meta.bg, color: meta.fg }}>
+                      <Icon className="size-4" />
+                    </span>
+                    <span className="flex-1 min-w-0 text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>
+                      {ACCOUNT_TYPES[k]}
+                    </span>
+                    <ChevronRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
+                  </button>
+                )
+              })}
             </div>
           </div>
+          ) : !editingId && addStep === 'institution' ? (
+          /* Langkah 1 (tambah saja): pilih institusi — katalog terkunci ke jenis terpilih */
+          <div className="py-2">
+            <InstitutionPicker
+              type={(CATALOG_TYPES.has(form.type) ? form.type : 'bank') as BankCatalogType}
+              onPick={(item) => {
+                setForm({ ...form, name: item.name, type: item.type as AccountType })
+                setAddStep('form')
+                // Nama + tipe sudah keisi → langsung ke saldo.
+                setTimeout(() => document.getElementById('acc-balance')?.focus(), 80)
+              }}
+              onManual={() => {
+                setAddStep('form')
+                setTimeout(() => document.getElementById('acc-name')?.focus(), 80)
+              }}
+            />
+          </div>
+          ) : (
+          /* Step form — settings-row ala Budget: label kiri (mint-ink kecil) +
+             kontrol kanan, dikelompokkan dalam kartu. PRESENTASI SAJA —
+             state, handler, validasi, dan id input (#acc-name/#acc-balance
+             dipakai fokus antar-step) tidak berubah. */
+          <div className="grid gap-3 py-2">
+            {/* Grup identitas: institusi terpilih + nama + jenis.
+                Tanpa overflow-hidden: dropdown InstitutionSearch absolut,
+                jangan ke-clip kartu. */}
+            <div className="s-card">
+              {/* Baris institusi — avatar read-only, sekadar konfirmasi pilihan */}
+              <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52 }}>
+                <span className="text-[13px] font-medium shrink-0" style={{ color: 'var(--c-mint-ink)' }}>
+                  {locale === 'id' ? 'Institusi' : 'Institution'}
+                </span>
+                <span className="flex items-center gap-2.5 min-w-0">
+                  {!editingId && (
+                    <button
+                      type="button"
+                      onClick={stepBack}
+                      className="text-[11px] font-medium hover:underline"
+                      style={{ color: 'var(--c-mint-ink)' }}
+                    >
+                      {locale === 'id' ? 'Pilih dari daftar' : 'Pick from list'}
+                    </button>
+                  )}
+                  <InstitutionLogo accountName={form.name} size={30} shape="circle" />
+                </span>
+              </div>
+
+              {/* Baris nama */}
+              <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
+                <Label htmlFor="acc-name" className="text-[13px] shrink-0" style={{ color: 'var(--c-mint-ink)' }}>
+                  {t('accounts.field_name')}
+                </Label>
+                <div className="flex-1 min-w-0">
+                  <InstitutionSearch
+                    id="acc-name"
+                    value={form.name}
+                    onTextChange={(text) => setForm({ ...form, name: text })}
+                    onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
+                    placeholder={t('accounts.field_name_placeholder')}
+                  />
+                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
+                </div>
+              </div>
+
+              {/* Baris jenis */}
+              <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
+                <Label className="text-[13px] shrink-0" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.field_type')}</Label>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
+                  <SelectTrigger className="max-w-[60%]">
+                    <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(ACCOUNT_TYPES) as AccountType[]).map((k) => (<SelectItem key={k} value={k}>{ACCOUNT_TYPES[k]}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Grup nilai: nomor rekening + saldo awal */}
+            <div className="s-card">
+              <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52 }}>
+                <Label htmlFor="acc-number" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--c-mint-ink)' }}>
+                  {t('accounts.field_number')}
+                  <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
+                </Label>
+                <Input
+                  id="acc-number"
+                  value={form.account_number}
+                  onChange={(e) => setForm({ ...form, account_number: e.target.value })}
+                  placeholder={t('accounts.field_number_placeholder')}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="flex-1 min-w-0 text-right tabular"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
+                <Label htmlFor="acc-balance" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--c-mint-ink)' }}>
+                  {t('accounts.field_starting_balance')}
+                  <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
+                </Label>
+                {/* tabular saja (bukan .num — .num ikut ke-blur privacy mode) */}
+                <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" className="flex-1 min-w-0 text-right tabular" />
+              </div>
+            </div>
+          </div>
+          )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('accounts.cancel')}</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              {editingId ? t('accounts.save') : t('accounts.add')}
+            {/* Step form di mobile: simpan = pill full-width ala Budget "Confirm";
+               Batal disembunyikan (<sm) — tutup lewat X / swipe sheet. Handler
+               simpan tetap handleSave yang sama. Desktop tidak berubah. */}
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              className={(editingId || addStep === 'form') ? 'hidden sm:inline-flex' : undefined}
+            >
+              {t('accounts.cancel')}
             </Button>
+            {(editingId || addStep === 'form') && (
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full h-11 rounded-full text-[15px] font-semibold sm:w-auto sm:h-8 sm:rounded-lg sm:text-sm sm:font-medium"
+              >
+                {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
+                {editingId ? t('accounts.save') : t('accounts.add')}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -39,7 +39,7 @@ export default function NotFound() {
           fontSize: 13,
           fontWeight: 700,
           letterSpacing: '0.12em',
-          color: 'var(--c-mint)',
+          color: 'var(--c-mint-ink)',
         }}
       >
         404

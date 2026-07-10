@@ -13,7 +13,7 @@
  * activated → cleans up old caches.
  */
 
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const STATIC_CACHE = `pwm-static-${CACHE_VERSION}`
 const PAGES_CACHE = `pwm-pages-${CACHE_VERSION}`
 
@@ -126,4 +126,45 @@ async function networkFirst(request, cacheName) {
 // ─── Message channel: allow the app to ask the SW to skip waiting ──────
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
+})
+
+// ─── Web Push ──────────────────────────────────────────────────────────
+// Payload JSON dari server (src/lib/push-server.ts): {title, body, url, tag}.
+// tag = dedup — notif baru dengan tag sama menggantikan yang lama.
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    // Payload bukan JSON — tampilkan apa adanya sebagai body.
+    data = { body: event.data ? event.data.text() : '' }
+  }
+  const title = data.title || 'Klunting'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      tag: data.tag || undefined,
+      icon: '/icon.svg',
+      badge: '/icon.svg',
+      data: { url: data.url || '/dashboard' },
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/dashboard'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Kalau ada tab Klunting kebuka, fokus + arahkan ke sana.
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.focus()
+          if ('navigate' in client) return client.navigate(url)
+          return
+        }
+      }
+      return self.clients.openWindow(url)
+    }),
+  )
 })

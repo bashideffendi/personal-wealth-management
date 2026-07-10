@@ -191,7 +191,10 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
           <Icon className="size-6" />
         </div>
         <div>
-          <h1 className="t-h1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          <h1
+            className="tracking-tight"
+            style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.2 }}
+          >
             {playbook.title}
           </h1>
           <p className="t-body mt-1.5 max-w-2xl" style={{ color: 'var(--ink-soft)' }}>

@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import type { AssetNonLiquid } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +22,7 @@ import {
 import { LeafletMap } from '@/components/map/map-client'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
 import { depreciate, METODE_LABEL, type MetodePenyusutan } from '@/lib/depreciation'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
 const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
@@ -51,8 +51,8 @@ const PLACEHOLDERS: Record<Category, { name: string; note: string }> = {
   personal_item: { name: 'mis. Rolex Submariner',     note: 'mis. box & surat lengkap, kondisi mint' },
 }
 
-const monthYear = (d: string | null) =>
-  d ? new Date(d).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : '—'
+const monthYear = (d: string | null, locale: string) =>
+  d ? new Date(d).toLocaleDateString(locale, { month: 'short', year: 'numeric' }) : '—'
 
 interface AssetDetails {
   // kendaraan
@@ -102,7 +102,8 @@ const EMPTY: FormState = {
 }
 
 export default function NonLiquidAssetsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -300,13 +301,13 @@ export default function NonLiquidAssetsPage() {
       : a.type || meta.note
     const body = (
       <>
-        <p className="num text-2xl mt-3 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
+        <p className="num text-xl mt-2.5 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
         <div className="mt-1.5 flex items-center gap-2 text-[11px]">
           <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: tint(up ? MINT : CORAL, 10), color: up ? MINT_INK : CORAL_INK }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
           <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
         </div>
         <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--outline)' }}>
-          <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
+          <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date, dloc)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
           {hasMap && (
             <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
               {t('assets_nonliquid.open_maps')} <ExternalLink className="h-3 w-3" />
@@ -332,7 +333,7 @@ export default function NonLiquidAssetsPage() {
                 <Icon className="size-5" style={{ color: '#fff' }} />
               </div>
             </div>
-            <div className="px-5 pb-5 pt-8">
+            <div className="px-4 pb-4 pt-8">
               <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
               <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
               {a.address && (
@@ -344,7 +345,7 @@ export default function NonLiquidAssetsPage() {
             </div>
           </>
         ) : (
-          <div className="p-5">
+          <div className="p-4">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}>
                 <Icon className="size-5" style={{ color: meta.ink }} />
@@ -394,9 +395,18 @@ export default function NonLiquidAssetsPage() {
           <Button variant="outline" onClick={() => pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : items.length === 0 ? (
-        <div className="s-card p-12 text-center">
+        <div className="s-card flex flex-col items-center p-12 text-center">
+          <div
+            className="size-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'var(--surface-2)' }}
+          >
+            <Home className="size-10" style={{ color: 'var(--ink-soft)' }} />
+          </div>
           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('assets_nonliquid.empty_title')}</p>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.empty_desc')}</p>
+          <Button className="mt-4" onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+            <Plus className="h-4 w-4" /> {t('assets_nonliquid.add_asset')}
+          </Button>
         </div>
       ) : (
         <>
@@ -404,7 +414,7 @@ export default function NonLiquidAssetsPage() {
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
               <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.market_value_now')}</p>
-              <p className="num tabular text-3xl sm:text-4xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(total)}</p>
+              <p className="num tabular text-xl sm:text-3xl font-bold mt-2 leading-none" title={formatCurrency(total)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(total)}</p>
               <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                 {t('assets_nonliquid.initial_capital')} <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
                 <span className="num font-semibold" style={{ color: totalDelta >= 0 ? MINT_INK : CORAL_INK }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
@@ -417,7 +427,7 @@ export default function NonLiquidAssetsPage() {
               return (
                 <div key={cat} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].ink }}><CatIcon className="size-3" />{CAT[cat].label}</p>
-                  <p className="num tabular text-xl font-bold mt-2 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(s.cur)}</p>
+                  <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(s.cur)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(s.cur)}</p>
                   <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                     {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? MINT_INK : CORAL_INK }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}
                   </p>
@@ -503,7 +513,7 @@ export default function NonLiquidAssetsPage() {
                           </div>
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{tipe}</td>
-                        <td className="px-3 py-3 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date)}</td>
+                        <td className="px-3 py-3 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{monthYear(a.purchase_date, dloc)}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{ageYears > 0 ? `${ageYears.toFixed(1)} ${t('assets_nonliquid.unit_years')}` : '—'}</td>
                         <td className="px-3 py-3 text-right num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(a.purchase_value)}</td>
                         <td className="px-3 py-3 text-right num font-semibold whitespace-nowrap" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</td>

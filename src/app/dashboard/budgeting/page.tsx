@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { monthsShort } from '@/lib/i18n/dates'
@@ -51,7 +51,10 @@ function setBodyUserSelect(v: string) {
   if (typeof document !== 'undefined') document.body.style.userSelect = v
 }
 
-const YEAR_OPTIONS = ['2024', '2025', '2026']
+// Opsi tahun ter-derive dari tahun berjalan (lalu/ini/depan) — dihitung sekali
+// saat module load, bukan per render.
+const THIS_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = [THIS_YEAR - 1, THIS_YEAR, THIS_YEAR + 1].map(String)
 
 interface BudgetMap {
   [key: string]: number // key = `${type}|${category}|${month}`
@@ -125,6 +128,9 @@ export default function BudgetingPage() {
 
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
+  // Des tahun sebelumnya (key `${type}|${category}`) — sumber "Salin bulan lalu"
+  // saat bulan terpilih Januari; di-fetch bareng fetchBudgets.
+  const [prevDecBudgets, setPrevDecBudgets] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(noCollapsed)
 
@@ -238,11 +244,20 @@ export default function BudgetingPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data, error } = await supabase
-        .from('budgets')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('year', Number(selectedYear))
+      const [{ data, error }, decRes] = await Promise.all([
+        supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('year', Number(selectedYear)),
+        // Des tahun-1 — sumber "Salin bulan lalu" untuk Januari.
+        supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('year', Number(selectedYear) - 1)
+          .eq('month', 12),
+      ])
       if (error) {
         // Jangan render grid kosong seolah anggaran tahun ini blank.
         toast.error(t('common.load_failed'))
@@ -257,6 +272,11 @@ export default function BudgetingPage() {
         }
       }
       setBudgets(map)
+      const decMap: Record<string, number> = {}
+      for (const b of (decRes.data ?? []) as Budget[]) {
+        decMap[`${b.type}|${b.category}`] = b.amount
+      }
+      setPrevDecBudgets(decMap)
       loadMonthlyActuals(supabase, user.id, selectedYear).then(setActuals)
       setLoading(false)
     },
@@ -373,6 +393,90 @@ export default function BudgetingPage() {
     return budgets[budgetKey(type, category, month)] ?? 0
   }
 
+  // ---- Salin anggaran bulan lalu (reuse ringan, tanpa skema baru) ----
+
+  // Semua entri ≠0 (type, category, amount) satu bulan, di-parse dari BudgetMap.
+  // Aman walau category mengandung '|': type gak pernah ber-'|' (separator
+  // pertama) dan month selalu di belakang separator terakhir.
+  function monthEntries(month: number) {
+    const out: { type: BudgetType; category: string; amount: number }[] = []
+    for (const [k, v] of Object.entries(budgets)) {
+      if (!v) continue
+      const lastSep = k.lastIndexOf('|')
+      if (Number(k.slice(lastSep + 1)) !== month) continue
+      const firstSep = k.indexOf('|')
+      out.push({ type: k.slice(0, firstSep) as BudgetType, category: k.slice(firstSep + 1, lastSep), amount: v })
+    }
+    return out
+  }
+
+  // Sumber salinan untuk bulan target: bulan sebelumnya di tahun yang sama,
+  // atau Des tahun-1 (dari prevDecBudgets) kalau targetnya Januari.
+  function prevMonthEntries(targetMonth: number) {
+    if (targetMonth === 1) {
+      return Object.entries(prevDecBudgets)
+        .filter(([, v]) => v !== 0)
+        .map(([k, amount]) => {
+          const i = k.indexOf('|')
+          return { type: k.slice(0, i) as BudgetType, category: k.slice(i + 1), amount }
+        })
+    }
+    return monthEntries(targetMonth - 1)
+  }
+
+  function monthAllocTotal(month: number) {
+    return monthEntries(month).reduce((s, e) => s + e.amount, 0)
+  }
+
+  function prevMonthAllocTotal(targetMonth: number) {
+    return prevMonthEntries(targetMonth).reduce((s, e) => s + e.amount, 0)
+  }
+
+  // Salin SEMUA anggaran bulan lalu (semua tipe) ke bulan target — batch upsert
+  // dgn optimistic update + rollback, pola sama persis dgn fillRange.
+  async function copyFromPrevMonth(targetMonth: number) {
+    const source = prevMonthEntries(targetMonth)
+    if (!source.length) return
+    if (monthAllocTotal(targetMonth) > 0) {
+      const label = shortMonths[targetMonth - 1]
+      const ok = window.confirm(
+        locale === 'id'
+          ? `${label} sudah ada isinya. Timpa dengan anggaran bulan lalu?`
+          : `${label} already has values. Overwrite with last month's budget?`,
+      )
+      if (!ok) return
+    }
+    const prevValues: Record<string, number> = {}
+    for (const e of source) {
+      const k = budgetKey(e.type, e.category, targetMonth)
+      prevValues[k] = budgets[k] ?? 0
+    }
+    setBudgets((prev) => {
+      const next = { ...prev }
+      for (const e of source) next[budgetKey(e.type, e.category, targetMonth)] = e.amount
+      return next
+    })
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    const rows = source.map((e) => ({
+      user_id: user.id,
+      year: Number(year),
+      month: targetMonth,
+      type: e.type,
+      category: e.category,
+      amount: e.amount,
+    }))
+    const { error } = await supabase.from('budgets').upsert(rows, { onConflict: 'user_id,year,month,type,category' })
+    if (error) {
+      setBudgets((prev) => ({ ...prev, ...prevValues }))
+      toast.error(t('common.mutation_failed'))
+    } else {
+      toast.success(locale === 'id' ? 'Anggaran bulan lalu disalin' : "Last month's budget copied")
+    }
+  }
+
   // Year-grid "Rencana / Realisasi" toggle. In Realisasi mode the grid — and every
   // total/percent that flows through sectionMonthTotal — reads monthly actuals (from
   // transaksi) instead of the planned budget. The month view has its own plan-vs-
@@ -420,6 +524,11 @@ export default function BudgetingPage() {
   const leafSaving = leafKeys(tree.saving)
   const leafInvestment = leafKeys(tree.investment)
 
+  // Empty-state: total kategori aktif semua tipe = 0 (user baru / semua kategori
+  // dinonaktifkan). leafKeys udah nge-skip kategori nonaktif.
+  const noActiveCategories =
+    leafIncome.length + leafExpense.length + leafSaving.length + leafInvestment.length === 0
+
   // Peta target per leaf (`${type}::${leafKey}` → CatTarget) buat view Bulan.
   const leafTargets = useMemo(() => {
     const m: Record<string, CatTarget> = {}
@@ -466,7 +575,7 @@ export default function BudgetingPage() {
     const ownerNode = tree[type].find((c) => c.name === (isSub ? rootCategory(categoryKey) : categoryKey))
     const dotColor = ownerNode?.color ?? accent
     return (
-      <tr key={`${type}-${categoryKey}`} className="group" style={{ background: bg }}>
+      <tr key={`${type}-${categoryKey}`} className="group" style={{ backgroundColor: bg }}>
         <th
           scope="row"
           className={`sticky left-0 z-10 border-b border-[color:var(--border)] py-1 text-xs text-left bg-inherit whitespace-nowrap truncate ${isSub ? 'pl-6 pr-2 font-normal' : 'px-2 font-semibold'}`}
@@ -567,7 +676,7 @@ export default function BudgetingPage() {
   function renderRollupRow(type: BudgetType, node: CatNode) {
     const keys = node.subs.map((s) => subKey(node.name, s.name))
     return (
-      <tr key={`${type}-rollup-${node.id}`} className="group" style={{ background: tint(type, 8) }}>
+      <tr key={`${type}-rollup-${node.id}`} className="group" style={{ backgroundColor: tint(type, 8) }}>
         <td className="sticky left-0 z-10 border-b border-[color:var(--border)] px-2 py-1 text-xs font-semibold bg-inherit whitespace-nowrap truncate" title={node.name} style={{ color: 'var(--ink)' }}>
           <span className="mr-1.5 inline-grid size-4 place-items-center align-middle" style={{ color: node.color ?? KIND_COLOR[type].hex }}>
             {node.icon ? (
@@ -716,6 +825,7 @@ export default function BudgetingPage() {
                   else if (e.key === 'Escape') { setAddingSubTo(null); setNewSubInline('') }
                 }}
                 onBlur={() => void addSubInline(kind, node.name)}
+                aria-label={t('budgeting.new_subcategory_placeholder')}
                 placeholder={t('budgeting.new_subcategory_placeholder')}
                 className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
                 style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
@@ -744,6 +854,7 @@ export default function BudgetingPage() {
                 }
               }}
               onBlur={() => addCategoryInline(kind)}
+              aria-label={t('budgeting.new_category_placeholder')}
               placeholder={t('budgeting.new_category_placeholder')}
               className="h-7 w-56 max-w-full rounded-md border px-2 text-xs outline-none focus:border-[var(--ink)]"
               style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
@@ -864,7 +975,7 @@ export default function BudgetingPage() {
     const color = KIND_COLOR[kind]
     const isCollapsed = collapsed[kind]
     return (
-      <tr style={{ background: tint(kind, 14) }}>
+      <tr style={{ backgroundColor: tint(kind, 14) }}>
         <td
           colSpan={13}
           className="sticky left-0 z-10 border-b border-[color:var(--border)] p-0 bg-inherit"
@@ -907,7 +1018,7 @@ export default function BudgetingPage() {
       <div className="overflow-hidden rounded-xl border" style={{ background: 'color-mix(in srgb, var(--ink) 4%, var(--surface))', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
         <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '160px' }} />
+            <col className="w-[160px] xl:w-[240px]" />
             {shortMonths.map((m) => <col key={m} />)}
           </colgroup>
           <tbody>
@@ -961,6 +1072,31 @@ export default function BudgetingPage() {
         info={t('budgeting.subtitle')}
         actions={
           <>
+            {(() => {
+              // Target salin = bulan yang lagi "aktif" (logika sama dgn banner
+              // zero-based): view Bulan → focusMonth; view Tahun → bulan berjalan.
+              const bMonth = viewMode === 'month' ? focusMonth : isCurrentYearActive ? currentMonth : 1
+              const prevEmpty = prevMonthAllocTotal(bMonth) === 0
+              const prevLabel = bMonth === 1 ? `${shortMonths[11]} ${Number(year) - 1}` : shortMonths[bMonth - 2]
+              return (
+                <Button
+                  variant="outline"
+                  className="hidden md:inline-flex"
+                  disabled={loading || prevEmpty}
+                  onClick={() => void copyFromPrevMonth(bMonth)}
+                  title={
+                    prevEmpty
+                      ? locale === 'id' ? `Anggaran ${prevLabel} kosong` : `${prevLabel} budget is empty`
+                      : locale === 'id'
+                        ? `Salin anggaran ${prevLabel} → ${shortMonths[bMonth - 1]}`
+                        : `Copy ${prevLabel} budget → ${shortMonths[bMonth - 1]}`
+                  }
+                >
+                  <Copy className="h-4 w-4" data-icon="inline-start" />
+                  {locale === 'id' ? 'Salin bulan lalu' : 'Copy last month'}
+                </Button>
+              )
+            })()}
             <Button onClick={() => setManagerOpen(true)}>
               <FolderTree className="h-4 w-4" data-icon="inline-start" />
               {t('budgeting.manage_categories')}
@@ -977,10 +1113,24 @@ export default function BudgetingPage() {
         }
       />
 
+      {/* Mobile (F9c): total tahunan jadi 1 baris teks kecil di kanvas — kartu
+          ringkasan bulanan baru ada di MobileBudgetingView, ini konteks setahun. */}
+      <p className="md:hidden text-[11.5px] px-1" style={{ color: 'var(--ink-soft)' }}>
+        {t('budgeting.annual')} · {t('budgeting.income')}{' '}
+        <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }} title={privacyHidden ? undefined : formatCurrency(totalIncomeYear)}>
+          {privacyHidden ? '••' : formatCompactCurrency(totalIncomeYear)}
+        </span>
+        {' · '}{t('budgeting.expense')}{' '}
+        <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }} title={privacyHidden ? undefined : formatCurrency(totalExpenseYear)}>
+          {privacyHidden ? '••' : formatCompactCurrency(totalExpenseYear)}
+        </span>
+      </p>
+
       {/* Summary — annual totals (sum of all 12 months). Neutral surface card +
           contained color accent (soft-tint icon box) so it stays selaras with the
           rest of the page; color lives in the chip, not the whole card. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+      {!(treeLoaded && noActiveCategories) && (
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[
           { label: t('budgeting.total_income'), value: totalIncomeYear, dot: 'var(--c-mint)', Icon: ArrowDownToLine, sub: t('budgeting.annual') },
           { label: t('budgeting.total_expense'), value: totalExpenseYear, dot: 'var(--c-coral)', Icon: ArrowUpFromLine, sub: `${totalIncomeYear > 0 ? Math.round((totalExpenseYear / totalIncomeYear) * 100) : 0}% ${t('budgeting.of_income')}` },
@@ -994,13 +1144,14 @@ export default function BudgetingPage() {
               </span>
               <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{c.label}</span>
             </div>
-            <p className="num tabular font-semibold mt-2" style={{ color: 'var(--ink)', fontSize: 20, letterSpacing: '-0.02em' }}>
-              {privacyHidden ? '••••••' : formatCurrency(c.value)}
+            <p className="num tabular font-semibold mt-2" title={privacyHidden ? undefined : formatCurrency(c.value)} style={{ color: 'var(--ink)', fontSize: 19, letterSpacing: '-0.02em' }}>
+              {privacyHidden ? '••••••' : formatCompactCurrency(c.value)}
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
           </div>
         ))}
       </div>
+      )}
 
       {/* Zero-based nudge — remaining-to-allocate for the CURRENT (or focused) month.
           People budget monthly (salary is monthly), so this is per-month, not annual. */}
@@ -1016,8 +1167,9 @@ export default function BudgetingPage() {
         const over = remaining < 0
         const hex = ok ? 'var(--c-mint)' : over ? 'var(--c-coral)' : 'var(--c-amber)'
         const amt = privacyHidden ? '••••••' : formatCurrency(Math.abs(remaining))
+        // Mobile: strip over-alokasi ramping dirender MobileBudgetingView (per bulan terpilih)
         return (
-          <div className="flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
+          <div className="hidden md:flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
             {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
             <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
               <span className="font-semibold">{shortMonths[bMonth - 1]}</span>{' — '}
@@ -1048,11 +1200,37 @@ export default function BudgetingPage() {
             visibleSaving={leafSaving}
             visibleInvestment={leafInvestment}
             getValue={getValue}
+            actuals={actuals}
             onCellChange={handleCellBlur}
+            monthAllocTotal={monthAllocTotal}
+            prevMonthAllocTotal={prevMonthAllocTotal}
+            onCopyPrevMonth={copyFromPrevMonth}
           />
         </div>
 
-        {/* Desktop: title + month-header strip + per-section standalone cards */}
+        {/* Desktop empty-state — kategori aktif = 0 (user baru / semua nonaktif):
+            kartu arahan gantiin toolbar + grid. Mobile <md gak disentuh —
+            MobileBudgetingView di atas tetap render seperti biasa. */}
+        {noActiveCategories ? (
+          <div className="s-card hidden md:flex flex-col items-center text-center py-16 px-8">
+            <div className="size-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--surface-2)' }}>
+              <PiggyBank className="size-7" style={{ color: 'var(--ink-muted)' }} />
+            </div>
+            <h3 className="text-2xl font-semibold tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
+              {locale === 'id' ? 'Belum ada anggaran' : 'No budget yet'}
+            </h3>
+            <p className="text-sm max-w-xs mb-5" style={{ color: 'var(--ink-muted)' }}>
+              {locale === 'id'
+                ? 'Atur kategori & alokasi bulananmu di sini — mulai dengan menambah kategori pemasukan dan pengeluaran.'
+                : 'Set up your categories & monthly allocations here — start by adding income and expense categories.'}
+            </p>
+            <Button onClick={() => setManagerOpen(true)}>
+              <FolderTree className="h-4 w-4" data-icon="inline-start" />
+              {t('budgeting.manage_categories')}
+            </Button>
+          </div>
+        ) : (
+        /* Desktop: title + month-header strip + per-section standalone cards */
         <div className="hidden md:block space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
             <div className="min-w-0">
@@ -1140,13 +1318,16 @@ export default function BudgetingPage() {
           {isCurrentYearActive && (
             <style dangerouslySetInnerHTML={{ __html: `.budget-grid td:nth-child(${currentMonth + 1}){background-color:color-mix(in srgb, var(--c-primary) 5%, transparent)!important}` }} />
           )}
-          <div className="overflow-x-auto pb-2">
+          {/* Desktop-only row hover: background-image overlay composes over any
+              semantic backgroundColor tint without overriding it. */}
+          <style dangerouslySetInnerHTML={{ __html: `@media (min-width: 768px){.budget-grid tbody tr:hover > td, .budget-grid tbody tr:hover > th { background-image: linear-gradient(color-mix(in srgb, var(--ink) 5%, transparent) 0 0); }}` }} />
+          <div className="overflow-x-auto xl:overflow-visible pb-2">
             <div className="space-y-3 min-w-[1040px]">
               {/* Month-label header strip */}
-              <div className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
+              <div className="overflow-hidden rounded-xl border xl:sticky xl:top-0 xl:z-30" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                 <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
-                    <col style={{ width: '160px' }} />
+                    <col className="w-[160px] xl:w-[240px]" />
                     {shortMonths.map((m) => <col key={m} />)}
                   </colgroup>
                   <thead>
@@ -1198,7 +1379,7 @@ export default function BudgetingPage() {
                 <div key={sec.kind} className="overflow-hidden rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', boxShadow: 'var(--card-shadow)' }}>
                   <table className="budget-grid w-full border-collapse text-sm" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
-                      <col style={{ width: '160px' }} />
+                      <col className="w-[160px] xl:w-[240px]" />
                       {shortMonths.map((m) => <col key={m} />)}
                     </colgroup>
                     <tbody>
@@ -1219,6 +1400,7 @@ export default function BudgetingPage() {
           </>
           )}
         </div>
+        )}
       </>
       )}
 

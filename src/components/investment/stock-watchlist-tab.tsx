@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, X, Search, Loader2, Star, TrendingUp, TrendingDown } from 'lucide-react'
+import { Plus, X, Search, Loader2, Star, TrendingUp, TrendingDown, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useT } from '@/lib/i18n/context'
@@ -223,7 +223,7 @@ export function StockWatchlistTab() {
           className="rounded-2xl border overflow-hidden"
           style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr
@@ -339,6 +339,94 @@ export function StockWatchlistTab() {
               </tbody>
             </table>
           </div>
+          {/* Mobile: baris compact ~60px — tap → riset, ikon kanan edit catatan/hapus */}
+          <div className="md:hidden">
+            {rows.map((row, i) => {
+              const meta = emiten.find((e) => e.ticker === row.ticker)
+              const quote = quotes.get(row.ticker)
+              const price = quote?.price ?? null
+              const changePct = quote?.changePct ?? null
+              const reachedTarget =
+                row.target_price != null &&
+                price != null &&
+                price <= row.target_price
+              const up = (changePct ?? 0) >= 0
+              return (
+                <div
+                  key={row.ticker}
+                  className="flex items-center gap-1 pr-2 transition-colors active:bg-[var(--surface-2)]"
+                  style={{ minHeight: 60, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                >
+                  <Link
+                    href={`/dashboard/assets/investment/stock/research/${row.ticker}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-3.5"
+                    title={`${t('watchlist.viewResearch')} ${row.ticker}`}
+                  >
+                    <span
+                      className="font-mono text-[11px] font-bold px-1.5 py-1 rounded shrink-0"
+                      style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                    >
+                      {row.ticker}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>
+                        {meta?.name ?? row.ticker}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[11px] leading-tight" style={{ color: 'var(--ink-soft)' }}>
+                        {row.note ?? meta?.sector ?? '—'}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="num tabular block text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                        {price != null ? formatCurrency(price) : '—'}
+                      </span>
+                      <span className="num tabular mt-0.5 block text-[11px] leading-tight">
+                        {changePct != null && (
+                          <span
+                            className="font-semibold"
+                            style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+                          >
+                            {up ? '+' : ''}{changePct.toFixed(2)}%
+                          </span>
+                        )}
+                        {changePct != null && row.target_price ? (
+                          <span style={{ color: 'var(--ink-soft)' }}> · </span>
+                        ) : null}
+                        {row.target_price ? (
+                          <span style={{ color: reachedTarget ? 'var(--c-mint-ink)' : 'var(--ink-soft)' }}>
+                            {formatCurrency(row.target_price)}
+                          </span>
+                        ) : null}
+                      </span>
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditTicker(row.ticker)
+                    }}
+                    className="p-2 shrink-0 text-[var(--ink-soft)] hover:text-[var(--ink)] transition"
+                    aria-label={`${t('watchlist.editTitle')} ${row.ticker}`}
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      remove(row.ticker)
+                    }}
+                    disabled={pending}
+                    className="p-2 shrink-0 text-[var(--ink-soft)] hover:text-[var(--danger)] transition"
+                    aria-label={`${t('watchlist.removeAria')} ${row.ticker}`}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -368,14 +456,14 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   const t = useT()
   return (
     <div
-      className="rounded-2xl border p-10 text-center"
+      className="rounded-2xl border p-8 text-center"
       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
       <div
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"
+        className="mx-auto flex h-10 w-10 items-center justify-center rounded-full"
         style={{ background: 'var(--surface-2)' }}
       >
-        <Star className="size-6" style={{ color: 'var(--ink-muted)' }} />
+        <Star className="size-5" style={{ color: 'var(--ink-muted)' }} />
       </div>
       <p className="mt-4 text-sm font-semibold" style={{ color: 'var(--ink)' }}>
         {t('watchlist.emptyTitle')}

@@ -9,7 +9,7 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 // Range buttons, in display order. Yahoo-form ticker handled server-side.
 const RANGES = ['1D', '1W', '1M', '3M', 'YTD', '1Y', '3Y', '5Y'] as const
@@ -53,7 +53,7 @@ function fmtPrice(value: number, currency: 'IDR' | 'USD'): string {
 }
 
 export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chartApi = 'stock', sourceLabel }: StockPriceChartProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const [range, setRange] = useState<RangeKey>('1D')
   const [points, setPoints] = useState<ChartPoint[]>([])
   const [meta, setMeta] = useState<ChartMeta | null>(null)
@@ -133,7 +133,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
 
   const up = change ? change.up : true
   const lineColor = up ? 'var(--c-mint)' : 'var(--c-coral)'
-  const lineHex = up ? '#129B69' : '#D2495A'
+  const lineHex = up ? '#17b890' : '#f0664f'
 
   // recharts data — keep raw `t` for the axis/tooltip formatters.
   const data = useMemo(() => points.map((p) => ({ t: p.t, c: p.c })), [points])
@@ -166,7 +166,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
         hour12: false,
       }) + ' WIB'
     }
-    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
   const hasData = data.length >= 2
@@ -178,7 +178,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
         <div>
           <p className="eyebrow">{t('price_chart.price')}</p>
           <p
-            className="num tabular text-3xl font-semibold leading-none mt-1.5"
+            className="num tabular text-2xl font-semibold leading-none mt-1.5"
             style={{ color: 'var(--ink)' }}
           >
             {lastPrice != null ? `${sym} ${fmtPrice(lastPrice, currency)}` : '—'}

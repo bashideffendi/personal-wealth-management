@@ -46,7 +46,8 @@ export function QuietPageHeader({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-      <div className="flex items-center gap-2 min-w-0">
+      {/* F9: judul pindah ke MobileAppBar di <md — cluster judul desktop-only */}
+      <div className="hidden md:flex items-center gap-2 min-w-0">
         {Icon && (
           <span
             className="grid place-items-center shrink-0 rounded-xl"
@@ -58,7 +59,7 @@ export function QuietPageHeader({
         )}
         <h1
           className="tracking-tight truncate"
-          style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}
+          style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}
         >
           {title}
         </h1>

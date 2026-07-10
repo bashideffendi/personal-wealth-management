@@ -5,6 +5,7 @@ import { QuickAddLauncher } from '@/components/layout/quick-add-launcher'
 import { CommandPalette } from '@/components/layout/command-palette'
 import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
 import { InstallPrompt } from '@/components/layout/install-prompt'
+import { OfflineSync } from '@/components/layout/offline-sync'
 
 /**
  * Dashboard layout — fintech top-nav shell.
@@ -71,7 +72,8 @@ export default async function DashboardLayout({
     >
       <TopNav user={user} />
       <main
-        className="flex-1 pt-6 md:pt-7 pb-24 md:pb-16"
+        // pb mobile = clearance dock floating (bottom 10px + dock 64px + napas) + safe-area
+        className="flex-1 pt-6 md:pt-7 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16"
         style={{ background: 'var(--bg)' }}
       >
         {/* px di div mx-auto ini (bukan di <main>) biar persis kayak container
@@ -91,6 +93,8 @@ export default async function DashboardLayout({
       <CommandPalette />
       <BottomTabBar />
       <InstallPrompt />
+      {/* Penyapu antrian transaksi offline — flush on mount/online/60s */}
+      <OfflineSync />
     </div>
   )
 }

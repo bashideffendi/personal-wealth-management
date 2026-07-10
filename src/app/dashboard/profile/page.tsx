@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
@@ -24,7 +25,7 @@ import {
 import {
   User, Bell, Database, Shield, Sparkles,
   Loader2, Crown, AlertTriangle, ExternalLink, LogOut,
-  Lock, Mail, Trash2, Download, Moon, Palette, LockKeyhole,
+  Lock, Mail, Trash2, Download, Moon, LockKeyhole, Palette,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
@@ -35,7 +36,7 @@ import { SecurityActivity } from '@/components/security/security-activity'
 import { logSecurityEvent } from '@/lib/security-events'
 import { ExportDataButton } from '@/components/export-data-button'
 import { DeleteAccountButton } from '@/components/delete-account-button'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 interface Profile {
   id: string
@@ -67,7 +68,7 @@ export default function ProfilePage() {
   const supabase = createClient()
   const router = useRouter()
   const lock = useLock()
-  const t = useT()
+  const { t, locale } = useI18n()
 
   const [profile, setProfile] = useState<Profile | null>(null)
 
@@ -249,6 +250,9 @@ export default function ProfilePage() {
     toast.success(t('profile.toast_password_updated'))
   }
 
+  // Pengingat catat harian — delivery via push /api/cron/push-reminders
+  // (1x sehari sore); jam custom (daily_reminder_time) disimpan tapi belum
+  // dipakai cron — pengiriman per-jam menyusul.
   async function toggleDailyReminder(enabled: boolean) {
     if (!profile || !user) return
     setProfile({ ...profile, daily_reminder_enabled: enabled })
@@ -371,23 +375,22 @@ export default function ProfilePage() {
             background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
           }}
         />
-        <div className="relative p-6 sm:p-7">
+        <div className="relative p-5 sm:p-7">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'var(--on-hero-mut)' }}
           >
             {t('profile.eyebrow')}
           </p>
-          <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-4">
+          <div className="mt-2 flex items-end justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
               <div
-                className="flex h-16 w-16 items-center justify-center rounded-2xl font-bold"
+                className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-2xl font-bold text-[20px] sm:text-[28px]"
                 style={{
                   background: 'var(--c-primary)',
                   color: 'var(--c-primary-foreground)',
                   fontFamily: 'var(--font-sans)',
                   fontWeight: 800,
-                  fontSize: 28,
                   letterSpacing: '-0.04em',
                   lineHeight: 1,
                   boxShadow: 'var(--card-shadow)',
@@ -397,9 +400,8 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h1
-                  className="font-bold"
+                  className="font-bold text-[22px] sm:text-[28px]"
                   style={{
-                    fontSize: 'clamp(28px, 4vw, 40px)',
                     color: 'var(--on-hero)',
                     letterSpacing: '-0.035em',
                   }}
@@ -409,7 +411,9 @@ export default function ProfilePage() {
                 <p className="text-sm mt-0.5" style={{ color: 'var(--on-hero-mut)' }}>
                   {user.email}
                 </p>
-                <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  {/* Billing beku (src/lib/billing-flag.ts) → label paket disembunyikan */}
+                  {BILLING_ENABLED && (
                   <span
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
                     style={{
@@ -422,15 +426,18 @@ export default function ProfilePage() {
                     {t('profile.plan_prefix')} {planLabel}
                     {subscription?.status === 'trialing' && ` (${t('profile.plan_trial')})`}
                   </span>
+                  )}
                   <span className="text-xs" style={{ color: 'var(--on-hero-mut)' }}>
-                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''}
+                    {accountCount} {t('profile.stat_accounts')} · {txCount} {t('profile.stat_transactions')}{subscription ? ` · ${t('profile.stat_since')} ${formatDate(new Date(subscription.started_at))}` : ''} · {today}
                   </span>
                 </div>
               </div>
             </div>
+            {/* Billing beku → tombol upgrade/kelola langganan disembunyikan */}
+            {BILLING_ENABLED && (
             <Link
               href="/dashboard/pricing"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition hover:opacity-90"
               style={{
                 background: 'var(--c-primary)',
                 color: 'var(--c-primary-foreground)',
@@ -440,24 +447,25 @@ export default function ProfilePage() {
               <Crown className="size-4" />
               {subscription?.status === 'trialing' || subscription?.plan_id === 'basic' ? t('profile.cta_upgrade') : t('profile.cta_manage_sub')}
             </Link>
+            )}
           </div>
-          <p className="text-xs mt-3" style={{ color: 'var(--on-hero-mut)' }}>{today}</p>
         </div>
       </section>
 
-      {/* AI Credits card */}
-      <div className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 22%, transparent)' }}>
+      {/* AI Credits card — beku selama billing OFF (metering kredit dilewati) */}
+      {BILLING_ENABLED && (
+      <div className="rounded-xl border p-5" style={{ background: 'var(--c-violet-soft)', borderColor: 'color-mix(in srgb, var(--c-violet) 22%, transparent)' }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
             <div className="rounded-lg p-2 shadow-[var(--card-shadow)]" style={{ background: 'var(--surface)' }}>
-              <Sparkles className="size-5" style={{ color: 'var(--c-amber-ink)' }} />
+              <Sparkles className="size-5" style={{ color: 'var(--c-violet-ink)' }} />
             </div>
             <div>
               <p className="font-semibold">{t('profile.ai_credits_title')}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {t('profile.ai_credits_desc')}
               </p>
-              <p className="mt-3 text-3xl font-bold tabular-nums">
+              <p className="mt-3 text-xl font-bold tabular-nums">
                 {profile.ai_credits.toLocaleString('id-ID')}
                 <span className="text-sm font-normal text-muted-foreground ml-1">{t('profile.ai_credits_unit')}</span>
               </p>
@@ -466,21 +474,22 @@ export default function ProfilePage() {
           <Link
             href="/dashboard/pricing"
             className="self-end inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition hover:opacity-90"
-            style={{ background: 'var(--c-amber-ink)', color: 'var(--on-hero)' }}
+            style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}
           >
             <Sparkles className="size-3.5" />
             {t('profile.ai_credits_topup')}
           </Link>
         </div>
       </div>
+      )}
 
       {/* Tabs section */}
       <Tabs defaultValue="preferensi" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="preferensi"><User className="size-3.5 mr-1.5" />{t('profile.tab_preferences')}</TabsTrigger>
-          <TabsTrigger value="keamanan"><Shield className="size-3.5 mr-1.5" />{t('profile.tab_security')}</TabsTrigger>
-          <TabsTrigger value="notifikasi"><Bell className="size-3.5 mr-1.5" />{t('profile.tab_notifications')}</TabsTrigger>
-          <TabsTrigger value="data"><Database className="size-3.5 mr-1.5" />{t('profile.tab_data')}</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto no-scrollbar">
+          <TabsTrigger value="preferensi" className="shrink-0"><User className="size-3.5 mr-1.5" />{t('profile.tab_preferences')}</TabsTrigger>
+          <TabsTrigger value="keamanan" className="shrink-0"><Shield className="size-3.5 mr-1.5" />{t('profile.tab_security')}</TabsTrigger>
+          <TabsTrigger value="notifikasi" className="shrink-0"><Bell className="size-3.5 mr-1.5" />{t('profile.tab_notifications')}</TabsTrigger>
+          <TabsTrigger value="data" className="shrink-0"><Database className="size-3.5 mr-1.5" />{t('profile.tab_data')}</TabsTrigger>
         </TabsList>
 
         {/* PREFERENSI */}
@@ -561,10 +570,10 @@ export default function ProfilePage() {
               </p>
             </div>
             <div>
-              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />{t('profile.skin_label')}</Label>
+              <Label className="flex items-center gap-1.5 mb-2"><Palette className="size-4" />Tema tampilan</Label>
               <SkinPicker />
-              <p className="text-xs text-muted-foreground mt-2">
-                {t('profile.skin_hint')}
+              <p className="hidden md:block text-xs text-muted-foreground mt-2">
+                Default <strong>Bersih</strong> (redesign baru). <strong>Cartoon</strong> = tampilan lawas (emas/dongeng), opsional.
               </p>
             </div>
           </section>
@@ -617,7 +626,7 @@ export default function ProfilePage() {
                 <Shield className="size-4 mt-0.5 text-muted-foreground" />
                 <div>
                   <h3 className="font-semibold">{t('profile.pin_lock_title')}</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <p className="hidden md:block text-sm text-muted-foreground mt-0.5">
                     {t('profile.pin_lock_desc')}
                   </p>
                 </div>
@@ -678,7 +687,7 @@ export default function ProfilePage() {
                   <Shield className="size-4 mt-0.5 text-muted-foreground" />
                   <div>
                     <h3 className="font-semibold">{t('profile.biometric_title')}</h3>
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="hidden md:block text-sm text-muted-foreground mt-0.5">
                       {t('profile.biometric_desc')}
                     </p>
                   </div>
@@ -730,12 +739,17 @@ export default function ProfilePage() {
                   value={profile.daily_reminder_time}
                   onChange={(e) => updateReminderTime(e.target.value)}
                 />
+                <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>
+                  {locale === 'id'
+                    ? 'Saat ini dikirim 1x sehari sore — jam custom menyusul.'
+                    : 'Currently sent once a day in the evening — custom time coming soon.'}
+                </p>
               </div>
             )}
           </section>
 
           <section className="rounded-xl border p-5" style={{ background: 'var(--c-amber-soft)', borderColor: 'color-mix(in srgb, var(--c-amber) 25%, transparent)' }}>
-            <p className="text-sm" style={{ color: 'var(--c-amber-ink)' }}>
+            <p className="hidden md:block text-sm" style={{ color: 'var(--c-amber-ink)' }}>
               {t('profile.push_notice_prefix')} <strong>{t('profile.push_notice_bold')}</strong> {t('profile.push_notice_suffix')}
             </p>
           </section>
@@ -748,7 +762,7 @@ export default function ProfilePage() {
               <Download className="size-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
                 <h3 className="font-semibold">{t('profile.export_title')}</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="hidden md:block text-sm text-muted-foreground mt-0.5">
                   {t('profile.export_desc')}
                 </p>
                 <div className="mt-3">
@@ -772,7 +786,7 @@ export default function ProfilePage() {
               <AlertTriangle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />
               <div className="flex-1">
                 <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{t('profile.danger_zone_title')}</h3>
-                <p className="text-sm mt-1" style={{ color: 'var(--c-coral-ink)' }}>
+                <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--c-coral-ink)' }}>
                   {t('profile.danger_zone_prefix')} <strong>{t('profile.danger_zone_bold')}</strong>.
                 </p>
                 <Button
@@ -786,7 +800,7 @@ export default function ProfilePage() {
                 </Button>
 
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'color-mix(in srgb, var(--c-coral) 20%, transparent)' }}>
-                  <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('profile.delete_account_desc')}</p>
+                  <p className="hidden md:block text-sm" style={{ color: 'var(--ink-muted)' }}>{t('profile.delete_account_desc')}</p>
                   <div className="mt-3"><DeleteAccountButton /></div>
                 </div>
               </div>

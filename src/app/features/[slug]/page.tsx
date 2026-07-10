@@ -67,9 +67,9 @@ export default async function FeatureDetailPage({ params }: { params: Promise<{ 
           <div className="max-w-5xl mx-auto mt-10">
             <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)', background: 'var(--surface)' }}>
               <div className="flex items-center gap-2 px-4 h-9 border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
-                <span className="size-2.5 rounded-full" style={{ background: '#ED7385' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#f0664f' }} />
                 <span className="size-2.5 rounded-full" style={{ background: '#E3A93C' }} />
-                <span className="size-2.5 rounded-full" style={{ background: '#5CCB9F' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#17b890' }} />
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={f.shot} alt={f.shotAlt ?? f.name} className="w-full h-auto block" />

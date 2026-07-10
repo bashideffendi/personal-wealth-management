@@ -82,13 +82,13 @@ const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
 
 /** Palet warna kategori — selaras token brand. Dipakai picker di Kelola Kategori. */
 export const CATEGORY_COLORS = [
-  '#129B69', // mint
-  '#14B8A6', // teal
-  '#3B82F6', // blue
-  '#7C5FD3', // violet
-  '#EC4899', // pink
-  '#D2495A', // coral
+  '#17b890', // teal (brand)
+  '#f0664f', // coral (brand)
+  '#5d6fe0', // blue (brand)
+  '#8b4fb0', // violet (brand)
   '#C98F0E', // amber
+  '#EC4899', // pink
+  '#0EA5E9', // sky
   '#64748B', // slate
 ] as const
 

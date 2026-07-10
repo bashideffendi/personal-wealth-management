@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendHouseholdInviteEmail } from '@/lib/email'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -15,6 +16,11 @@ export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Throttle: cegah spam email undangan (email bombing lewat akun Resend).
+  if (!rateLimit(`invite:${user.id}`, { limit: 5, windowMs: 3_600_000 }).ok) {
+    return NextResponse.json({ error: 'Terlalu banyak undangan. Coba lagi nanti.' }, { status: 429 })
+  }
 
   const body = (await req.json().catch(() => null)) as { invitationId?: string } | null
   if (!body?.invitationId) {

@@ -80,7 +80,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         <div className="w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end py-12 lg:py-0">
           <div
-            className="rounded-3xl p-7 sm:p-8"
+            className="rounded-3xl p-5 sm:p-8"
             style={{ background: 'var(--surface)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}
           >
             {children}

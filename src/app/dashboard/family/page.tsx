@@ -4,7 +4,8 @@ import { useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { formatDate, formatCurrency } from '@/lib/utils'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
+import { formatDate, formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 import {
@@ -14,6 +15,7 @@ import {
   type HouseholdGoal, type HouseholdActivity, type HouseholdNetWorth,
 } from '@/lib/household'
 
+import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,7 +29,7 @@ import {
 } from '@/components/ui/select'
 import {
   Users, UserPlus, Crown, Copy, Check, Loader2, Trash2,
-  AlertCircle, Mail, CalendarClock, Home, LogOut,
+  AlertCircle, Mail, CalendarClock, Home, ChevronDown,
   Wallet, ArrowLeftRight, PieChart, Lock, Target, Activity,
   Eye, SlidersHorizontal, TrendingUp,
 } from 'lucide-react'
@@ -73,6 +75,9 @@ export default function FamilyPage() {
   // Leave/remove
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+
+  // Kartu utama: detail anggota collapse (pola Share Manager: baris avatar + chevron)
+  const [membersOpen, setMembersOpen] = useState(false)
 
   // Net worth sharing toggle
   const [togglingNW, setTogglingNW] = useState(false)
@@ -404,14 +409,17 @@ export default function FamilyPage() {
             <Home className="size-7" style={{ color: 'var(--surface)' }} />
           </div>
           <h2 className="text-xl sm:text-2xl" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('family.empty_title')}</h2>
-          <p className="mt-2 max-w-md mx-auto text-sm" style={{ color: 'var(--ink-muted)' }}>
+          <p className="hidden md:block mt-2 max-w-md mx-auto text-sm" style={{ color: 'var(--ink-muted)' }}>
             {t('family.empty_desc')}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button onClick={() => setCreateDialogOpen(true)}><Home className="size-4" /> {t('family.create_household')}</Button>
-            <Link href="/dashboard/pricing" className="text-sm inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.view_family_plan')}</Link>
+            {/* Billing beku (src/lib/billing-flag.ts) → link paket keluarga disembunyikan */}
+            {BILLING_ENABLED && (
+              <Link href="/dashboard/pricing" className="text-sm inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.view_family_plan')}</Link>
+            )}
           </div>
-          <p className="mt-5 text-xs" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block mt-5 text-xs" style={{ color: 'var(--ink-soft)' }}>
             {t('family.empty_invite_prefix')} <code className="rounded px-1 py-0.5" style={{ background: 'var(--surface-2)' }}>/dashboard/join/…</code> {t('family.empty_invite_suffix')}
           </p>
         </div>
@@ -427,7 +435,7 @@ export default function FamilyPage() {
                 <span className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('family.step_label')} {i + 1}</span>
               </div>
               <p className="font-semibold" style={{ color: 'var(--ink)' }}>{step.title}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
+              <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
             </div>
           ))}
         </div>
@@ -441,13 +449,7 @@ export default function FamilyPage() {
   // ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      <FamilyHeader
-        action={isUserOwner ? (
-          <Button onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }} disabled={members.length >= household.max_seats}>
-            <UserPlus className="size-4" /> {t('family.invite_member')}
-          </Button>
-        ) : undefined}
-      />
+      <FamilyHeader />
 
       {/* Sebagian section gagal dimuat — halaman tetap jalan, kasih tahu jujur */}
       {partialFailures.length > 0 && (
@@ -460,139 +462,143 @@ export default function FamilyPage() {
         </div>
       )}
 
-      {/* Hero — Lingkar Keluarga (data REAL) */}
-      <section className="s-card overflow-hidden grid sm:grid-cols-[1.6fr_1fr_1fr]" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>
-        <div className="p-5 sm:p-6 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--c-coral-ink)' }}>{t('family.family_circle')}</p>
-          <h2 className="mt-1.5 text-xl sm:text-2xl leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
-          <p className="text-[13px] mt-2" style={{ color: 'var(--ink-muted)' }}>{members.length} {t('family.active_members')} · {t('family.created_on')} {formatDate(new Date(household.created_at))}</p>
-        </div>
-        <div className="p-5 sm:p-6 border-t sm:border-t-0 sm:border-r" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.members')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{members.length}<span className="text-base font-medium" style={{ color: 'var(--ink-soft)' }}> / {household.max_seats}</span></p>
-          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{household.max_seats - members.length} {t('family.seats_remaining')}</p>
-        </div>
-        <div className="p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.invitations')}</p>
-          <p className="num font-bold mt-2 leading-none" style={{ fontSize: 26, color: invitations.length > 0 ? 'var(--c-amber-ink)' : 'var(--ink)', letterSpacing: '-0.02em' }}>{invitations.length}</p>
-          <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{invitations.length > 0 ? t('family.awaiting_acceptance') : t('family.none_pending')}</p>
-        </div>
-      </section>
-
-      {/* Net Worth Gabungan (opt-in, agregat) — muncul hanya kalau RPC aktif (migration 044) */}
-      {nwActive && (
-        <section className="s-card p-5">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.combined_net_worth')}</p>
-              {(netWorth?.members_sharing ?? 0) > 0 ? (
-                <>
-                  <p className="num font-bold mt-2 leading-none" style={{ fontSize: 28, color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(netWorth?.combined_net_worth ?? 0)}</p>
-                  <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>
-                    {t('family.assets')} <span className="num">{formatCurrency(netWorth?.combined_assets ?? 0)}</span> · {t('family.debts')} <span className="num">{formatCurrency(netWorth?.combined_debts ?? 0)}</span>
-                  </p>
-                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{netWorth?.members_sharing} {t('family.of')} {netWorth?.members_total} {t('family.members_sharing_note')}</p>
-                </>
-              ) : (
-                <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>{t('family.nw_none_sharing')}</p>
-              )}
+      {/* KARTU UTAMA — nama lingkar + baris avatar (overlap) + Undang pill + kuota inline.
+          Detail anggota & undangan dilipat di balik chevron (pola Share Manager). */}
+      <section className="s-card overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>
+        <div className="p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="eyebrow" style={{ color: 'var(--c-coral-ink)' }}>{t('family.family_circle')}</p>
+              <h2 className="mt-0.5 text-lg sm:text-xl leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
             </div>
-            <TrendingUp className="size-5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
+            {isUserOwner && (
+              <Button size="sm" className="rounded-full shrink-0" onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }} disabled={members.length >= household.max_seats}>
+                <UserPlus className="size-3.5" /> {t('family.invite')}
+              </Button>
+            )}
           </div>
-          {/* Toggle berbagi (current user) */}
           <button
             type="button"
-            onClick={toggleMyNetWorth}
-            disabled={togglingNW}
-            className="mt-4 flex items-center justify-between gap-3 w-full rounded-xl px-4 py-3 text-left transition"
-            style={{ background: 'var(--surface-2)' }}
+            onClick={() => setMembersOpen((v) => !v)}
+            aria-expanded={membersOpen}
+            title={t('family.section_members')}
+            className="mt-4 flex w-full items-center gap-2.5 text-left"
           >
-            <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--ink)' }}>
-              <Eye className="size-4" style={{ color: 'var(--ink-soft)' }} /> {t('family.share_my_nw')}
-            </span>
-            <span className="relative inline-flex h-5 w-9 items-center rounded-full transition" style={{ background: self?.share_net_worth ? 'var(--c-mint)' : 'var(--border)' }}>
-              {togglingNW
-                ? <Loader2 className="size-3 animate-spin mx-auto" style={{ color: '#FFF' }} />
-                : <span className="inline-block size-4 rounded-full bg-white transition" style={{ transform: self?.share_net_worth ? 'translateX(18px)' : 'translateX(2px)' }} />}
-            </span>
-          </button>
-        </section>
-      )}
-
-      {/* Anggota Keluarga */}
-      <section className="s-card overflow-hidden">
-        <div className="flex items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.section_members')}</p>
-          {isUserOwner && (
-            <Button variant="outline" size="sm" onClick={() => { setGeneratedLink(null); setInviteEmail(''); setInviteDialogOpen(true) }} disabled={members.length >= household.max_seats}>
-              <UserPlus className="size-3.5" /> {t('family.invite')}
-            </Button>
-          )}
-        </div>
-        <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
-          {members.map((m) => {
-            const me = m.user_id === user?.id
-            const owner = m.role === 'owner'
-            const relLabel = m.relationship && REL_LABEL_KEY[m.relationship] ? t(REL_LABEL_KEY[m.relationship]) : null
-            const viewOnly = !owner && m.can_edit === false
-            return (
-              <div key={m.user_id} className="flex items-center gap-3 p-4">
-                <div className="size-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0" style={{ background: owner ? 'var(--c-amber)' : 'var(--surface-2)', color: owner ? '#FFF' : 'var(--ink)' }}>
+            <span className="flex -space-x-2">
+              {members.map((m) => (
+                <span key={m.user_id} className="size-9 rounded-full border-2 flex items-center justify-center text-[12px] font-bold" style={{ background: m.role === 'owner' ? 'var(--c-amber)' : 'var(--surface-2)', color: m.role === 'owner' ? '#FFF' : 'var(--ink)', borderColor: 'var(--surface)' }}>
                   {(m.full_name || m.email || '?').slice(0, 1).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{me ? t('family.you') : (m.full_name || t('family.member_fallback'))}</p>
-                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
-                      {owner && <Crown className="size-2.5" />}{relLabel ?? (m.role === 'owner' ? t('family.role_owner') : t('family.role_member'))}
-                    </span>
-                    {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />{t('family.view_only')}</span>}
-                  </div>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('family.joined')} {formatDate(new Date(m.joined_at))}</p>
-                </div>
-                {isUserOwner && !me && (
-                  <>
-                    <Button variant="ghost" size="icon-sm" onClick={() => openPerms(m)} title={`${t('family.set_perms_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.set_perms_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
-                      <SlidersHorizontal className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
-                    </Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removeMember(m.user_id)} disabled={removingMemberId === m.user_id} title={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
-                      {removingMemberId === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} />}
-                    </Button>
-                  </>
-                )}
-              </div>
-            )
-          })}
+                </span>
+              ))}
+            </span>
+            <span className="num text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }} title={`${household.max_seats - members.length} ${t('family.seats_remaining')}`}>
+              {members.length}<span style={{ color: 'var(--ink-soft)' }}>/{household.max_seats}</span>
+            </span>
+            {isUserOwner && invitations.length > 0 && (
+              <span className="num inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'color-mix(in srgb, var(--c-amber) 16%, transparent)', color: 'var(--c-amber-ink)' }} title={`${invitations.length} ${t('family.awaiting_acceptance')}`}>
+                <Mail className="size-2.5" /> {invitations.length}
+              </span>
+            )}
+            <ChevronDown className="size-4 ml-auto shrink-0 transition-transform" style={{ color: 'var(--ink-soft)', transform: membersOpen ? 'rotate(180deg)' : 'none' }} />
+          </button>
         </div>
-      </section>
-
-      {/* Undangan Aktif (owner) */}
-      {isUserOwner && invitations.length > 0 && (
-        <section className="s-card overflow-hidden">
-          <div className="p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.active_invitations')}</p>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
-            {invitations.map((inv) => {
+        {membersOpen && (
+          <div className="border-t divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+            {members.map((m) => {
+              const me = m.user_id === user?.id
+              const owner = m.role === 'owner'
+              const relLabel = m.relationship && REL_LABEL_KEY[m.relationship] ? t(REL_LABEL_KEY[m.relationship]) : null
+              const viewOnly = !owner && m.can_edit === false
+              return (
+                <div key={m.user_id} className="flex items-center gap-2.5 px-4 py-2.5" title={`${t('family.joined')} ${formatDate(new Date(m.joined_at))}`}>
+                  <span className="size-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0" style={{ background: owner ? 'var(--c-amber)' : 'var(--surface-2)', color: owner ? '#FFF' : 'var(--ink)' }}>
+                    {(m.full_name || m.email || '?').slice(0, 1).toUpperCase()}
+                  </span>
+                  <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{me ? t('family.you') : (m.full_name || t('family.member_fallback'))}</p>
+                    <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
+                      {owner && <Crown className="size-2.5" />}{relLabel ?? (owner ? t('family.role_owner') : t('family.role_member'))}
+                    </span>
+                    {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />{t('family.view_only')}</span>}
+                  </div>
+                  {isUserOwner && !me && (
+                    <>
+                      <Button variant="ghost" size="icon-sm" onClick={() => openPerms(m)} title={`${t('family.set_perms_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.set_perms_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
+                        <SlidersHorizontal className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => removeMember(m.user_id)} disabled={removingMemberId === m.user_id} title={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`} aria-label={`${t('family.remove_member_for')} ${m.full_name || t('family.member_fallback_lower')}`}>
+                        {removingMemberId === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} />}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+            {isUserOwner && invitations.map((inv) => {
               const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
               const link = `${baseUrl}/dashboard/join/${inv.token}`
               return (
-                <div key={inv.id} className="flex items-center gap-3 p-4">
-                  <div className="size-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--c-amber-soft)' }}>
-                    <Mail className="size-4" style={{ color: 'var(--c-amber-ink)' }} />
-                  </div>
+                <div key={inv.id} className="flex items-center gap-2.5 px-4 py-2.5">
+                  <span className="size-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--c-amber-soft)' }}>
+                    <Mail className="size-3.5" style={{ color: 'var(--c-amber-ink)' }} />
+                  </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || t('family.no_email_link')}</p>
+                    <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || t('family.no_email_link')}</p>
                     <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}><CalendarClock className="size-3" /> {t('family.expires')} {formatDate(new Date(inv.expires_at))}</p>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(link); toast.success(t('family.toast_invite_link_copied')) }}><Copy className="size-3.5" /> {t('family.copy')}</Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => { navigator.clipboard.writeText(link); toast.success(t('family.toast_invite_link_copied')) }} title={t('family.copy')} aria-label={t('family.copy')}><Copy className="size-3.5" /></Button>
                   <Button variant="ghost" size="icon-sm" onClick={() => revokeInvite(inv.id)} title={t('family.revoke_invite')} aria-label={t('family.revoke_invite')}><Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} /></Button>
                 </div>
               )
             })}
           </div>
-        </section>
-      )}
+        )}
+      </section>
+
+      {/* KARTU BERBAGI — toggle net worth (1 baris) + chip yang dibagikan + privat 1 baris */}
+      <section className="s-card p-4 sm:p-5">
+        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.whats_shared')}</p>
+        {nwActive && (
+          <button
+            type="button"
+            onClick={toggleMyNetWorth}
+            disabled={togglingNW}
+            className="mt-3 flex items-center justify-between gap-3 w-full rounded-xl px-3.5 py-2.5 text-left transition"
+            style={{ background: 'var(--surface-2)' }}
+          >
+            <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--ink)' }}>
+              <Eye className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} /> {t('family.share_my_nw')}
+            </span>
+            <span className="relative inline-flex h-5 w-9 items-center rounded-full transition shrink-0" style={{ background: self?.share_net_worth ? 'var(--c-mint)' : 'var(--border)' }}>
+              {togglingNW
+                ? <Loader2 className="size-3 animate-spin mx-auto" style={{ color: '#FFF' }} />
+                : <span className="inline-block size-4 rounded-full bg-white transition" style={{ transform: self?.share_net_worth ? 'translateX(18px)' : 'translateX(2px)' }} />}
+            </span>
+          </button>
+        )}
+        {nwActive && (netWorth?.members_sharing ?? 0) > 0 && (
+          <p className="mt-2 text-[12px]" style={{ color: 'var(--ink-muted)' }} title={`${netWorth?.members_sharing} ${t('family.of')} ${netWorth?.members_total} ${t('family.members_sharing_note')}`}>
+            {t('family.combined_net_worth')}{' '}
+            <span className="num font-bold" title={formatCurrency(netWorth?.combined_net_worth ?? 0)} style={{ color: 'var(--c-mint-ink)' }}>{formatCompactCurrency(netWorth?.combined_net_worth ?? 0)}</span>
+            <span className="num" style={{ color: 'var(--ink-soft)' }}> · {netWorth?.members_sharing}/{netWorth?.members_total}</span>
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {[
+            { icon: Wallet, label: t('family.shared_accounts') },
+            { icon: ArrowLeftRight, label: t('family.shared_transactions') },
+            { icon: PieChart, label: t('family.shared_budgets_goals') },
+            { icon: TrendingUp, label: t('family.shared_net_worth') },
+          ].map((c, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
+              <c.icon className="size-3 shrink-0" /> {c.label}
+            </span>
+          ))}
+        </div>
+        <p className="mt-2.5 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }} title={`${t('family.private_assets')} · ${t('family.private_debts')} · ${t('family.private_personal_goals')}`}>
+          <Lock className="size-3 shrink-0" /> {t('family.stays_private')}
+        </p>
+      </section>
 
       {/* Tujuan Bersama */}
       <section className="s-card overflow-hidden">
@@ -606,7 +612,7 @@ export default function FamilyPage() {
         </div>
         {goals.length === 0 ? (
           <div className="p-6 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-            {t('family.goals_empty')} {canWrite ? t('family.goals_empty_can_write') : t('family.goals_empty_readonly')}
+            {t('family.goals_empty')}<span className="hidden md:inline"> {canWrite ? t('family.goals_empty_can_write') : t('family.goals_empty_readonly')}</span>
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
@@ -635,77 +641,29 @@ export default function FamilyPage() {
         )}
       </section>
 
-      {/* Aktivitas Terkini */}
+      {/* Aktivitas terakhir — 1 baris teks kecil, bukan kartu */}
       {activities.length > 0 && (
-        <section className="s-card overflow-hidden">
-          <div className="p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><Activity className="size-3.5" /> {t('family.recent_activity')}</p>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
-            {activities.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 p-3.5">
-                <div className="size-8 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
-                  {(a.full_name || '?').slice(0, 1).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] truncate" style={{ color: 'var(--ink)' }}><span className="font-medium">{a.user_id === user?.id ? t('family.you') : (a.full_name || t('family.member_fallback'))}</span> · {a.description}</p>
-                </div>
-                <span className="text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>{timeAgo(a.created_at, t)}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        <p className="flex items-center gap-2 px-1 text-[11px]" title={t('family.recent_activity')} style={{ color: 'var(--ink-soft)' }}>
+          <Activity className="size-3 shrink-0" />
+          <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink-muted)' }}>
+            <span className="font-medium">{activities[0].user_id === user?.id ? t('family.you') : (activities[0].full_name || t('family.member_fallback'))}</span> · {activities[0].description}
+          </span>
+          <span className="shrink-0">{timeAgo(activities[0].created_at, t)}</span>
+        </p>
       )}
 
-      {/* Yang Dibagikan */}
-      <section className="s-card p-5">
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.whats_shared')}</p>
-        <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.whats_shared_desc')}</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl p-4" style={{ background: 'var(--c-mint-soft)' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--c-mint-ink)' }}><Check className="size-3.5" /> {t('family.shared')}</p>
-            <ul className="mt-2.5 space-y-2 text-sm" style={{ color: 'var(--ink)' }}>
-              <li className="flex items-center gap-2"><Wallet className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_accounts')}</li>
-              <li className="flex items-center gap-2"><ArrowLeftRight className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_transactions')}</li>
-              <li className="flex items-center gap-2"><PieChart className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_budgets_goals')}</li>
-              <li className="flex items-center gap-2"><TrendingUp className="size-4 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('family.shared_net_worth')} <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_net_worth_note')}</span></li>
-            </ul>
-          </div>
-          <div className="rounded-xl p-4" style={{ background: 'var(--surface-2)' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><Lock className="size-3.5" /> {t('family.stays_private')}</p>
-            <ul className="mt-2.5 space-y-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> {t('family.private_assets')}</li>
-              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> {t('family.private_debts')}</li>
-              <li className="flex items-center gap-2"><span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--ink-soft)' }} /> {t('family.private_personal_goals')}</li>
-            </ul>
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/dashboard/accounts"><Button variant="outline" size="sm"><Wallet className="size-3.5" /> {t('family.shared_accounts_btn')}</Button></Link>
-          <Link href="/dashboard/budgeting"><Button variant="outline" size="sm"><PieChart className="size-3.5" /> {t('family.shared_budgets_btn')}</Button></Link>
-        </div>
-      </section>
-
-      {/* Zona Berbahaya */}
-      <section className="s-card p-5" style={{ borderColor: 'color-mix(in srgb, var(--c-coral) 28%, transparent)' }}>
-        <div className="flex items-start gap-3">
-          <AlertCircle className="size-5 mt-0.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />
-          <div className="flex-1">
-            <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('family.danger_zone')}</p>
-            {isUserOwner ? (
-              <>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.disband_desc')}</p>
-                <Button variant="destructive" size="sm" className="mt-3" onClick={deleteHousehold}><Trash2 className="size-4" /> {t('family.disband_household')}</Button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('family.leave_desc')}</p>
-                <Button variant="destructive" size="sm" className="mt-3" onClick={() => setLeaveDialogOpen(true)}><LogOut className="size-4" /> {t('family.leave_household')}</Button>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* Bubarkan / keluar — 1 baris teks merah, confirm/dialog tetap jalan */}
+      <div className="pb-1 text-center">
+        {isUserOwner ? (
+          <button type="button" onClick={deleteHousehold} className="text-[12px] font-medium hover:underline" style={{ color: 'var(--c-coral-ink)' }}>
+            {t('family.disband_household')}
+          </button>
+        ) : (
+          <button type="button" onClick={() => setLeaveDialogOpen(true)} className="text-[12px] font-medium hover:underline" style={{ color: 'var(--c-coral-ink)' }}>
+            {t('family.leave_household')}
+          </button>
+        )}
+      </div>
 
       {/* INVITE DIALOG */}
       <Dialog open={inviteDialogOpen} onOpenChange={(o) => { setInviteDialogOpen(o); if (!o) { setGeneratedLink(null); setInviteEmail('') } }}>
@@ -822,24 +780,17 @@ export default function FamilyPage() {
 }
 
 // ───────────────────────────────────────────────────────────
-// Header — pola seragam (eyebrow + judul serif + subtitle + aksi)
+// Header — pola QuietPageHeader (judul 20px + ⓘ tooltip + aksi)
 // ───────────────────────────────────────────────────────────
 
 function FamilyHeader({ action }: { action?: ReactNode }) {
   const t = useT()
   return (
-    <header className="flex items-start justify-between gap-4 flex-wrap">
-      <div className="max-w-xl">
-        <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('family.header_eyebrow')}</p>
-        <h1 className="mt-1 text-2xl sm:text-[28px] leading-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
-          {t('family.header_title')}
-        </h1>
-        <p className="text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
-          {t('family.header_subtitle')}
-        </p>
-      </div>
-      {action && <div className="flex items-center gap-2 shrink-0">{action}</div>}
-    </header>
+    <QuietPageHeader
+      title={t('family.header_title')}
+      info={t('family.header_subtitle')}
+      actions={action}
+    />
   )
 }
 

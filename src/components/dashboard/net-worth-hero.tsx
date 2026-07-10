@@ -14,7 +14,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowUp, ArrowDown, ArrowUpRight } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
 interface MonthlyData {
@@ -99,41 +99,16 @@ export function NetWorthHero({
     return (ytdSum / Math.abs(yearStart)) * 100
   })()
 
-  // Forecast: when reach Rp 1B at current pace?
-  const forecastMonths = (() => {
-    if (monthlyTrend.length < 3) return null
-    const recentAvg = monthlyTrend.slice(-3).reduce((s, m) => s + m.net, 0) / 3
-    if (recentAvg <= 0) return null
-    const target = 1_000_000_000
-    if (netWorth >= target) return null
-    const months = Math.ceil((target - netWorth) / recentAvg)
-    if (months > 60 || months < 1) return null
-    return months
-  })()
-
   return (
     <section
       className="relative overflow-hidden rounded-3xl"
       style={{
-        background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+        background: 'var(--hero-bg)', border: '1px solid var(--hero-line)', boxShadow: 'var(--card-shadow)',
         color: 'var(--on-hero)',
-        
       }}
     >
-      {/* Emerald ambient glow top-right */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: -120,
-          right: -80,
-          width: 380,
-          height: 380,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-        }}
-      />
 
-      <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-6 lg:gap-8 p-5 sm:p-6 lg:p-7">
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-5 lg:gap-8 p-4 sm:p-5">
         {/* ───── LEFT: numeric block ───── */}
         <div className="min-w-0">
           {/* Label net worth (greeting "Hi, Nama" pindah ke atas hero) */}
@@ -148,12 +123,12 @@ export function NetWorthHero({
           <p
             className="num tabular font-bold leading-none mt-2 whitespace-nowrap"
             style={{
-              fontSize: 'clamp(30px, 4.2vw, 42px)',
-              letterSpacing: '-0.035em',
+              fontSize: 'clamp(24px, 4.5vw, 30px)',
+              letterSpacing: '-0.02em',
               color: 'var(--on-hero)',
             }}
           >
-            {formatCurrency(netWorth)}
+            {formatCompactCurrency(netWorth)}
           </p>
 
           {/* Delta chips row */}
@@ -169,7 +144,7 @@ export function NetWorthHero({
               >
                 {monthDelta > 0 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
                 {monthDelta > 0 ? '+' : '−'}
-                {formatCurrency(Math.abs(monthDelta))} {t('nw_hero.this_month')}
+                {formatCompactCurrency(Math.abs(monthDelta))} {t('nw_hero.this_month')}
               </span>
             )}
             {ytdPct !== 0 && (
@@ -189,20 +164,6 @@ export function NetWorthHero({
             )}
           </div>
 
-          {/* Forecast hint */}
-          {forecastMonths && (
-            <p
-              className="text-[13px] mt-5 leading-relaxed"
-              style={{ color: 'var(--on-hero-mut)' }}
-            >
-              {t('nw_hero.forecast_prefix')}{' '}
-              <span className="font-semibold" style={{ color: 'var(--hero-chip-pos-fg)' }}>
-                {t('nw_hero.forecast_target')}
-              </span>{' '}
-              {t('nw_hero.forecast_in')} {forecastMonths} {t('nw_hero.forecast_months')}.
-            </p>
-          )}
-
           {/* Asset/Debt split */}
           <div
             className="mt-5 pt-4 grid grid-cols-2 gap-6"
@@ -219,7 +180,7 @@ export function NetWorthHero({
                 className="num tabular font-semibold mt-1.5 whitespace-nowrap"
                 style={{ fontSize: 16, color: 'var(--on-hero)' }}
               >
-                {formatCurrency(totalAssets)}
+                {formatCompactCurrency(totalAssets)}
               </p>
             </div>
             <div>
@@ -236,7 +197,7 @@ export function NetWorthHero({
                   color: debtTotal > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--on-hero)',
                 }}
               >
-                {debtTotal > 0 ? `−${formatCurrency(debtTotal)}` : formatCurrency(0)}
+                {debtTotal > 0 ? `−${formatCompactCurrency(debtTotal)}` : formatCompactCurrency(0)}
               </p>
             </div>
           </div>
@@ -268,8 +229,8 @@ export function NetWorthHero({
           </div>
         </div>
 
-        {/* ───── RIGHT: chart block ───── */}
-        <div className="min-w-0 flex flex-col">
+        {/* ───── RIGHT: chart block (desktop only — mobile hero tetap ringkas) ───── */}
+        <div className="min-w-0 hidden lg:flex flex-col">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
               <p

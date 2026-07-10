@@ -14,10 +14,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { enqueue, isNetworkError } from '@/lib/offline-queue'
 import { useCategoryOptions } from '@/lib/use-category-options'
+import { adjustCardBalance } from '@/lib/data/balances'
 import type { Account, CreditCard } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,6 +44,7 @@ import {
   Camera,
   MessageSquareText,
   PenLine,
+  ArrowLeftRight,
   Loader2,
   Check,
   ChevronLeft,
@@ -79,6 +82,13 @@ const TYPE_TINT: Record<TxType, string> = {
   saving: 'var(--amber-500)',
   investment: 'var(--sky-500)',
 }
+// Varian -ink (AA-safe) buat TEKS label tipe; TYPE_TINT (hue terang) cuma buat tint bg.
+const TYPE_TINT_INK: Record<TxType, string> = {
+  income: 'var(--c-mint-ink)',
+  expense: 'var(--c-coral-ink)',
+  saving: 'var(--c-amber-ink)',
+  investment: 'var(--c-blue-ink)',
+}
 
 interface QuickAddLauncherProps {
   /**
@@ -89,7 +99,7 @@ interface QuickAddLauncherProps {
 }
 
 export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const router = useRouter()
   const supabase = createClient()
   const { firstOf } = useCategoryOptions()
@@ -100,6 +110,9 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
 
   // Receipt flow state
   const [previewData, setPreviewData] = useState<ReceiptData | null>(null)
+  // File asli foto struk — dipertahankan setelah parse biar bisa diupload ke
+  // Storage sebagai lampiran transaksi (jangan dibuang setelah OCR).
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   const [savingReceipt, setSavingReceipt] = useState(false)
 
@@ -186,6 +199,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     const t = setTimeout(() => {
       setMode('menu')
       setPreviewData(null)
+      setReceiptFile(null)
       setScanError(null)
       setForm({
         date: new Date().toISOString().split('T')[0],
@@ -229,6 +243,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       }
       const data = json.data as ReceiptData
       setPreviewData(data)
+      setReceiptFile(file) // simpan file asli buat diupload saat save
       setMode('preview')
     } catch (err) {
       setScanError(err instanceof Error ? err.message : t('quickadd.scan_failed'))
@@ -278,7 +293,28 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       })
       return
     }
-    const { error } = await supabase.from('transactions').insert({
+    // Upload foto struk asli ke bucket privat 'receipts' (infra migrasi 011,
+    // pola sama dgn manual-add di transactions/page.tsx) — path disimpan di
+    // kolom receipt_url. Best-effort: gagal upload ≠ gagal simpan.
+    let receiptPath: string | null = null
+    if (receiptFile) {
+      const ext =
+        receiptFile.type === 'image/png' ? 'png'
+        : receiptFile.type === 'image/webp' ? 'webp'
+        : receiptFile.type === 'image/gif' ? 'gif'
+        : 'jpg'
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('receipts')
+        .upload(path, receiptFile, { contentType: receiptFile.type || 'image/jpeg', upsert: false })
+      if (upErr) {
+        console.warn('[quick-add] Upload struk gagal — transaksi disimpan tanpa lampiran:', upErr.message)
+      } else {
+        receiptPath = path
+      }
+    }
+
+    const payload: Record<string, unknown> = {
       user_id: user.id,
       date: previewData.date,
       account_id: acc.id,
@@ -286,7 +322,20 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       category: previewData.category,
       description: previewData.description || previewData.merchant,
       amount: previewData.total,
-    })
+    }
+    if (receiptPath) payload.receipt_url = receiptPath
+
+    let { error } = await supabase.from('transactions').insert(payload)
+    // Graceful pre-migrasi: kolom receipt_url belum ada di DB → retry tanpa
+    // lampiran biar simpan tetap jalan (tiru pola auto_post di recurring/page.tsx).
+    if (
+      error && payload.receipt_url &&
+      (error.code === '42703' || /receipt_url/i.test(error.message ?? ''))
+    ) {
+      console.warn('[quick-add] Kolom receipt_url belum tersedia — simpan tanpa lampiran:', error.message)
+      delete payload.receipt_url
+      ;({ error } = await supabase.from('transactions').insert(payload))
+    }
     setSavingReceipt(false)
     if (error) {
       toast.error(t('quickadd.save_failed'), { description: error.message })
@@ -320,34 +369,64 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       return
     }
     setManualSaving(true)
+    // getUser() butuh network — saat offline balikannya null. Fallback ke
+    // session lokal (getSession baca storage, gak fetch) biar entri offline
+    // tetap bisa diantre dengan user_id yang benar.
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) {
+    let userId: string | null = user?.id ?? null
+    if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession()
+      userId = session?.user?.id ?? null
+    }
+    if (!userId) {
       setManualSaving(false)
       return
     }
-    const { error } = await supabase.from('transactions').insert({
-      user_id: user.id,
+    const payload = {
+      user_id: userId,
       date: form.date,
       account_id: form.account_id,
       type: form.type,
       category: form.category,
       description: form.description,
       amount: form.amount,
-    })
+    }
+    let error: { message?: string } | null = null
+    try {
+      ;({ error } = await supabase.from('transactions').insert(payload))
+    } catch (err) {
+      error = { message: err instanceof Error ? err.message : String(err) }
+    }
 
     // Bump credit card outstanding if applicable
     const cc = cards.find((c) => c.id === form.account_id)
     if (cc && form.type === 'expense' && !error) {
-      await supabase
-        .from('credit_cards')
-        .update({ current_balance: cc.current_balance + form.amount })
-        .eq('id', cc.id)
+      const { ok: ccOk } = await adjustCardBalance(supabase, cc.id, form.amount, cc.current_balance)
+      // Jangan senyap: kalau saldo kartu gagal naik, kasih tau (samain jalur lain)
+      if (!ccOk) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
     }
 
     setManualSaving(false)
     if (error) {
+      // Gagal karena jaringan → antre offline, tanpa error merah & tanpa
+      // dispatch 'klunting:data-changed' (belum ada di DB — hindari data hantu).
+      if (isNetworkError(error) && enqueue(payload)) {
+        toast.info(
+          locale === 'id' ? 'Tersimpan offline, akan disinkron saat online' : 'Saved offline, will sync when online',
+        )
+        // Bump saldo kartu kredit gak ikut diantre — kasih tau biar gak senyap.
+        if (cc && form.type === 'expense') {
+          toast.warning(
+            locale === 'id'
+              ? 'Saldo kartu kredit tidak diperbarui otomatis untuk transaksi offline. Cek halaman Kartu Kredit setelah online.'
+              : 'Credit card balance is not auto-updated for offline transactions. Check the Credit Cards page once online.',
+          )
+        }
+        setOpen(false)
+        return
+      }
       toast.error(t('quickadd.save_failed'), { description: error.message })
       return
     }
@@ -366,6 +445,22 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('klunting:open-command-palette'))
     }, 320)
+  }
+
+  function openTransfer() {
+    setOpen(false)
+    if (window.location.pathname === '/dashboard/transactions') {
+      // Sudah di halaman Transaksi — cukup dispatch event, dialog transfer
+      // di page.tsx yang buka. Delay 320ms sama dgn openCommandPalette biar
+      // focus trap sheet vs dialog gak bentrok saat animasi close.
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('klunting:open-transfer'))
+      }, 320)
+    } else {
+      // Belum di halaman Transaksi — navigasi bawa param; page.tsx baca
+      // transfer=1 on mount, buka dialog, lalu bersihkan param.
+      router.push('/dashboard/transactions?transfer=1')
+    }
   }
 
   // ─── Render ────────────────────────────────────────────────────
@@ -411,6 +506,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
               onPickReceipt={pickFile}
               onPickAI={openCommandPalette}
               onPickManual={() => setMode('manual')}
+              onPickTransfer={openTransfer}
               scanError={scanError}
             />
           )}
@@ -422,6 +518,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
               saving={savingReceipt}
               onBack={() => {
                 setPreviewData(null)
+                setReceiptFile(null)
                 setMode('menu')
               }}
               onSave={saveReceipt}
@@ -452,11 +549,13 @@ function MenuView({
   onPickReceipt,
   onPickAI,
   onPickManual,
+  onPickTransfer,
   scanError,
 }: {
   onPickReceipt: () => void
   onPickAI: () => void
   onPickManual: () => void
+  onPickTransfer: () => void
   scanError: string | null
 }) {
   const t = useT()
@@ -487,6 +586,15 @@ function MenuView({
       tint: 'var(--ink-muted)',
       bg: 'var(--surface-2)',
       onSelect: onPickManual,
+    },
+    {
+      key: 'transfer',
+      icon: ArrowLeftRight,
+      title: t('transactions.transfer'),
+      body: t('transactions.transfer_desc'),
+      tint: 'var(--c-blue-ink)',
+      bg: 'var(--c-blue-soft)',
+      onSelect: onPickTransfer,
     },
   ] as const
 
@@ -587,7 +695,7 @@ function PreviewView({
   onBack: () => void
   onSave: () => void
 }) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const typeLabel: Record<TxType, string> = {
     income: t('quickadd.type_income'),
     expense: t('quickadd.type_expense'),
@@ -619,7 +727,7 @@ function PreviewView({
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
           style={{
             background: 'var(--c-mint-soft)',
-            color: 'var(--c-mint)',
+            color: 'var(--c-mint-ink)',
             letterSpacing: '0.06em',
           }}
         >
@@ -643,7 +751,7 @@ function PreviewView({
             className="inline-flex items-center px-2 py-1 rounded-full font-semibold uppercase"
             style={{
               background: 'color-mix(in srgb, ' + TYPE_TINT[data.type] + ' 12%, transparent)',
-              color: TYPE_TINT[data.type],
+              color: TYPE_TINT_INK[data.type],
               letterSpacing: '0.04em',
             }}
           >
@@ -656,7 +764,7 @@ function PreviewView({
             {data.category}
           </span>
           <span style={{ color: 'var(--ink-muted)' }}>
-            {new Date(data.date).toLocaleDateString('id-ID', {
+            {new Date(data.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', {
               day: 'numeric',
               month: 'short',
               year: 'numeric',
@@ -808,7 +916,7 @@ function ManualForm({
               value={form.type}
               onValueChange={(v) => v && setType(v as TxType)}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-label={t('quickadd.type')}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -825,7 +933,7 @@ function ManualForm({
               value={form.category}
               onValueChange={(v) => v && setForm({ ...form, category: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-label={t('quickadd.category')}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -845,8 +953,9 @@ function ManualForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label>{t('quickadd.amount')}</Label>
+            <Label htmlFor="qa-amount">{t('quickadd.amount')}</Label>
             <Input
+              id="qa-amount"
               type="number"
               min={0}
               value={form.amount || ''}
@@ -858,8 +967,9 @@ function ManualForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>{t('quickadd.date')}</Label>
+            <Label htmlFor="qa-date">{t('quickadd.date')}</Label>
             <Input
+              id="qa-date"
               type="date"
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
@@ -873,7 +983,7 @@ function ManualForm({
             value={form.account_id}
             onValueChange={(v) => setForm({ ...form, account_id: v ?? '' })}
           >
-            <SelectTrigger>
+            <SelectTrigger aria-label={t('quickadd.account_or_card')}>
               <SelectValue placeholder={t('quickadd.pick_account')} />
             </SelectTrigger>
             <SelectContent>
@@ -892,8 +1002,9 @@ function ManualForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>{t('quickadd.description')}</Label>
+          <Label htmlFor="qa-description">{t('quickadd.description')}</Label>
           <Input
+            id="qa-description"
             value={form.description}
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })
@@ -907,7 +1018,7 @@ function ManualForm({
               className="self-start mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition hover:opacity-80"
               style={{
                 background: 'var(--c-mint-soft)',
-                color: 'var(--c-mint)',
+                color: 'var(--c-mint-ink)',
                 border: '1px solid color-mix(in srgb, var(--c-mint) 25%, transparent)',
               }}
               title={t('quickadd.suggestion_tooltip')}

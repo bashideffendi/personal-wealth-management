@@ -4,9 +4,9 @@ import { toast } from 'sonner'
 
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import type { Contract, ContractCategory, ContractFrequency } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Plus, Pencil, Trash2, Loader2, Archive, ArchiveRestore, Search, Check,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table'
+import {
+  Plus, Trash2, Loader2, Archive, ArchiveRestore, Search, Check, Pencil,
   Shield, Landmark, Briefcase, Building2, KeyRound, Clock, Package, FileText,
   ShieldCheck, RefreshCw, CalendarClock, type LucideIcon,
 } from 'lucide-react'
@@ -79,10 +82,10 @@ function humanizeSisa(iso: string, today: Date): string {
   return `${d} hari`
 }
 const monthlyOf = (c: Contract) => !c.cost || !c.frequency ? 0 : c.frequency === 'monthly' ? c.cost : c.frequency === 'quarterly' ? c.cost / 3 : c.frequency === 'yearly' ? c.cost / 12 : 0
-const fullDate = (iso: string) => new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+const fullDate = (iso: string, locale: string) => new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 
 export default function ContractsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -157,11 +160,12 @@ export default function ContractsPage() {
   const monthlyCost = Math.round(active.reduce((s, c) => s + monthlyOf(c), 0))
 
   const big = formatCurrency
+  // Nominal stat compact ala kpi-card Beranda — full digit dipertahanin via title.
   const stats = [
-    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: 'var(--ink)', tint: 'var(--surface-2)' },
-    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: tint(AMBER, 10) },
-    { label: t('contracts.stat_coverage_total'), value: big(coverageTotal), sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: tint(VIOLET, 10) },
-    { label: t('contracts.stat_premium'), value: big(monthlyCost), sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: tint(MINT, 10) },
+    { label: t('contracts.stat_active_total'), value: `${active.length} ${t('contracts.unit_item')}`, full: undefined as string | undefined, sub: `${t('contracts.stat_active_sub')} ${catsPresent.length} ${t('contracts.unit_category')}`, icon: ShieldCheck, color: 'var(--ink)', tint: 'var(--surface-2)' },
+    { label: t('contracts.stat_renewing'), value: `${expiring.length} ${t('contracts.unit_item')}`, full: undefined as string | undefined, sub: t('contracts.stat_renewing_sub'), icon: RefreshCw, color: AMBER, tint: tint(AMBER, 10) },
+    { label: t('contracts.stat_coverage_total'), value: formatCompactCurrency(coverageTotal), full: formatCurrency(coverageTotal) as string | undefined, sub: t('contracts.stat_coverage_sub'), icon: Shield, color: VIOLET, tint: tint(VIOLET, 10) },
+    { label: t('contracts.stat_premium'), value: formatCompactCurrency(monthlyCost), full: formatCurrency(monthlyCost) as string | undefined, sub: t('contracts.stat_premium_sub'), icon: CalendarClock, color: MINT, tint: tint(MINT, 10) },
   ]
 
   const visible = active
@@ -178,9 +182,7 @@ export default function ContractsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow mb-1.5">{items.length} {t('contracts.eyebrow_recorded')}</p>
-          <h1 className="leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,38px)', color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('contracts.page_title')}</h1>
-          <p className="text-sm mt-2 max-w-xl" style={{ color: 'var(--ink-muted)' }}>{t('contracts.page_subtitle')}</p>
+          <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('contracts.page_title')}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={() => setSearchOpen((v) => !v)}><Search className="h-4 w-4" /> {t('contracts.btn_search')}</Button>
@@ -197,14 +199,25 @@ export default function ContractsPage() {
         </div>
       ) : (
         <>
+          {/* F10: pas kosong, 4 tile "0 item" di-hide di mobile — diganti
+              1 kartu ringkas (empty state di bawah yang cerita). */}
+          {items.length === 0 && stats.length > 0 && (
+            <div className="s-card px-4 py-3 flex items-center justify-between md:hidden">
+              <div>
+                <p className="text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>{stats[0].label}</p>
+                <p className="num tabular text-[18px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stats[0].value}</p>
+              </div>
+              <span className="text-[11.5px] rounded-full px-2.5 py-1" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{stats[0].sub}</span>
+            </div>
+          )}
           {/* Stat strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className={items.length === 0 ? 'hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3' : 'grid grid-cols-2 lg:grid-cols-4 gap-3'}>
             {stats.map((s) => (
               <div key={s.label} className="s-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
-                    <p className="num tabular text-2xl font-bold mt-1.5 whitespace-nowrap" style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="num tabular text-[20px] font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
                     <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}><s.icon className="size-4" style={{ color: s.color }} /></div>
@@ -214,11 +227,12 @@ export default function ContractsPage() {
           </div>
 
           {items.length === 0 ? (
-            <div className="s-card p-12 text-center">
-              <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}><ShieldCheck className="size-6" style={{ color: 'var(--ink-soft)' }} /></div>
-              <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>{t('contracts.empty_title')}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('contracts.empty_desc')}</p>
-              <Button className="mt-4" onClick={openAdd}><Plus className="h-4 w-4" /> {t('contracts.btn_add')}</Button>
+            /* F10: empty state hangat — chip ikon tint brand, bukan abu datar */
+            <div className="s-card px-6 py-10 text-center">
+              <div className="size-16 rounded-[22px] grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><ShieldCheck className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              <p className="text-[15px] font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('contracts.empty_title')}</p>
+              <p className="text-[12.5px] mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('contracts.empty_desc')}</p>
+              <Button className="mt-4 rounded-full" onClick={openAdd}><Plus className="h-4 w-4" /> {t('contracts.btn_add')}</Button>
             </div>
           ) : (
             <>
@@ -238,7 +252,80 @@ export default function ContractsPage() {
                     <Input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('contracts.search_placeholder')} />
                   </div>
                 )}
-                <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
+                {/* Desktop ≥md: tabel beneran */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-[var(--surface-2)] hover:bg-[var(--surface-2)]">
+                        <TableHead className="pl-4 text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_name')}</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_category')}</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{locale === 'en' ? 'Expires' : 'Berakhir'}</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_cost')}</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Status</TableHead>
+                        <TableHead className="pr-4 text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_action')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {visible.map((c) => {
+                        const meta = CAT[c.category]
+                        const Icon = meta.icon
+                        const st = getStatus(c, today)
+                        const monthly = monthlyOf(c)
+                        const dateInk = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : 'var(--ink)'
+                        const badge = st === 'overdue' ? { t: t('contracts.badge_overdue'), c: CORAL, ink: CORAL_INK } : st === 'expiring' ? { t: t('contracts.badge_renewal'), c: AMBER, ink: AMBER_INK } : { t: t('contracts.badge_active'), c: MINT, ink: MINT_INK }
+                        return (
+                          <TableRow
+                            key={c.id}
+                            onClick={() => openEdit(c)}
+                            className="group cursor-pointer border-[color:var(--border-soft)] hover:bg-[var(--surface-2)]"
+                            aria-label={`${t('contracts.dialog_title_edit')}: ${c.name}`}
+                          >
+                            <TableCell className="pl-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                                <div className="min-w-0">
+                                  <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                                  {(c.provider || c.policy_number) && <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.provider || c.policy_number}</p>}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <p className="num tabular-nums text-[13px] font-medium leading-tight" style={{ color: dateInk }}>{fullDate(c.end_date, locale)}</p>
+                              <p className="text-[11px] leading-tight mt-0.5" style={{ color: st === 'upcoming' ? 'var(--ink-soft)' : dateInk }}>{humanizeSisa(c.end_date, today)}</p>
+                            </TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              {c.cost ? (
+                                <>
+                                  <p className="num tabular-nums text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}{c.frequency ? <span className="font-normal" style={{ color: 'var(--ink-soft)' }}> / {FREQ[c.frequency].toLowerCase()}</span> : null}</p>
+                                  {monthly > 0 && c.frequency !== 'monthly' && <p className="num tabular-nums text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>≈ {formatCurrency(Math.round(monthly))}{t('calculators.per_month')}</p>}
+                                </>
+                              ) : (
+                                <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>—</p>
+                              )}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium" style={{ background: tint(badge.c, 12), color: badge.ink }}>{badge.t}</span>
+                            </TableCell>
+                            <TableCell className="pr-4 text-right">
+                              <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition">
+                                <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); openEdit(c) }} aria-label={`${t('contracts.dialog_title_edit')}: ${c.name}`}><Pencil className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); toggleArchive(c) }} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')} aria-label={`${c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}: ${c.name}`}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
+                                <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); remove(c.id) }} aria-label={`${t('debts.delete')}: ${c.name}`}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                  {visible.length === 0 && <p className="px-4 py-8 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>{t('contracts.no_match')}</p>}
+                </div>
+
+                {/* Mobile <md: row-list (JANGAN diubah) */}
+                <div className="divide-y md:hidden" style={{ borderColor: 'var(--border-soft)' }}>
                   {visible.map((c) => {
                     const meta = CAT[c.category]
                     const Icon = meta.icon
@@ -248,25 +335,30 @@ export default function ContractsPage() {
                       : c.policy_number || meta.label
                     const badge = st === 'overdue' ? { t: t('contracts.badge_overdue'), c: CORAL, ink: CORAL_INK } : st === 'expiring' ? { t: t('contracts.badge_renewal'), c: AMBER, ink: AMBER_INK } : { t: t('contracts.badge_active'), c: MINT, ink: MINT_INK }
                     return (
-                      <div key={c.id} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--surface-2)] transition-colors">
-                        <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                      <div
+                        key={c.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openEdit(c)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEdit(c) } }}
+                        aria-label={`${t('contracts.dialog_title_edit')}: ${c.name}`}
+                        className="group flex items-center gap-3 px-4 py-2 hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] transition-colors cursor-pointer"
+                        style={{ minHeight: 56 }}
+                      >
+                        <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                          <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{sub}</p>
+                          <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                          <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                            <span className="font-medium" style={{ color: badge.ink }}>{badge.t}</span>{' · '}{sub}
+                          </p>
                         </div>
                         <span className="hidden sm:inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
-                        <div className="hidden md:block text-right w-24 shrink-0">
-                          <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('contracts.col_remaining')}</p>
-                          <p className="num text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{humanizeSisa(c.end_date, today)}</p>
+                        <div className="text-right shrink-0">
+                          {c.cost ? <><p className="num tabular-nums text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
                         </div>
-                        <div className="text-right w-28 shrink-0">
-                          {c.cost ? <><p className="num text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
-                        </div>
-                        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0" style={{ background: tint(badge.c, 10), color: badge.ink }}>{badge.t}</span>
                         <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
-                          <Button variant="ghost" size="icon-sm" onClick={() => openEdit(c)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => toggleArchive(c)} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
-                          <Button variant="ghost" size="icon-sm" onClick={() => remove(c.id)}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); toggleArchive(c) }} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')} aria-label={`${c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}: ${c.name}`}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
+                          <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); remove(c.id) }} aria-label={`${t('debts.delete')}: ${c.name}`}><Trash2 className="h-3 w-3" style={{ color: 'var(--danger)' }} /></Button>
                         </div>
                       </div>
                     )
@@ -277,19 +369,19 @@ export default function ContractsPage() {
 
               {/* Timeline tanggal kunci */}
               {timeline.length > 0 && (
-                <div className="s-card p-5">
+                <div className="s-card p-5 md:p-4">
                   <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.timeline_title')}</p>
                   <p className="text-base mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{expiring.length} {t('contracts.timeline_subtitle')}</p>
-                  <div className="mt-4 space-y-3">
-                    {timeline.map((c) => {
+                  <div className="mt-2 lg:grid lg:grid-cols-2 lg:gap-x-6">
+                    {timeline.map((c, i) => {
                       const st = getStatus(c, today)
                       const color = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : MINT_INK
                       return (
-                        <div key={c.id} className="flex items-start gap-4 rounded-xl px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
-                          <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date)}</span>
+                        <div key={c.id} className={`flex items-start gap-4 py-2.5${i ? ' border-t' : ''}${i === 1 ? ' lg:border-t-0' : ''}`} style={{ borderColor: 'var(--border-soft)' }}>
+                          <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date, locale)}</span>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
-                            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
+                            <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
+                            <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
                           </div>
                         </div>
                       )

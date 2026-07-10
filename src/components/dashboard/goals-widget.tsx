@@ -8,20 +8,20 @@
 import Link from 'next/link'
 import { ChevronRight, Target } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 interface GoalsWidgetProps {
   goals: Array<{ id: string; name: string; target_amount: number; current_amount: number; deadline: string | null; created_at?: string | null }>
 }
 
-function etaLabel(deadline: string | null): string | null {
+function etaLabel(deadline: string | null, locale: string): string | null {
   if (!deadline) return null
   const d = new Date(deadline)
-  return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', year: 'numeric' })
 }
 
 export function GoalsWidget({ goals }: GoalsWidgetProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   if (goals.length === 0) {
     return (
       <article className="s-card s-card-pad-lg">
@@ -76,7 +76,7 @@ export function GoalsWidget({ goals }: GoalsWidgetProps) {
       <div className="flex flex-col">
         {goals.slice(0, 3).map((g, i) => {
           const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0
-          const eta = etaLabel(g.deadline)
+          const eta = etaLabel(g.deadline, locale)
           // Tone ikut PACE vs deadline — rumus sama dengan goalStatus halaman
           // Tujuan (progress vs waktu berjalan), bukan % absolut. Goal jangka
           // panjang yang baru 20% tapi on-track gak boleh tampil alarm.

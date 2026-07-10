@@ -11,13 +11,13 @@
  * top actions so switching is one tap from anywhere.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
-  Search, Plus, Bell, ChevronDown, Menu as MenuIcon, X,
+  Search, Bell, ChevronDown, ArrowLeft, Eye, EyeOff,
 } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
@@ -39,7 +39,6 @@ const PRIMARY_HREFS = new Set<string>([
 ])
 
 const HIDDEN_HREFS = new Set<string>([
-  '/dashboard/rules',
   '/dashboard/subscriptions',
 ])
 
@@ -151,12 +150,90 @@ function NavDropdown({
   )
 }
 
+/**
+ * MobileAppBar — app bar kontekstual <md (F9 shell, 2026-07-02).
+ * Logo bar dibuang total di mobile: subhalaman = back + judul 17px (pola
+ * app native); Beranda = null (greeting dirender halaman). Judul dari
+ * NAV_ITEMS (longest prefix match) dgn fallback document.title yang
+ * di-set QuietPageHeader ("X · Klunting").
+ */
+// Root tab bottom-bar (selain Beranda) — dibuka via tab, bukan drill-down →
+// tanpa tombol back (judul saja). Subroute di bawahnya tetap dapet back.
+const TAB_ROOTS = ['/dashboard/transactions', '/dashboard/budgeting', '/dashboard/more']
+
+function MobileAppBar({ pathname }: { pathname: string }) {
+  const { t } = useI18n()
+  const router = useRouter()
+  const [docTitle, setDocTitle] = useState('')
+
+  useEffect(() => {
+    // document.title di-set effect halaman — baca setelah macrotask biar kebaca.
+    const id = setTimeout(() => {
+      const dt = document.title.replace(/ · Klunting$/, '')
+      setDocTitle(dt === 'Klunting' ? '' : dt)
+    }, 60)
+    return () => clearTimeout(id)
+  }, [pathname])
+
+  const flat = useMemo(() => {
+    const out: NavItem[] = []
+    for (const it of NAV_ITEMS) {
+      out.push(it)
+      if (it.children) out.push(...it.children)
+    }
+    return out
+  }, [])
+
+  if (pathname === '/dashboard') return null
+
+  const isTabRoot = TAB_ROOTS.includes(pathname)
+
+  const matched = flat
+    .filter((it) => it.href !== '/dashboard' && matchesPath(pathname, it.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]
+  const title = matched ? (matched.titleKey ? t(matched.titleKey) : matched.label ?? '') : docTitle
+
+  function goBack() {
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back()
+    else router.push('/dashboard')
+  }
+
+  return (
+    <header
+      className="md:hidden sticky top-0 z-40"
+      style={{
+        background: 'color-mix(in srgb, var(--bg) 88%, transparent)',
+        backdropFilter: 'blur(14px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(14px) saturate(1.2)',
+        paddingTop: 'env(safe-area-inset-top)',
+      }}
+    >
+      <div className={`flex items-center gap-1 ${isTabRoot ? 'px-4' : 'px-2'}`} style={{ height: 48 }}>
+        {!isTabRoot && (
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label="Kembali"
+            className="grid place-items-center size-9 rounded-full transition-colors active:bg-[var(--surface-2)]"
+            style={{ color: 'var(--ink)' }}
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+        )}
+        <h1 className="text-[17px] font-semibold truncate" style={{ color: 'var(--ink)', letterSpacing: '-0.01em', fontFamily: 'var(--font-display)' }}>
+          {title}
+        </h1>
+      </div>
+    </header>
+  )
+}
+
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname()
   const { t } = useI18n()
+  const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy()
   const navLabel = (it: NavItem) => (it.titleKey ? t(it.titleKey) : it.label)
   const [scrolled, setScrolled] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
   const [isMac, setIsMac] = useState(false)
   useEffect(() => { setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) }, [])
 
@@ -176,53 +253,41 @@ export function TopNav({ user }: TopNavProps) {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
   }
 
-  function openQuickAdd() {
-    window.dispatchEvent(new CustomEvent('klunting:quick-add'))
-  }
-
-  const fullName = (user.user_metadata?.full_name as string) || user.email || 'Pengguna'
-  const initials = fullName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-
   return (
     <>
+      {/* F9: <md pakai app bar kontekstual, logo bar desktop-only */}
+      <MobileAppBar pathname={pathname} />
       <header
-        className="sticky top-0 z-40 transition-[background,backdrop-filter,border-color] duration-200"
+        className="hidden md:block sticky top-0 z-40 transition-[background,backdrop-filter,border-color] duration-200"
         style={{
           background: scrolled ? 'color-mix(in srgb, var(--bg) 80%, transparent)' : 'var(--bg)',
           backdropFilter: scrolled ? 'blur(14px) saturate(1.2)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(14px) saturate(1.2)' : 'none',
           borderBottom: '1px solid var(--line)',
+          paddingTop: 'env(safe-area-inset-top)',
         }}
       >
+        {/* Mobile: flex justify-end → actions (avatar) PASTI di kanan (brand
+            absolute center, nav hidden). Desktop: grid 3-kolom. */}
         <div
-          className="mx-auto grid items-center gap-4 md:gap-6 px-4 md:px-8 py-3"
-          style={{
-            gridTemplateColumns: 'auto 1fr auto',
-            maxWidth: 1400,
-          }}
+          className="relative mx-auto flex items-center justify-end gap-4 md:gap-6 px-4 md:px-8 py-3 lg:grid lg:[grid-template-columns:auto_1fr_auto]"
+          style={{ maxWidth: 1400 }}
         >
-          {/* ─── Brand left ─── */}
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div
-              className="grid place-items-center"
-              style={{
-                width: 32, height: 32, borderRadius: 10,
-                background: 'var(--c-primary)', color: 'var(--c-primary-foreground)',
-                fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em',
-              }}
-            >
-              K
-            </div>
+          {/* ─── Brand — di TENGAH pas mobile (ala Stockbit), kiri pas desktop ─── */}
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:translate-x-0 lg:translate-y-0"
+          >
+            <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" className="shrink-0">
+              <rect x="35" y="3" width="30" height="30" rx="9" fill="#17b890" />
+              <rect x="3" y="35" width="30" height="30" rx="9" fill="#f0664f" />
+              <rect x="67" y="35" width="30" height="30" rx="9" fill="#5d6fe0" />
+              <rect x="35" y="67" width="30" height="30" rx="9" fill="#8b4fb0" />
+            </svg>
             <span
-              className="hidden sm:inline"
-              style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}
+              style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 21, letterSpacing: '-0.02em', color: 'var(--ink)' }}
             >
-              Klunting
+              klunting
             </span>
           </Link>
 
@@ -261,20 +326,7 @@ export function TopNav({ user }: TopNavProps) {
             <NavDropdown label={t('nav.section.secondary')} items={lainnya} pathname={pathname} align="right" />
           </nav>
 
-          {/* ─── Mobile menu trigger ─── */}
-          <div className="lg:hidden flex justify-center">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium"
-              style={{ color: 'var(--ink-muted)', background: 'var(--surface-2)', border: '1px solid var(--line)' }}
-              aria-label="Buka menu"
-            >
-              <MenuIcon className="size-4" />
-              {t('nav.menu')}
-            </button>
-          </div>
-
-          {/* ─── Actions right ─── */}
+          {/* ─── Actions right (mobile: flex justify-end; desktop: grid kolom 3) ─── */}
           <div className="flex items-center gap-2">
             <button
               onClick={openCommandPalette}
@@ -302,17 +354,23 @@ export function TopNav({ user }: TopNavProps) {
               <AICreditsBadge />
             </div>
 
+            {/* Privacy mode — global hide-numbers toggle (ghost button) */}
             <button
-              onClick={openQuickAdd}
-              className="btn-outline btn-primary"
-              style={{ padding: '9px 12px' }}
-              aria-label="Tambah cepat"
+              type="button"
+              onClick={togglePrivacy}
+              className="hidden md:grid place-items-center transition-colors"
+              style={{ width: 38, height: 38, borderRadius: 12, background: 'transparent', color: 'var(--text-2)' }}
+              aria-label={privacyHidden ? 'Tampilkan angka' : 'Sembunyikan angka'}
+              aria-pressed={privacyHidden}
+              title={privacyHidden ? 'Tampilkan angka' : 'Sembunyikan angka'}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
-              <Plus className="size-3.5" />
+              {privacyHidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
 
             <button
-              className="relative grid place-items-center"
+              className="relative hidden md:grid place-items-center"
               style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text-2)' }}
               aria-label="Notifikasi"
               title="Notifikasi (segera)"
@@ -320,158 +378,11 @@ export function TopNav({ user }: TopNavProps) {
               <Bell className="size-3.5" />
             </button>
 
-            <div className="hidden sm:block">
-              <AvatarMenu user={user} />
-            </div>
-            <div className="sm:hidden">
-              <AvatarMenu user={user} />
-            </div>
+            <AvatarMenu user={user} />
           </div>
         </div>
       </header>
 
-      {/* ─── Mobile menu drawer ─── */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-50 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-modal="true"
-          role="dialog"
-        >
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} />
-          <div
-            className="absolute top-0 right-0 bottom-0 w-[320px] max-w-[88vw] flex flex-col"
-            style={{ background: 'var(--surface)', borderLeft: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--line)' }}>
-              <div className="flex items-center gap-2">
-                <div
-                  className="grid place-items-center"
-                  style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: 'var(--card-shadow)' }}
-                >
-                  K
-                </div>
-                <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-                  Klunting
-                </span>
-              </div>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="grid place-items-center"
-                style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-                aria-label="Tutup"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3">
-              <p className="px-3 py-2 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
-                {t('nav.section.main')}
-              </p>
-              <div className="flex flex-col gap-0.5 mb-3">
-                {primary.map((it) => {
-                  if (it.children?.length) {
-                    return (
-                      <div key={it.href} className="mt-1">
-                        <p className="px-3 py-1.5 text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-                          {navLabel(it)}
-                        </p>
-                        <div className="ml-3 flex flex-col gap-0.5 border-l pl-2" style={{ borderColor: 'var(--line)' }}>
-                          {it.children.map((c) => {
-                            const active = isActiveItem(pathname, c)
-                            return (
-                              <Link
-                                key={c.href}
-                                href={c.href}
-                                aria-current={active ? 'page' : undefined}
-                                onClick={() => setMobileOpen(false)}
-                                className="px-3 py-2 rounded-lg text-[13px] transition-colors"
-                                style={{
-                                  fontWeight: active ? 600 : 500,
-                                  color: active ? 'var(--c-primary)' : 'var(--ink-muted)',
-                                  background: active ? 'var(--c-primary-soft)' : 'transparent',
-                                }}
-                              >
-                                {navLabel(c)}
-                              </Link>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  }
-                  const active = isActiveItem(pathname, it)
-                  return (
-                    <Link
-                      key={it.href}
-                      href={it.href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={() => setMobileOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm transition-colors"
-                      style={{
-                        fontWeight: active ? 600 : 500,
-                        color: active ? 'var(--c-primary)' : 'var(--ink)',
-                        background: active ? 'var(--c-primary-soft)' : 'transparent',
-                      }}
-                    >
-                      {navLabel(it)}
-                    </Link>
-                  )
-                })}
-              </div>
-
-              <p className="px-3 py-2 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
-                {t('nav.section.secondary')}
-              </p>
-              <div className="flex flex-col gap-0.5">
-                {lainnya.map((it) => {
-                  const active = isActiveItem(pathname, it)
-                  return (
-                    <Link
-                      key={it.href}
-                      href={it.href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={() => setMobileOpen(false)}
-                      className="px-3 py-2.5 rounded-lg text-sm transition-colors"
-                      style={{
-                        fontWeight: active ? 600 : 500,
-                        color: active ? 'var(--c-primary)' : 'var(--ink-muted)',
-                        background: active ? 'var(--c-primary-soft)' : 'transparent',
-                      }}
-                    >
-                      {navLabel(it)}
-                    </Link>
-                  )
-                })}
-              </div>
-
-              {/* Language toggle (mobile) */}
-              <div className="px-3 mt-5">
-                <p className="text-[10px] font-bold uppercase mb-2" style={{ letterSpacing: '0.12em', color: 'var(--text-faint)' }}>{t('common.language')}</p>
-                <LangToggle full />
-              </div>
-            </div>
-
-            <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--line)' }}>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                    {fullName}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }

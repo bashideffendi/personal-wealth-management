@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import type { Goal } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,9 +23,10 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { RingProgress } from '@/components/ui/ring-progress'
 import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 import {
   computeGoalProbability, RISK_PROFILES, suggestedRiskProfile,
   categoryToPyramidLayer, PYRAMID_LAYERS, mulberry32, seedFromString, monthsUntil,
@@ -125,7 +126,7 @@ const STATUS_TONE: Record<'ok' | 'risk' | 'overdue' | 'done', { bg: string; ink:
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
 
 export default function GoalsPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -361,11 +362,12 @@ export default function GoalsPage() {
     : stats.iuranVsIncome > 30 ? 'var(--c-amber-ink)'
     : 'var(--ink-soft)'
 
+  // Angka stat compact ala kpi-card Beranda — full digit dipertahanin via title.
   const statCards = [
-    { label: t('goals.stat_total_target'), value: formatCurrency(stats.totalTarget), sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
-    { label: t('goals.stat_collected'), value: formatCurrency(stats.totalCurrent), sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
-    { label: t('goals.stat_monthly_contribution'), value: formatCurrency(stats.iuranBulan), sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
-    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
+    { label: t('goals.stat_total_target'), value: formatCompactCurrency(stats.totalTarget), full: formatCurrency(stats.totalTarget) as string | undefined, sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
+    { label: t('goals.stat_collected'), value: formatCompactCurrency(stats.totalCurrent), full: formatCurrency(stats.totalCurrent) as string | undefined, sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
+    { label: t('goals.stat_monthly_contribution'), value: formatCompactCurrency(stats.iuranBulan), full: formatCurrency(stats.iuranBulan) as string | undefined, sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
+    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', full: undefined as string | undefined, sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
   ]
 
   function scrollToPyramid() {
@@ -415,11 +417,45 @@ export default function GoalsPage() {
           <p className="text-sm max-w-xs" style={{ color: 'var(--ink-muted)' }}>
             {t('goals.empty_desc')}
           </p>
+          <Button className="mt-4" onClick={() => { setForm(EMPTY); setDialogOpen(true) }}>
+            <Plus className="h-4 w-4" /> {t('goals.new_goal')}
+          </Button>
         </div>
       ) : (
         <>
-          {/* 4 stat cards */}
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          {/* F10 mobile: ringkasan = ring total terkumpul (4 tile pindah md+) */}
+          <section className="s-card px-4 py-3.5 flex items-center gap-4 md:hidden">
+            <RingProgress
+              pct={stats.pct}
+              size={84}
+              strokeWidth={9}
+              color="var(--c-violet)"
+              label={stats.totalTarget > 0 ? `${stats.pct.toFixed(0)}%` : '—'}
+              subLabel={t('goals.of_target')}
+              className="shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                {t('goals.stat_collected')} · {activeGoals.length} {t('goals.goals_unit')}
+              </p>
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+                <span className="num tabular font-semibold" style={{ fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink)' }} title={formatCurrency(stats.totalCurrent)}>
+                  {formatCompactCurrency(stats.totalCurrent)}
+                </span>
+                <span className="num text-[11.5px]" style={{ color: 'var(--ink-soft)' }} title={formatCurrency(stats.totalTarget)}>
+                  / {formatCompactCurrency(stats.totalTarget)}
+                </span>
+              </p>
+              {stats.avgProb != null && (
+                <span className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                  {t('goals.stat_avg_probability')} {stats.avgProb.toFixed(0)}%
+                </span>
+              )}
+            </div>
+          </section>
+
+          {/* 4 stat cards (md+) */}
+          <div className="hidden md:grid gap-3 grid-cols-2 lg:grid-cols-4">
             {statCards.map((c) => (
               <div key={c.label} className="s-card p-5">
                 <div className="flex items-start justify-between">
@@ -428,7 +464,7 @@ export default function GoalsPage() {
                     <c.icon className="size-4" style={{ color: c.color }} />
                   </div>
                 </div>
-                <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>
+                <p className="num tabular text-[19px] sm:text-2xl font-semibold mt-3 leading-none" title={c.full} style={{ color: 'var(--ink)' }}>
                   {c.value}
                 </p>
                 <p className="text-[11px] mt-1.5" style={{ color: c.subColor }}>{c.sub}</p>
@@ -455,10 +491,19 @@ export default function GoalsPage() {
                   {/* Layout per mockup user: header (nama + meta + CTA kanan) →
                       angka terkumpul SERIF besar "dari target" kecil → bar + %
                       → hairline → footer 3 kolom small-caps. */}
-                  <div className="p-5">
+                  <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="size-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
+                        {/* F10 mobile: ring progres gantiin chip ikon (md+ tetap ikon) */}
+                        <RingProgress
+                          pct={pct}
+                          size={36}
+                          strokeWidth={4}
+                          color={done ? 'var(--c-mint)' : layerColor}
+                          label={`${Math.min(pct, 999).toFixed(0)}`}
+                          className="shrink-0 md:hidden"
+                        />
+                        <div className="size-8 rounded-xl hidden md:flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
                           <Icon className="size-4" style={{ color: layerInk }} />
                         </div>
                         <div className="min-w-0">
@@ -473,7 +518,7 @@ export default function GoalsPage() {
                           {/* Status = teks berwarna di meta (per mockup), bukan pill. */}
                           <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                             {g.deadline
-                              ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}`
+                              ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', year: 'numeric' })}`
                               : (categoryLabel(g.category) ?? g.category)}
                             {status && (
                               <>
@@ -502,7 +547,9 @@ export default function GoalsPage() {
                           </Button>
                         ) : (
                           <Button variant="outline" size="sm" className="rounded-full text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
-                            {t('goals.deposit_now')} <ArrowRight className="h-3.5 w-3.5" />
+                            <span className="sm:hidden">{t('goals.deposit_short')}</span>
+                            <span className="hidden sm:inline">{t('goals.deposit_now')}</span>
+                            <ArrowRight className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
@@ -510,8 +557,8 @@ export default function GoalsPage() {
 
                     {/* Angka sebagai perhiasan: terkumpul serif besar, target kecil
                         di baseline yang sama — satu baris, gak boleh patah aneh. */}
-                    <p className="mt-5 leading-none truncate">
-                      <span className="num" style={{ fontSize: '2.1rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+                    <p className="mt-3.5 leading-none truncate">
+                      <span className="num" style={{ fontSize: '1.375rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
                         {formatCurrency(g.current_amount)}
                       </span>
                       <span className="num text-[12.5px] ml-2" style={{ color: 'var(--ink-soft)' }}>
@@ -531,7 +578,7 @@ export default function GoalsPage() {
 
                   {/* Footer 3 kolom — anchor kiri · tengah · kanan, label dijepit
                       h-4 biar tombol ⓘ gak ngedorong kolomnya turun. */}
-                  <div className="px-5 py-3.5 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--outline)' }}>
+                  <div className="px-4 py-3 border-t hidden sm:grid grid-cols-3 gap-3" style={{ borderColor: 'var(--outline)' }}>
                     <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.monthly_label')}
@@ -588,15 +635,22 @@ export default function GoalsPage() {
                 <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{archivedOpen ? '−' : '+'}</span>
               </button>
               {archivedOpen && (
-                <div className="mt-3">
+                <div className="mt-3 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-3">
                   {archivedGoals.map((g) => (
-                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--outline)' }}>
-                      <div className="min-w-0">
+                    <div key={g.id} className="flex items-center justify-between gap-3 py-2 max-md:border-b max-md:last:border-0 md:border md:rounded-lg md:px-3 md:py-2.5" style={{ borderColor: 'var(--outline)' }}>
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                        <p className="num text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="num text-[11px] md:hidden" style={{ color: 'var(--ink-soft)' }}>
                           {formatCurrency(g.current_amount)} / {formatCurrency(g.target_amount)}
                         </p>
                       </div>
+                      <p
+                        className="num tabular-nums text-[12px] text-right shrink-0 hidden md:block"
+                        style={{ color: 'var(--ink-soft)' }}
+                        title={`${formatCurrency(g.current_amount)} / ${formatCurrency(g.target_amount)}`}
+                      >
+                        {formatCompactCurrency(g.current_amount)} / {formatCompactCurrency(g.target_amount)}
+                      </p>
                       <div className="flex gap-0.5 shrink-0">
                         <Button variant="ghost" size="icon-sm" aria-label={t('goals.unarchive')} onClick={() => setActive(g.id, true)}>
                           <RotateCcw className="h-3.5 w-3.5" />

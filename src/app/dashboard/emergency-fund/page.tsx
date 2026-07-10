@@ -16,7 +16,7 @@ import {
 import { Plus, Minus, Pencil, Trash2, Loader2, Check, ChevronDown, ShieldCheck, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
 const JOB_STABILITY_LABELS: Record<JobStability, string> = {
@@ -36,12 +36,12 @@ const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transpare
 // Preset lokasi/instrumen (ikut sheet user) — tetap bisa ketik bebas.
 const LOCATION_PRESETS = ['Tabungan', 'Deposito', 'Reksa Dana Pasar Uang', 'Emas', 'Saham', 'P2P Lending', 'Lainnya']
 
-const dmy = (d: string) => (d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : '—')
+const dmy = (d: string, dloc: string) => (d ? new Date(d).toLocaleDateString(dloc, { day: 'numeric', month: 'short', year: '2-digit' }) : '—')
 const todayISO = () => new Date().toISOString().split('T')[0]
-function etaDate(months: number): string {
+function etaDate(months: number, dloc: string): string {
   if (!Number.isFinite(months) || months <= 0) return '—'
   const d = new Date(); d.setMonth(d.getMonth() + Math.ceil(months))
-  return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+  return d.toLocaleDateString(dloc, { month: 'short', year: 'numeric' })
 }
 
 // Form "Atur dana darurat" — user isi TOTAL dana darurat di sebuah tempat
@@ -53,7 +53,8 @@ type Account = { id: string; name: string; type: string; current_balance: number
 type AccAlloc = { id: string; account_id: string; amount: number; accounts: { name: string; current_balance: number } | null }
 
 export default function EmergencyFundPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const supabase = createClient()
   const qc = useQueryClient()
   const [saving, setSaving] = useState(false)
@@ -299,9 +300,9 @@ export default function EmergencyFundPage() {
     const baseline = Math.max(0, accumulatedFund - net)
     let run = baseline
     const pts = [{ label: t('emergency_fund.journey_start'), value: baseline }]
-    for (const tx of sorted) { run = Math.max(0, run + (tx.kind === 'setor' ? tx.amount : -tx.amount)); pts.push({ label: dmy(tx.date), value: run }) }
+    for (const tx of sorted) { run = Math.max(0, run + (tx.kind === 'setor' ? tx.amount : -tx.amount)); pts.push({ label: dmy(tx.date, dloc), value: run }) }
     return pts
-  }, [transactions, accumulatedFund, t])
+  }, [transactions, accumulatedFund, t, dloc])
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin" /></div>
@@ -357,7 +358,7 @@ export default function EmergencyFundPage() {
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_target')}</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} {t('emergency_fund.months_unit')}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_deficit')}</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? 'var(--c-coral-ink)' : MINT_INK, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : t('emergency_fund.metric_achieved')}</p></div>
               </div>
-              {coverageMonths > 0 && <p className="mt-4 text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.coverage_explainer_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</span> {t('emergency_fund.coverage_explainer_until')} {etaDate(coverageMonths)}.</p>}
+              {coverageMonths > 0 && <p className="mt-4 text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.coverage_explainer_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</span> {t('emergency_fund.coverage_explainer_until')} {etaDate(coverageMonths, dloc)}.</p>}
             </>
           ) : (
             <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.empty_target_pre')} <span className="font-semibold" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_calculator')}</span> {t('emergency_fund.empty_target_mid')} <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_action')}</button> {t('emergency_fund.empty_target_post')}</p>
@@ -418,7 +419,7 @@ export default function EmergencyFundPage() {
             {monthsToGoal > 0 ? (
               <div className="mt-3 rounded-xl p-4" style={{ background: tint(AMBER, 9) }}>
                 <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_with')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlySaving)}</span>{t('emergency_fund.plan_per_month_reached')}</p>
-                <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER_INK }}>{etaDate(monthsToGoal)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
+                <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER_INK }}>{etaDate(monthsToGoal, dloc)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
               </div>
             ) : (
               <p className="mt-3 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_enter_hint')}</p>
@@ -455,7 +456,7 @@ export default function EmergencyFundPage() {
                 <>
                   {t('emergency_fund.journey_last_deposit')} {journey[journey.length - 1].label}
                   {deficit > 0 && monthsToGoal > 0 && (
-                    <> · {t('emergency_fund.journey_est_reached')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>{etaDate(monthsToGoal)}</span></>
+                    <> · {t('emergency_fund.journey_est_reached')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>{etaDate(monthsToGoal, dloc)}</span></>
                   )}
                 </>
               ) : t('emergency_fund.journey_empty_subtitle')}
@@ -566,7 +567,7 @@ export default function EmergencyFundPage() {
                     const setor = tx.kind === 'setor'
                     return (
                       <tr key={tx.id} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
-                        <td className="px-5 py-2.5 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{dmy(tx.date)}</td>
+                        <td className="px-5 py-2.5 num whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{dmy(tx.date, dloc)}</td>
                         <td className="px-3 py-2.5">
                           <span className="flex items-center gap-1.5 min-w-0">
                             {setor ? <ArrowDownLeft className="size-3.5 shrink-0" style={{ color: MINT }} /> : <ArrowUpRight className="size-3.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />}

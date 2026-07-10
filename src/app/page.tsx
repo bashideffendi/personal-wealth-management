@@ -13,6 +13,7 @@ import {
   Receipt, TrendingUp, LineChart, ChevronDown,
 } from 'lucide-react'
 import { PricingSection } from '@/components/landing/pricing-section'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 
 export default async function LandingPage() {
   let isAuthed = false
@@ -27,7 +28,9 @@ export default async function LandingPage() {
 
   const navLinks = [
     { href: '/features', label: 'Fitur' },
-    { href: '#harga', label: 'Harga' },
+    // Billing beku (src/lib/billing-flag.ts) → section Harga tidak dirender,
+    // jadi anchor-nya juga disembunyikan.
+    ...(BILLING_ENABLED ? [{ href: '#harga', label: 'Harga' }] : []),
     { href: '#faq', label: 'FAQ' },
     { href: '/about', label: 'Tentang' },
   ]
@@ -136,9 +139,9 @@ export default async function LandingPage() {
           <div className="relative lg:-mr-6">
             <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)', background: 'var(--surface)' }}>
               <div className="flex items-center gap-2 px-4 h-9 border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
-                <span className="size-2.5 rounded-full" style={{ background: '#ED7385' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#f0664f' }} />
                 <span className="size-2.5 rounded-full" style={{ background: '#E3A93C' }} />
-                <span className="size-2.5 rounded-full" style={{ background: '#5CCB9F' }} />
+                <span className="size-2.5 rounded-full" style={{ background: '#17b890' }} />
                 <div className="ml-3 hidden sm:flex items-center rounded-md px-3 py-0.5 text-[11px] font-medium" style={{ background: 'var(--bg)', color: 'var(--ink-soft)' }}>klunting.com/dashboard</div>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -244,8 +247,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ─── HARGA ─── */}
-      <PricingSection />
+      {/* ─── HARGA ─── (beku selama billing OFF, lihat src/lib/billing-flag.ts) */}
+      {BILLING_ENABLED && <PricingSection />}
 
       {/* ─── FAQ ─── */}
       <section id="faq" className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
@@ -316,7 +319,7 @@ export default async function LandingPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Produk</p>
               <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
                 <Link href="/features" className="hover:text-[var(--ink)] transition-colors">Fitur</Link>
-                <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>
+                {BILLING_ENABLED && <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>}
                 <a href="#faq" className="hover:text-[var(--ink)] transition-colors">FAQ</a>
                 <Link href="/about" className="hover:text-[var(--ink)] transition-colors">Tentang</Link>
               </div>

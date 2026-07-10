@@ -53,8 +53,8 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
 
   // ─── Card: Skor + deskripsi + breakdown ────────────────────────────
   const scoreCard = (
-    <div className="s-card p-6 sm:p-7 h-full">
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 sm:gap-8 h-full">
+    <div className="s-card p-4 sm:p-5 h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-8 h-full">
         {/* Score + tier description — ngisi tinggi kolom */}
         <div className="sm:col-span-5 flex flex-col">
           <div className="flex items-center gap-1.5 shrink-0">
@@ -63,7 +63,8 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
           </div>
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 py-2">
             <div className="relative shrink-0">
-              <svg width={208} height={208} viewBox="0 0 192 192" className="size-48 sm:size-52 -rotate-90">
+              {/* viewBox tetap 192 → stroke/radius ikut menyusut proporsional saat render 144px */}
+              <svg width={144} height={144} viewBox="0 0 192 192" className="size-36 sm:size-40 -rotate-90">
                 <circle cx={96} cy={96} r={84} fill="none" stroke="var(--surface-2)" strokeWidth={11} />
                 <circle
                   cx={96} cy={96} r={84} fill="none" stroke={tierMeta.color} strokeWidth={11} strokeLinecap="round"
@@ -73,7 +74,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="leading-none tabular-nums font-bold" style={{ fontSize: 68, letterSpacing: '-0.04em', color: tierMeta.ink }}>
+                <span className="leading-none tabular-nums font-bold" style={{ fontSize: 32, letterSpacing: '-0.03em', color: tierMeta.ink }}>
                   {score}
                 </span>
                 <span className="text-[11px] mt-1.5 font-medium opacity-50" style={{ color: tierMeta.ink }}>
@@ -106,14 +107,14 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
 
   // ─── Card: Cash Coverage / runway ──────────────────────────────────
   const coverageCard = (
-    <div className="s-card p-6 h-full flex flex-col">
+    <div className="s-card p-4 h-full flex flex-col">
       <div className="flex items-center gap-1.5 shrink-0">
         <p className="eyebrow">{t('health_card.cash_coverage')}</p>
         <EduTip topic="financial-health" side="bottom" />
       </div>
-      <div className="mt-3 flex-1 rounded-2xl p-5 flex flex-col" style={{ background: burnTint, border: `1px solid color-mix(in srgb, ${burnColor} 20%, transparent)` }}>
+      <div className="mt-3 flex-1 rounded-2xl p-4 flex flex-col" style={{ background: burnTint, border: `1px solid color-mix(in srgb, ${burnColor} 20%, transparent)` }}>
         <div className="flex items-baseline gap-2">
-          <span className="num tabular leading-none font-bold" style={{ color: burnInk, fontSize: 68, letterSpacing: '-0.03em' }}>
+          <span className="num tabular leading-none font-bold" style={{ color: burnInk, fontSize: 30, letterSpacing: '-0.03em' }}>
             {!hasExpenseData ? '—' : burnMonths > 99 ? '99+' : burnMonths.toFixed(1)}
           </span>
           <span className="text-base font-semibold" style={{ color: burnInk }}>{t('health_card.months')}</span>

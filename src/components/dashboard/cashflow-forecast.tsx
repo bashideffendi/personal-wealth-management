@@ -18,9 +18,10 @@
 
 import { useMemo } from 'react'
 import { TrendingDown, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
 import { occurrencesInRange, toLocalISO } from '@/lib/recurrence'
+import { useI18n } from '@/lib/i18n/context'
 
 interface RecurringItem {
   name: string
@@ -131,6 +132,7 @@ export function CashFlowForecast({
   safetyBuffer = 500_000,
   daysAhead = 30,
 }: Props) {
+  const { locale } = useI18n()
   const forecast = useMemo(
     () => buildForecast(liquidBalance, recurringItems, contracts, daysAhead),
     [liquidBalance, recurringItems, contracts, daysAhead],
@@ -153,9 +155,9 @@ export function CashFlowForecast({
         <div className="flex items-start gap-3 mb-2">
           <div
             className="size-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(14,165,233,0.12)' }}
+            style={{ background: 'var(--c-blue-soft)' }}
           >
-            <Calendar className="size-4" style={{ color: 'var(--sky-600)' }} />
+            <Calendar className="size-4" style={{ color: 'var(--c-blue-ink)' }} />
           </div>
           <div>
             <p className="eyebrow">Forecast Saldo</p>
@@ -184,6 +186,8 @@ export function CashFlowForecast({
   const hasNegative = negativeDays.length > 0
   const hasRisk = riskDays.length > 0
   const accentColor = hasNegative ? 'var(--c-coral)' : hasRisk ? 'var(--c-amber)' : 'var(--c-mint)'
+  // Varian -ink (AA-safe) buat TEKS Stat; accentColor (hue terang) buat garis chart.
+  const accentColorInk = hasNegative ? 'var(--c-coral-ink)' : hasRisk ? 'var(--c-amber-ink)' : 'var(--c-mint-ink)'
 
   // SVG chart dimensions
   const chartH = 80
@@ -254,19 +258,22 @@ export function CashFlowForecast({
         <div className="grid grid-cols-3 gap-3 text-[11px]">
           <Stat
             label="Sekarang"
-            value={formatCurrency(liquidBalance)}
+            value={formatCompactCurrency(liquidBalance)}
+            title={formatCurrency(liquidBalance)}
             color="var(--ink)"
           />
           <Stat
             label="Akhir 30h"
-            value={formatCurrency(endBalance)}
-            color={endBalance < liquidBalance ? 'var(--c-coral)' : 'var(--c-mint)'}
+            value={formatCompactCurrency(endBalance)}
+            title={formatCurrency(endBalance)}
+            color={endBalance < liquidBalance ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)'}
             icon={endBalance < liquidBalance ? <TrendingDown className="size-3" /> : <TrendingUp className="size-3" />}
           />
           <Stat
             label="Terendah"
-            value={formatCurrency(minPoint?.balance ?? liquidBalance)}
-            color={minPoint && minPoint.balance < safetyBuffer ? accentColor : 'var(--ink)'}
+            value={formatCompactCurrency(minPoint?.balance ?? liquidBalance)}
+            title={formatCurrency(minPoint?.balance ?? liquidBalance)}
+            color={minPoint && minPoint.balance < safetyBuffer ? accentColorInk : 'var(--ink)'}
             sub={minPoint?.balance !== undefined && minPoint.balance < liquidBalance
               ? `H+${forecast.indexOf(minPoint)}`
               : undefined}
@@ -318,14 +325,14 @@ export function CashFlowForecast({
             {eventDays.slice(0, 4).map((p) => (
               <div key={p.iso} className="flex items-center gap-1.5">
                 <span className="num font-medium" style={{ color: 'var(--ink-soft)' }}>
-                  {p.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                  {p.date.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}
                 </span>
                 <span className="truncate max-w-[100px]" style={{ color: 'var(--ink)' }}>
                   {p.events[0].name}
                 </span>
                 <span
                   className="num font-semibold"
-                  style={{ color: p.inflow > p.outflow ? 'var(--c-mint)' : 'var(--c-coral)' }}
+                  style={{ color: p.inflow > p.outflow ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                 >
                   {p.inflow > p.outflow ? '+' : '-'}
                   {formatCurrency(Math.max(p.inflow, p.outflow))}
@@ -345,19 +352,22 @@ export function CashFlowForecast({
 }
 
 function Stat({
-  label, value, color, icon, sub,
+  label, value, color, icon, sub, title,
 }: {
   label: string
   value: string
   color: string
   icon?: React.ReactNode
   sub?: string
+  /** Full digit — hover/long-press tetap bisa lihat nominal utuh */
+  title?: string
 }) {
   return (
     <div>
       <p style={{ color: 'var(--ink-soft)' }}>{label}</p>
       <p
         className="num font-bold mt-0.5 inline-flex items-center gap-1"
+        title={title}
         style={{ color, fontSize: 14 }}
       >
         {icon}

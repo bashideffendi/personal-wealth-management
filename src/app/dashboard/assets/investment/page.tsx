@@ -5,7 +5,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
 import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown } from 'lucide-react'
 import { CurrencyRates } from '@/components/investment/currency-rates'
@@ -21,7 +21,7 @@ import { WatchlistTargetChip } from '@/components/investment/watchlist-target-ch
 import { assetClassKey, ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
 import { FX_FALLBACK_USDIDR, INVESTMENT_SUBCATS } from '@/lib/constants'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the route's initial JS (loads on chart mount).
 const AllocationDonut = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
@@ -57,7 +57,7 @@ const NO_SNAPSHOTS: { snapshot_date: string; market_value: number }[] = []
 const NO_QUOTES: Record<string, LiveQuote> = {}
 
 export default function InvestmentOverviewPage() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const supabase = createClient()
 
   // Menu "Tambah Holding" — pilih kelas aset dulu (investasi bukan cuma saham),
@@ -323,6 +323,63 @@ export default function InvestmentOverviewPage() {
     return basis > 0 ? (trailing / basis) * 100 : null
   }, [dividends, enriched])
 
+  // Header quiet dipakai dua branch (empty-state & normal) — CTA "Tambah
+  // holding" (dropdown kelas aset) tetap tersedia di keduanya.
+  const pageHeader = (
+    <QuietPageHeader
+      title={t('investment.title')}
+      info={t('investment.subtitle')}
+      actions={
+        <>
+          <CalmModeToggle />
+          <Link
+            href="/dashboard/assets/investment/stock?tab=dividen"
+            aria-label={t('investment.dividend_history')}
+            title={t('investment.dividend_history')}
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+          >
+            <History className="size-3.5" />
+            {/* Mobile <sm: icon-only biar muat 1 baris bareng "Tambah holding" */}
+            <span className="hidden sm:inline">{t('investment.dividend_history')}</span>
+          </Link>
+          <div className="relative" ref={addRef}>
+            <button
+              type="button"
+              onClick={() => setAddOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={addOpen}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
+              style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
+            >
+              <Plus className="size-3.5" /> {t('investment.add_holding')} <ChevronDown className="size-3" style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
+            </button>
+            {addOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border py-1.5 z-50 max-h-[60vh] overflow-y-auto"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
+              >
+                {INVESTMENT_SUBCATS.map((sc) => (
+                  <Link
+                    key={sc.slug}
+                    role="menuitem"
+                    href={`/dashboard/assets/investment/${sc.slug}?add=1`}
+                    onClick={() => setAddOpen(false)}
+                    className="block px-3.5 py-2 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {sc.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      }
+    />
+  )
+
   if (overview.isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -348,57 +405,49 @@ export default function InvestmentOverviewPage() {
     )
   }
 
+  // Empty state user baru — belum ada holding sama sekali: satu kartu ajakan
+  // menggantikan grid KPI Rp 0 + pesan pucat tersebar. Header quiet tetap
+  // dirender supaya CTA "Tambah holding" existing tetap tersedia.
+  if (items.length === 0) {
+    return (
+      <div className="space-y-6">
+        {pageHeader}
+        <div className="s-card p-8 sm:p-10 flex flex-col items-center text-center">
+          <div
+            className="size-12 rounded-2xl flex items-center justify-center mb-3"
+            style={{ background: 'var(--info-bg)' }}
+          >
+            <TrendingUp className="size-6" style={{ color: 'var(--info)' }} />
+          </div>
+          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+            {locale === 'id' ? 'Mulai portofolio investasimu' : 'Start your investment portfolio'}
+          </p>
+          <p className="text-xs mt-1 max-w-sm" style={{ color: 'var(--ink-muted)' }}>
+            {t('investment.allocation_empty_desc')}
+          </p>
+          {/* Mekanisme sama dengan dropdown header: langsung ke form tambah per kelas aset */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 max-w-md">
+            {INVESTMENT_SUBCATS.map((sc) => (
+              <Link
+                key={sc.slug}
+                href={`/dashboard/assets/investment/${sc.slug}?add=1`}
+                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:bg-[var(--surface-2)]"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}
+              >
+                <Plus className="size-3" style={{ color: 'var(--ink-soft)' }} />
+                {sc.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Quiet header — selaras Transaksi/Anggaran; identitas angka tetap di hero */}
-      <QuietPageHeader
-        title={t('investment.title')}
-        info={t('investment.subtitle')}
-        actions={
-          <>
-            <CalmModeToggle />
-            <Link
-              href="/dashboard/assets/investment/stock?tab=dividen"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
-            >
-              <History className="size-3.5" /> {t('investment.dividend_history')}
-            </Link>
-            <div className="relative" ref={addRef}>
-              <button
-                type="button"
-                onClick={() => setAddOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={addOpen}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition hover:opacity-90"
-                style={{ background: 'var(--c-primary)', color: 'var(--on-black)' }}
-              >
-                <Plus className="size-3.5" /> {t('investment.add_holding')} <ChevronDown className="size-3" style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
-              </button>
-              {addOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border py-1.5 z-50 max-h-[60vh] overflow-y-auto"
-                  style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
-                >
-                  {INVESTMENT_SUBCATS.map((sc) => (
-                    <Link
-                      key={sc.slug}
-                      role="menuitem"
-                      href={`/dashboard/assets/investment/${sc.slug}?add=1`}
-                      onClick={() => setAddOpen(false)}
-                      className="block px-3.5 py-2 text-xs font-medium transition hover:bg-[var(--surface-2)]"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      {sc.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        }
-      />
+      {pageHeader}
 
       <PortfolioHero
         totals={totals}
@@ -408,8 +457,14 @@ export default function InvestmentOverviewPage() {
         snapshots={snapshots}
       />
 
-      {/* Kas di RDN / RDI — kartu PUTIH, chip krem + logo bank, tombol "+" selalu ada */}
-      <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+      {/* Kas di RDN / RDI — kartu PUTIH, chip krem + logo bank, tombol "+" selalu ada.
+          F9 mobile: label pindah ke .m-sec di kanvas (+ link Kelola), eyebrow & link dalam kartu disembunyikan. */}
+      <div>
+        <div className="m-sec md:hidden">
+          <span>{t('investment.rdn_cash')}</span>
+          <Link href="/dashboard/accounts">{t('investment.manage')} ›</Link>
+        </div>
+        <div className="s-card p-5 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-3 shrink-0">
           <div
             className="size-11 rounded-xl flex items-center justify-center shrink-0"
@@ -418,9 +473,9 @@ export default function InvestmentOverviewPage() {
             <Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
           </div>
           <div>
-            <p className="eyebrow">{t('investment.rdn_cash')}</p>
-            <p className="num tabular text-2xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
-              {formatCurrency(rdnTotal)}
+            <p className="eyebrow max-md:hidden">{t('investment.rdn_cash')}</p>
+            <p className="num tabular font-bold leading-tight" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(rdnTotal)}>
+              {formatCompactCurrency(rdnTotal)}
             </p>
           </div>
         </div>
@@ -455,23 +510,40 @@ export default function InvestmentOverviewPage() {
         </div>
         <Link
           href="/dashboard/accounts"
-          className="text-xs font-medium inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
+          className="text-xs font-medium max-md:hidden md:inline-flex items-center gap-0.5 hover:underline shrink-0 ml-auto"
           style={{ color: 'var(--c-mint-ink)' }}
         >
           {t('investment.manage')} <ArrowUpRight className="size-3.5" />
         </Link>
+        </div>
       </div>
 
-      <AssetClassCards byClass={byClass} byCategory={byCategory} />
+      {/* F9 mobile: header "Kelas Aset" (sudah di kanvas dalam komponen) di-restyle
+          jadi rupa .m-sec — 13px/600 ink, non-uppercase. `!` wajib: .eyebrow
+          unlayered di globals ngalahin utilities tanpa important. Desktop tetap. */}
+      <div className="max-md:[&_.eyebrow]:text-[13px]! max-md:[&_.eyebrow]:font-semibold! max-md:[&_.eyebrow]:normal-case! max-md:[&_.eyebrow]:tracking-normal! max-md:[&_.eyebrow]:text-[color:var(--ink)]! max-md:[&>div>div:first-child]:mb-1.5">
+        <AssetClassCards byClass={byClass} byCategory={byCategory} />
+      </div>
 
       {/* Currency rates — konteks FX, diturunkan dari slot #2: duit user dulu,
-          kurs belakangan. */}
-      <CurrencyRates />
+          kurs belakangan. F9 mobile: judul pindah ke .m-sec kanvas; eyebrow
+          dalam kartu disembunyikan (subtitle jam update + refresh tetap). */}
+      <div>
+        <div className="m-sec md:hidden"><span>{t('investment.fx_title')}</span></div>
+        <div className="max-md:[&_.eyebrow]:hidden">
+          <CurrencyRates />
+        </div>
+      </div>
 
-      {/* Alokasi donut + Kinerja per kelas */}
+      {/* Alokasi donut + Kinerja per kelas.
+          F9 mobile: judul tiap kartu pindah ke .m-sec di kanvas (marginTop 0
+          inline — margin .m-sec gak collapse di dalam grid cell); header
+          dalam kartu jadi desktop-only. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="s-card p-5 sm:p-6 lg:col-span-2 flex flex-col">
-          <div className="mb-4">
+        <div className="lg:col-span-2 flex flex-col">
+          <div className="m-sec md:hidden" style={{ marginTop: 0 }}><span>{t('investment.portfolio_composition')}</span></div>
+          <div className="s-card p-5 sm:p-6 flex-1 flex flex-col">
+          <div className="mb-4 max-md:hidden">
             <p className="eyebrow">{t('investment.allocation')}</p>
             <h2 className="text-xl font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
               {t('investment.portfolio_composition')}
@@ -494,14 +566,18 @@ export default function InvestmentOverviewPage() {
             </div>
           ) : (
             <>
-              <div className="relative" style={{ height: 180 }}>
+              {/* F11: donut TETAP (informatif) tapi proporsional di HP —
+                  tinggi diciutkan + angka tengah compact (full digit kelebaran
+                  buat lubang donut di layar sempit; full tetap via title). */}
+              <div className="relative h-[150px] md:h-[180px]">
                 <AllocationDonut data={donut} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                     {donut.length} {t('investment.classes')}
                   </p>
-                  <p className="num tabular text-base font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-                    {formatCurrency(totals.market)}
+                  <p className="num tabular text-base font-semibold leading-tight" title={formatCurrency(totals.market)} style={{ color: 'var(--ink)' }}>
+                    <span className="md:hidden">{formatCompactCurrency(totals.market)}</span>
+                    <span className="hidden md:inline">{formatCurrency(totals.market)}</span>
                   </p>
                 </div>
               </div>
@@ -526,10 +602,16 @@ export default function InvestmentOverviewPage() {
               </div>
             </>
           )}
+          </div>
         </div>
 
-        <div className="s-card p-5 sm:p-6 lg:col-span-3 flex flex-col">
-          <div className="flex items-start justify-between gap-2 mb-4">
+        <div className="lg:col-span-3 flex flex-col">
+          <div className="m-sec md:hidden" style={{ marginTop: 0 }}>
+            <span>{t('investment.return_per_class')}</span>
+            <span className="text-[11px] font-normal" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
+          </div>
+          <div className="s-card p-5 sm:p-6 flex-1 flex flex-col">
+          <div className="flex items-start justify-between gap-2 mb-4 max-md:hidden">
             <div>
               <p className="eyebrow">{t('investment.performance')}</p>
               <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.return_per_class')}</h2>
@@ -579,23 +661,38 @@ export default function InvestmentOverviewPage() {
               })()}
             </div>
           )}
+          </div>
         </div>
       </div>
 
       <WatchlistTargetChip />
 
-      <HoldingTable enriched={enriched} quotes={quotes} />
+      {/* F9 mobile: judul "Daftar Holding" pindah ke .m-sec kanvas; eyebrow+h2
+          dalam kartu disembunyikan (wedge summary + tab pill tetap). Gate
+          enriched.length menjiplak guard internal HoldingTable biar .m-sec
+          gak yatim pas komponen return null. */}
+      {enriched.length > 0 && (
+        <div>
+          <div className="m-sec md:hidden"><span>{t('investment.holding_list')}</span></div>
+          <div className="max-md:[&_.eyebrow]:hidden max-md:[&_h2]:hidden">
+            <HoldingTable enriched={enriched} quotes={quotes} />
+          </div>
+        </div>
+      )}
 
       {/* Bottom row: Dividen 6 bulan + Dividen Terdekat (forward-looking —
           mengganti "Pergerakan Hari Ini" yang merender data day-change yang
           sama untuk ketiga kalinya di satu halaman). */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
-        {/* Dividen 6 bulan — real dari tabel dividends */}
-        <div className="s-card p-5 sm:p-6">
+        {/* Dividen 6 bulan — real dari tabel dividends.
+            F9 mobile: judul ke .m-sec kanvas, eyebrow dalam kartu md-only. */}
+        <div>
+          <div className="m-sec md:hidden" style={{ marginTop: 0 }}><span>{t('investment.dividend_6mo')}</span></div>
+          <div className="s-card p-5 sm:p-6">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <p className="eyebrow">{t('investment.dividend_6mo')}</p>
-              <p className="num tabular text-2xl font-bold mt-1" style={{ color: 'var(--ink)' }}>{formatCurrency(dividen6Total)}</p>
+              <p className="eyebrow max-md:hidden">{t('investment.dividend_6mo')}</p>
+              <p className="num tabular font-bold mt-1" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(dividen6Total)}>{formatCompactCurrency(dividen6Total)}</p>
               {yieldOnCost != null && (
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {t('investment.yoc_label')} ~{yieldOnCost.toFixed(1).replace('.', ',')}% {t('investment.yoc_suffix')}
@@ -615,19 +712,24 @@ export default function InvestmentOverviewPage() {
             )}
           </div>
           {dividen6Total === 0 ? (
-            <div className="h-[160px] flex flex-col items-center justify-center text-center">
+            /* Empty state gak perlu nyewa tinggi chart 160px — padding wajar aja */
+            <div className="py-8 flex flex-col items-center justify-center text-center">
               <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('investment.dividend_empty')}</p>
               <Link href="/dashboard/assets/investment/stock?tab=dividen" className="text-xs mt-1 hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
                 {t('investment.record_dividend')} →
               </Link>
             </div>
           ) : (
-            <div style={{ height: 160 }}>
+            <div className="h-[160px] xl:h-[220px]">
               <DividendBar data={dividen6} />
             </div>
           )}
+          </div>
         </div>
 
+        {/* UpcomingDividends bisa return null (query internal) — .m-sec kanvas
+            gak bisa dipasang dari sini tanpa risiko header yatim; header
+            dalam kartunya dibiarkan (butuh edit upcoming-dividends.tsx). */}
         <UpcomingDividends enriched={enriched} />
       </div>
 

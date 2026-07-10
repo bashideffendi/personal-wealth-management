@@ -63,7 +63,10 @@ export function ReportHiddenStyle() {
       {ready && hidden.length > 0 && (
         <style
           dangerouslySetInnerHTML={{
-            __html: hidden.map((id) => `[data-report-block="${id}"]{display:none!important}`).join(''),
+            __html: hidden
+              .filter((id) => /^[a-z0-9_-]+$/i.test(id))
+              .map((id) => `[data-report-block="${id}"]{display:none!important}`)
+              .join(''),
           }}
         />
       )}

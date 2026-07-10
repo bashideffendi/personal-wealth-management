@@ -30,36 +30,36 @@
 
 :root {
   /* ── Brand stops — hijau Klunting (bespoke, bukan emerald-500 stock) ── */
-  --brand-50:    #EDF6F1;
-  --brand-100:   #D9EEE3;
-  --brand-500:   #129B69;      /* primary green (Klunting brand) */
-  --brand-600:   #0E7F57;
-  --brand-700:   #0B6E4D;
+  --brand-50:    #E4F6F0;
+  --brand-100:   #C5ECE0;
+  --brand-500:   #17b890;      /* primary teal (Klunting brand baru) */
+  --brand-600:   #0F9D78;
+  --brand-700:   #0C8C69;
 
-  --mint-50:     #EDF6F1;
-  --mint-300:    #8BCBAD;
-  --mint-500:    #129B69;      /* income/positive accent */
-  --mint-600:    #0E7F57;
+  --mint-50:     #E4F6F0;
+  --mint-300:    #7FD9BE;
+  --mint-500:    #17b890;      /* income/positive accent */
+  --mint-600:    #0F9D78;
 
-  --violet-50:   #F1EEFA;
-  --violet-100:  #E5DFF6;
-  --violet-300:  #C2B4EA;
-  --violet-500:  #7C5FD3;     /* AI/langganan/kewajiban tetap — iris, bukan ungu neon */
-  --violet-600:  #6A4BC2;
-  --violet-700:  #5A3CAB;
+  --violet-50:   #F3EAF7;
+  --violet-100:  #E7D6EE;
+  --violet-300:  #C9A6DA;
+  --violet-500:  #8b4fb0;     /* langganan/kategori/AI — ungu brand */
+  --violet-600:  #7A44A0;
+  --violet-700:  #724094;
 
   /* ── Surfaces (Light) — CARTOON QUEST v7: kertas dongeng ──────
      Kanvas kertas hangat, kartu putih dengan outline tinta + bayangan
      offset (bahasa kartun/neo-brutalist — lihat .s-card & .btn-primary).
      Sumur/chip selapis lebih dalam dari kertas. */
-  --paper:       #FFF9EE;
-  --bg:          #FFF9EE;
-  --bg-2:        #F6EFDD;
+  --paper:       #FAFAFA;
+  --bg:          #FAFAFA;
+  --bg-2:        #F4F4F5;
   --surface:     #FFFFFF;    /* card bg pure white */
-  --surface-2:   #F8F1E1;    /* sumur/chip sekunder */
-  --surface-3:   #EFE6D0;
+  --surface-2:   #F4F4F5;    /* sumur/chip sekunder (netral) */
+  --surface-3:   #ECECEF;
   --line:        rgba(24, 24, 27, 0.08);
-  --line-strong: rgba(24, 24, 27, 0.14);
+  --line-strong: rgba(24, 24, 27, 0.12);
 
   /* ── Text (Light) — TIGA PERAN saja, jangan nambah abu baru ──────
      Aturan keterbacaan (semua ≥ AA di atas --surface putih):
@@ -67,25 +67,25 @@
        --ink-muted = teks sekunder (paragraf pendukung, deskripsi). PEKAT.
        --ink-soft  = label/eyebrow/caption paling redup. FLOOR — jangan lebih terang.
      JANGAN pakai abu lebih terang dari --ink-soft buat TEKS yg harus kebaca. */
-  --ink:         #1E1B16;    /* konten utama — tinta kartun (warna outline juga) */
-  --ink-muted:   #4A453C;    /* sekunder, kebaca (9.5:1) */
-  --ink-soft:    #5E5749;    /* sekunder-redup — FLOOR text (7.2:1 putih / 6.8:1 kertas) */
-  --text:        #1E1B16;
-  --text-2:      #4A453C;    /* alias → ink-muted */
-  --text-mute:   #5E5749;    /* alias → ink-soft (floor) */
-  --text-faint:  #5E5749;    /* faint utk teks dilarang — samain ke floor */
-  --border:      #D5C39D;    /* garis kartu/divider — JELAS kelihatan di krem (dulu #E5DCC6 pudar/gak kebaca) */
-  --border-soft: #E6DCC4;    /* hairline halus */
+  --ink:         #18181b;    /* konten utama (near-black) */
+  --ink-muted:   #3F3F46;    /* sekunder, kebaca (~10:1) */
+  --ink-soft:    #52525B;    /* sekunder-redup (~7:1) */
+  --text:        #18181b;
+  --text-2:      #3F3F46;    /* alias → ink-muted */
+  --text-mute:   #52525B;    /* alias → ink-soft */
+  --text-faint:  #71717A;    /* faint — FLOOR text (4.7:1 putih, masih AA) */
+  --border:      rgba(24, 24, 27, 0.08);   /* hairline divider netral */
+  --border-soft: rgba(24, 24, 27, 0.05);   /* hairline halus */
   /* Outline kartun — bingkai 2px + bayangan offset keras (identitas v7).
      DIMENSI kartu/tombol juga token sejak sistem multi-skin: tiap skin
      ngatur ketebalan bingkai, gaya bayangan, dan radius-nya sendiri. */
-  --outline:        #1E1B16;
-  --outline-shadow: #1E1B16;
-  --outline-w:      1.5px;
-  --card-radius:    14px;
-  --card-shadow:    2px 2px 0 var(--outline-shadow);
-  --btn-shadow:     1.5px 1.5px 0 var(--outline-shadow);
-  --btn-radius:     999px;   /* cartoon = tombol pill chunky (match mockup) */
+  --outline:        rgba(24, 24, 27, 0.08);   /* border kartu = hairline netral (flat, bukan tinta tebal) */
+  --outline-shadow: rgba(24, 24, 27, 0.06);
+  --outline-w:      0.5px;
+  --card-radius:    16px;
+  --card-shadow:    0 1px 2px rgba(24, 24, 27, 0.05);   /* flat, bukan offset keras */
+  --btn-shadow:     none;
+  --btn-radius:     999px;   /* tombol pill */
   /* Progress bar ala game (.quest-bar): track tebal + outline tinta +
      fill bulat. Skin lain ngecilin tinggi & ilangin outline. */
   --bar-h:          12px;
@@ -95,76 +95,79 @@
   /* ── Token HERO — panel gelap ikonik (net worth dkk). SELALU gelap di
      light & dark mode; tiap skin ngatur nuansanya (cartoon=dusk ungu,
      mono=ink, terminal=hitam amber). JANGAN redefine di .dark. ── */
-  --hero-bg:          #241F31;
-  --hero-mid:         #2C2640;
-  --hero-soft:        #322B45;
-  --on-hero:          #F4EDDC;
-  --on-hero-mut:      #B5ABCC;
+  --hero-bg:          #0F0F14;
+  --hero-mid:         #15151B;
+  --hero-soft:        #1B1B22;
+  --on-hero:          #FAFAFA;
+  --on-hero-mut:      #A1A1AA;
   --hero-line:        rgba(255, 255, 255, 0.10);
-  --hero-chip-pos-bg: rgba(61, 186, 138, 0.18);
-  --hero-chip-pos-fg: #82DBB1;
-  --hero-chip-neg-bg: rgba(237, 115, 133, 0.18);
-  --hero-chip-neg-fg: #F4A6AE;
-  --hero-accent:      #3DBA8A;
-  --hero-accent-2:    #5CCB9F;
+  --hero-chip-pos-bg: rgba(23, 184, 144, 0.20);
+  --hero-chip-pos-fg: #46E0B4;
+  --hero-chip-neg-bg: rgba(240, 102, 79, 0.20);
+  --hero-chip-neg-fg: #FF9686;
+  --hero-accent:      #46E0B4;
+  --hero-accent-2:    #17B890;
 
   /* ── Semantic tokens — palet data bespoke (lightness diharmonisasi) ───
      Empat hue identitas tetap (hijau=naik, rose=turun, brass=waspada,
      iris=AI) tapi hex-nya milik Klunting: de-neon, warm-shift, dan
      lightness disetarakan biar berdampingan di chart tanpa ada yang
      teriak. Stock Tailwind 500 (10B981/F43F5E/F59E0B/8B5CF6) pensiun. */
-  /* PRIMARY = EMAS (v7 Cartoon Quest) — koin/loot, aksi utama. Tombol/
-     FAB/logo emas + TEKS TINTA (11.1:1). Emas = FILL ONLY; sebagai teks
-     di putih gagal kontras → teks/ikon/ring aksen = --c-primary-ink. */
-  --c-primary:      #FFC83D;
-  --c-primary-soft: #FFF3D6;     /* tint emas buat active states (-ink 5.2:1) */
-  --c-primary-foreground: #1E1B16;
-  --c-primary-ink:  #7E5600;
-  --c-mint:         #129B69;     /* income/up — hijau dalam, gak neon (putih di atasnya 3.6:1, > lama) */
-  --c-mint-soft:    #E7F4EC;
-  --c-coral:        #D2495A;     /* expense/danger — garnet rose, lebih tenang dari coral pink */
-  --c-coral-soft:   #FAEDEE;
-  --c-amber:        #C98F0E;     /* warning/saving — brass/ochre, bukan oranye rambu */
+  /* PRIMARY = INK (brand baru) — tombol/FAB/aksi utama = ink + teks putih.
+     Aksen/positif/link = teal (--accent). Filosofi: brand color cuma di DATA
+     & kategori, chrome netral (60-30-10). */
+  --c-primary:      #18181b;
+  --c-primary-soft: #F4F4F5;     /* tint netral buat active/hover states */
+  --c-primary-foreground: #FFFFFF;
+  --c-primary-ink:  #18181b;
+  --accent:         #17b890;     /* aksen brand: active-nav / link / positif */
+  --c-mint:         #17b890;     /* income/up — teal brand (#17b890) */
+  --c-mint-soft:    #E4F6F0;
+  --c-coral:        #f0664f;     /* expense/danger — coral brand */
+  --c-coral-soft:   #FCECE8;
+  --c-amber:        #C98F0E;     /* warning/anggaran near-limit — brass (fungsional, bukan dari logo) */
   --c-amber-soft:   #F9F1DD;
-  --c-violet:       #7C5FD3;     /* AI — iris */
-  --c-violet-soft:  #F1EEFA;
-  /* AA-contrast foreground variants — readable on the soft tints AND on near-white
-     surfaces. Diverifikasi: mint 6.3 / coral 7.1 / amber 5.6 / violet 7.9 di putih. */
-  --c-mint-ink:     #0B6E4D;
-  --c-coral-ink:    #A12C3F;
+  --c-violet:       #8b4fb0;     /* langganan/kategori/AI — ungu brand */
+  --c-violet-soft:  #F3EAF7;
+  --c-blue:         #5d6fe0;     /* info/akun/link — biru brand */
+  --c-blue-soft:    #ECECF8;
+  /* AA-contrast foreground variants — readable di soft tint & near-white. */
+  --c-mint-ink:     #0C8C69;
+  --c-coral-ink:    #CE4630;
   --c-amber-ink:    #8F5E06;
-  --c-violet-ink:   #5A3CAB;
-  --c-ink:          #1E1B16;
+  --c-violet-ink:   #724094;
+  --c-blue-ink:     #4350C2;
+  --c-ink:          #18181b;
 
-  /* ── Dark inverse — panel "malam dusk" (hero cards di light mode) ── */
-  --black:       #241F31;
-  --black-soft:  #322B45;
-  --black-2:     #3C3454;
+  /* ── Dark inverse — panel charcoal (hero/ink cards di light mode) ── */
+  --black:       #0F0F14;
+  --black-soft:  #19191F;
+  --black-2:     #212129;
   --black-line:  rgba(255, 255, 255, 0.10);
-  --on-black:    #F4EDDC;
+  --on-black:    #FAFAFA;
   --on-black-mut:#B5ABCC;
 
   /* ── Hijau Klunting — ramp bespoke (warm sage-emerald) ── */
-  --emerald-50:  #EDF6F1;
-  --emerald-100: #D9EEE3;
-  --emerald-200: #B7DFCC;
-  --emerald-300: #8BCBAD;
-  --emerald-400: #4AB386;
-  --emerald-500: #129B69;   /* primary */
-  --emerald-600: #0E7F57;
-  --emerald-700: #0B6E4D;
-  --emerald-800: #0A5740;
-  --emerald-900: #084433;
+  --emerald-50:  #E4F6F0;
+  --emerald-100: #C5ECE0;
+  --emerald-200: #9FE0CB;
+  --emerald-300: #6FD0B0;
+  --emerald-400: #34BD97;
+  --emerald-500: #17b890;   /* primary teal */
+  --emerald-600: #0F9D78;
+  --emerald-700: #0C8C69;
+  --emerald-800: #0A6E54;
+  --emerald-900: #08543F;
 
   /* ── Garnet rose — secondary accent (expense, warmth) ── */
-  --coral-50:    #FAEDEE;
-  --coral-100:   #F7DCDF;
-  --coral-200:   #F0BDC3;
-  --coral-300:   #E5929D;
-  --coral-400:   #DC6B7A;
-  --coral-500:   #D2495A;
-  --coral-600:   #B93748;
-  --coral-700:   #A12C3F;
+  --coral-50:    #FCECE8;
+  --coral-100:   #FBDBD3;
+  --coral-200:   #F8BCAE;
+  --coral-300:   #F59683;
+  --coral-400:   #F37A63;
+  --coral-500:   #f0664f;
+  --coral-600:   #DC4A33;
+  --coral-700:   #CE4630;
 
   /* ── Brass — tertiary (warning, savings tier) ── */
   --amber-50:    #F9F1DD;
@@ -177,11 +180,11 @@
   --amber-700:   #8F5E06;
 
   /* ── Sky — supplementary info color (calmer, warm-grey undertone) ── */
-  --sky-50:    #EFF6FA;
-  --sky-100:   #DFEDF6;
-  --sky-300:   #8FC3DE;
-  --sky-500:   #2D89BC;
-  --sky-600:   #1F71A0;
+  --sky-50:    #ECECF8;
+  --sky-100:   #DADCF6;
+  --sky-300:   #A6ADEE;
+  --sky-500:   #5d6fe0;
+  --sky-600:   #4350C2;
 
   /* ── Semantic ─────────────────────────────────── */
   --success:     var(--emerald-500);
@@ -297,15 +300,13 @@
   --stone:       #6B6354;
   --stone-light: #B0A893;
 
-  /* ── Fonts — keluarga Instrument ───────────────── */
-  --font-sans:    var(--font-sans-brand), "Instrument Sans",
-                  system-ui, -apple-system, sans-serif;
+  /* ── Fonts — Geist (workhorse data/UI, brand baru) ───────────────── */
+  --font-sans:    var(--font-sans-brand), system-ui, -apple-system,
+                  "Segoe UI", Roboto, sans-serif;
   --font-ui:      var(--font-sans);
-  /* Suara display PER-SKIN: cartoon = Baloo 2 (chubby game UI),
-     mono = Instrument Serif italic (quiet luxury), terminal = sans.
-     --font-display = KATA doang (judul, dialog) — angka tetap sans
-     tabular via .num. --font-mono tetap alias sans (tnum, bukan mono). */
-  --font-display: var(--font-baloo), "Baloo 2", var(--font-sans);
+  /* Brand baru = SATU font (Geist), drop serif & Baloo. --font-display dan
+     --font-mono alias ke sans; angka tabular via .num (Geist punya tnum). */
+  --font-display: var(--font-sans);
   --font-mono:    var(--font-sans);
 
   --radius: 1rem;       /* 16px — editorial card baseline */
@@ -372,62 +373,66 @@
 .dark {
   /* Surfaces — MALAM DUSK v7: ungu senja dongeng (bukan hitam pekat).
      Jurang elevasi tegas dipertahankan (panel 1.19 di atas bg). */
-  --paper:       #241F31;
-  --bg:          #241F31;
-  --bg-2:        #322B45;
-  --surface:     #322B45;
-  --surface-2:   #3C3454;
-  --surface-3:   #463D63;
-  --line:        rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 255, 255, 0.20);
+  --paper:       #0F0F14;
+  --bg:          #0F0F14;
+  --bg-2:        #15151B;
+  --surface:     #19191F;
+  --surface-2:   #212129;
+  --surface-3:   #2A2A33;
+  --line:        rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.16);
 
-  /* Text — cream ramp (kontras: 11.5 / 8.9 / 6.5 di atas panel) */
-  --ink:         #F4EDDC;
-  --ink-muted:   #DCD3E8;
-  --ink-soft:    #B5ABCC;
-  --text:        #F4EDDC;
-  --text-2:      #DCD3E8;
-  --text-mute:   #B5ABCC;
-  --text-faint:  #B5ABCC;   /* faint utk teks dilarang — samain ke floor --ink-soft */
-  --border:      rgba(255, 255, 255, 0.12);
-  --border-soft: rgba(255, 255, 255, 0.07);
-  /* Outline kartun di malam: garis ungu terang + bayangan lebih gelap dari bg */
-  --outline:        #4A4063;
-  --outline-shadow: #171221;
+  /* Text — netral near-white ramp (AA di atas panel #19191F) */
+  --ink:         #FAFAFA;
+  --ink-muted:   #D4D4D8;
+  --ink-soft:    #A1A1AA;
+  --text:        #FAFAFA;
+  --text-2:      #D4D4D8;
+  --text-mute:   #A1A1AA;
+  --text-faint:  #A1A1AA;   /* faint — floor, masih AA di panel gelap */
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  /* Hairline + shadow buat malam (flat, bukan offset kartun) */
+  --outline:        rgba(255, 255, 255, 0.10);
+  --outline-shadow: rgba(0, 0, 0, 0.40);
 
   /* Inverse — for cards that need light bg in dark mode (rare) */
-  --black:       #F4EDDC;
-  --black-soft:  #EDE3CC;
-  --black-2:     #DCD3E8;
+  --black:       #FAFAFA;
+  --black-soft:  #F4F4F5;
+  --black-2:     #E4E4E7;
   --black-line:  rgba(0, 0, 0, 0.10);
-  --on-black:    #1E1B16;
-  --on-black-mut:#5E5749;
+  --on-black:    #18181b;
+  --on-black-mut:#52525B;
 
   /* Accents — EMAS tetap emas di malam (koin bercahaya): fill dgn teks
      tinta (11.1:1), sbg teks/ring 8.7:1 di panel → -ink = dirinya. */
-  --c-primary:      #FFC83D;
-  --c-primary-soft: rgba(255, 200, 61, 0.14);
-  --c-primary-foreground: #1E1B16;
-  --c-primary-ink:  #FFC83D;
-  --c-mint:         #3DBA8A;
-  --c-mint-soft:    rgba(61, 186, 138, 0.13);
-  --c-coral:        #ED7385;
-  --c-coral-soft:   rgba(237, 115, 133, 0.13);
+  --c-primary:      #FAFAFA;   /* dark: tombol terang + teks ink (mirror light) */
+  --c-primary-soft: rgba(255, 255, 255, 0.10);
+  --c-primary-foreground: #18181b;
+  --c-primary-ink:  #FAFAFA;
+  --accent:         #46E0B4;   /* aksen teal terang di malam */
+  --c-mint:         #46E0B4;
+  --c-mint-soft:    rgba(23, 184, 144, 0.16);
+  --c-coral:        #FF8A75;
+  --c-coral-soft:   rgba(240, 102, 79, 0.16);
   --c-amber:        #E3A93C;
-  --c-amber-soft:   rgba(227, 169, 60, 0.13);
-  --c-violet:       #A78FE8;
-  --c-violet-soft:  rgba(167, 143, 232, 0.14);
+  --c-amber-soft:   rgba(227, 169, 60, 0.14);
+  --c-violet:       #B98ED6;
+  --c-violet-soft:  rgba(139, 79, 176, 0.18);
+  --c-blue:         #8B97F0;
+  --c-blue-soft:    rgba(93, 111, 224, 0.18);
   /* Lighter on dark — readable on dark soft tints + dark surfaces. */
-  --c-mint-ink:     #82DBB1;
-  --c-coral-ink:    #F4A6AE;
+  --c-mint-ink:     #6FE6C2;
+  --c-coral-ink:    #FFB0A0;
   --c-amber-ink:    #EFCB7E;
-  --c-violet-ink:   #C9BAF4;
-  --c-ink:          #F4EDDC;
+  --c-violet-ink:   #D4B8EA;
+  --c-blue-ink:     #B3BBF7;
+  --c-ink:          #FAFAFA;
 
   /* Legacy emerald tokens — boost untuk dark */
-  --emerald-400: #5CCB9F;
-  --emerald-500: #3DBA8A;
-  --emerald-600: #25A375;
+  --emerald-400: #46E0B4;
+  --emerald-500: #2DD0A6;
+  --emerald-600: #17b890;
 
   --success:     var(--c-mint);
   --success-bg:  var(--c-mint-soft);
@@ -453,11 +458,39 @@
 }
 
 /* ============================================
-   SISTEM SKIN — html[data-skin] (localStorage 'pwm-skin', picker di
-   Profil). :root = skin default CARTOON. Tiap skin override: surfaces,
-   netral, primary, bahasa kartu (outline-w/card-shadow/radius), font
-   display, hero, selection. Token DATA (mint/coral/amber/violet) shared.
+   SISTEM SKIN — html[data-skin] (localStorage 'pwm-skin', picker di Profil).
+   DEFAULT = base :root (redesign "Bersih", TANPA data-skin). Skin opsi yang
+   aktif: "cartoon" (tampilan lawas emas/dongeng).
    ============================================ */
+
+/* Cartoon (OPSI, BUKAN default) — restore tampilan LAMA: emas + dusk + cream +
+   border tan + outline/shadow offset tebal + Baloo. Default app = redesign baru
+   (base :root). Block ini cuma aktif kalau user pilih skin "cartoon". */
+html[data-skin="cartoon"] {
+  --paper: #FFF9EE; --bg: #FFF9EE; --bg-2: #F6EFDD;
+  --surface: #FFFFFF; --surface-2: #F8F1E1; --surface-3: #EFE6D0;
+  --line: rgba(30,27,22,0.10); --line-strong: rgba(30,27,22,0.16);
+  --ink: #1E1B16; --ink-muted: #4A453C; --ink-soft: #5E5749;
+  --text: #1E1B16; --text-2: #4A453C; --text-mute: #5E5749; --text-faint: #5E5749;
+  --border: #D5C39D; --border-soft: #E6DCC4;
+  --outline: #1E1B16; --outline-shadow: #1E1B16; --outline-w: 1.5px;
+  --card-radius: 14px;
+  --card-shadow: 2px 2px 0 var(--outline-shadow);
+  --btn-shadow: 1.5px 1.5px 0 var(--outline-shadow);
+  --hero-bg: #241F31; --hero-mid: #2C2640; --hero-soft: #322B45;
+  --on-hero: #F4EDDC; --on-hero-mut: #B5ABCC;
+  --hero-accent: #3DBA8A; --hero-accent-2: #5CCB9F;
+  --hero-chip-pos-bg: rgba(61,186,138,0.18); --hero-chip-pos-fg: #82DBB1;
+  --hero-chip-neg-bg: rgba(237,115,133,0.18); --hero-chip-neg-fg: #F4A6AE;
+  --c-primary: #FFC83D; --c-primary-soft: #FFF3D6; --c-primary-foreground: #1E1B16; --c-primary-ink: #7E5600;
+  --accent: #129B69;
+  --c-mint: #129B69; --c-mint-soft: #E7F4EC;
+  --c-coral: #D2495A; --c-coral-soft: #FAEDEE;
+  --c-amber: #C98F0E; --c-amber-soft: #F9F1DD;
+  --c-violet: #7C5FD3; --c-violet-soft: #F1EEFA;
+  --c-mint-ink: #0B6E4D; --c-coral-ink: #A12C3F; --c-amber-ink: #8F5E06; --c-violet-ink: #5A3CAB;
+  --font-display: var(--font-baloo), "Baloo 2", var(--font-sans);
+}
 
 /* Cartoon: heading & tombol primer ikut suara Baloo */
 html[data-skin="cartoon"] h1,
@@ -469,150 +502,6 @@ html[data-skin="cartoon"] .btn-primary {
   font-family: var(--font-display);
   letter-spacing: 0.01em;
 }
-
-/* ── SKIN MONO — quiet luxury: ink hitam + porselen, tanpa aksen warna ── */
-html[data-skin="mono"] {
-  --paper:       #F4F3EE;
-  --bg:          #F4F3EE;
-  --bg-2:        #EAE8E0;
-  --surface:     #FFFFFF;
-  --surface-2:   #EFEDE6;
-  --surface-3:   #E3E0D6;
-  --ink:         #131110;
-  --ink-muted:   #46413A;
-  --ink-soft:    #5B544B;
-  --text:        #131110;
-  --text-2:      #46413A;
-  --text-mute:   #5B544B;
-  --text-faint:  #5B544B;
-  --border:      #E0DCD2;
-  --border-soft: #ECE9E1;
-  --outline:        var(--border);
-  --outline-shadow: transparent;
-  --outline-w:      1px;
-  --card-radius:    16px;
-  --card-shadow:    0 1px 0 rgba(28, 25, 23, 0.04);
-  --btn-shadow:     none;
-  --btn-radius:     10px;
-  --bar-h:          7px;
-  --bar-outline-w:  0px;
-  --bar-track:      var(--surface-3);
-  --c-primary:      #131110;
-  --c-primary-soft: #ECEAE3;
-  --c-primary-foreground: #FFFFFF;
-  --c-primary-ink:  #131110;
-  --c-ink:          #131110;
-  --black:       #0A0A0F;
-  --black-soft:  #14141A;
-  --black-2:     #1C1C24;
-  --on-black:    #F5F5F7;
-  --on-black-mut:#A1A1AA;
-  --hero-bg:     #0A0A0F;
-  --hero-mid:    #14141A;
-  --hero-soft:   #1C1C24;
-  --on-hero:     #F5F5F7;
-  --on-hero-mut: rgba(255, 255, 255, 0.62);
-  --font-display: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
-}
-html[data-skin="mono"] ::selection { background: #E5E2DA; color: #131110; }
-html[data-skin="mono"].dark {
-  --paper:       #0E0C0A;
-  --bg:          #0E0C0A;
-  --bg-2:        #1E1A16;
-  --surface:     #1E1A16;
-  --surface-2:   #282320;
-  --surface-3:   #332D27;
-  --ink:         #F4F2ED;
-  --ink-muted:   #D6D2CA;
-  --ink-soft:    #A6A097;
-  --text:        #F4F2ED;
-  --text-2:      #D6D2CA;
-  --text-mute:   #A6A097;
-  --text-faint:  #A6A097;
-  --border:      rgba(255, 255, 255, 0.10);
-  --border-soft: rgba(255, 255, 255, 0.06);
-  --outline:        rgba(255, 255, 255, 0.12);
-  --outline-shadow: transparent;
-  --c-primary:      #F4F2ED;
-  --c-primary-soft: rgba(255, 255, 255, 0.08);
-  --c-primary-foreground: #0E0C0A;
-  --c-primary-ink:  #F4F2ED;
-  --c-ink:          #F4F2ED;
-  --black:       #F4F2ED;
-  --black-soft:  #E8E4DC;
-  --black-2:     #D6D2CA;
-  --on-black:    #14110D;
-  --on-black-mut:#57534E;
-}
-html[data-skin="mono"].dark ::selection { background: #44403A; color: #F4F2ED; }
-
-/* ── SKIN TERMINAL — Bloomberg modern: dark-only, amber, padat ──
-   (init script memaksa class .dark saat skin terminal — token di sini
-   menang dari .dark karena specificity attribute+type.) */
-html[data-skin="terminal"] {
-  --paper:       #0E0F12;
-  --bg:          #0E0F12;
-  --bg-2:        #16181D;
-  --surface:     #16181D;
-  --surface-2:   #1D2026;
-  --surface-3:   #262A31;
-  --line:        rgba(255, 255, 255, 0.10);
-  --line-strong: rgba(255, 255, 255, 0.17);
-  --ink:         #F2F2F0;
-  --ink-muted:   #C9CBCE;
-  --ink-soft:    #969AA3;
-  --text:        #F2F2F0;
-  --text-2:      #C9CBCE;
-  --text-mute:   #969AA3;
-  --text-faint:  #969AA3;
-  --border:      rgba(255, 255, 255, 0.10);
-  --border-soft: rgba(255, 255, 255, 0.06);
-  --outline:        rgba(255, 255, 255, 0.12);
-  --outline-shadow: transparent;
-  --outline-w:      1px;
-  --card-radius:    10px;
-  --card-shadow:    none;
-  --btn-shadow:     none;
-  --btn-radius:     6px;
-  --bar-h:          6px;
-  --bar-outline-w:  0px;
-  --bar-track:      var(--surface-3);
-  --c-primary:      #F7A600;
-  --c-primary-soft: rgba(247, 166, 0, 0.14);
-  --c-primary-foreground: #1A1100;
-  --c-primary-ink:  #F7A600;
-  --c-ink:          #F2F2F0;
-  --black:       #0A0A0A;
-  --black-soft:  #111214;
-  --black-2:     #16181D;
-  --on-black:    #F2F2F0;
-  --on-black-mut:#969AA3;
-  --hero-bg:     #0A0A0A;
-  --hero-mid:    #101114;
-  --hero-soft:   #16181D;
-  --on-hero:     #F2F2F0;
-  --on-hero-mut: #969AA3;
-  --hero-chip-pos-bg: rgba(74, 222, 150, 0.15);
-  --hero-chip-pos-fg: #4ADE96;
-  --hero-chip-neg-bg: rgba(248, 112, 131, 0.15);
-  --hero-chip-neg-fg: #F87083;
-  --hero-accent:      #F7A600;
-  --hero-accent-2:    #FFC55E;
-  --font-display: var(--font-sans);
-  --c-mint:         #3DBA8A;
-  --c-mint-soft:    rgba(61, 186, 138, 0.13);
-  --c-coral:        #ED7385;
-  --c-coral-soft:   rgba(237, 115, 133, 0.13);
-  --c-amber:        #E3A93C;
-  --c-amber-soft:   rgba(227, 169, 60, 0.13);
-  --c-violet:       #A78FE8;
-  --c-violet-soft:  rgba(167, 143, 232, 0.14);
-  --c-mint-ink:     #82DBB1;
-  --c-coral-ink:    #F4A6AE;
-  --c-amber-ink:    #EFCB7E;
-  --c-violet-ink:   #C9BAF4;
-}
-html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
 
 @layer base {
   * {
@@ -652,14 +541,14 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
     letter-spacing: -0.025em;
     font-weight: 600;
   }
-  /* Seleksi teks — emas tint, momen fun yang cuma muncul saat interaksi. */
+  /* Seleksi teks — teal tint brand, momen halus saat interaksi. */
   ::selection {
-    background: #FFE9AC;
-    color: #1E1B16;
+    background: #E4F6F0;
+    color: #18181b;
   }
   .dark ::selection {
-    background: #5A4A14;
-    color: #F4EDDC;
+    background: #0C3B30;
+    color: #FAFAFA;
   }
   /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
   * {
@@ -749,9 +638,9 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
 }
-.s-card-pad     { padding: 20px; }
-.s-card-pad-lg  { padding: 24px; }
-.s-card-pad-xl  { padding: 28px 32px; }
+.s-card-pad     { padding: 14px; }
+.s-card-pad-lg  { padding: 16px; }
+.s-card-pad-xl  { padding: 18px 20px; }
 
 .dark .s-card {
   border-color: var(--outline);
@@ -765,7 +654,7 @@ html[data-skin="terminal"] ::selection { background: #5A3D00; color: #F2F2F0; }
   border: var(--outline-w) solid var(--outline);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
-  padding: 18px 20px;
+  padding: 14px;
   transition: transform 120ms, box-shadow 120ms;
 }
 .stat-tile:hover {
@@ -1198,4 +1087,70 @@ body[data-calm="true"] [data-loss] {
 }
 body[data-calm="true"] [data-loss]:hover {
   filter: blur(0) !important;
+}
+
+/* ============================================
+   MOBILE SHELL — utilitas app-native (redesign F1/F3)
+   ============================================ */
+/* Sembunyiin scrollbar (SegmentedTabs + list horizontal) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (max-width: 767px) {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { overscroll-behavior-y: contain; }
+}
+
+/* ═══ F9/F10 MOBILE SHELL — kanvas app-native (<md) ═══════════════════════
+   F9 (mockup approve 2026-07-02): kartu tanpa border, pemisahan dari kontras
+   kanvas abu vs permukaan putih. F10 (mockup approve 2026-07-02 sore):
+   + soft depth ala Budggt — bayangan lembut difus + radius 18 biar kartu
+   "ngambang" premium, bukan kotak datar. Desktop & skin cartoon TIDAK berubah. */
+@media (max-width: 767px) {
+  :root:not([data-skin='cartoon']) {
+    --bg: #eff0f4;
+    --paper: #eff0f4;
+    --bg-2: #e8e9ee;
+    --card-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 8px 20px rgba(24, 24, 27, 0.07);
+    --card-radius: 18px;
+  }
+  :root.dark:not([data-skin='cartoon']) {
+    --bg: #0b0b10;
+    --paper: #0b0b10;
+    --bg-2: #101016;
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+  :root:not([data-skin='cartoon']) .s-card {
+    border-color: transparent;
+    box-shadow: var(--card-shadow);
+  }
+  :root:not([data-skin='cartoon']) .stat-tile {
+    border-color: transparent;
+    box-shadow: var(--card-shadow);
+  }
+  /* Tile/kartu pola tailwind (rounded-xl|2xl + border) ikut borderless +
+     bayangan lebih tipis (sering nested di dalam kartu). Border fungsional
+     (input rounded-md/lg, chip rounded-full, border berwarna via inline
+     style) TIDAK kena — inline style menang. */
+  :root:not([data-skin='cartoon']) .rounded-xl.border,
+  :root:not([data-skin='cartoon']) .rounded-2xl.border {
+    border-color: transparent;
+    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 5px 14px rgba(24, 24, 27, 0.05);
+  }
+  :root.dark:not([data-skin='cartoon']) .rounded-xl.border,
+  :root.dark:not([data-skin='cartoon']) .rounded-2xl.border {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.35);
+  }
+  /* Section header nempel kanvas (dipakai layout mobile F9) */
+  .m-sec {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 14px 2px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .m-sec a, .m-sec button { font-size: 11.5px; font-weight: 500; color: var(--c-mint-ink); }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
 import { projectNetWorth } from '@/lib/net-worth-projection'
@@ -11,7 +11,7 @@ import type { PayoffDebt } from '@/lib/debt-payoff'
 import dynamic from 'next/dynamic'
 import { Loader2, TrendingUp, TrendingDown, RefreshCw, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useT } from '@/lib/i18n/context'
+import { useT, useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the net-worth route's initial JS (loads on chart mount).
 const ProjectionChart = dynamic(
@@ -36,11 +36,11 @@ interface NetWorthData {
   longTermDebt: number
 }
 
-const todayLong = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+const todayLong = (dloc: string) => new Date().toLocaleDateString(dloc, { day: 'numeric', month: 'long', year: 'numeric' })
 
-function nwMonthLabel(monthsAhead: number): string {
+function nwMonthLabel(monthsAhead: number, dloc: string): string {
   const d = new Date(); d.setMonth(d.getMonth() + monthsAhead)
-  return d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' })
+  return d.toLocaleDateString(dloc, { month: 'short', year: '2-digit' })
 }
 function ccMinPaymentNW(balance: number): number {
   if (balance <= 0) return 0
@@ -68,7 +68,8 @@ function snapshotDelta(snapshots: NetWorthSnapshot[], target: Date): { delta: nu
 
 export default function NetWorthPage() {
   const supabase = createClient()
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const qc = useQueryClient()
   const [period, setPeriod] = useState<'3m' | '6m' | '12m' | 'all'>('12m')
   const [nwStrategy, setNwStrategy] = useState<'snowball' | 'avalanche'>('avalanche')
@@ -180,15 +181,17 @@ export default function NetWorthPage() {
   const isPositive = netWorth >= 0
   const projection = useMemo(() => projectNetWorth(totalAssets, payoffDebts, nwStrategy), [totalAssets, payoffDebts, nwStrategy])
   const projAccent = nwStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'
-  const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month), netWorth: p.netWorth })), [projection])
+  const projChartData = useMemo(() => projection.points.map((p) => ({ label: nwMonthLabel(p.month, dloc), netWorth: p.netWorth })), [projection, dloc])
 
+  // F10: komposisi pakai keluarga 4 warna logo (teal/coral/biru/ungu) + abu
+  // netral — buang amber/ink liar biar konsisten sama chart lain.
   const assetClasses = useMemo(() => ([
     { label: t('networth.class_investment'), value: data.longTermInvestment, color: 'var(--c-violet)' },
     { label: t('networth.class_cash'), value: data.cashAndEquivalent, color: 'var(--c-mint)' },
-    { label: t('networth.class_property'), value: data.property, color: 'var(--c-amber)' },
-    { label: t('networth.class_vehicle'), value: data.vehicle, color: 'var(--ink)' },
+    { label: t('networth.class_property'), value: data.property, color: 'var(--c-blue)' },
+    { label: t('networth.class_vehicle'), value: data.vehicle, color: 'var(--c-coral)' },
     { label: t('networth.class_personal_item'), value: data.personalItem, color: 'var(--ink-soft)' },
-    { label: t('networth.class_receivable'), value: data.receivable, color: 'var(--c-mint-ink)' },
+    { label: t('networth.class_receivable'), value: data.receivable, color: 'var(--c-blue-ink)' },
   ].filter((c) => c.value > 0)), [data, t])
 
   const heroStats = useMemo(() => {
@@ -216,7 +219,7 @@ export default function NetWorthPage() {
       {/* Slim header — judul gak diulang (ada di hero card di bawah) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
-          {t('networth.eyebrow')} · {todayLong}
+          {t('networth.eyebrow')} · {todayLong(dloc)}
         </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => document.getElementById('nw-history')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
@@ -233,9 +236,10 @@ export default function NetWorthPage() {
         style={{ background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}>
         <div className="absolute pointer-events-none" style={{ top: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,95,211,0.20), transparent 65%)' }} />
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, var(--hero-chip-pos-bg), transparent 65%)' }} />
-        <div className="relative p-6 sm:p-7 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative p-5 sm:p-6 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
-          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(40px,6vw,64px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}>{formatCurrency(netWorth)}</p>
+          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,40px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}>{formatCompactCurrency(netWorth)}</p>
+          <p className="num tabular text-[11px] mt-1.5" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
@@ -250,14 +254,14 @@ export default function NetWorthPage() {
             )}
           </div>
         </div>
-        <div className="relative p-6 sm:p-7 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative p-5 sm:p-6 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_assets')}</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: 'var(--hero-chip-pos-fg)' }}>{formatCurrency(totalAssets)}</p>
+          <p className="num tabular font-bold mt-2 leading-none" title={formatCurrency(totalAssets)} style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: 'var(--hero-chip-pos-fg)' }}>{formatCompactCurrency(totalAssets)}</p>
           <p className="text-[11px] mt-2" style={{ color: 'var(--on-hero-mut)' }}>{assetClasses.length} {t('networth.asset_classes')}</p>
         </div>
-        <div className="relative p-6 sm:p-7 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="relative p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_debt')}</p>
-          <p className="num tabular font-bold mt-2 leading-none" style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--hero-chip-pos-fg)' }}>{totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)}</p>
+          <p className="num tabular font-bold mt-2 leading-none" title={totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)} style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--hero-chip-pos-fg)' }}>{totalDebt > 0 ? `−${formatCompactCurrency(totalDebt)}` : formatCompactCurrency(0)}</p>
           <p className="text-[11px] mt-2" style={{ color: 'var(--on-hero-mut)' }}>{debtCount} {t('networth.active_debts')}</p>
         </div>
       </section>
@@ -272,7 +276,8 @@ export default function NetWorthPage() {
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="max-w-md">
               <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_projection')}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('networth.debt_free_projection_desc')}</p>
+              {/* F11: deskripsi panjang desktop-only — HP cukup label + angka */}
+              <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('networth.debt_free_projection_desc')}</p>
             </div>
             <div className="flex gap-1.5 shrink-0">
               {(['snowball', 'avalanche'] as const).map((s) => (
@@ -284,14 +289,15 @@ export default function NetWorthPage() {
           {projection.feasible ? (
             <>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months)}</p></div>
+                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months, dloc)}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(projection.endNetWorth)}</p></div>
                 <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
-              <div className="mt-4" style={{ height: 200 }}>
+              {/* F11: grafik proyeksi + footnote = desktop-only */}
+              <div className="mt-4 hidden md:block h-[200px] md:h-[260px] xl:h-[300px]">
                 <ProjectionChart data={projChartData} accent={projAccent} />
               </div>
-              <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
+              <p className="hidden md:block mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
             </>
           ) : (
             <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber-ink)' }}>{t('networth.projection_not_feasible')}</p>
@@ -300,7 +306,7 @@ export default function NetWorthPage() {
       )}
 
       {/* Rincian aset & liabilitas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--c-mint-ink)' }}>{t('networth.asset_breakdown')}</p>
           <div className="mt-4 space-y-4">
@@ -349,7 +355,7 @@ export default function NetWorthPage() {
       </div>
 
       {/* Komposisi + Rasio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_composition')}</p>
           {totalAssets > 0 ? (
@@ -413,7 +419,7 @@ function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, i
                 <span className="size-1.5 rounded-full shrink-0" style={{ background: c }} />
                 <p className="text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>{r.label}</p>
               </div>
-              <p className="num tabular font-bold mt-1.5 leading-none" style={{ fontSize: 26, color: c }}>{r.value}</p>
+              <p className="num tabular font-bold mt-1.5 leading-none" style={{ fontSize: 20, color: c }}>{r.value}</p>
               <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>{r.ideal}</p>
             </div>
           )
@@ -447,7 +453,8 @@ interface HistoryProps {
 }
 
 function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
+  const dloc = locale === 'en' ? 'en-US' : 'id-ID'
   const filtered = useMemo(() => {
     if (period === 'all' || snapshots.length === 0) return snapshots
     const now = new Date()
@@ -466,9 +473,9 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
   }, [snapshots])
 
   const chartData = useMemo(() => filtered.map((s) => ({
-    date: new Date(s.snapshot_date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+    date: new Date(s.snapshot_date).toLocaleDateString(dloc, { month: 'short', day: 'numeric' }),
     rawDate: s.snapshot_date, assets: s.total_assets, debts: -s.total_debts, net: s.net_worth,
-  })), [filtered])
+  })), [filtered, dloc])
 
   const periodLabels = { '3m': t('networth.period_3m'), '6m': t('networth.period_6m'), '12m': t('networth.period_12m'), all: t('networth.period_all') }
 
@@ -479,7 +486,8 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
           <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.history')}</p>
           <h3 className="text-lg mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('networth.history_heading')}</h3>
         </div>
-        <div className="flex items-center gap-1.5">
+        {/* F11: chips periode cuma relevan buat chart → desktop-only */}
+        <div className="hidden md:flex items-center gap-1.5">
           {(['3m', '6m', '12m', 'all'] as const).map((p) => (
             <button key={p} type="button" onClick={() => onPeriodChange(p)} className="text-[11px] font-medium px-2.5 py-1 rounded-md transition"
               style={{ background: period === p ? 'var(--ink)' : 'var(--surface-2)', color: period === p ? 'var(--surface)' : 'var(--ink-muted)' }}>
@@ -497,9 +505,14 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
         </div>
       ) : (
         <>
-          <HistoryChart data={chartData} />
+          {/* F11: grafik riwayat = desktop-only (ronde-6: di HP net worth itu
+              ANGKA yang dicek, bukan grafik yang dianalisis — pola Budget/LM).
+              Mobile langsung ke 3 angka delta di bawah. */}
+          <div className="hidden md:block">
+            <HistoryChart data={chartData} />
+          </div>
           {stats && (
-            <div className="mt-5 pt-4 border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
+            <div className="mt-1 md:mt-5 md:pt-4 md:border-t grid grid-cols-3 gap-3" style={{ borderColor: 'var(--border-soft)' }}>
               <ChangeStat label={t('networth.vs_last_month')} change={stats.vs1mo} />
               <ChangeStat label={t('networth.vs_3_months_ago')} change={stats.vs3mo} />
               <ChangeStat label={t('networth.ytd_start_of_year')} change={stats.vsYtd} />
@@ -521,7 +534,7 @@ function ChangeStat({ label, change }: { label: string; change: { delta: number;
   return (
     <div>
       <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
-      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1" style={{ color }}><Icon className="size-3.5" />{positive ? '+' : ''}{formatCurrency(change.delta)}</p>
+      <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1 min-w-0" title={`${positive ? '+' : ''}${formatCurrency(change.delta)}`} style={{ color }}><Icon className="size-3.5 shrink-0" />{positive ? '+' : ''}{formatCompactCurrency(change.delta)}</p>
       <p className="text-[11px] mt-0.5" style={{ color }}>{positive ? '+' : ''}{change.pct.toFixed(1)}%</p>
     </div>
   )

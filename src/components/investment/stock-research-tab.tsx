@@ -119,10 +119,10 @@ export function StockResearchTab() {
   return (
     <div className="space-y-3">
       <div
-        className="rounded-xl border p-3 flex flex-wrap items-center gap-2"
+        className="rounded-xl border p-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative col-span-2 sm:flex-1 sm:min-w-[200px]">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5"
             style={{ color: 'var(--ink-soft)' }}
@@ -136,7 +136,7 @@ export function StockResearchTab() {
         </div>
 
         <Select value={verdictFilter} onValueChange={(v) => v && setVerdictFilter(v)}>
-          <SelectTrigger className="h-9 w-[140px] text-sm">
+          <SelectTrigger className="h-9 w-full sm:w-[140px] text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -148,7 +148,7 @@ export function StockResearchTab() {
         </Select>
 
         <Select value={sectorFilter} onValueChange={(v) => v && setSectorFilter(v)}>
-          <SelectTrigger className="h-9 w-[160px] text-sm">
+          <SelectTrigger className="h-9 w-full sm:w-[160px] text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -160,7 +160,7 @@ export function StockResearchTab() {
         </Select>
 
         <Select value={sort} onValueChange={(v) => v && setSort(v as SortKey)}>
-          <SelectTrigger className="h-9 w-[140px] text-sm">
+          <SelectTrigger className="col-span-2 h-9 w-full sm:w-[140px] text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -180,7 +180,7 @@ export function StockResearchTab() {
         className="rounded-2xl border overflow-hidden"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-sm">
             <thead>
               <tr
@@ -263,6 +263,54 @@ export function StockResearchTab() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile: baris compact — tap → halaman riset */}
+        <div className="md:hidden">
+          {sorted.slice(0, 200).map((r, i) => {
+            const fv = r.medianFairValue ?? r.avgFairValue
+            return (
+              <Link
+                key={r.ticker}
+                href={`/dashboard/assets/investment/stock/research/${r.ticker}`}
+                className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)]"
+                style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
+                aria-label={`${t('stock_research.aria_open_research')} ${r.ticker}`}
+              >
+                <span
+                  className="font-mono text-[11px] font-bold px-1.5 py-1 rounded shrink-0"
+                  style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
+                >
+                  {r.ticker}
+                </span>
+                <span className="min-w-0 flex-1 py-2">
+                  <span className="block truncate text-[14px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>
+                    {r.name}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[11px] leading-tight" style={{ color: 'var(--ink-soft)' }}>
+                    {r.sector ?? '—'}
+                    {fv != null ? ` · ${t('stock_research.col_fair_value')} ${formatIDRCompact(fv)}` : ''}
+                  </span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="num tabular block text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                    {formatPrice(r.price)}
+                  </span>
+                  <span
+                    className="num tabular mt-0.5 block text-[11px] font-semibold leading-tight"
+                    style={{ color: signColorVar(r.avgMoS) }}
+                  >
+                    {formatPercentValue(r.avgMoS)}
+                  </span>
+                </span>
+              </Link>
+            )
+          })}
+          {sorted.length === 0 && (
+            <p className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
+              {t('stock_research.empty_filter')}
+            </p>
+          )}
         </div>
 
         {sorted.length > 200 && (

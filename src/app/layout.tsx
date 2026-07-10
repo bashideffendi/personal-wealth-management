@@ -1,34 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Instrument_Sans, Instrument_Serif } from "next/font/google";
+import { Baloo_2, Geist } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "./globals.css";
 
-// Keluarga Instrument — SATU keluarga huruf untuk seluruh produk.
-// Instrument Sans (grotesque hangat, satu proyek dengan Instrument Serif):
-// body, UI, dan angka tabular (.num pakai fitur tnum — diverifikasi empiris).
-// Pasangan sans+serif satu foundry = sistem tipografi yang nyambung, bukan
-// dua font asing dijodohkan. Variable font, semua weight tersedia.
-const instrumentSans = Instrument_Sans({
+// Geist — font kerja Klunting (body / UI / angka). Dipilih buat product &
+// data-dense UI: numeral tabular rapi + 0/1 gampang dibedain (krusial buat
+// kolom uang), sangat kebaca di ukuran kecil buat layar padat ala Stockbit,
+// netral-premium (karakter brand dibawa warna + logo, bukan font). Variable,
+// semua weight. Logo Klunting (Plus Jakarta) = aset gambar, gak di-load di sini.
+// Var --font-sans-brand dikonsumsi globals.css (--font-sans).
+const geistSans = Geist({
   variable: "--font-sans-brand",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Instrument Serif (italic) — momen personality: judul halaman/dialog via
-// --font-display + frasa landing/auth via var(--font-instrument-serif).
-// Angka & body TETAP sans — serif cuma buat kata, jangan buat data.
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
-  style: "italic",
-  subsets: ["latin"],
-  variable: "--font-instrument-serif",
-  display: "swap",
-});
-
-// Baloo 2 — suara display tema Cartoon Quest (judul, dialog, tombol).
-// Chubby rounded khas game UI. HANYA buat kata — angka tetap Instrument
-// Sans tabular di semua tema.
+// Baloo 2 — font display tema "Cartoon" (OPSI, bukan default). Cuma kepakai
+// kalau user pilih skin cartoon (via --font-display di [data-skin="cartoon"]).
 const baloo = Baloo_2({
   subsets: ["latin"],
   variable: "--font-baloo",
@@ -86,9 +75,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    // Nyamain kanvas v6 (Volt & Ink) — chrome browser/PWA nyatu mulus.
-    { media: "(prefers-color-scheme: light)", color: "#FFF9EE" },
-    { media: "(prefers-color-scheme: dark)", color: "#241F31" },
+    // Nyamain kanvas brand baru — chrome browser/PWA nyatu mulus.
+    { media: "(prefers-color-scheme: light)", color: "#FAFAFA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F0F14" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -102,15 +91,15 @@ const themeInitScript = `
 (function() {
   try {
     var skin = localStorage.getItem('pwm-skin');
-    if (skin === 'mono' || skin === 'terminal' || skin === 'cartoon') {
-      document.documentElement.setAttribute('data-skin', skin);
+    if (skin === 'cartoon') {
+      document.documentElement.setAttribute('data-skin', 'cartoon');
     }
     var stored = localStorage.getItem('pwm-theme');
     var mode = stored === 'light' || stored === 'dark' || stored === 'auto' ? stored : 'auto';
     var resolved = mode === 'auto'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : mode;
-    if (resolved === 'dark' || skin === 'terminal') document.documentElement.classList.add('dark');
+    if (resolved === 'dark') document.documentElement.classList.add('dark');
   } catch (e) {}
 })();
 `
@@ -124,8 +113,7 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      data-skin="cartoon"
-      className={`${instrumentSans.variable} ${instrumentSerif.variable} ${baloo.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${baloo.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

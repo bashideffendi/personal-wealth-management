@@ -33,8 +33,8 @@ function normalizeForLogo(ticker: string): string {
 
 // Hash the ticker to pick a deterministic gradient color
 const FALLBACK_GRADIENTS = [
-  'linear-gradient(135deg, #129B69, #14B8A6)',  // emerald
-  'linear-gradient(135deg, #6366F1, #7C5FD3)',  // indigo
+  'linear-gradient(135deg, #17b890, #14B8A6)',  // teal
+  'linear-gradient(135deg, #6366F1, #8b4fb0)',  // indigo→violet
   'linear-gradient(135deg, #C98F0E, #AC7708)',  // amber
   'linear-gradient(135deg, #EF4444, #EC4899)',  // rose
   'linear-gradient(135deg, #2D89BC, #06B6D4)',  // sky

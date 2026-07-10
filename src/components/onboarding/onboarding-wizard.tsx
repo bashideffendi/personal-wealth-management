@@ -205,7 +205,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-6"
       style={{ background: 'var(--bg)' }}
     >
       <div className="w-full" style={{ maxWidth: 600 }}>
@@ -243,7 +243,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
           ))}
         </div>
 
-        <div className="s-card p-6 sm:p-8">
+        <div className="s-card p-5 sm:p-6">
           {/* STEP 0 — Fokus */}
           {step === 0 && (
             <div>
@@ -262,7 +262,7 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                       key={opt.key}
                       type="button"
                       onClick={() => toggleFocus(opt.key)}
-                      className="text-left rounded-xl p-3.5 transition relative"
+                      className="text-left rounded-xl p-3 transition relative"
                       style={{
                         background: active ? 'var(--c-primary-soft)' : 'var(--surface)',
                         border: `1.5px solid ${active ? 'var(--c-primary)' : 'var(--line)'}`,
@@ -270,13 +270,13 @@ export function OnboardingWizard({ firstName }: { firstName: string }) {
                     >
                       <div className="flex items-start gap-3">
                         <div
-                          className="size-9 rounded-[10px] flex items-center justify-center shrink-0"
+                          className="size-8 rounded-[10px] flex items-center justify-center shrink-0"
                           style={{
                             background: active ? 'var(--c-primary)' : 'var(--bg)',
                             color: active ? '#fff' : 'var(--ink-soft)',
                           }}
                         >
-                          <Icon className="size-[18px]" />
+                          <Icon className="size-4" />
                         </div>
                         <div className="min-w-0">
                           <p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>

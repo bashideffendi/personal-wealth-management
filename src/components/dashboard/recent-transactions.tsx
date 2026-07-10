@@ -21,12 +21,12 @@ function categoryStyle(
 ): { Icon: React.ComponentType<{ className?: string }>; tone: string } {
   const cat = (category || '').toLowerCase()
   if (cat.includes('makan') || cat.includes('food') || cat.includes('kopi')) return { Icon: Coffee, tone: 'amber' }
-  if (cat.includes('belanja') || cat.includes('shop')) return { Icon: ShoppingCart, tone: 'primary' }
+  if (cat.includes('belanja') || cat.includes('shop')) return { Icon: ShoppingCart, tone: 'blue' }
   if (cat.includes('transport') || cat.includes('bensin') || cat.includes('grab') || cat.includes('gojek')) return { Icon: Fuel, tone: 'coral' }
   if (cat.includes('langganan') || cat.includes('netflix') || cat.includes('spotify') || cat.includes('subscript')) return { Icon: Tv, tone: 'violet' }
   if (cat.includes('tagihan') || cat.includes('listrik') || cat.includes('air')) return { Icon: Lightbulb, tone: 'amber' }
   if (cat.includes('gaji') || cat.includes('bonus') || cat.includes('thr')) return { Icon: BanknoteArrowUp, tone: 'mint' }
-  if (cat.includes('investasi') || cat.includes('saham')) return { Icon: TrendingUp, tone: 'primary' }
+  if (cat.includes('investasi') || cat.includes('saham')) return { Icon: TrendingUp, tone: 'violet' }
   if (cat.includes('tabung') || cat.includes('saving')) return { Icon: Wallet, tone: 'amber' }
   if (cat.includes('kesehatan') || cat.includes('rumah sakit')) return { Icon: Heart, tone: 'coral' }
   if (cat.includes('hiburan') || cat.includes('game')) return { Icon: Gamepad2, tone: 'violet' }
@@ -34,7 +34,7 @@ function categoryStyle(
   if (type === 'expense') return { Icon: BanknoteArrowDown, tone: 'coral' }
   if (type === 'saving') return { Icon: Wallet, tone: 'amber' }
   if (type === 'investment') return { Icon: TrendingUp, tone: 'primary' }
-  return { Icon: Receipt, tone: 'primary' }
+  return { Icon: Receipt, tone: 'blue' }
 }
 
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
@@ -45,7 +45,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
   )
 
   return (
-    <article className="s-card" style={{ padding: 24 }}>
+    <article className="s-card" style={{ padding: 16 }}>
       <div className="flex items-center justify-between">
         <p className="eyebrow">{t('recent_tx.title')}</p>
         <Link
@@ -106,7 +106,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                   style={{
                     fontSize: 13.5,
                     fontWeight: 700,
-                    color: pos ? 'var(--c-mint)' : 'var(--ink)',
+                    color: pos ? 'var(--c-mint-ink)' : expense ? 'var(--c-coral-ink)' : 'var(--ink)',
                   }}
                 >
                   {pos ? '+' : expense ? '−' : ''}{formatCurrency(tx.amount)}

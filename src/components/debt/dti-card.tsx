@@ -115,8 +115,8 @@ export function DTICard({ monthlyIncome, monthlyDebtPayment }: Props) {
       {/* Big ratio number */}
       <div className="flex items-baseline gap-2 mb-1">
         <p
-          className="num tabular text-4xl sm:text-5xl font-bold leading-none"
-          style={{ color: zone.color }}
+          className="num tabular text-3xl font-bold leading-none"
+          style={{ color: zone.color === 'var(--c-mint)' ? 'var(--c-mint-ink)' : zone.color === 'var(--c-coral)' ? 'var(--c-coral-ink)' : zone.color === 'var(--c-amber)' ? 'var(--c-amber-ink)' : zone.color }}
         >
           {hasNoDebt ? '0' : (ratio * 100).toFixed(1)}
           <span className="text-2xl ml-1">%</span>
