@@ -19,7 +19,9 @@ import { categoryHue } from '@/lib/category-hue'
 import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
 import { MobileStatsView } from '@/components/transactions/mobile-stats-view'
 import { monthLong } from '@/lib/i18n/dates'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { adjustCardBalance } from '@/lib/data/balances'
+import { getSessionUser } from '@/lib/hooks/use-session-user'
 import { parseCsvRows, toCsv } from '@/lib/transactions/csv'
 import { splitRemaining as calcSplitRemaining, isSplitValid } from '@/lib/transactions/split'
 import { ccContribution, computeCardDeltas, reverseCardDeltas } from '@/lib/transactions/cc-delta'
@@ -101,10 +103,68 @@ export default function TransactionsPage() {
     investment: 'transactions.type_investment',
   }
 
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [creditCards, setCreditCards] = useState<CreditCard[]>([])
-  const [rules, setRules] = useState<CategorizationRule[]>([])
+  // Data halaman via react-query — cache antar navigasi + refetch di belakang.
+  // Dulu: useEffect fetchData() dengan setLoading(true) di tiap mutasi/event →
+  // habis quick-add 1 transaksi, SELURUH halaman collapse ke spinner.
+  const qc = useQueryClient()
+  const pageQuery = useQuery({
+    queryKey: ['transactions-page'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      // Sesi lokal (tanpa round-trip /auth/v1/user) — token sudah diverifikasi
+      // middleware + dashboard layout sebelum halaman ini render.
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
+      const [txRes, accRes, ccRes, rulesRes, profRes] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('accounts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name'),
+        supabase
+          .from('credit_cards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('name'),
+        supabase
+          .from('categorization_rules')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true),
+        supabase
+          .from('profiles')
+          .select('default_account_id')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ])
+      // Fetch utama gagal = bilang terus terang (error state + retry), jangan
+      // render daftar kosong seolah transaksinya memang nol.
+      if (txRes.error) throw txRes.error
+      if (accRes.error) throw accRes.error
+      return {
+        transactions: (txRes.data ?? []) as Transaction[],
+        accounts: (accRes.data ?? []) as Account[],
+        creditCards: (ccRes.data ?? []) as CreditCard[],
+        rules: (rulesRes.data ?? []) as CategorizationRule[],
+        profileDefaultAccountId: (profRes.data?.default_account_id as string | undefined) ?? null,
+      }
+    },
+  })
+  const transactions = useMemo(() => pageQuery.data?.transactions ?? [], [pageQuery.data])
+  const accounts = useMemo(() => pageQuery.data?.accounts ?? [], [pageQuery.data])
+  const creditCards = useMemo(() => pageQuery.data?.creditCards ?? [], [pageQuery.data])
+  const rules = useMemo(() => pageQuery.data?.rules ?? [], [pageQuery.data])
+  const loading = pageQuery.isLoading
+  const loadError = pageQuery.isError
+  // Pasca-mutasi: invalidasi cache (refetch di belakang, data lama tetap
+  // tampil — TIDAK ada spinner reset). Pengganti semua refresh() lama.
+  const refresh = () => { void qc.invalidateQueries({ queryKey: ['transactions-page'] }) }
 
   // CSV Import
   const [importOpen, setImportOpen] = useState(false)
@@ -142,7 +202,7 @@ export default function TransactionsPage() {
 
   async function commitImport() {
     setImporting(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setImporting(false); return }
     const toInsert = importRows
       .filter((r) => r.apply && r.account_id)
@@ -169,10 +229,8 @@ export default function TransactionsPage() {
     toast.success(`${toInsert.length} ${t('transactions.toast_imported')}`)
     setImportOpen(false)
     setImportRows([])
-    fetchData()
+    refresh()
   }
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Dialog state
@@ -189,6 +247,13 @@ export default function TransactionsPage() {
 
   // Smart default account (3-layer fallback: AI / user-default / last-used / first)
   const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null)
+  // Sinkron dari profil (query) → state lokal; state tetap dipakai karena
+  // handleSetDefault meng-update-nya optimistik sebelum invalidasi.
+  useEffect(() => {
+    const d = pageQuery.data?.profileDefaultAccountId
+    if (d) setDefaultAccountId(d)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageQuery.data])
   const [accountSource, setAccountSource] = useState<'ai' | 'default' | 'last_used' | 'first' | null>(null)
   const [settingDefault, setSettingDefault] = useState(false)
 
@@ -207,7 +272,7 @@ export default function TransactionsPage() {
   async function handleSetDefault() {
     if (!form.account_id) return
     setSettingDefault(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSettingDefault(false); return }
     const { error } = await supabase
       .from('profiles')
@@ -341,7 +406,7 @@ export default function TransactionsPage() {
     if (!transferForm.from_account_id || !transferForm.to_account_id || transferForm.amount <= 0) return
     if (transferForm.from_account_id === transferForm.to_account_id) { toast.error(t('transactions.toast_same_account')); return }
     setTransferSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setTransferSaving(false); return }
     const desc = transferForm.notes
       ? `Transfer: ${transferForm.notes}`
@@ -374,7 +439,7 @@ export default function TransactionsPage() {
       date: new Date().toISOString().split('T')[0],
       from_account_id: '', to_account_id: '', amount: 0, notes: '',
     })
-    fetchData()
+    refresh()
   }
 
   function exportCSV(rows: Transaction[]) {
@@ -461,14 +526,12 @@ export default function TransactionsPage() {
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkCatOpen, setBulkCatOpen] = useState(false)
 
+  // Re-fetch saat ada mutasi data dari FAB/command palette — sekarang lewat
+  // invalidasi cache (refetch di belakang, TANPA reset halaman ke spinner).
+  // JANGAN hapus listener ini: dispatcher-nya quick-add-launcher, offline-sync,
+  // dan mobile-quick-entry.
   useEffect(() => {
-    fetchData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Re-fetch saat ada mutasi data dari FAB/command palette.
-  useEffect(() => {
-    const h = () => { void fetchData() }
+    const h = () => { void qc.invalidateQueries({ queryKey: ['transactions-page'] }) }
     window.addEventListener('klunting:data-changed', h)
     return () => window.removeEventListener('klunting:data-changed', h)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -479,56 +542,6 @@ export default function TransactionsPage() {
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent))
   }, [])
-
-  async function fetchData() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const [txRes, accRes, ccRes, rulesRes, profRes] = await Promise.all([
-      supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false }),
-      supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name'),
-      supabase
-        .from('credit_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('name'),
-      supabase
-        .from('categorization_rules')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true),
-      supabase
-        .from('profiles')
-        .select('default_account_id')
-        .eq('id', user.id)
-        .maybeSingle(),
-    ])
-
-    // Fetch utama gagal = bilang terus terang, jangan render daftar kosong
-    // seolah transaksinya memang nol.
-    if (txRes.error || accRes.error) {
-      setLoadError(true)
-      setLoading(false)
-      return
-    }
-    setLoadError(false)
-    if (txRes.data) setTransactions(txRes.data)
-    if (accRes.data) setAccounts(accRes.data)
-    if (ccRes.data) setCreditCards(ccRes.data as CreditCard[])
-    if (rulesRes.data) setRules(rulesRes.data as CategorizationRule[])
-    if (profRes.data?.default_account_id) setDefaultAccountId(profRes.data.default_account_id as string)
-    setLoading(false)
-  }
 
   function openAddDialog() {
     if (accounts.length === 0 && creditCards.length === 0) {
@@ -604,7 +617,7 @@ export default function TransactionsPage() {
     const tx = splitSourceTx
     if (!tx || !splitValid) return
     setSplitSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSplitSaving(false); return }
 
     const groupId = crypto.randomUUID()
@@ -664,7 +677,7 @@ export default function TransactionsPage() {
     toast.success(locale === 'id'
       ? `Transaksi dipecah jadi ${splitRows.length} bagian`
       : `Transaction split into ${splitRows.length} parts`)
-    fetchData()
+    refresh()
   }
 
   // ─── Split saat TAMBAH (add-dialog) ─────────────────────────
@@ -720,7 +733,7 @@ export default function TransactionsPage() {
   async function actuallySave() {
 
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSaving(false); return }
 
     // Look up active household — new transactions auto-tagged so they
@@ -845,7 +858,7 @@ export default function TransactionsPage() {
     setDialogOpen(false)
     // Surface kegagalan sync saldo kartu (jangan diam-diam — biar user bisa koreksi).
     if (ccSyncFailed) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek & sesuaikan di halaman Kartu Kredit.')
-    fetchData()
+    refresh()
   }
 
   async function handleDelete(id: string) {
@@ -863,7 +876,7 @@ export default function TransactionsPage() {
       }
     }
     toast.success(t('transactions.toast_deleted'))
-    fetchData()
+    refresh()
   }
 
   // ─── Bulk edit + inline category ────────────────────────────
@@ -903,7 +916,7 @@ export default function TransactionsPage() {
     if (ccSyncFailed) toast.warning('Saldo kartu kredit gagal diperbarui untuk sebagian item. Cek di halaman Kartu Kredit.')
     toast.success(`${ids.length} ${t('transactions.bulk_deleted')}`)
     setSelectedIds(new Set())
-    fetchData()
+    refresh()
   }
 
   async function bulkSetCategory(category: string) {
@@ -916,14 +929,14 @@ export default function TransactionsPage() {
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
     toast.success(t('transactions.bulk_recategorized'))
     setSelectedIds(new Set())
-    fetchData()
+    refresh()
   }
 
   async function inlineSetCategory(id: string, category: string) {
     setInlineCatId(null)
     const { error } = await supabase.from('transactions').update({ category }).eq('id', id)
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
-    fetchData()
+    refresh()
   }
 
   // ─── Quick-add (inline row) ─────────────────────────────────
@@ -952,7 +965,7 @@ export default function TransactionsPage() {
     if (!quickForm.category) { toast.error(t('transactions.toast_pick_category_short')); return }
     if (!quickForm.amount || quickForm.amount <= 0) { toast.error(t('transactions.toast_amount_positive')); return }
     setQuickSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setQuickSaving(false); return }
     // Auto-tag household if member
     const memRes = await supabase.from('household_members').select('*').eq('user_id', user.id).maybeSingle()
@@ -978,7 +991,7 @@ export default function TransactionsPage() {
     // Reset only amount + description; keep date/account/type/category
     // (most users add multiple similar transactions in a row)
     setQuickForm((q) => ({ ...q, description: '', amount: 0 }))
-    fetchData()
+    refresh()
   }
 
   function getAccountName(accountId: string) {
@@ -1563,7 +1576,7 @@ export default function TransactionsPage() {
       ) : loadError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
-          <Button variant="outline" onClick={() => { setLoading(true); void fetchData() }}>{t('common.retry')}</Button>
+          <Button variant="outline" onClick={() => void pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
