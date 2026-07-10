@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useState, useMemo, useRef, type ReactNode } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getSessionUser } from '@/lib/hooks/use-session-user'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { useT, useI18n } from '@/lib/i18n/context'
@@ -129,9 +131,8 @@ export default function BudgetingPage() {
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [budgets, setBudgets] = useState<BudgetMap>({})
   // Des tahun sebelumnya (key `${type}|${category}`) — sumber "Salin bulan lalu"
-  // saat bulan terpilih Januari; di-fetch bareng fetchBudgets.
+  // saat bulan terpilih Januari; di-fetch bareng query anggaran.
   const [prevDecBudgets, setPrevDecBudgets] = useState<Record<string, number>>({})
-  const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState<CollapsedMap>(noCollapsed)
 
   // Category tree (kategori → subkategori) — DB-synced w/ localStorage fallback
@@ -181,31 +182,45 @@ export default function BudgetingPage() {
     setCollapsed(loadCollapsed())
   }, [])
 
-  // Load category tree (DB-first, localStorage fallback)
-  useEffect(() => {
-    let active = true
-    ;(async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!active) return
+  // Load category tree + hitungan pemakaian kategori (DB-first, localStorage
+  // fallback) via react-query — cache antar navigasi + refetch di belakang.
+  const qc = useQueryClient()
+  const treeQuery = useQuery({
+    queryKey: ['budget-tree'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      // Sesi lokal (tanpa round-trip /auth/v1/user) — token sudah diverifikasi
+      // middleware + dashboard layout sebelum halaman ini render.
+      const user = await getSessionUser(supabase)
       if (!user) {
-        setTree(loadLocalTree())
-        setTreeLoaded(true)
-        return
+        // Tanpa sesi: tree lokal (perilaku lama), tanpa hitungan pemakaian.
+        return {
+          userId: null as string | null,
+          tree: loadLocalTree(),
+          dbAvailable: false,
+          usage: {} as Record<string, number>,
+        }
       }
-      userIdRef.current = user.id
-      const { tree: t, dbAvailable } = await loadTree(supabase, user.id)
-      if (!active) return
-      setTree(t)
-      setDbSynced(dbAvailable)
-      setTreeLoaded(true)
-      loadCategoryUsage(supabase, user.id).then((u) => active && setCatUsage(u))
-    })()
-    return () => {
-      active = false
-    }
-  }, [supabase])
+      const [treeRes, usage] = await Promise.all([
+        loadTree(supabase, user.id),
+        loadCategoryUsage(supabase, user.id),
+      ])
+      return { userId: user.id as string | null, tree: treeRes.tree, dbAvailable: treeRes.dbAvailable, usage }
+    },
+  })
+  // Sinkron hasil query → state lokal; state tree tetap dipakai karena
+  // handleTreeCommit meng-update-nya optimistik sebelum persist + invalidasi.
+  // treeLoaded di-set di efek yang SAMA dengan setTree biar gak ada satu render
+  // "treeLoaded tapi tree kosong" yang keburu dianggap empty-state.
+  useEffect(() => {
+    const d = treeQuery.data
+    if (!d) return
+    userIdRef.current = d.userId
+    setTree(d.tree)
+    setDbSynced(d.dbAvailable)
+    setCatUsage(d.usage)
+    setTreeLoaded(true)
+  }, [treeQuery.data])
 
   function toggleCollapsed(kind: BudgetType) {
     setCollapsed((prev) => {
@@ -230,69 +245,77 @@ export default function BudgetingPage() {
     await saveTree(supabase, uid, dbSynced, next)
     if (renames && renames.pairs.length) {
       await cascadeRenameKeys(supabase, uid, renames.type, renames.pairs)
-      fetchBudgets(year) // resync the budget map after key remap
-      loadCategoryUsage(supabase, uid).then(setCatUsage) // transaksi ikut pindah → refresh hitungan
-      loadMonthlyActuals(supabase, uid, year).then(setActuals) // realisasi ikut berubah
+      refreshBudgets() // resync peta anggaran + realisasi setelah key remap
     }
+    refreshTree() // cache tree + hitungan pemakaian ikut resync
   }
 
-  const fetchBudgets = useCallback(
-    async (selectedYear: string) => {
-      setLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      const [{ data, error }, decRes] = await Promise.all([
+  // Anggaran tahun terpilih + Des tahun-1 + realisasi bulanan — satu query per
+  // tahun, diparalelkan dengan SATU resolve sesi. Dulu: fetchBudgets() dengan
+  // setLoading(true) per event + loadMonthlyActuals sekuensial di belakangnya;
+  // dan kalau fetch gagal cuma toast lalu return → grid tetap dirender penuh
+  // angka 0 seolah anggaran memang kosong.
+  const budgetsQuery = useQuery({
+    queryKey: ['budgets', year],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
+      const [mainRes, decRes, actualsMap] = await Promise.all([
         supabase
           .from('budgets')
           .select('*')
           .eq('user_id', user.id)
-          .eq('year', Number(selectedYear)),
+          .eq('year', Number(year)),
         // Des tahun-1 — sumber "Salin bulan lalu" untuk Januari.
         supabase
           .from('budgets')
           .select('*')
           .eq('user_id', user.id)
-          .eq('year', Number(selectedYear) - 1)
+          .eq('year', Number(year) - 1)
           .eq('month', 12),
+        loadMonthlyActuals(supabase, user.id, year),
       ])
-      if (error) {
-        // Jangan render grid kosong seolah anggaran tahun ini blank.
-        toast.error(t('common.load_failed'))
-        setLoading(false)
-        return
-      }
-
+      // Fetch utama gagal = bilang terus terang (error card + retry), jangan
+      // render grid kosong seolah anggaran tahun ini blank.
+      if (mainRes.error) throw mainRes.error
       const map: BudgetMap = {}
-      if (data) {
-        for (const b of data as Budget[]) {
-          map[budgetKey(b.type, b.category, b.month)] = b.amount
-        }
+      for (const b of (mainRes.data ?? []) as Budget[]) {
+        map[budgetKey(b.type, b.category, b.month)] = b.amount
       }
-      setBudgets(map)
       const decMap: Record<string, number> = {}
       for (const b of (decRes.data ?? []) as Budget[]) {
         decMap[`${b.type}|${b.category}`] = b.amount
       }
-      setPrevDecBudgets(decMap)
-      loadMonthlyActuals(supabase, user.id, selectedYear).then(setActuals)
-      setLoading(false)
+      return { budgets: map, prevDec: decMap, actuals: actualsMap }
     },
-    [supabase, t],
-  )
-
+  })
+  const loading = budgetsQuery.isLoading
+  const loadError = budgetsQuery.isError
+  // Sinkron hasil query → state lokal; state budgets tetap dipakai karena
+  // handleCellBlur/fillRange/copyFromPrevMonth meng-update-nya optimistik
+  // (dengan rollback) sebelum invalidasi.
   useEffect(() => {
-    fetchBudgets(year)
-  }, [year, fetchBudgets])
+    const d = budgetsQuery.data
+    if (!d) return
+    setBudgets(d.budgets)
+    setPrevDecBudgets(d.prevDec)
+    setActuals(d.actuals)
+  }, [budgetsQuery.data])
+  // Pasca-mutasi: invalidasi cache (refetch di belakang, data lama tetap
+  // tampil — TIDAK ada spinner reset). Pengganti semua fetchBudgets() manual.
+  const refreshBudgets = () => { void qc.invalidateQueries({ queryKey: ['budgets'] }) }
+  const refreshTree = () => { void qc.invalidateQueries({ queryKey: ['budget-tree'] }) }
 
-  // Re-fetch budget saat ada mutasi data dari FAB/command palette.
+  // Re-fetch budget saat ada mutasi data dari FAB/command palette — sekarang
+  // lewat invalidasi cache. JANGAN hapus listener ini: dispatcher-nya
+  // quick-add-launcher, offline-sync, dan mobile-quick-entry.
   useEffect(() => {
-    const h = () => { void fetchBudgets(year) }
+    const h = () => { void qc.invalidateQueries({ queryKey: ['budgets'] }) }
     window.addEventListener('klunting:data-changed', h)
     return () => window.removeEventListener('klunting:data-changed', h)
-  }, [year, fetchBudgets])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleCellBlur(
     type: BudgetType,
@@ -306,9 +329,7 @@ export default function BudgetingPage() {
 
     setBudgets((prev) => ({ ...prev, [key]: value }))
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) return
 
     const { error } = await supabase.from('budgets').upsert(
@@ -327,6 +348,8 @@ export default function BudgetingPage() {
       // nampilin angka yang sebenernya gak kesimpen.
       setBudgets((prev) => ({ ...prev, [key]: prevValue }))
       toast.error(t('common.mutation_failed'))
+    } else {
+      refreshBudgets() // cache ikut nilai baru (refetch di belakang)
     }
   }
 
@@ -372,9 +395,7 @@ export default function BudgetingPage() {
       for (let m = lo; m <= hi; m++) next[budgetKey(s.type, s.category, m)] = s.value
       return next
     })
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) return
     const rows = []
     for (let m = lo; m <= hi; m++) {
@@ -384,6 +405,8 @@ export default function BudgetingPage() {
     if (error) {
       setBudgets((prev) => ({ ...prev, ...prevValues }))
       toast.error(t('common.mutation_failed'))
+    } else {
+      refreshBudgets()
     }
   }
 
@@ -456,9 +479,7 @@ export default function BudgetingPage() {
       for (const e of source) next[budgetKey(e.type, e.category, targetMonth)] = e.amount
       return next
     })
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) return
     const rows = source.map((e) => ({
       user_id: user.id,
@@ -474,6 +495,7 @@ export default function BudgetingPage() {
       toast.error(t('common.mutation_failed'))
     } else {
       toast.success(locale === 'id' ? 'Anggaran bulan lalu disalin' : "Last month's budget copied")
+      refreshBudgets()
     }
   }
 
@@ -771,7 +793,7 @@ export default function BudgetingPage() {
         return next
       })
       // Persist across ALL years when logged in.
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getSessionUser(supabase)
       if (user) {
         const { data: oldRows } = await supabase
           .from('budgets')
@@ -786,6 +808,7 @@ export default function BudgetingPage() {
             { onConflict: 'user_id,year,month,type,category' },
           )
           await supabase.from('budgets').delete().eq('user_id', user.id).eq('type', kind).eq('category', parentName)
+          refreshBudgets() // cache ikut key baru hasil migrasi nilai
         }
       }
       if (hadValues) toast.success(t('budgeting.sub_added_migrated'))
@@ -1154,8 +1177,9 @@ export default function BudgetingPage() {
       )}
 
       {/* Zero-based nudge — remaining-to-allocate for the CURRENT (or focused) month.
-          People budget monthly (salary is monthly), so this is per-month, not annual. */}
-      {!loading && treeLoaded && !effectiveActual && (() => {
+          People budget monthly (salary is monthly), so this is per-month, not annual.
+          Saat fetch gagal (loadError) disembunyikan — angkanya dari state basi. */}
+      {!loading && !loadError && treeLoaded && !effectiveActual && (() => {
         const bMonth = viewMode === 'month' ? focusMonth : (isCurrentYearActive ? currentMonth : 1)
         const inc = sectionMonthTotal(leafIncome, 'income', bMonth)
         if (inc <= 0) return null
@@ -1188,6 +1212,13 @@ export default function BudgetingPage() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
           <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>{t('budgeting.loading')}</span>
+        </div>
+      ) : loadError ? (
+        // Fetch anggaran gagal ≠ anggaran kosong: kartu error + retry,
+        // BUKAN grid penuh angka 0 (pola sama dgn transactions/accounts).
+        <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
+          <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
+          <Button variant="outline" onClick={() => void budgetsQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : (
       <>
