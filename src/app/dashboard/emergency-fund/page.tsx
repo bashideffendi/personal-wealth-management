@@ -16,6 +16,7 @@ import {
 import { Plus, Minus, Pencil, Trash2, Loader2, Check, ChevronDown, ShieldCheck, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { useI18n } from '@/lib/i18n/context'
 
 type JobStability = 'stabil' | 'cukup_stabil' | 'tidak_stabil'
@@ -328,6 +329,8 @@ export default function EmergencyFundPage() {
         info={`${t('emergency_fund.page_subtitle')} ${t('emergency_fund.info_benchmark')} ${t('emergency_fund.tip_1')} ${t('emergency_fund.tip_2')}`}
         actions={<Button onClick={openTxn}><Plus className="h-4 w-4" /> {t('emergency_fund.set_fund_button')}</Button>}
       />
+
+      <WealthSubnav />
 
       {/* Card — cuma ring (kiri, amber-tint) + metrik (kanan, surface). Tanpa judul di dalam. */}
       <div className="grid sm:grid-cols-[auto_1fr] rounded-2xl border overflow-hidden" style={{ borderColor: tint(AMBER, 20) }}>

@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { useT } from '@/lib/i18n/context'
 
 const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
@@ -218,6 +219,8 @@ export default function LiquidAssetsPage() {
         <Button variant="outline" onClick={() => refresh()}><RefreshCw className="h-4 w-4" /> {t('assets_liquid.btn_sync')}</Button>
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> {t('assets_liquid.btn_add_asset')}</Button>
       </WealthHeader>
+
+      <WealthSubnav />
 
       {duplicates.length > 0 && (
         <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: tint(AMBER, 8), border: `1px solid ${tint(AMBER, 20)}` }}>

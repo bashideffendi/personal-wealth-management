@@ -14,6 +14,7 @@ import { simulatePayoff, type PayoffResult } from '@/lib/debt-payoff'
 import { useI18n } from '@/lib/i18n/context'
 import { EduTip } from '@/components/edu/edu-tip'
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -277,6 +278,8 @@ export default function DebtsOverviewPage() {
           <Button onClick={() => { setForm(emptyForm); setTriedSave(false); setDialogOpen(true) }}><Plus className="h-4 w-4" /> {t('debts.new_debt')}</Button>
         </div>
       </header>
+
+      <WealthSubnav />
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>

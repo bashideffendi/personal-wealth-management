@@ -9,6 +9,7 @@ import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
 import { adjustCardBalance, adjustAccountBalance } from '@/lib/data/balances'
 import type { Account, CreditCard as CreditCardType, CreditCardPayment } from '@/types'
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -331,6 +332,8 @@ export default function CreditCardsPage() {
           </Button>
         </div>
       </div>
+
+      <WealthSubnav />
 
       {loading ? (
         <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>

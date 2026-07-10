@@ -11,6 +11,7 @@ import type { AssetNonLiquid, Investment } from '@/types'
 
 import { Loader2, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import dynamic from 'next/dynamic'
 
 // Defer recharts out of the assets route's initial JS (loads on chart mount).
@@ -129,6 +130,9 @@ export default function AssetsOverviewPage() {
 
   return (
     <div className="space-y-6">
+      {/* Sub-nav Kekayaan — hub ini bukan anggota keluarga (gak ada chip aktif), tapi tetap dapat strip sebagai konteks */}
+      <WealthSubnav />
+
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{

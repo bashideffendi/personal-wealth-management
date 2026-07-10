@@ -12,6 +12,7 @@ import type { PayoffDebt } from '@/lib/debt-payoff'
 import dynamic from 'next/dynamic'
 import { Loader2, TrendingUp, TrendingDown, RefreshCw, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { useT, useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the net-worth route's initial JS (loads on chart mount).
@@ -229,6 +230,8 @@ export default function NetWorthPage() {
           </Button>
         </div>
       </div>
+
+      <WealthSubnav />
 
       {/* Dark hero — 3 cell */}
       <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-[1.6fr_1fr_1fr]"
