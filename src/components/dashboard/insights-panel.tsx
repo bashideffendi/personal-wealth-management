@@ -142,7 +142,9 @@ export function InsightsPanel({
       const mm = m - i
       const start = new Date(y, mm, 1).toISOString().split('T')[0]
       const end   = new Date(y, mm + 1, 1).toISOString().split('T')[0]
-      const txs = yearTransactions.filter((t) => t.date >= start && t.date < end)
+      // Exclude leg Transfer di KEDUA sisi — sama dengan currMonthExp/prevMonthExp
+      // di atas; tanpa ini transfer antar rekening menggelembungkan income & expense.
+      const txs = yearTransactions.filter((t) => t.date >= start && t.date < end && t.category !== 'Transfer')
       if (txs.length === 0) continue
       inc += txs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
       exp += txs.filter((t) => t.type !== 'income').reduce((s, t) => s + t.amount, 0)

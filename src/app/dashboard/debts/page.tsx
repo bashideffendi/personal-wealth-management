@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { averageMonthlyIncome } from '@/lib/data/monthly-income'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import type { Debt, CreditCard as CreditCardRow } from '@/types'
@@ -137,16 +138,14 @@ export default function DebtsOverviewPage() {
       if (debtsRes.error) throw debtsRes.error
       if (ccRes.error) throw ccRes.error
       const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
-      const totalIncome = incomeRows.reduce((s, t) => s + (t.amount || 0), 0)
-      // Bagi pakai jumlah bulan DISTINCT yg beneran ada (cap 3, lantai 1) — bukan
-      // hardcode /3 yg under-estimate income kalau histori < 3 bln → DTI palsu rendah.
-      const incomeMonths = new Set(incomeRows.map((t) => (t.date || '').slice(0, 7)).filter(Boolean)).size
       const nlq = ((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0)
       const inv = ((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0)
       return {
         debts: (debtsRes.data ?? []) as Debt[],
         cards: (ccRes.data ?? []) as CreditCardRow[],
-        monthlyIncome: incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0,
+        // Math kanonik lib/data/monthly-income (bulan DISTINCT cap 3, lantai 1)
+        // — bukan /3 tetap yg under-estimate kalau histori < 3 bln → DTI palsu rendah.
+        monthlyIncome: averageMonthlyIncome(incomeRows),
         totalAssets: sumLiquid(liqEntries) + nlq + inv,
       }
     },

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { averageMonthlyIncome } from '@/lib/data/monthly-income'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
@@ -105,11 +106,9 @@ export default function NetWorthPage() {
       // Kartu kredit = utang revolving → ikut liabilitas
       const cards = (ccRes.data ?? []) as { id: string; name: string; current_balance: number; interest_rate: number }[]
 
-      // Rata-rata income pakai jumlah bulan DISTINCT (cap 3, lantai 1) —
-      // SAMA dengan halaman Utang, biar DTI konsisten antar halaman.
+      // Rata-rata income: math kanonik lib/data/monthly-income (bulan DISTINCT
+      // cap 3) — SAMA dengan Utang/Goals/Dashboard, biar DTI konsisten antar halaman.
       const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
-      const totalIncome = incomeRows.reduce((s, r) => s + (r.amount || 0), 0)
-      const incomeMonths = new Set(incomeRows.map((r) => (r.date || '').slice(0, 7)).filter(Boolean)).size
 
       const sumCat = (rows: NonLiquidRow[], cat: string) => rows.filter((a) => a.category === cat).reduce((s, a) => s + (a.current_value || 0), 0)
       const sumDebt = (cat: string) => debts.filter((d) => d.category === cat).reduce((s, d) => s + (d.remaining || 0), 0)
@@ -128,7 +127,7 @@ export default function NetWorthPage() {
       return {
         data,
         snapshots: (snapshotRes.data ?? []) as NetWorthSnapshot[],
-        monthlyIncome: incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0,
+        monthlyIncome: averageMonthlyIncome(incomeRows),
         debtCount: debts.filter((d) => d.remaining > 0).length + cards.filter((c) => (c.current_balance || 0) > 0).length,
         // PayoffDebt[] buat proyeksi — mapping CC persis kayak halaman Utang.
         payoffDebts: [

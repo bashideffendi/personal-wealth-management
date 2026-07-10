@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { fetchMonthlyIncome } from '@/lib/data/monthly-income'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import type { Goal } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -153,18 +154,11 @@ export default function GoalsPage() {
       const goals = ((data ?? []) as (Goal & { household_id?: string | null })[])
         .filter((g) => !g.household_id)
 
-      // Pemasukan rata-rata/bln dari 3 bln terakhir — buat ngukur "iuran wajib"
-      // vs cashflow REAL (bukan ngarang). Mirror cara dashboard hitung income.
-      const since = new Date()
-      since.setMonth(since.getMonth() - 3)
-      const { data: inc } = await supabase
-        .from('transactions')
-        .select('amount')
-        .eq('user_id', user.id)
-        .eq('type', 'income')
-        .gte('date', since.toISOString().slice(0, 10))
-      const totalInc = ((inc ?? []) as { amount: number }[]).reduce((s, r) => s + (r.amount ?? 0), 0)
-      return { goals, monthlyIncome: totalInc / 3 }
+      // Pemasukan rata-rata/bln — helper kanonik lib/data (exclude Transfer +
+      // pembagi bulan distinct), SAMA dengan Net Worth/Utang/Dashboard.
+      // Dulu inline tanpa exclude Transfer + /3 tetap → angka beda antar layar.
+      const monthlyIncome = await fetchMonthlyIncome(supabase, user.id)
+      return { goals, monthlyIncome }
     },
   })
 
