@@ -28,7 +28,7 @@ import {
 import {
   Loader2, Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown,
   LineChart, Coins, LayoutGrid, List, Star, FileSearch, GitCompare, Calendar,
-  Lightbulb, Newspaper, ArrowLeft,
+  Lightbulb, Newspaper, ArrowLeft, ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { NumberInput } from '@/components/ui/number-input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -98,6 +98,17 @@ const EMPTY: FormState = {
   quantity: 0, avg_cost: 0, current_price: 0, sector: '', notes: '',
   currency: '',
 }
+
+// ── Sort tabel posisi (list view desktop) ────────────────────────────
+// Key per kolom tabel; default arah ngikutin jenisnya (angka = desc dulu,
+// teks = asc dulu) — pola yang sama dengan tabel screener.
+type HoldingSortKey =
+  | 'ticker' | 'name' | 'sector' | 'shares' | 'avg' | 'invested'
+  | 'price' | 'market' | 'pl' | 'plpct' | 'platform'
+type HoldingSort = { key: HoldingSortKey; dir: 'asc' | 'desc' }
+const NUMERIC_SORT_KEYS: ReadonlySet<HoldingSortKey> = new Set([
+  'shares', 'avg', 'invested', 'price', 'market', 'pl', 'plpct',
+])
 
 export default function InvestmentCategoryPage() {
   const params = useParams<{ slug: string }>()
@@ -403,6 +414,58 @@ export default function InvestmentCategoryPage() {
       return { ...e, q, shares: i.quantity || 0 }
     })
   }, [items, quotes, usdIdr, category, goldPrices])
+
+  // ── Sort klik-header, KHUSUS tabel desktop (list view) ──────────────
+  // Default null = urutan existing dipertahankan. Hanya mempengaruhi array
+  // yang dirender tabel; list mobile & grid kartu tetap pakai `enriched`.
+  const [tableSort, setTableSort] = useState<HoldingSort | null>(null)
+  const toggleTableSort = useCallback((key: HoldingSortKey) => {
+    setTableSort((prev) =>
+      prev && prev.key === key
+        ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+        : { key, dir: NUMERIC_SORT_KEYS.has(key) ? 'desc' : 'asc' },
+    )
+  }, [])
+  const sortedRows = useMemo(() => {
+    if (!tableSort) return enriched
+    const { key, dir } = tableSort
+    const mul = dir === 'asc' ? 1 : -1
+    const val = (e: (typeof enriched)[number]): string | number | null => {
+      switch (key) {
+        case 'ticker':
+          return !e.i.ticker
+            ? null
+            : category === 'stock'
+              ? fromYahooTicker(e.i.ticker)
+              : category === 'crypto'
+                ? cryptoBase(e.i.ticker)
+                : e.i.ticker
+        case 'name': return e.i.name || null
+        case 'sector': return (e.i as Investment & { sector?: string }).sector ?? null
+        case 'shares': return e.shares
+        case 'avg': return e.i.avg_cost
+        case 'invested': return e.invested
+        case 'price': return e.live
+        case 'market': return e.market
+        case 'pl': return e.pl
+        // P/L% tanpa modal (invested 0) gak bermakna -> perlakukan sebagai null
+        case 'plpct': return e.invested > 0 ? e.plPct : null
+        case 'platform': return e.i.platform || null
+      }
+    }
+    const arr = [...enriched]
+    arr.sort((a, b) => {
+      const va = val(a)
+      const vb = val(b)
+      // null/kosong selalu di bawah, apapun arah sort (pola screener)
+      if (va === null && vb === null) return 0
+      if (va === null) return 1
+      if (vb === null) return -1
+      if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb, 'id') * mul
+      return ((va as number) - (vb as number)) * mul
+    })
+    return arr
+  }, [enriched, tableSort, category])
 
   const totals = useMemo(() => {
     const invested = enriched.reduce((s, x) => s + x.invested, 0)
@@ -745,26 +808,32 @@ export default function InvestmentCategoryPage() {
         // stock → StockLogo, crypto → CryptoLogo, others → no logo cell.
         // Desktop-only — mobile pakai baris ringkas di atas.
         <div className="hidden md:block space-y-4">
-          <div className="s-card overflow-x-auto p-0">
+          {/* Kartu jadi scroll-container sendiri (max-h 70vh) supaya thead
+              sticky nempel pas daftar panjang. Catatan: pola .tx-scroll
+              (globals) sengaja GAK dipakai di sini — top:57px-nya berasumsi
+              tabel mengalir penuh di halaman TANPA container overflow,
+              sedangkan tabel 12 kolom ini butuh overflow-x-auto di layar
+              sempit; sticky top-0 dalam kartu bekerja di kedua sumbu. */}
+          <div className="s-card overflow-x-auto overflow-y-auto max-h-[70vh] p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b" style={{ borderColor: 'var(--outline)' }}>
-                  <Th>{category === 'stock' ? t('investment_detail.th_ticker') : t('investment_detail.th_coin')}</Th>
-                  <Th>{category === 'stock' ? t('investment_detail.th_company') : t('investment_detail.th_name')}</Th>
-                  {category === 'stock' && <Th>{t('investment_detail.th_sector')}</Th>}
-                  <Th className="text-right">{category === 'stock' ? t('investment_detail.th_shares') : t('investment_detail.th_qty')}</Th>
-                  <Th className="text-right">{t('investment_detail.th_avg_cost')}</Th>
-                  <Th className="text-right">{t('investment_detail.th_invested')}</Th>
-                  <Th className="text-right">{t('investment_detail.th_price')}</Th>
-                  <Th className="text-right">{t('investment_detail.th_market_value')}</Th>
-                  <Th className="text-right">{t('investment_detail.th_pl')}</Th>
-                  <Th className="text-right">{t('investment_detail.th_pl_pct')}</Th>
-                  <Th>{t('investment_detail.th_platform')}</Th>
+                <tr>
+                  <SortTh label={category === 'stock' ? t('investment_detail.th_ticker') : t('investment_detail.th_coin')} k="ticker" sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={category === 'stock' ? t('investment_detail.th_company') : t('investment_detail.th_name')} k="name" sort={tableSort} onSort={toggleTableSort} />
+                  {category === 'stock' && <SortTh label={t('investment_detail.th_sector')} k="sector" sort={tableSort} onSort={toggleTableSort} />}
+                  <SortTh label={category === 'stock' ? t('investment_detail.th_shares') : t('investment_detail.th_qty')} k="shares" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_avg_cost')} k="avg" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_invested')} k="invested" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_price')} k="price" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_market_value')} k="market" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_pl')} k="pl" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_pl_pct')} k="plpct" numeric sort={tableSort} onSort={toggleTableSort} />
+                  <SortTh label={t('investment_detail.th_platform')} k="platform" sort={tableSort} onSort={toggleTableSort} />
                   <Th className="text-right"></Th>
                 </tr>
               </thead>
               <tbody>
-                {enriched.map((e) => {
+                {sortedRows.map((e) => {
                   const pos = e.pl >= 0
                   return (
                     <tr key={e.i.id} className="border-b hover:bg-[var(--surface-alt)]/50 transition-colors" style={{ borderColor: 'var(--outline)' }}>
@@ -1350,13 +1419,52 @@ function RpFieldInv({ value, onChange, placeholder }: { value: number; onChange:
   )
 }
 
+/* Header tabel posisi — sticky top-0 dalam kartu ber-max-h (garis bawah pakai
+   inset shadow, bukan border: border di tabel border-collapse gak ikut sticky). */
+const TH_STICKY_CLASS = 'sticky top-0 z-20 px-3 py-2.5 text-[11px] font-semibold uppercase whitespace-nowrap'
+const TH_STICKY_STYLE: React.CSSProperties = {
+  color: 'var(--ink-soft)', letterSpacing: '0.08em',
+  background: 'var(--surface-alt)', boxShadow: 'inset 0 -1px 0 var(--outline)',
+}
+
 function Th({ children = null, className = '' }: { children?: React.ReactNode; className?: string }) {
   return (
-    <th
-      className={`px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider ${className}`}
-      style={{ color: 'var(--ink-muted)', letterSpacing: '0.06em', background: 'var(--surface-alt)' }}
-    >
+    <th className={`${TH_STICKY_CLASS} text-left ${className}`} style={TH_STICKY_STYLE}>
       {children}
+    </th>
+  )
+}
+
+/** Header sortable: satu tombol per kolom, panah ArrowUp/ArrowDown cuma muncul
+ *  di kolom aktif + aria-sort buat screen reader. Kolom angka rata kanan. */
+function SortTh({ label, k, sort, onSort, numeric = false }: {
+  label: string
+  k: HoldingSortKey
+  sort: HoldingSort | null
+  onSort: (key: HoldingSortKey) => void
+  numeric?: boolean
+}) {
+  const dir = sort && sort.key === k ? sort.dir : null
+  return (
+    <th
+      aria-sort={dir ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      className={TH_STICKY_CLASS}
+      style={TH_STICKY_STYLE}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(k)}
+        title="Urutkan"
+        className={`inline-flex w-full cursor-pointer items-center gap-0.5 transition-colors duration-100 hover:text-[var(--ink)] ${numeric ? 'justify-end' : 'justify-start'}`}
+        // color inline CUMA pas aktif — kalau selalu di-set (walau 'inherit'),
+        // inline style menang atas class hover:text-* dan affordance hover mati.
+        style={dir ? { color: 'var(--ink)' } : undefined}
+      >
+        {label}
+        {dir && (dir === 'asc'
+          ? <ArrowUp className="size-3 shrink-0" aria-hidden="true" />
+          : <ArrowDown className="size-3 shrink-0" aria-hidden="true" />)}
+      </button>
     </th>
   )
 }
