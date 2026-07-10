@@ -20,6 +20,10 @@ import { MobileMonthCalendar } from '@/components/transactions/mobile-month-cale
 import { MobileStatsView } from '@/components/transactions/mobile-stats-view'
 import { monthLong } from '@/lib/i18n/dates'
 import { adjustCardBalance } from '@/lib/data/balances'
+import { parseCsvRows, toCsv } from '@/lib/transactions/csv'
+import { splitRemaining as calcSplitRemaining, isSplitValid } from '@/lib/transactions/split'
+import { ccContribution, computeCardDeltas, reverseCardDeltas } from '@/lib/transactions/cc-delta'
+import { pickAccount, type ExtractedPayment } from '@/lib/transactions/pick-account'
 
 import { Button } from '@/components/ui/button'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
@@ -112,16 +116,9 @@ export default function TransactionsPage() {
   const [importing, setImporting] = useState(false)
   const [tagDraft, setTagDraft] = useState('') // input tag di form add/edit
 
-  function applyRules(desc: string): { type: 'income' | 'expense' | 'saving' | 'investment'; category: string } | null {
-    const text = desc.toUpperCase()
-    const sorted = [...rules].filter((r) => r.is_active).sort((a, b) => b.priority - a.priority)
-    for (const r of sorted) {
-      if (text.includes(r.match_text.toUpperCase())) {
-        return { type: r.type, category: r.category }
-      }
-    }
-    return null
-  }
+  // Cek apakah account_id menunjuk kartu kredit — dipakai semua jalur sync
+  // outstanding CC (save/delete/bulk) via lib/transactions/cc-delta.
+  const isCreditCard = (id: string) => creditCards.some((c) => c.id === id)
 
   async function handleCsvUpload(file: File) {
     // Lazy-load papaparse — cuma kepakai di handler import CSV ini,
@@ -131,39 +128,13 @@ export default function TransactionsPage() {
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
-        const rows = res.data.map((row) => {
-          // Try to detect common column names (flexible)
-          const desc = (row.description ?? row.Deskripsi ?? row.Description ?? row.Keterangan ?? row.keterangan ?? '').trim()
-          const dateRaw = row.date ?? row.Tanggal ?? row.Date ?? row.tanggal ?? ''
-          const amountRaw = row.amount ?? row.Jumlah ?? row.Amount ?? row.Nominal ?? '0'
-          const amountSigned = Number(String(amountRaw).replace(/[^0-9.-]/g, '')) || 0
-          const amount = Math.abs(amountSigned)
-          // Parse date — try yyyy-mm-dd or dd/mm/yyyy
-          let date = new Date().toISOString().split('T')[0]
-          if (dateRaw) {
-            const dn = new Date(dateRaw)
-            if (!isNaN(dn.getTime())) date = dn.toISOString().split('T')[0]
-            else {
-              const m = dateRaw.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
-              if (m) date = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
-            }
-          }
-          // Auto-categorize from rules
-          const matched = applyRules(desc)
-          // Expense if: a rule says so, OR the raw amount is negative, OR the
-          // description has a whole-word debit cue. Anchored \b so "Checkout",
-          // "Takeout", "payout" don't get misread as expenses.
-          const isExpense = matched?.type === 'expense' || amountSigned < 0 || /\b(debit|keluar|withdraw|dr)\b/i.test(desc)
-          return {
-            date,
-            description: desc,
-            amount,
-            type: (matched?.type ?? (isExpense ? 'expense' : 'income')) as 'income' | 'expense' | 'saving' | 'investment',
-            category: matched?.category ?? (isExpense ? 'Lainnya' : 'Gaji'),
-            account_id: accounts[0]?.id ?? creditCards[0]?.id ?? '',
-            apply: true,
-          }
-        }).filter((r) => r.amount > 0)
+        // Parsing + auto-kategorisasi murni di lib/transactions/csv (tested);
+        // di sini tinggal nambah default akun + flag apply per baris.
+        const rows = parseCsvRows(res.data, rules).map((r) => ({
+          ...r,
+          account_id: accounts[0]?.id ?? creditCards[0]?.id ?? '',
+          apply: true,
+        }))
         setImportRows(rows)
       },
     })
@@ -221,51 +192,16 @@ export default function TransactionsPage() {
   const [accountSource, setAccountSource] = useState<'ai' | 'default' | 'last_used' | 'first' | null>(null)
   const [settingDefault, setSettingDefault] = useState(false)
 
-  type ExtractedPayment = { payment_method?: string; payment_detail?: string }
-
-  function pickAccount(extracted?: ExtractedPayment): { id: string; source: 'ai' | 'default' | 'last_used' | 'first' } | null {
-    if (accounts.length === 0 && creditCards.length === 0) return null
-    const allAccounts = [
-      ...accounts.map((a) => ({ id: a.id, name: a.name })),
-      ...creditCards.map((c) => ({ id: c.id, name: `Kredit ${c.name}` })),
-    ]
-
-    // Layer 1: AI-detected payment match
-    const detail = extracted?.payment_detail?.trim().toLowerCase()
-    if (detail && detail.length > 1) {
-      const match = allAccounts.find((a) => {
-        const n = a.name.toLowerCase()
-        return n.includes(detail) || detail.includes(n)
-      })
-      if (match) return { id: match.id, source: 'ai' }
-    }
-    // Also try matching credit_card method to any credit card in list
-    if (extracted?.payment_method === 'credit_card' && creditCards.length > 0) {
-      return { id: creditCards[0].id, source: 'ai' }
-    }
-    // Cash payment method → match any cash-type account
-    if (extracted?.payment_method === 'cash') {
-      const cashAcc = accounts.find((a) => a.type === 'cash')
-      if (cashAcc) return { id: cashAcc.id, source: 'ai' }
-    }
-
-    // Layer 2: User's saved default
-    if (defaultAccountId && allAccounts.some((a) => a.id === defaultAccountId)) {
-      return { id: defaultAccountId, source: 'default' }
-    }
-
-    // Layer 3: Last used (from most recent transaction)
-    const lastTx = transactions.find((tx) => tx.account_id)
-    if (lastTx?.account_id && allAccounts.some((a) => a.id === lastTx.account_id)) {
-      return { id: lastTx.account_id, source: 'last_used' }
-    }
-
-    // Layer 4: Fallback — prefer cash-type account, else first in list.
-    // Most ID transactions are cash; this gives a sensible default for users
-    // who haven't explicitly set one yet.
-    const cashFallback = accounts.find((a) => a.type === 'cash')
-    if (cashFallback) return { id: cashFallback.id, source: 'first' }
-    return { id: allAccounts[0].id, source: 'first' }
+  // Logika 4-lapis murni ada di lib/transactions/pick-account (tested);
+  // wrapper ini cuma menyuntik state halaman.
+  function pickDefaultAccount(extracted?: ExtractedPayment): { id: string; source: 'ai' | 'default' | 'last_used' | 'first' } | null {
+    return pickAccount({
+      accounts,
+      creditCards,
+      defaultAccountId,
+      lastUsedAccountId: transactions.find((tx) => tx.account_id)?.account_id ?? null,
+      extracted,
+    })
   }
 
   async function handleSetDefault() {
@@ -344,7 +280,7 @@ export default function TransactionsPage() {
         confidence: 'high' | 'medium' | 'low'
       }
       // Re-pick account using AI-detected payment info (overrides default if matches)
-      const picked = pickAccount({ payment_method: d.payment_method, payment_detail: d.payment_detail })
+      const picked = pickDefaultAccount({ payment_method: d.payment_method, payment_detail: d.payment_detail })
       setForm((prev) => ({
         ...prev,
         date: d.date || prev.date,
@@ -443,14 +379,8 @@ export default function TransactionsPage() {
 
   function exportCSV(rows: Transaction[]) {
     const header = [t('transactions.col_date'), t('transactions.col_account'), t('transactions.col_type'), t('transactions.col_category'), t('transactions.col_description'), t('transactions.col_amount')]
-    // Quote + escape EVERY cell (account/category are free-text too) and neutralize
-    // spreadsheet formula injection (cells starting with =,+,-,@) with a leading quote.
-    const cell = (v: unknown) => {
-      let s = String(v ?? '')
-      if (/^[=+\-@]/.test(s)) s = `'${s}`
-      return `"${s.replace(/"/g, '""')}"`
-    }
-    const csvRows = [
+    // Quoting + anti formula-injection per cell di lib/transactions/csv (tested).
+    const csv = toCsv([
       header,
       ...rows.map((tx) => [
         tx.date,
@@ -460,8 +390,7 @@ export default function TransactionsPage() {
         tx.description ?? '',
         String(tx.amount),
       ]),
-    ]
-    const csv = csvRows.map((r) => r.map(cell).join(',')).join('\n')
+    ])
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -609,7 +538,7 @@ export default function TransactionsPage() {
       return
     }
     setEditingId(null)
-    const picked = pickAccount()
+    const picked = pickDefaultAccount()
     setForm({ ...emptyForm, account_id: picked?.id ?? '' })
     setTagDraft('')
     setAccountSource(picked?.source ?? null)
@@ -666,13 +595,10 @@ export default function TransactionsPage() {
     setDialogOpen(true) // batal → balik ke dialog edit
   }
 
-  const splitAllocated = splitRows.reduce((s, r) => s + r.amount, 0)
-  const splitRemaining = (splitSourceTx?.amount ?? 0) - splitAllocated
-  const splitValid =
-    !!splitSourceTx &&
-    splitRows.length >= 2 &&
-    splitRows.every((r) => r.category && r.amount > 0) &&
-    splitRemaining === 0
+  // Math split murni di lib/transactions/split (tested — kontrak: total
+  // pecahan HARUS persis = nominal sumber).
+  const splitRemaining = calcSplitRemaining(splitRows, splitSourceTx?.amount ?? 0)
+  const splitValid = !!splitSourceTx && isSplitValid(splitRows, splitSourceTx?.amount ?? 0)
 
   async function saveSplit() {
     const tx = splitSourceTx
@@ -753,13 +679,8 @@ export default function TransactionsPage() {
   ]
   const [newSplitOn, setNewSplitOn] = useState(false)
   const [newSplitRows, setNewSplitRows] = useState<{ category: string; amount: number; description: string }[]>(emptyNewSplitRows)
-  const newSplitAllocated = newSplitRows.reduce((s, r) => s + r.amount, 0)
-  const newSplitRemaining = form.amount - newSplitAllocated
-  const newSplitReady =
-    newSplitRows.length >= 2 &&
-    newSplitRows.every((r) => r.category && r.amount > 0) &&
-    form.amount > 0 &&
-    newSplitRemaining === 0
+  const newSplitRemaining = calcSplitRemaining(newSplitRows, form.amount)
+  const newSplitReady = isSplitValid(newSplitRows, form.amount)
 
   // Reflective spending (Kakeibo) — anti-impulse modal for big expenses
   const [reflectionOpen, setReflectionOpen] = useState(false)
@@ -902,23 +823,17 @@ export default function TransactionsPage() {
       return
     }
 
-    // Keep credit-card outstanding in sync — SYMMETRICALLY. A CC expense adds to
-    // the card; editing or moving it must subtract the OLD contribution and add the
-    // new one, else the balance only ever grows (it was add-on-create-only before).
-    // Net per-card delta avoids a double-read race when one card is on both sides.
-    const ccContribution = (txType: TransactionType, accountId: string, amount: number) =>
-      txType === 'expense' && amount > 0 && creditCards.some((c) => c.id === accountId) ? amount : 0
+    // Keep credit-card outstanding in sync — SYMMETRICALLY (math murni +
+    // tested di lib/transactions/cc-delta): kontribusi lama dikurangkan,
+    // baru ditambahkan, net per-kartu (kartu di dua sisi edit tidak dobel).
     const prevTx = editingId ? transactions.find((tx) => tx.id === editingId) : null
-    const cardDeltas: Record<string, number> = {}
-    if (prevTx) {
-      const old = ccContribution(prevTx.type, prevTx.account_id, prevTx.amount)
-      if (old) cardDeltas[prevTx.account_id] = (cardDeltas[prevTx.account_id] ?? 0) - old
-    }
-    const nu = ccContribution(form.type, form.account_id, form.amount)
-    if (nu) cardDeltas[form.account_id] = (cardDeltas[form.account_id] ?? 0) + nu
+    const cardDeltas = computeCardDeltas(
+      prevTx ?? null,
+      { type: form.type, account_id: form.account_id, amount: form.amount },
+      isCreditCard,
+    )
     let ccSyncFailed = false
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
-      if (delta === 0) continue
       const card = creditCards.find((c) => c.id === cardId)
       if (card) {
         const { ok: ccOk } = await adjustCardBalance(supabase, cardId, delta, card.current_balance)
@@ -938,11 +853,12 @@ export default function TransactionsPage() {
     const tx = transactions.find((x) => x.id === id)
     const { error } = await supabase.from('transactions').delete().eq('id', id)
     if (error) { toast.error(t('transactions.toast_delete_failed'), { description: error.message }); return }
-    // Reverse the CC outstanding this expense had added.
-    if (tx && tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
+    // Reverse the CC outstanding this expense had added (lib/transactions/cc-delta).
+    const delDelta = tx ? ccContribution(tx, isCreditCard) : 0
+    if (tx && delDelta > 0) {
       const card = creditCards.find((c) => c.id === tx.account_id)
       if (card) {
-        const { ok: ccOk } = await adjustCardBalance(supabase, card.id, -tx.amount, card.current_balance)
+        const { ok: ccOk } = await adjustCardBalance(supabase, card.id, -delDelta, card.current_balance)
         if (!ccOk) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
       }
     }
@@ -973,13 +889,9 @@ export default function TransactionsPage() {
     const { error } = await supabase.from('transactions').delete().in('id', ids)
     setBulkBusy(false)
     if (error) { toast.error(t('transactions.toast_delete_failed'), { description: error.message }); return }
-    // Reverse CC outstanding for every deleted expense (net per card).
-    const cardDeltas: Record<string, number> = {}
-    for (const tx of removed) {
-      if (tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
-        cardDeltas[tx.account_id] = (cardDeltas[tx.account_id] ?? 0) - tx.amount
-      }
-    }
+    // Reverse CC outstanding for every deleted expense — net per card
+    // (lib/transactions/cc-delta, tested).
+    const cardDeltas = reverseCardDeltas(removed, isCreditCard)
     let ccSyncFailed = false
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
       const card = creditCards.find((c) => c.id === cardId)
@@ -1029,7 +941,7 @@ export default function TransactionsPage() {
   // Pre-fill account when accounts load (use Cash/default)
   useEffect(() => {
     if (!quickForm.account_id) {
-      const picked = pickAccount()
+      const picked = pickDefaultAccount()
       if (picked) setQuickForm((q) => ({ ...q, account_id: picked.id }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
