@@ -4,9 +4,12 @@
  * DashboardCustomizer — "Atur" = tampilkan/sembunyikan section dashboard.
  *
  * URUTAN section di-drag LANGSUNG di dashboard (lihat SortableSection in-place);
- * di sini cuma toggle tampil/sembunyi. Default SEMUA tampil — gak ada yg ke-hide
- * sepihak (belajar dari kejadian tab). Tiap section punya `data-block="id"`;
- * yang disembunyiin di-`display:none` via <style> yg di-inject di sini.
+ * di sini cuma toggle tampil/sembunyi. Default = 8 kartu INTI tampil (bento
+ * padat), sisanya masuk DEFAULT_HIDDEN — tapi CUMA berlaku buat yang belum
+ * pernah nyimpen preferensi (lihat readHidden + hydrate DB); prefs tersimpan
+ * selalu menang, gak ada yg ke-hide sepihak (belajar dari kejadian tab).
+ * Tiap section punya `data-block="id"`; yang disembunyiin di-`display:none`
+ * via <style> yg di-inject di sini.
  *
  * Prefs di localStorage (instant) + mirror DB ui_prefs.dashboardHidden (lintas-perangkat).
  */
@@ -25,9 +28,24 @@ export interface DashBlock {
 
 const LS_KEY = 'pwm.dashboard.hidden.v2'
 
-/** Tidak ada yang default-hidden lagi — kartu low-value (saving-ring, top-kategori,
- *  hari-aktif, proyeksi) sudah DIHAPUS dari dashboard, bukan sekadar disembunyiin. */
-const DEFAULT_HIDDEN: string[] = []
+/** DENSITY Beranda: default yang TAMPIL = 8 kartu inti (akun, sisa-aman, aliran,
+ *  transaksi, tagihan, anggaran, tujuan, portofolio); sisanya default-hidden di
+ *  bawah — tetep bisa dinyalain lagi lewat dialog "Atur" ini.
+ *  PENTING: default ini cuma kena user TANPA prefs tersimpan — readHidden()
+ *  fallback ke sini hanya kalau localStorage kosong, dan hydrate DB cuma
+ *  override kalau ui_prefs.dashboardHidden memang pernah disimpan (array +
+ *  versi cocok). JANGAN bump DASHBOARD_LAYOUT_VERSION buat perubahan ini —
+ *  bump bikin prefs lama dianggap basi dan ketimpa default baru. */
+const DEFAULT_HIDDEN: string[] = [
+  'kalender',
+  'arus-tahunan',
+  'insights',
+  'langganan',
+  'kesehatan',
+  'cash-coverage',
+  'ai-insights',
+  'alokasi',
+]
 
 /** Section dashboard yang bisa di-toggle. id HARUS sama dengan data-block di page. */
 // Urutan = default visual order yg dipilih supaya bento-grid (dense) pack rapi
@@ -126,7 +144,9 @@ export function DashboardCustomizer({
   return (
     <>
       {/* Wrapper kosong (komponen self-hide / null) → collapse. Selalu aktif. */}
-      {/* Sembunyiin block terpilih. Cuma setelah mount (default: semua tampil, gak ada flash). */}
+      {/* Sembunyiin block terpilih. Cuma setelah mount (SSR gak bisa baca
+          localStorage → style di-gate `ready` demi hindari hydration mismatch;
+          konsekuensi: satu frame awal semua block keliatan sebelum ke-collapse). */}
       {ready && hiddenCount > 0 && (
         <style
           dangerouslySetInnerHTML={{
