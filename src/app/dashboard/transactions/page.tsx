@@ -13,7 +13,6 @@ import { useCategoryOptions } from '@/lib/use-category-options'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { formatDateShort } from '@/lib/i18n/dates'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
-import Papa from 'papaparse'
 import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
@@ -124,7 +123,10 @@ export default function TransactionsPage() {
     return null
   }
 
-  function handleCsvUpload(file: File) {
+  async function handleCsvUpload(file: File) {
+    // Lazy-load papaparse — cuma kepakai di handler import CSV ini,
+    // gak perlu ikut bundle awal halaman transaksi.
+    const Papa = (await import('papaparse')).default
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,

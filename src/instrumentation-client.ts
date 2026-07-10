@@ -10,7 +10,8 @@ Sentry.init({
     'https://f56e722f3815392f65e4ebad0af540d5@o4511474451021824.ingest.de.sentry.io/4511474473107536',
   sendDefaultPii: false,
   enableLogs: false,
-  tracesSampleRate: process.env.NODE_ENV === 'development' ? 1.0 : 0.1,
+  // Tanpa tracesSampleRate: browser-tracing gak ke-bundle (±50KB+ di semua
+  // halaman) — error capture tetap jalan penuh, cuma performance span yang off.
   beforeSend(event) {
     if (event.request) {
       delete event.request.cookies
