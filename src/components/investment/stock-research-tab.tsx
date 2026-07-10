@@ -118,6 +118,18 @@ export function StockResearchTab() {
 
   return (
     <div className="space-y-3">
+      {/* Banner kecil ke versi penuh (Screener IDX, halaman kelas satu) —
+          desktop only, label literal (tanpa key messages baru). */}
+      <Link
+        href="/dashboard/screener"
+        className="hidden md:flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs transition hover:bg-[var(--surface-2)]"
+        style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+      >
+        <span>
+          Versi penuh: <span className="font-semibold" style={{ color: 'var(--ink)' }}>Screener IDX</span> — filter PER, PBV, ROE, yield untuk semua emiten
+        </span>
+        <ArrowUpRight className="size-3.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
+      </Link>
       <div
         className="rounded-xl border p-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}

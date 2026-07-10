@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
-import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown } from 'lucide-react'
+import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
@@ -332,6 +332,15 @@ export default function InvestmentOverviewPage() {
       actions={
         <>
           <CalmModeToggle />
+          {/* Link kecil ke Screener IDX (halaman kelas satu) — desktop only */}
+          <Link
+            href="/dashboard/screener"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+          >
+            <SlidersHorizontal className="size-3.5" />
+            Screener IDX
+          </Link>
           <Link
             href="/dashboard/assets/investment/stock?tab=dividen"
             aria-label={t('investment.dividend_history')}
