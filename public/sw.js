@@ -13,9 +13,13 @@
  * activated → cleans up old caches.
  */
 
-const CACHE_VERSION = 'v2'
+const CACHE_VERSION = 'v3'
 const STATIC_CACHE = `pwm-static-${CACHE_VERSION}`
 const PAGES_CACHE = `pwm-pages-${CACHE_VERSION}`
+
+// Batas entry PAGES_CACHE — dulu tumbuh tanpa batas (tiap HTML yang pernah
+// dikunjungi disimpan selamanya sampai bump versi).
+const PAGES_CACHE_MAX = 30
 
 // Pages worth pre-caching after install so first visit is offline-ready.
 const PRECACHE_URLS = ['/', '/offline.html']
@@ -65,9 +69,17 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Static assets — cache-first (Next.js content-hashes these)
+  // Aset ber-hash konten (Next.js) — cache-first murni, tidak pernah basi.
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(cacheFirst(req, STATIC_CACHE))
+    return
+  }
+
+  // Aset TANPA hash (ikon, manifest, svg/font root) — stale-while-revalidate:
+  // serve cache instan + refresh di belakang. Dulu cache-first murni: rebrand
+  // ikon/manifest cuma ter-invalidate lewat bump manual CACHE_VERSION — kalau
+  // lupa, user lama terjebak logo lama selamanya.
   if (
-    url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icon') ||
     url.pathname.startsWith('/apple-icon') ||
     url.pathname === '/manifest.json' ||
@@ -76,7 +88,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.woff') ||
     url.pathname.endsWith('.ttf')
   ) {
-    event.respondWith(cacheFirst(req, STATIC_CACHE))
+    event.respondWith(staleWhileRevalidate(req, STATIC_CACHE))
     return
   }
 
@@ -102,11 +114,38 @@ async function cacheFirst(request, cacheName) {
   }
 }
 
+// Serve dari cache kalau ada (instan), sambil fetch versi baru di belakang
+// buat request berikutnya. Gagal fetch = diam (cache lama tetap dipakai).
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName)
+  const hit = await cache.match(request)
+  const refresh = fetch(request)
+    .then((fresh) => {
+      if (fresh.ok) cache.put(request, fresh.clone())
+      return fresh
+    })
+    .catch(() => undefined)
+  if (hit) return hit
+  const fresh = await refresh
+  return fresh ?? new Response('', { status: 504, statusText: 'Offline' })
+}
+
+// Buang entry terlama saat melewati batas (urutan keys ≈ urutan insert).
+async function trimCache(cacheName, maxEntries) {
+  const cache = await caches.open(cacheName)
+  const keys = await cache.keys()
+  if (keys.length <= maxEntries) return
+  await Promise.all(keys.slice(0, keys.length - maxEntries).map((k) => cache.delete(k)))
+}
+
 async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName)
   try {
     const fresh = await fetch(request)
-    if (fresh.ok) cache.put(request, fresh.clone())
+    if (fresh.ok) {
+      cache.put(request, fresh.clone())
+      void trimCache(cacheName, PAGES_CACHE_MAX)
+    }
     return fresh
   } catch {
     const hit = await cache.match(request)
