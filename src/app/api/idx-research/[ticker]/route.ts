@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { getValuation, getValuationDetail, getEmittenStat, getDividendsForTicker } from '@/lib/invest/stocks'
+import { getValuation, getValuationDetail, getEmittenStat, getDividendsForTicker, getStock } from '@/lib/invest/stocks'
 import { getEmiten } from '@/lib/invest/emitten'
+import { computePiotroski } from '@/lib/invest/piotroski'
 
 /**
  * Per-ticker research detail. Returns valuation methods + stats + dividend
@@ -26,6 +27,22 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Ticker tidak ditemukan' }, { status: 404 })
   }
 
+  // Metrik multi-tahun + Piotroski buat Compare (sparkline Revenue/Laba 10 thn
+  // + skor F). getStock = fs-read per-ticker (±19KB, cache Map) — file bisa
+  // tidak ter-ship (tracing gagal) → degrade ke null, jangan 500.
+  let metrics: Record<string, Record<string, number>> | null = null
+  let piotroski: ReturnType<typeof computePiotroski> | null = null
+  try {
+    const stock = getStock(ticker)
+    if (stock) {
+      metrics = stock.metrics ?? null
+      piotroski = computePiotroski(stock)
+    }
+  } catch {
+    metrics = null
+    piotroski = null
+  }
+
   return NextResponse.json(
     {
       ticker,
@@ -33,6 +50,8 @@ export async function GET(_request: Request, context: RouteContext) {
       valuation: valuation ?? null,
       detail: detail ?? null,
       stats: stats ?? null,
+      metrics,
+      piotroski,
       dividends: dividends.slice(0, 20), // last 20 events
     },
     {
