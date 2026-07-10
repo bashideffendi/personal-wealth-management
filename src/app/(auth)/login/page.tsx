@@ -2,7 +2,7 @@
 
 /**
  * Login — clean centered card on the shared (auth)/layout shell.
- * Brand promise (serif moment) + honest security line, not a bare form.
+ * Brand promise (accent moment) + honest security line, not a bare form.
  */
 
 import { useEffect, useState } from 'react'
@@ -14,8 +14,6 @@ import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { GoogleSignInButton } from '@/components/auth/google-signin-button'
 import { logSecurityEvent } from '@/lib/security-events'
-
-const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
 
 // Translate the Supabase errors users actually hit — never show raw English.
 function humanError(msg: string): string {
@@ -111,7 +109,7 @@ export default function LoginPage() {
       <>
         <div className="text-center mb-8">
           <h1 className="font-bold tracking-tight text-[22px] sm:text-[28px]" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>
-            Verifikasi <span style={SERIF}>2 langkah.</span>
+            Verifikasi <span style={{ color: 'var(--accent)' }}>2 langkah.</span>
           </h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masukin kode 6 digit dari app authenticator kamu.</p>
         </div>
@@ -145,7 +143,7 @@ export default function LoginPage() {
     <>
       <div className="text-center mb-8">
         <h1 className="font-bold tracking-tight text-[22px] sm:text-[28px]" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>
-          Selamat datang <span style={SERIF}>kembali.</span>
+          Selamat datang <span style={{ color: 'var(--accent)' }}>kembali.</span>
         </h1>
         <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Masuk untuk melanjutkan.</p>
       </div>

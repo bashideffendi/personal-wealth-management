@@ -9,8 +9,6 @@ import { Shield } from 'lucide-react'
  * trust line bottom-left. No feature copy.
  */
 
-const SERIF = { fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' } as const
-
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -74,7 +72,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="hidden lg:block max-w-md">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keuangan pribadi</p>
           <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(32px, 2.8vw, 42px)', lineHeight: 1.16, letterSpacing: '-0.03em', color: 'var(--ink)' }}>
-            Kelola keuanganmu dengan <span style={{ ...SERIF, color: 'var(--c-primary-ink)', fontWeight: 400 }}>tenang</span>.
+            Kelola keuanganmu dengan <span style={{ color: 'var(--accent)' }}>tenang</span>.
           </h2>
         </div>
 

@@ -69,7 +69,7 @@ function NetworkMark({ network, size = 22 }: { network?: string | null; size?: n
     )
   }
   if (n === 'visa') {
-    return <span style={{ fontFamily: 'var(--font-instrument-serif), Georgia, serif', fontStyle: 'italic', fontWeight: 800, fontSize: size, color: '#FFFFFF', letterSpacing: '0.01em', lineHeight: 1 }}>VISA</span>
+    return <span style={{ fontWeight: 800, fontSize: size, color: '#FFFFFF', letterSpacing: '0.01em', lineHeight: 1 }}>VISA</span>
   }
   const label = n === 'gpn' ? 'GPN' : n === 'jcb' ? 'JCB' : n === 'amex' ? 'AMEX' : (network || '').toUpperCase()
   return <span style={{ fontWeight: 800, fontSize: size * 0.72, color: '#FFFFFF', letterSpacing: '0.1em', lineHeight: 1 }}>{label}</span>
