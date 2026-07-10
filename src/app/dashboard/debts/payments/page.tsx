@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { adjustDebtRemaining } from '@/lib/data/balances'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Debt } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -83,8 +84,10 @@ export default function DebtPaymentsPage() {
     if (insErr) { setSaving(false); toast.error(t('common.mutation_failed')); return }
     const d = debts.find((x) => x.id === form.debt_id)
     if (d) {
-      const { error: updErr } = await supabase.from('debts').update({ remaining: Math.max(0, d.remaining - form.amount) }).eq('id', d.id)
-      if (updErr) { setSaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
+      // Atomik via RPC 065 (fallback read-modify-write pre-migrasi) — dua tab /
+      // double-click tidak lagi bisa saling menimpa sisa utang.
+      const { ok: updOk } = await adjustDebtRemaining(supabase, d.id, -form.amount, d.remaining)
+      if (!updOk) { setSaving(false); toast.error(t('common.mutation_failed')); refresh(); return }
     }
     setSaving(false)
     setDialogOpen(false)
@@ -101,8 +104,9 @@ export default function DebtPaymentsPage() {
     if (delErr) { toast.error(t('common.delete_failed')); return }
     const d = debts.find((x) => x.id === p.debt_id)
     if (d) {
-      const { error: updErr } = await supabase.from('debts').update({ remaining: d.remaining + p.amount }).eq('id', d.id)
-      if (updErr) toast.error(t('common.mutation_failed'))
+      // clampZero=false saat reverse: pengembalian tidak boleh ke-clamp diam-diam.
+      const { ok: updOk } = await adjustDebtRemaining(supabase, d.id, p.amount, d.remaining, false)
+      if (!updOk) toast.error(t('common.mutation_failed'))
     }
     refresh()
   }
