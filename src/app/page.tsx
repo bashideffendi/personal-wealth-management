@@ -6,8 +6,6 @@
  */
 
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import {
   ArrowRight, Menu, Check, Shield, Lock, Database, EyeOff,
   Receipt, TrendingUp, LineChart, ChevronDown,
@@ -15,17 +13,11 @@ import {
 import { PricingSection } from '@/components/landing/pricing-section'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
 
-export default async function LandingPage() {
-  let isAuthed = false
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    isAuthed = !!user
-  } catch {
-    isAuthed = false
-  }
-  if (isAuthed) redirect('/dashboard')
-
+// Redirect user ber-sesi → /dashboard TIDAK lagi di sini (dulu getUser di page
+// bikin '/' gagal prerender — halaman jualan jadi dynamic + bayar auth per hit).
+// Sekarang ditangani middleware via cek keberadaan cookie sesi (lihat
+// lib/supabase/middleware.ts) sehingga landing bisa 100% static.
+export default function LandingPage() {
   const navLinks = [
     { href: '/features', label: 'Fitur' },
     // Billing beku (src/lib/billing-flag.ts) → section Harga tidak dirender,

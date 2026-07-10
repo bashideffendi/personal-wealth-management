@@ -56,6 +56,20 @@ export async function updateSession(request: NextRequest) {
   // auth server (±100-300ms) percuma. Refresh cookie sesi tetap terjadi di
   // setiap request rute privat, jadi sesi tidak akan kadaluarsa diam-diam.
   if (isPublicRoute) {
+    // Landing: user yang PUNYA cookie sesi diarahkan ke /dashboard (dulu getUser
+    // di page.tsx — bikin '/' gagal prerender). Ini cek KEBERADAAN cookie saja,
+    // bukan verifikasi: kalau cookie basi, dashboard layout yang mem-verifikasi
+    // dan melempar balik ke /login. Trade-off sadar demi landing 100% static.
+    if (path === '/') {
+      const hasSession = request.cookies
+        .getAll()
+        .some((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token') && c.value !== '')
+      if (hasSession) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+      }
+    }
     return NextResponse.next({ request })
   }
 
