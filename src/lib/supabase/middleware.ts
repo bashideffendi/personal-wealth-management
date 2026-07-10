@@ -48,6 +48,13 @@ export async function updateSession(request: NextRequest) {
     path.startsWith('/refund') ||
     path.startsWith('/auth') ||
     path.startsWith('/api') ||
+    // Metadata routes Next (tanpa ekstensi di URL, mis. /opengraph-image?hash)
+    // — WAJIB publik: crawler sosial fetch og:image tanpa sesi. Sebelum ini,
+    // share card di produksi rusak (crawler dapat redirect ke HTML /login).
+    path.startsWith('/opengraph-image') ||
+    path.startsWith('/twitter-image') ||
+    path.startsWith('/icon') ||
+    path.startsWith('/apple-icon') ||
     /\.(?:js|json|html|txt|xml|webmanifest|ico)$/.test(path)
 
   // Rute publik: LANGSUNG lolos tanpa getUser — hasil verifikasinya toh tidak
