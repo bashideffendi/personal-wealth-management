@@ -16,11 +16,13 @@ import {
 } from '@/components/ui/dialog'
 import {
   Plus, Pencil, Trash2, Loader2, MapPin, ExternalLink, Home, Car, Gem,
-  RefreshCw, TrendingUp, TrendingDown, ShieldCheck, LayoutGrid, List, ArrowUpDown,
+  RefreshCw, TrendingUp, TrendingDown, ShieldCheck, LayoutGrid, List, ArrowUp, ArrowDown,
   type LucideIcon,
 } from 'lucide-react'
-import { LeafletMap } from '@/components/map/map-client'
+import { LeafletMap, PortfolioMap } from '@/components/map/map-client'
+import { StaticMapThumb } from '@/components/map/static-map-thumb'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { depreciate, METODE_LABEL, type MetodePenyusutan } from '@/lib/depreciation'
 import { useI18n } from '@/lib/i18n/context'
 
@@ -286,6 +288,21 @@ export default function NonLiquidAssetsPage() {
     })
   }, [items, sortKey, sortDir])
 
+  // Titik Peta Portofolio — semua properti yang punya koordinat, satu peta.
+  const mapPoints = useMemo(
+    () =>
+      items
+        .filter((a) => a.category === 'property' && a.latitude != null && a.longitude != null)
+        .map((a) => ({ id: a.id, name: a.name, value: a.current_value, lat: a.latitude!, lng: a.longitude! })),
+    [items],
+  )
+
+  // Indikator arah sort di header tabel (dulu ArrowUpDown statis — arah gak kebaca).
+  function sortIcon(k: 'value' | 'gain' | 'date') {
+    if (sortKey !== k) return null
+    return sortDir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+  }
+
   function renderCard(a: AssetNonLiquid) {
     const cat = (a.category in CAT ? a.category : 'personal_item') as Category
     const meta = CAT[cat]
@@ -327,7 +344,7 @@ export default function NonLiquidAssetsPage() {
         {hasMap ? (
           <>
             <div className="relative h-28 w-full">
-              <LeafletMap lat={a.latitude!} lng={a.longitude!} readOnly height={112} />
+              <StaticMapThumb lat={a.latitude!} lng={a.longitude!} name={a.name} height={112} />
               {/* badge kategori ngambang di pojok peta */}
               <div className="absolute -bottom-5 left-5 z-[2] size-10 rounded-xl grid place-items-center shadow-[var(--card-shadow)] ring-2 ring-[var(--surface)]" style={{ background: meta.color }}>
                 <Icon className="size-5" style={{ color: '#fff' }} />
@@ -386,6 +403,7 @@ export default function NonLiquidAssetsPage() {
         {items.length > 0 && <Button variant="outline" onClick={openReval}><RefreshCw className="h-4 w-4" /> {t('assets_nonliquid.revalue_all')}</Button>}
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true) }}><Plus className="h-4 w-4" /> {t('assets_nonliquid.add_asset')}</Button>
       </WealthHeader>
+      <WealthSubnav />
 
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -461,6 +479,22 @@ export default function NonLiquidAssetsPage() {
             </div>
           )}
 
+          {/* Peta Portofolio — SATU peta semua properti ber-koordinat (desktop-only,
+              mobile tetap kartu). Muncul cuma kalau ada minimal 1 titik. */}
+          {mapPoints.length > 0 && (
+            <section className="s-card hidden md:block overflow-hidden">
+              <div className="flex items-center justify-between px-4 pt-3.5 pb-3">
+                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Peta Portofolio</p>
+                <span className="text-[11px]" style={{ color: 'var(--ink-muted)' }}><span className="num">{mapPoints.length}</span> properti di peta</span>
+              </div>
+              <PortfolioMap
+                items={mapPoints}
+                height={380}
+                onView={(id) => { const a = items.find((x) => x.id === id); if (a) openEdit(a) }}
+              />
+            </section>
+          )}
+
           {/* Toolbar — judul + toggle Kartu/Tabel */}
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.asset_details')}</p>
@@ -482,12 +516,12 @@ export default function NonLiquidAssetsPage() {
                   <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                     <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_asset')}</th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_type')}</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_bought')} {sortKey === 'date' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_bought')} {sortIcon('date')}</button></th>
                     <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_age')}</th>
                     <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_initial_capital')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_current_value')} {sortKey === 'value' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_current_value')} {sortIcon('value')}</button></th>
                     <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_diff')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ% {sortKey === 'gain' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ% {sortIcon('gain')}</button></th>
                     <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_method')}</th>
                     <th className="px-3 py-2.5" />
                   </tr>
