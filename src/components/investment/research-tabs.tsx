@@ -19,8 +19,14 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import dynamic from 'next/dynamic'
+
+// react-markdown + remark-gfm (±232KB) keluar dari initial JS route research —
+// dimuat saat body riset tampil (pola sama dengan chart-modules).
+const ResearchMarkdown = dynamic(
+  () => import('./research-markdown').then((m) => m.ResearchMarkdown),
+  { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 320, background: 'var(--surface-2)' }} aria-hidden="true" /> },
+)
 
 import {
   formatIDRCompact,
@@ -492,25 +498,7 @@ function ResearchView({
           </div>
         )}
         <div className="prose-research max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              // Tabel markdown (mis. "Highlights Finansial — Tren 5 Tahun") bisa
-              // 6-7 kolom: bungkus scroll horizontal + edge-fade di mobile biar
-              // kolom terakhir gak keiris diam-diam.
-              table: (props) => {
-                const { node, ...tableProps } = props
-                void node
-                return (
-                  <div className="md-table-scroll">
-                    <table {...tableProps} />
-                  </div>
-                )
-              },
-            }}
-          >
-            {research.body}
-          </ReactMarkdown>
+          <ResearchMarkdown>{research.body}</ResearchMarkdown>
         </div>
       </article>
 
