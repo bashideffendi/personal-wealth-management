@@ -59,14 +59,16 @@ import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 
-// Chart palette per design handoff tokens.css — emerald led, then sky,
-// amber, coral, violet for categorical variety. Replaces the older
-// "lime + orange + black" palette which clashed with the new design tokens.
-// Palet token (adaptif tema) — urutan sama dengan hub Kekayaan biar kategori
-// yang sama dapet warna yang sama di mana pun.
+// Palet chart = 4 warna logo (mint → biru → violet → coral) sebagai aksen data,
+// disusul varian -ink (lebih gelap, kontras teks/label) dengan urutan yang sama
+// untuk seri ke-5 dst. Amber (brass) eksklusif warning/anggaran — cuma jadi
+// slot terakhir khusus kalau seri lebih dari 8. Palet token (adaptif tema) —
+// urutan ini juga acuan hub Kekayaan biar kategori yang sama dapet warna yang
+// sama di mana pun.
 const CHART_PALETTE = [
-  'var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)',
-  'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)',
+  'var(--c-mint)', 'var(--c-blue)', 'var(--c-violet)', 'var(--c-coral)',
+  'var(--c-mint-ink)', 'var(--c-blue-ink)', 'var(--c-violet-ink)', 'var(--c-coral-ink)',
+  'var(--c-amber)',
 ]
 
 // Charts deferred out of the initial dashboard JS — recharts loads only when a
