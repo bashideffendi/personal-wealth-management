@@ -15,9 +15,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Search, Bell, ChevronDown, ArrowLeft, Eye, EyeOff,
+  Search, ChevronDown, ArrowLeft, Eye, EyeOff,
 } from 'lucide-react'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import { AICreditsBadge } from '@/components/layout/ai-credits-badge'
 import { AvatarMenu } from '@/components/layout/avatar-menu'
 import { NAV_ITEMS, type NavItem } from '@/lib/constants'
@@ -369,14 +370,8 @@ export function TopNav({ user }: TopNavProps) {
               {privacyHidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
 
-            <button
-              className="relative hidden md:grid place-items-center"
-              style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--text-2)' }}
-              aria-label="Notifikasi"
-              title="Notifikasi (segera)"
-            >
-              <Bell className="size-3.5" />
-            </button>
+            {/* Bell hidup — inbox in-app + alert target watchlist (P3 #4) */}
+            <NotificationBell />
 
             <AvatarMenu user={user} />
           </div>
