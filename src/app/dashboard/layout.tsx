@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { TopNav } from '@/components/layout/top-nav'
 import { QuickAddLauncher } from '@/components/layout/quick-add-launcher'
 import { CommandPalette } from '@/components/layout/command-palette'
+import { KeyboardShortcuts } from '@/components/layout/keyboard-shortcuts'
 import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
 import { InstallPrompt } from '@/components/layout/install-prompt'
 import { OfflineSync } from '@/components/layout/offline-sync'
@@ -96,6 +97,8 @@ export default async function DashboardLayout({
           <QuickAddLauncher variant="mobile" />
         </div>
         <CommandPalette />
+        {/* Pintasan keyboard global: n = Quick Add, ? = bantuan, g+huruf = lompat */}
+        <KeyboardShortcuts />
         <BottomTabBar />
         <InstallPrompt />
         {/* Penyapu antrian transaksi offline — flush on mount/online/60s */}
