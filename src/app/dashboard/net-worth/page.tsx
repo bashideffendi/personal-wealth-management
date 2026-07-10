@@ -237,8 +237,9 @@ export default function NetWorthPage() {
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, var(--hero-chip-pos-bg), transparent 65%)' }} />
         <div className="relative p-5 sm:p-6 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
-          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,40px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}>{formatCompactCurrency(netWorth)}</p>
-          <p className="num tabular text-[11px] mt-1.5" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
+          {/* MOMENT: digit penuh di >=lg (baris 11px di bawah jadi redundan → lg:hidden), compact di <lg */}
+          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,44px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}><span className="lg:hidden">{formatCompactCurrency(netWorth)}</span><span className="hidden lg:inline" style={{ fontWeight: 800 }}>{formatCurrency(netWorth)}</span></p>
+          <p className="num tabular text-[11px] mt-1.5 lg:hidden" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
