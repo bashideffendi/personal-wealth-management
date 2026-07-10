@@ -252,7 +252,6 @@ export default function TransactionsPage() {
   useEffect(() => {
     const d = pageQuery.data?.profileDefaultAccountId
     if (d) setDefaultAccountId(d)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageQuery.data])
   const [accountSource, setAccountSource] = useState<'ai' | 'default' | 'last_used' | 'first' | null>(null)
   const [settingDefault, setSettingDefault] = useState(false)

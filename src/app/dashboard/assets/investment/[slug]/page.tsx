@@ -1,11 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getSessionUser } from '@/lib/hooks/use-session-user'
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/utils'
 import { INVESTMENT_SUBCATS, INVESTMENT_SLUG_TO_CATEGORY, FX_FALLBACK_USDIDR } from '@/lib/constants'
 import type { Investment, Quote } from '@/types'
@@ -112,8 +113,9 @@ export default function InvestmentCategoryPage() {
   // (Research/Compare/Watchlist + link research per-baris). Endpoint2 itu
   // IDX-only (`/api/idx-emiten`, `.JK`) -> 404/empty buat US.
   const isUS = marketFilter === 'us'
-  // useMemo penting: fallback object harus stabil identity-nya, kalau nggak
-  // `subcat` berubah tiap render -> useEffect(load) loop -> refresh harga terus.
+  // useMemo penting: fallback object harus stabil identity-nya — dipakai efek
+  // redirect di bawah; kalau identity-nya goyang tiap render, dulu bikin
+  // useEffect(load) loop -> refresh harga terus.
   const subcat = useMemo(
     () =>
       INVESTMENT_SUBCATS.find((s) => s.slug === slug) ??
@@ -127,10 +129,7 @@ export default function InvestmentCategoryPage() {
   // (view "Semua" + "IHSG"), gak relevan buat saham US -> sembunyikan di US.
   const showNews = category === 'stock' && marketFilter !== 'us'
 
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  const [items, setItems] = useState<Investment[]>([])
 
   // View toggle (card | list) — persisted per category in localStorage so
   // user's preference survives page reloads. Default: list for stock (table
@@ -172,8 +171,8 @@ export default function InvestmentCategoryPage() {
   }, [])
 
   // Declared as useCallback before the useEffect that triggers it so the
-  // hook deps lint rule is happy without disabling it. Both `load` and
-  // `refreshQuotes` are stable as long as `category` doesn't change.
+  // hook deps lint rule is happy without disabling it. `refreshQuotes` is
+  // stable as long as `category` doesn't change.
   const refreshQuotes = useCallback(async (list: Investment[]) => {
     // Emas: harga buyback per-gram dari harga publik provider — gak butuh ticker.
     if (category === 'gold') {
@@ -260,36 +259,58 @@ export default function InvestmentCategoryPage() {
     }
   }, [category])
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setLoadError(false)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const { data, error } = await supabase
-      .from('investments')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('category', category)
-      .order('total_value', { ascending: false })
-    if (error) {
-      // Fetch gagal ≠ portofolio kosong — jangan render "belum ada posisi" palsu.
-      setLoadError(true)
-      setLoading(false)
-      return
-    }
-    const all = (data ?? []) as Investment[]
-    const list = marketFilter
-      ? all.filter((i) => (((i.currency ?? '').toUpperCase() === 'USD') ? 'us' : 'idx') === marketFilter)
-      : all
-    setItems(list)
-    setLoading(false)
-    void refreshQuotes(list)
-  }, [supabase, category, refreshQuotes, marketFilter])
+  // Data holdings via react-query — cache antar navigasi + refetch di belakang
+  // (idiom sama dengan transactions/accounts/net-worth). Key per KATEGORI,
+  // bukan per slug: stock / stock-idx / stock-us berbagi satu cache; filter
+  // market diturunkan client-side di bawah, jadi toggle IDX/US = nol network
+  // (dulu: tiap toggle bikin `load` baru -> re-run getUser + select investments
+  // + refresh harga, padahal filternya dari array yang sudah di memori).
+  const pageQuery = useQuery({
+    queryKey: ['investment-slug', category],
+    enabled: !!subcat,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      // Sesi lokal (tanpa round-trip /auth/v1/user) — token sudah diverifikasi
+      // middleware + dashboard layout sebelum halaman ini render.
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
+      const { data, error } = await supabase
+        .from('investments')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('category', category)
+        .order('total_value', { ascending: false })
+      // Fetch gagal ≠ portofolio kosong — jangan render "belum ada posisi"
+      // palsu; throw -> error card + tombol retry.
+      if (error) throw error
+      return (data ?? []) as Investment[]
+    },
+  })
+  const allItems = useMemo(() => pageQuery.data ?? [], [pageQuery.data])
+  // Filter market IDX/US murni client-side dari hasil query utuh di memori.
+  const items = useMemo(
+    () =>
+      marketFilter
+        ? allItems.filter((i) => (((i.currency ?? '').toUpperCase() === 'USD') ? 'us' : 'idx') === marketFilter)
+        : allItems,
+    [allItems, marketFilter],
+  )
+  const loading = pageQuery.isLoading
+  const loadError = pageQuery.isError
 
   useEffect(() => {
-    if (!subcat) { router.push('/dashboard/assets/investment'); return }
-    void load()
-  }, [slug, subcat, router, load])
+    if (!subcat) router.push('/dashboard/assets/investment')
+  }, [subcat, router])
+
+  // Refresh harga saat data holdings datang/berubah — dulu dipanggil di ekor
+  // load(). Keyed ke `allItems` (hasil query utuh, identity stabil berkat
+  // structural sharing react-query), BUKAN `items` ter-filter, supaya toggle
+  // IDX/US tidak memicu fetch harga ulang. Aman dari loop refresh harga
+  // (warning `subcat` di atas): refreshQuotes cuma set state quotes/goldPrices
+  // yang bukan dependency effect ini.
+  useEffect(() => {
+    if (pageQuery.isSuccess) void refreshQuotes(allItems)
+  }, [pageQuery.isSuccess, allItems, refreshQuotes])
 
   function openCreate() {
     setForm(EMPTY)
@@ -312,12 +333,17 @@ export default function InvestmentCategoryPage() {
     qc.invalidateQueries({ queryKey: ['assets-hub'] })
     qc.invalidateQueries({ queryKey: ['net-worth'] })
   }
+  // Pasca-mutasi halaman INI: invalidasi cache (refetch di belakang, data lama
+  // tetap tampil — tanpa reset ke spinner). Key prefix tanpa kategori: edit
+  // dari halaman "Semua" bisa mindahin bucket market/kategori, biar semua
+  // varian ikut segar.
+  const refresh = () => { void qc.invalidateQueries({ queryKey: ['investment-slug'] }) }
 
   async function save() {
     if (form.quantity <= 0) { toast.error(t('investment_detail.toast_qty_invalid')); return }
     if (form.avg_cost <= 0) { toast.error(t('investment_detail.toast_cost_invalid')); return }
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSaving(false); return }
     const type = category === 'stock' || category === 'mutual_fund' || category === 'crypto'
       ? 'variable_income'
@@ -356,14 +382,14 @@ export default function InvestmentCategoryPage() {
     if (error) { toast.error(t('common.mutation_failed')); return }
     setDialogOpen(false)
     invalidateInvestmentCaches()
-    void load()
+    refresh()
   }
   async function remove(id: string) {
     if (!confirm(t('investment_detail.confirm_delete'))) return
     const { error } = await supabase.from('investments').delete().eq('id', id)
     if (error) { toast.error(t('common.delete_failed')); return }
     invalidateInvestmentCaches()
-    void load()
+    refresh()
   }
 
   // Shared enrich (same math as the hub): USD quotes × usdIdr, fallback ke
@@ -607,7 +633,7 @@ export default function InvestmentCategoryPage() {
       ) : loadError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
-          <Button variant="outline" onClick={() => void load()}>{t('common.retry')}</Button>
+          <Button variant="outline" onClick={() => void pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : items.length === 0 ? (
         <div className="s-card p-8 text-center">
