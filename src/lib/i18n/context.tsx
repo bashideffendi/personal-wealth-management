@@ -1,7 +1,8 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { messages, type Locale } from './messages'
+import { id } from './messages-id'
+import type { Locale } from './messages'
 
 const STORAGE_KEY = 'pwm.locale'
 
@@ -13,8 +14,16 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null)
 
+// Katalog en dimuat SEKALI saat pertama kali locale = en, lalu di-cache
+// module-level (survive re-mount provider). Sebelum resolve, t() fallback ke id
+// sebentar — trade-off sadar demi motong ±145KB dari bundle SEMUA halaman
+// (mayoritas user berbahasa Indonesia tidak pernah membayar katalog en).
+type Catalog = typeof id
+let enCache: Catalog | null = null
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('id')
+  const [enCatalog, setEnCatalog] = useState<Catalog | null>(enCache)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -24,6 +33,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       document.documentElement.lang = saved
     }
   }, [])
+
+  useEffect(() => {
+    if (locale !== 'en' || enCache) return
+    let cancelled = false
+    void import('./messages-en').then((m) => {
+      enCache = m.en as unknown as Catalog
+      if (!cancelled) setEnCatalog(enCache)
+    })
+    return () => { cancelled = true }
+  }, [locale])
 
   function setLocale(l: Locale) {
     setLocaleState(l)
@@ -48,7 +67,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
       return typeof cur === 'string' ? cur : undefined
     }
-    return walk(messages[locale]) ?? walk(messages.id) ?? path
+    const active = locale === 'en' ? (enCatalog ?? id) : id
+    return walk(active) ?? walk(id) ?? path
   }
 
   return (
