@@ -22,6 +22,43 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // Public routes that anonymous users can access without redirect:
+  //   - /                                   → landing
+  //   - /login /register /forgot-password   → auth forms
+  //   - /features /about /contact           → marketing pages
+  //   - /terms /privacy /refund             → legal pages
+  //   - /auth/*                             → OAuth callback handler
+  //   - /api/*                              → public API routes (own auth gates)
+  //   - static files at root (sw.js, manifest.json, offline.html, robots.txt,
+  //     sitemap.xml, …) — the matcher only excludes _next + images, so these
+  //     .js/.json/.html/.txt/.xml files would otherwise be gated and break the
+  //     PWA/SEO. Matched by extension so new public assets don't need adding.
+  // Any other path under an unauthenticated session → redirect to /login.
+  const path = request.nextUrl.pathname
+  const isPublicRoute =
+    path === '/' ||
+    path.startsWith('/login') ||
+    path.startsWith('/register') ||
+    path.startsWith('/forgot-password') ||
+    path.startsWith('/features') ||
+    path.startsWith('/about') ||
+    path.startsWith('/contact') ||
+    path.startsWith('/terms') ||
+    path.startsWith('/privacy') ||
+    path.startsWith('/refund') ||
+    path.startsWith('/auth') ||
+    path.startsWith('/api') ||
+    /\.(?:js|json|html|txt|xml|webmanifest|ico)$/.test(path)
+
+  // Rute publik: LANGSUNG lolos tanpa getUser — hasil verifikasinya toh tidak
+  // dipakai untuk apa pun di jalur ini (redirect hanya terjadi di rute privat).
+  // Sebelumnya SEMUA request (landing, /api/*, marketing) bayar 1 round-trip
+  // auth server (±100-300ms) percuma. Refresh cookie sesi tetap terjadi di
+  // setiap request rute privat, jadi sesi tidak akan kadaluarsa diam-diam.
+  if (isPublicRoute) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -65,35 +102,7 @@ export async function updateSession(request: NextRequest) {
     )
   }
 
-  // Public routes that anonymous users can access without redirect:
-  //   - /                                   → landing
-  //   - /login /register /forgot-password   → auth forms
-  //   - /features /about /contact           → marketing pages
-  //   - /terms /privacy /refund             → legal pages
-  //   - /auth/*                             → OAuth callback handler
-  //   - /api/*                              → public API routes (own auth gates)
-  //   - static files at root (sw.js, manifest.json, offline.html, robots.txt,
-  //     sitemap.xml, …) — the matcher only excludes _next + images, so these
-  //     .js/.json/.html/.txt/.xml files would otherwise be gated and break the
-  //     PWA/SEO. Matched by extension so new public assets don't need adding.
-  // Any other path under an unauthenticated session → redirect to /login.
-  const path = request.nextUrl.pathname
-  const isPublicRoute =
-    path === '/' ||
-    path.startsWith('/login') ||
-    path.startsWith('/register') ||
-    path.startsWith('/forgot-password') ||
-    path.startsWith('/features') ||
-    path.startsWith('/about') ||
-    path.startsWith('/contact') ||
-    path.startsWith('/terms') ||
-    path.startsWith('/privacy') ||
-    path.startsWith('/refund') ||
-    path.startsWith('/auth') ||
-    path.startsWith('/api') ||
-    /\.(?:js|json|html|txt|xml|webmanifest|ico)$/.test(path)
-
-  if (!user && !isPublicRoute) {
+  if (!user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
