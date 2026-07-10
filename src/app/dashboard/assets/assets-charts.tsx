@@ -12,7 +12,13 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 
-const PIE_COLORS = ['var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)', 'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)']
+// Fallback default — urutan SAMA dengan CHART_PALETTE dashboard & ALLOC_PALETTE
+// (4 warna logo → -ink → amber terakhir) biar warna kategori konsisten se-app.
+const PIE_COLORS = [
+  'var(--c-mint)', 'var(--c-blue)', 'var(--c-violet)', 'var(--c-coral)',
+  'var(--c-mint-ink)', 'var(--c-blue-ink)', 'var(--c-violet-ink)', 'var(--c-coral-ink)',
+  'var(--c-amber)',
+]
 
 export function AllocationPie({ data, palette }: { data: Array<{ name: string; value: number }>; palette?: string[] }) {
   const colors = palette && palette.length > 0 ? palette : PIE_COLORS

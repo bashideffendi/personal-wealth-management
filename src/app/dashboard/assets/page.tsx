@@ -33,7 +33,13 @@ const INVESTMENT_CATEGORY_KEYS: Record<string, string> = {
 
 // Palet token buat pie + legend (didefinisikan di page biar lazy-boundary
 // chart gak ketembus import statis).
-const ALLOC_PALETTE = ['var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)', 'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)']
+// Urutan SAMA dengan CHART_PALETTE dashboard (4 warna logo → varian -ink →
+// amber slot terakhir) biar kategori dapat warna konsisten lintas halaman.
+const ALLOC_PALETTE = [
+  'var(--c-mint)', 'var(--c-blue)', 'var(--c-violet)', 'var(--c-coral)',
+  'var(--c-mint-ink)', 'var(--c-blue-ink)', 'var(--c-violet-ink)', 'var(--c-coral-ink)',
+  'var(--c-amber)',
+]
 
 export default function AssetsOverviewPage() {
   const t = useT()
