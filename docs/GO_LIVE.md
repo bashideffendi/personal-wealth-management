@@ -1,16 +1,17 @@
 # Go-Live Checklist — merge `redesign/mobile` → master
 
-**Status (2026-07-02): MERGE-READY.** 34 commit ahead of master · master tidak
-bergerak · **nol konflik** · `npm run build` + `npm test` (256) hijau · migrasi
-057-061 sudah di-apply di Supabase prod.
+**Status: master tidak bergerak · nol konflik ke master · migrasi 057-061 sudah
+di-apply di prod. VERIFY BUILD+TEST DI TIP TERKINI SEBELUM MERGE** (jumlah commit
++ test terus nambah dari beberapa sesi paralel — jangan percaya angka statis).
 
-Branch `redesign/mobile` = SEMUA kerjaan yang belum live: redesign mobile penuh
-(chrome + density baris-compact + rebrand 4-warna + logo center) · tema Bersih
-default + Cartoon opsi · hardening (2FA API, error generik, rate-limit invite,
-CSS-injection guard, shadcn→dev) · saldo atomik (RPC) · idempotensi generate
-research · /api/health · test jalur uang · shared AI client · cron idempoten +
-delete-account orphan · **scaffold Xendit (GATED OFF — gak aktif sampai
-BILLING_ENABLED=true)**.
+⚠️ **PENTING — branch ini gabungan BANYAK sesi:** selain hardening/backend/Xendit,
+branch `redesign/mobile` mencakup **REDESIGN MOBILE TOTAL "ala app Budget" (F8-F13,
+mockup approved)** + fitur besar (web push PWA, offline queue quick-entry, split
+transaction, auto-post recurring, katalog bank, billing dibekukan, Keluarga
+disimpel, cron snapshot net worth, ⌘K cari transaksi, audit desktop + a11y +
+i18n date). **Go-live harus di-drive sesi yang punya KONTEKS redesign itu** (bukan
+sesi backend/audit) supaya bisa mastiin semua yang di tip sekarang emang layak
+tayang. Backend/keamanan/Xendit(gated-off) dari sesi ini = aman & sudah kegabung.
 
 ## SEBELUM merge (wajib)
 1. Buka **PREVIEW** (BUKAN klunting.com) di HP:
