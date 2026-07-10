@@ -57,7 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split, ArrowUp, ArrowDown } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { toast } from 'sonner'
 
@@ -88,6 +88,38 @@ const emptyForm = {
   description: '',
   amount: 0,
   tags: [] as string[],
+}
+
+// ─── P3 #2: tabel Excel-grade (desktop) — sort + saved views ──────────
+const TX_SORT_KEYS = ['date', 'amount', 'category', 'account', 'description'] as const
+type TxSortKey = (typeof TX_SORT_KEYS)[number]
+
+// Saved view = snapshot filter+sort yang bisa di-apply ulang. Date disimpan
+// sebagai 'YYYY-MM-DD' LOKAL (Date gak serializable ke JSON dgn aman; pola
+// from/to di-rehydrate ke startOfDay/endOfDay — sama dgn output RangePicker).
+type SavedTxView = {
+  name: string
+  dateRange: { from: string; to: string } | null
+  account: string
+  type: string
+  category: string
+  tag: string
+  search: string
+  sortKey: TxSortKey
+  sortDir: 'asc' | 'desc'
+}
+const TX_VIEWS_LS_KEY = 'pwm.tx-saved-views'
+// Pakai komponen tanggal LOKAL (bukan toISOString UTC) — konsisten dgn cara
+// filter tanggal mem-parse tx.date sebagai local midnight.
+const toYmdLocal = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const ymdToStartOfDay = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1, 0, 0, 0, 0)
+}
+const ymdToEndOfDay = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1, 23, 59, 59, 999)
 }
 
 export default function TransactionsPage() {
@@ -524,6 +556,98 @@ export default function TransactionsPage() {
   const [inlineCatId, setInlineCatId] = useState<string | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkCatOpen, setBulkCatOpen] = useState(false)
+
+  // Sort klik-header (desktop). Default date/desc = perilaku lama (grouping
+  // per hari tetap). Kolom lain → daftar FLAT + kolom tanggal per baris.
+  const [sortKey, setSortKey] = useState<TxSortKey>('date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  function toggleSort(key: TxSortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      // Angka/tanggal mulai desc (terbesar/terbaru dulu), teks mulai asc (A→Z).
+      setSortDir(key === 'amount' || key === 'date' ? 'desc' : 'asc')
+    }
+  }
+
+  // Saved views — kombinasi filter+sort tersimpan di localStorage (maks 8).
+  const [savedViews, setSavedViews] = useState<SavedTxView[]>([])
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [viewNameDraft, setViewNameDraft] = useState('')
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(TX_VIEWS_LS_KEY)
+      if (!raw) return
+      const parsed: unknown = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        setSavedViews((parsed as SavedTxView[]).filter((v) => v && typeof v.name === 'string').slice(0, 8))
+      }
+    } catch {
+      // localStorage korup/di-block — saved views mulai kosong saja
+    }
+  }, [])
+  function persistViews(next: SavedTxView[]) {
+    setSavedViews(next)
+    try {
+      localStorage.setItem(TX_VIEWS_LS_KEY, JSON.stringify(next))
+    } catch {
+      // quota penuh / private mode — state in-memory tetap jalan
+    }
+  }
+  function saveCurrentView() {
+    const name = viewNameDraft.trim()
+    if (!name) return
+    const view: SavedTxView = {
+      name,
+      dateRange: dateRange ? { from: toYmdLocal(dateRange.from), to: toYmdLocal(dateRange.to) } : null,
+      account: filterAccount,
+      type: filterType,
+      category: filterCategory,
+      tag: filterTag,
+      search: search.trim(),
+      sortKey,
+      sortDir,
+    }
+    const next = [...savedViews.filter((v) => v.name !== name), view]
+    if (next.length > 8) {
+      toast.error('Maksimal 8 tampilan tersimpan — hapus salah satu dulu.')
+      return
+    }
+    persistViews(next)
+    setViewDialogOpen(false)
+    toast.success('Tampilan tersimpan')
+  }
+  function applyView(v: SavedTxView) {
+    setDateRange(v.dateRange ? { from: ymdToStartOfDay(v.dateRange.from), to: ymdToEndOfDay(v.dateRange.to) } : null)
+    setFilterAccount(v.account || 'all')
+    setFilterType(v.type || 'all')
+    setFilterCategory(v.category || 'all')
+    setFilterTag(v.tag || 'all')
+    setSearch(v.search ?? '')
+    setSortKey((TX_SORT_KEYS as readonly string[]).includes(v.sortKey) ? v.sortKey : 'date')
+    setSortDir(v.sortDir === 'asc' ? 'asc' : 'desc')
+  }
+  function deleteView(name: string) {
+    if (!confirm(`Hapus tampilan "${name}"?`)) return
+    persistViews(savedViews.filter((v) => v.name !== name))
+  }
+  // Chip aktif = state saat ini persis sama dgn snapshot view.
+  const isViewActive = (v: SavedTxView) =>
+    v.account === filterAccount &&
+    v.type === filterType &&
+    v.category === filterCategory &&
+    v.tag === filterTag &&
+    (v.search ?? '') === search.trim() &&
+    v.sortKey === sortKey &&
+    v.sortDir === sortDir &&
+    (v.dateRange === null) === (dateRange === null) &&
+    (!v.dateRange || !dateRange ||
+      (v.dateRange.from === toYmdLocal(dateRange.from) && v.dateRange.to === toYmdLocal(dateRange.to)))
+
+  // Peek panel (≥lg) + fokus baris j/k — murni UI, gak nyentuh data layer.
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [peekId, setPeekId] = useState<string | null>(null)
 
   // Re-fetch saat ada mutasi data dari FAB/command palette — sekarang lewat
   // invalidasi cache (refetch di belakang, TANPA reset halaman ke spinner).
@@ -1023,6 +1147,88 @@ export default function TransactionsPage() {
     return true
   }), [transactions, dateRange, filterAccount, filterType, filterCategory, filterTag, deferredSearch])
 
+  // Urutan tampil tabel desktop. Default (date desc) = identitas array query →
+  // grouping harian existing tetap persis sama. Sort akun pakai NAMA akun
+  // (getAccountName), bukan id. Bulk-select/inline-category tetap aman:
+  // semuanya bekerja per tx.id, bukan per posisi baris.
+  const sortedTransactions = useMemo(() => {
+    if (sortKey === 'date' && sortDir === 'desc') return filteredTransactions
+    const dir = sortDir === 'asc' ? 1 : -1
+    const arr = [...filteredTransactions]
+    arr.sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'date') cmp = a.date < b.date ? -1 : a.date > b.date ? 1 : 0
+      else if (sortKey === 'amount') cmp = a.amount - b.amount
+      else if (sortKey === 'category') cmp = a.category.localeCompare(b.category, 'id')
+      else if (sortKey === 'account') cmp = getAccountName(a.account_id).localeCompare(getAccountName(b.account_id), 'id')
+      else cmp = (a.description ?? '').localeCompare(b.description ?? '', 'id')
+      return cmp * dir
+    })
+    return arr
+    // getAccountName cuma turunan accounts/creditCards (sudah jadi deps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredTransactions, sortKey, sortDir, accounts, creditCards])
+
+  // Transaksi yang lagi dibuka di peek panel — dicari dari cache `transactions`
+  // (bukan filtered) biar panel gak nutup cuma karena baris keluar dari filter.
+  const peekTx = peekId ? transactions.find((x) => x.id === peekId) ?? null : null
+
+  // Jaga index fokus j/k tetap dalam range saat daftar menyusut (ganti filter).
+  useEffect(() => {
+    if (focusedIndex >= sortedTransactions.length) setFocusedIndex(sortedTransactions.length - 1)
+  }, [focusedIndex, sortedTransactions.length])
+
+  // Transaksi di peek sudah terhapus → tutup panel (jangan "hidup lagi" pas
+  // j/k berikutnya dipencet).
+  useEffect(() => {
+    if (peekId && !loading && !transactions.some((x) => x.id === peekId)) setPeekId(null)
+  }, [peekId, transactions, loading])
+
+  // j/k pindah fokus baris, Enter/Space buka peek, Esc tutup — desktop ≥lg.
+  // Guard: abaikan saat mengetik (input/textarea/select/contenteditable), saat
+  // ada dialog terbuka (edit/split/palette — semua role="dialog"), atau modifier.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (typeof window.matchMedia !== 'function' || !window.matchMedia('(min-width: 1024px)').matches) return
+      const el = e.target as HTMLElement | null
+      if (el && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return
+      if (document.querySelector('[role="dialog"]')) return
+      if (e.key === 'j' || e.key === 'k') {
+        if (sortedTransactions.length === 0) return
+        e.preventDefault()
+        const delta = e.key === 'j' ? 1 : -1
+        const next = focusedIndex < 0
+          ? (delta === 1 ? 0 : sortedTransactions.length - 1)
+          : Math.min(sortedTransactions.length - 1, Math.max(0, focusedIndex + delta))
+        setFocusedIndex(next)
+        if (peekId) setPeekId(sortedTransactions[next].id)
+        document.querySelector(`[data-txrow-idx="${next}"]`)?.scrollIntoView({ block: 'nearest' })
+      } else if ((e.key === 'Enter' || e.key === ' ') && focusedIndex >= 0 && focusedIndex < sortedTransactions.length) {
+        e.preventDefault()
+        setPeekId(sortedTransactions[focusedIndex].id)
+      } else if (e.key === 'Escape' && peekId) {
+        setPeekId(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sortedTransactions, focusedIndex, peekId])
+
+  // "Pecah" dari peek panel — jalankan openEditDialog dulu (set editingId+form,
+  // biar batal split balik ke dialog edit yang ke-populate benar — kontrak
+  // closeSplitDialog), lalu langsung lompat ke dialog split; dialog edit gak
+  // sempat kelihatan karena semua setState dalam 1 batch render.
+  function openSplitFromPeek(tx: Transaction) {
+    openEditDialog(tx)
+    setSplitRows([
+      { category: tx.category, amount: tx.amount },
+      { category: '', amount: 0 },
+    ])
+    setDialogOpen(false)
+    setSplitDialogOpen(true)
+  }
+
   // F12: data kalender mobile — net per hari + total bulan yang dilihat.
   // Dari SEMUA transaksi (independen filter); Transfer & saving/investment
   // di-skip dari sel (ikut konvensi ringkasan masuk/keluar).
@@ -1064,6 +1270,10 @@ export default function TransactionsPage() {
     filterTag !== 'all',
   ].filter(Boolean).length
 
+  // Tombol "Simpan tampilan" aktif cuma kalau ada yang beda dari default.
+  const canSaveView =
+    activeFilterCount > 0 || search.trim() !== '' || sortKey !== 'date' || sortDir !== 'desc'
+
   function resetFilters() {
     setDateRange(null)
     setFilterAccount('all')
@@ -1095,6 +1305,31 @@ export default function TransactionsPage() {
             ),
           ),
         ]
+
+  // Header kolom sortable — pola sama dgn tabel screener (aria-sort di th +
+  // panah arah ArrowUp/ArrowDown kecil, hanya di kolom aktif).
+  const renderSortHead = (key: TxSortKey, label: string, numeric = false) => {
+    const active = sortKey === key
+    return (
+      <TableHead
+        aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className={`text-[11px] uppercase tracking-[0.08em] whitespace-nowrap ${numeric ? 'text-right' : ''}`}
+        style={{ color: 'var(--ink-soft)' }}
+      >
+        <button
+          type="button"
+          onClick={() => toggleSort(key)}
+          className={`inline-flex w-full items-center gap-0.5 uppercase tracking-[0.08em] font-medium transition-colors duration-100 hover:text-[var(--ink)] ${numeric ? 'justify-end' : 'justify-start'}`}
+          style={{ color: active ? 'var(--ink)' : 'inherit' }}
+        >
+          {label}
+          {active && (sortDir === 'asc'
+            ? <ArrowUp className="size-3 shrink-0" aria-hidden="true" />
+            : <ArrowDown className="size-3 shrink-0" aria-hidden="true" />)}
+        </button>
+      </TableHead>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -1252,6 +1487,54 @@ export default function TransactionsPage() {
           Mobile: grid filter collapsed (panel 4 dropdown makan setengah layar) —
           toggle lewat tombol "Filter (n)" di samping search. Desktop: selalu tampil. */}
       <div className={`rounded-xl border p-3 ${mobileView === 'stats' ? 'hidden md:block' : ''}`} style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        {/* Saved views (desktop) — chip apply + tombol simpan snapshot filter+sort.
+            Chip aktif (state persis match) = pill near-black. */}
+        <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-3">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] mr-1" style={{ color: 'var(--ink-soft)' }}>
+            Tampilan
+          </span>
+          {savedViews.map((v) => {
+            const active = isViewActive(v)
+            return (
+              <span
+                key={v.name}
+                className="inline-flex items-center rounded-full border transition-colors duration-100"
+                style={active
+                  ? { background: 'var(--ink)', borderColor: 'var(--ink)' }
+                  : { background: 'var(--surface)', borderColor: 'var(--border)' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => applyView(v)}
+                  title={`Terapkan tampilan: ${v.name}`}
+                  className="max-w-40 truncate pl-2.5 pr-1 py-1 text-[12px] font-medium transition-colors duration-100"
+                  style={{ color: active ? 'var(--surface)' : 'var(--ink-muted)' }}
+                >
+                  {v.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteView(v.name)}
+                  aria-label={`Hapus tampilan: ${v.name}`}
+                  className="grid place-items-center rounded-full p-1 mr-1 transition-colors duration-100 hover:opacity-70"
+                  style={{ color: active ? 'var(--surface)' : 'var(--ink-soft)' }}
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )
+          })}
+          <button
+            type="button"
+            disabled={!canSaveView}
+            onClick={() => { setViewNameDraft(''); setViewDialogOpen(true) }}
+            title={canSaveView ? 'Simpan kombinasi filter & urutan saat ini' : 'Atur filter/urutan dulu sebelum menyimpan tampilan'}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 hover:bg-[var(--surface-2)] disabled:opacity-40 disabled:pointer-events-none"
+            style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)', background: 'transparent' }}
+          >
+            <Plus className="size-3" /> Simpan tampilan
+          </button>
+        </div>
         <div className="flex gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
@@ -1605,11 +1888,14 @@ export default function TransactionsPage() {
             <div className="tx-scroll">
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
+                {/* Mode flat (sort ≠ tanggal): grouping harian hilang → kolom
+                    tanggal per baris muncul, lebar kolom lain menyesuaikan. */}
                 <col style={{ width: '4%' }} />
-                <col style={{ width: '14%' }} />
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '18%' }} />
-                <col style={{ width: '28%' }} />
+                {sortKey !== 'date' && <col style={{ width: '9%' }} />}
+                <col style={{ width: sortKey !== 'date' ? '12%' : '14%' }} />
+                <col style={{ width: sortKey !== 'date' ? '10%' : '12%' }} />
+                <col style={{ width: sortKey !== 'date' ? '16%' : '18%' }} />
+                <col style={{ width: sortKey !== 'date' ? '25%' : '28%' }} />
                 <col style={{ width: '16%' }} />
                 <col style={{ width: '8%' }} />
               </colgroup>
@@ -1618,24 +1904,37 @@ export default function TransactionsPage() {
                   <TableHead className="pl-3 pr-0">
                     <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label={t('transactions.select_all')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                   </TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_account')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_type')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_category')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_description')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_amount')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_action')}</TableHead>
+                  {/* Klik "Tanggal" balik ke sort tanggal → grouping harian lagi */}
+                  {sortKey !== 'date' && renderSortHead('date', t('transactions.col_date'))}
+                  {renderSortHead('account', t('transactions.col_account'))}
+                  <TableHead className="text-[11px] uppercase tracking-[0.08em] whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_type')}</TableHead>
+                  {renderSortHead('category', t('transactions.col_category'))}
+                  {renderSortHead('description', t('transactions.col_description'))}
+                  {renderSortHead('amount', t('transactions.col_amount'), true)}
+                  <TableHead className="text-[11px] uppercase tracking-[0.08em] text-right whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_action')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(() => {
-                  const groups: { date: string; items: typeof filteredTransactions }[] = []
-                  filteredTransactions.forEach((tx) => {
-                    const last = groups[groups.length - 1]
-                    if (last && last.date === tx.date) last.items.push(tx)
-                    else groups.push({ date: tx.date, items: [tx] })
-                  })
+                  // Sort non-tanggal → daftar FLAT (tanpa baris header harian);
+                  // sort tanggal (default) → grouping per hari existing.
+                  const isFlat = sortKey !== 'date'
+                  const groups: { date: string; items: typeof sortedTransactions }[] = []
+                  if (isFlat) {
+                    groups.push({ date: '__flat__', items: sortedTransactions })
+                  } else {
+                    sortedTransactions.forEach((tx) => {
+                      const last = groups[groups.length - 1]
+                      if (last && last.date === tx.date) last.items.push(tx)
+                      else groups.push({ date: tx.date, items: [tx] })
+                    })
+                  }
+                  // Index baris ter-render (urutan sortedTransactions) — target
+                  // fokus j/k + scrollIntoView via [data-txrow-idx].
+                  const rowIndexById = new Map(sortedTransactions.map((x, i) => [x.id, i]))
                   return groups.map((g) => (
                     <Fragment key={g.date}>
+                      {!isFlat && (
                       <TableRow className="hover:bg-transparent border-[color:var(--border-soft)]">
                         <TableCell
                           colSpan={7}
@@ -1660,13 +1959,42 @@ export default function TransactionsPage() {
                           </div>
                         </TableCell>
                       </TableRow>
+                      )}
                       {g.items.map((tx) => {
+                        const idx = rowIndexById.get(tx.id) ?? -1
                         const selected = selectedIds.has(tx.id)
+                        const focused = idx >= 0 && idx === focusedIndex
                         return (
-                        <TableRow key={tx.id} className="tx-row border-[color:var(--border-soft)]" style={selected ? { background: 'color-mix(in srgb, var(--c-mint) 16%, var(--surface))' } : undefined}>
+                        <TableRow
+                          key={tx.id}
+                          data-txrow-idx={idx}
+                          onClick={(e) => {
+                            // ≥lg: klik baris = buka peek panel (fokus ikut pindah).
+                            // Klik pada kontrol (checkbox/kategori/aksi) tetap ke
+                            // handler masing-masing — jangan dobel buka peek.
+                            if (typeof window.matchMedia !== 'function' || !window.matchMedia('(min-width: 1024px)').matches) return
+                            if ((e.target as HTMLElement).closest('button, input, a, label, [role="dialog"]')) return
+                            setFocusedIndex(idx)
+                            setPeekId(tx.id)
+                          }}
+                          className="tx-row scroll-mt-28 border-[color:var(--border-soft)] lg:cursor-pointer"
+                          style={{
+                            background: selected
+                              ? 'color-mix(in srgb, var(--c-mint) 16%, var(--surface))'
+                              : focused
+                                ? 'var(--surface-2)'
+                                : undefined,
+                            boxShadow: focused ? 'inset 2px 0 0 var(--c-primary)' : undefined,
+                          }}
+                        >
                           <TableCell className="pl-3 pr-0">
                             <input type="checkbox" checked={selected} onChange={() => toggleSelect(tx.id)} aria-label={t('transactions.select_row')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                           </TableCell>
+                          {isFlat && (
+                            <TableCell className="num text-[13px] tabular-nums whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                              {formatDateShort(tx.date, locale)}
+                            </TableCell>
+                          )}
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             {getAccountName(tx.account_id)}
                           </TableCell>
@@ -1765,7 +2093,8 @@ export default function TransactionsPage() {
               </TableBody>
               <TableFooter>
                 <TableRow className="hover:bg-transparent" style={{ background: 'var(--surface-2)' }}>
-                  <TableCell colSpan={5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                  {/* Mode flat nambah 1 kolom tanggal → colSpan ikut geser */}
+                  <TableCell colSpan={sortKey !== 'date' ? 6 : 5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
                     {t('transactions.total')} · {filteredTransactions.length} {t('transactions.transactions_word')}
                   </TableCell>
                   <TableCell className="num text-right text-[13px] font-bold tabular-nums">
@@ -1890,6 +2219,155 @@ export default function TransactionsPage() {
           </div>
         </>
       )}
+
+      {/* Peek panel (desktop ≥lg) — detail transaksi terfokus di aside kanan.
+          Dibuka via klik baris / Enter/Space pada baris terfokus j/k; Esc atau
+          X nutup. z-40 = di bawah dialog (z-50), top 57px = di bawah TopNav
+          (selaras sticky thead .tx-scroll). Semua aksi manggil handler EXISTING. */}
+      {peekTx && (() => {
+        const amountColor = peekTx.type === 'income'
+          ? 'var(--c-mint-ink)'
+          : peekTx.type === 'expense'
+            ? 'var(--c-coral-ink)'
+            : 'var(--ink)'
+        const splitCount = peekTx.split_group_id
+          ? transactions.filter((x) => x.split_group_id === peekTx.split_group_id).length
+          : 0
+        return (
+          <aside
+            aria-label={`Detail transaksi: ${peekTx.description || peekTx.category}`}
+            className="hidden lg:flex flex-col fixed right-0 animate-in slide-in-from-right-4 fade-in-0 duration-150"
+            style={{
+              top: 57,
+              bottom: 0,
+              width: 400,
+              zIndex: 40,
+              background: 'var(--surface)',
+              borderLeft: '1px solid var(--border)',
+              boxShadow: '-12px 0 32px -18px color-mix(in srgb, var(--ink) 18%, transparent)',
+            }}
+          >
+            <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border-soft)' }}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>
+                Detail transaksi
+              </p>
+              <button
+                type="button"
+                onClick={() => setPeekId(null)}
+                aria-label="Tutup panel detail"
+                className="grid size-7 place-items-center rounded-md transition-colors duration-100 hover:bg-[var(--surface-2)]"
+                style={{ color: 'var(--ink-soft)' }}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <p className="num tabular-nums text-[28px] font-bold leading-none" style={{ color: amountColor }}>
+                {peekTx.type === 'income' ? '+' : peekTx.type === 'expense' ? '−' : ''}{formatCurrency(peekTx.amount)}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="chip" style={{ background: TYPE_BADGE_STYLES[peekTx.type].bg, color: TYPE_BADGE_STYLES[peekTx.type].color }}>
+                  {t(TYPE_LABEL_KEYS[peekTx.type])}
+                </span>
+                <span className="chip inline-flex items-center gap-1.5" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
+                  <CategoryIcon category={peekTx.category} className="size-3" /> {peekTx.category}
+                </span>
+                {peekTx.split_group_id && (
+                  <span className="chip inline-flex items-center gap-1" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                    <Split className="size-3" /> Pecahan{splitCount > 1 ? ` · ${splitCount} bagian` : ''}
+                  </span>
+                )}
+              </div>
+
+              <dl className="mt-6 grid gap-4">
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tanggal</dt>
+                  <dd className="mt-0.5 text-[13.5px]" style={{ color: 'var(--ink)' }}>{formatDateShort(peekTx.date, locale)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Akun</dt>
+                  <dd className="mt-0.5 text-[13.5px]" style={{ color: 'var(--ink)' }}>{getAccountName(peekTx.account_id)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Deskripsi</dt>
+                  <dd className="mt-0.5 text-[13.5px] break-words" style={{ color: peekTx.description ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                    {peekTx.description || '—'}
+                  </dd>
+                </div>
+                {peekTx.tags && peekTx.tags.length > 0 && (
+                  <div>
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tag</dt>
+                    <dd className="mt-1 flex flex-wrap gap-1">
+                      {peekTx.tags.map((tg) => (
+                        <span key={tg} className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                          {tg}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              <p className="mt-6 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                Navigasi: <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>j</kbd>/<kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>k</kbd> pindah baris · <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>Esc</kbd> tutup
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
+              <Button variant="outline" size="sm" onClick={() => openEditDialog(peekTx)}>
+                <Pencil className="size-3.5" data-icon="inline-start" /> {t('transactions.edit')}
+              </Button>
+              {/* Syarat "Pecah" = sama dgn tombol di dialog edit (skip Transfer) */}
+              {peekTx.category !== 'Transfer' && (
+                <Button variant="outline" size="sm" onClick={() => openSplitFromPeek(peekTx)}>
+                  <Split className="size-3.5" data-icon="inline-start" /> Pecah
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => void handleDelete(peekTx.id)}
+                className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors duration-100 hover:bg-[var(--surface-2)]"
+                style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral-ink)', background: 'var(--surface)' }}
+              >
+                <Trash2 className="size-3.5" /> {t('transactions.delete')}
+              </button>
+            </div>
+          </aside>
+        )
+      })()}
+
+      {/* Dialog simpan tampilan (saved view) — nama singkat, Enter = simpan */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Simpan tampilan</DialogTitle>
+            <DialogDescription>
+              Simpan kombinasi filter dan urutan saat ini sebagai tampilan cepat (maks 8).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1.5 py-2">
+            <Label htmlFor="tx-view-name">Nama tampilan</Label>
+            <Input
+              id="tx-view-name"
+              value={viewNameDraft}
+              onChange={(e) => setViewNameDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveCurrentView() } }}
+              placeholder="cth. Makan bulan ini"
+              maxLength={40}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
+              {t('transactions.cancel')}
+            </Button>
+            <Button onClick={saveCurrentView} disabled={!viewNameDraft.trim()}>
+              {t('transactions.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
