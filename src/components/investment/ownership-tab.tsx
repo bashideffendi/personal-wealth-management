@@ -25,7 +25,9 @@ const OwnershipGraph = dynamic(() => import('./ownership-graph'), {
     <div
       className="flex items-center justify-center rounded-xl border text-xs"
       style={{
-        height: 440,
+        // Samain dengan GRAPH_HEIGHT di ownership-graph.tsx (jangan import —
+        // static import bakal narik Sigma ke bundle SSR). Beda tinggi = CLS.
+        height: 600,
         background: 'var(--surface-2)',
         borderColor: 'var(--border-soft)',
         color: 'var(--ink-soft)',
@@ -36,14 +38,15 @@ const OwnershipGraph = dynamic(() => import('./ownership-graph'), {
   ),
 })
 
-// Skala warna emerald → makin kecil makin pudar (komposisi pemegang saham).
+// Skala warna emerald (ramp token globals.css) → makin kecil makin pudar.
+// Ekor JANGAN pakai --surface-2: itu warna track-nya sendiri, bar jadi gaib.
 function barColor(rank: number, total: number): string {
-  // rank 0 (terbesar) = mint penuh; ekor = abu.
+  // rank 0 (terbesar) = mint penuh; ekor = mint paling pudar (masih kebaca di atas track).
   const t = total <= 1 ? 0 : rank / (total - 1)
   if (t < 0.15) return 'var(--c-mint)'
-  if (t < 0.4) return '#4AB386'
-  if (t < 0.7) return '#B7DFCC'
-  return 'var(--surface-2)'
+  if (t < 0.4) return 'var(--emerald-400)'
+  if (t < 0.7) return 'var(--emerald-200)'
+  return 'var(--emerald-100)'
 }
 
 // Format jumlah lembar saham compact ala Indonesia: 1,23 M (juta) / 26,45 B (miliar) / 1,02 T (triliun).
@@ -257,7 +260,8 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                     {/* Persen */}
                     <span
                       className="num tabular text-[13px] font-bold shrink-0 w-20 text-right"
-                      style={{ color: h.pct >= 50 ? 'var(--c-mint)' : 'var(--ink)' }}
+                      // --c-mint-ink = varian teks (kontras AA); --c-mint mentah gagal kontras.
+                      style={{ color: h.pct >= 50 ? 'var(--c-mint-ink)' : 'var(--ink)' }}
                     >
                       {h.pct.toFixed(2)}%
                     </span>
@@ -364,7 +368,8 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                       {[s.location, s.businessType].filter(Boolean).join(' · ') || '—'}
                     </p>
                   </div>
-                  <span className="num tabular text-[13px] font-semibold shrink-0" style={{ color: (s.pct ?? 0) >= 50 ? 'var(--c-mint)' : 'var(--ink-muted)' }}>
+                  {/* --c-mint-ink = varian teks (kontras AA) buat persen mayoritas */}
+                  <span className="num tabular text-[13px] font-semibold shrink-0" style={{ color: (s.pct ?? 0) >= 50 ? 'var(--c-mint-ink)' : 'var(--ink-muted)' }}>
                     {s.pct != null ? `${s.pct}%` : '—'}
                   </span>
                 </div>
