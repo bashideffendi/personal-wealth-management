@@ -59,6 +59,7 @@ import {
 } from '@/components/ui/select'
 import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split, ArrowUp, ArrowDown } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { StatStrip } from '@/components/ui/stat-strip'
 import { toast } from 'sonner'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
@@ -1453,19 +1454,19 @@ export default function TransactionsPage() {
         return (
           <>
             {/* F12: ringkasan mobile pindah ke footer kalender — di sini
-                cuma versi desktop */}
-            <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-              {stats.map((s) => (
-                <div key={s.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                  <div className="flex items-center gap-2.5">
-                    <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${s.dot} 15%, var(--surface))`, color: s.dot }}>
-                      <s.Icon className="size-4" />
-                    </span>
-                    <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{s.label}</span>
-                  </div>
-                  <p className="num tabular font-semibold mt-2" title={s.full} style={{ fontSize: 19, letterSpacing: '-0.02em', color: s.color }}>{s.val}</p>
-                </div>
-              ))}
+                cuma versi desktop. SATU strip tersegmentasi (pola HeroStat),
+                bukan 4 tile terpisah — biar gak nyaru sama card konten. */}
+            <div className="hidden md:block">
+              <StatStrip
+                items={stats.map((s) => ({
+                  label: s.label,
+                  value: s.val,
+                  title: s.full,
+                  icon: s.Icon,
+                  iconColor: s.dot,
+                  accent: s.color,
+                }))}
+              />
             </div>
           </>
         )

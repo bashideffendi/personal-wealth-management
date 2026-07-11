@@ -3,10 +3,12 @@
 /**
  * Money Flow Sankey — resep Stockbit (broker-distribution) dipindah ke money flow.
  *
- * KEPUTUSAN DESAIN (jangan diubah tanpa baca ini — hasil 2 ronde review user):
- *   1. DUA KOLOM saja (sumber → tujuan), TANPA hub tengah. Hub bikin label
- *      numpuk di tengah viewport sempit. Link = split proporsional:
- *      link(i,o) = in_i × out_o / total — konservasi tetap (Σ per node benar).
+ * KEPUTUSAN DESAIN (jangan diubah tanpa baca ini — hasil 3 ronde review user):
+ *   1. DUA KOLOM saja, TANPA hub tengah. Ronde 3 (2026-07-11): SEMUA pemasukan
+ *      DIGABUNG jadi SATU pool "Total Pemasukan" di kolom kiri — multi-sumber
+ *      (Gaji + Side Hustle terpisah) bikin pita saling silang & ramai; user
+ *      minta balik ke pool tunggal seperti sebelumnya. Pita dari 1 pool =
+ *      lurus bersih ke tiap tujuan, nilai link = porsi tujuan (konservasi ✓).
  *   2. Node = bar TIPIS 8px di tepi → pita aliran dapat ~95% lebar chart.
  *   3. Label PENDEK nempel node DI DALAM area chart (bukan margin samping):
  *      kiri = nama di pangkal pita; kanan = "nilai · nama" di kiri node.
@@ -41,9 +43,9 @@ interface CategoryAmount {
 }
 
 interface MoneyFlowSankeyProps {
-  income: CategoryAmount[]      // left side
+  income: CategoryAmount[]      // left side — DIGABUNG jadi 1 pool (ronde 3)
   outflow: CategoryAmount[]     // right side: expense + saving + investment
-  /** Tidak dipakai lagi (hub dihapus) — dipertahankan biar caller lama gak error. */
+  /** Label pool pemasukan kiri (default t('sankey.middleLabel') = "Total Pemasukan"). */
   middleLabel?: string
   surplusLabel?: string         // label for the balancing pseudo-outflow
   deficitLabel?: string         // label for the balancing pseudo-income
@@ -220,6 +222,7 @@ function makeRenderLink(total: number) {
 export function MoneyFlowSankey({
   income,
   outflow,
+  middleLabel: middleLabelProp,
   surplusLabel: surplusLabelProp,
   deficitLabel: deficitLabelProp,
   height = 360,
@@ -227,17 +230,22 @@ export function MoneyFlowSankey({
   compact = false,
 }: MoneyFlowSankeyProps) {
   const t = useT()
+  const incomePoolLabel = middleLabelProp ?? t('sankey.middleLabel')
   const surplusLabel = surplusLabelProp ?? t('sankey.surplusLabel')
   const deficitLabel = deficitLabelProp ?? t('sankey.deficitLabel')
   const emptyMessage = emptyMessageProp ?? t('sankey.emptyMessage')
 
   const built = useMemo(() => {
-    const incomeFiltered = capCats(income.filter((c) => c.amount > 0), 7)
+    // Ronde 3: pemasukan multi-sumber digabung jadi SATU pool (resep #1) —
+    // cap 7 hanya berlaku sisi tujuan.
+    const totalInRaw = income.filter((c) => c.amount > 0).reduce((s, c) => s + c.amount, 0)
+    const incomeFiltered: CategoryAmount[] =
+      totalInRaw > 0 ? [{ name: incomePoolLabel, amount: totalInRaw, kind: 'income' }] : []
     const outflowFiltered = capCats(outflow.filter((c) => c.amount > 0), 7)
 
     if (incomeFiltered.length === 0 && outflowFiltered.length === 0) return null
 
-    const totalIn = incomeFiltered.reduce((s, c) => s + c.amount, 0)
+    const totalIn = totalInRaw
     const totalOut = outflowFiltered.reduce((s, c) => s + c.amount, 0)
 
     // Balance kedua kolom (lihat docblock).
@@ -269,7 +277,7 @@ export function MoneyFlowSankey({
 
     if (links.length === 0) return null
     return { data: { nodes, links }, total, leftCount: balancedIncome.length }
-  }, [income, outflow, surplusLabel, deficitLabel])
+  }, [income, outflow, incomePoolLabel, surplusLabel, deficitLabel])
 
   if (!built) {
     return (

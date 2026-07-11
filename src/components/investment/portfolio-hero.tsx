@@ -79,7 +79,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           </p>
           <span
             className="num inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
-            data-loss={up ? undefined : 'true'}
+            data-calm-hide="" data-loss={up ? undefined : 'true'}
             style={{
               background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
               color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
@@ -91,7 +91,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
         <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
           <span
             className="num tabular font-semibold"
-            data-loss={up ? undefined : 'true'}
+            data-calm-hide="" data-loss={up ? undefined : 'true'}
             style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
           >
             {up ? '+' : ''}{formatCurrency(totals.pl)}
@@ -101,7 +101,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
         </p>
         {/* Sparkline tipis — ikut demotion rule desktop (baru render ≥8 snapshot) */}
         {hasHistory && chartData.length >= 2 && (
-          <div className="mt-3" data-loss={up ? undefined : 'true'} style={{ height: 52 }}>
+          <div className="mt-3" data-calm-hide="" data-loss={up ? undefined : 'true'} style={{ height: 52 }}>
             <EquityArea data={chartData} up={up} />
           </div>
         )}
@@ -146,7 +146,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
             </p>
             <span
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mb-1"
-              data-loss={up ? undefined : 'true'}
+              data-calm-hide="" data-loss={up ? undefined : 'true'}
               style={{
                 background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
                 color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
@@ -159,7 +159,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           </div>
           <p className="text-sm mt-2" style={{ color: 'var(--ink-muted)' }}>
             {up ? t('investment.total_gain') : t('investment.total_loss')}{' '}
-            <span className="num tabular font-semibold" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+            <span className="num tabular font-semibold" data-calm-hide="" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
               {up ? '+' : ''}{formatCurrency(totals.pl)}
             </span>{' '}
             {t('investment.since_inception')}
@@ -190,7 +190,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           "curve" reads worse than no curve). Until then the slot earns its
           keep with Modal vs Nilai Sekarang, computable from day one.
           data-loss saat turun: Calm Mode ikut menyamarkan kurva merah. */}
-      <div className="mt-4 h-[150px] md:h-[200px] xl:h-[240px]" data-loss={up ? undefined : 'true'}>
+      <div className="mt-4 h-[150px] md:h-[200px] xl:h-[240px]" data-calm-hide="" data-loss={up ? undefined : 'true'}>
         {!hasHistory ? (
           <div className="h-full rounded-xl px-5 flex flex-col justify-center gap-3" style={{ background: 'var(--surface-2)' }}>
             {(() => {
@@ -213,9 +213,9 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
                       {t('investment.chart_interim_now')}
                     </span>
                     <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
-                      <div className="h-full rounded-md" data-loss={up ? undefined : 'true'} style={{ width: `${(totals.market / maxV) * 100}%`, background: up ? 'var(--c-mint)' : 'var(--c-coral)' }} />
+                      <div className="h-full rounded-md" data-calm-hide="" data-loss={up ? undefined : 'true'} style={{ width: `${(totals.market / maxV) * 100}%`, background: up ? 'var(--c-mint)' : 'var(--c-coral)' }} />
                     </div>
-                    <span className="num tabular text-xs font-semibold w-32 text-right shrink-0" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                    <span className="num tabular text-xs font-semibold w-32 text-right shrink-0" data-calm-hide="" data-loss={up ? undefined : 'true'} style={{ color: up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                       {formatCurrency(totals.market)}
                     </span>
                   </div>
@@ -246,12 +246,14 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
           value={`${up ? '+' : ''}${formatCurrency(totals.pl)}`}
           accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
           loss={!up}
+          calmHide
         />
         <HeroStat
           label={t('investment.stat_today')}
           value={todayPL == null ? '—' : `${todayPL >= 0 ? '+' : '−'}${formatCurrency(Math.abs(todayPL))}`}
           accent={todayPL == null ? 'var(--ink-soft)' : todayPL >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
           loss={todayPL != null && todayPL < 0}
+          calmHide={todayPL != null}
         />
         <HeroStat label={t('investment.stat_dividend_ytd')} value={formatCurrency(dividenYtd)} />
       </div>
@@ -260,11 +262,12 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
   )
 }
 
-function HeroStat({ label, value, accent, loss }: { label: string; value: string; accent?: string; loss?: boolean }) {
+function HeroStat({ label, value, accent, loss, calmHide }: { label: string; value: string; accent?: string; loss?: boolean; calmHide?: boolean }) {
   return (
     <div className="p-3.5" style={{ background: 'var(--surface)' }}>
       <p className="eyebrow">{label}</p>
-      <p className="num tabular text-lg font-bold mt-1" data-loss={loss ? 'true' : undefined} style={{ color: accent ?? 'var(--ink)' }}>
+      {/* calmHide hanya untuk stat P/L (dua arah) — Modal/Dividen bukan untung-rugi. */}
+      <p className="num tabular text-lg font-bold mt-1" data-calm-hide={calmHide ? '' : undefined} data-loss={loss ? 'true' : undefined} style={{ color: accent ?? 'var(--ink)' }}>
         {value}
       </p>
     </div>

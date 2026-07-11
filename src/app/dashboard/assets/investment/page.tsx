@@ -649,7 +649,7 @@ export default function InvestmentOverviewPage() {
                         <div className="absolute top-0 bottom-0" style={{ left: '50%', width: 1, background: 'var(--border)' }} />
                         <div
                           className="absolute top-0 bottom-0 rounded-full"
-                          data-loss={positive ? undefined : 'true'}
+                          data-calm-hide="" data-loss={positive ? undefined : 'true'}
                           style={{
                             left: positive ? '50%' : `${50 - half}%`,
                             width: `${half}%`,
@@ -659,7 +659,7 @@ export default function InvestmentOverviewPage() {
                       </div>
                       <span
                         className="num tabular text-xs font-semibold w-16 text-right shrink-0"
-                        data-loss={positive ? undefined : 'true'}
+                        data-calm-hide="" data-loss={positive ? undefined : 'true'}
                         style={{ color: positive ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                       >
                         {positive ? '+' : ''}{row.returnPct.toFixed(1)}%

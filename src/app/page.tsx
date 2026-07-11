@@ -11,8 +11,9 @@
 import Link from 'next/link'
 import {
   ArrowRight, Menu, Check, Shield, Lock, Database, EyeOff,
-  Receipt, TrendingUp, LineChart, ChevronDown, Scale,
+  Receipt, TrendingUp, LineChart, ChevronDown, Scale, Wallet, Zap, Command,
 } from 'lucide-react'
+import { KluntingLogo, KluntingMark } from '@/components/brand/klunting-logo'
 import { PricingSection } from '@/components/landing/pricing-section'
 import { Reveal } from '@/components/landing/reveal'
 import { CountUp } from '@/components/landing/count-up'
@@ -33,33 +34,47 @@ export default function LandingPage() {
     { href: '/about', label: 'Tentang' },
   ]
 
-  // Outcome-led clusters — each a verb, then terse capabilities. Deep detail
-  // lives on /features; this section is meant to be scanned, not read.
-  const CLUSTERS = [
-    { icon: LineChart, title: 'Lihat gambaran utuh', points: [
-      'Net worth otomatis, diperbarui tiap hari',
-      'Semua rekening, e-wallet, dan kartu di satu tempat',
-      'Portofolio saham, crypto, reksa dana, emas, SBN',
-      'Aset non-likuid seperti properti & kendaraan',
-    ] },
-    { icon: Receipt, title: 'Pahami ke mana uang pergi', points: [
-      'Anggaran bulanan & tahunan bergaya spreadsheet',
-      'Laporan arus kas dan diagram alur',
-      'Foto struk atau catat dengan bahasa biasa',
-      'Insight pengeluaran bulanan dari AI',
-    ] },
-    { icon: TrendingUp, title: 'Ambil keputusan dengan data', points: [
-      'Riset 1.000+ emiten IDX dengan 13 metode valuasi',
-      'Rasio kunci, struktur kepemilikan, kalender dividen',
-      'Manajemen utang & strategi pelunasan tercepat',
-      'Playbook finansial yang disusun AI',
-    ] },
-    { icon: Shield, title: 'Tenang dan terkendali', points: [
-      'Berbagi keluarga hingga 5 anggota',
-      'Multi-mata uang (IDR, USD, SGD, EUR)',
-      'Enkripsi, 2FA, dan Calm Mode',
-      'Ekspor CSV & hapus akun kapan saja',
-    ] },
+  // EMPAT PILAR = EMPAT WARNA LOGO (redesign 2026-07-11, permintaan user:
+  // "elemen warna logo dimainkan"). Tiap kotak di mark = satu pekerjaan
+  // produk; warna hidup di kicker/ikon/aksen kartu — bukan hiasan acak.
+  // Semua bullet = fitur NYATA terverifikasi di kode; jangan tambah klaim.
+  const PILLARS = [
+    {
+      icon: LineChart, kicker: 'Lihat', title: 'Net worth yang hidup',
+      accent: 'var(--c-mint)', inkVar: 'var(--c-mint-ink)', soft: 'var(--c-mint-soft)',
+      points: [
+        'Enam kelas aset — rekening, e-wallet, investasi, properti, kendaraan, piutang — jadi satu angka harian',
+        'Snapshot otomatis: kekayaanmu punya riwayat, bukan cuma angka hari ini',
+        'Properti tampil di peta, lengkap dengan apresiasi nilainya',
+      ],
+    },
+    {
+      icon: TrendingUp, kicker: 'Riset', title: 'Riset saham selevel terminal',
+      accent: 'var(--c-blue)', inkVar: 'var(--c-blue-ink)', soft: 'var(--c-blue-soft)',
+      points: [
+        'Screener 1.004 emiten IDX — saring PER, PBV, ROE, yield, margin of safety',
+        'Fair value dari 13 metode valuasi, dirangkum satu konsensus per saham',
+        'Struktur kepemilikan, kalender dividen, dan skor kesehatan fundamental',
+      ],
+    },
+    {
+      icon: Wallet, kicker: 'Rencana', title: 'Anggaran yang tidak terasa seperti kerja',
+      accent: 'var(--c-violet)', inkVar: 'var(--c-violet-ink)', soft: 'var(--c-violet-soft)',
+      points: [
+        'Grid 12 bulan gaya spreadsheet — isi sel, drag-fill, salin bulan lalu',
+        'Tujuan dengan probabilitas tercapai — dihitung simulasi, bukan tebakan',
+        'Diagram arus kas: dari gaji sampai kategori terkecil, kelihatan semua',
+      ],
+    },
+    {
+      icon: Zap, kicker: 'Kendali', title: 'Catat dalam hitungan detik',
+      accent: 'var(--c-coral)', inkVar: 'var(--c-coral-ink)', soft: 'var(--c-coral-soft)',
+      points: [
+        'Ketik "kopi 25rb gopay" — AI mengerti, mengkategorikan, dan mencatatnya',
+        'Foto struk, transaksinya terisi sendiri',
+        'Alert saat saham menyentuh target harga; strategi pelunasan utang tercepat',
+      ],
+    },
   ]
 
   return (
@@ -69,9 +84,9 @@ export default function LandingPage() {
         className="sticky top-0 z-40 flex items-center justify-between px-6 sm:px-12 py-4 border-b backdrop-blur"
         style={{ borderColor: 'var(--line)', background: 'color-mix(in srgb, var(--bg) 88%, transparent)' }}
       >
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Klunting">
-          <div className="grid place-items-center" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em' }}>K</div>
-          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Klunting</span>
+        <Link href="/" aria-label="Klunting">
+          {/* Logo ASLI (mark 4 warna + wordmark) — bukan tile "K" generik */}
+          <KluntingLogo size={26} />
         </Link>
 
         <nav className="hidden md:flex gap-7 text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>
@@ -113,12 +128,13 @@ export default function LandingPage() {
           <div className="max-w-xl">
             {/* Ornamen draw-chart — bahasa visual yang sama dengan auth shell */}
             <HeroChart className="mb-5" />
-            <h1 className="tracking-tight" style={{ fontSize: 'clamp(34px, 4.6vw, 54px)', lineHeight: 1.05, letterSpacing: '-0.03em', fontWeight: 700, color: 'var(--ink)' }}>
-              Seluruh keuanganmu, dalam satu tampilan yang jelas.
+            <h1 className="tracking-tight" style={{ fontSize: 'clamp(36px, 5vw, 58px)', lineHeight: 1.04, letterSpacing: '-0.032em', fontWeight: 800, color: 'var(--ink)' }}>
+              Semua uangmu,<br />satu angka.
             </h1>
             <p className="mt-5 text-lg leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-              Klunting menyatukan rekening, investasi, dan utang menjadi satu angka net worth yang
-              diperbarui tiap hari — lengkap dengan anggaran, riset saham IDX, dan pencatatan berbantuan AI.
+              Rekening, saham, properti, sampai utang — Klunting merangkumnya jadi net worth yang
+              diperbarui tiap hari. Lalu memberimu alat untuk memahaminya: riset 1.004 emiten IDX,
+              anggaran gaya spreadsheet, dan arus kas yang bisa ditelusuri.
             </p>
             <div className="mt-7 flex flex-wrap gap-3 items-center">
               <Link href="/register" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
@@ -179,29 +195,43 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── FITUR (outcome clusters → /features) ─── */}
+      {/* ─── EMPAT PILAR = EMPAT WARNA LOGO ───
+          Cerita brand yang bekerja: tiap kotak di mark = satu pekerjaan produk.
+          Warna hidup di aksen kartu (garis atas, kicker, ikon, bullet) —
+          terukur, bukan retail warna-warni. */}
       <section id="fitur" className="px-6 sm:px-12 py-16 sm:py-20">
         <Reveal className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-12">
-            <p className="eyebrow">Fitur</p>
+            <span className="inline-flex items-center gap-2">
+              <KluntingMark size={18} />
+              <p className="eyebrow">Empat kotak, empat pekerjaan</p>
+            </span>
             <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.12, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
-              Satu tempat untuk gambaran utuh keuanganmu.
+              Lihat. Riset. Rencana. Kendali.
             </h2>
+            <p className="mt-4 text-base leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              Empat warna di logo Klunting bukan hiasan — itu empat hal yang dia kerjakan untukmu, setiap hari.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-12">
-            {CLUSTERS.map((c) => (
-              <div key={c.title}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="size-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
-                    <c.icon className="size-5" style={{ color: 'var(--ink)' }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            {PILLARS.map((c) => (
+              <div
+                key={c.kicker}
+                className="rounded-2xl border p-6 sm:p-7 transition-colors hover:border-[var(--line-strong)]"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', borderTop: `2px solid ${c.accent}` }}
+              >
+                <div className="flex items-center gap-3 mb-1.5">
+                  <div className="size-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: c.soft }}>
+                    <c.icon className="size-5" style={{ color: c.inkVar }} />
                   </div>
-                  <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>{c.title}</h3>
+                  <p className="text-[11px] font-bold tracking-[0.14em] uppercase" style={{ color: c.inkVar }}>{c.kicker}</p>
                 </div>
-                <ul className="space-y-2.5">
+                <h3 className="mt-3 text-lg font-semibold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>{c.title}</h3>
+                <ul className="mt-3.5 space-y-2.5">
                   {c.points.map((p) => (
                     <li key={p} className="flex items-start gap-2.5 text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-                      <span className="size-1.5 rounded-full mt-2 shrink-0" style={{ background: 'var(--c-mint)' }} />
+                      <span className="size-1.5 rounded-full mt-2 shrink-0" style={{ background: c.accent }} />
                       <span>{p}</span>
                     </li>
                   ))}
@@ -210,9 +240,13 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div className="mt-12">
-            <Link href="/features" className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
-              Lihat semua fitur secara detail <ArrowRight className="size-4" />
+          {/* Kredensial desktop — pembeda vs semua app finansial ID (mobile-only semua) */}
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-[13px]" style={{ color: 'var(--ink-muted)' }}>
+            <span className="inline-flex items-center gap-2"><Command className="size-3.5" style={{ color: 'var(--ink-soft)' }} /> ⌘K ke mana pun, dari mana pun</span>
+            <span className="inline-flex items-center gap-2"><span className="px-1.5 py-0.5 rounded border text-[11px] font-semibold leading-none" style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}>j</span><span className="px-1.5 py-0.5 rounded border text-[11px] font-semibold leading-none" style={{ borderColor: 'var(--border)', color: 'var(--ink-soft)' }}>k</span> telusuri transaksi tanpa mouse</span>
+            <span>Dibangun serius untuk layar besar — hal yang belum dilakukan app keuangan mana pun di Indonesia.</span>
+            <Link href="/features" className="inline-flex items-center gap-1.5 font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+              Semua fitur <ArrowRight className="size-3.5" />
             </Link>
           </div>
         </Reveal>
@@ -338,10 +372,10 @@ export default function LandingPage() {
       <section className="px-6 sm:px-12 py-16 sm:py-20">
         <Reveal className="max-w-6xl mx-auto rounded-3xl p-10 sm:p-14 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <h2 className="font-bold tracking-tight" style={{ color: 'var(--ink)', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.1, letterSpacing: '-0.025em' }}>
-            Mulai lihat keuanganmu dengan jelas.
+            Lihat angkamu hari ini.
           </h2>
           <p className="mt-3 text-base max-w-lg mx-auto" style={{ color: 'var(--ink-muted)' }}>
-            Coba seluruh fitur gratis 21 hari, tanpa kartu kredit.
+            21 hari akses penuh, tanpa kartu kredit. Berhenti kapan saja — datamu ikut kamu, dalam CSV.
           </p>
           <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold mt-7 transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
             Coba gratis 21 hari <ArrowRight className="size-4" />
@@ -354,12 +388,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-2.5">
-                <div className="grid place-items-center" style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontWeight: 800, fontSize: 14, letterSpacing: '-0.04em' }}>K</div>
-                <span className="font-bold" style={{ color: 'var(--ink)', fontSize: 16 }}>Klunting</span>
-              </div>
+              <KluntingLogo size={22} />
               <p className="text-[13px] mt-3 leading-relaxed max-w-xs" style={{ color: 'var(--ink-muted)' }}>
-                Kelola seluruh keuangan pribadi di satu tempat. Beroperasi di Indonesia.
+                Semua uangmu, satu angka. Dibuat dan dioperasikan di Indonesia.
               </p>
             </div>
 
