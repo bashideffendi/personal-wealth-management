@@ -74,7 +74,9 @@ const CHAPTERS: ChapterData[] = [
       'Bandingkan 4 emiten: valuasi, skor Piotroski, tren 10 tahun',
       'Struktur kepemilikan ditelusuri sampai pemilik akhir',
     ],
-    shot: { src: '/features/research.webp', alt: 'Halaman riset saham Klunting: nilai wajar konsensus, margin of safety, dan rincian metode valuasi sebuah emiten IDX', w: 1600, h: 900 },
+    // research.webp di-recrop 2026-07-11: nav lama (tile "K") + tab bar
+    // kepotong dibuang — isi = kartu emiten + chart + strip valuasi.
+    shot: { src: '/features/research.webp', alt: 'Halaman riset saham Klunting: nilai wajar konsensus, margin of safety, dan rincian metode valuasi sebuah emiten IDX', w: 1600, h: 926 },
   },
   {
     kicker: 'Anggaran & arus kas', color: 'var(--c-violet)', ink: 'var(--c-violet-ink)',
