@@ -13,7 +13,7 @@ import { useCategoryOptions } from '@/lib/use-category-options'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { formatDateShort } from '@/lib/i18n/dates'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
-import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
+import { RangePicker, type DateRange, matchPresetKey, resolvePresetRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
 import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
@@ -100,6 +100,8 @@ type TxSortKey = (typeof TX_SORT_KEYS)[number]
 type SavedTxView = {
   name: string
   dateRange: { from: string; to: string } | null
+  /** Kunci preset RangePicker kalau range saat disimpan = preset (rolling saat apply). */
+  datePreset?: string | null
   account: string
   type: string
   category: string
@@ -601,6 +603,9 @@ export default function TransactionsPage() {
     const view: SavedTxView = {
       name,
       dateRange: dateRange ? { from: toYmdLocal(dateRange.from), to: toYmdLocal(dateRange.to) } : null,
+      // Range yang persis = preset ("Bulan ini" dst) disimpan sebagai preset
+      // ROLLING — dihitung ulang saat apply, bukan beku ke tanggal simpan.
+      datePreset: dateRange ? matchPresetKey(dateRange) : null,
       account: filterAccount,
       type: filterType,
       category: filterCategory,
@@ -619,7 +624,9 @@ export default function TransactionsPage() {
     toast.success('Tampilan tersimpan')
   }
   function applyView(v: SavedTxView) {
-    setDateRange(v.dateRange ? { from: ymdToStartOfDay(v.dateRange.from), to: ymdToEndOfDay(v.dateRange.to) } : null)
+    // Preset rolling dulu; view lama tanpa datePreset tetap pakai snapshot absolut.
+    const presetRange = v.datePreset ? resolvePresetRange(v.datePreset) : null
+    setDateRange(presetRange ?? (v.dateRange ? { from: ymdToStartOfDay(v.dateRange.from), to: ymdToEndOfDay(v.dateRange.to) } : null))
     setFilterAccount(v.account || 'all')
     setFilterType(v.type || 'all')
     setFilterCategory(v.category || 'all')
