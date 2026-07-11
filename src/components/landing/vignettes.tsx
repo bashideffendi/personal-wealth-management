@@ -54,6 +54,79 @@ export function AiEntryVignette() {
   )
 }
 
+// ─── Net worth: satu angka + komposisi enam kelas aset ────────────────────
+// Aset networth.webp lama cuma strip 1600×317 (band hero doang, dobel dengan
+// hero landing) — vignette ini justru menggambarkan spec bab: enam kelas aset
+// dan liabilitas dihitung jadi satu angka.
+const NW_ROWS = [
+  { label: 'Properti', v: '1,32 M', pct: 45, c: 'var(--ink)' },
+  { label: 'Saham', v: '892 jt', pct: 30, c: 'var(--c-blue)' },
+  { label: 'Reksa dana', v: '310 jt', pct: 11, c: 'var(--c-violet)' },
+  { label: 'Kas & bank', v: '214 jt', pct: 7, c: 'var(--c-mint)' },
+  { label: 'Kendaraan', v: '108 jt', pct: 4, c: 'var(--ink-soft)' },
+  { label: 'Emas', v: '96 jt', pct: 3, c: 'var(--c-coral)' },
+]
+
+export function NetWorthVignette() {
+  return (
+    <div className="w-full max-w-md mx-auto select-none" aria-hidden="true">
+      <div
+        className="rounded-xl border overflow-hidden"
+        style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
+      >
+        <div className="px-4 pt-4 pb-3.5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
+            Kekayaan bersih
+          </p>
+          <div className="flex items-baseline gap-2.5 mt-1 flex-wrap">
+            <p className="num tabular text-[24px] leading-none" style={{ color: 'var(--ink)', fontWeight: 800 }}>
+              Rp 2.424.056.000
+            </p>
+            <span
+              className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded"
+              style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+            >
+              +2,8% YTD
+            </span>
+          </div>
+        </div>
+
+        {/* bar komposisi: enam kelas aset dalam satu garis */}
+        <div className="flex h-1.5 mx-4 rounded-full overflow-hidden gap-px">
+          {NW_ROWS.map((r) => (
+            <span key={r.label} style={{ width: `${r.pct}%`, background: r.c }} />
+          ))}
+        </div>
+
+        <ul className="px-4 py-2 mt-1.5">
+          {NW_ROWS.map((r, i) => (
+            <li
+              key={r.label}
+              className={`flex items-center gap-2.5 py-[7px] text-[12.5px] ${i > 0 ? 'border-t' : ''}`}
+              style={{ borderColor: 'var(--border-soft)' }}
+            >
+              <span className="size-2 rounded-[3px] shrink-0" style={{ background: r.c }} />
+              <span className="font-medium" style={{ color: 'var(--ink)' }}>{r.label}</span>
+              <span className="ml-auto num tabular" style={{ color: 'var(--ink-muted)' }}>{r.v}</span>
+            </li>
+          ))}
+          <li
+            className="flex items-center gap-2.5 py-[7px] border-t text-[12.5px]"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <span className="size-2 rounded-[3px] shrink-0 border" style={{ borderColor: 'var(--c-coral)' }} />
+            <span className="font-medium" style={{ color: 'var(--ink)' }}>Utang &amp; kartu kredit</span>
+            <span className="ml-auto num tabular" style={{ color: 'var(--c-coral-ink)' }}>−517 jt</span>
+          </li>
+        </ul>
+      </div>
+      <p className="text-center text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
+        Enam kelas aset, dikurangi utang — satu angka, diperbarui tiap hari.
+      </p>
+    </div>
+  )
+}
+
 // ─── Anggaran grid 12 bulan: rasa spreadsheet ─────────────────────────────
 const BUDGET_ROWS = [
   { cat: 'Makanan', v: ['2.500', '2.500', '2.750'] },

@@ -26,7 +26,7 @@ import { KluntingLogo, KluntingMark } from '@/components/brand/klunting-logo'
 import { PricingSection } from '@/components/landing/pricing-section'
 import { Reveal } from '@/components/landing/reveal'
 import { CountUp } from '@/components/landing/count-up'
-import { AiEntryVignette, BudgetVignette, KeyboardVignette } from '@/components/landing/vignettes'
+import { AiEntryVignette, BudgetVignette, KeyboardVignette, NetWorthVignette } from '@/components/landing/vignettes'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
 
 // Redirect user ber-sesi → /dashboard ditangani middleware (cek cookie sesi),
@@ -42,7 +42,7 @@ interface ChapterData {
   lead: string
   specs: Spec[]
   shot?: { src: string; alt: string; w: number; h: number }
-  vignette?: 'ai' | 'budget' | 'keyboard'
+  vignette?: 'ai' | 'budget' | 'keyboard' | 'networth'
 }
 
 const CHAPTERS: ChapterData[] = [
@@ -56,7 +56,10 @@ const CHAPTERS: ChapterData[] = [
       'Properti tampil di peta dengan apresiasi nilainya; kendaraan terdepresiasi otomatis',
       'Delta “vs bulan lalu” dihitung dari snapshot sungguhan — bukan perkiraan',
     ],
-    shot: { src: '/features/networth.webp', alt: 'Halaman Net Worth Klunting: angka kekayaan bersih besar dengan grafik riwayat dan rincian aset-liabilitas', w: 1600, h: 900 },
+    // networth.webp lama = strip 1600×317 (band hero doang, dobel dengan shot
+    // hero di atasnya) — kelihatan hilang di kolom bab. Diganti vignette
+    // komposisi kelas aset yang justru menggambarkan spec bab ini.
+    vignette: 'networth',
   },
   {
     kicker: 'Riset saham IDX', color: 'var(--c-blue)', ink: 'var(--c-blue-ink)',
@@ -120,7 +123,7 @@ const CHAPTERS: ChapterData[] = [
   },
 ]
 
-const VIGNETTES = { ai: AiEntryVignette, budget: BudgetVignette, keyboard: KeyboardVignette } as const
+const VIGNETTES = { ai: AiEntryVignette, budget: BudgetVignette, keyboard: KeyboardVignette, networth: NetWorthVignette } as const
 
 // ─── Sub-komponen presentasi (server, murni) ──────────────────────────────
 
