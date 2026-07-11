@@ -1,12 +1,17 @@
 /**
- * Klunting — Landing (root /). REBUILD TOTAL v3 (2026-07-11, arahan user:
- * "redesign total, ganti konten, bebas sebebas-bebasmu, secantik-cantiknya,
- * penjelasan per fitur detil, kurangi AI slop").
+ * Klunting — Landing (root /). v4 COPY MINIMAL (2026-07-11, arahan user:
+ * "copywriting bodoh semua diganti; minimalis, ringkas, informatif, cantik" —
+ * pemicu: finale v3 "Mulai malam ini..." berasumsi jam akses pembaca).
+ *
+ * Aturan copy v4 (hasil panel 3 penulis + 2 juri):
+ *  - DILARANG asumsi waktu/situasi pembaca, melodrama, metafora maksa.
+ *  - Lead bab = SATU kalimat; spec 3 butir pendek; klaim = fakta produk.
+ *  - Jangan ulang klaim/angka yang sama antar section.
  *
  * Struktur: Hero vertikal (headline → product shot penuh) · strip angka ·
- * ENAM BAB fitur berselang-seling (visual besar + copy panjang + spec-list) ·
- * keluarga+keamanan · harga (gated) · catatan pembuat · FAQ editorial ·
- * finale gelap. Long-form ala Linear/Stripe — BUKAN grid kartu.
+ * ENAM BAB fitur berselang-seling (visual + lead 1 kalimat + 3 spec) ·
+ * keluarga+keamanan · harga (gated) · FAQ editorial · finale gelap.
+ * Long-form ala Linear/Stripe — BUKAN grid kartu.
  *
  * Aturan anti-slop yang dijaga di file ini:
  *  - TANPA kartu ber-border-warna-atas, TANPA grid ikon-kartu 2x2, TANPA emoji.
@@ -47,14 +52,13 @@ interface ChapterData {
 
 const CHAPTERS: ChapterData[] = [
   {
-    kicker: 'Net worth', color: 'var(--c-mint)', ink: 'var(--c-mint-ink)',
-    title: 'Satu angka yang merangkum semuanya.',
-    lead: 'Rekening bank, e-wallet, saham, reksa dana, emas, properti, kendaraan, sampai piutang — dikurangi utang dan tagihan kartu kredit. Klunting menghitungnya jadi satu angka net worth, menyimpan riwayatnya setiap hari, dan menunjukkan ke mana arahnya.',
+    kicker: 'Kekayaan bersih', color: 'var(--c-mint)', ink: 'var(--c-mint-ink)',
+    title: 'Naik atau turun, kamu tahu.',
+    lead: 'Snapshot direkam setiap hari — selisih terhadap bulan lalu dihitung dari catatan, bukan perkiraan.',
     specs: [
-      'Enam kelas aset dan liabilitas dalam satu perhitungan — bukan lima tab spreadsheet yang lupa di-update',
-      'Snapshot otomatis harian: bandingkan sebulan lalu, setahun lalu, atau sejak awal mencatat',
-      'Properti tampil di peta dengan apresiasi nilainya; kendaraan terdepresiasi otomatis',
-      'Delta “vs bulan lalu” dihitung dari snapshot sungguhan — bukan perkiraan',
+      'Kas, saham, reksa dana, emas, properti, kendaraan',
+      'Properti tampil di peta, lengkap dengan apresiasinya',
+      'Nilai kendaraan menyusut otomatis',
     ],
     // networth.webp lama = strip 1600×317 (band hero doang, dobel dengan shot
     // hero di atasnya) — kelihatan hilang di kolom bab. Diganti vignette
@@ -63,61 +67,56 @@ const CHAPTERS: ChapterData[] = [
   },
   {
     kicker: 'Riset saham IDX', color: 'var(--c-blue)', ink: 'var(--c-blue-ink)',
-    title: 'Riset yang biasanya ada di terminal mahal.',
-    lead: '1.004 emiten Bursa Efek Indonesia dengan data fundamental multi-tahun. Setiap saham dinilai lewat 13 metode valuasi — DCF, Graham, EPV, DDM, sampai relative valuation — lalu dirangkum jadi satu fair value konsensus dan margin of safety yang bisa kamu screening.',
+    title: 'Nilai wajar, bukan kata orang.',
+    lead: 'Dari DCF sampai formula Graham — nilai wajar (fair value) konsensus dan margin of safety tiap emiten.',
     specs: [
-      'Screener seluruh bursa: saring PER, PBV, ROE, dividend yield, market cap, margin of safety — semua kolom bisa diurutkan, hasilnya bisa diekspor',
-      'Bandingkan sampai 4 emiten berdampingan: valuasi per metode, skor Piotroski, tren pendapatan & laba 10 tahun',
-      'Struktur kepemilikan sampai pemegang akhir, plus kalender dividen',
-      'Watchlist dengan target harga — dapat notifikasi begitu tersentuh',
+      'Screener seluruh bursa: PER, PBV, ROE, dividend yield, market cap',
+      'Bandingkan 4 emiten: valuasi, skor Piotroski, tren 10 tahun',
+      'Struktur kepemilikan ditelusuri sampai pemilik akhir',
     ],
-    shot: { src: '/features/research.webp', alt: 'Halaman riset saham Klunting: fair value konsensus, margin of safety, dan rincian metode valuasi sebuah emiten IDX', w: 1600, h: 900 },
+    shot: { src: '/features/research.webp', alt: 'Halaman riset saham Klunting: nilai wajar konsensus, margin of safety, dan rincian metode valuasi sebuah emiten IDX', w: 1600, h: 900 },
   },
   {
     kicker: 'Anggaran & arus kas', color: 'var(--c-violet)', ink: 'var(--c-violet-ink)',
-    title: 'Anggaran setahun, digarap seperti spreadsheet.',
-    lead: 'Grid 12 bulan yang diisi langsung di sel, di-drag-fill seperti Excel, atau disalin dari bulan lalu. Di sampingnya: diagram arus kas yang menunjukkan ke mana setiap rupiah pergi — dari total pemasukan sampai kategori terkecil, termasuk yang belum terpakai.',
+    title: 'Isi sel, tarik sampai Desember.',
+    lead: 'Grid 12 bulan dengan drag-fill ala Excel — rencana dan realisasi selalu berdampingan.',
     specs: [
-      'Rencana vs realisasi dalam satu grid — kategori yang jebol langsung kelihatan',
-      'Diagram alir Sankey: pemasukan masuk satu pool, mengalir ke belanja, tabungan, dan investasi',
-      'Auto-kategorisasi yang belajar dari koreksimu — makin dipakai makin jarang salah',
-      'Laporan bulanan siap cetak, rapi untuk arsip',
+      'Diagram Sankey memetakan pemasukan sampai pengeluaran',
+      'Auto-kategorisasi belajar dari setiap koreksimu',
+      'Laporan bulanan siap cetak',
     ],
     vignette: 'budget',
   },
   {
     kicker: 'Catat dengan AI', color: 'var(--c-coral)', ink: 'var(--c-coral-ink)',
-    title: 'Mencatat itu tiga detik, bukan tiga menit.',
-    lead: 'Ketik seperti kamu bicara — “kopi 25rb pake gopay” — dan AI mengerti jumlah, kategori, sekaligus akunnya. Atau foto struknya: total, tanggal, dan merchant terbaca sendiri. Kebiasaan mencatat gagal karena ribet; ini menghilangkan ribetnya.',
+    title: 'Ketik seperti kamu bicara.',
+    lead: '“kopi 25rb pake gopay” — jumlah, kategori, dan akun terisi sendiri.',
     specs: [
-      'Bahasa Indonesia sehari-hari, bukan format yang harus dihafal',
-      'Foto struk → transaksi terisi otomatis, strukturnya tersimpan sebagai bukti',
-      'Impor mutasi bank (PDF/CSV) dengan deteksi duplikat sebelum masuk',
-      'Tetap bisa mencatat saat offline — tersinkron begitu kembali online',
+      'Foto struk terbaca otomatis',
+      'Impor mutasi bank PDF/CSV, duplikat terdeteksi',
+      'Offline pun tetap tercatat, tersinkron saat online',
     ],
     vignette: 'ai',
   },
   {
     kicker: 'Utang & tujuan', color: 'var(--c-mint)', ink: 'var(--c-mint-ink)',
-    title: 'Utang dilunasi dengan strategi. Tujuan dikejar dengan probabilitas.',
-    lead: 'Semua cicilan dan kartu kredit dalam satu daftar, lengkap dengan meter debt-to-income. Klunting menghitung urutan pelunasan tercepat dan memproyeksikan tanggal bebas utangmu. Untuk tujuan finansial, setiap target disimulasikan ribuan kali — angkanya kejujuran, bukan harapan.',
+    title: 'Kapan lunas, seberapa mungkin tercapai.',
+    lead: 'Semua cicilan dan kartu kredit dalam satu daftar, plus meter debt-to-income — rasio utang terhadap penghasilan.',
     specs: [
-      'Proyeksi bebas-utang dua strategi — avalanche vs snowball — lengkap dengan selisih bunganya',
-      'Probabilitas tercapai per tujuan (simulasi Monte Carlo), berdasarkan setoran dan profil risiko',
-      'Piramida prioritas: amankan dana darurat dulu, baru kejar yang ambisius',
-      'Pengingat tagihan H-1 lewat notifikasi',
+      'Proyeksi lunas avalanche vs snowball, termasuk selisih bunga',
+      'Simulasi Monte Carlo menghitung peluang tiap tujuan',
+      'Piramida prioritas: dana darurat lebih dulu',
     ],
     shot: { src: '/features/debts.webp', alt: 'Halaman Utang Klunting: daftar cicilan dengan proyeksi pelunasan dan meter debt-to-income', w: 1600, h: 900 },
   },
   {
-    kicker: 'Dibangun untuk desktop', color: 'var(--ink)', ink: 'var(--ink)',
-    title: 'Serius di layar besar.',
-    lead: 'Aplikasi keuangan di Indonesia berhenti di ponsel. Klunting tidak. Di desktop dia berperilaku seperti perkakas kerja: pintasan keyboard di mana-mana, tabel yang bisa diurutkan dan disimpan tampilannya, panel detail tanpa pindah halaman — hal yang belum dilakukan aplikasi keuangan mana pun di sini.',
+    kicker: 'Desktop', color: 'var(--ink)', ink: 'var(--ink)',
+    title: 'Keyboard dulu, mouse belakangan.',
+    lead: 'Navigasi penuh lewat keyboard, dari command palette sampai peek panel.',
     specs: [
-      'Command palette ⌘K: lompat halaman, cari transaksi, tambah data — tanpa menyentuh mouse',
-      'Saved views di tabel transaksi: kombinasi filter favoritmu, sekali klik',
-      'Peek panel: telusuri baris dengan j/k, tekan Space untuk detail — posisi tidak hilang',
-      'Ekspor CSV dari transaksi, holdings, dan screener — datamu selalu portabel',
+      'Ctrl/⌘K memanggil fitur apa pun',
+      'Peek panel: periksa isi baris tanpa pindah halaman',
+      'Simpan filter dan urutan kolom sebagai tampilan siap pakai',
     ],
     vignette: 'keyboard',
   },
@@ -225,26 +224,24 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto text-center">
           <p className="inline-flex items-center gap-2.5 text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>
             <KluntingMark size={16} />
-            Aplikasi keuangan pribadi untuk Indonesia
+            Pencatat kekayaan pribadi untuk Indonesia
           </p>
           <h1 className="mt-5 tracking-tight" style={{ fontSize: 'clamp(38px, 6vw, 68px)', lineHeight: 1.02, letterSpacing: '-0.035em', fontWeight: 800, color: 'var(--ink)' }}>
             Semua uangmu,<br />satu angka.
           </h1>
           <p className="mt-6 text-lg leading-relaxed max-w-xl mx-auto" style={{ color: 'var(--ink-muted)' }}>
-            Rekening, saham, properti, sampai utang — dirangkum jadi net worth yang diperbarui
-            tiap hari. Lalu alat untuk memahaminya: riset saham IDX, anggaran gaya spreadsheet,
-            dan arus kas yang bisa ditelusuri.
+            Aset, utang, anggaran, dan riset saham IDX — semuanya dalam satu aplikasi.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 items-center justify-center">
             <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[15px] font-semibold transition hover:opacity-90 motion-reduce:transition-none" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
               Coba gratis 21 hari <ArrowRight className="size-4" />
             </Link>
-            <Link href="/features" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-[15px] font-medium border transition hover:bg-[var(--surface-2)] motion-reduce:transition-none" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
+            <a href="#fitur" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-[15px] font-medium border transition hover:bg-[var(--surface-2)] motion-reduce:transition-none" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
               Lihat fitur
-            </Link>
+            </a>
           </div>
           <p className="mt-5 text-[12.5px]" style={{ color: 'var(--ink-soft)' }}>
-            Tanpa kartu kredit · Berhenti kapan saja · Datamu bisa diekspor seluruhnya
+            Tanpa kartu kredit · Tanpa akses ke rekening bankmu · Berhenti kapan saja
           </p>
         </div>
 
@@ -252,7 +249,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
           <ShotFrame
             src="/hero-dashboard.webp"
-            alt="Dashboard Klunting: net worth Rp 2,42 M dengan grafik pertumbuhan, ringkasan harian, dan skor kesehatan finansial"
+            alt="Dashboard Klunting: kekayaan bersih Rp 2,42 M dengan grafik pertumbuhan, ringkasan harian, dan skor kesehatan finansial"
             w={1760} h={1226} priority
           />
         </div>
@@ -264,9 +261,9 @@ export default function LandingPage() {
       <section className="px-6 sm:px-12 mt-14 sm:mt-20 py-10 border-y" style={{ borderColor: 'var(--border-soft)' }}>
         <Reveal className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8">
           {([
-            { n: 1004, label: 'emiten IDX siap diriset' },
-            { n: 13, label: 'metode valuasi per saham' },
-            { n: 6, label: 'kelas aset dalam satu net worth' },
+            { n: 1004, label: 'emiten IDX dalam basis data' },
+            { n: 13, label: 'metode valuasi per emiten' },
+            { n: 6, label: 'kelas aset dalam satu neraca' },
           ] as const).map((s) => (
             <div key={s.label}>
               <p className="num font-bold" style={{ fontSize: 'clamp(28px, 2.8vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--ink)' }}>
@@ -277,7 +274,7 @@ export default function LandingPage() {
           ))}
           <div>
             <p className="font-bold" style={{ fontSize: 'clamp(28px, 2.8vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--ink)' }}>CSV</p>
-            <p className="text-[13.5px] mt-2" style={{ color: 'var(--ink-muted)' }}>ekspor seluruh datamu, kapan saja</p>
+            <p className="text-[13.5px] mt-2" style={{ color: 'var(--ink-muted)' }}>ekspor penuh, semua datamu</p>
           </div>
         </Reveal>
       </section>
@@ -299,12 +296,11 @@ export default function LandingPage() {
               <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--c-violet-ink)' }}>Keluarga</span>
             </p>
             <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-              Uang keluarga, tanpa saling tanya saldo.
+              Uang bersama, catatan masing-masing.
             </h2>
             <p className="mt-3 text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
-              Sampai 5 anggota berbagi tujuan, anggaran, dan dompet bersama — sementara pengeluaran
-              pribadi tetap privat. Net worth gabungan keluarga terlihat dalam satu tempat, tanpa
-              grup chat “transfer berapa tadi?”.
+              Sampai 5 anggota berbagi tujuan, anggaran, dan dompet — pengeluaran pribadi
+              tetap privat, kekayaan bersih gabungan tetap kelihatan.
             </p>
           </div>
           <div>
@@ -313,13 +309,13 @@ export default function LandingPage() {
               <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--c-mint-ink)' }}>Keamanan</span>
             </p>
             <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-              Membosankan justru di sini bagusnya.
+              Datamu tetap milikmu.
             </h2>
             <ul className="mt-4 space-y-2.5 text-[14.5px]" style={{ color: 'var(--ink-muted)' }}>
-              <li className="flex items-start gap-2.5"><Lock className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Enkripsi TLS di tiap koneksi; password di-hash — tim kami pun tak bisa membacanya</li>
-              <li className="flex items-start gap-2.5"><Database className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Data antar pengguna terisolasi di level database (Row Level Security); 2FA &amp; PIN perangkat tersedia</li>
-              <li className="flex items-start gap-2.5"><EyeOff className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Tanpa iklan; datamu tidak dijual — kamu membayar untuk alatnya, bukan menjadi produknya</li>
-              <li className="flex items-start gap-2.5"><Scale className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Kami tidak menjual produk investasi apa pun — murni alat catat &amp; analisis, tanpa konflik kepentingan</li>
+              <li className="flex items-start gap-2.5"><Lock className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Enkripsi TLS; password di-hash; 2FA dan PIN perangkat</li>
+              <li className="flex items-start gap-2.5"><Database className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Data antar pengguna terisolasi di level database (Row Level Security)</li>
+              <li className="flex items-start gap-2.5"><EyeOff className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Tanpa iklan; datamu tidak dijual</li>
+              <li className="flex items-start gap-2.5"><Scale className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Tidak menjual produk investasi apa pun</li>
             </ul>
           </div>
         </Reveal>
@@ -327,19 +323,6 @@ export default function LandingPage() {
 
       {/* ─── HARGA ─── (beku selama billing OFF) */}
       {BILLING_ENABLED && <PricingSection />}
-
-      {/* ─── CATATAN PEMBUAT ─── jujur, tanpa nama/foto/testimoni palsu */}
-      <section className="px-6 sm:px-12 py-14 sm:py-20">
-        <Reveal className="max-w-2xl mx-auto text-center">
-          <KluntingMark size={22} className="mx-auto" />
-          <p className="mt-6 text-lg sm:text-xl leading-relaxed font-medium" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
-            Klunting dibangun karena kami membutuhkannya sendiri — dan sampai sekarang dipakai
-            setiap hari untuk keuangan keluarga. Tanpa iklan, tanpa menjual data, tanpa menjual
-            produk investasi.
-          </p>
-          <p className="mt-3 text-[13px]" style={{ color: 'var(--ink-soft)' }}>— pembuat Klunting</p>
-        </Reveal>
-      </section>
 
       {/* ─── FAQ ─── editorial: daftar hairline, tanpa kartu */}
       <section id="faq" className="px-6 sm:px-12 py-14 sm:py-20" style={{ background: 'var(--surface)' }}>
@@ -353,16 +336,18 @@ export default function LandingPage() {
 
           <div className="mt-8">
             {[
-              { q: 'Seberapa aman data finansialku?', a: 'Seluruh komunikasi browser ke server dienkripsi TLS. Password disimpan sebagai hash satu-arah (bcrypt) sehingga tim Klunting pun tidak dapat membacanya. Database memakai Row Level Security, jadi data antar pengguna terisolasi di level engine. Foto struk hanya dapat diakses pemiliknya. Tidak ada iklan dan data tidak dijual. Tersedia juga 2FA dan PIN perangkat di pengaturan Keamanan.' },
-              { q: 'Apakah aku perlu memberi password mobile banking?', a: 'Tidak. Klunting tidak terhubung langsung ke rekening bank. Kami hanya menyimpan data yang kamu input atau unggah manual: foto struk (dibaca AI), input bahasa biasa, atau unggah PDF mutasi untuk diproses.' },
-              { q: 'AI-nya memakai apa, dan ke mana data dikirim?', a: 'Fitur AI memakai Claude dari Anthropic. Yang dikirim hanya teks atau gambar struk yang kamu berikan; Anthropic tidak menyimpannya untuk melatih model. Detail ada di Kebijakan Privasi.' },
-              { q: 'Apa yang terjadi pada dataku jika berhenti berlangganan?', a: 'Trial dapat dihentikan kapan saja tanpa potongan. Setelah berhenti, akun beralih ke mode hanya-baca hingga akhir periode. Kamu dapat mengekspor seluruh data ke CSV, lalu menghapus akun dari Profil; data disimpan 30 hari sebelum dihapus permanen.' },
-              { q: 'Bisakah aku mengekspor seluruh transaksi?', a: 'Bisa. Di halaman Transaksi, pilih Export CSV — berkas terunduh langsung dan bisa dibuka di Excel, Google Sheets, atau aplikasi lain. Datamu milikmu.' },
-              { q: 'Apa bedanya dengan aplikasi keuangan lain?', a: 'Tiga hal: konteks Indonesia (kategori, Rupiah, IDX); kedalaman investasi (riset 1.000+ emiten dengan 13 metode valuasi dan struktur kepemilikan) yang jarang ada di aplikasi pencatatan; serta keseriusan di desktop — screener, keyboard, tabel kerja.' },
-              { q: 'Aku tinggal di luar negeri tapi punya rekening Indonesia, bisa?', a: 'Bisa. Klunting berbasis web dan dapat diakses dari mana saja, mendukung multi-mata uang (IDR, USD, SGD, EUR), dan pembacaan struk dalam Bahasa Indonesia maupun Inggris.' },
-              { q: 'Apakah ada paket gratis?', a: 'Belum. Saat ini fokusnya trial 21 hari akses penuh tanpa kartu, lalu pilih paket: Pro Rp 149.000/tahun (atau Rp 19.000/bulan) dan Max Rp 299.000/tahun (atau Rp 35.000/bulan).' },
-              { q: 'Bisakah dipakai bersama keluarga?', a: 'Bisa, melalui paket Max. Hingga 5 anggota dapat mengakses tujuan, anggaran, dan dompet bersama, dengan tetap memisahkan pengeluaran pribadi bila diinginkan.' },
-              { q: 'Kapan ada aplikasi mobile?', a: 'Klunting adalah PWA — dapat dipasang di layar utama iPhone/Android tanpa unduh dari store (buka di Safari/Chrome → "Tambah ke Layar Utama"). Pengalamannya seperti aplikasi native, termasuk akses kamera untuk foto struk.' },
+              { q: 'Apakah Klunting terhubung ke rekening bank?', a: 'Tidak — semua data diinput manual atau lewat unggahan, jadi tidak ada kredensial bank yang kamu serahkan. Mutasi bank cukup diimpor sebagai PDF atau CSV.' },
+              // Item harga ikut gate BILLING_ENABLED — selama billing beku,
+              // halaman tidak boleh menjawab harga yang tombol belinya tak ada.
+              ...(BILLING_ENABLED ? [
+                { q: 'Berapa harganya?', a: 'Pro Rp 149 ribu per tahun atau Rp 19 ribu per bulan; Max Rp 299 ribu per tahun atau Rp 35 ribu per bulan. Selama masa coba 21 hari tidak ada tagihan apa pun.' },
+                { q: 'Apa beda Pro dan Max?', a: 'Max membuka fitur keluarga hingga 5 anggota dengan kekayaan bersih gabungan; Pro untuk pemakaian satu orang.' },
+              ] : []),
+              { q: 'AI-nya pakai model apa?', a: 'Claude dari Anthropic. Inputmu tidak dipakai untuk melatih model.' },
+              { q: 'Apakah hasil valuasinya rekomendasi beli?', a: 'Bukan — nilai wajar dan margin of safety adalah alat analisis, bukan saran transaksi. Keputusan tetap di tanganmu.' },
+              { q: 'Bisa dipakai di iPhone dan Android?', a: 'Bisa — Klunting terpasang langsung dari browser (PWA), tanpa lewat app store, dan tetap berfungsi offline.' },
+              { q: 'Mendukung mata uang selain rupiah?', a: 'Ya — USD, SGD, dan EUR, di samping IDR.' },
+              { q: 'Kalau berhenti berlangganan, dataku bagaimana?', a: 'Akun beralih ke mode hanya-baca dan seluruh data bisa diekspor sebagai CSV. Kalau akun dihapus, seluruh datamu terhapus permanen setelah 30 hari.' },
             ].map((item, i) => (
               <details key={i} className="group border-t" style={{ borderColor: 'var(--border-soft)' }}>
                 <summary className="flex items-center justify-between gap-4 py-5 cursor-pointer list-none select-none" style={{ color: 'var(--ink)' }}>
@@ -385,10 +370,10 @@ export default function LandingPage() {
         <Reveal className="max-w-3xl mx-auto text-center">
           <KluntingMark size={30} className="mx-auto" />
           <h2 className="mt-7 font-bold tracking-tight" style={{ fontSize: 'clamp(30px, 4.6vw, 52px)', lineHeight: 1.06, letterSpacing: '-0.03em', color: 'var(--on-hero)' }}>
-            Mulai malam ini.<br />Besok pagi kamu sudah tahu angkamu.
+            Ukur dulu.<br />Baru putuskan.
           </h2>
           <p className="mt-5 text-base max-w-md mx-auto" style={{ color: 'var(--on-hero-mut)' }}>
-            21 hari akses penuh. Tanpa kartu kredit. Berhenti kapan saja — datamu ikut kamu.
+            Akses penuh sejak hari pertama.
           </p>
           <Link
             href="/register"
@@ -407,7 +392,7 @@ export default function LandingPage() {
             <div className="col-span-2 lg:col-span-1">
               <KluntingLogo size={22} />
               <p className="text-[13px] mt-3 leading-relaxed max-w-xs" style={{ color: 'var(--ink-muted)' }}>
-                Semua uangmu, satu angka. Dibuat dan dioperasikan di Indonesia.
+                Catat, hitung, putuskan. Dibuat dan dioperasikan di Indonesia.
               </p>
             </div>
 
