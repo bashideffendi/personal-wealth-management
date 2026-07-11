@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
+import { KluntingLogo } from '@/components/brand/klunting-logo'
 
 /**
  * Nav sticky bersama untuk halaman marketing (legal, kontak, fitur, tentang).
@@ -19,9 +20,8 @@ export function SiteNav({ active }: { active?: 'features' | 'about' } = {}) {
       className="sticky top-0 z-40 flex items-center justify-between px-6 sm:px-12 py-4 border-b backdrop-blur"
       style={{ borderColor: 'var(--line)', background: 'color-mix(in srgb, var(--bg) 88%, transparent)' }}
     >
-      <Link href="/" className="flex items-center gap-2.5" aria-label="Klunting">
-        <div className="grid place-items-center" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em' }}>K</div>
-        <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Klunting</span>
+      <Link href="/" aria-label="Klunting">
+        <KluntingLogo size={26} />
       </Link>
 
       <nav className="hidden md:flex gap-7 text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>

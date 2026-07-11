@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Shield } from 'lucide-react'
+import { KluntingLogo } from '@/components/brand/klunting-logo'
 
 /**
  * Shared auth shell — YNAB composition, minimalist premium.
@@ -57,8 +58,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         aria-label="Klunting"
         className="absolute z-20 top-8 left-8 sm:top-12 sm:left-12 inline-flex items-center gap-2.5"
       >
-        <span className="grid place-items-center" style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontWeight: 800, fontSize: 17, letterSpacing: '-0.04em' }}>K</span>
-        <span style={{ fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em' }}>Klunting</span>
+        <KluntingLogo size={28} />
       </Link>
 
       {/* trust — bottom-left viewport edge (desktop) */}
