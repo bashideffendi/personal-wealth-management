@@ -119,7 +119,7 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
                 {data.invested > 0 && (
                   <p
                     className="num tabular font-semibold text-[11.5px] leading-tight mt-0.5"
-                    data-loss={plUp ? undefined : 'true'}
+                    data-calm-hide="" data-loss={plUp ? undefined : 'true'}
                     style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                   >
                     {plUp ? '+' : ''}{pct.toFixed(2)}%

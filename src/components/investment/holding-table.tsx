@@ -337,10 +337,10 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
                       <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.plPct != null && !plUp ? 'true' : undefined} style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-calm-hide="" data-loss={r.plPct != null && !plUp ? 'true' : undefined} style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                     {r.plPct == null ? '—' : `${plUp ? '+' : ''}${r.plPct.toFixed(1)}%`}
                   </td>
-                  <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-loss={r.changePct != null && !dUp ? 'true' : undefined} style={{ color: r.changePct == null ? 'var(--ink-soft)' : dUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-calm-hide="" data-loss={r.changePct != null && !dUp ? 'true' : undefined} style={{ color: r.changePct == null ? 'var(--ink-soft)' : dUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                     {r.changePct == null ? '—' : `${dUp ? '+' : ''}${r.changePct.toFixed(2)}%`}
                   </td>
                 </tr>
@@ -371,7 +371,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
               <div className="text-right shrink-0">
                 <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(r.market)}</p>
                 {r.plPct != null && (
-                  <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" data-loss={!plUp ? 'true' : undefined} style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" data-calm-hide="" data-loss={!plUp ? 'true' : undefined} style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                     {plUp ? '+' : ''}{r.plPct.toFixed(1)}%
                   </p>
                 )}

@@ -718,6 +718,7 @@ export default function InvestmentCategoryPage() {
             title={formatCurrency(totals.pl)}
             glow={up ? 'glow-emerald' : 'glow-rose'}
             accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
+            calmHide
           />
           <MiniStat
             label={t('investment_detail.stat_today')}
@@ -729,6 +730,7 @@ export default function InvestmentCategoryPage() {
             title={todayPL ? formatCurrency(todayPL.value) : undefined}
             glow={todayPL ? (todayPL.value >= 0 ? 'glow-emerald' : 'glow-rose') : undefined}
             accent={todayPL ? (todayPL.value >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)') : undefined}
+            calmHide={!!todayPL}
           />
         </div>
 
@@ -769,7 +771,7 @@ export default function InvestmentCategoryPage() {
                 <div className="text-right shrink-0">
                   <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</p>
                   {e.invested > 0 && (
-                    <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                    <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                       {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                     </p>
                   )}
@@ -914,16 +916,16 @@ export default function InvestmentCategoryPage() {
                       <Td className="text-right tabular">
                         <div style={{ color: 'var(--ink)' }}>{formatCurrency(e.live)}</div>
                         {e.q?.changePct !== null && e.q?.changePct !== undefined && (
-                          <div className="text-[10px] tabular" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                          <div className="text-[10px] tabular" data-calm-hide="" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                             {formatPercent(e.q.changePct)}
                           </div>
                         )}
                       </Td>
                       <Td className="text-right tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</Td>
-                      <Td className="text-right tabular font-medium" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                      <Td className="text-right tabular font-medium" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                         {formatCurrency(e.pl)}
                       </Td>
-                      <Td className="text-right tabular" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                      <Td className="text-right tabular" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                         {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                       </Td>
                       <Td style={{ color: 'var(--ink-muted)' }}>{e.i.platform || '—'}</Td>
@@ -994,7 +996,7 @@ export default function InvestmentCategoryPage() {
                 <div className="mt-1.5 flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-muted)' }}>
                   <span>{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}</span>
                   {e.invested > 0 && (
-                    <span className="num font-medium" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                    <span className="num font-medium" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                       {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                     </span>
                   )}
@@ -1358,7 +1360,7 @@ export default function InvestmentCategoryPage() {
                     </div>
                     <div>
                       <p style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_pl')}</p>
-                      <p className="num font-semibold mt-0.5" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                      <p className="num font-semibold mt-0.5" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                         {pos ? '+' : ''}{formatCurrency(Math.round(pl))} ({pos ? '+' : ''}{plPct.toFixed(1)}%)
                       </p>
                     </div>
@@ -1473,7 +1475,7 @@ function Td({ children, className = '', style }: { children: React.ReactNode; cl
 }
 
 function MiniStat({
-  label, value, glow, accent, title,
+  label, value, glow, accent, title, calmHide,
 }: {
   label: string
   value: string
@@ -1481,11 +1483,13 @@ function MiniStat({
   accent?: string
   /** Full digit buat hover — angka display-nya compact */
   title?: string
+  /** Calm Mode: blur nilai P/L dua arah (keputusan user 2026-07-11). */
+  calmHide?: boolean
 }) {
   return (
     <div className={`s-card p-4 ${glow ?? ''}`}>
       <p className="eyebrow">{label}</p>
-      <p className="num mt-2 tabular font-bold" style={{ fontSize: 19, color: accent ?? 'var(--ink)' }} title={title}>
+      <p className="num mt-2 tabular font-bold" data-calm-hide={calmHide ? '' : undefined} style={{ fontSize: 19, color: accent ?? 'var(--ink)' }} title={title}>
         {value}
       </p>
     </div>

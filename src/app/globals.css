@@ -904,10 +904,21 @@ body[data-calm="true"] [style*="--coral"]:hover {
 /* Explicit Calm Mode hook — the style-substring selectors above can't match
    token usage like var(--c-coral) ("--coral" isn't a substring of "--c-coral"),
    so loss elements opt in with data-loss="true" set conditionally when the
-   value is negative. Scoped + intentional: no blast radius on error banners. */
-body[data-calm="true"] [data-loss] {
+   value is negative. Scoped + intentional: no blast radius on error banners.
+
+   KEPUTUSAN 2026-07-11 (review user): Calm Mode menyembunyikan UNTUNG *DAN*
+   RUGI — bukan cuma angka merah. "Calm ON tapi untung rugi masih keliatan"
+   = laporan bug user; angka hijau pun memicu perilaku ngecek-terus. Elemen
+   nilai P/L (dua arah) di permukaan investasi pakai data-calm-hide
+   (unconditional); data-loss lama tetap dihormati (loss-only, back-compat). */
+body[data-calm="true"] [data-loss],
+body[data-calm="true"] [data-calm-hide] {
   filter: blur(5px) !important;
   transition: filter 0.3s ease;
+}
+body[data-calm="true"] [data-loss]:hover,
+body[data-calm="true"] [data-calm-hide]:hover {
+  filter: blur(0) !important;
 }
 body[data-calm="true"] [data-loss]:hover {
   filter: blur(0) !important;
