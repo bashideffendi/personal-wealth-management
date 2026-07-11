@@ -1456,7 +1456,7 @@ export const id = {
     cmp_unlimited: "Catat transaksi & anggaran unlimited",
     cmp_dashboard: "Dashboard net worth + KPI",
     cmp_portfolio: "Portfolio investasi (saham, crypto, dll)",
-    cmp_ai_advisor_scan: "AI Advisor + scan struk",
+    cmp_ai_advisor_scan: "Scan struk + catat dengan AI",
     cmp_ai_insights: "AI insights & laporan bulanan",
     cmp_import: "Import mutasi rekening",
     cmp_goal_forecast: "Goal setting & forecast",

@@ -1457,7 +1457,7 @@ export const en = {
     cmp_unlimited: "Unlimited transactions & budgets",
     cmp_dashboard: "Net worth dashboard + KPIs",
     cmp_portfolio: "Investment portfolio (stocks, crypto, etc.)",
-    cmp_ai_advisor_scan: "AI Advisor + receipt scanning",
+    cmp_ai_advisor_scan: "Receipt scan + AI entry",
     cmp_ai_insights: "AI insights & monthly reports",
     cmp_import: "Import bank statements",
     cmp_goal_forecast: "Goal setting & forecasting",
