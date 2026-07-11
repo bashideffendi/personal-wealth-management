@@ -1,9 +1,17 @@
-// Thumbnail peta STATIS — tile OSM langsung sebagai <img>, TANPA instance
+// Thumbnail peta STATIS — tile basemap langsung sebagai <img>, TANPA instance
 // Leaflet (sebelumnya tiap kartu properti me-render MapContainer hidup hanya
 // untuk thumbnail readOnly 112px). Tile digeser supaya koordinat aset persis
 // di pusat container; marker = dot CSS di tengah.
+//
+// PROVIDER = Carto light_all (BUKAN tile.openstreetmap.org): kebijakan tile
+// OSM men-degradasi request hotlink ber-Referer situs — terukur tile yang sama
+// 35,6KB (UA polos) vs 6,9KB (Referer klunting.com) = tile nyaris kosong,
+// itulah "peta rusak" yang terlihat di kartu. Carto serve penuh (28KB/78KB @2x),
+// gratis ber-atribusi, dan visual light-gray-nya pas kanvas mono. @2x = retina.
 
 const TILE = 256
+const TILE_URL = (z: number, x: number, y: number) =>
+  `https://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}@2x.png`
 
 // lat/lng → koordinat tile (pecahan) skema slippy-map OSM.
 function latLngToTile(lat: number, lng: number, zoom: number) {
@@ -50,7 +58,7 @@ export function StaticMapThumb({ lat, lng, name, height = 112, zoom = 15 }: Stat
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={`${dx},${dy}`}
-              src={`https://tile.openstreetmap.org/${zoom}/${gx}/${gy}.png`}
+              src={TILE_URL(zoom, gx, gy)}
               alt={dx === 0 && dy === 0 ? `Peta lokasi ${name}` : ''}
               loading="lazy"
               decoding="async"
@@ -73,13 +81,13 @@ export function StaticMapThumb({ lat, lng, name, height = 112, zoom = 15 }: Stat
         className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white shadow"
         style={{ background: 'var(--c-mint)' }}
       />
-      {/* Atribusi wajib OSM — kecil di pojok */}
+      {/* Atribusi wajib — kecil di pojok */}
       <span
         className="absolute bottom-0.5 right-1 rounded px-1 py-0.5 text-[9px] leading-none"
         style={{ color: 'var(--ink-soft)', background: 'color-mix(in srgb, var(--surface) 75%, transparent)' }}
-        title="© OpenStreetMap contributors"
+        title="© OpenStreetMap contributors © CARTO"
       >
-        © OSM
+        © OSM · CARTO
       </span>
     </div>
   )
