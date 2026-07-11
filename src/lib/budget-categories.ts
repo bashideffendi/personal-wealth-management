@@ -368,15 +368,44 @@ export async function cascadeRenameKeys(
   }
 }
 
+// Pola sama dgn isMissingFn di src/lib/data/balances.ts — deteksi "RPC belum
+// di-apply" biar bisa jatuh ke query lama tanpa break.
+function isMissingFn(err: { code?: string; message?: string }): boolean {
+  // PostgREST PGRST202 (fn tak ada di schema cache) / Postgres 42883 (undefined_function)
+  return (
+    err.code === 'PGRST202' ||
+    err.code === '42883' ||
+    /function .* does not exist|could not find the function/i.test(err.message ?? '')
+  )
+}
+
 /**
  * Hitung jumlah transaksi per kategori, dikelompokin `${type}::${category}`.
  * Dipakai Kelola Kategori buat nampilin "N transaksi" tiap baris + ngingetin
  * (sekaligus nawarin pindahin) sebelum kategori yang masih kepake dihapus.
+ *
+ * Jalur utama: RPC category_usage() (migrasi 066) — count di server, hemat
+ * bandwidth & bebas cap 1000 row PostgREST. Dulu narik SEMUA baris transaksi
+ * sepanjang masa cuma buat di-count di client → begitu transaksi > 1000,
+ * hitungannya diam-diam salah. Kalau fungsi belum ada di DB, fallback ke
+ * query lama (perilaku identik, cap-nya ikut balik).
  */
 export async function loadCategoryUsage(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<Record<string, number>> {
+  const rpcRes = await supabase.rpc('category_usage')
+  if (!rpcRes.error) {
+    const out: Record<string, number> = {}
+    for (const row of (rpcRes.data ?? []) as { type: string; category: string | null; cnt: number | string }[]) {
+      if (!row.category) continue
+      out[`${row.type}::${row.category}`] = Number(row.cnt)
+    }
+    return out
+  }
+  // Error selain "fungsi belum ada" (network dsb) → kontrak lama: peta kosong.
+  if (!isMissingFn(rpcRes.error)) return {}
+  // Fallback: migrasi 066 belum di-apply → query lama.
   const { data, error } = await supabase
     .from('transactions')
     .select('type, category')

@@ -11,15 +11,16 @@ import type { AssetNonLiquid, Investment } from '@/types'
 
 import { Loader2, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import dynamic from 'next/dynamic'
 
 // Defer recharts out of the assets route's initial JS (loads on chart mount).
 const AllocationPie = dynamic(
-  () => import('./assets-charts').then((m) => m.AllocationPie),
+  () => import('@/components/charts/chart-modules').then((m) => m.AllocationPie),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 220, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 const NonLiquidBar = dynamic(
-  () => import('./assets-charts').then((m) => m.NonLiquidBar),
+  () => import('@/components/charts/chart-modules').then((m) => m.NonLiquidBar),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 260, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 
@@ -33,7 +34,13 @@ const INVESTMENT_CATEGORY_KEYS: Record<string, string> = {
 
 // Palet token buat pie + legend (didefinisikan di page biar lazy-boundary
 // chart gak ketembus import statis).
-const ALLOC_PALETTE = ['var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)', 'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)']
+// Urutan SAMA dengan CHART_PALETTE dashboard (4 warna logo → varian -ink →
+// amber slot terakhir) biar kategori dapat warna konsisten lintas halaman.
+const ALLOC_PALETTE = [
+  'var(--c-mint)', 'var(--c-blue)', 'var(--c-violet)', 'var(--c-coral)',
+  'var(--c-mint-ink)', 'var(--c-blue-ink)', 'var(--c-violet-ink)', 'var(--c-coral-ink)',
+  'var(--c-amber)',
+]
 
 export default function AssetsOverviewPage() {
   const t = useT()
@@ -123,6 +130,9 @@ export default function AssetsOverviewPage() {
 
   return (
     <div className="space-y-6">
+      {/* Sub-nav Kekayaan — hub ini bukan anggota keluarga (gak ada chip aktif), tapi tetap dapat strip sebagai konteks */}
+      <WealthSubnav />
+
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{

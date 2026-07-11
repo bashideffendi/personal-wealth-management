@@ -13,14 +13,19 @@ import { useCategoryOptions } from '@/lib/use-category-options'
 import { useT, useI18n } from '@/lib/i18n/context'
 import { formatDateShort } from '@/lib/i18n/dates'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
-import Papa from 'papaparse'
-import { RangePicker, type DateRange } from '@/components/transactions/range-picker'
+import { RangePicker, type DateRange, matchPresetKey, resolvePresetRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { categoryHue } from '@/lib/category-hue'
 import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
 import { MobileStatsView } from '@/components/transactions/mobile-stats-view'
 import { monthLong } from '@/lib/i18n/dates'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { adjustCardBalance } from '@/lib/data/balances'
+import { getSessionUser } from '@/lib/hooks/use-session-user'
+import { parseCsvRows, toCsv } from '@/lib/transactions/csv'
+import { splitRemaining as calcSplitRemaining, isSplitValid } from '@/lib/transactions/split'
+import { ccContribution, computeCardDeltas, reverseCardDeltas } from '@/lib/transactions/cc-delta'
+import { pickAccount, type ExtractedPayment } from '@/lib/transactions/pick-account'
 
 import { Button } from '@/components/ui/button'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
@@ -52,7 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkles, Camera, X, ScanLine, Star, Wallet, Search, ArrowDownToLine, ArrowUpFromLine, Hash, SlidersHorizontal, MoreHorizontal, Split, ArrowUp, ArrowDown } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { toast } from 'sonner'
 
@@ -85,6 +90,40 @@ const emptyForm = {
   tags: [] as string[],
 }
 
+// ─── P3 #2: tabel Excel-grade (desktop) — sort + saved views ──────────
+const TX_SORT_KEYS = ['date', 'amount', 'category', 'account', 'description'] as const
+type TxSortKey = (typeof TX_SORT_KEYS)[number]
+
+// Saved view = snapshot filter+sort yang bisa di-apply ulang. Date disimpan
+// sebagai 'YYYY-MM-DD' LOKAL (Date gak serializable ke JSON dgn aman; pola
+// from/to di-rehydrate ke startOfDay/endOfDay — sama dgn output RangePicker).
+type SavedTxView = {
+  name: string
+  dateRange: { from: string; to: string } | null
+  /** Kunci preset RangePicker kalau range saat disimpan = preset (rolling saat apply). */
+  datePreset?: string | null
+  account: string
+  type: string
+  category: string
+  tag: string
+  search: string
+  sortKey: TxSortKey
+  sortDir: 'asc' | 'desc'
+}
+const TX_VIEWS_LS_KEY = 'pwm.tx-saved-views'
+// Pakai komponen tanggal LOKAL (bukan toISOString UTC) — konsisten dgn cara
+// filter tanggal mem-parse tx.date sebagai local midnight.
+const toYmdLocal = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const ymdToStartOfDay = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1, 0, 0, 0, 0)
+}
+const ymdToEndOfDay = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1, 23, 59, 59, 999)
+}
+
 export default function TransactionsPage() {
   const supabase = createClient()
   const { optionsForType } = useCategoryOptions()
@@ -98,10 +137,68 @@ export default function TransactionsPage() {
     investment: 'transactions.type_investment',
   }
 
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [creditCards, setCreditCards] = useState<CreditCard[]>([])
-  const [rules, setRules] = useState<CategorizationRule[]>([])
+  // Data halaman via react-query — cache antar navigasi + refetch di belakang.
+  // Dulu: useEffect fetchData() dengan setLoading(true) di tiap mutasi/event →
+  // habis quick-add 1 transaksi, SELURUH halaman collapse ke spinner.
+  const qc = useQueryClient()
+  const pageQuery = useQuery({
+    queryKey: ['transactions-page'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      // Sesi lokal (tanpa round-trip /auth/v1/user) — token sudah diverifikasi
+      // middleware + dashboard layout sebelum halaman ini render.
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
+      const [txRes, accRes, ccRes, rulesRes, profRes] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('accounts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name'),
+        supabase
+          .from('credit_cards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('name'),
+        supabase
+          .from('categorization_rules')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true),
+        supabase
+          .from('profiles')
+          .select('default_account_id')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ])
+      // Fetch utama gagal = bilang terus terang (error state + retry), jangan
+      // render daftar kosong seolah transaksinya memang nol.
+      if (txRes.error) throw txRes.error
+      if (accRes.error) throw accRes.error
+      return {
+        transactions: (txRes.data ?? []) as Transaction[],
+        accounts: (accRes.data ?? []) as Account[],
+        creditCards: (ccRes.data ?? []) as CreditCard[],
+        rules: (rulesRes.data ?? []) as CategorizationRule[],
+        profileDefaultAccountId: (profRes.data?.default_account_id as string | undefined) ?? null,
+      }
+    },
+  })
+  const transactions = useMemo(() => pageQuery.data?.transactions ?? [], [pageQuery.data])
+  const accounts = useMemo(() => pageQuery.data?.accounts ?? [], [pageQuery.data])
+  const creditCards = useMemo(() => pageQuery.data?.creditCards ?? [], [pageQuery.data])
+  const rules = useMemo(() => pageQuery.data?.rules ?? [], [pageQuery.data])
+  const loading = pageQuery.isLoading
+  const loadError = pageQuery.isError
+  // Pasca-mutasi: invalidasi cache (refetch di belakang, data lama tetap
+  // tampil — TIDAK ada spinner reset). Pengganti semua refresh() lama.
+  const refresh = () => { void qc.invalidateQueries({ queryKey: ['transactions-page'] }) }
 
   // CSV Import
   const [importOpen, setImportOpen] = useState(false)
@@ -113,55 +210,25 @@ export default function TransactionsPage() {
   const [importing, setImporting] = useState(false)
   const [tagDraft, setTagDraft] = useState('') // input tag di form add/edit
 
-  function applyRules(desc: string): { type: 'income' | 'expense' | 'saving' | 'investment'; category: string } | null {
-    const text = desc.toUpperCase()
-    const sorted = [...rules].filter((r) => r.is_active).sort((a, b) => b.priority - a.priority)
-    for (const r of sorted) {
-      if (text.includes(r.match_text.toUpperCase())) {
-        return { type: r.type, category: r.category }
-      }
-    }
-    return null
-  }
+  // Cek apakah account_id menunjuk kartu kredit — dipakai semua jalur sync
+  // outstanding CC (save/delete/bulk) via lib/transactions/cc-delta.
+  const isCreditCard = (id: string) => creditCards.some((c) => c.id === id)
 
-  function handleCsvUpload(file: File) {
+  async function handleCsvUpload(file: File) {
+    // Lazy-load papaparse — cuma kepakai di handler import CSV ini,
+    // gak perlu ikut bundle awal halaman transaksi.
+    const Papa = (await import('papaparse')).default
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
-        const rows = res.data.map((row) => {
-          // Try to detect common column names (flexible)
-          const desc = (row.description ?? row.Deskripsi ?? row.Description ?? row.Keterangan ?? row.keterangan ?? '').trim()
-          const dateRaw = row.date ?? row.Tanggal ?? row.Date ?? row.tanggal ?? ''
-          const amountRaw = row.amount ?? row.Jumlah ?? row.Amount ?? row.Nominal ?? '0'
-          const amountSigned = Number(String(amountRaw).replace(/[^0-9.-]/g, '')) || 0
-          const amount = Math.abs(amountSigned)
-          // Parse date — try yyyy-mm-dd or dd/mm/yyyy
-          let date = new Date().toISOString().split('T')[0]
-          if (dateRaw) {
-            const dn = new Date(dateRaw)
-            if (!isNaN(dn.getTime())) date = dn.toISOString().split('T')[0]
-            else {
-              const m = dateRaw.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
-              if (m) date = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
-            }
-          }
-          // Auto-categorize from rules
-          const matched = applyRules(desc)
-          // Expense if: a rule says so, OR the raw amount is negative, OR the
-          // description has a whole-word debit cue. Anchored \b so "Checkout",
-          // "Takeout", "payout" don't get misread as expenses.
-          const isExpense = matched?.type === 'expense' || amountSigned < 0 || /\b(debit|keluar|withdraw|dr)\b/i.test(desc)
-          return {
-            date,
-            description: desc,
-            amount,
-            type: (matched?.type ?? (isExpense ? 'expense' : 'income')) as 'income' | 'expense' | 'saving' | 'investment',
-            category: matched?.category ?? (isExpense ? 'Lainnya' : 'Gaji'),
-            account_id: accounts[0]?.id ?? creditCards[0]?.id ?? '',
-            apply: true,
-          }
-        }).filter((r) => r.amount > 0)
+        // Parsing + auto-kategorisasi murni di lib/transactions/csv (tested);
+        // di sini tinggal nambah default akun + flag apply per baris.
+        const rows = parseCsvRows(res.data, rules).map((r) => ({
+          ...r,
+          account_id: accounts[0]?.id ?? creditCards[0]?.id ?? '',
+          apply: true,
+        }))
         setImportRows(rows)
       },
     })
@@ -169,7 +236,7 @@ export default function TransactionsPage() {
 
   async function commitImport() {
     setImporting(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setImporting(false); return }
     const toInsert = importRows
       .filter((r) => r.apply && r.account_id)
@@ -196,10 +263,8 @@ export default function TransactionsPage() {
     toast.success(`${toInsert.length} ${t('transactions.toast_imported')}`)
     setImportOpen(false)
     setImportRows([])
-    fetchData()
+    refresh()
   }
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Dialog state
@@ -216,60 +281,31 @@ export default function TransactionsPage() {
 
   // Smart default account (3-layer fallback: AI / user-default / last-used / first)
   const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null)
+  // Sinkron dari profil (query) → state lokal; state tetap dipakai karena
+  // handleSetDefault meng-update-nya optimistik sebelum invalidasi.
+  useEffect(() => {
+    const d = pageQuery.data?.profileDefaultAccountId
+    if (d) setDefaultAccountId(d)
+  }, [pageQuery.data])
   const [accountSource, setAccountSource] = useState<'ai' | 'default' | 'last_used' | 'first' | null>(null)
   const [settingDefault, setSettingDefault] = useState(false)
 
-  type ExtractedPayment = { payment_method?: string; payment_detail?: string }
-
-  function pickAccount(extracted?: ExtractedPayment): { id: string; source: 'ai' | 'default' | 'last_used' | 'first' } | null {
-    if (accounts.length === 0 && creditCards.length === 0) return null
-    const allAccounts = [
-      ...accounts.map((a) => ({ id: a.id, name: a.name })),
-      ...creditCards.map((c) => ({ id: c.id, name: `Kredit ${c.name}` })),
-    ]
-
-    // Layer 1: AI-detected payment match
-    const detail = extracted?.payment_detail?.trim().toLowerCase()
-    if (detail && detail.length > 1) {
-      const match = allAccounts.find((a) => {
-        const n = a.name.toLowerCase()
-        return n.includes(detail) || detail.includes(n)
-      })
-      if (match) return { id: match.id, source: 'ai' }
-    }
-    // Also try matching credit_card method to any credit card in list
-    if (extracted?.payment_method === 'credit_card' && creditCards.length > 0) {
-      return { id: creditCards[0].id, source: 'ai' }
-    }
-    // Cash payment method → match any cash-type account
-    if (extracted?.payment_method === 'cash') {
-      const cashAcc = accounts.find((a) => a.type === 'cash')
-      if (cashAcc) return { id: cashAcc.id, source: 'ai' }
-    }
-
-    // Layer 2: User's saved default
-    if (defaultAccountId && allAccounts.some((a) => a.id === defaultAccountId)) {
-      return { id: defaultAccountId, source: 'default' }
-    }
-
-    // Layer 3: Last used (from most recent transaction)
-    const lastTx = transactions.find((tx) => tx.account_id)
-    if (lastTx?.account_id && allAccounts.some((a) => a.id === lastTx.account_id)) {
-      return { id: lastTx.account_id, source: 'last_used' }
-    }
-
-    // Layer 4: Fallback — prefer cash-type account, else first in list.
-    // Most ID transactions are cash; this gives a sensible default for users
-    // who haven't explicitly set one yet.
-    const cashFallback = accounts.find((a) => a.type === 'cash')
-    if (cashFallback) return { id: cashFallback.id, source: 'first' }
-    return { id: allAccounts[0].id, source: 'first' }
+  // Logika 4-lapis murni ada di lib/transactions/pick-account (tested);
+  // wrapper ini cuma menyuntik state halaman.
+  function pickDefaultAccount(extracted?: ExtractedPayment): { id: string; source: 'ai' | 'default' | 'last_used' | 'first' } | null {
+    return pickAccount({
+      accounts,
+      creditCards,
+      defaultAccountId,
+      lastUsedAccountId: transactions.find((tx) => tx.account_id)?.account_id ?? null,
+      extracted,
+    })
   }
 
   async function handleSetDefault() {
     if (!form.account_id) return
     setSettingDefault(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSettingDefault(false); return }
     const { error } = await supabase
       .from('profiles')
@@ -342,7 +378,7 @@ export default function TransactionsPage() {
         confidence: 'high' | 'medium' | 'low'
       }
       // Re-pick account using AI-detected payment info (overrides default if matches)
-      const picked = pickAccount({ payment_method: d.payment_method, payment_detail: d.payment_detail })
+      const picked = pickDefaultAccount({ payment_method: d.payment_method, payment_detail: d.payment_detail })
       setForm((prev) => ({
         ...prev,
         date: d.date || prev.date,
@@ -403,7 +439,7 @@ export default function TransactionsPage() {
     if (!transferForm.from_account_id || !transferForm.to_account_id || transferForm.amount <= 0) return
     if (transferForm.from_account_id === transferForm.to_account_id) { toast.error(t('transactions.toast_same_account')); return }
     setTransferSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setTransferSaving(false); return }
     const desc = transferForm.notes
       ? `Transfer: ${transferForm.notes}`
@@ -436,19 +472,13 @@ export default function TransactionsPage() {
       date: new Date().toISOString().split('T')[0],
       from_account_id: '', to_account_id: '', amount: 0, notes: '',
     })
-    fetchData()
+    refresh()
   }
 
   function exportCSV(rows: Transaction[]) {
     const header = [t('transactions.col_date'), t('transactions.col_account'), t('transactions.col_type'), t('transactions.col_category'), t('transactions.col_description'), t('transactions.col_amount')]
-    // Quote + escape EVERY cell (account/category are free-text too) and neutralize
-    // spreadsheet formula injection (cells starting with =,+,-,@) with a leading quote.
-    const cell = (v: unknown) => {
-      let s = String(v ?? '')
-      if (/^[=+\-@]/.test(s)) s = `'${s}`
-      return `"${s.replace(/"/g, '""')}"`
-    }
-    const csvRows = [
+    // Quoting + anti formula-injection per cell di lib/transactions/csv (tested).
+    const csv = toCsv([
       header,
       ...rows.map((tx) => [
         tx.date,
@@ -458,8 +488,7 @@ export default function TransactionsPage() {
         tx.description ?? '',
         String(tx.amount),
       ]),
-    ]
-    const csv = csvRows.map((r) => r.map(cell).join(',')).join('\n')
+    ])
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -530,14 +559,109 @@ export default function TransactionsPage() {
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkCatOpen, setBulkCatOpen] = useState(false)
 
-  useEffect(() => {
-    fetchData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Sort klik-header (desktop). Default date/desc = perilaku lama (grouping
+  // per hari tetap). Kolom lain → daftar FLAT + kolom tanggal per baris.
+  const [sortKey, setSortKey] = useState<TxSortKey>('date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  function toggleSort(key: TxSortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      // Angka/tanggal mulai desc (terbesar/terbaru dulu), teks mulai asc (A→Z).
+      setSortDir(key === 'amount' || key === 'date' ? 'desc' : 'asc')
+    }
+  }
 
-  // Re-fetch saat ada mutasi data dari FAB/command palette.
+  // Saved views — kombinasi filter+sort tersimpan di localStorage (maks 8).
+  const [savedViews, setSavedViews] = useState<SavedTxView[]>([])
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [viewNameDraft, setViewNameDraft] = useState('')
   useEffect(() => {
-    const h = () => { void fetchData() }
+    try {
+      const raw = localStorage.getItem(TX_VIEWS_LS_KEY)
+      if (!raw) return
+      const parsed: unknown = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        setSavedViews((parsed as SavedTxView[]).filter((v) => v && typeof v.name === 'string').slice(0, 8))
+      }
+    } catch {
+      // localStorage korup/di-block — saved views mulai kosong saja
+    }
+  }, [])
+  function persistViews(next: SavedTxView[]) {
+    setSavedViews(next)
+    try {
+      localStorage.setItem(TX_VIEWS_LS_KEY, JSON.stringify(next))
+    } catch {
+      // quota penuh / private mode — state in-memory tetap jalan
+    }
+  }
+  function saveCurrentView() {
+    const name = viewNameDraft.trim()
+    if (!name) return
+    const view: SavedTxView = {
+      name,
+      dateRange: dateRange ? { from: toYmdLocal(dateRange.from), to: toYmdLocal(dateRange.to) } : null,
+      // Range yang persis = preset ("Bulan ini" dst) disimpan sebagai preset
+      // ROLLING — dihitung ulang saat apply, bukan beku ke tanggal simpan.
+      datePreset: dateRange ? matchPresetKey(dateRange) : null,
+      account: filterAccount,
+      type: filterType,
+      category: filterCategory,
+      tag: filterTag,
+      search: search.trim(),
+      sortKey,
+      sortDir,
+    }
+    const next = [...savedViews.filter((v) => v.name !== name), view]
+    if (next.length > 8) {
+      toast.error('Maksimal 8 tampilan tersimpan — hapus salah satu dulu.')
+      return
+    }
+    persistViews(next)
+    setViewDialogOpen(false)
+    toast.success('Tampilan tersimpan')
+  }
+  function applyView(v: SavedTxView) {
+    // Preset rolling dulu; view lama tanpa datePreset tetap pakai snapshot absolut.
+    const presetRange = v.datePreset ? resolvePresetRange(v.datePreset) : null
+    setDateRange(presetRange ?? (v.dateRange ? { from: ymdToStartOfDay(v.dateRange.from), to: ymdToEndOfDay(v.dateRange.to) } : null))
+    setFilterAccount(v.account || 'all')
+    setFilterType(v.type || 'all')
+    setFilterCategory(v.category || 'all')
+    setFilterTag(v.tag || 'all')
+    setSearch(v.search ?? '')
+    setSortKey((TX_SORT_KEYS as readonly string[]).includes(v.sortKey) ? v.sortKey : 'date')
+    setSortDir(v.sortDir === 'asc' ? 'asc' : 'desc')
+  }
+  function deleteView(name: string) {
+    if (!confirm(`Hapus tampilan "${name}"?`)) return
+    persistViews(savedViews.filter((v) => v.name !== name))
+  }
+  // Chip aktif = state saat ini persis sama dgn snapshot view.
+  const isViewActive = (v: SavedTxView) =>
+    v.account === filterAccount &&
+    v.type === filterType &&
+    v.category === filterCategory &&
+    v.tag === filterTag &&
+    (v.search ?? '') === search.trim() &&
+    v.sortKey === sortKey &&
+    v.sortDir === sortDir &&
+    (v.dateRange === null) === (dateRange === null) &&
+    (!v.dateRange || !dateRange ||
+      (v.dateRange.from === toYmdLocal(dateRange.from) && v.dateRange.to === toYmdLocal(dateRange.to)))
+
+  // Peek panel (≥lg) + fokus baris j/k — murni UI, gak nyentuh data layer.
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [peekId, setPeekId] = useState<string | null>(null)
+
+  // Re-fetch saat ada mutasi data dari FAB/command palette — sekarang lewat
+  // invalidasi cache (refetch di belakang, TANPA reset halaman ke spinner).
+  // JANGAN hapus listener ini: dispatcher-nya quick-add-launcher, offline-sync,
+  // dan mobile-quick-entry.
+  useEffect(() => {
+    const h = () => { void qc.invalidateQueries({ queryKey: ['transactions-page'] }) }
     window.addEventListener('klunting:data-changed', h)
     return () => window.removeEventListener('klunting:data-changed', h)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -549,56 +673,6 @@ export default function TransactionsPage() {
     setIsMac(/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent))
   }, [])
 
-  async function fetchData() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const [txRes, accRes, ccRes, rulesRes, profRes] = await Promise.all([
-      supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false }),
-      supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name'),
-      supabase
-        .from('credit_cards')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('name'),
-      supabase
-        .from('categorization_rules')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true),
-      supabase
-        .from('profiles')
-        .select('default_account_id')
-        .eq('id', user.id)
-        .maybeSingle(),
-    ])
-
-    // Fetch utama gagal = bilang terus terang, jangan render daftar kosong
-    // seolah transaksinya memang nol.
-    if (txRes.error || accRes.error) {
-      setLoadError(true)
-      setLoading(false)
-      return
-    }
-    setLoadError(false)
-    if (txRes.data) setTransactions(txRes.data)
-    if (accRes.data) setAccounts(accRes.data)
-    if (ccRes.data) setCreditCards(ccRes.data as CreditCard[])
-    if (rulesRes.data) setRules(rulesRes.data as CategorizationRule[])
-    if (profRes.data?.default_account_id) setDefaultAccountId(profRes.data.default_account_id as string)
-    setLoading(false)
-  }
-
   function openAddDialog() {
     if (accounts.length === 0 && creditCards.length === 0) {
       toast.error(t('transactions.toast_no_account_title'), {
@@ -607,7 +681,7 @@ export default function TransactionsPage() {
       return
     }
     setEditingId(null)
-    const picked = pickAccount()
+    const picked = pickDefaultAccount()
     setForm({ ...emptyForm, account_id: picked?.id ?? '' })
     setTagDraft('')
     setAccountSource(picked?.source ?? null)
@@ -664,19 +738,16 @@ export default function TransactionsPage() {
     setDialogOpen(true) // batal → balik ke dialog edit
   }
 
-  const splitAllocated = splitRows.reduce((s, r) => s + r.amount, 0)
-  const splitRemaining = (splitSourceTx?.amount ?? 0) - splitAllocated
-  const splitValid =
-    !!splitSourceTx &&
-    splitRows.length >= 2 &&
-    splitRows.every((r) => r.category && r.amount > 0) &&
-    splitRemaining === 0
+  // Math split murni di lib/transactions/split (tested — kontrak: total
+  // pecahan HARUS persis = nominal sumber).
+  const splitRemaining = calcSplitRemaining(splitRows, splitSourceTx?.amount ?? 0)
+  const splitValid = !!splitSourceTx && isSplitValid(splitRows, splitSourceTx?.amount ?? 0)
 
   async function saveSplit() {
     const tx = splitSourceTx
     if (!tx || !splitValid) return
     setSplitSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSplitSaving(false); return }
 
     const groupId = crypto.randomUUID()
@@ -736,7 +807,7 @@ export default function TransactionsPage() {
     toast.success(locale === 'id'
       ? `Transaksi dipecah jadi ${splitRows.length} bagian`
       : `Transaction split into ${splitRows.length} parts`)
-    fetchData()
+    refresh()
   }
 
   // ─── Split saat TAMBAH (add-dialog) ─────────────────────────
@@ -751,13 +822,8 @@ export default function TransactionsPage() {
   ]
   const [newSplitOn, setNewSplitOn] = useState(false)
   const [newSplitRows, setNewSplitRows] = useState<{ category: string; amount: number; description: string }[]>(emptyNewSplitRows)
-  const newSplitAllocated = newSplitRows.reduce((s, r) => s + r.amount, 0)
-  const newSplitRemaining = form.amount - newSplitAllocated
-  const newSplitReady =
-    newSplitRows.length >= 2 &&
-    newSplitRows.every((r) => r.category && r.amount > 0) &&
-    form.amount > 0 &&
-    newSplitRemaining === 0
+  const newSplitRemaining = calcSplitRemaining(newSplitRows, form.amount)
+  const newSplitReady = isSplitValid(newSplitRows, form.amount)
 
   // Reflective spending (Kakeibo) — anti-impulse modal for big expenses
   const [reflectionOpen, setReflectionOpen] = useState(false)
@@ -797,7 +863,7 @@ export default function TransactionsPage() {
   async function actuallySave() {
 
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setSaving(false); return }
 
     // Look up active household — new transactions auto-tagged so they
@@ -900,23 +966,17 @@ export default function TransactionsPage() {
       return
     }
 
-    // Keep credit-card outstanding in sync — SYMMETRICALLY. A CC expense adds to
-    // the card; editing or moving it must subtract the OLD contribution and add the
-    // new one, else the balance only ever grows (it was add-on-create-only before).
-    // Net per-card delta avoids a double-read race when one card is on both sides.
-    const ccContribution = (txType: TransactionType, accountId: string, amount: number) =>
-      txType === 'expense' && amount > 0 && creditCards.some((c) => c.id === accountId) ? amount : 0
+    // Keep credit-card outstanding in sync — SYMMETRICALLY (math murni +
+    // tested di lib/transactions/cc-delta): kontribusi lama dikurangkan,
+    // baru ditambahkan, net per-kartu (kartu di dua sisi edit tidak dobel).
     const prevTx = editingId ? transactions.find((tx) => tx.id === editingId) : null
-    const cardDeltas: Record<string, number> = {}
-    if (prevTx) {
-      const old = ccContribution(prevTx.type, prevTx.account_id, prevTx.amount)
-      if (old) cardDeltas[prevTx.account_id] = (cardDeltas[prevTx.account_id] ?? 0) - old
-    }
-    const nu = ccContribution(form.type, form.account_id, form.amount)
-    if (nu) cardDeltas[form.account_id] = (cardDeltas[form.account_id] ?? 0) + nu
+    const cardDeltas = computeCardDeltas(
+      prevTx ?? null,
+      { type: form.type, account_id: form.account_id, amount: form.amount },
+      isCreditCard,
+    )
     let ccSyncFailed = false
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
-      if (delta === 0) continue
       const card = creditCards.find((c) => c.id === cardId)
       if (card) {
         const { ok: ccOk } = await adjustCardBalance(supabase, cardId, delta, card.current_balance)
@@ -928,7 +988,7 @@ export default function TransactionsPage() {
     setDialogOpen(false)
     // Surface kegagalan sync saldo kartu (jangan diam-diam — biar user bisa koreksi).
     if (ccSyncFailed) toast.warning('Transaksi tersimpan, tapi saldo kartu kredit gagal diperbarui. Cek & sesuaikan di halaman Kartu Kredit.')
-    fetchData()
+    refresh()
   }
 
   async function handleDelete(id: string) {
@@ -936,16 +996,17 @@ export default function TransactionsPage() {
     const tx = transactions.find((x) => x.id === id)
     const { error } = await supabase.from('transactions').delete().eq('id', id)
     if (error) { toast.error(t('transactions.toast_delete_failed'), { description: error.message }); return }
-    // Reverse the CC outstanding this expense had added.
-    if (tx && tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
+    // Reverse the CC outstanding this expense had added (lib/transactions/cc-delta).
+    const delDelta = tx ? ccContribution(tx, isCreditCard) : 0
+    if (tx && delDelta > 0) {
       const card = creditCards.find((c) => c.id === tx.account_id)
       if (card) {
-        const { ok: ccOk } = await adjustCardBalance(supabase, card.id, -tx.amount, card.current_balance)
+        const { ok: ccOk } = await adjustCardBalance(supabase, card.id, -delDelta, card.current_balance)
         if (!ccOk) toast.warning('Transaksi dihapus, tapi saldo kartu kredit gagal diperbarui. Cek di halaman Kartu Kredit.')
       }
     }
     toast.success(t('transactions.toast_deleted'))
-    fetchData()
+    refresh()
   }
 
   // ─── Bulk edit + inline category ────────────────────────────
@@ -971,13 +1032,9 @@ export default function TransactionsPage() {
     const { error } = await supabase.from('transactions').delete().in('id', ids)
     setBulkBusy(false)
     if (error) { toast.error(t('transactions.toast_delete_failed'), { description: error.message }); return }
-    // Reverse CC outstanding for every deleted expense (net per card).
-    const cardDeltas: Record<string, number> = {}
-    for (const tx of removed) {
-      if (tx.type === 'expense' && creditCards.some((c) => c.id === tx.account_id)) {
-        cardDeltas[tx.account_id] = (cardDeltas[tx.account_id] ?? 0) - tx.amount
-      }
-    }
+    // Reverse CC outstanding for every deleted expense — net per card
+    // (lib/transactions/cc-delta, tested).
+    const cardDeltas = reverseCardDeltas(removed, isCreditCard)
     let ccSyncFailed = false
     for (const [cardId, delta] of Object.entries(cardDeltas)) {
       const card = creditCards.find((c) => c.id === cardId)
@@ -989,7 +1046,7 @@ export default function TransactionsPage() {
     if (ccSyncFailed) toast.warning('Saldo kartu kredit gagal diperbarui untuk sebagian item. Cek di halaman Kartu Kredit.')
     toast.success(`${ids.length} ${t('transactions.bulk_deleted')}`)
     setSelectedIds(new Set())
-    fetchData()
+    refresh()
   }
 
   async function bulkSetCategory(category: string) {
@@ -1002,14 +1059,14 @@ export default function TransactionsPage() {
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
     toast.success(t('transactions.bulk_recategorized'))
     setSelectedIds(new Set())
-    fetchData()
+    refresh()
   }
 
   async function inlineSetCategory(id: string, category: string) {
     setInlineCatId(null)
     const { error } = await supabase.from('transactions').update({ category }).eq('id', id)
     if (error) { toast.error(t('transactions.toast_save_failed_short'), { description: error.message }); return }
-    fetchData()
+    refresh()
   }
 
   // ─── Quick-add (inline row) ─────────────────────────────────
@@ -1027,7 +1084,7 @@ export default function TransactionsPage() {
   // Pre-fill account when accounts load (use Cash/default)
   useEffect(() => {
     if (!quickForm.account_id) {
-      const picked = pickAccount()
+      const picked = pickDefaultAccount()
       if (picked) setQuickForm((q) => ({ ...q, account_id: picked.id }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1038,7 +1095,7 @@ export default function TransactionsPage() {
     if (!quickForm.category) { toast.error(t('transactions.toast_pick_category_short')); return }
     if (!quickForm.amount || quickForm.amount <= 0) { toast.error(t('transactions.toast_amount_positive')); return }
     setQuickSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getSessionUser(supabase)
     if (!user) { setQuickSaving(false); return }
     // Auto-tag household if member
     const memRes = await supabase.from('household_members').select('*').eq('user_id', user.id).maybeSingle()
@@ -1064,7 +1121,7 @@ export default function TransactionsPage() {
     // Reset only amount + description; keep date/account/type/category
     // (most users add multiple similar transactions in a row)
     setQuickForm((q) => ({ ...q, description: '', amount: 0 }))
-    fetchData()
+    refresh()
   }
 
   function getAccountName(accountId: string) {
@@ -1096,6 +1153,88 @@ export default function TransactionsPage() {
     }
     return true
   }), [transactions, dateRange, filterAccount, filterType, filterCategory, filterTag, deferredSearch])
+
+  // Urutan tampil tabel desktop. Default (date desc) = identitas array query →
+  // grouping harian existing tetap persis sama. Sort akun pakai NAMA akun
+  // (getAccountName), bukan id. Bulk-select/inline-category tetap aman:
+  // semuanya bekerja per tx.id, bukan per posisi baris.
+  const sortedTransactions = useMemo(() => {
+    if (sortKey === 'date' && sortDir === 'desc') return filteredTransactions
+    const dir = sortDir === 'asc' ? 1 : -1
+    const arr = [...filteredTransactions]
+    arr.sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'date') cmp = a.date < b.date ? -1 : a.date > b.date ? 1 : 0
+      else if (sortKey === 'amount') cmp = a.amount - b.amount
+      else if (sortKey === 'category') cmp = a.category.localeCompare(b.category, 'id')
+      else if (sortKey === 'account') cmp = getAccountName(a.account_id).localeCompare(getAccountName(b.account_id), 'id')
+      else cmp = (a.description ?? '').localeCompare(b.description ?? '', 'id')
+      return cmp * dir
+    })
+    return arr
+    // getAccountName cuma turunan accounts/creditCards (sudah jadi deps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredTransactions, sortKey, sortDir, accounts, creditCards])
+
+  // Transaksi yang lagi dibuka di peek panel — dicari dari cache `transactions`
+  // (bukan filtered) biar panel gak nutup cuma karena baris keluar dari filter.
+  const peekTx = peekId ? transactions.find((x) => x.id === peekId) ?? null : null
+
+  // Jaga index fokus j/k tetap dalam range saat daftar menyusut (ganti filter).
+  useEffect(() => {
+    if (focusedIndex >= sortedTransactions.length) setFocusedIndex(sortedTransactions.length - 1)
+  }, [focusedIndex, sortedTransactions.length])
+
+  // Transaksi di peek sudah terhapus → tutup panel (jangan "hidup lagi" pas
+  // j/k berikutnya dipencet).
+  useEffect(() => {
+    if (peekId && !loading && !transactions.some((x) => x.id === peekId)) setPeekId(null)
+  }, [peekId, transactions, loading])
+
+  // j/k pindah fokus baris, Enter/Space buka peek, Esc tutup — desktop ≥lg.
+  // Guard: abaikan saat mengetik (input/textarea/select/contenteditable), saat
+  // ada dialog terbuka (edit/split/palette — semua role="dialog"), atau modifier.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (typeof window.matchMedia !== 'function' || !window.matchMedia('(min-width: 1024px)').matches) return
+      const el = e.target as HTMLElement | null
+      if (el && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return
+      if (document.querySelector('[role="dialog"]')) return
+      if (e.key === 'j' || e.key === 'k') {
+        if (sortedTransactions.length === 0) return
+        e.preventDefault()
+        const delta = e.key === 'j' ? 1 : -1
+        const next = focusedIndex < 0
+          ? (delta === 1 ? 0 : sortedTransactions.length - 1)
+          : Math.min(sortedTransactions.length - 1, Math.max(0, focusedIndex + delta))
+        setFocusedIndex(next)
+        if (peekId) setPeekId(sortedTransactions[next].id)
+        document.querySelector(`[data-txrow-idx="${next}"]`)?.scrollIntoView({ block: 'nearest' })
+      } else if ((e.key === 'Enter' || e.key === ' ') && focusedIndex >= 0 && focusedIndex < sortedTransactions.length) {
+        e.preventDefault()
+        setPeekId(sortedTransactions[focusedIndex].id)
+      } else if (e.key === 'Escape' && peekId) {
+        setPeekId(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sortedTransactions, focusedIndex, peekId])
+
+  // "Pecah" dari peek panel — jalankan openEditDialog dulu (set editingId+form,
+  // biar batal split balik ke dialog edit yang ke-populate benar — kontrak
+  // closeSplitDialog), lalu langsung lompat ke dialog split; dialog edit gak
+  // sempat kelihatan karena semua setState dalam 1 batch render.
+  function openSplitFromPeek(tx: Transaction) {
+    openEditDialog(tx)
+    setSplitRows([
+      { category: tx.category, amount: tx.amount },
+      { category: '', amount: 0 },
+    ])
+    setDialogOpen(false)
+    setSplitDialogOpen(true)
+  }
 
   // F12: data kalender mobile — net per hari + total bulan yang dilihat.
   // Dari SEMUA transaksi (independen filter); Transfer & saving/investment
@@ -1138,6 +1277,10 @@ export default function TransactionsPage() {
     filterTag !== 'all',
   ].filter(Boolean).length
 
+  // Tombol "Simpan tampilan" aktif cuma kalau ada yang beda dari default.
+  const canSaveView =
+    activeFilterCount > 0 || search.trim() !== '' || sortKey !== 'date' || sortDir !== 'desc'
+
   function resetFilters() {
     setDateRange(null)
     setFilterAccount('all')
@@ -1169,6 +1312,31 @@ export default function TransactionsPage() {
             ),
           ),
         ]
+
+  // Header kolom sortable — pola sama dgn tabel screener (aria-sort di th +
+  // panah arah ArrowUp/ArrowDown kecil, hanya di kolom aktif).
+  const renderSortHead = (key: TxSortKey, label: string, numeric = false) => {
+    const active = sortKey === key
+    return (
+      <TableHead
+        aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className={`text-[11px] uppercase tracking-[0.08em] whitespace-nowrap ${numeric ? 'text-right' : ''}`}
+        style={{ color: 'var(--ink-soft)' }}
+      >
+        <button
+          type="button"
+          onClick={() => toggleSort(key)}
+          className={`inline-flex w-full items-center gap-0.5 uppercase tracking-[0.08em] font-medium transition-colors duration-100 hover:text-[var(--ink)] ${numeric ? 'justify-end' : 'justify-start'}`}
+          style={{ color: active ? 'var(--ink)' : 'inherit' }}
+        >
+          {label}
+          {active && (sortDir === 'asc'
+            ? <ArrowUp className="size-3 shrink-0" aria-hidden="true" />
+            : <ArrowDown className="size-3 shrink-0" aria-hidden="true" />)}
+        </button>
+      </TableHead>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -1326,6 +1494,54 @@ export default function TransactionsPage() {
           Mobile: grid filter collapsed (panel 4 dropdown makan setengah layar) —
           toggle lewat tombol "Filter (n)" di samping search. Desktop: selalu tampil. */}
       <div className={`rounded-xl border p-3 ${mobileView === 'stats' ? 'hidden md:block' : ''}`} style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        {/* Saved views (desktop) — chip apply + tombol simpan snapshot filter+sort.
+            Chip aktif (state persis match) = pill near-black. */}
+        <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-3">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] mr-1" style={{ color: 'var(--ink-soft)' }}>
+            Tampilan
+          </span>
+          {savedViews.map((v) => {
+            const active = isViewActive(v)
+            return (
+              <span
+                key={v.name}
+                className="inline-flex items-center rounded-full border transition-colors duration-100"
+                style={active
+                  ? { background: 'var(--ink)', borderColor: 'var(--ink)' }
+                  : { background: 'var(--surface)', borderColor: 'var(--border)' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => applyView(v)}
+                  title={`Terapkan tampilan: ${v.name}`}
+                  className="max-w-40 truncate pl-2.5 pr-1 py-1 text-[12px] font-medium transition-colors duration-100"
+                  style={{ color: active ? 'var(--surface)' : 'var(--ink-muted)' }}
+                >
+                  {v.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteView(v.name)}
+                  aria-label={`Hapus tampilan: ${v.name}`}
+                  className="grid place-items-center rounded-full p-1 mr-1 transition-colors duration-100 hover:opacity-70"
+                  style={{ color: active ? 'var(--surface)' : 'var(--ink-soft)' }}
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )
+          })}
+          <button
+            type="button"
+            disabled={!canSaveView}
+            onClick={() => { setViewNameDraft(''); setViewDialogOpen(true) }}
+            title={canSaveView ? 'Simpan kombinasi filter & urutan saat ini' : 'Atur filter/urutan dulu sebelum menyimpan tampilan'}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 hover:bg-[var(--surface-2)] disabled:opacity-40 disabled:pointer-events-none"
+            style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)', background: 'transparent' }}
+          >
+            <Plus className="size-3" /> Simpan tampilan
+          </button>
+        </div>
         <div className="flex gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-soft)' }} />
@@ -1649,7 +1865,7 @@ export default function TransactionsPage() {
       ) : loadError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
-          <Button variant="outline" onClick={() => { setLoading(true); void fetchData() }}>{t('common.retry')}</Button>
+          <Button variant="outline" onClick={() => void pageQuery.refetch()}>{t('common.retry')}</Button>
         </div>
       ) : filteredTransactions.length === 0 ? (
         // Empty state — clean centered card with icon + headline + sub
@@ -1679,11 +1895,14 @@ export default function TransactionsPage() {
             <div className="tx-scroll">
             <Table className="border-collapse" style={{ tableLayout: 'fixed' }}>
               <colgroup>
+                {/* Mode flat (sort ≠ tanggal): grouping harian hilang → kolom
+                    tanggal per baris muncul, lebar kolom lain menyesuaikan. */}
                 <col style={{ width: '4%' }} />
-                <col style={{ width: '14%' }} />
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '18%' }} />
-                <col style={{ width: '28%' }} />
+                {sortKey !== 'date' && <col style={{ width: '9%' }} />}
+                <col style={{ width: sortKey !== 'date' ? '12%' : '14%' }} />
+                <col style={{ width: sortKey !== 'date' ? '10%' : '12%' }} />
+                <col style={{ width: sortKey !== 'date' ? '16%' : '18%' }} />
+                <col style={{ width: sortKey !== 'date' ? '25%' : '28%' }} />
                 <col style={{ width: '16%' }} />
                 <col style={{ width: '8%' }} />
               </colgroup>
@@ -1692,24 +1911,37 @@ export default function TransactionsPage() {
                   <TableHead className="pl-3 pr-0">
                     <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label={t('transactions.select_all')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                   </TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_account')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_type')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_category')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_description')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_amount')}</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_action')}</TableHead>
+                  {/* Klik "Tanggal" balik ke sort tanggal → grouping harian lagi */}
+                  {sortKey !== 'date' && renderSortHead('date', t('transactions.col_date'))}
+                  {renderSortHead('account', t('transactions.col_account'))}
+                  <TableHead className="text-[11px] uppercase tracking-[0.08em] whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_type')}</TableHead>
+                  {renderSortHead('category', t('transactions.col_category'))}
+                  {renderSortHead('description', t('transactions.col_description'))}
+                  {renderSortHead('amount', t('transactions.col_amount'), true)}
+                  <TableHead className="text-[11px] uppercase tracking-[0.08em] text-right whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_action')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(() => {
-                  const groups: { date: string; items: typeof filteredTransactions }[] = []
-                  filteredTransactions.forEach((tx) => {
-                    const last = groups[groups.length - 1]
-                    if (last && last.date === tx.date) last.items.push(tx)
-                    else groups.push({ date: tx.date, items: [tx] })
-                  })
+                  // Sort non-tanggal → daftar FLAT (tanpa baris header harian);
+                  // sort tanggal (default) → grouping per hari existing.
+                  const isFlat = sortKey !== 'date'
+                  const groups: { date: string; items: typeof sortedTransactions }[] = []
+                  if (isFlat) {
+                    groups.push({ date: '__flat__', items: sortedTransactions })
+                  } else {
+                    sortedTransactions.forEach((tx) => {
+                      const last = groups[groups.length - 1]
+                      if (last && last.date === tx.date) last.items.push(tx)
+                      else groups.push({ date: tx.date, items: [tx] })
+                    })
+                  }
+                  // Index baris ter-render (urutan sortedTransactions) — target
+                  // fokus j/k + scrollIntoView via [data-txrow-idx].
+                  const rowIndexById = new Map(sortedTransactions.map((x, i) => [x.id, i]))
                   return groups.map((g) => (
                     <Fragment key={g.date}>
+                      {!isFlat && (
                       <TableRow className="hover:bg-transparent border-[color:var(--border-soft)]">
                         <TableCell
                           colSpan={7}
@@ -1734,13 +1966,42 @@ export default function TransactionsPage() {
                           </div>
                         </TableCell>
                       </TableRow>
+                      )}
                       {g.items.map((tx) => {
+                        const idx = rowIndexById.get(tx.id) ?? -1
                         const selected = selectedIds.has(tx.id)
+                        const focused = idx >= 0 && idx === focusedIndex
                         return (
-                        <TableRow key={tx.id} className="tx-row border-[color:var(--border-soft)]" style={selected ? { background: 'color-mix(in srgb, var(--c-mint) 16%, var(--surface))' } : undefined}>
+                        <TableRow
+                          key={tx.id}
+                          data-txrow-idx={idx}
+                          onClick={(e) => {
+                            // ≥lg: klik baris = buka peek panel (fokus ikut pindah).
+                            // Klik pada kontrol (checkbox/kategori/aksi) tetap ke
+                            // handler masing-masing — jangan dobel buka peek.
+                            if (typeof window.matchMedia !== 'function' || !window.matchMedia('(min-width: 1024px)').matches) return
+                            if ((e.target as HTMLElement).closest('button, input, a, label, [role="dialog"]')) return
+                            setFocusedIndex(idx)
+                            setPeekId(tx.id)
+                          }}
+                          className="tx-row scroll-mt-28 border-[color:var(--border-soft)] lg:cursor-pointer"
+                          style={{
+                            background: selected
+                              ? 'color-mix(in srgb, var(--c-mint) 16%, var(--surface))'
+                              : focused
+                                ? 'var(--surface-2)'
+                                : undefined,
+                            boxShadow: focused ? 'inset 2px 0 0 var(--c-primary)' : undefined,
+                          }}
+                        >
                           <TableCell className="pl-3 pr-0">
                             <input type="checkbox" checked={selected} onChange={() => toggleSelect(tx.id)} aria-label={t('transactions.select_row')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                           </TableCell>
+                          {isFlat && (
+                            <TableCell className="num text-[13px] tabular-nums whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                              {formatDateShort(tx.date, locale)}
+                            </TableCell>
+                          )}
                           <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             {getAccountName(tx.account_id)}
                           </TableCell>
@@ -1839,7 +2100,8 @@ export default function TransactionsPage() {
               </TableBody>
               <TableFooter>
                 <TableRow className="hover:bg-transparent" style={{ background: 'var(--surface-2)' }}>
-                  <TableCell colSpan={5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                  {/* Mode flat nambah 1 kolom tanggal → colSpan ikut geser */}
+                  <TableCell colSpan={sortKey !== 'date' ? 6 : 5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
                     {t('transactions.total')} · {filteredTransactions.length} {t('transactions.transactions_word')}
                   </TableCell>
                   <TableCell className="num text-right text-[13px] font-bold tabular-nums">
@@ -1964,6 +2226,155 @@ export default function TransactionsPage() {
           </div>
         </>
       )}
+
+      {/* Peek panel (desktop ≥lg) — detail transaksi terfokus di aside kanan.
+          Dibuka via klik baris / Enter/Space pada baris terfokus j/k; Esc atau
+          X nutup. z-40 = di bawah dialog (z-50), top 57px = di bawah TopNav
+          (selaras sticky thead .tx-scroll). Semua aksi manggil handler EXISTING. */}
+      {peekTx && (() => {
+        const amountColor = peekTx.type === 'income'
+          ? 'var(--c-mint-ink)'
+          : peekTx.type === 'expense'
+            ? 'var(--c-coral-ink)'
+            : 'var(--ink)'
+        const splitCount = peekTx.split_group_id
+          ? transactions.filter((x) => x.split_group_id === peekTx.split_group_id).length
+          : 0
+        return (
+          <aside
+            aria-label={`Detail transaksi: ${peekTx.description || peekTx.category}`}
+            className="hidden lg:flex flex-col fixed right-0 animate-in slide-in-from-right-4 fade-in-0 duration-150"
+            style={{
+              top: 57,
+              bottom: 0,
+              width: 400,
+              zIndex: 40,
+              background: 'var(--surface)',
+              borderLeft: '1px solid var(--border)',
+              boxShadow: '-12px 0 32px -18px color-mix(in srgb, var(--ink) 18%, transparent)',
+            }}
+          >
+            <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border-soft)' }}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>
+                Detail transaksi
+              </p>
+              <button
+                type="button"
+                onClick={() => setPeekId(null)}
+                aria-label="Tutup panel detail"
+                className="grid size-7 place-items-center rounded-md transition-colors duration-100 hover:bg-[var(--surface-2)]"
+                style={{ color: 'var(--ink-soft)' }}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <p className="num tabular-nums text-[28px] font-bold leading-none" style={{ color: amountColor }}>
+                {peekTx.type === 'income' ? '+' : peekTx.type === 'expense' ? '−' : ''}{formatCurrency(peekTx.amount)}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="chip" style={{ background: TYPE_BADGE_STYLES[peekTx.type].bg, color: TYPE_BADGE_STYLES[peekTx.type].color }}>
+                  {t(TYPE_LABEL_KEYS[peekTx.type])}
+                </span>
+                <span className="chip inline-flex items-center gap-1.5" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
+                  <CategoryIcon category={peekTx.category} className="size-3" /> {peekTx.category}
+                </span>
+                {peekTx.split_group_id && (
+                  <span className="chip inline-flex items-center gap-1" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                    <Split className="size-3" /> Pecahan{splitCount > 1 ? ` · ${splitCount} bagian` : ''}
+                  </span>
+                )}
+              </div>
+
+              <dl className="mt-6 grid gap-4">
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tanggal</dt>
+                  <dd className="mt-0.5 text-[13.5px]" style={{ color: 'var(--ink)' }}>{formatDateShort(peekTx.date, locale)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Akun</dt>
+                  <dd className="mt-0.5 text-[13.5px]" style={{ color: 'var(--ink)' }}>{getAccountName(peekTx.account_id)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Deskripsi</dt>
+                  <dd className="mt-0.5 text-[13.5px] break-words" style={{ color: peekTx.description ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                    {peekTx.description || '—'}
+                  </dd>
+                </div>
+                {peekTx.tags && peekTx.tags.length > 0 && (
+                  <div>
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tag</dt>
+                    <dd className="mt-1 flex flex-wrap gap-1">
+                      {peekTx.tags.map((tg) => (
+                        <span key={tg} className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                          {tg}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              <p className="mt-6 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                Navigasi: <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>j</kbd>/<kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>k</kbd> pindah baris · <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>Esc</kbd> tutup
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
+              <Button variant="outline" size="sm" onClick={() => openEditDialog(peekTx)}>
+                <Pencil className="size-3.5" data-icon="inline-start" /> {t('transactions.edit')}
+              </Button>
+              {/* Syarat "Pecah" = sama dgn tombol di dialog edit (skip Transfer) */}
+              {peekTx.category !== 'Transfer' && (
+                <Button variant="outline" size="sm" onClick={() => openSplitFromPeek(peekTx)}>
+                  <Split className="size-3.5" data-icon="inline-start" /> Pecah
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => void handleDelete(peekTx.id)}
+                className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors duration-100 hover:bg-[var(--surface-2)]"
+                style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral-ink)', background: 'var(--surface)' }}
+              >
+                <Trash2 className="size-3.5" /> {t('transactions.delete')}
+              </button>
+            </div>
+          </aside>
+        )
+      })()}
+
+      {/* Dialog simpan tampilan (saved view) — nama singkat, Enter = simpan */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Simpan tampilan</DialogTitle>
+            <DialogDescription>
+              Simpan kombinasi filter dan urutan saat ini sebagai tampilan cepat (maks 8).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-1.5 py-2">
+            <Label htmlFor="tx-view-name">Nama tampilan</Label>
+            <Input
+              id="tx-view-name"
+              value={viewNameDraft}
+              onChange={(e) => setViewNameDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveCurrentView() } }}
+              placeholder="cth. Makan bulan ini"
+              maxLength={40}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
+              {t('transactions.cancel')}
+            </Button>
+            <Button onClick={saveCurrentView} disabled={!viewNameDraft.trim()}>
+              {t('transactions.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

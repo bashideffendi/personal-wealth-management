@@ -119,16 +119,25 @@ export function NetWorthHero({
             {t('nw_hero.label_net_worth')}
           </p>
 
-          {/* Hero net worth — MONO bold large */}
+          {/* Hero net worth — MOMENT: digit penuh tabular di >=lg, compact di
+              bawahnya (mobile baru rilis, jangan diubah). Weight 800 + tracking
+              desktop HARUS inline di span — .num (unlayered, 500) menang dari
+              utility font-* Tailwind (layered). Floor 24px = perilaku HP lama. */}
           <p
             className="num tabular font-bold leading-none mt-2 whitespace-nowrap"
             style={{
-              fontSize: 'clamp(24px, 4.5vw, 30px)',
+              fontSize: 'clamp(24px, 4.5vw, 46px)',
               letterSpacing: '-0.02em',
               color: 'var(--on-hero)',
             }}
           >
-            {formatCompactCurrency(netWorth)}
+            <span className="lg:hidden">{formatCompactCurrency(netWorth)}</span>
+            <span
+              className="hidden lg:inline"
+              style={{ fontWeight: 800, letterSpacing: '-0.03em' }}
+            >
+              {formatCurrency(netWorth)}
+            </span>
           </p>
 
           {/* Delta chips row */}

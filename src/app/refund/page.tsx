@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { SiteNav } from '@/components/marketing/site-nav'
+import { SiteFooter } from '@/components/marketing/site-footer'
 
 export const metadata: Metadata = {
   title: 'Kebijakan Pengembalian Dana',
@@ -11,12 +13,7 @@ const UPDATED = '2 Juni 2026'
 export default function RefundPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--paper)', color: 'var(--ink)' }}>
-      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="grid place-items-center" style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.04em', boxShadow: 'var(--card-shadow)' }}>K</div>
-          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Klunting</span>
-        </Link>
-      </header>
+      <SiteNav />
 
       <main className="max-w-2xl mx-auto px-6 sm:px-12 py-12">
         <p className="text-xs uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--ink-soft)' }}>Legal</p>
@@ -78,6 +75,8 @@ export default function RefundPage() {
           <Link href="/contact" className="text-sm font-medium hover:underline" style={{ color: 'var(--ink-muted)' }}>Hubungi Kami</Link>
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }

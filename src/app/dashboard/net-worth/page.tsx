@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { averageMonthlyIncome } from '@/lib/data/monthly-income'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
@@ -11,15 +12,16 @@ import type { PayoffDebt } from '@/lib/debt-payoff'
 import dynamic from 'next/dynamic'
 import { Loader2, TrendingUp, TrendingDown, RefreshCw, Sparkles, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { useT, useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the net-worth route's initial JS (loads on chart mount).
 const ProjectionChart = dynamic(
-  () => import('./net-worth-charts').then((m) => m.ProjectionChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.ProjectionChart),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: '100%', background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 const HistoryChart = dynamic(
-  () => import('./net-worth-charts').then((m) => m.HistoryChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.HistoryChart),
   { ssr: false, loading: () => <div className="animate-pulse rounded-lg" style={{ height: 300, background: 'var(--surface-2)' }} aria-hidden="true" /> },
 )
 
@@ -105,11 +107,9 @@ export default function NetWorthPage() {
       // Kartu kredit = utang revolving → ikut liabilitas
       const cards = (ccRes.data ?? []) as { id: string; name: string; current_balance: number; interest_rate: number }[]
 
-      // Rata-rata income pakai jumlah bulan DISTINCT (cap 3, lantai 1) —
-      // SAMA dengan halaman Utang, biar DTI konsisten antar halaman.
+      // Rata-rata income: math kanonik lib/data/monthly-income (bulan DISTINCT
+      // cap 3) — SAMA dengan Utang/Goals/Dashboard, biar DTI konsisten antar halaman.
       const incomeRows = (txRes.data ?? []) as { amount: number; date: string }[]
-      const totalIncome = incomeRows.reduce((s, r) => s + (r.amount || 0), 0)
-      const incomeMonths = new Set(incomeRows.map((r) => (r.date || '').slice(0, 7)).filter(Boolean)).size
 
       const sumCat = (rows: NonLiquidRow[], cat: string) => rows.filter((a) => a.category === cat).reduce((s, a) => s + (a.current_value || 0), 0)
       const sumDebt = (cat: string) => debts.filter((d) => d.category === cat).reduce((s, d) => s + (d.remaining || 0), 0)
@@ -128,7 +128,7 @@ export default function NetWorthPage() {
       return {
         data,
         snapshots: (snapshotRes.data ?? []) as NetWorthSnapshot[],
-        monthlyIncome: incomeRows.length > 0 ? totalIncome / Math.min(3, Math.max(1, incomeMonths)) : 0,
+        monthlyIncome: averageMonthlyIncome(incomeRows),
         debtCount: debts.filter((d) => d.remaining > 0).length + cards.filter((c) => (c.current_balance || 0) > 0).length,
         // PayoffDebt[] buat proyeksi — mapping CC persis kayak halaman Utang.
         payoffDebts: [
@@ -231,6 +231,8 @@ export default function NetWorthPage() {
         </div>
       </div>
 
+      <WealthSubnav />
+
       {/* Dark hero — 3 cell */}
       <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-[1.6fr_1fr_1fr]"
         style={{ background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}>
@@ -238,8 +240,9 @@ export default function NetWorthPage() {
         <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, var(--hero-chip-pos-bg), transparent 65%)' }} />
         <div className="relative p-5 sm:p-6 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
-          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,40px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}>{formatCompactCurrency(netWorth)}</p>
-          <p className="num tabular text-[11px] mt-1.5" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
+          {/* MOMENT: digit penuh di >=lg (baris 11px di bawah jadi redundan → lg:hidden), compact di <lg */}
+          <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,44px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}><span className="lg:hidden">{formatCompactCurrency(netWorth)}</span><span className="hidden lg:inline" style={{ fontWeight: 800 }}>{formatCurrency(netWorth)}</span></p>
+          <p className="num tabular text-[11px] mt-1.5 lg:hidden" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>

@@ -22,9 +22,10 @@ function isMissingFn(err: { code?: string; message?: string }): boolean {
 
 async function adjust(
   supabase: SupabaseClient,
-  rpc: 'adjust_credit_card_balance' | 'adjust_account_balance',
-  idKey: 'p_card' | 'p_account',
-  table: 'credit_cards' | 'accounts',
+  rpc: 'adjust_credit_card_balance' | 'adjust_account_balance' | 'adjust_debt_remaining',
+  idKey: 'p_card' | 'p_account' | 'p_debt',
+  table: 'credit_cards' | 'accounts' | 'debts',
+  column: 'current_balance' | 'remaining',
   id: string,
   delta: number,
   fallbackCurrent: number,
@@ -34,7 +35,7 @@ async function adjust(
   if (!error) return { ok: true }
   if (isMissingFn(error)) {
     const next = clampZero ? Math.max(0, fallbackCurrent + delta) : fallbackCurrent + delta
-    const { error: e2 } = await supabase.from(table).update({ current_balance: next }).eq('id', id)
+    const { error: e2 } = await supabase.from(table).update({ [column]: next }).eq('id', id)
     return e2 ? { ok: false, error: e2.message } : { ok: true }
   }
   return { ok: false, error: error.message }
@@ -44,12 +45,19 @@ async function adjust(
 export function adjustCardBalance(
   supabase: SupabaseClient, cardId: string, delta: number, fallbackCurrent: number, clampZero = false,
 ): Promise<Result> {
-  return adjust(supabase, 'adjust_credit_card_balance', 'p_card', 'credit_cards', cardId, delta, fallbackCurrent, clampZero)
+  return adjust(supabase, 'adjust_credit_card_balance', 'p_card', 'credit_cards', 'current_balance', cardId, delta, fallbackCurrent, clampZero)
 }
 
 /** Tambah/kurang saldo rekening (delta boleh negatif). */
 export function adjustAccountBalance(
   supabase: SupabaseClient, accountId: string, delta: number, fallbackCurrent: number, clampZero = false,
 ): Promise<Result> {
-  return adjust(supabase, 'adjust_account_balance', 'p_account', 'accounts', accountId, delta, fallbackCurrent, clampZero)
+  return adjust(supabase, 'adjust_account_balance', 'p_account', 'accounts', 'current_balance', accountId, delta, fallbackCurrent, clampZero)
+}
+
+/** Tambah/kurang sisa utang (delta boleh negatif). Default clamp 0 — sisa utang tak boleh negatif. */
+export function adjustDebtRemaining(
+  supabase: SupabaseClient, debtId: string, delta: number, fallbackCurrent: number, clampZero = true,
+): Promise<Result> {
+  return adjust(supabase, 'adjust_debt_remaining', 'p_debt', 'debts', 'remaining', debtId, delta, fallbackCurrent, clampZero)
 }

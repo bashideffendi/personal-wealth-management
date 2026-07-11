@@ -1,17 +1,26 @@
 import { ImageResponse } from 'next/og'
 
 // Social share card — App Router file convention. Served at /opengraph-image
-// and auto-wired by Next.js into BOTH og:image and twitter:image (the
-// layout.tsx twitter card is 'summary_large_image', which requires an image).
-// 1200x630 is the canonical OG size. Dark canvas (#0A0A0F — mirrors the dark
-// theme bg + manifest background_color) with the emerald brand lockup, per the
-// fintech/terminal aesthetic (dense, dark) rather than a light editorial card.
-// Uses system-ui only — no external font fetch — matching icon.tsx so the
-// build stays self-contained and reliable.
+// dan auto-wired oleh Next.js ke og:image DAN twitter:image (twitter card di
+// layout.tsx = 'summary_large_image', yang butuh gambar). 1200x630 = ukuran
+// OG kanonis. Kanvas terang #FAFAFA polos + mark 4-warna Klunting
+// (plus-layout, proporsi sama dengan icon.tsx/apple-icon.tsx) + wordmark
+// "klunting" lowercase ink. Tagline & footer ngikutin metadata di layout.tsx.
+// Pakai system-ui aja — tanpa fetch font eksternal — biar build tetap
+// self-contained dan reliable.
 
-export const alt = 'Klunting — Wealth Management App'
+export const alt = 'Klunting — Atur uang tanpa drama'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
+
+// Mark 4-warna plus-layout — tile 40px, jarak antar-pusat 46px (rasio sama
+// dengan icon.tsx: teal atas, coral kiri, biru kanan, ungu bawah).
+const TILES = [
+  { c: '#17b890', left: 46, top: 0 },   // atas — teal
+  { c: '#f0664f', left: 0, top: 46 },   // kiri — coral
+  { c: '#5d6fe0', left: 92, top: 46 },  // kanan — biru
+  { c: '#8b4fb0', left: 46, top: 92 },  // bawah — ungu
+]
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -22,23 +31,12 @@ export default function OpengraphImage() {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background:
-            'linear-gradient(135deg, #0A0A0F 0%, #0A0A0F 55%, #0B231C 100%)',
-          color: '#FAFAF9',
+          background: '#FAFAFA',
+          color: '#18181b',
           fontFamily: 'system-ui',
         }}
       >
-        {/* Top accent strip — emerald, full-bleed (trading-terminal cue) */}
-        <div
-          style={{
-            display: 'flex',
-            width: '100%',
-            height: 10,
-            background: 'linear-gradient(90deg, #FFD15C 0%, #E8A100 100%)',
-          }}
-        />
-
-        {/* Brand lockup + tagline, vertically centered */}
+        {/* Lockup mark + wordmark + tagline, vertikal di tengah */}
         <div
           style={{
             display: 'flex',
@@ -52,55 +50,71 @@ export default function OpengraphImage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              marginBottom: 40,
+              marginBottom: 44,
             }}
           >
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 108,
-                height: 108,
-                borderRadius: 26,
-                background:
-                  'linear-gradient(135deg, #FFD15C 0%, #E8A100 100%)',
-                color: '#1E1B16',
-                fontSize: 66,
-                fontWeight: 800,
-                letterSpacing: '-0.05em',
+                position: 'relative',
+                width: 132,
+                height: 132,
               }}
             >
-              K
+              {TILES.map((t) => (
+                <div
+                  key={t.c}
+                  style={{
+                    position: 'absolute',
+                    left: t.left,
+                    top: t.top,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: t.c,
+                  }}
+                />
+              ))}
             </div>
             <div
               style={{
-                marginLeft: 32,
-                fontSize: 76,
+                marginLeft: 40,
+                fontSize: 96,
                 fontWeight: 800,
-                letterSpacing: '-0.03em',
-                color: '#FAFAF9',
+                letterSpacing: '-0.04em',
+                color: '#18181b',
               }}
             >
-              Klunting
+              klunting
             </div>
           </div>
 
+          {/* Aksen teal halus — garis pendek pemisah lockup dan tagline */}
           <div
             style={{
-              fontSize: 36,
+              display: 'flex',
+              width: 72,
+              height: 6,
+              borderRadius: 3,
+              background: '#17b890',
+              marginBottom: 32,
+            }}
+          />
+
+          <div
+            style={{
+              fontSize: 40,
               fontWeight: 500,
               lineHeight: 1.3,
-              color: '#A8A29E',
+              color: '#52525b',
               maxWidth: 940,
             }}
           >
-            Catat pendapatan, pengeluaran, aset, utang, dan investasi — pakai
-            AI biar cepat.
+            Atur uang tanpa drama
           </div>
         </div>
 
-        {/* Footer — domain + feature keywords */}
+        {/* Footer — domain + kata kunci fitur */}
         <div
           style={{
             display: 'flex',
@@ -108,25 +122,13 @@ export default function OpengraphImage() {
             justifyContent: 'space-between',
             height: 104,
             padding: '0 80px',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '1px solid #e4e4e7',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div
-              style={{
-                display: 'flex',
-                width: 14,
-                height: 14,
-                borderRadius: 7,
-                background: '#FFC83D',
-                marginRight: 16,
-              }}
-            />
-            <div style={{ fontSize: 28, fontWeight: 600, color: '#E7E5E4' }}>
-              klunting.com
-            </div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: '#18181b' }}>
+            klunting.com
           </div>
-          <div style={{ fontSize: 24, color: '#78716C' }}>
+          <div style={{ fontSize: 24, color: '#71717a' }}>
             Pemasukan · Pengeluaran · Aset · Investasi
           </div>
         </div>

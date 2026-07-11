@@ -7,9 +7,6 @@ import { LanguageProvider } from '@/lib/i18n/context'
 import { ThemeProvider, useTheme } from '@/components/theme/theme-provider'
 import { PrivacyProvider } from '@/components/privacy/privacy-provider'
 import { CalmModeProvider } from '@/components/privacy/calm-mode-provider'
-import { LockProvider } from '@/components/security/lock-provider'
-import { LockScreen } from '@/components/security/lock-screen'
-
 function ThemedToaster() {
   const { resolved } = useTheme()
   return (
@@ -45,13 +42,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <PrivacyProvider>
           <CalmModeProvider>
-            <LockProvider>
-              <LanguageProvider>
-                {children}
-                <LockScreen />
-                <ThemedToaster />
-              </LanguageProvider>
-            </LockProvider>
+            {/* LockProvider + LockScreen pindah ke dashboard/layout.tsx — fitur
+                lock cuma relevan area authed; naruh di root bikin supabase-js
+                ikut ke bundle semua halaman termasuk landing/marketing. */}
+            <LanguageProvider>
+              {children}
+              <ThemedToaster />
+            </LanguageProvider>
           </CalmModeProvider>
         </PrivacyProvider>
       </ThemeProvider>

@@ -2,14 +2,19 @@
 
 /**
  * Compare tab — side-by-side comparison untuk 2-4 saham IDX.
- * Tabular metrics: harga, fair value, MoS, verdict, sektor.
+ * Tabular metrics: harga, fair value, MoS, verdict, sektor (semua breakpoint),
+ * plus pendalaman desktop (md+): breakdown valuasi per metode, skor Piotroski,
+ * sparkline tren 10 tahun, dan dividend yield TTM.
  *
- * Source: /api/idx-research (slim list), kalau user butuh detail
- * dia bisa klik ke /research/[ticker] dari sini.
+ * Source: /api/idx-research (slim list) untuk 5 baris dasar; detail per-ticker
+ * di-fetch paralel dari /api/idx-research/[ticker] via useQueries (staleTime
+ * 5 menit), digate media query md biar mobile gak ikut narik data. Baris
+ * pendalaman pakai `hidden md:table-row` — perilaku mobile tak berubah.
  */
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useQueries } from '@tanstack/react-query'
 import { Plus, X, Search, Loader2, ArrowUpRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,9 +25,13 @@ import {
   formatIDRCompact,
   formatPercentValue,
   formatPrice,
+  parseIDXShortDate,
   signColorVar,
   verdictStyle,
 } from '@/lib/invest/format'
+import { METHOD_ORDER } from '@/lib/invest/valuation-methods'
+import { computePiotroski } from '@/lib/invest/piotroski'
+import type { Stock } from '@/lib/invest/stocks'
 import { useT } from '@/lib/i18n/context'
 
 interface ResearchRow {
@@ -34,6 +43,149 @@ interface ResearchRow {
   verdict: string | null
   avgFairValue: number | null
   medianFairValue: number | null
+}
+
+// ─── Shape response /api/idx-research/[ticker] (subset yang dipakai) ────────
+
+interface MethodDetail {
+  fairValue: number | null
+  mos: number | null
+}
+
+interface CompareDetail {
+  ticker: string
+  valuation: {
+    price: number
+    methods: Record<string, number | null>
+    avgFairValue: number | null
+    medianFairValue: number | null
+    methodsValid: number
+    undervaluedCount: number
+    avgMoS: number | null
+    verdict: string | null
+  } | null
+  detail: { price: number | null; methods: Record<string, MethodDetail> } | null
+  dividends?: Array<{ dividend: number; exDate: string | null }>
+  /**
+   * Field opsional — route hari ini BELUM meng-expose metrik historis maupun
+   * Piotroski (cek src/app/api/idx-research/[ticker]/route.ts). Begitu route
+   * nambahin salah satu field ini, baris Piotroski + sparkline tren otomatis
+   * nyala tanpa perlu menyentuh komponen ini lagi.
+   */
+  piotroski?: { score: number; maxPossible: number; verdict: string } | null
+  stock?: { metrics?: Record<string, Record<string, number>> } | null
+  metrics?: Record<string, Record<string, number>> | null
+}
+
+interface SeriPoint {
+  year: number
+  value: number
+}
+
+/** Hasil olahan response detail per ticker — bahan baris pendalaman desktop. */
+interface DeepData {
+  methods: Record<string, MethodDetail>
+  konsensusFV: number | null
+  konsensusMoS: number | null
+  piotroski: { score: number; maxPossible: number; verdict: string } | null
+  revenue10: SeriPoint[]
+  netProfit10: SeriPoint[]
+  divYieldTTM: number | null
+}
+
+const MS_SETAHUN = 365 * 24 * 60 * 60 * 1000
+
+/** Ambil maks 10 tahun terakhir sebuah metrik, urut naik, buang nol/NaN. */
+function seri10Tahun(
+  metrics: Record<string, Record<string, number>> | null,
+  nama: string,
+): SeriPoint[] {
+  const s = metrics?.[nama]
+  if (!s) return []
+  return Object.entries(s)
+    .map(([y, v]) => ({ year: parseInt(y, 10), value: v }))
+    .filter((e) => Number.isFinite(e.value) && e.value !== 0)
+    .sort((a, b) => a.year - b.year)
+    .slice(-10)
+}
+
+/** Dividend yield TTM: total dividen ber-ex-date ≤ 12 bulan ke belakang ÷ harga. */
+function hitungYieldTTM(
+  dividends: CompareDetail['dividends'],
+  price: number | null,
+): number | null {
+  if (!price || price <= 0 || !dividends?.length) return null
+  const now = Date.now()
+  let total = 0
+  let ada = false
+  for (const d of dividends) {
+    const t = parseIDXShortDate(d.exDate)?.getTime()
+    if (t === undefined) continue
+    if (t <= now && now - t <= MS_SETAHUN) {
+      total += d.dividend
+      ada = true
+    }
+  }
+  return ada ? total / price : null
+}
+
+/** Olah response detail jadi data siap render. fallbackPrice = harga slim list. */
+function olahDetail(data: CompareDetail, fallbackPrice: number | null): DeepData {
+  const price = data.valuation?.price ?? data.detail?.price ?? fallbackPrice
+  // Breakdown metode: prefer `detail` (fair value + MoS sudah precomputed);
+  // fallback hitung MoS sendiri dari fair value `valuation` ÷ harga.
+  let methods: Record<string, MethodDetail> = data.detail?.methods ?? {}
+  if (Object.keys(methods).length === 0 && data.valuation?.methods) {
+    methods = {}
+    for (const [k, fv] of Object.entries(data.valuation.methods)) {
+      methods[k] = { fairValue: fv, mos: fv != null && price ? fv / price - 1 : null }
+    }
+  }
+  const metrics = data.stock?.metrics ?? data.metrics ?? null
+  let piotroski = data.piotroski ?? null
+  if (!piotroski && metrics) {
+    // Hitung F-Score client-side — computePiotroski cuma baca stock.metrics,
+    // field lain boleh kosong (pola sama keystats-grid).
+    try {
+      const r = computePiotroski({
+        ticker: data.ticker,
+        name: null,
+        type: null,
+        listingDate: null,
+        board: null,
+        sector: null,
+        currentPrice: price,
+        metrics,
+      } as Stock)
+      piotroski = { score: r.score, maxPossible: r.maxPossible, verdict: r.verdict }
+    } catch {
+      // metrik tak lengkap → biarkan null, sel render '—'
+    }
+  }
+  return {
+    methods,
+    konsensusFV: data.valuation
+      ? (data.valuation.medianFairValue ?? data.valuation.avgFairValue)
+      : null,
+    konsensusMoS: data.valuation?.avgMoS ?? null,
+    piotroski,
+    revenue10: seri10Tahun(metrics, 'Revenue'),
+    netProfit10: seri10Tahun(metrics, 'Net Profit'),
+    divYieldTTM: hitungYieldTTM(data.dividends, price),
+  }
+}
+
+/** True kalau viewport ≥ md (768px) — gate fetch detail biar mobile hemat data. */
+function useDesktopMd(): boolean {
+  const [md, setMd] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const update = () => setMd(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  return md
 }
 
 const MAX_COMPARE = 4
@@ -74,6 +226,22 @@ export function StockCompareTab() {
     [selectedTickers, byTicker],
   )
 
+  // Detail per-ticker (paralel, cache 5 menit) — sumber baris pendalaman
+  // desktop. enabled digate md+ karena barisnya hidden di mobile.
+  const isDesktopMd = useDesktopMd()
+  const detailQueries = useQueries({
+    queries: selectedTickers.map((tk) => ({
+      queryKey: ['compare-detail', tk],
+      staleTime: 5 * 60 * 1000,
+      enabled: isDesktopMd,
+      queryFn: async (): Promise<CompareDetail | null> => {
+        const r = await fetch(`/api/idx-research/${tk}`)
+        if (!r.ok) return null // 404 = ticker tak ter-cover; render '—' tanpa retry
+        return (await r.json()) as CompareDetail
+      },
+    })),
+  })
+
   function add(ticker: string) {
     if (selectedTickers.length >= MAX_COMPARE) return
     if (selectedTickers.includes(ticker)) return
@@ -106,6 +274,47 @@ export function StockCompareTab() {
     if (maxMoS.avgMoS != null) w.mos = maxMoS.ticker
     return w
   })()
+
+  // ── Olah data pendalaman per ticker (desktop md+) ──
+  const deepBy = new Map<string, { loading: boolean; deep: DeepData | null }>()
+  selectedTickers.forEach((tk, i) => {
+    const q = detailQueries[i]
+    deepBy.set(tk, {
+      loading: q?.isLoading ?? false,
+      deep: q?.data ? olahDetail(q.data, byTicker.get(tk)?.price ?? null) : null,
+    })
+  })
+  const deeps = selectedTickers.map((tk) => deepBy.get(tk)?.deep ?? null)
+  const masihLoading = selectedTickers.some((tk) => deepBy.get(tk)?.loading)
+
+  // Union metode yang tersedia di response, urut konsisten METHOD_ORDER
+  // (sama dengan halaman research); key di luar daftar itu nempel di ekor.
+  const methodKeys = (() => {
+    const avail = new Set<string>()
+    for (const d of deeps) if (d) for (const k of Object.keys(d.methods)) avail.add(k)
+    const urut = METHOD_ORDER.filter((k) => avail.has(k))
+    const sisa = [...avail].filter((k) => !METHOD_ORDER.includes(k)).sort()
+    return [...urut, ...sisa]
+  })()
+
+  // Baris pendalaman cuma dirender kalau minimal satu emiten punya datanya
+  // (atau masih loading) — degradasi rapi tanpa mecahin layout.
+  const adaValuasi = methodKeys.length > 0 || deeps.some((d) => d?.konsensusFV != null)
+  const adaPiotroski = deeps.some((d) => d?.piotroski)
+  const adaTrenRevenue = deeps.some((d) => (d?.revenue10.length ?? 0) >= 2)
+  const adaTrenLaba = deeps.some((d) => (d?.netProfit10.length ?? 0) >= 2)
+  const adaYield = deeps.some((d) => d?.divYieldTTM != null)
+  const adaKualitas = adaPiotroski || adaTrenRevenue || adaTrenLaba || adaYield
+
+  // Catatan kecil: ada gap '—' setelah loading rampung (emiten tak ter-cover
+  // sepenuhnya oleh snapshot data).
+  const adaGap =
+    !masihLoading &&
+    selected.length > 0 &&
+    (deeps.some((d) => !d) ||
+      deeps.some((d) => d && methodKeys.some((k) => d.methods[k]?.fairValue == null)) ||
+      (adaPiotroski && deeps.some((d) => d && !d.piotroski)) ||
+      (adaYield && deeps.some((d) => d && d.divYieldTTM == null)))
 
   return (
     <div className="space-y-3">
@@ -219,10 +428,135 @@ export function StockCompareTab() {
                     }
                   })}
                 />
+
+                {/* ── Pendalaman desktop (md+): breakdown valuasi per metode ── */}
+                {(masihLoading || adaValuasi) && (
+                  <>
+                    <SectionRow label="Valuasi per metode" span={selected.length} />
+                    {methodKeys.map((k) => (
+                      <DeepRow
+                        key={k}
+                        label={k}
+                        cells={selected.map((s) => {
+                          const st = deepBy.get(s.ticker)
+                          return {
+                            ticker: s.ticker,
+                            loading: !!st?.loading,
+                            node: <MethodCell m={st?.deep?.methods[k]} />,
+                          }
+                        })}
+                      />
+                    ))}
+                    <DeepRow
+                      label="Fair value konsensus"
+                      bold
+                      cells={selected.map((s) => {
+                        const st = deepBy.get(s.ticker)
+                        return {
+                          ticker: s.ticker,
+                          loading: !!st?.loading,
+                          node: (
+                            <MethodCell
+                              m={st?.deep
+                                ? { fairValue: st.deep.konsensusFV, mos: st.deep.konsensusMoS }
+                                : undefined}
+                            />
+                          ),
+                        }
+                      })}
+                    />
+                  </>
+                )}
+
+                {/* ── Pendalaman desktop (md+): kualitas, tren 10 thn, dividen ── */}
+                {(masihLoading || adaKualitas) && (
+                  <>
+                    <SectionRow label="Kualitas & tren" span={selected.length} />
+                    {(masihLoading || adaPiotroski) && (
+                      <DeepRow
+                        label="Skor Piotroski"
+                        cells={selected.map((s) => {
+                          const st = deepBy.get(s.ticker)
+                          return {
+                            ticker: s.ticker,
+                            loading: !!st?.loading,
+                            node: <PiotroskiCell p={st?.deep?.piotroski ?? null} />,
+                          }
+                        })}
+                      />
+                    )}
+                    {(masihLoading || adaTrenRevenue) && (
+                      <DeepRow
+                        label="Revenue 10 thn"
+                        cells={selected.map((s) => {
+                          const st = deepBy.get(s.ticker)
+                          return {
+                            ticker: s.ticker,
+                            loading: !!st?.loading,
+                            node: (
+                              <Sparkline
+                                points={st?.deep?.revenue10 ?? []}
+                                label={`Revenue ${s.ticker}`}
+                              />
+                            ),
+                          }
+                        })}
+                      />
+                    )}
+                    {(masihLoading || adaTrenLaba) && (
+                      <DeepRow
+                        label="Laba bersih 10 thn"
+                        cells={selected.map((s) => {
+                          const st = deepBy.get(s.ticker)
+                          return {
+                            ticker: s.ticker,
+                            loading: !!st?.loading,
+                            node: (
+                              <Sparkline
+                                points={st?.deep?.netProfit10 ?? []}
+                                label={`Laba bersih ${s.ticker}`}
+                              />
+                            ),
+                          }
+                        })}
+                      />
+                    )}
+                    {(masihLoading || adaYield) && (
+                      <DeepRow
+                        label="Dividend yield (TTM)"
+                        cells={selected.map((s) => {
+                          const st = deepBy.get(s.ticker)
+                          const val = st?.deep?.divYieldTTM
+                          return {
+                            ticker: s.ticker,
+                            loading: !!st?.loading,
+                            node: val != null
+                              ? <span className="num tabular">{formatPercentValue(val)}</span>
+                              : <Dash />,
+                          }
+                        })}
+                      />
+                    )}
+                  </>
+                )}
               </tbody>
             </table>
           </div>
         </div>
+      )}
+
+      {/* Catatan kecil — desktop only, muncul kalau ada gap data '—' */}
+      {selected.length > 0 && adaGap && (
+        <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          — = data belum ter-cover snapshot untuk emiten tersebut.
+        </p>
+      )}
+      {selected.length > 0 && !masihLoading && deeps.some((d) => d) &&
+        !adaPiotroski && !adaTrenRevenue && !adaTrenLaba && (
+        <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          Skor Piotroski &amp; tren 10 tahun butuh metrik historis per emiten — belum
+          tersedia dari sumber data compare.
+        </p>
       )}
 
       {selected.length >= 2 && (
@@ -272,6 +606,149 @@ function CompareRow({
         </td>
       ))}
     </tr>
+  )
+}
+
+// ─── Baris & sel pendalaman (desktop md+ only) ───────────────────────────────
+
+/** Header section di dalam tabel compare — sticky label di kolom pertama. */
+function SectionRow({ label, span }: { label: string; span: number }) {
+  return (
+    <tr className="hidden md:table-row border-t" style={{ borderColor: 'var(--border-soft)' }}>
+      <td
+        className="px-3 py-2 text-[10px] uppercase tracking-[0.08em] font-semibold sticky left-0 z-10"
+        style={{ color: 'var(--ink-soft)', background: 'var(--surface-2)' }}
+      >
+        {label}
+      </td>
+      <td colSpan={span} style={{ background: 'var(--surface-2)' }} />
+    </tr>
+  )
+}
+
+/** Baris data pendalaman — skeleton per kolom selama detail ticker dimuat. */
+function DeepRow({
+  label,
+  cells,
+  bold,
+}: {
+  label: string
+  bold?: boolean
+  cells: Array<{ ticker: string; loading: boolean; node: React.ReactNode }>
+}) {
+  return (
+    <tr className="hidden md:table-row border-t" style={{ borderColor: 'var(--border-soft)' }}>
+      <td
+        className="px-3 py-2 text-xs sticky left-0 bg-[var(--surface)] z-10"
+        style={{ color: 'var(--ink-muted)', fontWeight: bold ? 600 : 500 }}
+      >
+        {label}
+      </td>
+      {cells.map((c) => (
+        <td
+          key={c.ticker}
+          className="px-3 py-2 text-sm"
+          style={{ color: 'var(--ink)', fontWeight: bold ? 600 : 400 }}
+        >
+          {c.loading ? <CellSkeleton /> : c.node}
+        </td>
+      ))}
+    </tr>
+  )
+}
+
+/** Shimmer placeholder saat detail per-ticker masih loading. */
+function CellSkeleton() {
+  return <div className="h-3 w-16 rounded animate-pulse" style={{ background: 'var(--surface-2)' }} />
+}
+
+function Dash() {
+  return <span style={{ color: 'var(--ink-soft)' }}>—</span>
+}
+
+/** Nilai wajar satu metode + selisih % vs harga (mint = undervalued, coral = overvalued). */
+function MethodCell({ m }: { m: MethodDetail | undefined }) {
+  if (!m || m.fairValue == null || isNaN(m.fairValue)) return <Dash />
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="num tabular">{formatPrice(m.fairValue)}</span>
+      {m.mos != null && !isNaN(m.mos) && (
+        <span
+          className="num tabular text-[11px]"
+          style={{ color: m.mos >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+        >
+          {m.mos >= 0 ? '+' : ''}
+          {formatPercentValue(m.mos)}
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** Skor Piotroski x/9 + bar mini 9 segmen (biru = poin lolos). */
+function PiotroskiCell({ p }: { p: DeepData['piotroski'] }) {
+  if (!p) return <Dash />
+  return (
+    <div>
+      <div className="flex items-baseline gap-1.5">
+        <span className="num tabular font-semibold">{p.score}/9</span>
+        <span className="text-[10px]" style={{ color: 'var(--ink-muted)' }}>{p.verdict}</span>
+      </div>
+      <div className="mt-1 flex gap-0.5" aria-hidden="true">
+        {Array.from({ length: 9 }, (_, i) => (
+          <span
+            key={i}
+            className="h-1 w-3 rounded-full transition-colors duration-150"
+            style={{ background: i < p.score ? 'var(--c-blue)' : 'var(--surface-2)' }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Sparkline mini SVG (polyline + dot endpoint) — util lokal, tanpa recharts.
+ * Skala min-max per emiten: fokus ke BENTUK tren; magnitude dibaca dari angka
+ * compact di sebelah kanan (nilai tahun terakhir).
+ */
+function Sparkline({ points, label }: { points: SeriPoint[]; label: string }) {
+  const W = 120
+  const H = 36
+  const PAD = 3
+  if (points.length < 2) return <Dash />
+  const values = points.map((p) => p.value)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const x = (i: number) => PAD + (i / (points.length - 1)) * (W - PAD * 2)
+  const y = (v: number) =>
+    max === min ? H / 2 : PAD + (1 - (v - min) / (max - min)) * (H - PAD * 2)
+  const path = points.map((p, i) => `${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ')
+  const last = points[points.length - 1]
+  return (
+    <div className="flex items-center gap-2">
+      <svg
+        width={W}
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        className="shrink-0"
+        role="img"
+        aria-label={`${label} ${points[0].year}–${last.year}`}
+      >
+        <polyline
+          points={path}
+          fill="none"
+          stroke="var(--c-blue)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx={x(points.length - 1)} cy={y(last.value)} r="2" fill="var(--c-blue)" />
+      </svg>
+      <span className="num tabular text-[10px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+        {formatIDRCompact(last.value)}
+      </span>
+    </div>
   )
 }
 

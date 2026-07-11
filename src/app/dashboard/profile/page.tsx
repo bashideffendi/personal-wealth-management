@@ -314,7 +314,7 @@ export default function ProfilePage() {
       supabase.from('accounts').delete().eq('user_id', user.id),
     ])
     setResetting(false)
-    const failed = results.find((r) => r.error)
+    const failed = results.find((r: { error: { message: string } | null }) => r.error)
     if (failed?.error) {
       toast.error(t('profile.toast_reset_partial'), { description: failed.error.message })
       return

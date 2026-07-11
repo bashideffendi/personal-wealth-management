@@ -13,6 +13,7 @@ import { useI18n } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import { Label } from '@/components/ui/label'
@@ -458,6 +459,9 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Sub-nav Kekayaan — halaman ini gak punya header judul, jadi strip di paling atas */}
+      <WealthSubnav />
+
       {/* ═══ MOBILE (<md): hero teal ala Budget — kekayaan bersih ═══ */}
       <section
         className="md:hidden rounded-[20px] px-5 pt-3.5 pb-5"

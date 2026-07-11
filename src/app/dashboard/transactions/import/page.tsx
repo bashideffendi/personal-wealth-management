@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { adjustCardBalance } from '@/lib/data/balances'
 import { normalizeRulePattern } from '@/lib/categorization-rules'
 import { toast } from 'sonner'
 import { notifyAICreditsChanged } from '@/components/layout/ai-credits-badge'
@@ -259,6 +260,24 @@ export default function ImportMutasiPage() {
       toast.error(t('import_tx.toast_import_failed'), { description: insErr.message })
       setStage('preview')
       return
+    }
+
+    // Sinkron outstanding kartu kredit — SAMA dengan jalur manual (transactions/
+    // quick-add): tiap expense di kartu menaikkan current_balance. Tanpa ini,
+    // import belanja kartu membuat outstanding & net worth salah diam-diam.
+    // Konvensi mirror ccContribution: hanya expense yang berkontribusi.
+    const targetCard = cards.find((c) => c.id === accountId)
+    if (targetCard) {
+      const ccDelta = toInsert.reduce(
+        (sum, r) => (r.type === 'expense' && r.amount > 0 ? sum + r.amount : sum),
+        0,
+      )
+      if (ccDelta > 0) {
+        const { ok: ccOk } = await adjustCardBalance(
+          supabase, targetCard.id, ccDelta, targetCard.current_balance,
+        )
+        if (!ccOk) toast.warning('Transaksi terimpor, tapi saldo kartu kredit gagal diperbarui. Cek & sesuaikan di halaman Kartu Kredit.')
+      }
     }
 
     // LEARN-FROM-CORRECTION (tulis): baris yang kategorinya DIUBAH user di

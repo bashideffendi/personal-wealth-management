@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
     ],
     '/api/idx-research/[ticker]': ['./src/data/invest/*.json', './src/data/invest/research/**'],
     '/api/idx-research': ['./src/data/invest/*.json'],
+    // Screener: baca SEMUA file per-ticker sekali (cache module-level).
+    '/api/screener': ['./src/data/invest/*.json', './src/data/invest/stocks/**'],
     '/api/idx-dividends': ['./src/data/invest/*.json'],
     '/api/idx-emiten': ['./src/data/invest/*.json'],
   },

@@ -30,6 +30,23 @@ function fmt(d: Date, locale: Locale) {
   return formatDateShort(d, locale, true)
 }
 
+/** Kunci preset yang nilainya (per hari) sama dengan range — dipakai saved
+ *  views transaksi supaya preset tersimpan ROLLING ("Bulan ini" tetap bulan
+ *  berjalan saat di-apply), bukan membeku ke tanggal absolut saat disimpan. */
+export function matchPresetKey(range: DateRange): string | null {
+  if (!range) return null
+  for (const p of PRESETS) {
+    const r = p.get()
+    if (r && isSameDay(r.from, range.from) && isSameDay(r.to, range.to)) return p.key
+  }
+  return null
+}
+
+/** Range terkini untuk kunci preset (null kalau kunci tak dikenal). */
+export function resolvePresetRange(key: string): DateRange {
+  return PRESETS.find((p) => p.key === key)?.get() ?? null
+}
+
 const PRESETS: { key: string; label: string; get: () => DateRange }[] = [
   { key: 'all', label: 'Semua waktu', get: () => null },
   { key: 'today', label: 'Hari ini', get: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }) },

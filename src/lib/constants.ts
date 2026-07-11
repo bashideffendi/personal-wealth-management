@@ -173,7 +173,15 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Beranda',     titleKey: 'nav.dashboard',     href: '/dashboard',                   icon: 'LayoutDashboard', section: 'primary' },
   { label: 'Transaksi',   titleKey: 'nav.transactions',  href: '/dashboard/transactions',      icon: 'Receipt',         section: 'primary' },
   { label: 'Anggaran',    titleKey: 'nav.budgeting',     href: '/dashboard/budgeting',         icon: 'Wallet',          section: 'primary' },
-  { label: 'Investasi',   titleKey: 'nav.investment',    href: '/dashboard/assets/investment', icon: 'TrendingUp',      section: 'primary' },
+  {
+    label: 'Investasi', titleKey: 'nav.investment', href: '/dashboard/assets/investment', icon: 'TrendingUp', section: 'primary',
+    // Mirror pola Kekayaan: item ber-children → NavDropdown di top-nav.
+    // Label literal (tanpa key messages baru — preseden fitur split).
+    children: [
+      { label: 'Portofolio Investasi', href: '/dashboard/assets/investment', icon: '' },
+      { label: 'Screener IDX',         href: '/dashboard/screener',          icon: '' },
+    ],
+  },
   {
     label: 'Kekayaan', titleKey: 'nav.wealth', href: '/dashboard/net-worth', icon: 'Building2', section: 'primary',
     children: [

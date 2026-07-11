@@ -11,20 +11,18 @@
 .leaflet-container { isolation: isolate; }
 
 /* ============================================
-   Klunting — Design System v7 "CARTOON QUEST" (2026-06-13)
-   Konsep RPG kartun modern (user pilih dari mockup: varian B, full app,
-   fase 1 reskin). Bahasa: kertas hangat + OUTLINE TINTA 2px + bayangan
-   offset keras + emas sebagai aksi + malam dusk ungu (dark & panel
-   hero). Data uang TETAP hijau=naik/garnet=turun. Fase 2 (mekanika
-   XP/quest) menyusul setelah reskin di-ACC:
-   (1) PRIMARY = emas #FFC83D — tombol/FAB/logo + teks tinta (11.1:1);
-       aksen sbg teks/ikon/ring wajib --c-primary-ink;
-   (2) kanvas porselen ber-cast hijau + kartu putih + grain kertas;
-   (3) netral green-cast ink (bukan warm brown era krem);
-   (4) dark = green-ink pekat, habitat asli volt (volt 13.7:1 di dark);
-   (5) palet DATA bespoke v5 dipertahankan (hijau=naik garnet=turun
-       brass=waspada iris=AI) — volt itu AKSI, emerald itu UANG;
-   (6) tipografi keluarga Instrument (Sans kerja, Serif italic momen).
+   Klunting — Design System v8 "PREMIUM MONO" (2026-07-10)
+   Mono premium ala Linear: chrome netral tenang, warna hanya buat DATA.
+   (1) Kanvas #FAFAFA + kartu putih + hairline tipis tapi TEGAS
+       (--border/--outline rgba ink, --outline-w 1px);
+   (2) PRIMARY = ink #18181b (tombol/FAB/aksi) + teks putih; aksen
+       brand teal #17b890 buat active-nav/link/positif;
+   (3) 4 warna logo = aksen DATA & kategori, BUKAN chrome:
+       teal #17b890 / coral #f0664f / biru #5d6fe0 / ungu #8b4fb0;
+   (4) tipografi SATU font Geist, TANPA serif — angka tabular via .num;
+   (5) panel hero ikonik tetap gelap di dua mode (token --hero-*);
+   (6) skin "cartoon" (emas/dongeng lawas) = OPT-IN via
+       html[data-skin="cartoon"], bukan default.
    Kontras: -ink ≥ 4.5:1, teks sekunder ≥ 6:1 (diverifikasi per nilai).
    ============================================ */
 
@@ -59,7 +57,7 @@
   --surface-2:   #F4F4F5;    /* sumur/chip sekunder (netral) */
   --surface-3:   #ECECEF;
   --line:        rgba(24, 24, 27, 0.08);
-  --line-strong: rgba(24, 24, 27, 0.12);
+  --line-strong: rgba(24, 24, 27, 0.16);
 
   /* ── Text (Light) — TIGA PERAN saja, jangan nambah abu baru ──────
      Aturan keterbacaan (semua ≥ AA di atas --surface putih):
@@ -74,14 +72,17 @@
   --text-2:      #3F3F46;    /* alias → ink-muted */
   --text-mute:   #52525B;    /* alias → ink-soft */
   --text-faint:  #71717A;    /* faint — FLOOR text (4.7:1 putih, masih AA) */
-  --border:      rgba(24, 24, 27, 0.08);   /* hairline divider netral */
-  --border-soft: rgba(24, 24, 27, 0.05);   /* hairline halus */
+  --border:      rgba(24, 24, 27, 0.11);   /* hairline divider netral — tipis tapi TEGAS */
+  --border-soft: rgba(24, 24, 27, 0.07);   /* hairline halus */
+  /* Border input/form — WCAG 1.4.11 butuh ≥ 3:1 vs surface; JANGAN
+     disamain hairline dekoratif yang sengaja redup. */
+  --input-border: rgba(24, 24, 27, 0.35);
   /* Outline kartun — bingkai 2px + bayangan offset keras (identitas v7).
      DIMENSI kartu/tombol juga token sejak sistem multi-skin: tiap skin
      ngatur ketebalan bingkai, gaya bayangan, dan radius-nya sendiri. */
-  --outline:        rgba(24, 24, 27, 0.08);   /* border kartu = hairline netral (flat, bukan tinta tebal) */
+  --outline:        rgba(24, 24, 27, 0.11);   /* border kartu = hairline netral (flat, bukan tinta tebal) */
   --outline-shadow: rgba(24, 24, 27, 0.06);
-  --outline-w:      0.5px;
+  --outline-w:      1px;
   --card-radius:    16px;
   --card-shadow:    0 1px 2px rgba(24, 24, 27, 0.05);   /* flat, bukan offset keras */
   --btn-shadow:     none;
@@ -214,92 +215,6 @@
   --shadow-lg: 0 24px 48px -16px rgba(30, 27, 22, 0.14), 0 4px 12px rgba(30, 27, 22, 0.06);
   --shadow-card: 0 1px 0 rgba(30, 27, 22, 0.05), 0 12px 24px -12px rgba(30, 27, 22, 0.10);
 
-  /* ── LEGACY alias map — keeps existing components working ── */
-  /* Old butter/lime → emerald (the new signature) */
-  --butter-50:   var(--emerald-50);
-  --butter-100:  var(--emerald-100);
-  --butter-200:  var(--emerald-200);
-  --butter-300:  var(--text-mute);
-  --butter-400:  var(--emerald-400);
-  --butter-500:  var(--emerald-500);
-  --butter-600:  var(--c-mint);
-  --butter-700:  var(--c-mint);
-  --butter-800:  var(--emerald-800);
-
-  --lime-50:     var(--emerald-50);
-  --lime-100:    var(--emerald-100);
-  --lime-200:    var(--emerald-200);
-  --lime-300:    var(--text-mute);
-  --lime-400:    var(--emerald-400);
-  --lime-500:    var(--emerald-500);
-  --lime-600:    var(--c-mint);
-  --lime-700:    var(--c-mint);
-  --lime-800:    var(--emerald-800);
-
-  /* indigo/olive/gold → emerald family */
-  --indigo-50:   var(--emerald-50);
-  --indigo-100:  var(--emerald-100);
-  --indigo-200:  var(--emerald-200);
-  --indigo-300:  var(--text-mute);
-  --indigo-400:  var(--emerald-400);
-  --indigo-500:  var(--emerald-500);
-  --indigo-600:  var(--c-mint);
-  --indigo-700:  var(--c-mint);
-  --indigo-800:  var(--emerald-800);
-
-  --olive-50:    var(--emerald-50);
-  --olive-100:   var(--emerald-100);
-  --olive-200:   var(--emerald-200);
-  --olive-300:   var(--text-mute);
-  --olive-400:   var(--emerald-400);
-  --olive-500:   var(--emerald-500);
-  --olive-600:   var(--c-mint);
-  --olive-700:   var(--c-mint);
-  --olive-800:   var(--emerald-800);
-
-  --gold-50:   var(--emerald-50);
-  --gold-100:  var(--emerald-100);
-  --gold-200:  var(--emerald-200);
-  --gold-300:  var(--text-mute);
-  --gold-400:  var(--emerald-400);
-  --gold-500:  var(--emerald-500);
-  --gold-600:  var(--c-mint);
-  --gold-700:  var(--c-mint);
-
-  /* burgundy → coral (warm secondary, used in profile/onboarding) */
-  --burgundy-50:  var(--coral-50);
-  --burgundy-100: var(--coral-100);
-  --burgundy-200: var(--coral-200);
-  --burgundy-300: var(--coral-300);
-  --burgundy-400: var(--coral-400);
-  --burgundy-500: var(--coral-500);
-  --burgundy-600: var(--coral-600);
-  --burgundy-700: var(--coral-700);
-  --burgundy-800: #7E2434;
-  --burgundy-900: #66202C;
-
-  /* moss → emerald */
-  --moss-50:     var(--emerald-50);
-  --moss-100:    var(--emerald-100);
-  --moss-300:    var(--text-mute);
-  --moss-500:    var(--emerald-500);
-  --moss-600:    var(--c-mint);
-  --moss-700:    var(--c-mint);
-  --moss-800:    var(--emerald-800);
-
-  /* orange → amber */
-  --orange-50:   var(--amber-50);
-  --orange-100:  var(--amber-100);
-  --orange-200:  var(--amber-200);
-  --orange-300:  var(--amber-300);
-  --orange-400:  var(--amber-400);
-  --orange-500:  var(--amber-500);
-  --orange-600:  var(--amber-600);
-  --orange-700:  var(--amber-700);
-
-  --stone:       #6B6354;
-  --stone-light: #B0A893;
-
   /* ── Fonts — Geist (workhorse data/UI, brand baru) ───────────────── */
   --font-sans:    var(--font-sans-brand), system-ui, -apple-system,
                   "Segoe UI", Roboto, sans-serif;
@@ -339,12 +254,12 @@
 
   --color-destructive: var(--c-coral);
   --color-border: var(--border);
-  --color-input: var(--border);
+  --color-input: var(--input-border);
   --color-ring: var(--c-primary-ink);
 
-  /* Chart palette — emerald-led, amber/coral/violet/sky for variety */
+  /* Chart palette — emerald-led, blue/coral/violet/sky for variety */
   --color-chart-1: var(--c-mint);      /* emerald — main */
-  --color-chart-2: var(--c-amber);     /* amber */
+  --color-chart-2: var(--c-blue);      /* biru logo */
   --color-chart-3: var(--c-coral);     /* coral — expense */
   --color-chart-4: var(--c-violet);    /* violet — AI */
   --color-chart-5: var(--sky-500);     /* sky — supplementary */
@@ -366,12 +281,12 @@
 }
 
 /* ============================================
-   DARK MODE — espresso hangat (bukan biru-hitam generik)
-   Hue surface ikut kanvas krem (cokelat-abu dalam), teks warm white.
+   DARK MODE — zinc gelap netral (#0F0F14, bukan biru-hitam generik)
+   Surface near-black netral, teks near-white netral (ramp zinc).
    Triggered by .dark class on <html>
    ============================================ */
 .dark {
-  /* Surfaces — MALAM DUSK v7: ungu senja dongeng (bukan hitam pekat).
+  /* Surfaces — zinc gelap netral (bukan hitam pekat).
      Jurang elevasi tegas dipertahankan (panel 1.19 di atas bg). */
   --paper:       #0F0F14;
   --bg:          #0F0F14;
@@ -392,6 +307,7 @@
   --text-faint:  #A1A1AA;   /* faint — floor, masih AA di panel gelap */
   --border:      rgba(255, 255, 255, 0.10);
   --border-soft: rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.35);   /* border input ≥ 3:1 (WCAG 1.4.11) */
   /* Hairline + shadow buat malam (flat, bukan offset kartun) */
   --outline:        rgba(255, 255, 255, 0.10);
   --outline-shadow: rgba(0, 0, 0, 0.40);
@@ -520,12 +436,6 @@ html[data-skin="cartoon"] .btn-primary {
     color: var(--ink);
     font-family: var(--font-sans);
   }
-  /* Grain kertas nyaris subliminal di kanvas light — tekstur premium yang
-     gak disadari tapi kerasa. Dark mode tetap bersih (noise di layar gelap
-     malah kebaca kotor). SVG turbulence repeat 160px, opacity 3.5%. */
-  html:not(.dark) body {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-  }
   /* Keyboard focus — a visible emerald ring on any interactive element that
      doesn't define its own. shadcn's focus-visible:ring/outline-none utilities
      sit in a later layer and still win where present, so no double ring; this
@@ -550,17 +460,17 @@ html[data-skin="cartoon"] .btn-primary {
     background: #0C3B30;
     color: #FAFAFA;
   }
-  /* Scrollbar — tipis & hangat, ikut token (espresso di dark). */
+  /* Scrollbar — tipis, ikut token (--line-strong biar thumb kelihatan). */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: var(--line-strong) transparent;
   }
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--border);
+    background: var(--line-strong);
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
@@ -592,8 +502,8 @@ html[data-skin="cartoon"] .btn-primary {
 }
 
 /* Display utility — bold SANS untuk hero net worth & angka besar.
-   Sengaja BUKAN var(--font-display): serif itu buat kata, angka tetap
-   Instrument Sans 800 tracking ketat biar tabular & berwibawa. */
+   Satu keluarga Geist (--font-display pun alias ke sans): angka tetap
+   Geist 800 tracking ketat biar tabular & berwibawa. */
 .font-display,
 .display {
   font-family: var(--font-sans);
@@ -814,60 +724,6 @@ html[data-skin="cartoon"] .btn-primary {
   border-color: var(--line-strong);
 }
 
-/* Hero "dark-card" — always renders dark even in light mode page.
-   In dark mode, slightly different shade so it stands out from page bg. */
-/* .dark-card — actual dark hero card (Mercury / Wise style).
-   Reverted dari editorial override karena visual hierarchy yang dipakai
-   per-page (hero = "lihat ini dulu") perlu dark anchor block. */
-.dark-card {
-  background: linear-gradient(135deg, #0A0A0F 0%, #14141A 100%);
-  color: var(--on-black);
-  border-radius: var(--radius-xl);
-  border: 1px solid #1C1C24;
-  --on-black:      #F5F5F7;
-  --on-black-mut:  #A1A1AA;
-  --ink:           #F5F5F7;
-  --ink-muted:     #A1A1AA;
-  --ink-soft:      #71717A;
-  --border:        rgba(255, 255, 255, 0.14);
-  --border-soft:   rgba(255, 255, 255, 0.08);
-  --black-2:       rgba(255, 255, 255, 0.10);
-  --black-soft:    rgba(255, 255, 255, 0.06);
-  --black-line:    rgba(255, 255, 255, 0.12);
-}
-.dark .dark-card {
-  background: linear-gradient(135deg, #14141A 0%, #1C1C24 100%);
-  border-color: var(--border);
-}
-.dark-card .eyebrow    { color: var(--on-black-mut); }
-.dark-card .text-white { color: var(--on-black); }
-.dark-card .text-white\/60,
-.dark-card .text-white\/70,
-.dark-card .text-white\/75,
-.dark-card .text-white\/80 {
-  color: var(--on-black-mut);
-}
-
-/* True dark card variant */
-.ink-card {
-  background-color: var(--black);
-  color: var(--on-black);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--black);
-  --on-black:      #F5F5F7;
-  --on-black-mut:  #A1A1AA;
-  --ink:           #F5F5F7;
-  --ink-muted:     #A1A1AA;
-  --ink-soft:      #71717A;
-  --border:        rgba(255, 255, 255, 0.14);
-  --border-soft:   rgba(255, 255, 255, 0.08);
-}
-.dark .ink-card {
-  background-color: var(--surface);
-  border-color: var(--border);
-}
-.ink-card .eyebrow { color: var(--on-black-mut); }
-
 .rule {
   display: flex;
   align-items: center;
@@ -896,17 +752,7 @@ html[data-skin="cartoon"] .btn-primary {
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
-.chip-emerald { background: var(--emerald-100); color: var(--emerald-800); }
-.chip-coral   { background: var(--coral-100);   color: var(--coral-700); }
-.chip-amber   { background: var(--amber-100);   color: var(--amber-700); }
-.chip-sky     { background: var(--sky-100);     color: var(--sky-600); }
-.chip-violet  { background: var(--violet-100);  color: var(--violet-700); }
 .chip-neutral { background: var(--surface-2);   color: var(--ink); }
-.dark .chip-emerald { background: rgba(16,185,129,0.16); color: var(--emerald-200); }
-.dark .chip-coral   { background: rgba(244,63,94,0.16);  color: var(--coral-200); }
-.dark .chip-amber   { background: rgba(245,158,11,0.16); color: var(--amber-200); }
-.dark .chip-sky     { background: rgba(14,165,233,0.16); color: var(--sky-300); }
-.dark .chip-violet  { background: rgba(139,92,246,0.16); color: #C4B5FD; }
 .dark .chip-neutral { background: var(--surface-2);      color: var(--ink); }
 
 .glow-indigo,
@@ -917,18 +763,6 @@ html[data-skin="cartoon"] .btn-primary {
 .glow-cyan {
   box-shadow: none;
 }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%      { transform: translateY(-8px); }
-}
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.25; }
-  50%      { opacity: 0.5; }
-}
-.animate-float { animation: float 8s ease-in-out infinite; }
-.animate-float-delayed { animation: float 10s ease-in-out 2s infinite; }
-.animate-pulse-glow { animation: pulse-glow 6s ease-in-out infinite; }
 
 /* Sidebar nav — thin scrollbar */
 .sidebar-nav-scroll {
@@ -953,7 +787,7 @@ html[data-skin="cartoon"] .btn-primary {
 html {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
-body, .s-card, .dark-card, .ink-card {
+body, .s-card {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -966,16 +800,6 @@ body {
 /* ============================================
    Klunting editorial helpers — `kl-*` per design handoff
    ============================================ */
-
-/* Card editorial — pakai warm surface + line border */
-.kl-card {
-  background-color: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-}
-.kl-card-pad    { padding: 20px; }
-.kl-card-pad-lg { padding: 24px; }
 
 /* Hero numbers + display headings — bold sans (fintech style).
    Drop Instrument Serif default per fintech pivot 2026-05-28.

@@ -1,38 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { Crown, Users, Check } from 'lucide-react'
-import { formatRupiahPlain as fmt } from '@/lib/utils'
-
-type Billing = 'annual' | 'monthly'
-
-const savingsPct = (annual: number, monthly: number) => Math.round((1 - annual / (monthly * 12)) * 100)
-
-const PRO_FEATURES = [
-  'Dashboard net worth + KPI keuangan',
-  'Catat transaksi & anggaran unlimited',
-  'Portfolio: saham IDX, crypto, reksa dana, emas, SBN, deposito',
-  'Riset saham IDX — 1.000+ emiten, 8 metode valuasi',
-  'Scan struk (AI Vision) + catat natural-language',
-  'AI Insight bulanan + AI Playbook (rencana finansial)',
-  'Tujuan finansial + forecast probabilitas',
-  'Import mutasi rekening (CSV/PDF)',
-  '2FA, Calm Mode, export & hapus data',
-  '100 kredit AI / bulan',
-]
-const MAX_FEATURES = [
-  'Semua fitur Pro',
-  'Berbagi keluarga sampai 5 anggota',
-  'Goal, wallet & anggaran bersama',
-  'Tracking per-anggota (siapa belanja apa)',
-  'Insight pengeluaran keluarga',
-  '300 kredit AI / bulan',
-]
+import { PLANS, type Billing } from '@/components/pricing/plans'
+import { PlanCard } from '@/components/pricing/plan-card'
 
 export function PricingSection() {
   const [billing, setBilling] = useState<Billing>('annual')
-  const annual = billing === 'annual'
 
   return (
     <section id="harga" className="px-6 sm:px-12 py-16 sm:py-20">
@@ -57,7 +30,7 @@ export function PricingSection() {
                   key={key}
                   type="button"
                   onClick={() => setBilling(key)}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                  className="rounded-lg px-4 py-2 text-sm font-semibold motion-safe:transition-colors inline-flex items-center gap-2"
                   style={{ background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-soft)', boxShadow: on ? '0 1px 3px rgba(16,24,40,0.10)' : undefined }}
                 >
                   {label}
@@ -71,62 +44,15 @@ export function PricingSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-          {/* Pro */}
-          <div className="rounded-2xl p-7 border-2 relative" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', letterSpacing: '0.08em' }}>
-              Paling populer
-            </span>
-            <div className="flex items-center gap-2 mb-3">
-              <Crown className="size-5" style={{ color: 'var(--ink)' }} />
-              <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Pro</h3>
-            </div>
-            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Untuk kamu yang serius mengatur keuangan dan investasi.</p>
-            <div className="mt-5 mb-0.5 flex items-baseline gap-2">
-              <span className="num text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>{fmt(annual ? 149000 : 19000)}</span>
-              <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>{annual ? '/tahun' : '/bulan'}</span>
-            </div>
-            {annual ? (
-              <>
-                <p className="text-xs font-medium" style={{ color: 'var(--c-mint-ink)' }}>≈ Rp 12.417/bln — hemat {savingsPct(149000, 19000)}% dari bulanan</p>
-                <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}><span style={{ textDecoration: 'line-through' }}>Rp 249.000</span> · harga promo peluncuran</p>
-              </>
-            ) : (
-              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>Ditagih tiap bulan · batal kapan saja</p>
-            )}
-            <Link href="/register" className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold btn-primary">Coba gratis 21 hari</Link>
-            <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              {PRO_FEATURES.map((f) => (
-                <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink)' }} />{f}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Max */}
-          <div className="rounded-2xl p-7 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="size-5" style={{ color: 'var(--ink-muted)' }} />
-              <h3 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Max</h3>
-            </div>
-            <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>Untuk keluarga — kelola keuangan bersama pasangan dan anggota lain.</p>
-            <div className="mt-5 mb-0.5 flex items-baseline gap-2">
-              <span className="num text-4xl font-bold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>{fmt(annual ? 299000 : 35000)}</span>
-              <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>{annual ? '/tahun' : '/bulan'}</span>
-            </div>
-            {annual ? (
-              <>
-                <p className="text-xs font-medium" style={{ color: 'var(--c-mint-ink)' }}>≈ Rp 24.917/bln — hemat {savingsPct(299000, 35000)}% dari bulanan</p>
-                <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}><span style={{ textDecoration: 'line-through' }}>Rp 499.000</span> · harga promo peluncuran</p>
-              </>
-            ) : (
-              <p className="text-xs mb-5 mt-0.5" style={{ color: 'var(--ink-soft)' }}>Ditagih tiap bulan · untuk sekeluarga</p>
-            )}
-            <Link href="/register" className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>Coba gratis 21 hari</Link>
-            <ul className="mt-6 space-y-2.5 text-sm" style={{ color: 'var(--ink-muted)' }}>
-              {MAX_FEATURES.map((f) => (
-                <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink)' }} />{f}</li>
-              ))}
-            </ul>
-          </div>
+          {PLANS.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              billing={billing}
+              ctaLabel="Coba gratis 21 hari"
+              ctaHref="/register"
+            />
+          ))}
         </div>
 
         <p className="mt-6 text-center text-xs" style={{ color: 'var(--ink-soft)' }}>

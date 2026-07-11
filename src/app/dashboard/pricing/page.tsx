@@ -7,73 +7,16 @@ import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useT } from '@/lib/i18n/context'
+import { PLANS, type Billing } from '@/components/pricing/plans'
+import { PlanCard } from '@/components/pricing/plan-card'
 import {
-  Sparkles, Crown, Users, Check, ShieldCheck, RefreshCcw,
+  Sparkles, Users, Check, ShieldCheck, RefreshCcw,
 } from 'lucide-react'
 
 // Paid-only, annual billing. NOTE: checkout is still a placeholder (no payment
 // gateway yet) — see Roadmap Fase 2. Trial/paywall enforcement ships WITH the
 // payment gateway; this page is display-only for now.
-interface Plan {
-  id: 'pro' | 'max'
-  name: string
-  icon: React.ReactNode
-  popular: boolean
-  price_idr: number
-  monthly_idr: number
-  original_price_idr: number
-  seats: number
-  ai_credits_monthly: number
-  description: string
-  features: string[]
-}
-
-const PLANS: Plan[] = [
-  {
-    id: 'pro',
-    name: 'Pro',
-    icon: <Crown className="size-5" />,
-    popular: true,
-    price_idr: 149000,
-    monthly_idr: 19000,
-    original_price_idr: 249000,
-    seats: 1,
-    ai_credits_monthly: 100,
-    description: 'Buat kamu yang serius atur keuangan & investasi.',
-    features: [
-      'Catat transaksi & anggaran unlimited',
-      'Dashboard net worth + KPI',
-      'Portfolio investasi: saham IDX, crypto, reksadana, emas, properti',
-      'AI Advisor — tanya apa aja soal keuanganmu',
-      'Scan struk (AI Vision) → otomatis jadi transaksi',
-      'AI insights & laporan bulanan',
-      'Goal setting + forecast probabilitas',
-      'Import mutasi rekening (CSV/PDF)',
-      'Update harga saham & crypto otomatis',
-      '100 kredit AI / bulan',
-    ],
-  },
-  {
-    id: 'max',
-    name: 'Max',
-    icon: <Users className="size-5" />,
-    popular: false,
-    price_idr: 299000,
-    monthly_idr: 35000,
-    original_price_idr: 499000,
-    seats: 5,
-    ai_credits_monthly: 300,
-    description: 'Buat keluarga — kelola keuangan bareng pasangan & anggota.',
-    features: [
-      'Semua fitur Pro',
-      'Household sharing sampai 5 anggota',
-      'Wallet & budget bersama keluarga',
-      'Tracking per-anggota (siapa belanja apa)',
-      'Insight pengeluaran keluarga',
-      '300 kredit AI / bulan',
-    ],
-  },
-]
+// Data plan + kartu = shared dengan landing (src/components/pricing).
 
 const CREDIT_PACKS = [
   { credits: 100, price: 15000, label: '100 kredit', perCredit: 150 },
@@ -81,24 +24,9 @@ const CREDIT_PACKS = [
   { credits: 1000, price: 99000, label: '1000 kredit', perCredit: 99 },
 ]
 
-const THEMES: Record<Plan['id'], { bg: string; ring: string; accent: string; cta: string }> = {
-  pro: {
-    bg: 'bg-[var(--c-primary-soft)]', ring: 'ring-[var(--c-primary-ink)]', accent: 'text-[var(--c-primary-ink)]',
-    cta: 'bg-[var(--c-primary)] text-[var(--c-primary-foreground)] hover:opacity-90',
-  },
-  max: {
-    bg: 'bg-[var(--surface)]', ring: 'ring-[var(--line)]', accent: 'text-[var(--ink-muted)]',
-    cta: 'bg-[var(--surface-2)] text-[var(--ink)] hover:bg-[var(--surface-3)]',
-  },
-}
-
-function perMonth(annual: number) {
-  return Math.round(annual / 12)
-}
-
 export default function PricingPage() {
   const t = useT()
-  const [billing, setBilling] = useState<'annual' | 'monthly'>('annual')
+  const [billing, setBilling] = useState<Billing>('annual')
 
   // Billing beku (src/lib/billing-flag.ts) → halaman upgrade dianggap tidak ada.
   if (!BILLING_ENABLED) notFound()
@@ -142,8 +70,8 @@ export default function PricingPage() {
               <button
                 key={key}
                 type="button"
-                onClick={() => setBilling(key as 'annual' | 'monthly')}
-                className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors inline-flex items-center gap-2"
+                onClick={() => setBilling(key as Billing)}
+                className="rounded-lg px-4 py-2 text-sm font-semibold motion-safe:transition-colors inline-flex items-center gap-2"
                 style={{ background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-soft)', boxShadow: on ? '0 1px 3px rgba(16,24,40,0.10)' : undefined }}
               >
                 {label}
@@ -154,87 +82,17 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* 2-tier cards */}
-      <div className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
-        {PLANS.map((plan) => {
-          const theme = THEMES[plan.id]
-          const discountPct = Math.round((1 - plan.price_idr / plan.original_price_idr) * 100)
-          return (
-            <div
-              key={plan.id}
-              className={`relative flex flex-col rounded-2xl ${theme.bg} p-6 ring-1 ${theme.ring} ${plan.popular ? 'shadow-[var(--card-shadow)] lg:scale-105' : 'shadow-[var(--card-shadow)]'} transition`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow">
-                  {t('pricing.most_popular')}
-                </div>
-              )}
-
-              <div className={`flex items-center gap-2 ${theme.accent}`}>
-                {plan.icon}
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-
-              <div className="mt-5">
-                {billing === 'annual' ? (
-                  <>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-muted-foreground line-through">{formatCurrency(plan.original_price_idr)}</span>
-                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">-{discountPct}%</span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{formatCurrency(plan.price_idr)}</span>
-                      <span className="text-sm text-muted-foreground">{t('pricing.per_year')}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ≈ {formatCurrency(perMonth(plan.price_idr))}{t('pricing.per_month_suffix')}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>{formatCurrency(plan.monthly_idr)}</span>
-                      <span className="text-sm text-muted-foreground">{t('pricing.per_month_only')}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{t('pricing.billed_monthly_note')}</p>
-                  </>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleUpgrade(plan.id)}
-                className={`mt-5 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${theme.cta}`}
-              >
-                {plan.icon}
-                {t('pricing.choose_plan')} {plan.name}
-              </button>
-
-              {plan.seats > 1 && (
-                <p className="text-xs text-center mt-2 text-[var(--c-mint-ink)] font-medium inline-flex items-center justify-center gap-1 w-full">
-                  <Users className="size-3.5 shrink-0" /> {t('pricing.seats_before')} {plan.seats} {t('pricing.seats_after')}
-                </p>
-              )}
-
-              <div className="mt-6 space-y-2.5 flex-1">
-                {plan.features.map((feature, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm">
-                    <Check className={`size-4 mt-0.5 shrink-0 ${theme.accent}`} />
-                    <span className="text-foreground/90">{feature}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 pt-4 border-t border-current/10">
-                <p className="text-xs text-center font-medium text-[var(--c-amber-ink)] inline-flex items-center justify-center gap-1 w-full">
-                  <Sparkles className="size-3" />
-                  {plan.ai_credits_monthly} {t('pricing.free_credits_monthly')}
-                </p>
-              </div>
-            </div>
-          )
-        })}
+      {/* 2-tier cards — shared dengan landing, kartu populer = border aksen (tanpa scale) */}
+      <div className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto items-start">
+        {PLANS.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            billing={billing}
+            ctaLabel={`${t('pricing.choose_plan')} ${plan.name}`}
+            onCta={() => handleUpgrade(plan.id)}
+          />
+        ))}
       </div>
 
       {/* Feature comparison */}
@@ -244,7 +102,7 @@ export default function PricingPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 font-medium text-muted-foreground">{t('pricing.compare_feature_col')}</th>
+                <th className="text-left py-3 font-medium" style={{ color: 'var(--ink-muted)' }}>{t('pricing.compare_feature_col')}</th>
                 <th className="text-center py-3 font-medium">Pro</th>
                 <th className="text-center py-3 font-medium">Max</th>
               </tr>
@@ -284,7 +142,7 @@ export default function PricingPage() {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">{t('pricing.topup_title')}</h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>
               {t('pricing.topup_subtitle')}
             </p>
           </div>
@@ -296,13 +154,16 @@ export default function PricingPage() {
               className={`relative rounded-xl border bg-[var(--surface)] p-4 ${pack.popular ? 'ring-2 ring-[var(--c-primary)]' : ''}`}
             >
               {pack.popular && (
-                <span className="absolute -top-2 right-3 rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                <span
+                  className="absolute -top-2 right-3 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber-ink)', border: '1px solid var(--c-amber)' }}
+                >
                   {t('pricing.save_badge')}
                 </span>
               )}
-              <p className="text-sm text-muted-foreground">{pack.label}</p>
+              <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{pack.label}</p>
               <p className="text-2xl font-bold mt-1 tabular-nums">{formatCurrency(pack.price)}</p>
-              <p className="text-xs text-muted-foreground mt-1">≈ Rp {pack.perCredit}{t('pricing.per_credit_suffix')}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>≈ Rp {pack.perCredit}{t('pricing.per_credit_suffix')}</p>
               <Button
                 size="sm"
                 variant="outline"
@@ -314,7 +175,7 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-4 text-center">
+        <p className="text-xs mt-4 text-center" style={{ color: 'var(--ink-muted)' }}>
           {t('pricing.credit_explainer')}
         </p>
       </section>
@@ -326,21 +187,21 @@ export default function PricingPage() {
             <ShieldCheck className="size-5 text-[var(--c-mint-ink)] mt-0.5" />
             <div>
               <p className="font-semibold text-sm">{t('pricing.trust_secure_title')}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('pricing.trust_secure_desc')}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('pricing.trust_secure_desc')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <RefreshCcw className="size-5 text-[var(--c-amber-ink)] mt-0.5" />
             <div>
               <p className="font-semibold text-sm">{t('pricing.trust_no_renew_title')}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('pricing.trust_no_renew_desc')}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('pricing.trust_no_renew_desc')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <Users className="size-5 mt-0.5" style={{ color: 'var(--sky-600)' }} />
+            <Users className="size-5 mt-0.5 text-[var(--c-violet-ink)]" />
             <div>
               <p className="font-semibold text-sm">{t('pricing.trust_own_data_title')}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('pricing.trust_own_data_desc')}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('pricing.trust_own_data_desc')}</p>
             </div>
           </div>
         </div>
@@ -360,7 +221,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
         {t('pricing.contact_prompt')} <Link href="mailto:support@klunting.com" className="font-medium text-foreground hover:underline">{t('pricing.contact_cta')}</Link>
       </p>
     </div>
@@ -371,7 +232,7 @@ function renderCell(v: boolean | string) {
   if (typeof v === 'string') return <span className="font-medium tabular-nums">{v}</span>
   return v
     ? <Check className="size-4 mx-auto text-[var(--c-mint-ink)]" />
-    : <span className="text-muted-foreground/40">—</span>
+    : <span style={{ color: 'var(--ink-soft)', opacity: 0.4 }}>—</span>
 }
 
 function Faq({ q, a }: { q: string; a: string }) {
@@ -379,9 +240,9 @@ function Faq({ q, a }: { q: string; a: string }) {
     <details className="group rounded-lg border border-muted bg-muted/20 p-3">
       <summary className="cursor-pointer font-medium list-none flex items-center justify-between">
         {q}
-        <span className="text-muted-foreground transition group-open:rotate-180">▾</span>
+        <span className="motion-safe:transition group-open:rotate-180" style={{ color: 'var(--ink-muted)' }}>▾</span>
       </summary>
-      <p className="mt-2 text-muted-foreground leading-relaxed">{a}</p>
+      <p className="mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{a}</p>
     </details>
   )
 }

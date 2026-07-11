@@ -22,6 +22,8 @@ const baloo = Baloo_2({
   subsets: ["latin"],
   variable: "--font-baloo",
   display: "swap",
+  // Skin cartoon opt-in — jangan preload woff2-nya di semua halaman (hemat LCP landing).
+  preload: false,
 });
 
 export const metadata: Metadata = {

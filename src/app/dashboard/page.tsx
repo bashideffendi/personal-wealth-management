@@ -7,7 +7,7 @@ import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { MobileHome } from '@/components/dashboard/mobile-home'
 import { MONTHS } from '@/lib/constants'
-import { fetchLiquidEntries, sumLiquid, sumCashEquivalent } from '@/lib/liquid'
+import { fetchLiquidEntries, sumLiquid, sumCashEquivalent, type LiquidType, type UnifiedLiquidEntry } from '@/lib/liquid'
 import { isExpired, occurrencesInRange } from '@/lib/recurrence'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
@@ -27,6 +27,8 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 import { loadUiPrefs, saveUiPref, DASHBOARD_LAYOUT_VERSION } from '@/lib/ui-prefs'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { getSessionUser } from '@/lib/hooks/use-session-user'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
@@ -59,14 +61,16 @@ import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 
-// Chart palette per design handoff tokens.css — emerald led, then sky,
-// amber, coral, violet for categorical variety. Replaces the older
-// "lime + orange + black" palette which clashed with the new design tokens.
-// Palet token (adaptif tema) — urutan sama dengan hub Kekayaan biar kategori
-// yang sama dapet warna yang sama di mana pun.
+// Palet chart = 4 warna logo (mint → biru → violet → coral) sebagai aksen data,
+// disusul varian -ink (lebih gelap, kontras teks/label) dengan urutan yang sama
+// untuk seri ke-5 dst. Amber (brass) eksklusif warning/anggaran — cuma jadi
+// slot terakhir khusus kalau seri lebih dari 8. Palet token (adaptif tema) —
+// urutan ini juga acuan hub Kekayaan biar kategori yang sama dapet warna yang
+// sama di mana pun.
 const CHART_PALETTE = [
-  'var(--c-mint)', 'var(--c-violet)', 'var(--c-amber)', 'var(--c-coral)',
-  'var(--ink)', 'var(--c-mint-ink)', 'var(--c-violet-ink)', 'var(--ink-soft)',
+  'var(--c-mint)', 'var(--c-blue)', 'var(--c-violet)', 'var(--c-coral)',
+  'var(--c-mint-ink)', 'var(--c-blue-ink)', 'var(--c-violet-ink)', 'var(--c-coral-ink)',
+  'var(--c-amber)',
 ]
 
 // Charts deferred out of the initial dashboard JS — recharts loads only when a
@@ -75,15 +79,15 @@ const skel = (h: number, w?: number) => (
   <div className="animate-pulse rounded-lg" style={{ height: h, width: w, background: 'var(--surface-2)' }} aria-hidden="true" />
 )
 const MoneyFlowSankey = dynamic(
-  () => import('@/components/dashboard/money-flow-sankey').then((m) => m.MoneyFlowSankey),
+  () => import('@/components/charts/chart-modules').then((m) => m.MoneyFlowSankey),
   { ssr: false, loading: () => skel(300) },
 )
 const MonthlyFlowChart = dynamic(
-  () => import('@/components/dashboard/dashboard-charts').then((m) => m.MonthlyFlowChart),
+  () => import('@/components/charts/chart-modules').then((m) => m.MonthlyFlowChart),
   { ssr: false, loading: () => skel(260) },
 )
 const InvestmentPie = dynamic(
-  () => import('@/components/dashboard/dashboard-charts').then((m) => m.InvestmentPie),
+  () => import('@/components/charts/chart-modules').then((m) => m.InvestmentPie),
   { ssr: false, loading: () => skel(120, 120) },
 )
 
@@ -105,6 +109,18 @@ interface MonthlyData {
 interface Budget {
   id: string; year: number; month: number; category: string
   type: 'income' | 'expense' | 'saving' | 'investment'; amount: number
+}
+
+// Baris hasil fetch (dulu inline di tipe useState) — sekarang tipe return queryFn.
+interface GoalRow {
+  id: string; name: string; target_amount: number; current_amount: number; deadline: string | null; created_at?: string | null
+}
+interface DebtRow {
+  id: string; name: string; remaining: number; due_date: string | null; monthly_payment: number
+}
+interface RecurringRow {
+  id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number
+  start_date?: string | null; end_date?: string | null
 }
 
 const DASH_ORDER_LS = 'pwm.dashboard.order.v9'
@@ -132,157 +148,78 @@ export default function DashboardPage() {
   const now = new Date()
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  // Nomor urut fetch — hasil periode lama jangan menimpa periode aktif.
-  const fetchSeq = useRef(0)
 
-  const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([])
-  const [yearTransactions, setYearTransactions] = useState<Transaction[]>([])
-  const [investments, setInvestments] = useState<Investment[]>([])
-  const [monthBudgets, setMonthBudgets] = useState<Budget[]>([])
-  const [creditCards, setCreditCards] = useState<CreditCard[]>([])
-  const [contracts, setContracts] = useState<Contract[]>([])
-  const [liquidTotal, setLiquidTotal] = useState(0)
-  // Kas siap pakai (tanpa piutang) — buat runway & forecast, bukan neraca.
-  const [cashEquivalent, setCashEquivalent] = useState(0)
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [nonLiquidTotal, setNonLiquidTotal] = useState(0)
-  const [debtTotal, setDebtTotal] = useState(0)
-  const [activeGoals, setActiveGoals] = useState<Array<{
-    id: string; name: string; target_amount: number; current_amount: number; deadline: string | null; created_at?: string | null
-  }>>([])
-  const [activeDebts, setActiveDebts] = useState<Array<{
-    id: string; name: string; remaining: number; due_date: string | null; monthly_payment: number
-  }>>([])
-  const [recurringItems, setRecurringItems] = useState<Array<{
-    id: string; name: string; type: string; amount: number; frequency: string; day_of_period: number
-    start_date?: string | null; end_date?: string | null
-  }>>([])
-  const [userFirstName, setUserFirstName] = useState<string>('')
+  // Data halaman via react-query — cache antar navigasi + refetch di belakang.
+  // Dipecah TIGA query sesuai dependensi param biar ganti bulan gak nge-refetch
+  // 13 query (dulu: effect [selectedYear, selectedMonth] → fetchData ulang SEMUA):
+  //   (a) ['dashboard-year', tahun]        — transaksi setahun (filter TAHUN)
+  //   (b) ['dashboard-budgets', thn, bln]  — budgets (satu-satunya yang param bulan)
+  //   (c) ['dashboard-static']             — sisanya tanpa parameter periode
+  const qc = useQueryClient()
 
-  // ---- Custom dashboard: urutan section (drag-drop in-place, Monarch-style) ----
-  const [blockOrder, setBlockOrder] = useState<string[]>(readBlockOrder)
-  const orderTouched = useRef(false)
-  // Drag overlay — visual yg gerak pas drag (bukan kartu in-place). dragSize =
-  // footprint kartu sumber biar preview-nya seukuran aslinya.
-  const [activeId, setActiveId] = useState<string | null>(null)
-  // Sheet sankey penuh (mobile) — kartu Beranda cuma ringkasan in/out/sisa.
-  const [sankeySheetOpen, setSankeySheetOpen] = useState(false)
-  const [dragSize, setDragSize] = useState<{ w: number; h: number } | null>(null)
-  const [dragHtml, setDragHtml] = useState<string>('')
-  const dragSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  // (a) Transaksi SETAHUN. monthTransactions diturunkan via useMemo (slice
+  // bulan) — ganti bulan TIDAK menyentuh query ini.
+  const yearQuery = useQuery({
+    queryKey: ['dashboard-year', selectedYear],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      // Sesi lokal (tanpa round-trip /auth/v1/user) — token sudah diverifikasi
+      // middleware + dashboard layout sebelum halaman ini render.
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
+      const yearRes = await supabase
+        .from('transactions')
+        // Kolom eksplisit (performance-7) — query ini narik setahun transaksi;
+        // hindari select('*'). Semua konsumen cuma baca 6 kolom ini.
+        .select('id, date, type, category, description, amount')
+        .eq('user_id', user.id)
+        .gte('date', `${selectedYear}-01-01`)
+        .lt('date', `${selectedYear + 1}-01-01`)
+        .order('date', { ascending: false })
+      // Query inti gagal = bilang terus terang (error card + retry), jangan
+      // render dashboard penuh nol palsu.
+      if (yearRes.error) throw yearRes.error
+      return (yearRes.data ?? []) as Transaction[]
+    },
+  })
 
-  useEffect(() => {
-    fetchData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear, selectedMonth])
+  // (b) Budgets bulan terpilih — ganti bulan = HANYA query ini yang refetch.
+  // Error budgets sengaja TIDAK fatal (perilaku lama: baris budget gagal →
+  // progress anggaran kosong, dashboard tetap tampil).
+  const budgetsQuery = useQuery({
+    queryKey: ['dashboard-budgets', selectedYear, selectedMonth],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
+      const budgetRes = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('year', selectedYear)
+        .eq('month', selectedMonth)
+      return (budgetRes.data ?? []) as Budget[]
+    },
+  })
 
-  // Re-fetch saat ada mutasi data dari mana pun (FAB quick-add / command palette)
-  // — router.refresh() gak nge-refresh client-fetch ini.
-  useEffect(() => {
-    const h = () => { void fetchData() }
-    window.addEventListener('klunting:data-changed', h)
-    return () => window.removeEventListener('klunting:data-changed', h)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Hydrate urutan dari DB sekali (lintas-perangkat); jangan timpa kalau user udah nge-drag sesi ini.
-  useEffect(() => {
-    void (async () => {
-      if (orderTouched.current) return
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const prefs = await loadUiPrefs(supabase, user.id)
-      if (prefs && Array.isArray(prefs.dashboardOrder) && prefs.dashboardLayoutVersion === DASHBOARD_LAYOUT_VERSION && !orderTouched.current) {
-        const next = reconcileBlockOrder(prefs.dashboardOrder)
-        setBlockOrder(next)
-        try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
-      }
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  function handleBlockDragStart(e: DragStartEvent) {
-    const id = e.active.id as string
-    setActiveId(id)
-    // Snapshot the source card's DOM so the overlay is a faithful frozen copy
-    // (no chart remount, no janky tilted placeholder).
-    const el = document.querySelector(`[data-block="${id}"]`)
-    const card = el?.firstElementChild as HTMLElement | null
-    setDragHtml(card ? card.outerHTML : '')
-    const r = e.active.rect.current.initial
-    if (r) setDragSize({ w: r.width, h: r.height })
-  }
-  function commitOrder(next: string[]) {
-    orderTouched.current = true
-    setBlockOrder(next)
-    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
-    })()
-  }
-  function handleBlockDragEnd(e: DragEndEvent) {
-    setActiveId(null)
-    setDragSize(null)
-    setDragHtml('')
-    const { active, over } = e
-    if (!over || active.id === over.id) return
-    const oldI = blockOrder.indexOf(active.id as string)
-    const newI = blockOrder.indexOf(over.id as string)
-    if (oldI < 0 || newI < 0) return
-    commitOrder(arrayMove(blockOrder, oldI, newI))
-  }
-  // Reorder tanpa drag — dipakai tombol ↑/↓ di customizer (grip handle = lg-only,
-  // di mobile dia ketutup/nutupin chip header kartu).
-  function moveBlock(id: string, dir: -1 | 1) {
-    const oldI = blockOrder.indexOf(id)
-    const newI = oldI + dir
-    if (oldI < 0 || newI < 0 || newI >= blockOrder.length) return
-    commitOrder(arrayMove(blockOrder, oldI, newI))
-  }
-
-  async function fetchData() {
-    setLoading(true)
-    setLoadError(false)
-    const seq = ++fetchSeq.current
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { if (seq === fetchSeq.current) setLoading(false); return }
+  // (c) Data tanpa parameter periode: akun/liquid/tree/kartu/kontrak/goals/
+  // recurring/investasi/aset non-likuid + nama depan buat sapaan.
+  const staticQuery = useQuery({
+    queryKey: ['dashboard-static'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const user = await getSessionUser(supabase)
+      if (!user) throw new Error('unauthenticated')
       // Capture first name for greeting per mockup ("Pagi, Bashid")
       const fullName = (user.user_metadata?.full_name as string | undefined)
         || user.email?.split('@')[0]
         || ''
 
-      const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
-      const endMonth = selectedMonth === 12 ? 1 : selectedMonth + 1
-      const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
-      const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
-
-      const [yearRes, invRes, budgetRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes, accRes] = await Promise.all([
-        supabase
-          .from('transactions')
-          // Kolom eksplisit (performance-7) — query ini narik setahun transaksi;
-          // hindari select('*'). Semua konsumen cuma baca 6 kolom ini.
-          .select('id, date, type, category, description, amount')
-          .eq('user_id', user.id)
-          .gte('date', `${selectedYear}-01-01`)
-          .lt('date', `${selectedYear + 1}-01-01`)
-          .order('date', { ascending: false }),
+      const [invRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes] = await Promise.all([
         supabase
           .from('investments')
           .select('category, total_value, name, platform, ticker, quantity, avg_cost, current_price')
           .eq('user_id', user.id),
-        supabase
-          .from('budgets')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('year', selectedYear)
-          .eq('month', selectedMonth),
         supabase
           .from('credit_cards')
           .select('*')
@@ -317,29 +254,24 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .eq('is_active', true),
         loadTree(supabase, user.id),
-        supabase
-          .from('accounts')
-          .select('*')
-          .eq('user_id', user.id),
       ])
-      // Periode keburu diganti user — buang hasil basi.
-      if (seq !== fetchSeq.current) return
-      // Query inti gagal = bilang terus terang, jangan render dashboard penuh nol palsu.
-      if (yearRes.error) throw yearRes.error
+      // Query inti gagal = bilang terus terang, jangan render dashboard penuh
+      // nol palsu. (fetchLiquidEntries strict:true udah throw sendiri; error
+      // contracts/goals/recurring non-fatal — perilaku lama.)
       if (invRes.error) throw invRes.error
       if (ccRes.error) throw ccRes.error
       if (debtRes.error) throw debtRes.error
       if (nlqRes.error) throw nlqRes.error
-      if (accRes.error) throw accRes.error
 
-      setUserFirstName(fullName.split(' ')[0])
-      setLiquidTotal(sumLiquid(liquidEntries))
-      setCashEquivalent(sumCashEquivalent(liquidEntries))
-      setAccounts((accRes.data ?? []) as Account[])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setNonLiquidTotal(((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setActiveGoals((goalsRes.data ?? []) as any[])
+      // Akun buat kartu "Akun & Saldo" DITURUNKAN dari liquidEntries —
+      // fetchLiquidEntries udah narik accounts (id, name, type, current_balance),
+      // persis kolom yang dipakai AccountsCard. Dulu ada query accounts
+      // select('*') KEDUA yang duplikat. Entri bertipe 'receivable' cuma ada di
+      // assets_liquid, jadi baris source='account' aman dipersempit tipenya.
+      const accounts: Array<Pick<Account, 'id' | 'name' | 'type' | 'current_balance'>> = liquidEntries
+        .filter((e: UnifiedLiquidEntry) => e.source === 'account')
+        .map((e: UnifiedLiquidEntry) => ({ id: e.id, name: e.name, type: e.type as Exclude<LiquidType, 'receivable'>, current_balance: e.balance }))
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const debtRows = (debtRes.data ?? []) as any[]
       // Total utang HARUS termasuk saldo kartu kredit — konsisten sama
@@ -347,40 +279,171 @@ export default function DashboardPage() {
       // net worth hero kelebihan sebesar saldo CC.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ccSumForDebt = ((ccRes.data ?? []) as any[]).reduce((s, c) => s + (c.current_balance ?? 0), 0)
-      setDebtTotal(debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0) + ccSumForDebt)
-      setActiveDebts(debtRows)
-      // Recurring yang sudah lewat end_date di-exclude — konsisten halaman Recurring.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setRecurringItems(((recurRes.data ?? []) as any[]).filter((r) => !isExpired(r)))
 
-      const yearTxs = (yearRes.data ?? []) as Transaction[]
-      setYearTransactions(yearTxs)
-      setMonthTransactions(yearTxs.filter((tx) => tx.date >= startDate && tx.date < endDate))
-      setInvestments((invRes.data ?? []) as Investment[])
-      // Filter budget ke LEAF KEY tree saat ini — samain PERSIS sama halaman
-      // Anggaran (parent = jumlah sub, kategori nonaktif dibuang). Tanpa ini,
-      // roll-up dashboard ngejumlahin baris parent BASI (double-count, mis. Family
-      // 4,5jt jadi 6jt) + kategori stale yg udah dihapus/rename (Tagihan dll).
-      // Fallback (tree DB gak ada) → jangan filter biar kategori custom gak kebuang.
-      const allBudgetRows = (budgetRes.data ?? []) as Budget[]
-      if (treeRes.dbAvailable) {
-        const leafByType: Record<string, Set<string>> = {
-          income: new Set(leafKeys(treeRes.tree.income)),
-          expense: new Set(leafKeys(treeRes.tree.expense)),
-          saving: new Set(leafKeys(treeRes.tree.saving)),
-          investment: new Set(leafKeys(treeRes.tree.investment)),
-        }
-        setMonthBudgets(allBudgetRows.filter((b) => leafByType[b.type]?.has(b.category)))
-      } else {
-        setMonthBudgets(allBudgetRows)
+      return {
+        firstName: fullName.split(' ')[0],
+        investments: (invRes.data ?? []) as Investment[],
+        creditCards: (ccRes.data ?? []) as CreditCard[],
+        contracts: (ctrRes.data ?? []) as Contract[],
+        accounts,
+        liquidTotal: sumLiquid(liquidEntries),
+        cashEquivalent: sumCashEquivalent(liquidEntries),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        nonLiquidTotal: ((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0),
+        debtTotal: debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0) + ccSumForDebt,
+        activeDebts: debtRows as DebtRow[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        activeGoals: ((goalsRes.data ?? []) as any[]) as GoalRow[],
+        // Recurring yang sudah lewat end_date di-exclude — konsisten halaman Recurring.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recurringItems: ((recurRes.data ?? []) as any[]).filter((r) => !isExpired(r)) as RecurringRow[],
+        treeRes,
       }
-      setCreditCards((ccRes.data ?? []) as CreditCard[])
-      setContracts((ctrRes.data ?? []) as Contract[])
-    } catch {
-      if (seq === fetchSeq.current) setLoadError(true)
-    } finally {
-      if (seq === fetchSeq.current) setLoading(false)
+    },
+  })
+
+  // ---- State hasil fetch (dulu useState + setX di fetchData) → turunan query ----
+  const yearTransactions = useMemo(() => yearQuery.data ?? [], [yearQuery.data])
+  // Slice bulan terpilih dari transaksi setahun — murni turunan (dulu dihitung
+  // di fetchData), jadi ganti bulan gak perlu narik ulang data transaksi.
+  const monthTransactions = useMemo(() => {
+    const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+    const endMonth = selectedMonth === 12 ? 1 : selectedMonth + 1
+    const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
+    const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
+    return yearTransactions.filter((tx) => tx.date >= startDate && tx.date < endDate)
+  }, [yearTransactions, selectedYear, selectedMonth])
+  const investments = useMemo(() => staticQuery.data?.investments ?? [], [staticQuery.data])
+  // Filter budget ke LEAF KEY tree saat ini — samain PERSIS sama halaman
+  // Anggaran (parent = jumlah sub, kategori nonaktif dibuang). Tanpa ini,
+  // roll-up dashboard ngejumlahin baris parent BASI (double-count, mis. Family
+  // 4,5jt jadi 6jt) + kategori stale yg udah dihapus/rename (Tagihan dll).
+  // Fallback (tree DB gak ada) → jangan filter biar kategori custom gak kebuang.
+  const monthBudgets = useMemo(() => {
+    const allBudgetRows = budgetsQuery.data ?? []
+    const treeRes = staticQuery.data?.treeRes
+    if (!treeRes?.dbAvailable) return allBudgetRows
+    const leafByType: Record<string, Set<string>> = {
+      income: new Set(leafKeys(treeRes.tree.income)),
+      expense: new Set(leafKeys(treeRes.tree.expense)),
+      saving: new Set(leafKeys(treeRes.tree.saving)),
+      investment: new Set(leafKeys(treeRes.tree.investment)),
     }
+    return allBudgetRows.filter((b) => leafByType[b.type]?.has(b.category))
+  }, [budgetsQuery.data, staticQuery.data])
+  const creditCards = useMemo(() => staticQuery.data?.creditCards ?? [], [staticQuery.data])
+  const contracts = useMemo(() => staticQuery.data?.contracts ?? [], [staticQuery.data])
+  const accounts = useMemo(() => staticQuery.data?.accounts ?? [], [staticQuery.data])
+  const activeGoals = useMemo(() => staticQuery.data?.activeGoals ?? [], [staticQuery.data])
+  const activeDebts = useMemo(() => staticQuery.data?.activeDebts ?? [], [staticQuery.data])
+  const recurringItems = useMemo(() => staticQuery.data?.recurringItems ?? [], [staticQuery.data])
+  const liquidTotal = staticQuery.data?.liquidTotal ?? 0
+  // Kas siap pakai (tanpa piutang) — buat runway & forecast, bukan neraca.
+  const cashEquivalent = staticQuery.data?.cashEquivalent ?? 0
+  const nonLiquidTotal = staticQuery.data?.nonLiquidTotal ?? 0
+  const debtTotal = staticQuery.data?.debtTotal ?? 0
+  const userFirstName = staticQuery.data?.firstName ?? ''
+
+  // Kontrak "fetch gagal ≠ data kosong" dipertahankan: query inti (a)/(c)
+  // gagal → error card + retry, BUKAN KPI nol palsu. Budgets (b) tetap
+  // non-fatal, tapi loading-nya ikut ditunggu (parity spinner lama).
+  const loading = yearQuery.isLoading || budgetsQuery.isLoading || staticQuery.isLoading
+  const loadError = yearQuery.isError || staticQuery.isError
+
+  // ---- Custom dashboard: urutan section (drag-drop in-place, Monarch-style) ----
+  const [blockOrder, setBlockOrder] = useState<string[]>(readBlockOrder)
+  const orderTouched = useRef(false)
+  // Drag overlay — visual yg gerak pas drag (bukan kartu in-place). dragSize =
+  // footprint kartu sumber biar preview-nya seukuran aslinya.
+  const [activeId, setActiveId] = useState<string | null>(null)
+  // Sheet sankey penuh (mobile) — kartu Beranda cuma ringkasan in/out/sisa.
+  const [sankeySheetOpen, setSankeySheetOpen] = useState(false)
+  const [dragSize, setDragSize] = useState<{ w: number; h: number } | null>(null)
+  const [dragHtml, setDragHtml] = useState<string>('')
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  // Ganti periode (selectedYear/selectedMonth) sekarang otomatis lewat query key
+  // — gak perlu effect fetchData lagi.
+
+  // Re-fetch saat ada mutasi data dari mana pun (FAB quick-add / command palette)
+  // — router.refresh() gak nge-refresh client-fetch ini. JANGAN hapus listener
+  // ini (dispatcher: quick-add-launcher, offline-sync, mobile-quick-entry);
+  // badannya sekarang invalidasi cache — refetch di belakang tanpa spinner reset.
+  useEffect(() => {
+    const h = () => {
+      void qc.invalidateQueries({ queryKey: ['dashboard-year'] })
+      void qc.invalidateQueries({ queryKey: ['dashboard-budgets'] })
+      void qc.invalidateQueries({ queryKey: ['dashboard-static'] })
+    }
+    window.addEventListener('klunting:data-changed', h)
+    return () => window.removeEventListener('klunting:data-changed', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Hydrate urutan dari DB sekali (lintas-perangkat) — load-nya via query kecil
+  // sendiri (best-effort: gak ikut loading/error halaman, user null → null,
+  // bukan throw). Apply-nya tetap di effect karena nge-set state urutan; jangan
+  // timpa kalau user udah nge-drag sesi ini (orderTouched).
+  const uiPrefsQuery = useQuery({
+    queryKey: ['dashboard-ui-prefs'],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const user = await getSessionUser(supabase)
+      if (!user) return null
+      return await loadUiPrefs(supabase, user.id)
+    },
+  })
+  useEffect(() => {
+    const prefs = uiPrefsQuery.data
+    if (!prefs || orderTouched.current) return
+    if (Array.isArray(prefs.dashboardOrder) && prefs.dashboardLayoutVersion === DASHBOARD_LAYOUT_VERSION) {
+      const next = reconcileBlockOrder(prefs.dashboardOrder)
+      setBlockOrder(next)
+      try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
+    }
+  }, [uiPrefsQuery.data])
+
+  function handleBlockDragStart(e: DragStartEvent) {
+    const id = e.active.id as string
+    setActiveId(id)
+    // Snapshot the source card's DOM so the overlay is a faithful frozen copy
+    // (no chart remount, no janky tilted placeholder).
+    const el = document.querySelector(`[data-block="${id}"]`)
+    const card = el?.firstElementChild as HTMLElement | null
+    setDragHtml(card ? card.outerHTML : '')
+    const r = e.active.rect.current.initial
+    if (r) setDragSize({ w: r.width, h: r.height })
+  }
+  function commitOrder(next: string[]) {
+    orderTouched.current = true
+    setBlockOrder(next)
+    try { localStorage.setItem(DASH_ORDER_LS, JSON.stringify(next)) } catch { /* ignore */ }
+    void (async () => {
+      const user = await getSessionUser(supabase)
+      if (user) await saveUiPref(supabase, user.id, { dashboardOrder: next, dashboardLayoutVersion: DASHBOARD_LAYOUT_VERSION })
+    })()
+  }
+  function handleBlockDragEnd(e: DragEndEvent) {
+    setActiveId(null)
+    setDragSize(null)
+    setDragHtml('')
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const oldI = blockOrder.indexOf(active.id as string)
+    const newI = blockOrder.indexOf(over.id as string)
+    if (oldI < 0 || newI < 0) return
+    commitOrder(arrayMove(blockOrder, oldI, newI))
+  }
+  // Reorder tanpa drag — dipakai tombol ↑/↓ di customizer (grip handle = lg-only,
+  // di mobile dia ketutup/nutupin chip header kartu).
+  function moveBlock(id: string, dir: -1 | 1) {
+    const oldI = blockOrder.indexOf(id)
+    const newI = oldI + dir
+    if (oldI < 0 || newI < 0 || newI >= blockOrder.length) return
+    commitOrder(arrayMove(blockOrder, oldI, newI))
   }
 
   // ---- KPI aggregations ----
@@ -689,7 +752,7 @@ export default function DashboardPage() {
     return (
       <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
         <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
-        <Button variant="outline" onClick={() => void fetchData()}>{t('common.retry')}</Button>
+        <Button variant="outline" onClick={() => { void yearQuery.refetch(); void budgetsQuery.refetch(); void staticQuery.refetch() }}>{t('common.retry')}</Button>
       </div>
     )
   }

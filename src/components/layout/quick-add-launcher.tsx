@@ -142,6 +142,21 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
     return () => window.removeEventListener('klunting:quick-add', onOpen)
   }, [])
 
+  // Pintasan keyboard "n" (keyboard-shortcuts.tsx) — event open eksplisit,
+  // pola sama dgn 'klunting:open-command-palette'. Didaftarkan HANYA di
+  // instance desktop: dua instance (desktop+mobile) sama-sama mounted di
+  // layout, kalau dua-duanya dengerin, satu tekan "n" buka dua dialog
+  // bertumpuk. Instance desktop tetap mounted di viewport mobile (wrapper
+  // hidden cuma sembunyiin FAB, Dialog-nya portal ke body) — jadi aman.
+  useEffect(() => {
+    if (variant !== 'desktop') return
+    function onOpen() {
+      setOpen(true)
+    }
+    window.addEventListener('klunting:open-quick-add', onOpen)
+    return () => window.removeEventListener('klunting:open-quick-add', onOpen)
+  }, [variant])
+
   // PWA shortcut handler — manifest has /dashboard?quickadd=1 wired to the
   // "Tambah Transaksi" home-screen shortcut. When the user long-presses the
   // icon and picks the shortcut, we open the sheet and strip the param so

@@ -32,14 +32,16 @@ const TILE_LAYERS: Record<MapStyle, { label: string; url: string; attribution: s
   },
 }
 
-// Fix Leaflet's default icon in bundlers — use a simple inline SVG data URI so
-// we don't depend on external icon assets.
-const pinIcon = L.divIcon({
+// Fix Leaflet's default icon in bundlers — use a simple inline SVG so we
+// don't depend on external icon assets. Warna pakai token (style, bukan
+// atribut fill — var() gak jalan di presentation attribute) biar ikut theme.
+// Diekspor: dipakai juga oleh portfolio-map (satu pin buat semua peta).
+export const pinIcon = L.divIcon({
   className: '',
   html: `
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
-      <path d="M14 0C6.268 0 0 6.268 0 14c0 8.5 14 22 14 22s14-13.5 14-22c0-7.732-6.268-14-14-14z" fill="#0A0A0A"/>
-      <circle cx="14" cy="14" r="5.5" fill="#C9F05A"/>
+      <path d="M14 0C6.268 0 0 6.268 0 14c0 8.5 14 22 14 22s14-13.5 14-22c0-7.732-6.268-14-14-14z" style="fill:var(--ink)"/>
+      <circle cx="14" cy="14" r="5.5" style="fill:var(--c-mint)"/>
     </svg>
   `,
   iconSize: [28, 36],
@@ -165,7 +167,7 @@ export default function LeafletMap({
             onClick={search}
             disabled={searching || !query.trim()}
             className="h-8 px-3 text-xs font-medium rounded border transition disabled:opacity-40"
-            style={{ background: 'var(--c-mint)', borderColor: 'transparent', color: 'var(--ink)' }}
+            style={{ background: 'var(--c-primary)', borderColor: 'transparent', color: 'var(--c-primary-foreground)' }}
           >
             {searching ? 'Mencari…' : 'Cari'}
           </button>
@@ -230,8 +232,8 @@ export default function LeafletMap({
               }}
               className="px-2 py-1 text-[10px] font-semibold transition-colors uppercase tracking-wider"
               style={{
-                background: mapStyle === key ? 'var(--ink)' : 'transparent',
-                color: mapStyle === key ? 'var(--c-mint)' : 'var(--ink-muted)',
+                background: mapStyle === key ? 'var(--surface-2)' : 'transparent',
+                color: mapStyle === key ? 'var(--ink)' : 'var(--ink-muted)',
               }}
               title={TILE_LAYERS[key].label}
             >

@@ -9,7 +9,7 @@
 import dynamic from 'next/dynamic'
 
 export const DividendsPanel = dynamic(
-  () => import('./dividends-panel').then((m) => m.DividendsPanel),
+  () => import('@/components/charts/chart-modules').then((m) => m.DividendsPanel),
   {
     ssr: false,
     loading: () => (

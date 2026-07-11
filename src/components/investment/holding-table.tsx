@@ -15,8 +15,10 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpRight, Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
+import { toCsv } from '@/lib/transactions/csv'
 import { useT } from '@/lib/i18n/context'
 import { assetClassKey, ASSET_CLASS_META, ASSET_CLASS_ORDER, type AssetClassKey } from '@/lib/invest/asset-class'
 import { tickerToQuoteSymbol, type EnrichedHolding, type LiveQuote } from '@/lib/invest/enrich'
@@ -36,6 +38,10 @@ interface ValuationRow {
 
 const priceFmt = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
 
+/** Kolom yang bisa di-sort (desktop). P/L & day change sort by PERSEN. */
+type SortKey = 'sym' | 'qty' | 'market' | 'fairValue' | 'plPct' | 'changePct'
+const NUMERIC_SORT_KEYS = new Set<SortKey>(['qty', 'market', 'fairValue', 'plPct', 'changePct'])
+
 /** Verdict → visual tone + casual-ID label. MoS > 0 = price below fair value. */
 function verdictTone(verdict: string | undefined, t: (k: string) => string) {
   if (!verdict) return null
@@ -48,6 +54,8 @@ function verdictTone(verdict: string | undefined, t: (k: string) => string) {
 export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
   const t = useT()
   const [tab, setTab] = useState<'all' | AssetClassKey>('all')
+  // Sort desktop-only (header sortable disembunyikan <md); default nilai desc.
+  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'market', dir: 'desc' })
 
   // IDX tickers in the portfolio → valuation lookup (1k+ emiten engine).
   const idxTickers = useMemo(() => {
@@ -106,6 +114,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
           qty: e.i.quantity,
           price: e.live,
           market: e.market,
+          pl: e.pl,
           plPct: e.invested > 0 ? (e.pl / e.invested) * 100 : null,
           changePct: sym ? (quotes[sym]?.changePct ?? null) : null,
           fairValue: val?.avgFairValue ?? val?.medianFairValue ?? null,
@@ -120,6 +129,58 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
       })
       .sort((a, b) => b.market - a.market)
   }, [enriched, tab, quotes, valuations])
+
+  // Urutan desktop mengikuti sort klik-header; mobile TETAP pakai holdingRows
+  // (nilai desc) — jadi tampilan <md tidak berubah. Null/kosong selalu di bawah.
+  const sortedRows = useMemo(() => {
+    const { key, dir } = sort
+    const mul = dir === 'asc' ? 1 : -1
+    const arr = [...holdingRows]
+    arr.sort((a, b) => {
+      const va = a[key] === '' ? null : a[key]
+      const vb = b[key] === '' ? null : b[key]
+      if (va == null && vb == null) return b.market - a.market
+      if (va == null) return 1
+      if (vb == null) return -1
+      if (typeof va === 'string' || typeof vb === 'string') return String(va).localeCompare(String(vb)) * mul
+      return (va - vb) * mul
+    })
+    return arr
+  }, [holdingRows, sort])
+
+  function toggleSort(key: SortKey) {
+    setSort((prev) => prev.key === key
+      ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+      : { key, dir: NUMERIC_SORT_KEYS.has(key) ? 'desc' : 'asc' })
+  }
+
+  // Export CSV — REUSE toCsv (quoting + anti formula-injection, tested);
+  // pola download blob sama dengan exportCSV di transactions/page.tsx.
+  function exportCsv() {
+    const header = ['Simbol', 'Nama', 'Lot/Unit', 'Nilai', 'Fair Value', 'P/L', 'P/L%', 'Day Change']
+    const csv = toCsv([
+      header,
+      ...sortedRows.map((r) => [
+        r.sym,
+        r.name,
+        r.qty,
+        Math.round(r.market),
+        r.fairValue != null ? Math.round(r.fairValue) : '',
+        Math.round(r.pl),
+        r.plPct != null ? r.plPct.toFixed(2) : '',
+        r.changePct != null ? r.changePct.toFixed(2) : '',
+      ]),
+    ])
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `holdings-${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   // Wedge headline: how many IDX holdings sit below their estimated fair value.
   const wedgeSummary = useMemo(() => {
@@ -153,41 +214,82 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
             </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-1">
-          {holdingTabs.map((tabItem) => {
-            const active = tab === tabItem.key
-            return (
-              <button
-                key={tabItem.key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setTab(tabItem.key)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
-                style={active
-                  ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
-                  : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
-              >
-                {tabItem.label}
-              </button>
-            )
-          })}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-1">
+            {holdingTabs.map((tabItem) => {
+              const active = tab === tabItem.key
+              return (
+                <button
+                  key={tabItem.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setTab(tabItem.key)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
+                  style={active
+                    ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
+                    : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
+                >
+                  {tabItem.label}
+                </button>
+              )
+            })}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden md:inline-flex"
+            onClick={exportCsv}
+            disabled={sortedRows.length === 0}
+          >
+            <Download data-icon="inline-start" />
+            Export CSV
+          </Button>
         </div>
       </div>
       <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm border-collapse" style={{ minWidth: 760 }}>
           <thead>
             <tr style={{ background: 'var(--surface-2)' }}>
-              <th scope="col" className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_sym')}</th>
-              <th scope="col" className="text-left text-[11px] uppercase tracking-wider font-medium px-3 py-2" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_name')}</th>
-              <th scope="col" className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_lot_unit')}</th>
-              <th scope="col" className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_value')}</th>
-              <th scope="col" className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_fair_value')}</th>
-              <th scope="col" className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_pl')}</th>
-              <th scope="col" className="text-right text-[11px] uppercase tracking-wider font-medium px-3 py-2 whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('investment.col_day_change')}</th>
+              {([
+                { key: 'sym' as SortKey, label: t('investment.col_sym'), numeric: false },
+                { key: null, label: t('investment.col_name'), numeric: false },
+                { key: 'qty' as SortKey, label: t('investment.col_lot_unit'), numeric: true },
+                { key: 'market' as SortKey, label: t('investment.col_value'), numeric: true },
+                { key: 'fairValue' as SortKey, label: t('investment.col_fair_value'), numeric: true },
+                { key: 'plPct' as SortKey, label: t('investment.col_pl'), numeric: true },
+                { key: 'changePct' as SortKey, label: t('investment.col_day_change'), numeric: true },
+              ] as { key: SortKey | null; label: string; numeric: boolean }[]).map((col, i) => {
+                const active = col.key != null && sort.key === col.key
+                return (
+                  <th
+                    key={col.key ?? `static-${i}`}
+                    scope="col"
+                    aria-sort={col.key == null ? undefined : active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    className={`${col.numeric ? 'text-right' : 'text-left'} text-[11px] uppercase tracking-[0.08em] font-medium px-3 py-2 whitespace-nowrap`}
+                    style={{ color: 'var(--ink-soft)' }}
+                  >
+                    {col.key == null ? (
+                      col.label
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(col.key as SortKey)}
+                        className={`inline-flex w-full items-center gap-0.5 uppercase tracking-[0.08em] font-medium transition-colors duration-100 hover:text-[var(--ink)] ${col.numeric ? 'justify-end' : 'justify-start'}`}
+                        style={{ color: active ? 'var(--ink)' : 'inherit' }}
+                      >
+                        {col.label}
+                        {active && (sort.dir === 'asc'
+                          ? <ArrowUp className="size-3 shrink-0" aria-hidden="true" />
+                          : <ArrowDown className="size-3 shrink-0" aria-hidden="true" />)}
+                      </button>
+                    )}
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
-            {holdingRows.map((r) => {
+            {sortedRows.map((r) => {
               const plUp = (r.plPct ?? 0) >= 0
               const dUp = (r.changePct ?? 0) >= 0
               const tone = verdictTone(r.verdict, t)

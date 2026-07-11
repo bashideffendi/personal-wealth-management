@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import type { Investment } from '@/types'
-import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown } from 'lucide-react'
+import { Loader2, ArrowUpRight, TrendingUp, Wallet, Plus, History, ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { CurrencyRates } from '@/components/investment/currency-rates'
 import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { EduTip } from '@/components/edu/edu-tip'
@@ -24,8 +24,8 @@ import { FX_FALLBACK_USDIDR, INVESTMENT_SUBCATS } from '@/lib/constants'
 import { useI18n } from '@/lib/i18n/context'
 
 // Defer recharts out of the route's initial JS (loads on chart mount).
-const AllocationDonut = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
-const DividendBar = dynamic(() => import('@/components/investment/investment-charts').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const AllocationDonut = dynamic(() => import('@/components/charts/chart-modules').then((m) => m.AllocationDonut), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
+const DividendBar = dynamic(() => import('@/components/charts/chart-modules').then((m) => m.DividendBar), { ssr: false, loading: () => <div className="h-full animate-pulse rounded-lg" style={{ background: 'var(--surface-2)' }} aria-hidden="true" /> })
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
@@ -332,6 +332,15 @@ export default function InvestmentOverviewPage() {
       actions={
         <>
           <CalmModeToggle />
+          {/* Link kecil ke Screener IDX (halaman kelas satu) — desktop only */}
+          <Link
+            href="/dashboard/screener"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition hover:bg-[var(--surface-2)]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
+          >
+            <SlidersHorizontal className="size-3.5" />
+            Screener IDX
+          </Link>
           <Link
             href="/dashboard/assets/investment/stock?tab=dividen"
             aria-label={t('investment.dividend_history')}

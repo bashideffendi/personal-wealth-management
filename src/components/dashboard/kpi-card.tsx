@@ -14,7 +14,7 @@
  *   net       → emerald (positive) atau coral (negative)
  */
 
-import { formatCompactCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, ArrowLeftRight,
   TrendingUp, TrendingDown,
@@ -99,7 +99,9 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
         )}
       </div>
 
-      {/* Angka — BARIS PENUH sendiri (gak ke-squeeze ikon/chip) */}
+      {/* Angka — BARIS PENUH sendiri (gak ke-squeeze ikon/chip).
+          DENSITY: >=lg digit PENUH (pola dua span persis net-worth-hero 005dacc),
+          <lg tetap compact pixel-identik (mobile jangan diusik). */}
       <p
         className="num tabular font-bold mt-auto pt-2.5 leading-tight truncate"
         style={{
@@ -108,7 +110,8 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
           letterSpacing: '-0.02em',
         }}
       >
-        {formatCompactCurrency(value)}
+        <span className="lg:hidden">{formatCompactCurrency(value)}</span>
+        <span className="hidden lg:inline">{formatCurrency(value)}</span>
       </p>
     </article>
   )
