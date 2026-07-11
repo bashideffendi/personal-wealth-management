@@ -1,141 +1,75 @@
 'use client'
 
 /**
- * Cash-flow Forecast — projects daily balance for next 30 days based on
- * recurring transactions + upcoming contract due dates. Surfaces:
+ * Cash-flow Forecast — projects daily balance for next 30 days. Surfaces:
  *   - Min balance hit during the window (vs current balance)
  *   - Days where balance projects to dip below "safe" threshold
- *   - Per-day inflow/outflow breakdown on hover
  *
  * Why this matters (CFPB cash-flow budgeting framework, 2021): mayoritas
  * problem cashflow rumah tangga bukan "berapa total bulanan" tapi "kapan
  * uang masuk vs kapan tagihan jatuh" — timing mismatch yang bikin
  * overdraft meskipun bulan-end positif.
  *
- * This is a deterministic forecast (no probabilistic), good enough for
- * 30-day window. For longer horizons, we'd need to add variance bands.
+ * Dua mode (logika murni di lib/data/cashflow-forecast — lihat kontrak
+ * angka di sana):
+ * - RECURRING: user rawat recurring → jadwal recurring + kontrak (lama).
+ * - BOOTSTRAP (recurring kosong): rata-rata belanja 60 hari + tagihan
+ *   CC/utang → kartu langsung berguna dari hari pertama, TANPA nag setup.
+ *   Pemasukan tidak ditebak — badge "Perkiraan" + caption menjelaskan.
  */
 
 import { useMemo } from 'react'
 import { TrendingDown, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
 import { formatCompactCurrency, formatCurrency } from '@/lib/utils'
 import { EduTip } from '@/components/edu/edu-tip'
-import { occurrencesInRange, toLocalISO } from '@/lib/recurrence'
 import { useI18n } from '@/lib/i18n/context'
-
-interface RecurringItem {
-  name: string
-  type: string  // 'income' | 'expense' | 'saving' | 'investment'
-  amount: number
-  frequency: string  // 'monthly' | 'weekly' | 'yearly' | 'daily'
-  day_of_period: number
-  start_date?: string | null
-  end_date?: string | null
-}
-
-interface ContractItem {
-  name: string
-  end_date: string  // ISO yyyy-mm-dd
-  cost: number | null
-  category: string  // 'insurance' | 'subscription' | 'loan' | 'warranty' | 'lease' | 'other'
-  is_archived: boolean
-}
+import {
+  buildForecast,
+  FORECAST_DAYS,
+  type BillEvent,
+  type ContractItem,
+  type RecurringItem,
+} from '@/lib/data/cashflow-forecast'
 
 interface Props {
   liquidBalance: number
   recurringItems: RecurringItem[]
   contracts: ContractItem[]
+  /** Tagihan tersintesis (CC due + cicilan utang) — dipakai saat recurring kosong. */
+  bootstrapBills?: BillEvent[]
+  /** Rata-rata belanja likuid/hari dari histori — dipakai saat recurring kosong. */
+  avgDailyExpense?: number | null
   /** Buffer threshold below which we flag "risk" (default Rp 500k) */
   safetyBuffer?: number
   /** Days to project (default 30) */
   daysAhead?: number
 }
 
-interface DayPoint {
-  date: Date
-  iso: string  // yyyy-mm-dd
-  inflow: number
-  outflow: number
-  events: { name: string; amount: number; kind: 'in' | 'out' }[]
-  balance: number
-}
-
-/**
- * Project balance forward N days. For each day, apply matching recurring
- * transactions + contract end_date events.
- */
-function buildForecast(
-  startBalance: number,
-  recurring: RecurringItem[],
-  contracts: ContractItem[],
-  daysAhead: number,
-): DayPoint[] {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const points: DayPoint[] = []
-  let balance = startBalance
-
-  // Precompute jadwal kemunculan tiap item via lib recurrence — sama persis
-  // dengan halaman Recurring (weekly anchor weekday start_date, yearly anchor
-  // bulan+tanggal start_date, clamp bulan pendek, end_date dihormati).
-  // toLocalISO, bukan toISOString: di WIB toISOString menggeser tanggal -1 hari.
-  const schedules = recurring.map((r) => ({
-    r,
-    dates: new Set(occurrencesInRange(r, today, daysAhead - 1).map(toLocalISO)),
-  }))
-
-  for (let i = 0; i < daysAhead; i++) {
-    const date = new Date(today)
-    date.setDate(today.getDate() + i)
-    const iso = toLocalISO(date)
-
-    let inflow = 0
-    let outflow = 0
-    const events: DayPoint['events'] = []
-
-    // Apply recurring transactions
-    for (const { r, dates } of schedules) {
-      if (!dates.has(iso) || r.amount <= 0) continue
-      if (r.type === 'income') {
-        inflow += r.amount
-        events.push({ name: r.name, amount: r.amount, kind: 'in' })
-      } else {
-        // expense / saving / investment all reduce liquid balance
-        outflow += r.amount
-        events.push({ name: r.name, amount: r.amount, kind: 'out' })
-      }
-    }
-
-    // Apply contract end_date events (treat as outflow on that day)
-    for (const c of contracts) {
-      if (c.is_archived) continue
-      if (!c.cost || c.cost <= 0) continue
-      if (c.end_date !== iso) continue
-      // Skip insurance auto-renew if we don't have a clear expectation —
-      // use the cost as a safe outflow estimate. Could be income (refund)
-      // for some contracts but rare.
-      outflow += c.cost
-      events.push({ name: `${c.name} (${c.category})`, amount: c.cost, kind: 'out' })
-    }
-
-    balance = balance + inflow - outflow
-    points.push({ date, iso, inflow, outflow, events, balance })
-  }
-
-  return points
-}
-
 export function CashFlowForecast({
   liquidBalance,
   recurringItems,
   contracts,
+  bootstrapBills,
+  avgDailyExpense,
   safetyBuffer = 500_000,
-  daysAhead = 30,
+  daysAhead = FORECAST_DAYS,
 }: Props) {
   const { locale } = useI18n()
+  // Bootstrap hanya saat recurring kosong DAN ada bahannya — kalau user sudah
+  // merawat recurring, jangan campur tagihan sintesis (risiko double-count
+  // dengan recurring "bayar kartu" buatan user sendiri). Recurring kosong
+  // tapi tanpa bahan bootstrap (cuma kontrak) → jatuh ke perilaku lama.
+  const bootstrap =
+    recurringItems.length === 0 &&
+    ((avgDailyExpense ?? 0) > 0 || (bootstrapBills?.length ?? 0) > 0)
+  const dailyBurn = bootstrap ? (avgDailyExpense ?? 0) : 0
+  const bills = useMemo(
+    () => (bootstrap ? (bootstrapBills ?? []) : []),
+    [bootstrap, bootstrapBills],
+  )
   const forecast = useMemo(
-    () => buildForecast(liquidBalance, recurringItems, contracts, daysAhead),
-    [liquidBalance, recurringItems, contracts, daysAhead],
+    () => buildForecast(liquidBalance, recurringItems, contracts, daysAhead, { dailyBurn, bills }),
+    [liquidBalance, recurringItems, contracts, daysAhead, dailyBurn, bills],
   )
 
   // Stats
@@ -145,8 +79,9 @@ export function CashFlowForecast({
   const negativeDays = forecast.filter((p) => p.balance < 0)
   const eventDays = forecast.filter((p) => p.events.length > 0)
 
-  // Empty state — user has no recurring data yet
-  if (recurringItems.length === 0 && eventDays.length === 0) {
+  // Empty state — HANYA saat benar-benar tidak ada bahan proyeksi sama
+  // sekali (tanpa recurring, tanpa histori belanja, tanpa tagihan/kontrak).
+  if (recurringItems.length === 0 && !bootstrap && eventDays.length === 0) {
     return (
       <div
         className="rounded-2xl border p-5 sm:p-6"
@@ -182,12 +117,18 @@ export function CashFlowForecast({
     )
   }
 
-  // Color the chart based on health
-  const hasNegative = negativeDays.length > 0
-  const hasRisk = riskDays.length > 0
-  const accentColor = hasNegative ? 'var(--c-coral)' : hasRisk ? 'var(--c-amber)' : 'var(--c-mint)'
+  // Color the chart based on health. Bootstrap = NETRAL (biru): proyeksinya
+  // belum memuat pemasukan, jadi klaim "Risiko Negatif" tidak berdasar —
+  // garis turun itu ekspektasi, bukan alarm.
+  const hasNegative = !bootstrap && negativeDays.length > 0
+  const hasRisk = !bootstrap && riskDays.length > 0
+  const accentColor = bootstrap
+    ? 'var(--c-blue)'
+    : hasNegative ? 'var(--c-coral)' : hasRisk ? 'var(--c-amber)' : 'var(--c-mint)'
   // Varian -ink (AA-safe) buat TEKS Stat; accentColor (hue terang) buat garis chart.
-  const accentColorInk = hasNegative ? 'var(--c-coral-ink)' : hasRisk ? 'var(--c-amber-ink)' : 'var(--c-mint-ink)'
+  const accentColorInk = bootstrap
+    ? 'var(--c-blue-ink)'
+    : hasNegative ? 'var(--c-coral-ink)' : hasRisk ? 'var(--c-amber-ink)' : 'var(--c-mint-ink)'
 
   // SVG chart dimensions
   const chartH = 80
@@ -227,7 +168,15 @@ export function CashFlowForecast({
             <EduTip topic="cash-flow" side="bottom" />
           </p>
         </div>
-        {hasNegative ? (
+        {bootstrap ? (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide shrink-0"
+            style={{ background: 'var(--c-blue-soft)', color: 'var(--c-blue-ink)' }}
+            title="Dari rata-rata belanja & tagihanmu — belum termasuk pemasukan"
+          >
+            Perkiraan
+          </span>
+        ) : hasNegative ? (
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
             style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
@@ -322,23 +271,30 @@ export function CashFlowForecast({
           style={{ borderColor: 'var(--border-soft)' }}
         >
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
-            {eventDays.slice(0, 4).map((p) => (
-              <div key={p.iso} className="flex items-center gap-1.5">
-                <span className="num font-medium" style={{ color: 'var(--ink-soft)' }}>
-                  {p.date.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}
-                </span>
-                <span className="truncate max-w-[100px]" style={{ color: 'var(--ink)' }}>
-                  {p.events[0].name}
-                </span>
-                <span
-                  className="num font-semibold"
-                  style={{ color: p.inflow > p.outflow ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
-                >
-                  {p.inflow > p.outflow ? '+' : '-'}
-                  {formatCurrency(Math.max(p.inflow, p.outflow))}
-                </span>
-              </div>
-            ))}
+            {eventDays.slice(0, 4).map((p) => {
+              // Nominal dari EVENT-nya, bukan total hari — di mode bootstrap
+              // outflow harian ikut memuat burn rata-rata yang bukan bagian
+              // dari tagihan yang ditampilkan.
+              const evIn = p.events.filter((e) => e.kind === 'in').reduce((s, e) => s + e.amount, 0)
+              const evOut = p.events.filter((e) => e.kind === 'out').reduce((s, e) => s + e.amount, 0)
+              return (
+                <div key={p.iso} className="flex items-center gap-1.5">
+                  <span className="num font-medium" style={{ color: 'var(--ink-soft)' }}>
+                    {p.date.toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}
+                  </span>
+                  <span className="truncate max-w-[100px]" style={{ color: 'var(--ink)' }}>
+                    {p.events[0].name}
+                  </span>
+                  <span
+                    className="num font-semibold"
+                    style={{ color: evIn > evOut ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
+                  >
+                    {evIn > evOut ? '+' : '-'}
+                    {formatCurrency(Math.max(evIn, evOut))}
+                  </span>
+                </div>
+              )
+            })}
             {eventDays.length > 4 && (
               <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
                 +{eventDays.length - 4} event lain
@@ -346,6 +302,18 @@ export function CashFlowForecast({
             )}
           </div>
         </div>
+      )}
+
+      {/* Bootstrap: jelaskan asal angkanya + jalan halus ke recurring —
+          pengganti empty-state nag yang dulu menyita seluruh kartu. */}
+      {bootstrap && (
+        <p className="mt-3 pt-2 border-t text-[10.5px] leading-relaxed" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+          Perkiraan dari rata-rata belanjamu 60 hari terakhir + tagihan terjadwal — belum
+          termasuk pemasukan.{' '}
+          <a href="/dashboard/recurring" className="font-semibold hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
+            Catat gaji &amp; langganan →
+          </a>
+        </p>
       )}
     </div>
   )
