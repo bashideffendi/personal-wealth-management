@@ -65,11 +65,17 @@ export async function POST() {
 
   const admin = createAdminClient()
   const db = admin ?? supabase
+  // Sapuan hapus di bawah menerima NAMA TABEL dari array (dinamis) — di luar
+  // jangkauan tipe literal Supabase (`.from(variabel)` melebur ke never). View
+  // untyped khusus loop generik ini; delete eksplisit di bawahnya tetap typed.
+  const dbLoose = db as unknown as {
+    from: (t: string) => { delete: () => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> } }
+  }
   const errors: Record<string, string> = {}
 
   // 1. Delete user-owned rows (best-effort; one table failing must not block the rest).
   for (const table of DELETE_ORDER) {
-    const { error } = await db.from(table).delete().eq('user_id', user.id)
+    const { error } = await dbLoose.from(table).delete().eq('user_id', user.id)
     if (error && !/does not exist|relation|column .* does not exist/i.test(error.message)) {
       errors[table] = error.message
     }
@@ -78,7 +84,7 @@ export async function POST() {
   // bergantung ke cascade auth (yg cuma jalan kalau service-role tersedia).
   // households delete akan cascade household_members/activities/invitations sisa.
   for (const [table, col] of [['household_invitations', 'invited_by'], ['households', 'owner_user_id']] as const) {
-    const { error } = await db.from(table).delete().eq(col, user.id)
+    const { error } = await dbLoose.from(table).delete().eq(col, user.id)
     if (error && !/does not exist|relation|column .* does not exist/i.test(error.message)) {
       errors[table] = error.message
     }

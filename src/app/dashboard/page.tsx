@@ -7,7 +7,7 @@ import { formatCurrency, formatCompactCurrency, getMonthName } from '@/lib/utils
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { MobileHome } from '@/components/dashboard/mobile-home'
 import { MONTHS } from '@/lib/constants'
-import { fetchLiquidEntries, sumLiquid, sumCashEquivalent, type LiquidType } from '@/lib/liquid'
+import { fetchLiquidEntries, sumLiquid, sumCashEquivalent, type LiquidType, type UnifiedLiquidEntry } from '@/lib/liquid'
 import { isExpired, occurrencesInRange } from '@/lib/recurrence'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
@@ -269,8 +269,8 @@ export default function DashboardPage() {
       // select('*') KEDUA yang duplikat. Entri bertipe 'receivable' cuma ada di
       // assets_liquid, jadi baris source='account' aman dipersempit tipenya.
       const accounts: Array<Pick<Account, 'id' | 'name' | 'type' | 'current_balance'>> = liquidEntries
-        .filter((e) => e.source === 'account')
-        .map((e) => ({ id: e.id, name: e.name, type: e.type as Exclude<LiquidType, 'receivable'>, current_balance: e.balance }))
+        .filter((e: UnifiedLiquidEntry) => e.source === 'account')
+        .map((e: UnifiedLiquidEntry) => ({ id: e.id, name: e.name, type: e.type as Exclude<LiquidType, 'receivable'>, current_balance: e.balance }))
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const debtRows = (debtRes.data ?? []) as any[]
