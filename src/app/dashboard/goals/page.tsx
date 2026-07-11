@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { RingProgress } from '@/components/ui/ring-progress'
+import { StatStrip } from '@/components/ui/stat-strip'
 import { InfoTip } from '@/components/ui/info-tip'
 import { GoalPyramid } from '@/components/goals/goal-pyramid'
 import { useI18n } from '@/lib/i18n/context'
@@ -358,10 +359,10 @@ export default function GoalsPage() {
 
   // Angka stat compact ala kpi-card Beranda — full digit dipertahanin via title.
   const statCards = [
-    { label: t('goals.stat_total_target'), value: formatCompactCurrency(stats.totalTarget), full: formatCurrency(stats.totalTarget) as string | undefined, sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)', chip: 'var(--surface-2)' },
-    { label: t('goals.stat_collected'), value: formatCompactCurrency(stats.totalCurrent), full: formatCurrency(stats.totalCurrent) as string | undefined, sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)', chip: 'var(--c-mint-soft)' },
-    { label: t('goals.stat_monthly_contribution'), value: formatCompactCurrency(stats.iuranBulan), full: formatCurrency(stats.iuranBulan) as string | undefined, sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: 'var(--c-violet)', chip: 'var(--c-violet-soft)' },
-    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', full: undefined as string | undefined, sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: 'var(--c-amber)', chip: 'var(--c-amber-soft)' },
+    { label: t('goals.stat_total_target'), value: formatCompactCurrency(stats.totalTarget), full: formatCurrency(stats.totalTarget) as string | undefined, sub: `${activeGoals.length} ${t('goals.goals_unit')}`, subColor: 'var(--ink-soft)', icon: Target, color: 'var(--ink)' },
+    { label: t('goals.stat_collected'), value: formatCompactCurrency(stats.totalCurrent), full: formatCurrency(stats.totalCurrent) as string | undefined, sub: `${stats.pct.toFixed(1)}% ${t('goals.of_target')}`, subColor: 'var(--ink-soft)', icon: TrendingUp, color: 'var(--c-mint)' },
+    { label: t('goals.stat_monthly_contribution'), value: formatCompactCurrency(stats.iuranBulan), full: formatCurrency(stats.iuranBulan) as string | undefined, sub: iuranSub, subColor: iuranSubColor, icon: Repeat, color: 'var(--c-violet)' },
+    { label: t('goals.stat_avg_probability'), value: stats.avgProb != null ? `${stats.avgProb.toFixed(0)}%` : '—', full: undefined as string | undefined, sub: t('goals.avg_if_invested'), subColor: 'var(--ink-soft)', icon: Sparkles, color: 'var(--c-amber)' },
   ]
 
   function scrollToPyramid() {
@@ -448,22 +449,20 @@ export default function GoalsPage() {
             </div>
           </section>
 
-          {/* 4 stat cards (md+) */}
-          <div className="hidden md:grid gap-3 grid-cols-2 lg:grid-cols-4">
-            {statCards.map((c) => (
-              <div key={c.label} className="s-card p-5">
-                <div className="flex items-start justify-between">
-                  <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{c.label}</p>
-                  <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.chip }}>
-                    <c.icon className="size-4" style={{ color: c.color }} />
-                  </div>
-                </div>
-                <p className="num tabular text-[19px] sm:text-2xl font-semibold mt-3 leading-none" title={c.full} style={{ color: 'var(--ink)' }}>
-                  {c.value}
-                </p>
-                <p className="text-[11px] mt-1.5" style={{ color: c.subColor }}>{c.sub}</p>
-              </div>
-            ))}
+          {/* Ringkasan (md+) — SATU strip tersegmentasi (pola HeroStat), bukan
+              4 kartu terpisah: biar gak nyaru sama kartu goal .s-card di bawah. */}
+          <div className="hidden md:block">
+            <StatStrip
+              items={statCards.map((c) => ({
+                label: c.label,
+                value: c.value,
+                title: c.full,
+                icon: c.icon,
+                iconColor: c.color,
+                // Warna sub kondisional (Iuran Wajib coral/amber) ikut kebawa.
+                sub: <span style={{ color: c.subColor }}>{c.sub}</span>,
+              }))}
+            />
           </div>
 
           {/* Goal cards + pyramid sebagai cell terakhir */}
