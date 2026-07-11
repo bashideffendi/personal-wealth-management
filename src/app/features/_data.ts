@@ -51,7 +51,7 @@ export const FEATURES: Feature[] = [
       'Inilah yang membedakan Klunting dari aplikasi pencatatan biasa. Pantau portofolio multi-aset sekaligus dapatkan riset valuasi yang biasanya hanya ada di terminal mahal.',
     sections: [
       { title: 'Portofolio multi-aset', body: 'Saham IDX, crypto, reksa dana, emas, SBN, dan deposito dalam satu portofolio. Harga bergerak harian untuk holding ber-ticker, lengkap dengan untung/rugi.' },
-      { title: 'Fair value dari 8+ metode valuasi', body: 'Tiap emiten dinilai lewat DCF, Graham, EPV, DDM, NAV, dan metode lain — lalu dirangkum jadi satu fair value konsensus beserta margin of safety.' },
+      { title: 'Fair value dari 13 metode valuasi', body: 'Tiap emiten dinilai lewat DCF, Graham, EPV, DDM, NAV, dan metode lain — lalu dirangkum jadi satu fair value konsensus beserta margin of safety.' },
       { title: 'Rasio kunci & tren 5 tahun', body: 'PER, PBV, ROE, NPM, DER, free float, dan tren fundamental lima tahun. Ringkasan eksekutif membantu memahami angka tanpa harus membuka laporan keuangan mentah.' },
       { title: 'Struktur kepemilikan & dividen', body: 'Pemegang saham, anak usaha, dan kalender dividen untuk 1.000+ emiten — konteks yang jarang ada di aplikasi keuangan pribadi.' },
     ],

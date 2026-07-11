@@ -1,16 +1,22 @@
 /**
  * Klunting — Landing (root /).
  * Minimal, professional, informative. Sections: Hero · Trust · Fitur (ringkas →
- * /features) · Harga · FAQ. Deep feature detail lives on /features, the story on
+ * /features) · Angka produk · Arus kas (band gelap, rasa produk) · Harga ·
+ * Catatan pembuat · FAQ. Deep feature detail lives on /features, the story on
  * /about. No how-it-works fluff, no decorative glow, no try-hard copy.
+ * Motion sengaja cuma 3 titik (hero draw-chart, reveal per section, count-up
+ * angka) — semua hormati prefers-reduced-motion, tanpa parallax/scroll-jack.
  */
 
 import Link from 'next/link'
 import {
   ArrowRight, Menu, Check, Shield, Lock, Database, EyeOff,
-  Receipt, TrendingUp, LineChart, ChevronDown,
+  Receipt, TrendingUp, LineChart, ChevronDown, Scale,
 } from 'lucide-react'
 import { PricingSection } from '@/components/landing/pricing-section'
+import { Reveal } from '@/components/landing/reveal'
+import { CountUp } from '@/components/landing/count-up'
+import { HeroChart } from '@/components/landing/hero-chart'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
 
 // Redirect user ber-sesi → /dashboard TIDAK lagi di sini (dulu getUser di page
@@ -43,7 +49,7 @@ export default function LandingPage() {
       'Insight pengeluaran bulanan dari AI',
     ] },
     { icon: TrendingUp, title: 'Ambil keputusan dengan data', points: [
-      'Riset 1.000+ emiten IDX dengan 8 metode valuasi',
+      'Riset 1.000+ emiten IDX dengan 13 metode valuasi',
       'Rasio kunci, struktur kepemilikan, kalender dividen',
       'Manajemen utang & strategi pelunasan tercepat',
       'Playbook finansial yang disusun AI',
@@ -105,6 +111,8 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-14 items-center max-w-7xl mx-auto">
           {/* Copy */}
           <div className="max-w-xl">
+            {/* Ornamen draw-chart — bahasa visual yang sama dengan auth shell */}
+            <HeroChart className="mb-5" />
             <h1 className="tracking-tight" style={{ fontSize: 'clamp(34px, 4.6vw, 54px)', lineHeight: 1.05, letterSpacing: '-0.03em', fontWeight: 700, color: 'var(--ink)' }}>
               Seluruh keuanganmu, dalam satu tampilan yang jelas.
             </h1>
@@ -130,12 +138,6 @@ export default function LandingPage() {
           {/* Real product screenshot — visible immediately */}
           <div className="relative lg:-mr-6">
             <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)', background: 'var(--surface)' }}>
-              <div className="flex items-center gap-2 px-4 h-9 border-b" style={{ borderColor: 'var(--border-soft)', background: 'var(--surface-2)' }}>
-                <span className="size-2.5 rounded-full" style={{ background: '#f0664f' }} />
-                <span className="size-2.5 rounded-full" style={{ background: '#E3A93C' }} />
-                <span className="size-2.5 rounded-full" style={{ background: '#17b890' }} />
-                <div className="ml-3 hidden sm:flex items-center rounded-md px-3 py-0.5 text-[11px] font-medium" style={{ background: 'var(--bg)', color: 'var(--ink-soft)' }}>klunting.com/dashboard</div>
-              </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/hero-dashboard.webp"
@@ -167,12 +169,19 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          {/* Positioning — pembeda paling penting, jadi satu baris penuh */}
+          <div className="flex items-start gap-2.5 mt-5 pt-5 border-t" style={{ borderColor: 'var(--line)' }}>
+            <Scale className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-mint-ink)' }} />
+            <span className="t-sm" style={{ color: 'var(--ink-muted)' }}>
+              Kami tidak menjual produk investasi apa pun — Klunting murni alat pencatat &amp; analisis, tanpa konflik kepentingan.
+            </span>
+          </div>
         </div>
       </section>
 
       {/* ─── FITUR (outcome clusters → /features) ─── */}
       <section id="fitur" className="px-6 sm:px-12 py-16 sm:py-20">
-        <div className="max-w-6xl mx-auto">
+        <Reveal className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-12">
             <p className="eyebrow">Fitur</p>
             <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.12, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
@@ -206,27 +215,57 @@ export default function LandingPage() {
               Lihat semua fitur secara detail <ArrowRight className="size-4" />
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* ─── HIGHLIGHT: arus kas / Sankey (fitur favorit) ─── */}
-      <section className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--bg-2)' }}>
-        <div className="grid grid-cols-1 lg:grid-cols-[0.82fr_1.18fr] gap-10 lg:gap-14 items-center max-w-6xl mx-auto">
+      {/* ─── ANGKA PRODUK ─── social proof jujur pre-launch: kapabilitas nyata,
+          bukan testimoni. Angka diverifikasi dari kode/data (valuations.json =
+          1.004 ticker unik; METHOD_ORDER = 13 metode; net-worth page = 6 kelas
+          aset). Jangan dinaikkan tanpa cek ulang sumbernya. */}
+      <section className="px-6 sm:px-12 py-12 sm:py-14 border-y" style={{ borderColor: 'var(--border-soft)' }}>
+        <Reveal className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+          {([
+            { n: 1004, label: 'emiten IDX siap diriset' },
+            { n: 13, label: 'metode valuasi saham' },
+            { n: 6, label: 'kelas aset dalam satu net worth' },
+          ] as const).map((s) => (
+            <div key={s.label}>
+              <p className="num font-bold" style={{ fontSize: 'clamp(30px, 3vw, 38px)', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--ink)' }}>
+                <CountUp value={s.n} />
+              </p>
+              <p className="t-sm mt-2" style={{ color: 'var(--ink-muted)' }}>{s.label}</p>
+            </div>
+          ))}
           <div>
-            <p className="eyebrow">Arus kas</p>
-            <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(26px, 3.4vw, 40px)', lineHeight: 1.1, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
+            <p className="font-bold" style={{ fontSize: 'clamp(30px, 3vw, 38px)', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--ink)' }}>CSV</p>
+            <p className="t-sm mt-2" style={{ color: 'var(--ink-muted)' }}>ekspor seluruh datamu, kapan saja</p>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ─── HIGHLIGHT: arus kas / Sankey (fitur favorit) ───
+          Satu-satunya band gelap di halaman — pakai token hero produk
+          (NetWorthHero) supaya sekaligus jadi preview rasa dashboard. */}
+      <section
+        className="px-6 sm:px-12 py-16 sm:py-20"
+        style={{ background: 'linear-gradient(165deg, var(--hero-bg) 0%, var(--hero-mid) 55%, var(--hero-soft) 100%)' }}
+      >
+        <Reveal className="grid grid-cols-1 lg:grid-cols-[0.82fr_1.18fr] gap-10 lg:gap-14 items-center max-w-6xl mx-auto">
+          <div>
+            <p className="eyebrow" style={{ color: 'var(--hero-accent)' }}>Arus kas</p>
+            <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(26px, 3.4vw, 40px)', lineHeight: 1.1, letterSpacing: '-0.025em', color: 'var(--on-hero)' }}>
               Lihat persis ke mana uangmu mengalir.
             </h2>
-            <p className="mt-4 text-base leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+            <p className="mt-4 text-base leading-relaxed" style={{ color: 'var(--on-hero-mut)' }}>
               Setiap rupiah — dari tiap sumber pemasukan sampai ke kategori pengeluaran, tabungan, dan
               investasi — dalam satu diagram aliran. Langsung kelihatan apa yang menyerap uangmu, dan
               berapa yang tersisa.
             </p>
-            <Link href="/features/anggaran" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+            <Link href="/features/anggaran" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: 'var(--hero-accent)' }}>
               Pelajari anggaran &amp; arus kas <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="rounded-2xl overflow-hidden border p-3 sm:p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)', boxShadow: 'var(--card-shadow)' }}>
+          <div className="rounded-2xl overflow-hidden border p-3 sm:p-4" style={{ borderColor: 'var(--hero-line)', background: 'var(--hero-soft)', boxShadow: 'var(--card-shadow)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/features/sankey.webp"
@@ -236,22 +275,39 @@ export default function LandingPage() {
               className="w-full h-auto block rounded-lg"
             />
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ─── HARGA ─── (beku selama billing OFF, lihat src/lib/billing-flag.ts) */}
       {BILLING_ENABLED && <PricingSection />}
 
+      {/* ─── CATATAN PEMBUAT ─── social proof jujur pre-launch: tanpa nama/foto,
+          tanpa testimoni, tanpa klaim yang tidak bisa diverifikasi. */}
+      <section className="px-6 sm:px-12 py-16 sm:py-20">
+        <Reveal className="max-w-6xl mx-auto">
+          <div className="max-w-2xl">
+            <p className="eyebrow">Catatan pembuat</p>
+            <p className="mt-4 text-lg sm:text-xl leading-relaxed font-medium" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+              Klunting dibangun karena kami membutuhkannya sendiri — dan sampai sekarang dipakai
+              setiap hari untuk mencatat keuangan keluarga. Tanpa iklan, tanpa menjual data, tanpa
+              menjual produk investasi. Kamu membayar untuk alatnya, bukan menjadi produknya.
+            </p>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ─── FAQ ─── */}
       <section id="faq" className="px-6 sm:px-12 py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
-        <div className="max-w-3xl mx-auto">
-          <p className="eyebrow">FAQ</p>
-          <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.12, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
-            Pertanyaan yang sering diajukan.
-          </h2>
-          <p className="mt-3 mb-8 text-base" style={{ color: 'var(--ink-muted)' }}>
-            Tidak ketemu jawabannya? Hubungi <a href="mailto:support@klunting.com" className="font-medium underline" style={{ color: 'var(--ink)' }}>support@klunting.com</a>.
-          </p>
+        <Reveal className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.9fr_1.4fr] gap-10 lg:gap-14 items-start">
+          <div className="lg:sticky lg:top-24">
+            <p className="eyebrow">FAQ</p>
+            <h2 className="mt-3 font-bold tracking-tight" style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.12, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
+              Pertanyaan yang sering diajukan.
+            </h2>
+            <p className="mt-3 text-base" style={{ color: 'var(--ink-muted)' }}>
+              Tidak ketemu jawabannya? Hubungi <a href="mailto:support@klunting.com" className="font-medium underline" style={{ color: 'var(--ink)' }}>support@klunting.com</a>.
+            </p>
+          </div>
 
           <div className="space-y-2">
             {[
@@ -260,7 +316,7 @@ export default function LandingPage() {
               { q: 'AI-nya memakai apa, dan ke mana data dikirim?', a: 'Fitur AI memakai Claude dari Anthropic. Yang dikirim hanya teks atau gambar struk yang kamu berikan; Anthropic tidak menyimpannya untuk melatih model. Detail ada di Kebijakan Privasi.' },
               { q: 'Apa yang terjadi pada dataku jika berhenti berlangganan?', a: 'Trial dapat dihentikan kapan saja tanpa potongan. Setelah berhenti, akun beralih ke mode hanya-baca hingga akhir periode. Kamu dapat mengekspor seluruh data ke CSV, lalu menghapus akun dari Profil; data disimpan 30 hari sebelum dihapus permanen.' },
               { q: 'Bisakah aku mengekspor seluruh transaksi?', a: 'Bisa. Di halaman Transaksi, pilih Export CSV — berkas terunduh langsung dan bisa dibuka di Excel, Google Sheets, atau aplikasi lain. Datamu milikmu.' },
-              { q: 'Apa bedanya dengan aplikasi keuangan lain?', a: 'Tiga hal: konteks Indonesia (kategori, Rupiah, IDX); kedalaman investasi (riset 1.000+ emiten dengan 8 metode valuasi dan struktur kepemilikan) yang jarang ada di aplikasi pencatatan; serta berbagi keluarga hingga 5 anggota.' },
+              { q: 'Apa bedanya dengan aplikasi keuangan lain?', a: 'Tiga hal: konteks Indonesia (kategori, Rupiah, IDX); kedalaman investasi (riset 1.000+ emiten dengan 13 metode valuasi dan struktur kepemilikan) yang jarang ada di aplikasi pencatatan; serta berbagi keluarga hingga 5 anggota.' },
               { q: 'Aku tinggal di luar negeri tapi punya rekening Indonesia, bisa?', a: 'Bisa. Klunting berbasis web dan dapat diakses dari mana saja, mendukung multi-mata uang (IDR, USD, SGD, EUR), dan pembacaan struk dalam Bahasa Indonesia maupun Inggris.' },
               { q: 'Apakah ada paket gratis?', a: 'Belum. Saat ini fokusnya trial 21 hari akses penuh tanpa kartu, lalu pilih paket: Pro Rp 149.000/tahun (atau Rp 19.000/bulan) dan Max Rp 299.000/tahun (atau Rp 35.000/bulan).' },
               { q: 'Bisakah dipakai bersama keluarga?', a: 'Bisa, melalui paket Max. Hingga 5 anggota dapat mengakses tujuan, anggaran, dan dompet bersama, dengan tetap memisahkan pengeluaran pribadi bila diinginkan.' },
@@ -275,12 +331,12 @@ export default function LandingPage() {
               </details>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ─── CTA ─── */}
       <section className="px-6 sm:px-12 py-16 sm:py-20">
-        <div className="max-w-5xl mx-auto rounded-3xl p-10 sm:p-14 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <Reveal className="max-w-6xl mx-auto rounded-3xl p-10 sm:p-14 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <h2 className="font-bold tracking-tight" style={{ color: 'var(--ink)', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.1, letterSpacing: '-0.025em' }}>
             Mulai lihat keuanganmu dengan jelas.
           </h2>
@@ -290,12 +346,12 @@ export default function LandingPage() {
           <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold mt-7 transition hover:opacity-90" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
             Coba gratis 21 hari <ArrowRight className="size-4" />
           </Link>
-        </div>
+        </Reveal>
       </section>
 
       {/* ─── FOOTER ─── */}
       <footer className="border-t px-6 sm:px-12 py-12" style={{ borderColor: 'var(--border-soft)' }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2.5">
