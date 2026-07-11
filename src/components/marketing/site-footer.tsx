@@ -1,9 +1,10 @@
 import Link from 'next/link'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 
 /**
- * Footer bersama untuk halaman marketing sekunder (legal, kontak).
+ * Footer bersama untuk halaman marketing (legal, kontak, fitur, tentang).
  * Pola mengikuti footer /about — baris link + disclaimer dari footer landing.
- * Server component, token murni.
+ * Server component, token murni. Link Harga ikut gate BILLING_ENABLED.
  */
 export function SiteFooter() {
   return (
@@ -11,7 +12,9 @@ export function SiteFooter() {
       <div className="max-w-2xl mx-auto flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
         <Link href="/" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Beranda</Link>
         <Link href="/features" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Fitur</Link>
-        <Link href="/#harga" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Harga</Link>
+        {BILLING_ENABLED && (
+          <Link href="/#harga" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Harga</Link>
+        )}
         <Link href="/about" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Tentang</Link>
         <Link href="/contact" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Hubungi Kami</Link>
         <Link href="/terms" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Syarat</Link>

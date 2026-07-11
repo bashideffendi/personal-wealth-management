@@ -1,12 +1,19 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { BILLING_ENABLED } from '@/lib/billing-flag'
 
 /**
- * Nav sticky bersama untuk halaman marketing sekunder (legal, kontak).
+ * Nav sticky bersama untuk halaman marketing (legal, kontak, fitur, tentang).
  * Pola mengikuti header /about — logo, link utama, Masuk, dan CTA Coba gratis.
  * Server component; tanpa state, menu mobile mengandalkan link footer.
+ * Link Harga ikut gate BILLING_ENABLED (anchor #harga tidak dirender di
+ * landing saat billing beku — jangan kasih link mati).
  */
-export function SiteNav() {
+export function SiteNav({ active }: { active?: 'features' | 'about' } = {}) {
+  const item = (isActive: boolean) =>
+    isActive
+      ? 'text-[var(--ink)]'
+      : 'hover:text-[var(--ink)] transition-colors motion-reduce:transition-none'
   return (
     <header
       className="sticky top-0 z-40 flex items-center justify-between px-6 sm:px-12 py-4 border-b backdrop-blur"
@@ -18,10 +25,12 @@ export function SiteNav() {
       </Link>
 
       <nav className="hidden md:flex gap-7 text-sm font-medium" style={{ color: 'var(--ink-muted)' }}>
-        <Link href="/features" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Fitur</Link>
-        <Link href="/#harga" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Harga</Link>
-        <Link href="/#faq" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">FAQ</Link>
-        <Link href="/about" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Tentang</Link>
+        <Link href="/features" className={item(active === 'features')} aria-current={active === 'features' ? 'page' : undefined}>Fitur</Link>
+        {BILLING_ENABLED && (
+          <Link href="/#harga" className={item(false)}>Harga</Link>
+        )}
+        <Link href="/#faq" className={item(false)}>FAQ</Link>
+        <Link href="/about" className={item(active === 'about')} aria-current={active === 'about' ? 'page' : undefined}>Tentang</Link>
       </nav>
 
       <div className="flex items-center gap-2">
