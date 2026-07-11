@@ -48,7 +48,7 @@ export function AiEntryVignette() {
       </div>
 
       <p className="text-center text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
-        Tiga detik. Tanpa form, tanpa dropdown.
+        Tanpa form, tanpa dropdown.
       </p>
     </div>
   )
@@ -86,7 +86,7 @@ export function NetWorthVignette() {
               className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded"
               style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
             >
-              +2,8% YTD
+              +2,8% vs bulan lalu
             </span>
           </div>
         </div>
@@ -120,9 +120,6 @@ export function NetWorthVignette() {
           </li>
         </ul>
       </div>
-      <p className="text-center text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
-        Enam kelas aset, dikurangi utang — satu angka, diperbarui tiap hari.
-      </p>
     </div>
   )
 }
@@ -181,9 +178,6 @@ export function BudgetVignette() {
           ))}
         </tbody>
       </table>
-      <p className="px-3.5 py-2 text-[11px] border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
-        Tarik handle-nya — nilai terisi ke bulan berikutnya.
-      </p>
     </div>
   )
 }
@@ -210,7 +204,7 @@ export function KeyboardVignette() {
   return (
     <div className="w-full max-w-md mx-auto select-none" aria-hidden="true">
       <div className="flex flex-wrap items-center gap-2.5 justify-center">
-        <Key wide>⌘</Key>
+        <Key wide>Ctrl / ⌘</Key>
         <Key>K</Key>
         <span className="mx-1 text-[13px]" style={{ color: 'var(--ink-soft)' }}>lompat ke mana pun</span>
       </div>
@@ -223,7 +217,7 @@ export function KeyboardVignette() {
       </div>
       <div className="flex flex-wrap items-center gap-2.5 justify-center mt-3">
         <Key wide>Space</Key>
-        <span className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>intip detail tanpa pindah halaman</span>
+        <span className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>intip detail baris</span>
       </div>
     </div>
   )
