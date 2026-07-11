@@ -8,7 +8,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { MobileHome } from '@/components/dashboard/mobile-home'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid, sumCashEquivalent, type LiquidType, type UnifiedLiquidEntry } from '@/lib/liquid'
-import { isExpired, occurrencesInRange } from '@/lib/recurrence'
+import { isExpired, occurrencesInRange, toLocalISO } from '@/lib/recurrence'
 import { rootCategory, loadTree, leafKeys } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
 import { GettingStarted } from '@/components/dashboard/getting-started'
@@ -32,6 +32,7 @@ import { getSessionUser } from '@/lib/hooks/use-session-user'
 import { AIInsightsCard } from '@/components/dashboard/ai-insights'
 import { FinancialHealthCard } from '@/components/dashboard/financial-health-card'
 import { CashFlowForecast } from '@/components/dashboard/cashflow-forecast'
+import { buildBootstrapBills, computeAvgDailyExpense, FORECAST_DAYS } from '@/lib/data/cashflow-forecast'
 import { MonthChangeStrip } from '@/components/dashboard/month-change-strip'
 import { TodayStrip } from '@/components/dashboard/today-strip'
 import { KpiCard } from '@/components/dashboard/kpi-card'
@@ -171,6 +172,8 @@ export default function DashboardPage() {
         .from('transactions')
         // Kolom eksplisit (performance-7) — query ini narik setahun transaksi;
         // hindari select('*'). Semua konsumen cuma baca 6 kolom ini.
+        // (Forecast bootstrap TIDAK nebeng sini — dia punya query 60 hari
+        // sendiri di staticQuery supaya bebas dari period picker.)
         .select('id, date, type, category, description, amount')
         .eq('user_id', user.id)
         .gte('date', `${selectedYear}-01-01`)
@@ -215,7 +218,14 @@ export default function DashboardPage() {
         || user.email?.split('@')[0]
         || ''
 
-      const [invRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes] = await Promise.all([
+      // Jendela burn forecast: 60 hari kalender ANCHOR HARI INI — sengaja di
+      // staticQuery (bukan yearQuery) supaya tidak ikut period picker dan
+      // tidak kepotong batas tahun di awal Januari.
+      const burnStart = new Date()
+      burnStart.setHours(0, 0, 0, 0)
+      burnStart.setDate(burnStart.getDate() - 59)
+
+      const [invRes, ccRes, liquidEntries, debtRes, ctrRes, nlqRes, goalsRes, recurRes, treeRes, allCardIdRes, burnTxRes] = await Promise.all([
         supabase
           .from('investments')
           .select('category, total_value, name, platform, ticker, quantity, avg_cost, current_price')
@@ -254,6 +264,18 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .eq('is_active', true),
         loadTree(supabase, user.id),
+        // SEMUA kartu (termasuk nonaktif) — exclusion burn: belanja historis
+        // di kartu yang baru dinonaktifkan tetap belanja kartu.
+        supabase
+          .from('credit_cards')
+          .select('id')
+          .eq('user_id', user.id),
+        // Bahan burn forecast bootstrap — ringan (5 kolom, 60 hari).
+        supabase
+          .from('transactions')
+          .select('date, type, amount, account_id, category')
+          .eq('user_id', user.id)
+          .gte('date', toLocalISO(burnStart)),
       ])
       // Query inti gagal = bilang terus terang, jangan render dashboard penuh
       // nol palsu. (fetchLiquidEntries strict:true udah throw sendiri; error
@@ -298,6 +320,10 @@ export default function DashboardPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recurringItems: ((recurRes.data ?? []) as any[]).filter((r) => !isExpired(r)) as RecurringRow[],
         treeRes,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        allCardIds: ((allCardIdRes.data ?? []) as any[]).map((c) => c.id as string),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        burnTxs: ((burnTxRes.data ?? []) as any[]) as Array<{ date: string; type: string; amount: number; account_id: string | null; category: string | null }>,
       }
     },
   })
@@ -337,6 +363,18 @@ export default function DashboardPage() {
   const activeGoals = useMemo(() => staticQuery.data?.activeGoals ?? [], [staticQuery.data])
   const activeDebts = useMemo(() => staticQuery.data?.activeDebts ?? [], [staticQuery.data])
   const recurringItems = useMemo(() => staticQuery.data?.recurringItems ?? [], [staticQuery.data])
+  // Bahan bootstrap Forecast Saldo (dipakai komponen HANYA saat recurring
+  // kosong): tagihan CC tersintesis (aturan due sama dgn "Tagihan Terdekat";
+  // utang sengaja TIDAK — lihat KONTRAK ANGKA di lib) + rata-rata belanja
+  // likuid harian dari jendela 60 hari yang bebas period picker.
+  const bootstrapBills = useMemo(
+    () => buildBootstrapBills(staticQuery.data?.creditCards ?? [], FORECAST_DAYS),
+    [staticQuery.data],
+  )
+  const avgDailyExpense = useMemo(() => {
+    const cardIds = new Set(staticQuery.data?.allCardIds ?? [])
+    return computeAvgDailyExpense(staticQuery.data?.burnTxs ?? [], cardIds)
+  }, [staticQuery.data])
   const liquidTotal = staticQuery.data?.liquidTotal ?? 0
   // Kas siap pakai (tanpa piutang) — buat runway & forecast, bukan neraca.
   const cashEquivalent = staticQuery.data?.cashEquivalent ?? 0
@@ -843,6 +881,8 @@ export default function DashboardPage() {
         liquidBalance={cashEquivalent}
         recurringItems={recurringItems}
         contracts={contracts}
+        bootstrapBills={bootstrapBills}
+        avgDailyExpense={avgDailyExpense}
       />
 
       {/* "Hari ini" — today's quick stats + budget warning. Self-hides
