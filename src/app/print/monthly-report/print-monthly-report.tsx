@@ -83,6 +83,21 @@ export function PrintMonthlyReport({ year, month }: Props) {
           .report-doc .lg\\:grid-cols-5 { display: grid !important; grid-template-columns: repeat(5, 1fr) !important; gap: 16px !important; }
           .report-doc .lg\\:col-span-3 { grid-column: span 3 !important; }
           .report-doc .lg\\:col-span-2 { grid-column: span 2 !important; }
+          /* md: breakpoint juga gak aktif di lebar A4 (~650px) → Sankey
+             dual-render kejebak di varian compact mobile. Paksa varian
+             desktop yang tampil, varian compact disembunyiin. */
+          .report-doc .hidden.md\\:block { display: block !important; }
+          .report-doc .md\\:hidden { display: none !important; }
+          /* Recharts ResponsiveContainer ngukur lebar via JS di layar; pas
+             layout print nyempit SVG gak re-measure → scale SVG (punya
+             viewBox) ke lebar kolom biar chart gak kepotong. */
+          .report-doc .print-chart-fit,
+          .report-doc .print-chart-fit .recharts-responsive-container,
+          .report-doc .print-chart-fit .recharts-wrapper { width: 100% !important; }
+          .report-doc .print-chart-fit > div,
+          .report-doc .print-chart-fit .recharts-responsive-container,
+          .report-doc .print-chart-fit .recharts-wrapper { height: auto !important; }
+          .report-doc .print-chart-fit .recharts-wrapper > svg.recharts-surface { width: 100% !important; height: auto !important; }
           /* Page-break discipline (sebelumnya .print-avoid-break NO-OP) */
           .print-avoid-break,
           .report-doc .print-avoid-break,

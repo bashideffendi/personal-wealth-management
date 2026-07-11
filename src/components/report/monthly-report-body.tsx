@@ -323,7 +323,7 @@ export function MonthlyReportBody({
         <div className="mt-2.5 space-y-2.5" style={{ maxWidth: variant === 'print' ? '64ch' : undefined }}>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
             <strong>{t('report.cashflow_label')}</strong> {t('report.cashflow_during')} {MONTHS[month - 1]} {year}, {t('report.cashflow_income')} {money(r.income)} {t('report.cashflow_and_expense')} {money(r.expense)} {t('report.cashflow_result')} {surplusWord}{' '}
-            <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)' }}>{money(Math.abs(r.surplus))}</span>{r.surplusStreak >= 2 ? ` — ${t('report.surplus_streak_pre')} ${r.surplusStreak} ${t('report.surplus_streak_post')}` : ''}.
+            <span className="num font-semibold" style={{ color: r.surplus >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>{money(Math.abs(r.surplus))}</span>{r.surplusStreak >= 2 ? ` — ${t('report.surplus_streak_pre')} ${r.surplusStreak} ${t('report.surplus_streak_post')}` : ''}.
           </p>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
             <strong>{t('report.allocation_label')}</strong> <span className="num font-semibold">{r.savingRate.toFixed(0)}%</span> {t('report.allocation_set_aside')} {r.savingRate >= 20 ? t('report.above') : t('report.below')} {t('report.allocation_threshold')}{topCat ? ` ${t('report.top_expense_at')} ${topCat.name} (${money(topCat.amount)})${topCatBudget ? (topCatBudget.ratio > 100 ? `, ${t('report.over_budget_suffix')} ${topCatBudget.ratio.toFixed(0)}%` : `, ${topCatBudget.ratio.toFixed(0)}% ${t('report.of_budget_suffix')}`) : ''}.` : ''}
@@ -333,10 +333,10 @@ export function MonthlyReportBody({
           </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--line)' }}>
-          <Mini label={t('report.mini_money_in')} value={r.income} color="var(--c-mint)" />
-          <Mini label={t('report.mini_spending')} value={r.expense} color="var(--c-coral)" />
-          <Mini label={t('report.mini_save_invest')} value={r.saving + r.investment} color="var(--c-violet)" />
-          <Mini label={t('report.mini_difference')} value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint)' : 'var(--c-coral)'} signed />
+          <Mini label={t('report.mini_money_in')} value={r.income} color="var(--c-mint-ink)" />
+          <Mini label={t('report.mini_spending')} value={r.expense} color="var(--c-coral-ink)" />
+          <Mini label={t('report.mini_save_invest')} value={r.saving + r.investment} color="var(--c-violet-ink)" />
+          <Mini label={t('report.mini_difference')} value={r.surplus} color={r.surplus >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'} signed />
         </div>
       </div>
 
@@ -346,7 +346,9 @@ export function MonthlyReportBody({
         <h3 className="t-h2 mt-0.5 mb-3" style={{ color: 'var(--ink)' }}>{t('report.flow_title')} — {MONTHS[month - 1]}</h3>
         {/* Dual render per breakpoint (pola sama dgn dashboard): tanpa `compact`,
             margin label desktop 130px×2 ngabisin lebar 375px → label numpuk. */}
-        <div className="hidden md:block">
+        {/* print-chart-fit: Sankey juga ResponsiveContainer recharts — saat print
+            dipaksa tampil (CSS print), SVG-nya di-scale ke lebar konten A4. */}
+        <div className="hidden md:block print-chart-fit">
           <MoneyFlowSankey income={r.sankeyIncome} outflow={r.sankeyOutflow} height={Math.max(340, Math.min(480, 90 + Math.max(r.sankeyIncome.length, r.sankeyOutflow.length) * 36))} emptyMessage={t('report.flow_empty')} />
         </div>
         <div className="md:hidden">
@@ -359,18 +361,22 @@ export function MonthlyReportBody({
         <div className="s-card p-5 sm:p-6 lg:col-span-3">
           <p className="eyebrow">{t('report.compare_eyebrow')}</p>
           <h3 className="t-h2 mt-0.5" style={{ color: 'var(--ink)' }}>{t('report.compare_title')}</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={r.series} barGap={3} barCategoryGap="22%" margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
-              <XAxis dataKey="label" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
-              <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v: unknown, n) => [formatCurrency(Number(v) || 0), n === 'income' ? t('report.kpi_income') : n === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest')]} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} formatter={(v) => (v === 'income' ? t('report.kpi_income') : v === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest'))} />
-              <Bar dataKey="income" name="income" fill="var(--c-mint)" radius={[3, 3, 0, 0]} maxBarSize={20} />
-              <Bar dataKey="expense" name="expense" fill="var(--c-coral)" radius={[3, 3, 0, 0]} maxBarSize={20} />
-              <Bar dataKey="saved" name="saved" fill="var(--c-violet)" radius={[3, 3, 0, 0]} maxBarSize={20} />
-            </BarChart>
-          </ResponsiveContainer>
+          {/* print-chart-fit: saat print, SVG di-scale via CSS ke lebar kolom
+              (ResponsiveContainer gak re-measure pas layout print nyempit). */}
+          <div className="print-chart-fit">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={r.series} barGap={3} barCategoryGap="22%" margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-soft)" vertical={false} />
+                <XAxis dataKey="label" fontSize={11} tick={{ fill: 'var(--ink-muted)' }} axisLine={{ stroke: 'var(--border-soft)' }} tickLine={false} />
+                <YAxis fontSize={11} tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}jt`} tick={{ fill: 'var(--ink-muted)' }} axisLine={false} tickLine={false} />
+                <Tooltip formatter={(v: unknown, n) => [formatCurrency(Number(v) || 0), n === 'income' ? t('report.kpi_income') : n === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest')]} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border-soft)', borderRadius: 8, fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" iconSize={8} formatter={(v) => (v === 'income' ? t('report.kpi_income') : v === 'expense' ? t('report.kpi_expense') : t('report.legend_save_invest'))} />
+                <Bar dataKey="income" name="income" fill="var(--c-mint)" radius={[3, 3, 0, 0]} maxBarSize={20} isAnimationActive={false} />
+                <Bar dataKey="expense" name="expense" fill="var(--c-coral)" radius={[3, 3, 0, 0]} maxBarSize={20} isAnimationActive={false} />
+                <Bar dataKey="saved" name="saved" fill="var(--c-violet)" radius={[3, 3, 0, 0]} maxBarSize={20} isAnimationActive={false} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         <div className="s-card p-5 sm:p-6 lg:col-span-2">
           <p className="eyebrow">{t('report.shifts_eyebrow')}</p>
@@ -383,7 +389,7 @@ export function MonthlyReportBody({
                   <div key={s.name} className="flex items-center justify-between gap-3">
                     <span className="t-sm truncate" style={{ color: 'var(--ink)' }}>{s.name}</span>
                     <span className="flex items-center gap-2 shrink-0">
-                      <span className="num t-sm font-medium" style={{ color: up ? 'var(--c-coral)' : 'var(--c-mint)' }}>{up ? '+' : '−'}{formatCurrency(Math.abs(s.delta))}</span>
+                      <span className="num t-sm font-medium" style={{ color: up ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{up ? '+' : '−'}{formatCurrency(Math.abs(s.delta))}</span>
                       {s.pct != null && <span className="inline-flex items-center gap-0.5 t-cap num" style={{ color: 'var(--text-mute)' }}>{up ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}{Math.abs(s.pct).toFixed(0)}%</span>}
                     </span>
                   </div>
@@ -403,14 +409,16 @@ export function MonthlyReportBody({
             {r.budgetVsActual.map((b) => {
               const over = b.ratio > 100
               const warn = b.ratio > 85 && !over
-              const color = over ? 'var(--c-coral)' : warn ? 'var(--c-amber)' : 'var(--c-mint)'
+              // Fill bar boleh aksen mentah (area warna), teks angka wajib varian -ink (kontras).
+              const barColor = over ? 'var(--c-coral)' : warn ? 'var(--c-amber)' : 'var(--c-mint)'
+              const textColor = over ? 'var(--c-coral-ink)' : warn ? 'var(--c-amber-ink)' : 'var(--c-mint-ink)'
               return (
                 <div key={b.category}>
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="t-sm truncate" style={{ color: 'var(--ink)' }}>{b.category}</span>
-                    <span className="num t-cap shrink-0" style={{ color }}>{b.ratio.toFixed(0)}% · {money(b.actual)}/{money(b.budget)}</span>
+                    <span className="num t-cap shrink-0" style={{ color: textColor }}>{b.ratio.toFixed(0)}% · {money(b.actual)}/{money(b.budget)}</span>
                   </div>
-                  <span className="quest-bar" style={{ ['--bar-fill' as string]: color, ['--bar-h' as string]: '9px' }}>
+                  <span className="quest-bar" style={{ ['--bar-fill' as string]: barColor, ['--bar-h' as string]: '9px' }}>
                     <i style={{ width: `${Math.min(100, b.ratio)}%` }} />
                   </span>
                 </div>
@@ -434,7 +442,7 @@ export function MonthlyReportBody({
                     <i style={{ width: `${(row.amount / r.maxExp) * 100}%` }} />
                   </span>
                   <span className="num t-sm font-semibold w-24 text-right shrink-0" style={{ color: 'var(--ink)' }}>{money(row.amount)}</span>
-                  {r.hasPrev && <span className="num t-cap w-16 text-right shrink-0" style={{ color: row.delta > 0 ? 'var(--c-coral)' : row.delta < 0 ? 'var(--c-mint)' : 'var(--text-mute)' }}>{row.delta === 0 ? '—' : `${row.delta > 0 ? '+' : '−'}${formatCurrency(Math.abs(row.delta))}`}</span>}
+                  {r.hasPrev && <span className="num t-cap w-16 text-right shrink-0" style={{ color: row.delta > 0 ? 'var(--c-coral-ink)' : row.delta < 0 ? 'var(--c-mint-ink)' : 'var(--text-mute)' }}>{row.delta === 0 ? '—' : `${row.delta > 0 ? '+' : '−'}${formatCurrency(Math.abs(row.delta))}`}</span>}
                 </div>
               ))}
             </div>
@@ -595,7 +603,7 @@ function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; v
     <div className="stat-tile">
       <div className="flex items-center justify-between"><p className="eyebrow">{label}</p><div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>{icon}</div></div>
       <p className="num tabular font-bold mt-2" style={{ fontSize: 19, letterSpacing: '-0.025em', color: 'var(--ink)' }} title={formatCurrency(value)}>{formatCompactCurrency(value)}</p>
-      {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint)' : 'var(--c-coral)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% {t('report.vs_last_month')}</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
+      {pct != null ? <p className="num t-cap mt-1" style={{ color: good ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>{up ? '+' : '−'}{Math.abs(pct).toFixed(0)}% {t('report.vs_last_month')}</p> : note ? <p className="t-cap mt-1" style={{ color: 'var(--text-mute)' }}>{note}</p> : null}
     </div>
   )
 }
@@ -614,5 +622,5 @@ function Mini({ label, value, text, color, signed }: { label: string; value?: nu
 
 function Nw({ label, value }: { label: string; value: number }) {
   const neg = value < 0
-  return <div className="flex items-center justify-between"><span className="t-sm" style={{ color: 'var(--ink-soft)' }}>{label}</span><span className="num t-sm font-medium" style={{ color: neg ? 'var(--c-coral)' : 'var(--ink)' }}>{neg ? '−' : ''}{formatCurrency(Math.abs(value))}</span></div>
+  return <div className="flex items-center justify-between"><span className="t-sm" style={{ color: 'var(--ink-soft)' }}>{label}</span><span className="num t-sm font-medium" style={{ color: neg ? 'var(--c-coral-ink)' : 'var(--ink)' }}>{neg ? '−' : ''}{formatCurrency(Math.abs(value))}</span></div>
 }
