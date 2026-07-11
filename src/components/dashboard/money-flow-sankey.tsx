@@ -3,12 +3,14 @@
 /**
  * Money Flow Sankey — resep Stockbit (broker-distribution) dipindah ke money flow.
  *
- * KEPUTUSAN DESAIN (jangan diubah tanpa baca ini — hasil 3 ronde review user):
- *   1. DUA KOLOM saja, TANPA hub tengah. Ronde 3 (2026-07-11): SEMUA pemasukan
- *      DIGABUNG jadi SATU pool "Total Pemasukan" di kolom kiri — multi-sumber
- *      (Gaji + Side Hustle terpisah) bikin pita saling silang & ramai; user
- *      minta balik ke pool tunggal seperti sebelumnya. Pita dari 1 pool =
- *      lurus bersih ke tiap tujuan, nilai link = porsi tujuan (konservasi ✓).
+ * KEPUTUSAN DESAIN (jangan diubah tanpa baca ini — hasil 4 ronde review user):
+ *   1. Ronde 4 (2026-07-11, klarifikasi user): STRUKTUR HUB — kiri = SUMBER
+ *      pemasukan (Gaji, Side Hustle, … cap 5), TENGAH = SATU pool
+ *      "Total Pemasukan", kanan = tujuan (cap 7). Dua segmen aliran:
+ *      sumber→pool lalu pool→tujuan. Anti-numpuk label tengah (masalah hub
+ *      versi lama): label pool ditaruh di KANAN-ATAS bar dengan halo, bukan
+ *      di tengah tinggi. Konservasi: Σsumber = pool = Σtujuan (pseudo-node
+ *      Defisit/Belum Terpakai menyeimbangkan).
  *   2. Node = bar TIPIS 8px di tepi → pita aliran dapat ~95% lebar chart.
  *   3. Label PENDEK nempel node DI DALAM area chart (bukan margin samping):
  *      kiri = nama di pangkal pita; kanan = "nilai · nama" di kiri node.
@@ -98,7 +100,7 @@ interface SankeyNodeData {
   kind?: FlowKind
 }
 
-function makeRenderNode(compact: boolean, leftCount: number) {
+function makeRenderNode(compact: boolean, poolIdx: number) {
   const labelMax = compact ? 16 : 26
   const fontMain = compact ? 10 : 11.5
   const fontSub = compact ? 9 : 10
@@ -122,10 +124,30 @@ function makeRenderNode(compact: boolean, leftCount: number) {
   }) {
     const { x, y, width, height, payload, index } = props
     const kind: FlowKind = payload.kind ?? 'income'
-    // Sisi ditentukan dari INDEKS node (kiri = income duluan di array), bukan
+    // Sisi ditentukan dari INDEKS node (kiri = sumber duluan di array), bukan
     // containerWidth — containerWidth bisa undefined/0 di render awal
     // (monthly report) → label kiri ke-anchor 'end' di tepi & kepotong (bug SS2).
-    const isLeft = index < leftCount
+    const isPool = index === poolIdx
+    const isLeft = index < poolIdx
+
+    // POOL tengah: label di KANAN-ATAS bar (bukan tengah tinggi) supaya tidak
+    // numpuk dengan pita yang keluar sepanjang bar — resep #1 ronde 4.
+    if (isPool) {
+      return (
+        <Layer>
+          <Rectangle x={x} y={y} width={width} height={Math.max(height, 4)}
+            fill={GROUP_NODE[kind]} fillOpacity={0.95} />
+          <text x={x + width + gap} y={y + (compact ? 8 : 10)} textAnchor="start" dominantBaseline="middle"
+            style={{ fontSize: fontMain, fontWeight: 700, fill: 'currentColor', ...halo }}>
+            {trunc(payload.name, labelMax)}
+          </text>
+          <text x={x + width + gap} y={y + (compact ? 8 : 10) + (compact ? 11 : 13)} textAnchor="start" dominantBaseline="middle"
+            style={{ fontSize: fontSub, fill: 'currentColor', opacity: 0.7, fontVariantNumeric: 'tabular-nums', ...halo }}>
+            {formatCompactCurrency(payload.value)}
+          </text>
+        </Layer>
+      )
+    }
     // Label DI DALAM chart: kiri → kanan node (pangkal pita), kanan → kiri node.
     const labelX = isLeft ? x + width + gap : x - gap
     const anchor = isLeft ? 'start' : 'end'
@@ -236,47 +258,46 @@ export function MoneyFlowSankey({
   const emptyMessage = emptyMessageProp ?? t('sankey.emptyMessage')
 
   const built = useMemo(() => {
-    // Ronde 3: pemasukan multi-sumber digabung jadi SATU pool (resep #1) —
-    // cap 7 hanya berlaku sisi tujuan.
-    const totalInRaw = income.filter((c) => c.amount > 0).reduce((s, c) => s + c.amount, 0)
-    const incomeFiltered: CategoryAmount[] =
-      totalInRaw > 0 ? [{ name: incomePoolLabel, amount: totalInRaw, kind: 'income' }] : []
+    // Ronde 4 (resep #1): sumber (cap 5) → pool tunggal → tujuan (cap 7).
+    const incomeFiltered = capCats(income.filter((c) => c.amount > 0), 5)
     const outflowFiltered = capCats(outflow.filter((c) => c.amount > 0), 7)
 
     if (incomeFiltered.length === 0 && outflowFiltered.length === 0) return null
 
-    const totalIn = totalInRaw
+    const totalIn = incomeFiltered.reduce((s, c) => s + c.amount, 0)
     const totalOut = outflowFiltered.reduce((s, c) => s + c.amount, 0)
 
-    // Balance kedua kolom (lihat docblock).
-    const balancedIncome = [...incomeFiltered]
-    const balancedOutflow = [...outflowFiltered]
+    // Balance dua segmen di pool: defisit = pseudo-SUMBER, surplus = pseudo-TUJUAN.
+    const sources = [...incomeFiltered]
+    const dests = [...outflowFiltered]
     if (totalIn > totalOut) {
-      balancedOutflow.push({ name: surplusLabel, amount: totalIn - totalOut, kind: 'middle' })
+      dests.push({ name: surplusLabel, amount: totalIn - totalOut, kind: 'middle' })
     } else if (totalOut > totalIn) {
-      balancedIncome.push({ name: deficitLabel, amount: totalOut - totalIn, kind: 'middle' })
+      sources.push({ name: deficitLabel, amount: totalOut - totalIn, kind: 'middle' })
     }
     const total = Math.max(totalIn, totalOut)
     if (total <= 0) return null
 
-    // Nodes: income (kiri) | outflow (kanan) — 2 kolom, tanpa hub.
+    // Nodes: sumber (kiri) | POOL (tengah) | tujuan (kanan).
     const nodes: { name: string; kind: FlowKind }[] = []
-    balancedIncome.forEach((c) => nodes.push({ name: c.name, kind: c.kind }))
-    const outflowStartIdx = nodes.length
-    balancedOutflow.forEach((c) => nodes.push({ name: c.name, kind: c.kind }))
+    sources.forEach((c) => nodes.push({ name: c.name, kind: c.kind }))
+    const poolIdx = nodes.length
+    nodes.push({ name: incomePoolLabel, kind: 'income' })
+    const destStartIdx = nodes.length
+    dests.forEach((c) => nodes.push({ name: c.name, kind: c.kind }))
 
-    // Links: split proporsional tiap sumber ke tiap tujuan (konservasi ✓).
-    // Nilai super kecil (<0.5) dibuang biar recharts gak gambar hairline nol.
+    // Links dua segmen — nilai apa adanya (konservasi di pool otomatis):
+    // sumber_i → pool = amount_i; pool → tujuan_j = amount_j.
     const links: { source: number; target: number; value: number }[] = []
-    balancedIncome.forEach((inc, i) => {
-      balancedOutflow.forEach((out, j) => {
-        const value = (inc.amount * out.amount) / total
-        if (value >= 0.5) links.push({ source: i, target: outflowStartIdx + j, value })
-      })
+    sources.forEach((c, i) => {
+      if (c.amount >= 0.5) links.push({ source: i, target: poolIdx, value: c.amount })
+    })
+    dests.forEach((c, j) => {
+      if (c.amount >= 0.5) links.push({ source: poolIdx, target: destStartIdx + j, value: c.amount })
     })
 
     if (links.length === 0) return null
-    return { data: { nodes, links }, total, leftCount: balancedIncome.length }
+    return { data: { nodes, links }, total, poolIdx }
   }, [income, outflow, incomePoolLabel, surplusLabel, deficitLabel])
 
   if (!built) {
@@ -293,7 +314,7 @@ export function MoneyFlowSankey({
     ? { top: 8, right: 10, bottom: 8, left: 10 }
     : { top: 12, right: 14, bottom: 12, left: 14 }
 
-  const renderNode = makeRenderNode(compact, built.leftCount)
+  const renderNode = makeRenderNode(compact, built.poolIdx)
   const renderLink = makeRenderLink(built.total)
 
   return (
