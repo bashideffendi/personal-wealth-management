@@ -161,6 +161,11 @@ function NavDropdown({
 // Root tab bottom-bar (selain Beranda) — dibuka via tab, bukan drill-down →
 // tanpa tombol back (judul saja). Subroute di bawahnya tetap dapet back.
 const TAB_ROOTS = ['/dashboard/transactions', '/dashboard/budgeting', '/dashboard/more']
+// Rute di luar NAV_ITEMS — judul pasti, jangan bergantung balapan document.title.
+const EXTRA_TITLES: Record<string, string> = {
+  '/dashboard/more': 'nav.section.secondary',
+  '/dashboard/profile': 'nav.profile',
+}
 
 function MobileAppBar({ pathname }: { pathname: string }) {
   const { t } = useI18n()
@@ -170,8 +175,9 @@ function MobileAppBar({ pathname }: { pathname: string }) {
   useEffect(() => {
     // document.title di-set effect halaman — baca setelah macrotask biar kebaca.
     const id = setTimeout(() => {
+      // Judul default root layout ("Klunting — …") bukan judul halaman → abaikan.
       const dt = document.title.replace(/ · Klunting$/, '')
-      setDocTitle(dt === 'Klunting' ? '' : dt)
+      setDocTitle(dt.startsWith('Klunting') ? '' : dt)
     }, 60)
     return () => clearTimeout(id)
   }, [pathname])
@@ -192,7 +198,9 @@ function MobileAppBar({ pathname }: { pathname: string }) {
   const matched = flat
     .filter((it) => it.href !== '/dashboard' && matchesPath(pathname, it.href))
     .sort((a, b) => b.href.length - a.href.length)[0]
-  const title = matched ? (matched.titleKey ? t(matched.titleKey) : matched.label ?? '') : docTitle
+  const title = matched
+    ? (matched.titleKey ? t(matched.titleKey) : matched.label ?? '')
+    : EXTRA_TITLES[pathname] ? t(EXTRA_TITLES[pathname]) : docTitle
 
   function goBack() {
     if (typeof window !== 'undefined' && window.history.length > 1) router.back()
