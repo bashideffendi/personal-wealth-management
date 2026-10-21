@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyCronAuth } from '@/lib/auth-guard'
 import { DAY_MS, occurrencesInRange, parseISODate, toLocalISO } from '@/lib/recurrence'
 import type { RecurringTransaction } from '@/types'
 
@@ -28,8 +29,8 @@ const MAX_OCCURRENCES_PER_RUN = 31
 
 export async function GET(request: Request) {
   // Only Vercel Cron (or a caller with the secret) may trigger this.
-  const auth = request.headers.get('authorization')
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail-closed + constant-time (src/lib/auth-guard.ts).
+  if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -68,9 +69,27 @@ export async function GET(request: Request) {
   let skipped = 0
   const errors: Array<{ id: string; name: string; error: string }> = []
 
+  // Service-role bypass RLS → validasi kepemilikan account_id di sini. RLS
+  // recurring_transactions tidak mengecek account_id milik user yang sama, jadi
+  // tanpa ini cron bisa menulis transaksi yang menunjuk rekening user lain.
+  const accIds = [...new Set(items.map((r) => r.account_id).filter((id): id is string => !!id))]
+  const accOwner = new Map<string, string>()
+  // Dipecah per 150 id supaya URL PostgREST `.in()` gak kepanjangan.
+  for (let i = 0; i < accIds.length; i += 150) {
+    const { data: accRows, error: accErr } = await admin
+      .from('accounts')
+      .select('id, user_id')
+      .in('id', accIds.slice(i, i + 150))
+    if (accErr) return NextResponse.json({ error: accErr.message }, { status: 500 })
+    for (const a of (accRows ?? []) as { id: string; user_id: string }[]) accOwner.set(a.id, a.user_id)
+  }
+
   for (const r of items) {
     // Per-item try/catch: satu item gagal gak ngehentikan sisanya.
     try {
+      if (r.account_id && accOwner.get(r.account_id) !== r.user_id) {
+        throw new Error('account_id bukan milik pemilik recurring — dilewati')
+      }
       const lastPosted = parseISODate(r.last_posted_date)
       const start = parseISODate(r.start_date)
       const from = lastPosted ? new Date(lastPosted.getTime() + DAY_MS) : (start ?? today)

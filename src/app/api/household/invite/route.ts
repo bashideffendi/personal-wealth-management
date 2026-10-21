@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendHouseholdInviteEmail } from '@/lib/email'
 import { rateLimit } from '@/lib/rate-limit'
+import { trustedOrigin } from '@/lib/auth-guard'
 
 export const runtime = 'nodejs'
 
@@ -51,7 +52,9 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .maybeSingle()
 
-  const origin = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'https://klunting.com'
+  // Link dikirim ke pihak lain (email/redirect) → origin dari env, BUKAN header
+  // Origin yang bisa dipalsukan pemanggil (lihat trustedOrigin).
+  const origin = trustedOrigin(req.url)
   const result = await sendHouseholdInviteEmail(inv.email, {
     inviterName: (prof as { full_name?: string | null } | null)?.full_name?.trim() || undefined,
     householdName: inv.households?.name,

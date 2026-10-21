@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyCronAuth } from '@/lib/auth-guard'
 import { sendPushToUser, type PushPayload } from '@/lib/push-server'
 import { DAY_MS, occurrencesInRange, parseISODate } from '@/lib/recurrence'
 import { formatCompactCurrency } from '@/lib/utils'
@@ -33,8 +34,8 @@ const MAX_PER_USER = 5
 
 export async function GET(request: Request) {
   // Only Vercel Cron (or a caller with the secret) may trigger this.
-  const auth = request.headers.get('authorization')
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail-closed + constant-time (src/lib/auth-guard.ts).
+  if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -106,15 +107,21 @@ export async function GET(request: Request) {
 
   // Nama akun buat body notif ("Rp 150rb · BCA").
   const accountIds = [...new Set(dueTomorrow.map((r) => r.account_id).filter((id): id is string => !!id))]
-  const accountName = new Map<string, string>()
+  const accountName = new Map<string, { name: string; userId: string }>()
   if (accountIds.length > 0) {
-    const { data: accRows } = await admin.from('accounts').select('id, name').in('id', accountIds)
-    for (const a of (accRows ?? []) as { id: string; name: string }[]) accountName.set(a.id, a.name)
+    const { data: accRows } = await admin.from('accounts').select('id, name, user_id').in('id', accountIds)
+    for (const a of (accRows ?? []) as { id: string; name: string; user_id: string }[]) {
+      accountName.set(a.id, { name: a.name, userId: a.user_id })
+    }
   }
 
   for (const r of dueTomorrow) {
     const en = isEn(r.user_id)
-    const acc = r.account_id ? accountName.get(r.account_id) : undefined
+    // Service-role bypass RLS: pastikan akun milik user yang sama. RLS
+    // recurring_transactions tidak memvalidasi kepemilikan account_id, jadi
+    // tanpa cek ini nama akun user lain bisa bocor ke notifikasi.
+    const accInfo = r.account_id ? accountName.get(r.account_id) : undefined
+    const acc = accInfo && accInfo.userId === r.user_id ? accInfo.name : undefined
     push(r.user_id, {
       title: en ? `Tomorrow: ${r.name}` : `Besok: ${r.name}`,
       body: acc ? `${formatCompactCurrency(r.amount)} · ${acc}` : formatCompactCurrency(r.amount),

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyCronAuth } from '@/lib/auth-guard'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
 import {
   formatRupiah,
@@ -30,8 +31,8 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://klunting.com'
 
 export async function GET(request: Request) {
   // Only Vercel Cron (or a caller with the secret) may trigger this.
-  const auth = request.headers.get('authorization')
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail-closed + constant-time (src/lib/auth-guard.ts).
+  if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

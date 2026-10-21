@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
-import { billingEnabled, isPaidPlan } from '@/lib/billing/config'
+import { billingEnabled, isPaidPlan, PLAN_PRICES } from '@/lib/billing/config'
 import { verifyXenditCallback, activateSubscription } from '@/lib/billing/xendit'
 import { sendPaymentSuccessEmail, sendPaymentFailedEmail, formatRupiah } from '@/lib/email'
 
@@ -87,12 +87,24 @@ export async function POST(req: Request) {
       console.error('[billing] metadata invalid di invoice PAID:', body.id, userId, planId)
       return NextResponse.json({ ok: true, warning: 'metadata invalid' })
     }
+    // Defense-in-depth: nominal yang dibayar harus = harga server untuk paket +
+    // periode di metadata. Cegah aktivasi paket mahal dari invoice murah (mis.
+    // invoice dibuat di luar checkout / metadata dimanipulasi).
+    const expected = PLAN_PRICES[planId][period]
+    if (typeof body.amount !== 'number' || body.amount < expected) {
+      console.error('[billing] amount mismatch di invoice PAID:', body.id, planId, period, body.amount, expected)
+      return NextResponse.json({ ok: true, warning: 'amount mismatch' })
+    }
     const expiresAt = computeExpiry(period)
     const r = await activateSubscription(admin, {
       userId, planId, expiresAt, provider: 'xendit', reference: body.id,
     })
     if (!r.ok) {
       console.error('[billing] activateSubscription gagal:', r.error)
+      // Lepas catatan idempotensi supaya RETRY Xendit (karena 500) diproses
+      // ulang — kalau tidak, retry kena dedup 23505 dan pembayaran yang sudah
+      // lunas tidak pernah mengaktifkan subscription.
+      await admin.from('billing_events').delete().eq('id', eventId)
       return NextResponse.json({ error: 'Activate failed' }, { status: 500 })
     }
     if (body.payer_email) {

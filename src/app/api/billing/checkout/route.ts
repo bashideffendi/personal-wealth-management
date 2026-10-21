@@ -4,6 +4,7 @@ import { BILLING_ENABLED } from '@/lib/billing-flag'
 import { billingEnabled, isPaidPlan, PLAN_PRICES } from '@/lib/billing/config'
 import { createXenditInvoice } from '@/lib/billing/xendit'
 import { rateLimit } from '@/lib/rate-limit'
+import { trustedOrigin } from '@/lib/auth-guard'
 
 export const runtime = 'nodejs'
 
@@ -40,7 +41,9 @@ export async function POST(req: Request) {
   }
 
   const amount = PLAN_PRICES[planId][period]
-  const origin = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'https://klunting.com'
+  // Link dikirim ke pihak lain (email/redirect) → origin dari env, BUKAN header
+  // Origin yang bisa dipalsukan pemanggil (lihat trustedOrigin).
+  const origin = trustedOrigin(req.url)
 
   try {
     const inv = await createXenditInvoice({

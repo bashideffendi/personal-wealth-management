@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyCronAuth } from '@/lib/auth-guard'
 import { get24hTickers } from '@/lib/binance'
 import { enrichHolding, tickerToQuoteSymbol, quoteKey, type LiveQuote } from '@/lib/invest/enrich'
 import { withResilience, mapLimit } from '@/lib/retry'
@@ -55,8 +56,8 @@ async function fetchYahoo(ticker: string) {
 
 export async function GET(request: Request) {
   // Only Vercel Cron (or a caller with the secret) may trigger this.
-  const auth = request.headers.get('authorization')
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail-closed + constant-time (src/lib/auth-guard.ts).
+  if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
