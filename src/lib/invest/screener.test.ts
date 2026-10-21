@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  DEFAULT_PRESETS,
+  DEFAULT_PRESET,
   EMPTY_RANGES,
   activeRangeCount,
   filterRows,
@@ -11,10 +11,11 @@ import {
   fmtPrice,
   fmtRatio,
   isHighPctile,
+  presetCounts,
+  sectorCounts,
   riskNotes,
   sortRows,
   type FilterState,
-  type PresetKey,
   type ScreenerRow,
 } from './screener'
 
@@ -52,7 +53,7 @@ const scored = (ticker: string, s: Partial<NonNullable<ScreenerRow['score']>>, e
   })
 
 function state(p: Partial<FilterState> = {}): FilterState {
-  return { presets: new Set<PresetKey>(), sectors: new Set(), search: '', ranges: EMPTY_RANGES, ...p }
+  return { preset: null, sectors: new Set(), search: '', ranges: EMPTY_RANGES, ...p }
 }
 
 const ROWS: ScreenerRow[] = [
@@ -64,18 +65,30 @@ const ROWS: ScreenerRow[] = [
 
 describe('filterRows — preset', () => {
   it('default "Punya skor" hanya meloloskan baris berskor', () => {
-    expect(filterRows(ROWS, state({ presets: DEFAULT_PRESETS })).map((r) => r.ticker)).toEqual(['AAAA', 'BBBB'])
+    expect(filterRows(ROWS, state({ preset: DEFAULT_PRESET })).map((r) => r.ticker)).toEqual(['AAAA', 'BBBB'])
   })
   it('Kualitas tinggi = prof ≥ 0,8 DAN safety ≥ 0,6', () => {
-    expect(filterRows(ROWS, state({ presets: new Set(['quality']) })).map((r) => r.ticker)).toEqual(['AAAA'])
+    expect(filterRows(ROWS, state({ preset: 'quality' })).map((r) => r.ticker)).toEqual(['AAAA'])
   })
   it('Murah vs sektor = value ≥ 0,8', () => {
-    expect(filterRows(ROWS, state({ presets: new Set(['cheap']) })).map((r) => r.ticker)).toEqual(['AAAA'])
+    expect(filterRows(ROWS, state({ preset: 'cheap' })).map((r) => r.ticker)).toEqual(['AAAA'])
   })
-  it('Likuid = liq60 ≥ Rp10 M; Syariah; preset digabung AND', () => {
-    expect(filterRows(ROWS, state({ presets: new Set(['liquid']) })).map((r) => r.ticker)).toEqual(['AAAA', 'CCCC'])
-    expect(filterRows(ROWS, state({ presets: new Set(['shariah']) })).map((r) => r.ticker)).toEqual(['AAAA', 'DDDD'])
-    expect(filterRows(ROWS, state({ presets: new Set(['liquid', 'shariah']) })).map((r) => r.ticker)).toEqual(['AAAA'])
+  it('Likuid = liq60 ≥ Rp10 M; Syariah; null = semua', () => {
+    expect(filterRows(ROWS, state({ preset: 'liquid' })).map((r) => r.ticker)).toEqual(['AAAA', 'CCCC'])
+    expect(filterRows(ROWS, state({ preset: 'shariah' })).map((r) => r.ticker)).toEqual(['AAAA', 'DDDD'])
+    expect(filterRows(ROWS, state({ preset: null }))).toHaveLength(4)
+  })
+  it('presetCounts menghitung tiap preset dengan filter lain tetap berlaku', () => {
+    const c = presetCounts(ROWS, state({ preset: 'quality', search: 'a' }))
+    expect(c.get(null)).toBe(2) // AAAA + CCCC (nama "Cahaya")
+    expect(c.get('scored')).toBe(1)
+    expect(c.get('liquid')).toBe(2)
+    expect(c.get('shariah')).toBe(1)
+  })
+  it('sectorCounts mengabaikan pilihan sektor sendiri', () => {
+    const c = sectorCounts(ROWS, state({ sectors: new Set(['Teknologi']) }))
+    expect(c.get('Energi')).toBe(3)
+    expect(c.get('Teknologi')).toBe(1)
   })
 })
 

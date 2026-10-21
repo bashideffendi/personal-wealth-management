@@ -103,7 +103,8 @@ export const PRESETS: { key: PresetKey; label: string; test: (r: ScreenerRow) =>
   { key: 'shariah', label: 'Syariah', test: (r) => r.shariah },
 ]
 
-export const DEFAULT_PRESETS: ReadonlySet<PresetKey> = new Set<PresetKey>(['scored'])
+/** Preset pilih-satu; null = semua emiten. Bawaan: "Punya skor". */
+export const DEFAULT_PRESET: PresetKey = 'scored'
 
 // ─── Filter ─────────────────────────────────────────────────────
 
@@ -127,7 +128,7 @@ export const EMPTY_RANGES: Ranges = {
 }
 
 export interface FilterState {
-  presets: ReadonlySet<PresetKey>
+  preset: PresetKey | null
   sectors: ReadonlySet<string>
   search: string
   ranges: Ranges
@@ -146,10 +147,10 @@ export function activeRangeCount(ranges: Ranges): number {
   ).length
 }
 
-/** Preset di-AND, sektor di-OR, pencarian ticker/nama, rentang inklusif. */
+/** Satu preset, sektor di-OR, pencarian ticker/nama, rentang inklusif. */
 export function filterRows(rows: readonly ScreenerRow[], f: FilterState): ScreenerRow[] {
   const q = f.search.trim().toLowerCase()
-  const presets = PRESETS.filter((p) => f.presets.has(p.key))
+  const preset = PRESETS.find((p) => p.key === f.preset)
   const bounds = RANGE_FIELDS.map(({ key, pct }) => ({
     key,
     pct,
@@ -160,7 +161,7 @@ export function filterRows(rows: readonly ScreenerRow[], f: FilterState): Screen
   return rows.filter((r) => {
     if (q && !r.ticker.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q)) return false
     if (f.sectors.size > 0 && (!r.sector || !f.sectors.has(r.sector))) return false
-    for (const p of presets) if (!p.test(r)) return false
+    if (preset && !preset.test(r)) return false
     for (const b of bounds) {
       const raw = r[b.key]
       if (raw === null || raw === undefined) return false // batas aktif, metrik kosong → keluar
@@ -172,21 +173,39 @@ export function filterRows(rows: readonly ScreenerRow[], f: FilterState): Screen
   })
 }
 
+/** Jumlah hasil per preset (null = semua) dengan filter lain tetap berlaku. */
+export function presetCounts(rows: readonly ScreenerRow[], f: FilterState): Map<PresetKey | null, number> {
+  const base = filterRows(rows, { ...f, preset: null })
+  const out = new Map<PresetKey | null, number>([[null, base.length]])
+  for (const p of PRESETS) out.set(p.key, base.filter(p.test).length)
+  return out
+}
+
+/** Jumlah emiten per sektor di bawah preset/pencarian/rentang aktif. */
+export function sectorCounts(rows: readonly ScreenerRow[], f: FilterState): Map<string, number> {
+  const out = new Map<string, number>()
+  for (const r of filterRows(rows, { ...f, sectors: new Set() })) {
+    if (r.sector) out.set(r.sector, (out.get(r.sector) ?? 0) + 1)
+  }
+  return out
+}
+
 // ─── Kolom & sort ───────────────────────────────────────────────
 
 export type ColKey =
-  | 'ticker' | 'sector' | 'price' | 'mcap' | 'composite'
+  | 'ticker' | 'sector' | 'price' | 'chg1y' | 'mcap' | 'composite'
   | 'per' | 'pbv' | 'evEbitda' | 'divYield' | 'fairBase' | 'gap'
   | 'value' | 'prof' | 'safety' | 'roe'
   | 'liq60' | 'mrs' | 'up' | 'eqFlag' | 'specialBoard' | 'shariah'
 
 export type ColumnSet = 'ringkas' | 'valuasi' | 'kualitas' | 'risiko'
 
+/** Skor gabungan ada di setiap set, tepat setelah emiten — fokus baca. */
 export const COLUMN_SETS: { key: ColumnSet; label: string; cols: ColKey[] }[] = [
-  { key: 'ringkas', label: 'Ringkas', cols: ['ticker', 'sector', 'price', 'mcap', 'composite'] },
-  { key: 'valuasi', label: 'Valuasi', cols: ['ticker', 'per', 'pbv', 'evEbitda', 'divYield', 'fairBase', 'gap'] },
-  { key: 'kualitas', label: 'Kualitas', cols: ['ticker', 'value', 'prof', 'safety', 'roe'] },
-  { key: 'risiko', label: 'Risiko', cols: ['ticker', 'liq60', 'mrs', 'up', 'eqFlag', 'specialBoard', 'shariah'] },
+  { key: 'ringkas', label: 'Ringkas', cols: ['ticker', 'composite', 'price', 'chg1y', 'mcap', 'sector'] },
+  { key: 'valuasi', label: 'Valuasi', cols: ['ticker', 'composite', 'per', 'pbv', 'evEbitda', 'divYield', 'fairBase', 'gap'] },
+  { key: 'kualitas', label: 'Kualitas', cols: ['ticker', 'composite', 'value', 'prof', 'safety', 'roe'] },
+  { key: 'risiko', label: 'Risiko', cols: ['ticker', 'composite', 'liq60', 'mrs', 'up', 'eqFlag', 'specialBoard', 'shariah'] },
 ]
 
 /** Nilai wajar dasar hanya dipakai bila valuasi andal — selain itu kosong. */
