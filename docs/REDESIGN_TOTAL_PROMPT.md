@@ -41,6 +41,16 @@ Di akhir tiap fase:
 
 Lalu lanjut ke fase berikutnya. Kalau sebuah perubahan berisiko mengubah perilaku atau angka, laporkan dan lewati.
 
+## Gerbang Mutu: Harus Lebih Bagus, atau Jangan Diubah
+
+Pemilik: "Harus lebih bagus dari yang sekarang; kalau jelek, mending tidak usah."
+
+- **Sebelum mengubah sebuah halaman,** ambil screenshot kondisi sekarang di desktop 1440px dan HP 390px, terang dan gelap, lewat render lokal dalam mode demo.
+- **Setelah diubah, bandingkan berdampingan.** Pertahankan perubahan hanya bila jelas lebih baik dalam kerapian, hierarki baca, konsistensi dengan bahasa desain, dan rasa premium.
+- **Kalau tidak jelas lebih baik**, atau malah lebih ramai, lebih generik, atau berbau AI slop, **kembalikan halaman itu** (`git checkout -- <berkas>`) dan catat alasannya di status.
+- Lebih baik sedikit halaman yang benar-benar naik kelas daripada banyak halaman yang berubah tapi tidak lebih baik.
+- Di status tiap fase, sebutkan halaman yang diubah dan alasannya lebih baik, serta halaman yang sengaja dibiarkan.
+
 ## Arah dan Pagar
 
 - **Arah:** presisi ala Linear × Copilot Money × Arc, yaitu "presisi yang hidup". Rasa mahal datang dari keheningan, garis rambut tegas, angka besar tabular sebagai momen, dan spasi lega. Rasa muda datang dari palet logo 4 warna (teal #17b890, coral #f0664f, biru #5d6fe0, ungu #8b4fb0) sebagai aksen data dan grafik, plus micro-interaction halus.
