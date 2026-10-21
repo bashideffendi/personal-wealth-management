@@ -14,55 +14,66 @@ export const maxDuration = 60
  * a logged-in user can only ever export their own rows. Unauthenticated → 401.
  */
 
-// User-owned tables (each RLS-scoped to the owner). Market-data / shared caches
-// (price_history, price_snapshots, stock_research_cache, plans) are intentionally
-// excluded — they aren't the user's personal data.
-const TABLES = [
-  'profiles',
-  'accounts',
-  'transactions',
-  'budgets',
-  'assets_liquid',
-  'assets_non_liquid',
-  'investments',
-  'debts',
-  'debt_payments',
-  'emergency_funds',
-  'emergency_fund_locations',
-  'transfers',
-  'credit_cards',
-  'credit_card_payments',
-  'goals',
-  'recurring_transactions',
-  'dividends',
-  'net_worth_snapshots',
-  'categorization_rules',
-  'stock_transactions',
-  'contracts',
-  'account_allocations',
-  'watchlist',
-  'subscriptions',
-  'ai_credit_ledger',
-  'household_members',
-  'household_activities',
-  'household_invitations',
-  'portfolio_snapshots',
-  'budget_categories',
-  'emergency_fund_transactions',
-  'security_events',
+// User-owned tables + kolom pemiliknya. Market-data / shared caches
+// (price_history, price_snapshots, stock_research_cache, plans) sengaja tidak
+// ikut — bukan data pribadi user.
+//
+// Filter pemilik EKSPLISIT (bukan cuma RLS): policy SELECT household
+// (accounts/transactions/budgets/goals/household_*) juga meloloskan baris
+// ANGGOTA LAIN satu household — tanpa filter, file ekspor "data saya" ikut
+// membawa data keuangan orang lain. owner = null → andalkan RLS (tabel anak
+// tanpa kolom user_id; RLS-nya sudah own-only lewat parent).
+const EXPORT_TABLES: ReadonlyArray<{ table: string; owner: string | null; columns?: string }> = [
+  { table: 'profiles', owner: 'id' },
+  { table: 'accounts', owner: 'user_id' },
+  { table: 'transactions', owner: 'user_id' },
+  { table: 'budgets', owner: 'user_id' },
+  { table: 'budget_categories', owner: 'user_id' },
+  { table: 'assets_liquid', owner: 'user_id' },
+  { table: 'assets_non_liquid', owner: 'user_id' },
+  { table: 'investments', owner: 'user_id' },
+  { table: 'debts', owner: 'user_id' },
+  { table: 'debt_payments', owner: 'user_id' },
+  { table: 'emergency_funds', owner: 'user_id' },
+  { table: 'emergency_fund_locations', owner: null },
+  { table: 'emergency_fund_transactions', owner: null },
+  { table: 'transfers', owner: 'user_id' },
+  { table: 'credit_cards', owner: 'user_id' },
+  { table: 'credit_card_payments', owner: 'user_id' },
+  { table: 'goals', owner: 'user_id' },
+  { table: 'recurring_transactions', owner: 'user_id' },
+  { table: 'dividends', owner: 'user_id' },
+  { table: 'net_worth_snapshots', owner: 'user_id' },
+  { table: 'portfolio_snapshots', owner: 'user_id' },
+  { table: 'categorization_rules', owner: 'user_id' },
+  { table: 'stock_transactions', owner: 'user_id' },
+  { table: 'contracts', owner: 'user_id' },
+  { table: 'account_allocations', owner: 'user_id' },
+  { table: 'watchlist', owner: 'user_id' },
+  { table: 'subscriptions', owner: 'user_id' },
+  { table: 'ai_credit_ledger', owner: 'user_id' },
+  { table: 'xp_events', owner: 'user_id' },
+  { table: 'achievements', owner: 'user_id' },
+  { table: 'notifications', owner: 'user_id' },
+  // Kunci p256dh/auth sengaja tidak diekspor (kredensial device, bukan data user).
+  { table: 'push_subscriptions', owner: 'user_id', columns: 'id, endpoint, created_at' },
+  { table: 'households', owner: 'owner_user_id' },
+  { table: 'household_members', owner: 'user_id' },
+  { table: 'household_activities', owner: 'user_id' },
+  { table: 'household_invitations', owner: 'invited_by' },
+  { table: 'security_events', owner: 'user_id' },
 ]
 
 // Page through a table so exports aren't capped at Supabase's 1000-row default.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchAll(supabase: any, table: string) {
+async function fetchAll(supabase: any, spec: (typeof EXPORT_TABLES)[number], userId: string) {
   const pageSize = 1000
   let from = 0
   const rows: unknown[] = []
   for (;;) {
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .range(from, from + pageSize - 1)
+    let q = supabase.from(spec.table).select(spec.columns ?? '*')
+    if (spec.owner) q = q.eq(spec.owner, userId)
+    const { data, error } = await q.range(from, from + pageSize - 1)
     if (error) return { error: error.message }
     rows.push(...(data ?? []))
     if (!data || data.length < pageSize) break
@@ -85,9 +96,9 @@ export async function GET() {
   }
 
   const data: Record<string, unknown> = {}
-  for (const table of TABLES) {
-    const res = await fetchAll(supabase, table)
-    data[table] = 'error' in res ? { _error: res.error } : res.rows
+  for (const spec of EXPORT_TABLES) {
+    const res = await fetchAll(supabase, spec, user.id)
+    data[spec.table] = 'error' in res ? { _error: res.error } : res.rows
   }
 
   const payload = {

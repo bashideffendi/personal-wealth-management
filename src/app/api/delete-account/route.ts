@@ -49,8 +49,14 @@ const DELETE_ORDER = [
   'ai_credit_ledger',
   'xp_events',
   'achievements',
+  'push_subscriptions',
   'household_members',
 ] as const
+
+// Tabel tanpa policy DELETE untuk user (ditulis server/cron) — hanya bisa
+// dihapus via service-role. Tanpa admin, cascade auth.users yang menangani
+// (kalau akun auth akhirnya dihapus).
+const ADMIN_ONLY_DELETE = ['notifications', 'reminder_log'] as const
 
 export async function POST() {
   const supabase = await createClient()
@@ -90,6 +96,28 @@ export async function POST() {
     }
   }
 
+  if (admin) {
+    for (const table of ADMIN_ONLY_DELETE) {
+      const { error } = await dbLoose.from(table).delete().eq('user_id', user.id)
+      if (error && !/does not exist|relation|column .* does not exist/i.test(error.message)) {
+        errors[table] = error.message
+      }
+    }
+    // FK ke auth.users TANPA `on delete` (022 stock_research_cache.generated_by,
+    // 015 household_invitations.accepted_by) → auth.admin.deleteUser GAGAL
+    // (FK violation) kalau user pernah generate riset / menerima undangan.
+    // Kosongkan referensinya dulu supaya penghapusan akun auth tuntas.
+    const adminLoose = admin as unknown as {
+      from: (t: string) => { update: (v: Record<string, null>) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> } }
+    }
+    for (const [table, col] of [['stock_research_cache', 'generated_by'], ['household_invitations', 'accepted_by']] as const) {
+      const { error } = await adminLoose.from(table).update({ [col]: null }).eq(col, user.id)
+      if (error && !/does not exist|relation|column .* does not exist/i.test(error.message)) {
+        errors[`${table}.${col}`] = error.message
+      }
+    }
+  }
+
   // profiles is keyed on id, not user_id.
   {
     const { error } = await db.from('profiles').delete().eq('id', user.id)
@@ -97,11 +125,19 @@ export async function POST() {
   }
 
   // 2. Delete uploaded receipts in storage (best-effort).
+  // list() default cuma 100 objek → loop sampai folder kosong (tiap putaran
+  // menghapus halaman pertama, jadi offset tetap 0). Cap putaran = rem aman.
   try {
     const bucket = (admin ?? supabase).storage.from('receipts')
-    const { data: files } = await bucket.list(user.id)
-    if (files?.length) {
-      await bucket.remove(files.map((f: { name: string }) => `${user.id}/${f.name}`))
+    for (let round = 0; round < 200; round++) {
+      const { data: files, error: listErr } = await bucket.list(user.id, { limit: 1000, offset: 0 })
+      if (listErr || !files?.length) break
+      const { error: rmErr } = await bucket.remove(files.map((f: { name: string }) => `${user.id}/${f.name}`))
+      if (rmErr) {
+        errors['storage'] = rmErr.message
+        break
+      }
+      if (files.length < 1000) break
     }
   } catch {
     /* storage cleanup is best-effort */
