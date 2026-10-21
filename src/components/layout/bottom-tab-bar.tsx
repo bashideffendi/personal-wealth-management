@@ -47,7 +47,7 @@ export function BottomTabBar() {
 
   return (
     <nav
-      className="md:hidden fixed z-30 mx-auto max-w-md rounded-[24px]"
+      className="md:hidden fixed z-30 mx-auto max-w-md rounded-xl"
       style={{
         left: 14,
         right: 14,

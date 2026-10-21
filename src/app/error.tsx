@@ -25,7 +25,7 @@ export default function Error({
         style={{
           width: 48,
           height: 48,
-          borderRadius: 14,
+          borderRadius: 12,
           background: 'var(--c-coral-soft)',
           color: 'var(--c-coral)',
         }}

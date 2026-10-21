@@ -117,7 +117,7 @@ export function MobileHome({
         key={c.category}
         type="button"
         onClick={() => openEntry(c, type)}
-        className="rounded-[20px] px-1.5 py-4 text-center active:opacity-70 transition-opacity"
+        className="rounded-xl px-1.5 py-4 text-center active:opacity-70 transition-opacity"
         style={{ background: hue.soft }}
       >
         <span className="block text-[12px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>

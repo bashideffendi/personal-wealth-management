@@ -21,7 +21,7 @@ export default function NotFound() {
           style={{
             width: 48,
             height: 48,
-            borderRadius: 14,
+            borderRadius: 12,
             background: 'var(--c-primary)',
             color: 'var(--c-primary-foreground)',
             fontWeight: 800,

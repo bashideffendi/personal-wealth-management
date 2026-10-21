@@ -83,10 +83,10 @@
   --outline:        rgba(24, 24, 27, 0.11);   /* border kartu = hairline netral (flat, bukan tinta tebal) */
   --outline-shadow: rgba(24, 24, 27, 0.06);
   --outline-w:      1px;
-  --card-radius:    16px;
+  --card-radius:    12px;   /* SATU radius: kartu/tile/tombol 12px, pill hanya chip */
   --card-shadow:    0 1px 2px rgba(24, 24, 27, 0.05);   /* flat, bukan offset keras */
   --btn-shadow:     none;
-  --btn-radius:     999px;   /* tombol pill */
+  --btn-radius:     12px;
   /* Progress bar ala game (.quest-bar): track tebal + outline tinta +
      fill bulat. Skin lain ngecilin tinggi & ilangin outline. */
   --bar-h:          12px;
@@ -202,9 +202,9 @@
 
   /* ── Editorial radius scale (per design handoff) ── */
   --radius-pill:  999px;     /* button pills, chips */
-  --radius-card:  16px;      /* card biasa */
-  --radius-hero:  22px;      /* card hero / featured */
-  --radius-cta:   28px;      /* CTA section */
+  --radius-card:  12px;
+  --radius-hero:  12px;
+  --radius-cta:   12px;
 
   /* ── Editorial shadow scale ─────────────────────
      Shadow tint = green-ink (rgba 22,28,22) biar kedalaman koheren sama
@@ -224,7 +224,7 @@
   --font-display: var(--font-sans);
   --font-mono:    var(--font-sans);
 
-  --radius: 1rem;       /* 16px — editorial card baseline */
+  --radius: 0.75rem;    /* 12px — satu skala radius */
 }
 
 @theme inline {
@@ -273,11 +273,13 @@
   --color-sidebar-border: var(--border);
   --color-sidebar-ring: var(--c-primary-ink);
 
-  --radius-sm: 10px;       /* chips, badge */
-  --radius-md: 12px;
-  --radius-lg: 16px;       /* card biasa */
-  --radius-xl: 22px;       /* card hero */
-  --radius-2xl: 28px;      /* CTA section */
+  /* Satu skala: 12px untuk kartu/tile/tombol; 8px hanya elemen kecil di dalam
+     kartu (badge, swatch). Pill (rounded-full) hanya untuk chip/avatar. */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
 }
 
 /* ============================================
@@ -711,8 +713,8 @@ html[data-skin="cartoon"] .btn-primary {
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
-  border-radius: 10px;
-  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--input-border);
   background: var(--surface);
   color: var(--ink);
   padding: 9px 14px;
@@ -936,45 +938,22 @@ body[data-calm="true"] [data-loss]:hover {
   body { overscroll-behavior-y: contain; }
 }
 
-/* ═══ F9/F10 MOBILE SHELL — kanvas app-native (<md) ═══════════════════════
-   F9 (mockup approve 2026-07-02): kartu tanpa border, pemisahan dari kontras
-   kanvas abu vs permukaan putih. F10 (mockup approve 2026-07-02 sore):
-   + soft depth ala Budggt — bayangan lembut difus + radius 18 biar kartu
-   "ngambang" premium, bukan kotak datar. Desktop & skin cartoon TIDAK berubah. */
+/* ═══ MOBILE SHELL — kanvas app-native (<md) ═══════════════════════════
+   Kanvas abu tipis vs permukaan putih + garis rambut 1px yang tegas (bukan
+   kartu "ngambang" berbayang). Radius ikut skala tunggal 12px.
+   Desktop & skin cartoon TIDAK berubah. */
 @media (max-width: 767px) {
   :root:not([data-skin='cartoon']) {
-    --bg: #eff0f4;
-    --paper: #eff0f4;
-    --bg-2: #e8e9ee;
-    --card-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 8px 20px rgba(24, 24, 27, 0.07);
-    --card-radius: 18px;
+    --bg: #f2f2f4;
+    --paper: #f2f2f4;
+    --bg-2: #ebebee;
+    --card-shadow: none;
   }
   :root.dark:not([data-skin='cartoon']) {
     --bg: #0b0b10;
     --paper: #0b0b10;
     --bg-2: #101016;
-    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px rgba(0, 0, 0, 0.45);
-  }
-  :root:not([data-skin='cartoon']) .s-card {
-    border-color: transparent;
-    box-shadow: var(--card-shadow);
-  }
-  :root:not([data-skin='cartoon']) .stat-tile {
-    border-color: transparent;
-    box-shadow: var(--card-shadow);
-  }
-  /* Tile/kartu pola tailwind (rounded-xl|2xl + border) ikut borderless +
-     bayangan lebih tipis (sering nested di dalam kartu). Border fungsional
-     (input rounded-md/lg, chip rounded-full, border berwarna via inline
-     style) TIDAK kena — inline style menang. */
-  :root:not([data-skin='cartoon']) .rounded-xl.border,
-  :root:not([data-skin='cartoon']) .rounded-2xl.border {
-    border-color: transparent;
-    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 5px 14px rgba(24, 24, 27, 0.05);
-  }
-  :root.dark:not([data-skin='cartoon']) .rounded-xl.border,
-  :root.dark:not([data-skin='cartoon']) .rounded-2xl.border {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.35);
+    --card-shadow: none;
   }
   /* Section header nempel kanvas (dipakai layout mobile F9) */
   .m-sec {

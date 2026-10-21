@@ -229,7 +229,7 @@ export default function ContractsPage() {
           {items.length === 0 ? (
             /* F10: empty state hangat — chip ikon tint brand, bukan abu datar */
             <div className="s-card px-6 py-10 text-center">
-              <div className="size-16 rounded-[22px] grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><ShieldCheck className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
+              <div className="size-12 rounded-xl grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><ShieldCheck className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
               <p className="text-[15px] font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('contracts.empty_title')}</p>
               <p className="text-[12.5px] mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('contracts.empty_desc')}</p>
               <Button className="mt-4 rounded-full" onClick={openAdd}><Plus className="h-4 w-4" /> {t('contracts.btn_add')}</Button>

@@ -464,7 +464,7 @@ export default function AccountsPage() {
 
       {/* ═══ MOBILE (<md): hero teal ala Budget — kekayaan bersih ═══ */}
       <section
-        className="md:hidden rounded-[20px] px-5 pt-3.5 pb-5"
+        className="md:hidden rounded-xl px-5 pt-3.5 pb-5"
         style={{ background: '#128a6d', boxShadow: '0 10px 24px rgba(18,138,109,.28)' }}
       >
         <div className="flex items-center justify-between">
