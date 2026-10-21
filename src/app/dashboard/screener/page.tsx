@@ -1,441 +1,433 @@
 'use client'
 
 /**
- * Screener IDX — halaman kelas satu (P3 #1, diferensiator terbesar).
+ * Screener IDX v2 — satu tabel padat semua emiten (±970) dengan set kolom
+ * bersegmen (Ringkas · Valuasi · Kualitas · Risiko), preset sebaris, chip
+ * sektor, pencarian, dan popover "Lanjutan" untuk rentang angka.
  *
- * Tabel dense SEMUA emiten ter-cover (±1.000, tanpa cap) dengan kolom
- * fundamental (PER, PBV, ROE, yield, MCap) + valuasi konsensus (fair value,
- * MoS, verdict). Filter: search deferred, chip multi-select sektor/verdict,
- * min-max numerik per metrik. Sort semua kolom, sticky header pola .tx-scroll,
- * baris pakai content-visibility:auto biar ringan tanpa virtualization.
+ * Data: /api/screener (screener-v2.json, ekspor bulanan IDX Screener).
+ * Logika filter/sort/format ada di lib/invest/screener (diuji unit).
+ * Klik baris → panel samping kanan (sheet bawah di mobile), bukan modal.
  *
- * Data: /api/screener (snapshot kuartalan) via useQuery, staleTime 5 menit.
- * Klik baris → halaman riset per emiten.
+ * Warna hanya di data: teal untuk persentil ≥ 0,80 dan selisih positif,
+ * coral untuk negatif. Kontrol mono.
  */
 
-import { useMemo, useState, useDeferredValue } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ArrowUpRight, Download, RotateCcw, Search } from 'lucide-react'
+import { Popover } from '@base-ui/react/popover'
+import { ArrowDown, ArrowUp, ArrowUpRight, Download, Search, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { toCsv } from '@/lib/transactions/csv'
 import {
-  formatIDRCompact,
-  formatPercentValue,
-  formatPrice,
-  formatRatio,
-  signColorVar,
-} from '@/lib/invest/format'
+  COLUMN_SETS,
+  DEFAULT_PRESETS,
+  EMPTY,
+  EMPTY_RANGES,
+  PRESETS,
+  RANGE_FIELDS,
+  activeRangeCount,
+  defaultDir,
+  filterRows,
+  fmtDateShort,
+  fmtIdrCompact,
+  fmtPct,
+  fmtPctile,
+  fmtPrice,
+  fmtRatio,
+  isHighPctile,
+  reliableValuation,
+  riskNotes,
+  sortRows,
+  type ColKey,
+  type ColumnSet,
+  type PresetKey,
+  type Ranges,
+  type ScreenerMeta,
+  type ScreenerResponse,
+  type ScreenerRow,
+  type SortDir,
+} from '@/lib/invest/screener'
 
-// Mirror bentuk response /api/screener (pola sama ResearchRow di
-// stock-research-tab — interface diduplikasi, route gak meng-export type).
-interface ScreenerRow {
-  ticker: string
-  name: string
-  sector: string | null
-  price: number | null
-  fairValue: number | null
-  /** fraksi (0.15 = 15%) */
-  mos: number | null
-  per: number | null
-  pbv: number | null
-  /** fraksi */
-  roe: number | null
-  /** fraksi */
-  divYield: number | null
-  mcap: number | null
-  verdict: string | null
-}
+const RESEARCH_HREF = '/dashboard/assets/investment/stock/research'
+const POS = 'var(--c-mint-ink)'
+const NEG = 'var(--c-coral-ink)'
 
-type ColKey =
-  | 'ticker' | 'name' | 'sector' | 'price' | 'fairValue' | 'mos'
-  | 'per' | 'pbv' | 'roe' | 'divYield' | 'mcap' | 'verdict'
+// ─── Kolom ──────────────────────────────────────────────────────
 
-const COLUMNS: { key: ColKey; label: string; numeric?: boolean }[] = [
-  { key: 'ticker', label: 'Ticker' },
-  { key: 'name', label: 'Nama' },
-  { key: 'sector', label: 'Sektor' },
-  { key: 'price', label: 'Harga', numeric: true },
-  { key: 'fairValue', label: 'Fair Value', numeric: true },
-  { key: 'mos', label: 'MoS%', numeric: true },
-  { key: 'per', label: 'PER', numeric: true },
-  { key: 'pbv', label: 'PBV', numeric: true },
-  { key: 'roe', label: 'ROE%', numeric: true },
-  { key: 'divYield', label: 'Yield%', numeric: true },
-  { key: 'mcap', label: 'MCap', numeric: true },
-  { key: 'verdict', label: 'Verdict' },
-]
-
-// ─── Filter min/max numerik ─────────────────────────────────────
-type RangeKey = 'mos' | 'per' | 'pbv' | 'roe' | 'divYield'
-type RangeState = Record<RangeKey, { min: string; max: string }>
-
-const RANGE_FIELDS: { key: RangeKey; label: string }[] = [
-  { key: 'mos', label: 'MoS %' },
-  { key: 'per', label: 'PER' },
-  { key: 'pbv', label: 'PBV' },
-  { key: 'roe', label: 'ROE %' },
-  { key: 'divYield', label: 'Yield %' },
-]
-/** Metrik yang disimpan fraksi tapi diinput user sebagai persen. */
-const PCT_KEYS = new Set<RangeKey>(['mos', 'roe', 'divYield'])
-const EMPTY_RANGES: RangeState = {
-  mos: { min: '', max: '' },
-  per: { min: '', max: '' },
-  pbv: { min: '', max: '' },
-  roe: { min: '', max: '' },
-  divYield: { min: '', max: '' },
-}
-
-// ─── Verdict ────────────────────────────────────────────────────
-type VerdictBucket = 'undervalued' | 'fair' | 'overvalued'
-
-const VERDICT_OPTIONS: { key: VerdictBucket; label: string }[] = [
-  { key: 'undervalued', label: 'Undervalued' },
-  { key: 'fair', label: 'Fair Value' },
-  { key: 'overvalued', label: 'Overvalued' },
-]
-
-/** Data pakai istilah 'UNDERVALUED'/'FAIR VALUE'/'OVERVALUED' (+ varian HIGHLY, 'N/A'). */
-function verdictBucket(v: string | null): VerdictBucket | null {
-  if (!v) return null
-  const u = v.toUpperCase()
-  if (u.includes('UNDER')) return 'undervalued'
-  if (u.includes('FAIR')) return 'fair'
-  if (u.includes('OVER')) return 'overvalued'
-  return null
-}
-
-/** Chip verdict — warna DATA (soft bg + teks -ink), bukan aksen chrome. */
-function verdictChipStyle(bucket: VerdictBucket | null): { background: string; color: string } {
-  if (bucket === 'undervalued') return { background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }
-  if (bucket === 'overvalued') return { background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }
-  return { background: 'var(--surface-2)', color: 'var(--ink-muted)' }
-}
-
-// ─── Chip filter kecil (sektor + verdict) ───────────────────────
-function FilterChip({
-  label, active, onToggle,
-}: {
+interface ColDef {
   label: string
-  active: boolean
-  onToggle: () => void
-}) {
+  /** Lebar relatif (table-layout fixed). */
+  w: number
+  numeric: boolean
+  render: (r: ScreenerRow) => React.ReactNode
+}
+
+function signColor(v: number | null | undefined): string | undefined {
+  if (v == null || !Number.isFinite(v) || v === 0) return undefined
+  return v > 0 ? POS : NEG
+}
+
+function yesNo(v: boolean | null | undefined) {
+  return v ? <span style={{ color: 'var(--ink)' }}>Ya</span> : EMPTY
+}
+
+function riskScore(v: number | null | undefined) {
+  if (v == null) return EMPTY
+  return <span style={{ color: v >= 2 ? NEG : undefined }}>{v}</span>
+}
+
+const COLS: Record<ColKey, ColDef> = {
+  ticker: { label: 'Emiten', w: 30, numeric: false, render: () => null },
+  sector: { label: 'Sektor', w: 22, numeric: false, render: (r) => r.sector ?? EMPTY },
+  price: { label: 'Harga', w: 12, numeric: true, render: (r) => fmtPrice(r.price) },
+  mcap: { label: 'Kapitalisasi', w: 14, numeric: true, render: (r) => fmtIdrCompact(r.mcap) },
+  composite: { label: 'Skor', w: 16, numeric: true, render: (r) => <Pctile v={r.score?.composite} /> },
+  per: { label: 'PER', w: 10, numeric: true, render: (r) => fmtRatio(r.per) },
+  pbv: { label: 'PBV', w: 10, numeric: true, render: (r) => fmtRatio(r.pbv) },
+  evEbitda: { label: 'EV/EBITDA', w: 12, numeric: true, render: (r) => fmtRatio(r.evEbitda) },
+  divYield: { label: 'Yield', w: 10, numeric: true, render: (r) => fmtPct(r.divYield) },
+  fairBase: { label: 'Nilai wajar', w: 13, numeric: true, render: (r) => fmtPrice(reliableValuation(r)?.base) },
+  gap: {
+    label: 'Selisih',
+    w: 11,
+    numeric: true,
+    render: (r) => {
+      const g = reliableValuation(r)?.gap
+      return <span style={{ color: signColor(g) }}>{fmtPct(g)}</span>
+    },
+  },
+  value: { label: 'Nilai', w: 16, numeric: true, render: (r) => <Pctile v={r.score?.value} /> },
+  prof: { label: 'Profitabilitas', w: 16, numeric: true, render: (r) => <Pctile v={r.score?.prof} /> },
+  safety: { label: 'Keamanan', w: 16, numeric: true, render: (r) => <Pctile v={r.score?.safety} /> },
+  roe: { label: 'ROE', w: 10, numeric: true, render: (r) => <span style={{ color: (r.roe ?? 0) < 0 ? NEG : undefined }}>{fmtPct(r.roe)}</span> },
+  liq60: { label: 'Likuiditas 60H', w: 14, numeric: true, render: (r) => fmtIdrCompact(r.liq60) },
+  mrs: { label: 'MRS', w: 7, numeric: true, render: (r) => riskScore(r.flags?.mrs) },
+  up: { label: 'UP', w: 7, numeric: true, render: (r) => riskScore(r.flags?.up) },
+  eqFlag: { label: 'Kual. laba', w: 10, numeric: true, render: (r) => yesNo(r.flags?.eqFlag) },
+  specialBoard: { label: 'Papan khusus', w: 11, numeric: true, render: (r) => yesNo(r.specialBoard) },
+  shariah: { label: 'Syariah', w: 9, numeric: true, render: (r) => yesNo(r.shariah) },
+}
+
+/** Mobile: ticker + maksimal tiga kolom terpenting per set. */
+const MOBILE_COLS: Record<ColumnSet, ReadonlySet<ColKey>> = {
+  ringkas: new Set(['ticker', 'price', 'composite']),
+  valuasi: new Set(['ticker', 'per', 'pbv', 'gap']),
+  kualitas: new Set(['ticker', 'value', 'prof', 'safety']),
+  risiko: new Set(['ticker', 'liq60', 'mrs', 'specialBoard']),
+}
+
+// ─── Primitif kecil ─────────────────────────────────────────────
+
+/** Persentil: meter 2px + angka. Teal hanya ≥ 0,80, selebihnya abu. */
+function Pctile({ v, wide = false }: { v: number | null | undefined; wide?: boolean }) {
+  if (v == null) return <>{EMPTY}</>
+  const high = isHighPctile(v)
+  return (
+    <span className="inline-flex items-center justify-end gap-2">
+      <span
+        className={`relative h-[2px] ${wide ? 'flex-1' : 'w-8 md:w-10'}`}
+        style={{ background: 'var(--border)' }}
+        aria-hidden
+      >
+        <span
+          className="absolute inset-y-0 left-0"
+          style={{ width: `${Math.max(0, Math.min(1, v)) * 100}%`, background: high ? 'var(--accent)' : 'var(--text-faint)' }}
+        />
+      </span>
+      <span className="num w-6 text-right" style={{ color: 'var(--ink)' }}>{fmtPctile(v)}</span>
+    </span>
+  )
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
-      onClick={onToggle}
+      onClick={onClick}
       aria-pressed={active}
-      className="rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors duration-100"
+      className="inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-xs font-medium whitespace-nowrap transition-colors duration-100 md:min-h-0 md:h-7 md:px-2.5"
       style={{
-        background: active ? 'var(--c-primary)' : 'var(--surface)',
-        borderColor: active ? 'var(--c-primary)' : 'var(--border)',
-        color: active ? 'var(--c-primary-foreground)' : 'var(--ink-muted)',
+        background: active ? 'var(--ink)' : 'var(--surface)',
+        borderColor: active ? 'var(--ink)' : 'var(--border)',
+        color: active ? 'var(--surface)' : 'var(--ink-muted)',
       }}
     >
-      {label}
+      {children}
     </button>
   )
 }
 
-const RESEARCH_HREF = '/dashboard/assets/investment/stock/research'
+function useIsDesktop(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia('(min-width: 1024px)')
+      mq.addEventListener('change', cb)
+      return () => mq.removeEventListener('change', cb)
+    },
+    () => window.matchMedia('(min-width: 1024px)').matches,
+    () => true,
+  )
+}
+
+function toggleIn<T>(set: ReadonlySet<T>, v: T): Set<T> {
+  const next = new Set(set)
+  if (next.has(v)) next.delete(v)
+  else next.add(v)
+  return next
+}
+
+function asOfLine(meta: ScreenerMeta): string {
+  return `Data pasar ${fmtDateShort(meta.marketAsOf)} · Skor riset ${fmtDateShort(meta.scoresAsOf)}`
+}
+
+// ─── Halaman ────────────────────────────────────────────────────
 
 export default function ScreenerPage() {
-  const router = useRouter()
-
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['screener'],
+    queryKey: ['screener', 'v2'],
     queryFn: async () => {
       const res = await fetch('/api/screener')
       if (!res.ok) throw new Error(`screener ${res.status}`)
-      return res.json() as Promise<{ rows: ScreenerRow[]; generatedAt: string }>
+      return res.json() as Promise<ScreenerResponse>
     },
     staleTime: 5 * 60 * 1000,
   })
   const rows = useMemo(() => data?.rows ?? [], [data])
+  const meta = data?.meta
 
-  // ─── State filter ───────────────────────────────────────────
+  const [colSet, setColSet] = useState<ColumnSet>('ringkas')
+  const [presets, setPresets] = useState<ReadonlySet<PresetKey>>(DEFAULT_PRESETS)
+  const [sectors, setSectors] = useState<ReadonlySet<string>>(new Set())
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
-  const [sectorSel, setSectorSel] = useState<Set<string>>(new Set())
-  const [verdictSel, setVerdictSel] = useState<Set<VerdictBucket>>(new Set())
-  const [ranges, setRanges] = useState<RangeState>(EMPTY_RANGES)
-  const [sort, setSort] = useState<{ key: ColKey; dir: 'asc' | 'desc' }>({ key: 'mos', dir: 'desc' })
+  const [ranges, setRanges] = useState<Ranges>(EMPTY_RANGES)
+  const [sort, setSort] = useState<{ key: ColKey; dir: SortDir }>({ key: 'composite', dir: 'desc' })
+  const [selected, setSelected] = useState<string | null>(null)
+  const isDesktop = useIsDesktop()
 
-  const hasFilter =
-    search !== '' || sectorSel.size > 0 || verdictSel.size > 0 ||
-    RANGE_FIELDS.some(({ key }) => ranges[key].min !== '' || ranges[key].max !== '')
+  const sectorList = useMemo(
+    () => [...new Set(rows.map((r) => r.sector).filter((s): s is string => !!s))].sort(),
+    [rows],
+  )
+  const visible = useMemo(
+    () => sortRows(filterRows(rows, { presets, sectors, search: deferredSearch, ranges }), sort.key, sort.dir),
+    [rows, presets, sectors, deferredSearch, ranges, sort],
+  )
+  const selectedRow = useMemo(() => rows.find((r) => r.ticker === selected) ?? null, [rows, selected])
+  const nRanges = activeRangeCount(ranges)
+  const isDefault =
+    search === '' && sectors.size === 0 && nRanges === 0 &&
+    presets.size === DEFAULT_PRESETS.size && [...presets].every((p) => DEFAULT_PRESETS.has(p))
 
-  const sectors = useMemo(() => {
-    const set = new Set<string>()
-    for (const r of rows) if (r.sector) set.add(r.sector)
-    return [...set].sort()
-  }, [rows])
+  useEffect(() => {
+    if (!selected || !isDesktop) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selected, isDesktop])
 
-  function toggleIn<T>(set: Set<T>, value: T): Set<T> {
-    const next = new Set(set)
-    if (next.has(value)) next.delete(value)
-    else next.add(value)
-    return next
-  }
+  const cols = COLUMN_SETS.find((s) => s.key === colSet)!.cols
+  const totalW = cols.reduce((a, k) => a + COLS[k].w, 0)
 
-  function setRange(key: RangeKey, bound: 'min' | 'max', value: string) {
-    setRanges((prev) => ({ ...prev, [key]: { ...prev[key], [bound]: value } }))
+  function toggleSort(key: ColKey) {
+    setSort((p) => (p.key === key ? { key, dir: p.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: defaultDir(key) }))
   }
 
   function resetFilters() {
     setSearch('')
-    setSectorSel(new Set())
-    setVerdictSel(new Set())
+    setSectors(new Set())
     setRanges(EMPTY_RANGES)
+    setPresets(DEFAULT_PRESETS)
   }
 
-  // ─── Filter + sort ──────────────────────────────────────────
-  const filtered = useMemo(() => {
-    const q = deferredSearch.trim().toLowerCase()
-    return rows.filter((r) => {
-      if (q && !r.ticker.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q)) return false
-      if (sectorSel.size > 0 && (!r.sector || !sectorSel.has(r.sector))) return false
-      if (verdictSel.size > 0) {
-        const b = verdictBucket(r.verdict)
-        if (!b || !verdictSel.has(b)) return false
-      }
-      for (const { key } of RANGE_FIELDS) {
-        const { min, max } = ranges[key]
-        if (min === '' && max === '') continue
-        const raw = r[key]
-        if (raw === null) return false // bound aktif tapi metrik kosong → keluar
-        const val = PCT_KEYS.has(key) ? raw * 100 : raw
-        const lo = min === '' ? null : Number(min)
-        const hi = max === '' ? null : Number(max)
-        if (lo !== null && Number.isFinite(lo) && val < lo) return false
-        if (hi !== null && Number.isFinite(hi) && val > hi) return false
-      }
-      return true
-    })
-  }, [rows, deferredSearch, sectorSel, verdictSel, ranges])
-
-  const sorted = useMemo(() => {
-    const { key, dir } = sort
-    const mul = dir === 'asc' ? 1 : -1
-    const arr = [...filtered]
-    arr.sort((a, b) => {
-      const va = a[key]
-      const vb = b[key]
-      // null selalu di bawah, apapun arah sort
-      if (va === null && vb === null) return a.ticker.localeCompare(b.ticker)
-      if (va === null) return 1
-      if (vb === null) return -1
-      if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb) * mul
-      return ((va as number) - (vb as number)) * mul
-    })
-    return arr
-  }, [filtered, sort])
-
-  function toggleSort(key: ColKey) {
-    setSort((prev) =>
-      prev.key === key
-        ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
-        : { key, dir: COLUMNS.find((c) => c.key === key)?.numeric ? 'desc' : 'asc' },
-    )
-  }
-
-  // ─── Export CSV — REUSE toCsv (quoting + anti formula-injection, tested) ──
   function exportCsv() {
-    const header = ['Ticker', 'Nama', 'Sektor', 'Harga', 'Fair Value', 'MoS %', 'PER', 'PBV', 'ROE %', 'Yield %', 'Market Cap', 'Verdict']
+    const pct = (v: number | null | undefined) => (v != null ? (v * 100).toFixed(2) : '')
+    const num = (v: number | null | undefined, d = 2) => (v != null ? v.toFixed(d) : '')
     const csv = toCsv([
-      header,
-      ...sorted.map((r) => [
-        r.ticker,
-        r.name,
-        r.sector ?? '',
-        r.price ?? '',
-        r.fairValue != null ? Math.round(r.fairValue) : '',
-        r.mos != null ? (r.mos * 100).toFixed(2) : '',
-        r.per != null ? r.per.toFixed(2) : '',
-        r.pbv != null ? r.pbv.toFixed(2) : '',
-        r.roe != null ? (r.roe * 100).toFixed(2) : '',
-        r.divYield != null ? (r.divYield * 100).toFixed(2) : '',
-        r.mcap != null ? Math.round(r.mcap) : '',
-        r.verdict ?? '',
-      ]),
+      [
+        'Ticker', 'Nama', 'Sektor', 'Sub-sektor', 'Syariah', 'Harga', 'Kapitalisasi', 'Likuiditas 60H',
+        'PER', 'PBV', 'EV/EBITDA', 'ROE %', 'Yield %', 'Skor gabungan', 'Nilai', 'Profitabilitas', 'Keamanan',
+        'Status valuasi', 'Nilai wajar konservatif', 'Nilai wajar dasar', 'Nilai wajar optimistis', 'Selisih %',
+        'MRS', 'UP', 'Penanda kualitas laba', 'Papan pemantauan khusus',
+      ],
+      ...visible.map((r) => {
+        const v = reliableValuation(r)
+        return [
+          r.ticker, r.name, r.sector ?? '', r.subSector ?? '', r.shariah ? 'Ya' : 'Tidak',
+          r.price ?? '', r.mcap != null ? Math.round(r.mcap) : '', r.liq60 != null ? Math.round(r.liq60) : '',
+          num(r.per), num(r.pbv), num(r.evEbitda), pct(r.roe), pct(r.divYield),
+          num(r.score?.composite, 4), num(r.score?.value, 4), num(r.score?.prof, 4), num(r.score?.safety, 4),
+          r.valuation?.status ?? '', v?.cons ?? '', v?.base ?? '', v?.opt ?? '', pct(v?.gap),
+          r.flags?.mrs ?? '', r.flags?.up ?? '', r.flags ? (r.flags.eqFlag ? 'Ya' : 'Tidak') : '',
+          r.specialBoard ? 'Ya' : 'Tidak',
+        ]
+      }),
     ])
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', `screener-idx-${new Date().toISOString().split('T')[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `screener-idx-${meta?.marketAsOf ?? new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
     URL.revokeObjectURL(url)
   }
 
-  // ─── Render ─────────────────────────────────────────────────
+  const panelOpen = !!selectedRow && isDesktop
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <QuietPageHeader
         title="Screener IDX"
-        info="Screening fundamental semua emiten IDX: valuasi konsensus (fair value, margin of safety) + rasio kunci per tahun buku lengkap terakhir. Data snapshot kuartalan, bukan real-time."
         actions={
-          <Button size="sm" onClick={exportCsv} disabled={isLoading || sorted.length === 0}>
+          <Button variant="outline" size="sm" className="max-md:h-11" onClick={exportCsv} disabled={isLoading || visible.length === 0}>
             <Download data-icon="inline-start" />
-            Export CSV
+            Ekspor CSV
           </Button>
         }
       />
-      <p className="text-xs -mt-2" style={{ color: 'var(--ink-muted)' }}>
-        {isLoading ? 'Memuat data emiten…' : `${rows.length.toLocaleString('id-ID')} emiten IDX · snapshot kuartalan`}
-      </p>
+      {meta && (
+        <p className="text-xs -mt-1" style={{ color: 'var(--text-faint)' }}>
+          {meta.disclaimer} {asOfLine(meta)}
+        </p>
+      )}
 
-      {/* ─── Filter bar ─── */}
-      <div className="s-card s-card-pad space-y-3">
+      {/* ─── Kontrol ─── */}
+      <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5" style={{ color: 'var(--ink-soft)' }} />
+          <div
+            role="group"
+            aria-label="Set kolom"
+            className="inline-flex rounded-lg border p-0.5"
+            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+          >
+            {COLUMN_SETS.map((s) => {
+              const active = s.key === colSet
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setColSet(s.key)}
+                  className="min-h-10 rounded-md px-3 text-xs font-medium transition-colors duration-100 md:min-h-0 md:h-7"
+                  style={{
+                    background: active ? 'var(--surface-2)' : 'transparent',
+                    color: active ? 'var(--ink)' : 'var(--ink-soft)',
+                  }}
+                >
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="relative min-w-[180px] flex-1 md:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2" style={{ color: 'var(--ink-soft)' }} />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari ticker / nama emiten…"
-              className="pl-9 h-8 text-sm"
+              placeholder="Cari ticker atau nama"
               aria-label="Cari ticker atau nama emiten"
+              className="h-11 pl-9 text-sm md:h-8"
             />
           </div>
-          {/* Min/max per metrik — kosong = tanpa batas */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            {RANGE_FIELDS.map(({ key, label }) => (
-              <div key={key} className="flex items-center gap-1">
-                <span className="text-[11px] font-medium whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{label}</span>
-                <Input
-                  value={ranges[key].min}
-                  onChange={(e) => setRange(key, 'min', e.target.value)}
-                  placeholder="min"
-                  inputMode="decimal"
-                  className="h-8 w-16 px-2 text-xs num tabular"
-                  aria-label={`${label} minimum`}
-                />
-                <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>–</span>
-                <Input
-                  value={ranges[key].max}
-                  onChange={(e) => setRange(key, 'max', e.target.value)}
-                  placeholder="max"
-                  inputMode="decimal"
-                  className="h-8 w-16 px-2 text-xs num tabular"
-                  aria-label={`${label} maksimum`}
-                />
-              </div>
-            ))}
-          </div>
-          <Button variant="outline" size="sm" onClick={resetFilters} disabled={!hasFilter}>
-            <RotateCcw data-icon="inline-start" />
-            Reset
-          </Button>
+
+          <AdvancedFilter ranges={ranges} onChange={setRanges} count={nRanges} />
+
+          {!isDefault && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="min-h-11 px-2 text-xs font-medium underline-offset-4 hover:underline md:min-h-0"
+              style={{ color: 'var(--ink-soft)' }}
+            >
+              Reset
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="eyebrow mr-1">Verdict</span>
-          {VERDICT_OPTIONS.map(({ key, label }) => (
-            <FilterChip
-              key={key}
-              label={label}
-              active={verdictSel.has(key)}
-              onToggle={() => setVerdictSel((prev) => toggleIn(prev, key))}
-            />
+          {PRESETS.map((p) => (
+            <Chip key={p.key} active={presets.has(p.key)} onClick={() => setPresets((s) => toggleIn(s, p.key))}>
+              {p.label}
+            </Chip>
           ))}
         </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="eyebrow mr-1">Sektor</span>
-          {sectors.map((s) => (
-            <FilterChip
-              key={s}
-              label={s}
-              active={sectorSel.has(s)}
-              onToggle={() => setSectorSel((prev) => toggleIn(prev, s))}
-            />
+        {/* Sektor: satu baris geser horizontal di mobile, membungkus di desktop */}
+        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:overflow-visible md:px-0" aria-label="Filter sektor" role="group">
+          {sectorList.map((s) => (
+            <Chip key={s} active={sectors.has(s)} onClick={() => setSectors((prev) => toggleIn(prev, s))}>
+              {s}
+            </Chip>
           ))}
         </div>
       </div>
 
       {!isLoading && !isError && (
-        <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-          {sorted.length.toLocaleString('id-ID')} dari {rows.length.toLocaleString('id-ID')} emiten lolos filter
+        <p className="text-xs num" style={{ color: 'var(--ink-soft)' }}>
+          {visible.length.toLocaleString('id-ID')} dari {rows.length.toLocaleString('id-ID')} emiten
         </p>
       )}
 
-      {/* ─── Loading: skeleton table ─── */}
+      {isError && (
+        <div className="s-card flex flex-col items-center p-10 text-center">
+          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Gagal memuat data screener</p>
+          <Button size="sm" className="mt-4" onClick={() => void refetch()}>Coba lagi</Button>
+        </div>
+      )}
+
       {isLoading && (
         <div className="s-card overflow-hidden" aria-busy="true" aria-label="Memuat tabel screener">
-          <div className="h-9 border-b animate-pulse" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }} />
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-3 border-b" style={{ height: 38, borderColor: 'var(--border-soft)' }}>
-              <div className="h-3 w-12 rounded animate-pulse" style={{ background: 'var(--surface-2)' }} />
-              <div className="h-3 flex-1 max-w-[220px] rounded animate-pulse" style={{ background: 'var(--surface-2)' }} />
-              <div className="ml-auto h-3 w-40 rounded animate-pulse" style={{ background: 'var(--surface-2)' }} />
+            <div key={i} className="flex h-10 items-center gap-3 border-b px-3" style={{ borderColor: 'var(--border-soft)' }}>
+              <div className="h-3 w-12 animate-pulse rounded" style={{ background: 'var(--surface-2)' }} />
+              <div className="h-3 max-w-[220px] flex-1 animate-pulse rounded" style={{ background: 'var(--surface-2)' }} />
             </div>
           ))}
         </div>
       )}
 
-      {/* ─── Error: kartu retry ─── */}
-      {isError && (
-        <div className="s-card p-10 flex flex-col items-center text-center">
-          <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Gagal memuat data screener</p>
-          <p className="text-xs mt-1 max-w-sm" style={{ color: 'var(--ink-muted)' }}>
-            Coba ulang — kalau masih gagal, kemungkinan sumber data lagi bermasalah.
-          </p>
-          <Button size="sm" className="mt-4" onClick={() => void refetch()}>
-            Coba lagi
-          </Button>
-        </div>
-      )}
-
-      {/* ─── Tabel dense (≥lg) — sticky header pola .tx-scroll ───
-          tableLayout fixed + lebar % (preseden tabel transaksi): truncate di
-          kolom teks, jadi gak pernah butuh scroll horizontal (yang matahin
-          sticky thead). */}
       {!isLoading && !isError && (
-        <>
-          <div className="tx-scroll s-card hidden lg:block">
-            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+        <div className={panelOpen ? 'grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_360px]' : ''}>
+          {/* Satu area gulir (halaman); thead sticky ke bawah TopNav via .tx-scroll */}
+          <div className="tx-scroll s-card">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed', borderCollapse: 'separate', borderSpacing: 0 }}>
               <colgroup>
-                <col style={{ width: '6.5%' }} />{/* Ticker */}
-                <col style={{ width: '16%' }} />{/* Nama */}
-                <col style={{ width: '9.5%' }} />{/* Sektor */}
-                <col style={{ width: '7%' }} />{/* Harga */}
-                <col style={{ width: '7%' }} />{/* Fair Value */}
-                <col style={{ width: '7%' }} />{/* MoS% */}
-                <col style={{ width: '6.5%' }} />{/* PER */}
-                <col style={{ width: '6.5%' }} />{/* PBV */}
-                <col style={{ width: '6.5%' }} />{/* ROE% */}
-                <col style={{ width: '6.5%' }} />{/* Yield% */}
-                <col style={{ width: '10.5%' }} />{/* MCap */}
-                <col style={{ width: '10.5%' }} />{/* Verdict */}
+                {cols.map((k) => (
+                  <col
+                    key={k}
+                    className={MOBILE_COLS[colSet].has(k) ? '' : 'max-md:hidden'}
+                    style={{ width: `${(COLS[k].w / totalW) * 100}%` }}
+                  />
+                ))}
               </colgroup>
               <thead>
                 <tr>
-                  {COLUMNS.map((col) => {
-                    const active = sort.key === col.key
+                  {cols.map((k) => {
+                    const c = COLS[k]
+                    const active = sort.key === k
                     return (
                       <th
-                        key={col.key}
+                        key={k}
                         aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
-                        className="px-2.5 py-2.5 text-[11px] uppercase tracking-[0.08em] font-semibold whitespace-nowrap"
+                        className={`h-9 px-3 text-[11px] font-medium ${MOBILE_COLS[colSet].has(k) ? '' : 'max-md:hidden'}`}
                         style={{ color: 'var(--ink-soft)' }}
                       >
                         <button
                           type="button"
-                          onClick={() => toggleSort(col.key)}
-                          className={`inline-flex w-full items-center gap-0.5 uppercase tracking-[0.08em] font-semibold transition-colors duration-100 hover:text-[var(--ink)] ${col.numeric ? 'justify-end' : 'justify-start'}`}
-                          style={{ color: active ? 'var(--ink)' : 'inherit' }}
+                          onClick={() => toggleSort(k)}
+                          className={`inline-flex w-full items-center gap-0.5 whitespace-nowrap ${c.numeric ? 'justify-end' : ''}`}
+                          style={{ color: active ? 'var(--ink)' : undefined }}
                         >
-                          {col.label}
+                          <span className="truncate">{c.label}</span>
                           {active && (sort.dir === 'asc'
-                            ? <ArrowUp className="size-3 shrink-0" aria-hidden="true" />
-                            : <ArrowDown className="size-3 shrink-0" aria-hidden="true" />)}
+                            ? <ArrowUp className="size-3 shrink-0" aria-hidden />
+                            : <ArrowDown className="size-3 shrink-0" aria-hidden />)}
                         </button>
                       </th>
                     )
@@ -443,59 +435,47 @@ export default function ScreenerPage() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((r) => {
-                  const bucket = verdictBucket(r.verdict)
+                {visible.map((r) => {
+                  const isSel = r.ticker === selected
                   return (
                     <tr
                       key={r.ticker}
-                      onClick={() => router.push(`${RESEARCH_HREF}/${r.ticker}`)}
-                      className="border-t cursor-pointer transition-colors duration-100 hover:bg-[var(--surface-2)]"
-                      // content-visibility: baris di luar viewport gak di-render →
-                      // ±1.000 baris tetap ringan tanpa dependency virtualization.
+                      onClick={() => setSelected(isSel ? null : r.ticker)}
+                      className="cursor-pointer transition-colors duration-100 hover:bg-[var(--surface-2)]"
                       style={{
-                        borderColor: 'var(--border-soft)',
+                        background: isSel ? 'var(--surface-2)' : undefined,
                         contentVisibility: 'auto',
-                        containIntrinsicSize: 'auto 38px',
+                        containIntrinsicSize: 'auto 40px',
                       }}
                     >
-                      <td className="px-2.5 py-2 font-mono font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                        <Link
-                          href={`${RESEARCH_HREF}/${r.ticker}`}
-                          className="hover:underline"
-                          onClick={(e) => e.stopPropagation()}
+                      {cols.map((k) => (
+                        <td
+                          key={k}
+                          className={`h-11 border-t px-3 md:h-10 ${COLS[k].numeric ? 'num text-right' : ''} ${MOBILE_COLS[colSet].has(k) ? '' : 'max-md:hidden'}`}
+                          style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
                         >
-                          {r.ticker}
-                        </Link>
-                      </td>
-                      <td className="px-2.5 py-2 truncate" style={{ color: 'var(--ink-muted)' }}>{r.name}</td>
-                      <td className="px-2.5 py-2 truncate" style={{ color: 'var(--ink-soft)' }}>{r.sector ?? '—'}</td>
-                      <td className="px-2.5 py-2 text-right num tabular truncate" style={{ color: 'var(--ink)' }}>{formatPrice(r.price)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular truncate" style={{ color: 'var(--ink-muted)' }}>{formatPrice(r.fairValue != null ? Math.round(r.fairValue) : null)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular font-semibold truncate" style={{ color: signColorVar(r.mos) }}>{formatPercentValue(r.mos)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular truncate" style={{ color: 'var(--ink)' }}>{formatRatio(r.per)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular truncate" style={{ color: 'var(--ink)' }}>{formatRatio(r.pbv)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular truncate" style={{ color: 'var(--ink)' }}>{formatPercentValue(r.roe)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular truncate" style={{ color: 'var(--ink)' }}>{formatPercentValue(r.divYield)}</td>
-                      <td className="px-2.5 py-2 text-right num tabular text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>{formatIDRCompact(r.mcap)}</td>
-                      <td className="px-2.5 py-2 truncate">
-                        {bucket ? (
-                          <span
-                            className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                            style={verdictChipStyle(bucket)}
-                          >
-                            {(r.verdict ?? '').toLowerCase()}
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--ink-soft)' }}>—</span>
-                        )}
-                      </td>
+                          {k === 'ticker' ? (
+                            <button
+                              type="button"
+                              aria-expanded={isSel}
+                              onClick={(e) => { e.stopPropagation(); setSelected(isSel ? null : r.ticker) }}
+                              className="flex w-full min-w-0 items-baseline gap-2 text-left"
+                            >
+                              <span className="font-semibold" style={{ color: 'var(--ink)' }}>{r.ticker}</span>
+                              <span className="truncate" style={{ color: 'var(--ink-soft)' }}>{r.name}</span>
+                            </button>
+                          ) : (
+                            <span className="block truncate">{COLS[k].render(r)}</span>
+                          )}
+                        </td>
+                      ))}
                     </tr>
                   )
                 })}
-                {sorted.length === 0 && (
+                {visible.length === 0 && (
                   <tr>
-                    <td colSpan={COLUMNS.length} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-                      Tidak ada emiten yang cocok dengan filter — coba longgarkan batasnya.
+                    <td colSpan={cols.length} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
+                      Tidak ada emiten yang cocok. Longgarkan filter atau tekan Reset.
                     </td>
                   </tr>
                 )}
@@ -503,48 +483,243 @@ export default function ScreenerPage() {
             </table>
           </div>
 
-          {/* <lg (mobile + tablet): list compact — kolom lengkap khusus desktop */}
-          <div className="s-card overflow-hidden lg:hidden">
-            {sorted.map((r, i) => (
-              <Link
-                key={r.ticker}
-                href={`${RESEARCH_HREF}/${r.ticker}`}
-                className="flex items-center gap-3 px-3.5 transition-colors active:bg-[var(--surface-2)]"
-                style={{
-                  minHeight: 52,
-                  borderTop: i ? '1px solid var(--border-soft)' : 'none',
-                  contentVisibility: 'auto',
-                  containIntrinsicSize: 'auto 52px',
-                }}
-              >
-                <span className="font-mono text-[11px] font-bold px-1.5 py-1 rounded shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
-                  {r.ticker}
-                </span>
-                <span className="min-w-0 flex-1 py-2">
-                  <span className="block truncate text-[13px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</span>
-                  <span className="mt-0.5 block truncate text-[11px] leading-tight" style={{ color: 'var(--ink-soft)' }}>
-                    {r.sector ?? '—'}{r.per != null ? ` · PER ${formatRatio(r.per)}` : ''}
-                  </span>
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="num tabular block text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatPrice(r.price)}</span>
-                  <span className="num tabular mt-0.5 block text-[11px] font-semibold leading-tight" style={{ color: signColorVar(r.mos) }}>{formatPercentValue(r.mos)}</span>
-                </span>
-                <ArrowUpRight className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
-              </Link>
-            ))}
-            {sorted.length === 0 && (
-              <p className="px-6 py-12 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-                Tidak ada emiten yang cocok dengan filter.
-              </p>
-            )}
-          </div>
-        </>
+          {panelOpen && meta && (
+            <aside
+              aria-label={`Detail ${selectedRow.ticker}`}
+              className="s-card sticky top-[69px] max-h-[calc(100dvh-81px)] overflow-y-auto overscroll-contain"
+            >
+              <DetailPanel row={selectedRow} meta={meta} onClose={() => setSelected(null)} />
+            </aside>
+          )}
+        </div>
       )}
 
-      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-        Data snapshot kuartalan (bukan real-time). PER/PBV/yield dihitung dari harga snapshot terhadap tahun buku
-        lengkap terakhir; fair value = median konsensus multi-metode. Bukan rekomendasi jual/beli.
+      {!isDesktop && selectedRow && meta && (
+        <BottomSheet
+          open
+          onOpenChange={(o) => { if (!o) setSelected(null) }}
+          title={`${selectedRow.ticker} · ${selectedRow.name}`}
+          hideTitle
+        >
+          <DetailPanel row={selectedRow} meta={meta} onClose={() => setSelected(null)} />
+        </BottomSheet>
+      )}
+    </div>
+  )
+}
+
+// ─── Popover "Lanjutan" ─────────────────────────────────────────
+
+function AdvancedFilter({ ranges, onChange, count }: { ranges: Ranges; onChange: (r: Ranges) => void; count: number }) {
+  return (
+    <Popover.Root>
+      <Popover.Trigger
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium md:min-h-0 md:h-8"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface)', color: 'var(--ink)' }}
+      >
+        <SlidersHorizontal className="size-3.5" aria-hidden />
+        Lanjutan{count > 0 && <span className="num" style={{ color: 'var(--ink-soft)' }}>· {count}</span>}
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="bottom" align="start" sideOffset={8} className="z-50">
+          <Popover.Popup
+            className="w-[min(320px,calc(100vw-2rem))] rounded-xl border p-3 outline-none"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--shadow-lg)' }}
+          >
+            <div className="space-y-2">
+              {RANGE_FIELDS.map(({ key, label }) => (
+                <div key={key} className="grid grid-cols-[72px_1fr_auto_1fr] items-center gap-2">
+                  <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>{label}</span>
+                  <Input
+                    value={ranges[key].min}
+                    onChange={(e) => onChange({ ...ranges, [key]: { ...ranges[key], min: e.target.value } })}
+                    placeholder="min"
+                    inputMode="decimal"
+                    aria-label={`${label} minimum`}
+                    className="num h-11 px-2 text-xs md:h-8"
+                  />
+                  <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>–</span>
+                  <Input
+                    value={ranges[key].max}
+                    onChange={(e) => onChange({ ...ranges, [key]: { ...ranges[key], max: e.target.value } })}
+                    placeholder="maks"
+                    inputMode="decimal"
+                    aria-label={`${label} maksimum`}
+                    className="num h-11 px-2 text-xs md:h-8"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <Button variant="ghost" size="sm" onClick={() => onChange(EMPTY_RANGES)} disabled={count === 0}>
+                Kosongkan
+              </Button>
+            </div>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  )
+}
+
+// ─── Panel detail ───────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="border-t px-4 py-3" style={{ borderColor: 'var(--border-soft)' }}>
+      <h3 className="mb-2 text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>{title}</h3>
+      {children}
+    </section>
+  )
+}
+
+function DetailPanel({ row: r, meta, onClose }: { row: ScreenerRow; meta: ScreenerMeta; onClose: () => void }) {
+  const notes = riskNotes(r)
+  const pctiles: { label: string; v: number | null | undefined }[] = [
+    { label: 'Nilai', v: r.score?.value },
+    { label: 'Profitabilitas', v: r.score?.prof },
+    { label: 'Keamanan', v: r.score?.safety },
+  ]
+  return (
+    <div className="text-sm">
+      <div className="flex items-start gap-3 px-4 pt-4 pb-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold" style={{ color: 'var(--ink)' }}>{r.name}</p>
+          <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--ink-soft)' }}>
+            {r.ticker} · {[...new Set([r.sector, r.subSector].filter(Boolean))].join(' · ') || EMPTY}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Tutup detail"
+          className="grid size-11 shrink-0 place-items-center rounded-md md:size-8 hover:bg-[var(--surface-2)]"
+          style={{ color: 'var(--ink-soft)' }}
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+
+      <dl className="grid grid-cols-3 gap-2 px-4 pb-3 text-xs">
+        {[
+          ['Harga', fmtPrice(r.price)],
+          ['Kapitalisasi', fmtIdrCompact(r.mcap)],
+          ['Skor gabungan', fmtPctile(r.score?.composite)],
+        ].map(([k, v]) => (
+          <div key={k}>
+            <dt style={{ color: 'var(--ink-soft)' }}>{k}</dt>
+            <dd className="num mt-0.5 text-sm" style={{ color: 'var(--ink)' }}>{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <Section title="Persentil sektor">
+        {r.hasScore && r.group !== 'bank' ? (
+          <div className="space-y-2">
+            {pctiles.map((p) => (
+              <div key={p.label} className="grid grid-cols-[96px_1fr] items-center gap-3 text-xs">
+                <span style={{ color: 'var(--ink-muted)' }}>{p.label}</span>
+                <Pctile v={p.v} wide />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {r.group === 'bank' ? 'Bank hanya punya skor gabungan.' : 'Belum ada skor riset untuk emiten ini.'}
+          </p>
+        )}
+      </Section>
+
+      <Section title="Nilai wajar">
+        <FairValue row={r} />
+      </Section>
+
+      <Section title="Penanda risiko">
+        {notes.length > 0 ? (
+          <ul className="space-y-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {notes.map((n) => <li key={n}>{n}</li>)}
+          </ul>
+        ) : (
+          <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+            {r.flags ? 'Tidak ada penanda aktif.' : EMPTY}
+          </p>
+        )}
+      </Section>
+
+      <div className="space-y-3 border-t px-4 py-3" style={{ borderColor: 'var(--border-soft)' }}>
+        <Link
+          href={`${RESEARCH_HREF}/${r.ticker}`}
+          className="inline-flex min-h-11 items-center gap-1 text-xs font-medium underline-offset-4 hover:underline md:min-h-0"
+          style={{ color: 'var(--ink)' }}
+        >
+          Buka halaman riset {r.ticker}
+          <ArrowUpRight className="size-3.5" aria-hidden />
+        </Link>
+        {r.modelClass && (
+          <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+            {r.modelClass.label} · kelas model riset, belum tervalidasi
+          </p>
+        )}
+        <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>{asOfLine(meta)}</p>
+      </div>
+    </div>
+  )
+}
+
+/** Rentang konservatif–dasar–optimistis + penanda harga; hanya status andal. */
+function FairValue({ row: r }: { row: ScreenerRow }) {
+  const v = r.valuation
+  const muted = (t: string) => <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>{t}</p>
+  if (!v) return muted('Belum ada nilai wajar model untuk emiten ini.')
+  if (v.status === 'unreliable') return muted('Valuasi belum andal')
+  if (v.status === 'not_valued') return muted('Riwayat laba belum cukup')
+  if (v.status === 'bank_pb') {
+    return (
+      <dl className="grid grid-cols-2 gap-2 text-xs">
+        {[['P/B wajar', fmtRatio(v.pbJustified)], ['P/B pasar', fmtRatio(v.pbMarket)]].map(([k, val]) => (
+          <div key={k}>
+            <dt style={{ color: 'var(--ink-soft)' }}>{k}</dt>
+            <dd className="num mt-0.5 text-sm" style={{ color: 'var(--ink)' }}>{val}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+
+  const { cons, base, opt, gap } = v
+  if (cons == null || base == null || opt == null) return muted('Valuasi belum andal')
+  const price = r.price
+  const lo = Math.min(cons, price ?? cons)
+  const hi = Math.max(opt, price ?? opt)
+  const span = hi - lo || 1
+  const at = (x: number) => `${((x - lo) / span) * 100}%`
+
+  return (
+    <div>
+      <div className="relative mx-1 mt-5 mb-2 h-[2px]" style={{ background: 'var(--border)' }}>
+        <span
+          className="absolute inset-y-0"
+          style={{ left: at(cons), width: `calc(${at(opt)} - ${at(cons)})`, background: 'var(--text-faint)' }}
+        />
+        <span className="absolute -top-[3px] h-2 w-px" style={{ left: at(base), background: 'var(--ink)' }} aria-hidden />
+        {price != null && (
+          <span className="absolute -top-5 -translate-x-1/2 text-center" style={{ left: at(price) }}>
+            <span className="num block text-[10px] leading-none" style={{ color: 'var(--ink)' }}>{fmtPrice(price)}</span>
+            <span className="mx-auto mt-1 block size-2 rounded-full border-2" style={{ borderColor: 'var(--ink)', background: 'var(--surface)' }} />
+          </span>
+        )}
+      </div>
+      <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        {[['Konservatif', cons], ['Dasar', base], ['Optimistis', opt]].map(([k, val]) => (
+          <div key={k as string}>
+            <dt style={{ color: 'var(--ink-soft)' }}>{k}</dt>
+            <dd className="num mt-0.5" style={{ color: 'var(--ink)' }}>{fmtPrice(val as number)}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-xs" style={{ color: 'var(--ink-muted)' }}>
+        Selisih nilai wajar dasar terhadap harga{' '}
+        <span className="num" style={{ color: signColor(gap) }}>{fmtPct(gap)}</span>
       </p>
     </div>
   )
