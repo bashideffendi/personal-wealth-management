@@ -4,7 +4,8 @@ import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
-import { rateLimit } from '@/lib/rate-limit'
+import { aiRateLimit, aiRateLimitMessage } from '@/lib/rate-limit'
+import { sanitizeMutasi } from '@/lib/ai/sanitize'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -121,10 +122,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Burst guard (AI abuse) — per-user; see src/lib/rate-limit.ts
-  const rl = rateLimit(`ai:${user.id}`)
+  const rl = aiRateLimit(user.id)
   if (!rl.ok) {
     return NextResponse.json(
-      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { error: aiRateLimitMessage(rl) },
       { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
     )
   }
@@ -138,6 +139,13 @@ export async function POST(request: NextRequest) {
 
   // Charge credits up-front. Bulk import = 5 credits (vs 1 for single receipt).
   // We could meter per-token but flat fee keeps the UX predictable.
+  // Tolak body raksasa SEBELUM formData()/json() mem-buffer semuanya ke memori
+  // (dan sebelum kredit dipotong). +1MB slack buat overhead multipart/JSON.
+  const declaredLen = Number(request.headers.get('content-length') ?? 0)
+  if (declaredLen > MAX_PDF_BYTES + 1024 * 1024) {
+    return NextResponse.json({ error: 'Upload terlalu besar. Maks 10MB.' }, { status: 413 })
+  }
+
   // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
   // proteksi abuse tetap lewat rateLimit di atas.
   const credit: CreditCheckResult = BILLING_ENABLED
@@ -266,15 +274,12 @@ export async function POST(request: NextRequest) {
     // ai-5: kalau AI nemu 0 transaksi valid, user gak dapet hasil apa-apa →
     // balikin kreditnya (refund di-clamp server-side, gak bisa over-grant).
     // Ini success-path (gak ada error) jadi gak bentrok sama refund di catch.
-    const parsed = toolUseBlock.input as {
-      transactions?: Array<{
-        description?: unknown
-        type?: unknown
-        category?: unknown
-        rule_applied?: boolean
-      }>
-    }
-    const txCount = Array.isArray(parsed.transactions) ? parsed.transactions.length : 0
+    // Output model = data tak tepercaya (mutasi bisa berisi teks injeksi) →
+    // buang baris invalid, clamp amount/tanggal/enum sebelum preview/bulk insert.
+    const parsed: ReturnType<typeof sanitizeMutasi> & {
+      transactions: Array<ReturnType<typeof sanitizeMutasi>['transactions'][number] & { rule_applied?: boolean }>
+    } = sanitizeMutasi(toolUseBlock.input)
+    const txCount = parsed.transactions.length
     if (txCount === 0) {
       await refundAICredits(supabase, user.id, 'mutasi_import')
     }
@@ -295,8 +300,7 @@ export async function POST(request: NextRequest) {
           expense: EXPENSE_CATEGORIES,
           income: INCOME_CATEGORIES,
         }
-        for (const tx of parsed.transactions ?? []) {
-          if (typeof tx.description !== 'string' || typeof tx.type !== 'string') continue
+        for (const tx of parsed.transactions) {
           const rule = matchCategorizationRule(tx.description, rules as MatchableRule[])
           if (
             rule &&
@@ -311,7 +315,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      data: toolUseBlock.input,
+      data: parsed,
       refunded: txCount === 0,
       usage: {
         input_tokens: response.usage.input_tokens,

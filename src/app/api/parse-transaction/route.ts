@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { aiRateLimit, aiRateLimitMessage } from '@/lib/rate-limit'
+import { sanitizeParsedTransaction } from '@/lib/ai/sanitize'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -51,10 +52,10 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Burst guard (AI abuse) — per-user; see src/lib/rate-limit.ts
-  const rl = rateLimit(`ai:${user.id}`)
+  const rl = aiRateLimit(user.id)
   if (!rl.ok) {
     return NextResponse.json(
-      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { error: aiRateLimitMessage(rl) },
       { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
     )
   }
@@ -151,8 +152,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Output model = data tak tepercaya (teks user bisa berisi prompt injection)
+    // → whitelist enum, clamp amount, potong string sebelum jadi preview.
+    const data = sanitizeParsedTransaction(block.input)
+    if (!data) {
+      return NextResponse.json({ error: 'Nominal tidak terbaca. Coba tulis ulang.' }, { status: 422 })
+    }
+
     return NextResponse.json({
-      data: block.input,
+      data,
       usage: {
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,

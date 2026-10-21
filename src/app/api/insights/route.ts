@@ -4,7 +4,8 @@ import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
-import { rateLimit } from '@/lib/rate-limit'
+import { aiRateLimit, aiRateLimitMessage } from '@/lib/rate-limit'
+import { str, isoDate } from '@/lib/ai/sanitize'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -68,10 +69,10 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Burst guard (AI abuse) — per-user; see src/lib/rate-limit.ts
-  const rl = rateLimit(`ai:${user.id}`)
+  const rl = aiRateLimit(user.id)
   if (!rl.ok) {
     return NextResponse.json(
-      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { error: aiRateLimitMessage(rl) },
       { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
     )
   }
@@ -91,16 +92,31 @@ export async function POST(request: NextRequest) {
     const raw = (await request.json()) as Record<string, unknown>
     const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
     const lm = raw.last_month && typeof raw.last_month === 'object' ? (raw.last_month as Record<string, unknown>) : null
+    // Item array juga dinormalkan + dibatasi jumlah & panjang string: body ini
+    // masuk mentah ke prompt — tanpa batas, satu request bisa membawa ratusan
+    // ribu token (biaya Anthropic) atau field hilang yang bikin .toFixed() crash.
+    const arr = (v: unknown, max: number) =>
+      (Array.isArray(v) ? v : []).slice(0, max).filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
+    const s = (v: unknown, max = 80) => str(v, max)
     input = {
-      period_label: typeof raw.period_label === 'string' ? raw.period_label : '',
+      period_label: s(raw.period_label, 40),
       income: num(raw.income), expense: num(raw.expense), saving: num(raw.saving),
       investment: num(raw.investment), net: num(raw.net), saving_rate: num(raw.saving_rate),
       last_month: lm ? { income: num(lm.income), expense: num(lm.expense), saving: num(lm.saving), investment: num(lm.investment) } : undefined,
-      expense_by_category: (Array.isArray(raw.expense_by_category) ? raw.expense_by_category : []) as InsightInput['expense_by_category'],
-      top_expenses: (Array.isArray(raw.top_expenses) ? raw.top_expenses : []) as InsightInput['top_expenses'],
-      goals: (Array.isArray(raw.goals) ? raw.goals : []) as InsightInput['goals'],
-      upcoming_bills: (Array.isArray(raw.upcoming_bills) ? raw.upcoming_bills : []) as InsightInput['upcoming_bills'],
-      today: typeof raw.today === 'string' ? raw.today : new Date().toISOString().slice(0, 10),
+      expense_by_category: arr(raw.expense_by_category, 20).map((c) => ({
+        category: s(c.category, 60), this_month: num(c.this_month), last_month: num(c.last_month),
+      })),
+      top_expenses: arr(raw.top_expenses, 10).map((t) => ({
+        description: s(t.description, 100), category: s(t.category, 60), amount: num(t.amount), date: s(t.date, 10),
+      })),
+      goals: arr(raw.goals, 10).map((g) => ({
+        name: s(g.name), progress_pct: num(g.progress_pct), remaining: num(g.remaining),
+        deadline: s(g.deadline, 10) || undefined,
+      })),
+      upcoming_bills: arr(raw.upcoming_bills, 10).map((b) => ({
+        name: s(b.name), days_until: num(b.days_until), amount: num(b.amount),
+      })),
+      today: isoDate(raw.today) ?? new Date().toISOString().slice(0, 10),
     }
   } catch {
     return NextResponse.json({ error: 'Body harus JSON' }, { status: 400 })

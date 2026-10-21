@@ -47,3 +47,45 @@ describe('rateLimit — burst guard', () => {
     expect(rateLimit(k).remaining).toBe(29) // limit default 30
   })
 })
+
+describe('aiRateLimit — burst + plafon harian', () => {
+  afterEach(() => {
+    delete process.env.AI_DAILY_LIMIT
+  })
+
+  it('blokir setelah plafon harian walau jendela menit sudah reset', async () => {
+    const { aiRateLimit, aiRateLimitMessage } = await import('./rate-limit')
+    vi.useFakeTimers()
+    process.env.AI_DAILY_LIMIT = '3'
+    const u = `user-${key()}`
+    for (let i = 0; i < 3; i++) {
+      expect(aiRateLimit(u).ok).toBe(true)
+      vi.advanceTimersByTime(61_000) // reset jendela menit tiap kali
+    }
+    const blocked = aiRateLimit(u)
+    expect(blocked.ok).toBe(false)
+    expect(blocked.retryAfterSec).toBeGreaterThan(60)
+    expect(aiRateLimitMessage(blocked)).toMatch(/harian/)
+
+    // Lewat 24 jam → boleh lagi.
+    vi.advanceTimersByTime(86_400_000)
+    expect(aiRateLimit(u).ok).toBe(true)
+  })
+
+  it('burst 30/menit tetap berlaku dan tidak memotong kuota harian saat ditolak', async () => {
+    const { aiRateLimit, aiRateLimitMessage } = await import('./rate-limit')
+    vi.useFakeTimers()
+    process.env.AI_DAILY_LIMIT = '31'
+    const u = `user-${key()}`
+    for (let i = 0; i < 30; i++) expect(aiRateLimit(u).ok).toBe(true)
+    const burst = aiRateLimit(u)
+    expect(burst.ok).toBe(false)
+    expect(burst.retryAfterSec).toBeLessThanOrEqual(60)
+    expect(aiRateLimitMessage(burst)).toMatch(/detik/)
+    // Request yang ditolak burst tidak memakan kuota harian: masih sisa 1.
+    vi.advanceTimersByTime(61_000)
+    expect(aiRateLimit(u).ok).toBe(true)
+    vi.advanceTimersByTime(61_000)
+    expect(aiRateLimit(u).ok).toBe(false)
+  })
+})

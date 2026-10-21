@@ -45,3 +45,37 @@ export function rateLimit(
   b.count += 1
   return { ok: true, remaining: limit - b.count, retryAfterSec: 0 }
 }
+
+/** Default plafon harian panggilan AI per user (override: env AI_DAILY_LIMIT). */
+export const AI_DAILY_LIMIT_DEFAULT = 200
+
+function aiDailyLimit(): number {
+  const n = Number.parseInt(process.env.AI_DAILY_LIMIT ?? '', 10)
+  return Number.isFinite(n) && n > 0 ? n : AI_DAILY_LIMIT_DEFAULT
+}
+
+/**
+ * Guard gabungan untuk SEMUA endpoint AI (scan struk, parse, insights, import,
+ * playbook, research): burst 30/menit + plafon HARIAN per user.
+ *
+ * Kenapa plafon harian: selama billing beku (NEXT_PUBLIC_BILLING_ENABLED≠1)
+ * metering kredit dilewati, jadi satu-satunya rem biaya Anthropic adalah rate
+ * limit. Burst 30/menit saja = ±43rb panggilan/hari/user (tak terbatas secara
+ * praktis). Plafon harian menutup itu di lapis pertama. Tetap per-instance
+ * (lihat LIMITATION di atas) — rem global yang tahan cold start butuh counter
+ * di DB/Redis.
+ *
+ * Bucket harian hanya dipotong kalau bucket menit lolos.
+ */
+export function aiRateLimit(userId: string): RateLimitResult {
+  const burst = rateLimit(`ai:${userId}`)
+  if (!burst.ok) return burst
+  return rateLimit(`ai-day:${userId}`, { limit: aiDailyLimit(), windowMs: 86_400_000 })
+}
+
+/** Pesan 429 standar untuk aiRateLimit (menit vs harian). */
+export function aiRateLimitMessage(r: RateLimitResult): string {
+  return r.retryAfterSec > 60
+    ? 'Batas harian fitur AI tercapai. Coba lagi besok.'
+    : `Terlalu banyak permintaan AI. Coba lagi dalam ${r.retryAfterSec} detik.`
+}

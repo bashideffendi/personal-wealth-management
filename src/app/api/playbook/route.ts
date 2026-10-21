@@ -4,7 +4,8 @@ import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
-import { rateLimit } from '@/lib/rate-limit'
+import { aiRateLimit, aiRateLimitMessage } from '@/lib/rate-limit'
+import { isoDate } from '@/lib/ai/sanitize'
 import { getPlaybook } from '@/lib/playbooks'
 
 export const runtime = 'nodejs'
@@ -88,10 +89,10 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const rl = rateLimit(`ai:${user.id}`)
+  const rl = aiRateLimit(user.id)
   if (!rl.ok) {
     return NextResponse.json(
-      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { error: aiRateLimitMessage(rl) },
       { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
     )
   }
@@ -107,7 +108,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Body harus JSON' }, { status: 400 })
   }
 
-  const playbook = getPlaybook(body.slug)
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Body harus JSON' }, { status: 400 })
+  }
+  const playbook = getPlaybook(typeof body.slug === 'string' ? body.slug : '')
   if (!playbook) {
     return NextResponse.json({ error: 'Playbook tidak dikenal' }, { status: 400 })
   }
@@ -140,14 +144,17 @@ export async function POST(request: NextRequest) {
     const raw = body.inputs?.[field.key]
     if (raw === undefined || raw === '' || raw === null) continue
     let valueStr: string
+    // Hanya nilai yang dikenal yang masuk prompt: select harus cocok opsi,
+    // number harus angka finit. Dulu fallback String(raw) → teks bebas
+    // sepanjang apa pun dari client ikut ke prompt (injeksi + biaya token).
     if (field.type === 'select') {
       const opt = field.options?.find((o) => o.value === String(raw))
-      valueStr = opt?.label ?? String(raw)
+      if (!opt) continue
+      valueStr = opt.label
     } else {
       const n = Number(raw)
-      valueStr = Number.isFinite(n)
-        ? `${field.prefix ? field.prefix + ' ' : ''}${n.toLocaleString('id-ID')}`
-        : String(raw)
+      if (!Number.isFinite(n)) continue
+      valueStr = `${field.prefix ? field.prefix + ' ' : ''}${n.toLocaleString('id-ID')}`
     }
     inputLines.push(`- ${field.label}: ${valueStr}`)
   }
@@ -162,7 +169,8 @@ export async function POST(request: NextRequest) {
   sections.push('ANGKA DARI USER:')
   sections.push(inputLines.length ? inputLines.join('\n') : '(user belum mengisi angka — beri rencana umum + minta isi angka)')
   sections.push('')
-  if (body.today) sections.push(`Tanggal hari ini: ${body.today}`)
+  const today = isoDate(body.today)
+  if (today) sections.push(`Tanggal hari ini: ${today}`)
   sections.push('')
   sections.push(
     'Susun rencana terpersonalisasi: hitung target total, sisa yang kurang, setoran bulanan, estimasi selesai, milestone bertahap, tips konkret, dan hal yang perlu diperhatikan. Pakai angka user.',

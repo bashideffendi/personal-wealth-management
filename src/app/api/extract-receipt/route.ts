@@ -4,7 +4,8 @@ import { anthropic, AI_MODEL } from '@/lib/ai/client'
 import { createClient } from '@/lib/supabase/server'
 import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
-import { rateLimit } from '@/lib/rate-limit'
+import { aiRateLimit, aiRateLimitMessage } from '@/lib/rate-limit'
+import { sanitizeReceipt } from '@/lib/ai/sanitize'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -22,7 +23,6 @@ const ALL_CATEGORIES = [
   ...INVESTMENT_CATEGORIES,
 ] as const
 
-const ALLOWED_MEDIA = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const MAX_BYTES = 10 * 1024 * 1024 // 10MB
 
 type SupportedMedia = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
@@ -128,10 +128,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Burst guard (AI abuse) — per-user; see src/lib/rate-limit.ts
-  const rl = rateLimit(`ai:${user.id}`)
+  const rl = aiRateLimit(user.id)
   if (!rl.ok) {
     return NextResponse.json(
-      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { error: aiRateLimitMessage(rl) },
       { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
     )
   }
@@ -143,15 +143,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Charge AI credits BEFORE doing the (expensive) Vision call. If the user
-  // is broke we want to fail fast without burning Anthropic budget.
-  // Billing beku (src/lib/billing-flag.ts): metering kredit dilewati —
-  // proteksi abuse tetap lewat rateLimit di atas.
-  const credit: CreditCheckResult = BILLING_ENABLED
-    ? await consumeAICredits(supabase, user.id, 'receipt_scan')
-    : { ok: true }
-  if (!credit.ok) {
-    return NextResponse.json({ error: credit.error }, { status: credit.status })
+  // Tolak body raksasa SEBELUM request.formData() mem-buffer semuanya ke memori.
+  // (+1MB slack buat overhead multipart.) Content-Length bisa absen (chunked) —
+  // cek file.size di bawah tetap jadi rem kedua.
+  const declaredLen = Number(request.headers.get('content-length') ?? 0)
+  if (declaredLen > MAX_BYTES + 1024 * 1024) {
+    return NextResponse.json({ error: 'File terlalu besar. Maks 10MB.' }, { status: 413 })
   }
 
   let formData: FormData
@@ -176,10 +173,10 @@ export async function POST(request: NextRequest) {
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  // Sniff actual format from magic bytes (don't trust file.type — browsers lie)
-  const detectedType = detectMediaType(buffer)
-  const reportedType = ALLOWED_MEDIA.has(file.type) ? (file.type as SupportedMedia) : null
-  const mediaType: SupportedMedia | null = detectedType ?? reportedType
+  // Sniff actual format from magic bytes (don't trust file.type — browsers lie).
+  // Magic bytes WAJIB cocok: dulu fallback ke file.type (label client) sehingga
+  // byte non-gambar tetap diteruskan ke Vision. Label client cuma info di pesan.
+  const mediaType: SupportedMedia | null = detectMediaType(buffer)
 
   if (!mediaType) {
     return NextResponse.json(
@@ -188,6 +185,16 @@ export async function POST(request: NextRequest) {
       },
       { status: 400 },
     )
+  }
+
+  // Charge AI credits SETELAH input lolos validasi (request jelek gak bakar
+  // kredit) tapi SEBELUM panggilan Vision yang mahal. Billing beku
+  // (src/lib/billing-flag.ts): metering dilewati — rem biaya = aiRateLimit.
+  const credit: CreditCheckResult = BILLING_ENABLED
+    ? await consumeAICredits(supabase, user.id, 'receipt_scan')
+    : { ok: true }
+  if (!credit.ok) {
+    return NextResponse.json({ error: credit.error }, { status: credit.status })
   }
 
   const base64 = buffer.toString('base64')
@@ -248,8 +255,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Output model = data tak tepercaya (struk bisa berisi teks injeksi) →
+    // normalkan enum/angka/string sebelum diisi ke form client.
+    const todayISO = new Date().toLocaleDateString('sv', { timeZone: 'Asia/Jakarta' })
+    const data = sanitizeReceipt(toolUseBlock.input, todayISO)
+    if (!data) {
+      await refundAICredits(supabase, user.id, 'receipt_scan')
+      return NextResponse.json({ error: 'Nominal struk tidak terbaca. Coba foto ulang.' }, { status: 422 })
+    }
+
     return NextResponse.json({
-      data: toolUseBlock.input,
+      data,
       usage: {
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,

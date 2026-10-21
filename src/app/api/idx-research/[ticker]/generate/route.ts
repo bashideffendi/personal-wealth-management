@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { consumeAICredits, refundAICredits, type CreditCheckResult } from '@/lib/ai-credits'
 import { BILLING_ENABLED } from '@/lib/billing-flag'
-import { rateLimit } from '@/lib/rate-limit'
+import { aiRateLimit, aiRateLimitMessage } from '@/lib/rate-limit'
 import {
   getStock,
   getValuation,
@@ -36,10 +36,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   // Burst guard (AI abuse) — per-user; see src/lib/rate-limit.ts
-  const rl = rateLimit(`ai:${user.id}`)
+  const rl = aiRateLimit(user.id)
   if (!rl.ok) {
     return NextResponse.json(
-      { error: `Terlalu banyak permintaan AI. Coba lagi dalam ${rl.retryAfterSec} detik.` },
+      { error: aiRateLimitMessage(rl) },
       { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
     )
   }
@@ -53,6 +53,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { ticker: rawTicker } = await context.params
   const ticker = rawTicker.toUpperCase()
+  // Ticker IDX = alfanumerik pendek. Tolak sisanya sebelum dipakai sebagai nama
+  // file (getStock → path.join(STOCK_DIR, `${t}.json`)) — cegah path traversal
+  // & pertumbuhan negative-cache Map tanpa batas.
+  if (!/^[A-Z0-9]{1,12}$/.test(ticker)) {
+    return NextResponse.json({ error: 'Ticker tidak valid' }, { status: 404 })
+  }
 
   // Sanity: stock exists?
   const stock = getStock(ticker)
