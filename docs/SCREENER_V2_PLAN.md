@@ -66,3 +66,27 @@ Mengikuti arah desain Juli: presisi ala Linear × Copilot Money, mono, garis ram
 2. **Cakupan semua ±950 emiten**, dengan filter bawaan "punya skor".
 3. **Branch data Okt di-QA lalu digabung lebih dulu** ke branch screener. Produksi menunggu persetujuan atas preview.
 4. **Akses paket** tetap seperti sekarang.
+
+## Status build
+
+Dibangun 21 Okt 2026 di `feat/screener-v2` (sesi cloud). Belum di-merge ke `master`.
+
+**Sudah:**
+
+- `/api/screener` menyajikan `screener-v2.json` (meta + 967 baris) dengan cache module-level berbasis mtime. `outputFileTracingIncludes` sekarang hanya memuat berkas itu. Nilai wajar konsensus Excel, verdict lama, dan fs-read per-ticker sudah dihapus.
+- `src/lib/invest/screener.ts` berisi tipe, preset, filter, sort, dan format angka (PER > 100 tampil "> 100", nilai kosong tampil "–"). Tesnya ada di `screener.test.ts` (17 kasus).
+- Halaman `/dashboard/screener`:
+  - set kolom bersegmen Ringkas · Valuasi · Kualitas · Risiko;
+  - preset dengan "Punya skor" aktif bawaan, chip sektor, pencarian, dan popover "Lanjutan" untuk PER/PBV/ROE/yield;
+  - sort per header dan ekspor CSV;
+  - meter persentil 2px, teal hanya bila ≥ 0,80;
+  - panel detail kanan yang menempel saat digulir; di mobile menjadi sheet bawah. Isinya meter persentil, rentang nilai wajar dengan penanda harga (hanya status andal), teks untuk status tidak andal/belum dinilai, P/B wajar vs pasar untuk bank, penanda risiko, kelas model, tautan riset, dan tanggal data;
+  - baris header berisi disclaimer + tanggal yang diambil dari meta.
+- `npm run build`, `tsc`, `eslint`, dan seluruh tes (372) lulus. Tampilan desktop dan mobile sudah dicek lewat screenshot lokal (mode demo).
+
+**Belum:**
+
+- Data skor masih dari dry run 30 Sep. Perlu ekspor ulang setelah run resmi 30 Okt.
+- Belum ada tes komponen/DOM; pola repo hanya menguji lib murni.
+- Mobile: tabel menampilkan ticker + maks. 3 kolom per set (tanpa gulir horizontal); kolom lain tersedia di desktop dan CSV.
+- Preview Vercel: tautan tidak terlihat dari sesi ini. Cek tab Deployments untuk branch `feat/screener-v2`.
