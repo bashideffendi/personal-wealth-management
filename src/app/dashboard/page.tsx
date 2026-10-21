@@ -61,6 +61,7 @@ import {
 import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
+import { fetchAllRows } from '@/lib/data/fetch-all'
 
 // Palet chart = 4 warna logo (mint → biru → violet → coral) sebagai aksen data,
 // disusul varian -ink (lebih gelap, kontras teks/label) dengan urutan yang sama
@@ -168,7 +169,7 @@ export default function DashboardPage() {
       // middleware + dashboard layout sebelum halaman ini render.
       const user = await getSessionUser(supabase)
       if (!user) throw new Error('unauthenticated')
-      const yearRes = await supabase
+      const yearRes = await fetchAllRows((from, to) => supabase
         .from('transactions')
         // Kolom eksplisit (performance-7) — query ini narik setahun transaksi;
         // hindari select('*'). Semua konsumen cuma baca 6 kolom ini.
@@ -179,6 +180,9 @@ export default function DashboardPage() {
         .gte('date', `${selectedYear}-01-01`)
         .lt('date', `${selectedYear + 1}-01-01`)
         .order('date', { ascending: false })
+        .order('id')
+        // >1000 transaksi/tahun: cap PostgREST dulu memotong bulan-bulan awal.
+        .range(from, to))
       // Query inti gagal = bilang terus terang (error card + retry), jangan
       // render dashboard penuh nol palsu.
       if (yearRes.error) throw yearRes.error

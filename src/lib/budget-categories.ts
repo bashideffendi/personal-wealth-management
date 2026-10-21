@@ -9,6 +9,7 @@
  *   So renames cascade to budgets.category (see cascadeRenameKeys).
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchAllRows } from '@/lib/data/fetch-all'
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
@@ -433,12 +434,19 @@ export async function loadMonthlyActuals(
 ): Promise<Record<string, number>> {
   const start = `${year}-01-01`
   const end = `${Number(year) + 1}-01-01`
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('type, category, amount, date')
-    .eq('user_id', userId)
-    .gte('date', start)
-    .lt('date', end)
+  // Paginate: setahun bisa > 1000 baris; tanpa urutan, cap PostgREST
+  // membuang baris ACAK → realisasi bulan mana pun bisa kurang.
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('transactions')
+      .select('type, category, amount, date')
+      .eq('user_id', userId)
+      .gte('date', start)
+      .lt('date', end)
+      .order('date')
+      .order('id')
+      .range(from, to),
+  )
   if (error || !data) return {}
   const out: Record<string, number> = {}
   for (const row of data as {

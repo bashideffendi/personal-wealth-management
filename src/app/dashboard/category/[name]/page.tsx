@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Transaction } from '@/types'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { fetchAllRows } from '@/lib/data/fetch-all'
 import { useT } from '@/lib/i18n/context'
 
 const CategoryBarChart = dynamic(
@@ -30,12 +31,14 @@ export default function CategoryDrilldownPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data } = await supabase
+    const { data } = await fetchAllRows((from, to) => supabase
       .from('transactions')
       .select('*')
       .eq('user_id', user.id)
       .eq('category', category)
       .order('date', { ascending: false })
+      .order('id')
+      .range(from, to))
     setTxs((data ?? []) as Transaction[])
     setLoading(false)
   }

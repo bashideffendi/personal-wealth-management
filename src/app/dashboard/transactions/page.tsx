@@ -61,6 +61,7 @@ import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkl
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { StatStrip } from '@/components/ui/stat-strip'
 import { toast } from 'sonner'
+import { fetchAllRows } from '@/lib/data/fetch-all'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -151,11 +152,15 @@ export default function TransactionsPage() {
       const user = await getSessionUser(supabase)
       if (!user) throw new Error('unauthenticated')
       const [txRes, accRes, ccRes, rulesRes, profRes] = await Promise.all([
-        supabase
+        // Sepanjang masa → wajib paginate (cap 1000 PostgREST dulu
+        // menyembunyikan transaksi lama & salah-total bulan lampau).
+        fetchAllRows((from, to) => supabase
           .from('transactions')
           .select('*')
           .eq('user_id', user.id)
-          .order('date', { ascending: false }),
+          .order('date', { ascending: false })
+          .order('id')
+          .range(from, to)),
         supabase
           .from('accounts')
           .select('*')
