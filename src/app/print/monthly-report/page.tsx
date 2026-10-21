@@ -18,6 +18,17 @@ export default async function PrintMonthlyReportPage({
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // 2FA — sama dengan dashboard/layout: sesi AAL1 milik user yang sudah enroll
+  // authenticator tidak boleh melihat laporan (dulu halaman ini lolos).
+  let needs2fa = false
+  try {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    needs2fa = !!aal && aal.nextLevel === 'aal2' && aal.currentLevel === 'aal1'
+  } catch {
+    needs2fa = false
+  }
+  if (needs2fa) redirect('/login')
+
   const params = await searchParams
   const now = new Date()
   const year = Number(params.year) || now.getFullYear()
