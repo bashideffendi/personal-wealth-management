@@ -3,7 +3,7 @@
 /**
  * KpiCard — Wise-style stat tile per fintech redesign 2026-05-28.
  *
- * Pattern: tone-colored icon kiri-atas + label compact + mono value
+ * Pattern: ikon mono (surface-2) kiri-atas + label compact + mono value
  * big + delta chip color-coded. Hover lift. Drop tone dot indicator,
  * drop emoji.
  *
@@ -37,16 +37,6 @@ const ICON_MAP: Record<NonNullable<KpiCardProps['kind']>, React.ComponentType<{ 
   net: ArrowLeftRight,
 }
 
-const TONE_MAP: Record<NonNullable<KpiCardProps['kind']>, {
-  icon: string
-  iconBg: string
-}> = {
-  income: { icon: 'var(--c-mint)', iconBg: 'var(--c-mint-soft)' },
-  expense: { icon: 'var(--c-coral)', iconBg: 'var(--c-coral-soft)' },
-  saving: { icon: 'var(--c-amber)', iconBg: 'var(--c-amber-soft)' },
-  net: { icon: 'var(--c-mint)', iconBg: 'var(--c-mint-soft)' },
-}
-
 export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
   const k = kind ?? 'net'
 
@@ -58,10 +48,6 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
   const deltaUp = (dp ?? 0) > 0
   const deltaGood = k === 'expense' ? !deltaUp : deltaUp
 
-  // Net flip to coral when value < 0
-  const tone = k === 'net' && value < 0
-    ? { icon: 'var(--c-coral)', iconBg: 'var(--c-coral-soft)' }
-    : TONE_MAP[k]
   const IconCmp = k === 'net' && value < 0 ? TrendingDown
     : k === 'net' && value >= 0 ? TrendingUp
     : ICON_MAP[k]
@@ -75,9 +61,9 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
           style={{
             width: 30,
             height: 30,
-            borderRadius: 9,
-            background: tone.iconBg,
-            color: tone.icon,
+            borderRadius: 8,
+            background: 'var(--surface-2)',
+            color: 'var(--ink)',
           }}
         >
           <IconCmp className="size-[15px]" />

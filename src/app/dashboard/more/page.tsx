@@ -33,47 +33,42 @@ import {
 import { QuietPageHeader } from '@/components/layout/quiet-page-header'
 import { useI18n } from '@/lib/i18n/context'
 
-type Tint = 'blue' | 'violet' | 'mint' | 'coral'
-
 interface Row {
   href: string
   /** i18n key nav.* — sama persis dgn NAV_ITEMS */
   titleKey: string
   icon: LucideIcon
-  /** Aksen brand per baris (ala Budget) — rotasi 4 tint */
-  tint?: Tint
   /** Status/nilai inline rata kanan sebelum chevron (ala Budget) */
   value?: string
   valueTone?: 'muted' | 'danger'
 }
 
-// Grup Uang — aksen brand kecil di chip ikon (blue=struktur, mint=aset,
-// violet=rencana, coral=kewajiban). Bukan blok warna besar.
+// Grup Uang — chip ikon mono (warna hanya untuk data).
 const MONEY: Row[] = [
-  { href: '/dashboard/net-worth',          titleKey: 'nav.wealth',            icon: Building2,  tint: 'blue' },
-  { href: '/dashboard/accounts',           titleKey: 'nav.accounts',          icon: Landmark,   tint: 'blue' },
-  { href: '/dashboard/assets/liquid',      titleKey: 'nav.assets_liquid',     icon: Coins,      tint: 'mint' },
-  { href: '/dashboard/assets/non-liquid',  titleKey: 'nav.assets_non_liquid', icon: Gem,        tint: 'violet' },
-  { href: '/dashboard/assets/investment',  titleKey: 'nav.investment',        icon: TrendingUp, tint: 'mint' },
-  { href: '/dashboard/goals',              titleKey: 'nav.goals',             icon: Target,     tint: 'violet' },
-  { href: '/dashboard/debts',              titleKey: 'nav.debts',             icon: HandCoins,  tint: 'coral' },
-  { href: '/dashboard/credit-cards',       titleKey: 'nav.credit_cards',      icon: CreditCard, tint: 'coral' },
-  { href: '/dashboard/emergency-fund',     titleKey: 'nav.emergency_fund',    icon: Umbrella,   tint: 'mint' },
+  { href: '/dashboard/net-worth',          titleKey: 'nav.wealth',            icon: Building2 },
+  { href: '/dashboard/accounts',           titleKey: 'nav.accounts',          icon: Landmark },
+  { href: '/dashboard/assets/liquid',      titleKey: 'nav.assets_liquid',     icon: Coins },
+  { href: '/dashboard/assets/non-liquid',  titleKey: 'nav.assets_non_liquid', icon: Gem },
+  { href: '/dashboard/assets/investment',  titleKey: 'nav.investment',        icon: TrendingUp },
+  { href: '/dashboard/goals',              titleKey: 'nav.goals',             icon: Target },
+  { href: '/dashboard/debts',              titleKey: 'nav.debts',             icon: HandCoins },
+  { href: '/dashboard/credit-cards',       titleKey: 'nav.credit_cards',      icon: CreditCard },
+  { href: '/dashboard/emergency-fund',     titleKey: 'nav.emergency_fund',    icon: Umbrella },
 ]
 
 // Kontrak gak listed lagi di sini — rumahnya sekarang tab Kontrak di /dashboard/recurring.
 const AUTOMATION: Row[] = [
-  { href: '/dashboard/recurring',      titleKey: 'nav.recurring',      icon: Repeat,     tint: 'blue' },
-  { href: '/dashboard/monthly-report', titleKey: 'nav.monthly_report', icon: FileText,   tint: 'violet' },
-  { href: '/dashboard/calculators',    titleKey: 'nav.calculators',    icon: Calculator, tint: 'mint' },
+  { href: '/dashboard/recurring',      titleKey: 'nav.recurring',      icon: Repeat },
+  { href: '/dashboard/monthly-report', titleKey: 'nav.monthly_report', icon: FileText },
+  { href: '/dashboard/calculators',    titleKey: 'nav.calculators',    icon: Calculator },
 ]
 
 const OTHER: Row[] = [
-  { href: '/dashboard/family',   titleKey: 'nav.family',   icon: Home,       tint: 'coral' },
-  { href: '/dashboard/playbook', titleKey: 'nav.playbook', icon: Compass,    tint: 'blue' },
-  { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle, tint: 'violet' },
+  { href: '/dashboard/family',   titleKey: 'nav.family',   icon: Home },
+  { href: '/dashboard/playbook', titleKey: 'nav.playbook', icon: Compass },
+  { href: '/dashboard/profile',  titleKey: 'nav.profile',  icon: UserCircle },
   // Tampilan gak ada di NAV_ITEMS — pinjam key profile.appearance_title existing.
-  { href: '/dashboard/appearance', titleKey: 'profile.appearance_title', icon: Palette, tint: 'mint' },
+  { href: '/dashboard/appearance', titleKey: 'profile.appearance_title', icon: Palette },
 ]
 
 // Baris "Notifikasi" + toggle Web Push — gaya baris menu existing (chip ikon +
@@ -133,7 +128,7 @@ function NotificationRow() {
     >
       <span
         className="grid place-items-center size-[32px] rounded-[8px] shrink-0"
-        style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+        style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
       >
         <Bell className="size-[17px]" />
       </span>
@@ -186,10 +181,7 @@ function Group({ rows, trailing }: { rows: Row[]; trailing?: React.ReactNode }) 
           >
             <span
               className="grid place-items-center size-[32px] rounded-[8px] shrink-0"
-              style={{
-                background: `var(--c-${row.tint ?? 'blue'}-soft)`,
-                color: `var(--c-${row.tint ?? 'blue'}-ink)`,
-              }}
+              style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
             >
               <Icon className="size-[17px]" />
             </span>

@@ -108,41 +108,42 @@ export function MobileHome({
     setEntry({ category: c.category, type, budget: c.budget, spent: c.amount, subs: type === 'expense' ? subsFor(c.category) : [] })
 
   const renderCard = (c: Card, type: 'expense' | 'income') => {
-    const hue = categoryHue(c.category)
     const over = c.budget > 0 && c.amount > c.budget
-    const ringColor = over ? 'var(--c-coral)' : hue.bar
+    // Mono: tile putih hairline + chip ikon netral. Warna cuma di data —
+    // ring progres ink, coral saat lewat anggaran.
+    const ringColor = over ? 'var(--c-coral)' : 'var(--ink)'
     const CIRC = 2 * Math.PI * 19
     return (
       <button
         key={c.category}
         type="button"
         onClick={() => openEntry(c, type)}
-        className="rounded-xl px-1.5 py-4 text-center active:opacity-70 transition-opacity"
-        style={{ background: hue.soft }}
+        className="s-card px-1.5 py-3.5 text-center active:opacity-70 transition-opacity"
       >
-        <span className="block text-[12px] font-medium leading-tight min-h-[28px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink)' }}>
+        <span className="block text-[12px] font-medium leading-tight min-h-[30px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink-muted)' }}>
           {c.category}
         </span>
         <span className="relative grid place-items-center size-[44px] mx-auto my-1.5">
           <svg width="44" height="44" viewBox="0 0 44 44" className="absolute inset-0" aria-hidden="true">
-            <circle cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeOpacity="0.25" strokeWidth="2.5" />
+            <circle cx="22" cy="22" r="19" fill="none" stroke="var(--border)" strokeWidth="2" />
             {c.ringPct != null && (
               <circle
-                cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeWidth="2.5"
-                strokeDasharray={`${(c.ringPct / 100) * CIRC} ${CIRC}`} strokeLinecap="round"
+                cx="22" cy="22" r="19" fill="none" stroke={ringColor} strokeWidth="2"
+                strokeDasharray={`${(Math.min(c.ringPct, 100) / 100) * CIRC} ${CIRC}`} strokeLinecap="round"
                 transform="rotate(-90 22 22)"
               />
             )}
           </svg>
-          <span className="grid place-items-center size-[34px] rounded-full" style={{ background: hue.bar, color: '#fff' }}>
+          <span className="grid place-items-center size-[34px] rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
             <CategoryIcon category={c.category} className="size-4" />
           </span>
         </span>
         <span
-          className="num tabular block font-semibold break-all"
-          style={{ fontSize: c.amount >= 1_000_000_000 ? 11.5 : 12, color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}
+          className="num tabular block text-[13px] font-semibold whitespace-nowrap"
+          title={formatCurrency(c.amount)}
+          style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}
         >
-          {formatCurrency(c.amount)}
+          {formatCompactCurrency(c.amount)}
         </span>
       </button>
     )

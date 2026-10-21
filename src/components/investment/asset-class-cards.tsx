@@ -3,9 +3,8 @@
 /**
  * AssetClassCards — drill-down cards per asset class (click → per-slug page).
  *
- * Grid kartu .s-card seragam (2/3/4 kolom) dengan warna kelas terkurung di
- * icon tile 36px soft-tint; ONE canonical palette from ASSET_CLASS_META so the
- * cards match the donut/chips/movers on the same screen. Only classes with
+ * Grid kartu .s-card seragam (2/3/4 kolom), icon tile 36px mono (surface-2 +
+ * ink) — warna kelas (ASSET_CLASS_META) cuma dipakai di grafik/donut. Only classes with
  * positions render by default; toggle di header expands the rest (kelas kosong
  * dirender redup biar tidak bersaing). The expander state lives here so
  * toggling never re-renders the page.
@@ -16,8 +15,8 @@ import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import { INVESTMENT_SUBCATS } from '@/lib/constants'
 import { getInvestmentVisual } from '@/lib/investment-visual'
-import { ASSET_CLASS_META, type AssetClassKey } from '@/lib/invest/asset-class'
-import { formatCurrency } from '@/lib/utils'
+import type { AssetClassKey } from '@/lib/invest/asset-class'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
 
 type ClassAgg = { invested: number; market: number; count: number }
@@ -80,7 +79,7 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
         )}
       </div>
       {/* Grid kartu seragam (bukan list baris) — tiap kelas = .s-card klik-able:
-          icon tile soft-tint + nama/posisi di atas, nilai market + chip P/L%
+          icon tile mono + nama/posisi di atas, nilai market + chip P/L%
           nempel bawah (mt-auto) biar baseline nilai sejajar antar kartu.
           Kelas kosong (0 posisi) dirender redup (ink-soft) biar gak bersaing. */}
       <div className="grid grid-cols-2 gap-2.5 md:gap-3 lg:grid-cols-3 xl:grid-cols-4">
@@ -90,7 +89,6 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
           const pct = data.invested > 0 ? (pl / data.invested) * 100 : 0
           const plUp = pl >= 0
           const hasPosition = data.count > 0
-          const color = ASSET_CLASS_META[c.classKey].color
           const CardIcon = c.Icon
           return (
             <Link
@@ -101,9 +99,7 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
               <div className="flex items-start gap-2.5">
                 <div
                   className="grid size-9 shrink-0 place-items-center rounded-lg"
-                  style={hasPosition
-                    ? { background: `color-mix(in srgb, ${color} 15%, var(--surface))`, color }
-                    : { background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
+                  style={{ background: 'var(--surface-2)', color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}
                 >
                   <CardIcon className="size-4" strokeWidth={2} />
                 </div>
@@ -115,7 +111,11 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
                 </div>
               </div>
               <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-                <p className="num tabular min-w-0 truncate text-[15px] font-bold leading-tight" style={{ color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}>{formatCurrency(data.market)}</p>
+                <p className="num tabular min-w-0 truncate text-[15px] font-bold leading-tight" title={formatCurrency(data.market)} style={{ color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                  {/* HP: ringkas biar angka gak kepotong "Rp 15.036..." */}
+                  <span className="md:hidden">{formatCompactCurrency(data.market)}</span>
+                  <span className="hidden md:inline">{formatCurrency(data.market)}</span>
+                </p>
                 {data.invested > 0 && (
                   <span
                     className="num tabular shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold leading-tight"

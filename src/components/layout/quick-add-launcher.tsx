@@ -580,8 +580,6 @@ function MenuView({
       icon: Camera,
       title: t('quickadd.receipt_title'),
       body: t('quickadd.receipt_body'),
-      tint: 'var(--c-mint)',
-      bg: 'var(--c-mint-soft)',
       onSelect: onPickReceipt,
     },
     {
@@ -589,8 +587,6 @@ function MenuView({
       icon: MessageSquareText,
       title: t('quickadd.ai_title'),
       body: t('quickadd.ai_body'),
-      tint: 'var(--c-violet)',
-      bg: 'rgba(139,92,246,0.12)',
       onSelect: onPickAI,
     },
     {
@@ -598,8 +594,6 @@ function MenuView({
       icon: PenLine,
       title: t('quickadd.manual_title'),
       body: t('quickadd.manual_body'),
-      tint: 'var(--ink-muted)',
-      bg: 'var(--surface-2)',
       onSelect: onPickManual,
     },
     {
@@ -607,8 +601,6 @@ function MenuView({
       icon: ArrowLeftRight,
       title: t('transactions.transfer'),
       body: t('transactions.transfer_desc'),
-      tint: 'var(--c-blue-ink)',
-      bg: 'var(--c-blue-soft)',
       onSelect: onPickTransfer,
     },
   ] as const
@@ -646,7 +638,7 @@ function MenuView({
               >
                 <span
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: it.bg, color: it.tint }}
+                  style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                 >
                   <Icon className="size-5" />
                 </span>
