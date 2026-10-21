@@ -235,9 +235,7 @@ export default function NetWorthPage() {
 
       {/* Dark hero — 3 cell */}
       <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-[1.6fr_1fr_1fr]"
-        style={{ background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}>
-        <div className="absolute pointer-events-none" style={{ top: -80, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,95,211,0.20), transparent 65%)' }} />
-        <div className="absolute pointer-events-none" style={{ bottom: -80, right: -40, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, var(--hero-chip-pos-bg), transparent 65%)' }} />
+        style={{ background: 'var(--hero-bg)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}>
         <div className="relative p-5 sm:p-6 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
           {/* MOMENT: digit penuh di >=lg (baris 11px di bawah jadi redundan → lg:hidden), compact di <lg */}

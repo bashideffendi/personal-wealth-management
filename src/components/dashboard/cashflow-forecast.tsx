@@ -153,10 +153,7 @@ export function CashFlowForecast({
     <div
       className="s-card p-4 sm:p-5"
       style={{
-        background: hasNegative
-          ? 'linear-gradient(135deg, rgba(244,63,94,0.05), var(--surface) 50%)'
-          : undefined,
-        borderColor: hasNegative ? 'rgba(244,63,94,0.45)' : undefined,
+        borderColor: hasNegative ? 'var(--c-coral)' : undefined,
       }}
     >
       {/* Compact header — title + status badge in one row, mini sparkline beside */}

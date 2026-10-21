@@ -404,7 +404,7 @@ export default function FamilyPage() {
     return (
       <div className="space-y-6">
         <FamilyHeader />
-        <div className="s-card p-8 sm:p-10 text-center" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 65%)' }}>
+        <div className="s-card p-8 sm:p-10 text-center">
           <div className="mx-auto size-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-primary)' }}>
             <Home className="size-7" style={{ color: 'var(--surface)' }} />
           </div>
@@ -464,7 +464,7 @@ export default function FamilyPage() {
 
       {/* KARTU UTAMA — nama lingkar + baris avatar (overlap) + Undang pill + kuota inline.
           Detail anggota & undangan dilipat di balik chevron (pola Share Manager). */}
-      <section className="s-card overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--c-coral-soft), var(--surface) 60%)' }}>
+      <section className="s-card overflow-hidden">
         <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">

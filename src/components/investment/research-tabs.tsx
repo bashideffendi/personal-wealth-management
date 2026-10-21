@@ -671,7 +671,7 @@ function GenerateResearchEmpty({
       <div
         className="rounded-2xl border p-8 sm:p-10 text-center"
         style={{
-          boxShadow: 'var(--card-shadow)', background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 60%)',
+          boxShadow: 'var(--card-shadow)', background: 'var(--surface)',
           borderColor: 'var(--border)',
         }}
       >

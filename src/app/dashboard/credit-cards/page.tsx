@@ -88,22 +88,6 @@ const EMPTY_PAY: PayFormState = {
   date: new Date().toISOString().split('T')[0], notes: '',
 }
 
-/** Issuer → gradient (match substring, fallback ink slate). */
-function issuerGradient(issuer: string): string {
-  const i = (issuer ?? '').toLowerCase()
-  if (i.includes('bca'))     return 'linear-gradient(135deg, #1E3A8A, #1E40AF 60%, #3B82F6)'
-  if (i.includes('mandiri')) return 'linear-gradient(135deg, #084433, #0B6E4D 60%, #129B69)'
-  if (i.includes('jenius') || i.includes('btpn')) return 'linear-gradient(135deg, #0F172A, #1E293B 60%, #334155)'
-  if (i.includes('bni'))     return 'linear-gradient(135deg, #7C2D12, #9A3412 60%, #EA580C)'
-  if (i.includes('bri'))     return 'linear-gradient(135deg, #0C4A6E, #0369A1 60%, #2D89BC)'
-  if (i.includes('cimb'))    return 'linear-gradient(135deg, #66202C, #7E2434 60%, #B93748)'
-  if (i.includes('danamon')) return 'linear-gradient(135deg, #422006, #713F12 60%, #CA8A04)'
-  if (i.includes('permata') || i.includes('hsbc') || i.includes('uob')) {
-    return 'linear-gradient(135deg, #3B0764, #581C87 60%, #9333EA)'
-  }
-  return 'linear-gradient(135deg, #18181B, #27272A 60%, #3F3F46)'
-}
-
 /** Minimum payment heuristik: ~10% tagihan, lantai Rp 50rb, gak lebih dari tagihan. */
 function minPayment(balance: number): number {
   if (balance <= 0) return 0
@@ -400,9 +384,9 @@ export default function CreditCardsPage() {
               const uInk = util > 80 ? CORAL_INK : util > 50 ? AMBER_INK : MINT_INK
               return (
                 <div key={c.id} className="s-card overflow-hidden p-0 group">
-                  {/* Visual gradient top */}
-                  <div className="relative p-5 overflow-hidden" style={{ background: issuerGradient(c.issuer), color: '#FFFFFF', aspectRatio: '1.9 / 1' }}>
-                    {/* Bank logo chip (white frame → kebaca di gradient apapun) */}
+                  {/* Visual kartu — mono gelap, logo bank di chip putih */}
+                  <div className="relative p-5 overflow-hidden" style={{ background: 'var(--hero-bg)', color: 'var(--on-hero)', aspectRatio: '1.9 / 1' }}>
+                    {/* Bank logo chip (frame putih) */}
                     <div className="absolute top-4 left-4 grid place-items-center rounded-lg bg-white" style={{ width: 34, height: 34, boxShadow: '0 1px 4px rgba(0,0,0,0.25)' }}>
                       <InstitutionLogo accountName={c.issuer} size={26} shape="rounded" />
                     </div>

@@ -44,10 +44,10 @@ export function WealthHeader({
 /**
  * Premium hero buat halaman Kekayaan — anchor 1 angka gede + stat pendukung,
  * BUKAN 4 card kosong. Header (judul serif) + eyebrow + actions nyatu di sini,
- * jadi gak ada judul dobel. Glow halus + hierarki kuat = kesan premium.
+ * jadi gak ada judul dobel. Flat + hierarki kuat = kesan premium.
  */
 export function WealthHero({
-  eyebrow, title, headline, headlineTitle, secondary = [], actions, accent = '#8b4fb0',
+  eyebrow, title, headline, headlineTitle, secondary = [], actions,
 }: {
   eyebrow?: string
   title: string
@@ -56,11 +56,11 @@ export function WealthHero({
   headlineTitle?: string
   secondary?: { label: string; value: ReactNode; color?: string }[]
   actions?: ReactNode
+  /** Tidak dipakai lagi (glow dihapus) — dibiarkan biar pemanggil lama tetap kompatibel. */
   accent?: string
 }) {
   return (
     <section className="relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border-[length:var(--outline-w)] border-[var(--outline)] shadow-[var(--card-shadow)]">
-      <div className="absolute pointer-events-none" style={{ top: -110, right: -70, width: 340, height: 340, borderRadius: '50%', background: `radial-gradient(circle, ${accent}1F, transparent 65%)` }} />
       <div className="relative flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           {eyebrow && <p className="text-[11px] font-semibold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>{eyebrow}</p>}

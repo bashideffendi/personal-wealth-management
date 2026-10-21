@@ -359,22 +359,11 @@ export default function ProfilePage() {
       <section
         className="relative overflow-hidden rounded-3xl"
         style={{
-          background: 'linear-gradient(135deg, var(--hero-bg) 0%, var(--hero-mid) 50%, var(--hero-soft) 100%)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
+          background: 'var(--hero-bg)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)',
           color: 'var(--on-hero)',
           
         }}
       >
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: -100,
-            right: -60,
-            width: 360,
-            height: 360,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%)',
-          }}
-        />
         <div className="relative p-5 sm:p-7">
           <p
             className="text-[11px] font-semibold tracking-[0.18em] uppercase"

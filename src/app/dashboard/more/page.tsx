@@ -320,10 +320,9 @@ export default function MorePage() {
       <QuietPageHeader title={t('nav.section.secondary')} />
 
       {/* Kartu profil hero (ala Budget) — avatar center + 3 statistik,
-          tint gradasi mint sangat halus biar playful tanpa rame */}
+          permukaan polos, avatar mono */}
       <section
         className="s-card overflow-hidden md:mt-4"
-        style={{ background: 'linear-gradient(135deg, var(--c-mint-soft), var(--surface) 62%)' }}
       >
         <Link
           href="/dashboard/profile"
@@ -332,9 +331,8 @@ export default function MorePage() {
           <span
             className="grid place-items-center size-16 rounded-full text-[22px] font-bold md:size-14 md:text-[20px] shrink-0"
             style={{
-              background: 'var(--c-mint-soft)',
-              color: 'var(--c-mint-ink)',
-              boxShadow: '0 0 0 3px var(--surface)',
+              background: 'var(--surface-2)',
+              color: 'var(--ink)',
             }}
             aria-hidden
           >
