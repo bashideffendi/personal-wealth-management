@@ -58,9 +58,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
+import { ArrowRight, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 // Palet chart = 4 warna logo (mint → biru → violet → coral) sebagai aksen data,
 // disusul varian -ink (lebih gelap, kontras teks/label) dengan urutan yang sama
@@ -777,12 +778,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} />
-        <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>
-          {t('dashboard.loading')}
-        </span>
-      </div>
+      <PageSkeleton variant="dashboard" label={t('dashboard.loading')} />
     )
   }
 

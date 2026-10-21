@@ -44,6 +44,7 @@ import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { InstitutionSearch } from '@/components/accounts/institution-search'
 import { InstitutionPicker } from '@/components/accounts/institution-picker'
 import type { BankCatalogType } from '@/lib/bank-catalog'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 type AccountType = keyof typeof ACCOUNT_TYPES
 
@@ -573,9 +574,7 @@ export default function AccountsPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12" style={{ color: 'var(--ink-muted)' }}>
-          <Loader2 className="size-5 animate-spin mr-2" /> {t('accounts.loading')}
-        </div>
+        <PageSkeleton variant="cards" label={t('accounts.loading')} />
       ) : pageQuery.isError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>

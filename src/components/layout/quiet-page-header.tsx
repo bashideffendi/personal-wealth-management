@@ -65,7 +65,9 @@ export function QuietPageHeader({
         </h1>
         {info && <span className="shrink-0"><InfoTip text={info} /></span>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {/* HP: baris aksi selebar layar (judul ada di app bar) supaya aksi bisa
+          rata kiri-kanan; desktop: menempel di kanan judul. */}
+      {actions && <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">{actions}</div>}
     </div>
   )
 }

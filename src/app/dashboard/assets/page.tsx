@@ -9,10 +9,11 @@ import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { useT } from '@/lib/i18n/context'
 import type { AssetNonLiquid, Investment } from '@/types'
 
-import { Loader2, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import dynamic from 'next/dynamic'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 // Defer recharts out of the assets route's initial JS (loads on chart mount).
 const AllocationPie = dynamic(
@@ -112,10 +113,7 @@ export default function AssetsOverviewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} />
-        <span className="ml-3 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('assets.loading')}</span>
-      </div>
+      <PageSkeleton variant="dashboard" label={t('assets.loading')} />
     )
   }
 

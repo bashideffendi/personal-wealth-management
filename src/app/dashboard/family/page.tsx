@@ -33,6 +33,7 @@ import {
   Wallet, ArrowLeftRight, PieChart, Lock, Target, Activity,
   Eye, SlidersHorizontal, TrendingUp,
 } from 'lucide-react'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 interface MyUser { id: string; email: string }
 
@@ -377,7 +378,7 @@ export default function FamilyPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20" style={{ color: 'var(--ink-soft)' }}><Loader2 className="size-5 animate-spin mr-2" /> {t('family.loading')}</div>
+    return <PageSkeleton variant="cards" label={t('family.loading')} />
   }
 
   if (pageQuery.isError) {

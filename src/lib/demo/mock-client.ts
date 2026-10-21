@@ -255,6 +255,9 @@ export function createMockClient() {
     from(table: string) {
       return makeBuilder(table)
     },
+    // RPC tidak dimodelkan di demo — balas error biar pemanggil jatuh ke
+    // fallback query tabel (bukan TypeError yang bikin halaman macet loading).
+    rpc: async () => ({ data: null, error: { message: 'rpc unavailable in demo' } }),
     auth: {
       getUser: async () => ({
         data: { user: DEMO_USER },

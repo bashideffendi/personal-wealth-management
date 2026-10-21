@@ -614,7 +614,7 @@ export function MobileBudgetingView({
           wrapper mobile halaman */}
       <div
         className="fixed inset-x-0 z-30 flex justify-center md:hidden pointer-events-none"
-        style={{ bottom: 'calc(88px + env(safe-area-inset-bottom))' }}
+        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
       >
         <div
           className="pointer-events-auto flex items-center rounded-full p-1"

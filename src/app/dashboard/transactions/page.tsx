@@ -61,6 +61,8 @@ import { Pencil, Trash2, Plus, Loader2, ArrowLeftRight, Download, Upload, Sparkl
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { StatStrip } from '@/components/ui/stat-strip'
 import { toast } from 'sonner'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
+import { Segmented } from '@/components/ui/segmented'
 
 type TransactionType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -1366,16 +1368,34 @@ export default function TransactionsPage() {
                 <ArrowLeftRight className="size-4" data-icon="inline-start" /> {t('transactions.transfer')}
               </Button>
             </div>
-            <Button variant="outline" size="sm" className="sm:hidden" aria-label={t('transactions.actions_sheet_title')} onClick={() => setActionsSheetOpen(true)}>
+            {/* HP: Catatan|Statistik di baris aksi (dulu pill melayang di atas dock
+                yang menutupi daftar). Label literal — tak ada key i18n yang pas. */}
+            <Segmented
+              className="md:hidden mr-auto"
+              value={mobileView}
+              onChange={setMobileView}
+              ariaLabel={`${locale === 'en' ? 'Record' : 'Catatan'} | ${locale === 'en' ? 'Stats' : 'Statistik'}`}
+              options={[
+                ['record', locale === 'en' ? 'Record' : 'Catatan'],
+                ['stats', locale === 'en' ? 'Stats' : 'Statistik'],
+              ] as const}
+            />
+            <Button variant="outline" className="sm:hidden size-11 rounded-full p-0" aria-label={t('transactions.actions_sheet_title')} onClick={() => setActionsSheetOpen(true)}>
               <MoreHorizontal className="size-4" />
             </Button>
 
-            {/* Primary — toggles the inline quick-add row above the table */}
-            <Button variant={showQuickAdd ? 'outline' : 'default'} onClick={() => setShowQuickAdd((v) => !v)}>
+            {/* Primary — toggles the inline quick-add row above the table.
+                HP: ikon saja (tombol + di bilah bawah juga ada). */}
+            <Button
+              variant={showQuickAdd ? 'outline' : 'default'}
+              onClick={() => setShowQuickAdd((v) => !v)}
+              aria-label={showQuickAdd ? t('transactions.close') : t('transactions.add_transaction')}
+              className="max-sm:size-11 max-sm:rounded-full max-sm:p-0"
+            >
               {showQuickAdd ? (
-                <><X className="size-4" data-icon="inline-start" />{t('transactions.close')}</>
+                <><X className="size-4" data-icon="inline-start" /><span className="max-sm:sr-only">{t('transactions.close')}</span></>
               ) : (
-                <><Plus className="size-4" data-icon="inline-start" />{t('transactions.add_transaction')}</>
+                <><Plus className="size-4" data-icon="inline-start" /><span className="max-sm:sr-only">{t('transactions.add_transaction')}</span></>
               )}
             </Button>
           </>
@@ -1859,10 +1879,7 @@ export default function TransactionsPage() {
 
       {/* Transactions list — table on md+, cards on mobile */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
-          <span className="ml-2" style={{ color: 'var(--ink-soft)' }}>{t('transactions.loading')}</span>
-        </div>
+        <PageSkeleton variant="cards" label={t('transactions.loading')} />
       ) : loadError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
@@ -3134,40 +3151,6 @@ export default function TransactionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* F13c: toggle Catatan|Statistik ala app Budget — pill floating di atas
-          dock (dock z-30, bottom 10+safe-area, tinggi 64 → pill di ~88px).
-          z-40 = di atas konten, di bawah dialog/sheet (z-50). Mobile only.
-          Label: gak ada key i18n yang pas ("Catatan"/"Statistik" standalone)
-          → literal locale ternary, JANGAN nambah key ke messages.ts. */}
-      <div
-        className="md:hidden fixed left-1/2 -translate-x-1/2 z-40 flex items-center rounded-full p-1"
-        style={{
-          bottom: 'calc(88px + env(safe-area-inset-bottom))',
-          background: 'var(--surface)',
-          border: '1px solid var(--border-soft)',
-          boxShadow: '0 4px 14px rgba(24,24,27,.10)',
-        }}
-        role="group"
-        aria-label={`${locale === 'en' ? 'Record' : 'Catatan'} | ${locale === 'en' ? 'Stats' : 'Statistik'}`}
-      >
-        {([
-          ['record', locale === 'en' ? 'Record' : 'Catatan'],
-          ['stats', locale === 'en' ? 'Stats' : 'Statistik'],
-        ] as const).map(([v, label]) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => setMobileView(v)}
-            aria-pressed={mobileView === v}
-            className="rounded-full px-4 py-1.5 text-cap font-semibold transition-colors"
-            style={mobileView === v
-              ? { background: 'var(--ink)', color: 'var(--surface)' }
-              : { color: 'var(--ink-soft)' }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

@@ -5,9 +5,9 @@
  * 4 tab + FAB tengah. Tab "Lainnya" = Link ke /dashboard/more (layar
  * settings-style F9, ganti MoreSheet) → bottom-tab + halaman Lainnya
  * nge-cover SEMUA destinasi, jadi top-nav bisa di-slim di mobile.
- * Style: DOCK GELAP FLOATING ala app Budget iOS — pill #1c1c22 (sama di
- * dark mode), margin 14px, bottom 10px + safe-area. Aktif = ikon dibungkus
- * pill mint soft + label mint; FAB tengah lingkaran putih. Tap-target ≥44.
+ * Style: bilah docked mono — permukaan + hairline atas + safe-area. Aktif =
+ * ink + label tebal (tanpa warna); tombol tengah = tombol primer bulat 44px.
+ * Tap-target ≥ 44.
  */
 
 import Link from 'next/link'
@@ -47,35 +47,29 @@ export function BottomTabBar() {
 
   return (
     <nav
-      className="md:hidden fixed z-30 mx-auto max-w-md rounded-xl"
+      className="md:hidden fixed inset-x-0 bottom-0 z-30"
       style={{
-        left: 14,
-        right: 14,
-        bottom: 'calc(10px + env(safe-area-inset-bottom))',
-        background: '#1c1c22',
-        boxShadow: '0 10px 30px rgba(0,0,0,.25)',
+        background: 'var(--surface)',
+        borderTop: '1px solid var(--border)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
       aria-label={t('bottom_tab.nav_label')}
     >
-      <div className="grid grid-cols-5 items-center h-16 px-2">
+      <div className="mx-auto grid max-w-md grid-cols-5 items-center h-14 px-1">
         {LEFT.map((tab) => (
           <TabLink key={tab.href} tab={tab} active={isActive(pathname, tab.href)} />
         ))}
 
-        {/* Center FAB — buka quick-add sheet (foto struk / AI / form manual) */}
+        {/* Tombol tengah — buka quick-add sheet (foto struk / AI / form manual) */}
         <div className="flex justify-center">
           <button
             type="button"
             onClick={openQuickAdd}
-            className="size-[46px] rounded-full flex items-center justify-center transition active:scale-95"
-            style={{
-              background: '#fff',
-              color: '#18181b',
-              boxShadow: '0 4px 10px rgba(0,0,0,.25)',
-            }}
+            className="size-11 rounded-full flex items-center justify-center transition active:scale-95"
+            style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}
             aria-label={t('bottom_tab.add_transaction')}
           >
-            <Plus className="size-6 stroke-[2.5]" />
+            <Plus className="size-5 stroke-[2.5]" />
           </button>
         </div>
 
@@ -94,18 +88,11 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
     <Link
       href={tab.href}
       aria-current={active ? 'page' : undefined}
-      className="flex flex-col items-center justify-center gap-0.5 h-full py-1.5 transition-colors"
-      style={{ color: active ? '#3ad3a8' : '#8e8e98' }}
+      className="flex flex-col items-center justify-center gap-1 h-full min-h-11 transition-colors"
+      style={{ color: active ? 'var(--ink)' : 'var(--ink-soft)' }}
     >
-      {/* Ikon dibungkus pill kecil — mint soft kalau aktif (dock selalu gelap,
-          jadi warna hardcoded, bukan token tema) */}
-      <span
-        className="flex items-center justify-center rounded-full px-3.5 py-[3px] transition-colors"
-        style={{ background: active ? 'rgba(23,184,144,.18)' : 'transparent' }}
-      >
-        <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
-      </span>
-      <span className={cn('text-3xs leading-tight', active && 'font-medium')}>
+      <Icon className={cn('size-[22px]', active ? 'stroke-[2.25]' : 'stroke-[1.75]')} />
+      <span className={cn('text-3xs leading-none', active ? 'font-semibold' : 'font-medium')}>
         {t(tab.labelKey)}
       </span>
     </Link>

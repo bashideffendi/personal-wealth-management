@@ -37,6 +37,7 @@ import { logSecurityEvent } from '@/lib/security-events'
 import { ExportDataButton } from '@/components/export-data-button'
 import { DeleteAccountButton } from '@/components/delete-account-button'
 import { useI18n } from '@/lib/i18n/context'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 interface Profile {
   id: string
@@ -331,9 +332,7 @@ export default function ProfilePage() {
 
   if (loading || (pageQuery.data && !profile)) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">
-        <Loader2 className="size-5 animate-spin mr-2" /> {t('profile.loading')}
-      </div>
+      <PageSkeleton variant="cards" label={t('profile.loading')} />
     )
   }
 

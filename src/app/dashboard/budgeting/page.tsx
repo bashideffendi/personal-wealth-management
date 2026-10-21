@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, FolderTree, ChevronDown, Plus, Info, CalendarDays, Calculator, Copy, Check, ArrowDownToLine, ArrowUpFromLine, PiggyBank, TrendingUp } from 'lucide-react'
+import { FolderTree, ChevronDown, Plus, Info, CalendarDays, Calculator, Copy, Check, ArrowDownToLine, ArrowUpFromLine, PiggyBank, TrendingUp } from 'lucide-react'
 import { MobileBudgetingView } from '@/components/budgeting/mobile-budgeting-view'
 import { MonthBudgetView } from '@/components/budgeting/month-budget-view'
 import { AnggaranMonthDrawer } from '@/components/budgeting/anggaran-drawer'
@@ -47,6 +47,7 @@ import {
 } from '@/lib/budget-categories'
 import { CategoryIcon } from '@/components/transactions/category-icon'
 import { toast } from 'sonner'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 // DOM mutation di luar komponen — dipanggil dari mouse handler, bukan render.
 function setBodyUserSelect(v: string) {
@@ -1209,10 +1210,7 @@ export default function BudgetingPage() {
 
       {/* Budget Grid */}
       {loading || !treeLoaded ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-6 animate-spin" style={{ color: 'var(--ink)' }} />
-          <span className="ml-2" style={{ color: 'var(--ink-muted)' }}>{t('budgeting.loading')}</span>
-        </div>
+        <PageSkeleton variant="cards" label={t('budgeting.loading')} />
       ) : loadError ? (
         // Fetch anggaran gagal ≠ anggaran kosong: kartu error + retry,
         // BUKAN grid penuh angka 0 (pola sama dgn transactions/accounts).

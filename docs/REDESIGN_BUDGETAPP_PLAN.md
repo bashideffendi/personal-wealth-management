@@ -72,3 +72,10 @@ mono, #6 judul HP Lainnya/Profil. Sisanya (#7–#10) dilebur ke fase di bawah.
   gelap tidak lagi putih-di-atas-putih; komponen `EmptyState` + `Skeleton`.
   Dibandingkan HP terang/gelap: kartu hairline + ikon mono lebih tenang dan
   hierarki angka lebih jelas. Screener tidak disentuh.
+- **Fase 1 — shell:** bilah bawah HP dari dock gelap melayang → bilah docked
+  mono (hairline, aktif = ink, tombol + primer 44px, ikut mode gelap);
+  spinner "Memuat…" halaman diganti `PageSkeleton` (Beranda, Transaksi,
+  Anggaran, Akun, Aset, Profil, Keluarga) + `dashboard/loading.tsx`; komponen
+  `Segmented`; toggle Catatan|Statistik pindah ke baris aksi Transaksi (dulu
+  melayang menutupi daftar), tombol ikon HP 44px. Mode demo: stub `rpc` supaya
+  Anggaran tidak macet memuat. Desktop top-nav sudah satu area gulir — dibiarkan.
