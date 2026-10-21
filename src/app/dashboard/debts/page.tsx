@@ -265,7 +265,7 @@ export default function DebtsOverviewPage() {
       {/* Header terang — eyebrow + judul serif + subtitle + aksi (pola Dana Darurat) */}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="max-w-xl">
-          <h1 className="text-h2 font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+          <h1 className="max-md:sr-only text-h2 font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
             {t('debts.page_title')}
           </h1>
           <p className="hidden md:block text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>

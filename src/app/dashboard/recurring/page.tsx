@@ -10,7 +10,6 @@ import {
   INCOME_CATEGORIES, EXPENSE_CATEGORIES, SAVING_CATEGORIES, INVESTMENT_CATEGORIES,
 } from '@/lib/constants'
 import { SUBSCRIPTION_PROVIDERS, providerInitials } from '@/lib/subscription-providers'
-import { categoryHue } from '@/lib/category-hue'
 import type { Account, Contract, RecurringTransaction } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +30,7 @@ import { useI18n } from '@/lib/i18n/context'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ProviderCatalog } from '@/components/recurring/provider-catalog'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 type TxType = 'income' | 'expense' | 'saving' | 'investment'
 type Freq = 'daily' | 'weekly' | 'monthly' | 'yearly'
@@ -120,12 +120,11 @@ type MTab = Klas | 'kontrak'
 type ContractLite = Pick<Contract, 'id' | 'name' | 'category' | 'provider' | 'cost' | 'end_date' | 'is_archived'>
 const CONTRACT_COLS = 'id, name, category, provider, cost, end_date, is_archived'
 const PROVIDER_COLOR = new Map(SUBSCRIPTION_PROVIDERS.map((p) => [p.name.toLowerCase(), p.color]))
-/** Avatar ala Budget: warna provider kalau nama match katalog, else hue kategori. */
-function avatarStyle(name: string, category: string): { bg: string; fg: string } {
+/** Avatar: warna provider kalau nama match katalog (pengenal), else netral mono. */
+function avatarStyle(name: string, _category: string): { bg: string; fg: string } {
   const pc = PROVIDER_COLOR.get(name.trim().toLowerCase())
   if (pc) return { bg: pc, fg: '#fff' }
-  const h = categoryHue(category)
-  return { bg: h.soft, fg: h.ink }
+  return { bg: 'var(--surface-2)', fg: 'var(--ink-muted)' }
 }
 
 export default function RecurringPage() {
@@ -493,7 +492,7 @@ export default function RecurringPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('recurring.title')}</h1>
+          <h1 className="max-md:sr-only leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('recurring.title')}</h1>
         </div>
         <div className="hidden md:flex flex-wrap items-center gap-2 shrink-0">
           <Button variant="outline" onClick={detectFromHistory}><Search className="h-4 w-4" /> {t('recurring.check_history')}</Button>
@@ -502,20 +501,20 @@ export default function RecurringPage() {
         {/* F14 mobile ala header Budget: deteksi (Sparkles) + tambah bulat tint mint */}
         <div className="flex md:hidden items-center gap-2 shrink-0">
           <button type="button" onClick={detectFromHistory} aria-label={t('recurring.check_history')}
-            className="size-9 rounded-full grid place-items-center active:opacity-70 transition-opacity"
+            className="size-11 rounded-full grid place-items-center active:opacity-70 transition-opacity"
             style={{ background: 'var(--surface-2)' }}>
             <Sparkles className="size-4" style={{ color: 'var(--ink-muted)' }} />
           </button>
           <button type="button" onClick={handleMobileAdd} aria-label={t('recurring.add_recurring')}
-            className="size-9 rounded-full grid place-items-center active:opacity-70 transition-opacity"
-            style={{ background: 'var(--c-mint-soft)' }}>
-            <Plus className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
+            className="size-11 rounded-full grid place-items-center active:opacity-70 transition-opacity"
+            style={{ background: 'var(--c-primary)' }}>
+            <Plus className="size-5" style={{ color: 'var(--c-primary-foreground)' }} />
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-24"><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--ink-soft)' }} /></div>
+        <PageSkeleton variant="cards" label={t('common.loading')} />
       ) : pageQuery.isError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
@@ -536,10 +535,9 @@ export default function RecurringPage() {
                   onClick={() => setMtab(k)}
                   className="flex items-center justify-center gap-1 rounded-full py-2 text-cap transition-colors min-w-0"
                   style={{
-                    background: mtab === k ? 'var(--surface)' : 'transparent',
-                    color: mtab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
-                    fontWeight: mtab === k ? 500 : 400,
-                    boxShadow: mtab === k ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    background: mtab === k ? 'var(--c-primary)' : 'transparent',
+                    color: mtab === k ? 'var(--c-primary-foreground)' : 'var(--ink-muted)',
+                    fontWeight: 600,
                   }}
                 >
                   <span className="truncate">{MTAB_LABELS[k]}</span>

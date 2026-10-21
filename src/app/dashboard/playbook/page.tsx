@@ -30,7 +30,7 @@ export default function PlaybookIndexPage() {
             >
               <div
                 className="size-[30px] rounded-lg grid place-items-center shrink-0"
-                style={{ background: `color-mix(in oklab, ${p.accent} 14%, transparent)`, color: p.accent }}
+                style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
               >
                 <Icon className="size-[15px]" />
               </div>

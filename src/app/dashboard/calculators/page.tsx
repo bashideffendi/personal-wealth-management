@@ -46,7 +46,7 @@ export default function CalculatorsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="min-w-0">
-        <h1 className="leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
+        <h1 className="max-md:sr-only leading-tight truncate" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{t('calculators.page_title')}</h1>
       </div>
 
       {/* Featured calculator */}
@@ -69,8 +69,8 @@ export default function CalculatorsPage() {
             className="w-full text-left flex items-center gap-3 px-3.5 transition-colors hover:bg-[var(--surface-2)]"
             style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
           >
-            <div className="size-[30px] rounded-lg grid place-items-center shrink-0" style={{ background: tint(c.color, 10) }}>
-              <c.icon className="size-[15px]" style={{ color: c.ink }} />
+            <div className="size-[30px] rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+              <c.icon className="size-[15px]" style={{ color: 'var(--ink-muted)' }} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
@@ -126,8 +126,8 @@ function KprFeatured() {
     <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" >
       {/* Input (kiri, tinted) */}
       <div className="p-5 sm:p-6" style={{ background: 'var(--surface-2)' }}>
-        <p className="text-2xs font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
-          <span className="size-7 rounded-lg grid place-items-center" style={{ background: tint(VIOLET, 10) }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
+        <p className="text-2xs font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: 'var(--ink-soft)' }}>
+          <span className="size-7 rounded-lg grid place-items-center" style={{ background: 'var(--surface)', color: 'var(--ink-muted)' }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
         <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('calculators.kpr_featured_title')}</p>
         <div className="mt-5 space-y-5">
@@ -143,7 +143,7 @@ function KprFeatured() {
       {/* Result (kanan) */}
       <div className="p-5 sm:p-6" style={{ background: 'var(--surface)' }}>
         <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
-        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(26px,4.5vw,36px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
+        <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(26px,4.5vw,36px)', color: 'var(--ink)', letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_monthly_for')} {tenor} {t('calculators.unit_years')}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
           <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
@@ -175,7 +175,7 @@ function Slider({ label, valueLabel, suffix, min, max, step = 1, value, onChange
         <span className="num text-sm font-semibold" style={{ color: 'var(--ink)' }}>{valueLabel}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full mt-2" style={{ accentColor: VIOLET }} />
+        className="w-full mt-2" style={{ accentColor: 'var(--ink)' }} />
       <p className="text-3xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{suffix}</p>
     </div>
   )

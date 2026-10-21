@@ -46,8 +46,8 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
   // Saat fokus, tampilkan digit mentah (tanpa reformat ribuan) biar caret
   // gak lompat ke akhir tiap ketikan di tengah nilai.
   const [focusKey, setFocusKey] = useState<string | null>(null)
-  // Teks pakai varian -ink (AA); accent full-sat cuma buat ikon & tint.
-  const accentInk = playbook.accent.replace(/\)$/, '-ink)')
+  // Mono (bahasa desain): aksen playbook tidak lagi mewarnai chrome/angka.
+  const accentInk = 'var(--ink)'
   const hasNumberInput = playbook.inputs.some((f) => f.type === 'number' && values[f.key] !== '' && values[f.key] != null)
 
   // Prefill angka dari data user — best-effort (saldo likuid + arus kas bulan ini).
@@ -186,7 +186,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
       <header className="flex items-start gap-3.5">
         <div
           className="size-12 rounded-2xl flex items-center justify-center shrink-0"
-          style={{ background: `color-mix(in oklab, ${playbook.accent} 14%, transparent)`, color: playbook.accent }}
+          style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
         >
           <Icon className="size-6" />
         </div>
@@ -215,7 +215,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
                 <div
                   className="size-6 rounded-full flex items-center justify-center shrink-0 num font-semibold"
                   style={{
-                    background: `color-mix(in oklab, ${playbook.accent} 14%, transparent)`,
+                    background: 'var(--surface-2)',
                     color: accentInk,
                     fontSize: 12,
                   }}
@@ -322,7 +322,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
       {plan && (
         <section className="s-card p-5 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="size-4" style={{ color: playbook.accent }} />
+            <Sparkles className="size-4" style={{ color: 'var(--ink-soft)' }} />
             <h2 className="t-title font-semibold" style={{ color: 'var(--ink)' }}>
               {t('playbook_detail.plan_title')}
             </h2>
@@ -352,7 +352,7 @@ export function PlaybookDetail({ playbook }: { playbook: Playbook }) {
                     className="flex items-start gap-3 rounded-xl px-4 py-3"
                     style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}
                   >
-                    <Flag className="size-4 mt-0.5 shrink-0" style={{ color: playbook.accent }} />
+                    <Flag className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="t-sm font-semibold" style={{ color: 'var(--ink)' }}>

@@ -172,7 +172,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
       {/* Header line */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('ownership.eyebrowNetwork')}</p>
+          <p className="eyebrow">{t('ownership.eyebrowNetwork')}</p>
           <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>
             {t('ownership.asOf')} {formatTanggalID(ownership.asOf)} ·{' '}
             <span className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>{investorCount}</span> {t('ownership.investorsLabel')} ·{' '}
@@ -198,7 +198,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
       <div className="s-card p-5">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-4">
           <UserRound className="size-4 self-center" style={{ color: 'var(--c-mint-ink)' }} />
-          <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('ownership.shareholdersTitle')}</p>
+          <p className="eyebrow">{t('ownership.shareholdersTitle')}</p>
           {namedHolders.length > 0 && (
             <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
               {t('ownership.fromNetwork')} {formatTanggalID(ownership.asOf)}

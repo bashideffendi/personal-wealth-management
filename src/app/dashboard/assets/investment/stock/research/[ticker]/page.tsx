@@ -266,7 +266,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
             className="p-4 flex flex-col justify-center border-b lg:border-b-0 lg:border-r"
             style={{ background: 'rgba(16,185,129,0.07)', borderColor: 'var(--border-soft)' }}
           >
-          <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>Ringkasan AI · Equity Research</p>
+          <p className="eyebrow">Ringkasan AI · Equity Research</p>
           <p className="text-2xl font-bold mt-1 leading-none" style={{ color: 'var(--c-mint-ink)' }}>
             {fm.recommendation ? String(fm.recommendation).toUpperCase() : '—'}
           </p>

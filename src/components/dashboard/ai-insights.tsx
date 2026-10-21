@@ -267,7 +267,7 @@ export function AIInsightsCard({
             <Sparkles className="size-3.5 text-white" />
           </div>
           <div>
-            <p className="eyebrow" style={{ color: 'var(--c-violet-ink)' }}>
+            <p className="eyebrow">
               {t('ai_insights.title')}
             </p>
             <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
@@ -451,7 +451,7 @@ function WelcomeInsights() {
           <Sparkles className="size-4 text-white" />
         </div>
         <div>
-          <p className="eyebrow" style={{ color: 'var(--c-violet-ink)' }}>
+          <p className="eyebrow">
             {t('ai_insights.welcome_eyebrow')}
           </p>
           <p className="text-2xs mt-0.5" style={{ color: 'var(--text-mute)' }}>

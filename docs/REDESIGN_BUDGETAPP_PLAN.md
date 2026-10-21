@@ -107,3 +107,16 @@ mono, #6 judul HP Lainnya/Profil. Sisanya (#7–#10) dilebur ke fase di bawah.
   Utang: chip jenis = teks, ikon & bar per baris mono/teal; riset saham tanpa
   italic. Grafik & donat data (net worth, komposisi aset, peta) dibiarkan —
   sudah memakai warna sebagai seri data.
+- **Fase 4 — sisanya (SEBAGIAN, dijeda atas permintaan pemilik):**
+  - *Selesai:* Berulang (avatar netral kecuali warna provider, tab aktif =
+    tombol primer, tombol 44px, skeleton); Laporan Bulanan (tanpa garis warna
+    kiri di Ringkasan Eksekutif/Sorotan, ikon KPI mono); Kalkulator (kartu &
+    angka hasil tanpa ungu, slider ink, ikon daftar mono); Playbook (ikon &
+    angka mono); Keluarga kosong (3 kartu berikon → satu daftar bernomor);
+    eyebrow berwarna di seluruh app jadi standar; judul ganda di HP (Utang,
+    Berulang, Kartu Kredit, Kalkulator) disembunyikan visual, tetap ada untuk
+    pembaca layar.
+  - *Belum:* Laporan versi print, Profil/Pengaturan/Tampilan, Pricing (404 di
+    mode demo — dicek dengan data asli), Keluarga saat sudah punya anggota.
+- **Berikutnya:** sisa Fase 4 di atas, lalu Fase 5 (Landing, Features,
+  Login/Daftar, Onboarding, About/Contact/Legal).

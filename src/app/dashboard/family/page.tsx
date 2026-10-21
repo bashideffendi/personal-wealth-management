@@ -28,7 +28,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Users, UserPlus, Crown, Copy, Check, Loader2, Trash2,
+  UserPlus, Crown, Copy, Check, Loader2, Trash2,
   AlertCircle, Mail, CalendarClock, Home, ChevronDown,
   Wallet, ArrowLeftRight, PieChart, Lock, Target, Activity,
   Eye, SlidersHorizontal, TrendingUp,
@@ -406,11 +406,11 @@ export default function FamilyPage() {
       <div className="space-y-6">
         <FamilyHeader />
         <div className="s-card p-8 sm:p-10 text-center">
-          <div className="mx-auto size-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--c-primary)' }}>
-            <Home className="size-7" style={{ color: 'var(--surface)' }} />
+          <div className="mx-auto size-11 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+            <Home className="size-5" />
           </div>
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('family.empty_title')}</h2>
-          <p className="hidden md:block mt-2 max-w-md mx-auto text-sm" style={{ color: 'var(--ink-muted)' }}>
+          <h2 className="text-h3 font-semibold" style={{ color: 'var(--ink)' }}>{t('family.empty_title')}</h2>
+          <p className="mt-1.5 max-w-md mx-auto text-ui" style={{ color: 'var(--ink-muted)' }}>
             {t('family.empty_desc')}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -424,22 +424,22 @@ export default function FamilyPage() {
             {t('family.empty_invite_prefix')} <code className="rounded px-1 py-0.5" style={{ background: 'var(--surface-2)' }}>/dashboard/join/…</code> {t('family.empty_invite_suffix')}
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        {/* Alur 3 langkah — satu daftar bernomor (bukan grid kartu berikon). */}
+        <ol className="s-card overflow-hidden">
           {[
-            { icon: Home, title: t('family.step1_title'), desc: t('family.step1_desc') },
-            { icon: UserPlus, title: t('family.step2_title'), desc: t('family.step2_desc') },
-            { icon: Users, title: t('family.step3_title'), desc: t('family.step3_desc') },
+            { title: t('family.step1_title'), desc: t('family.step1_desc') },
+            { title: t('family.step2_title'), desc: t('family.step2_desc') },
+            { title: t('family.step3_title'), desc: t('family.step3_desc') },
           ].map((step, i) => (
-            <div key={i} className="s-card p-5">
-              <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--c-mint-ink)' }}>
-                <step.icon className="size-4" />
-                <span className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('family.step_label')} {i + 1}</span>
+            <li key={i} className="flex items-start gap-3 px-4 py-3.5 sm:px-5" style={{ borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
+              <span className="num grid size-6 shrink-0 place-items-center rounded-full text-2xs font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>{i + 1}</span>
+              <div className="min-w-0">
+                <p className="text-body font-semibold" style={{ color: 'var(--ink)' }}>{step.title}</p>
+                <p className="text-ui mt-0.5" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
               </div>
-              <p className="font-semibold" style={{ color: 'var(--ink)' }}>{step.title}</p>
-              <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{step.desc}</p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
         <CreateHouseholdDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} name={newHouseholdName} setName={setNewHouseholdName} onSubmit={createHousehold} loading={creating} />
       </div>
     )
@@ -469,7 +469,7 @@ export default function FamilyPage() {
         <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="eyebrow" style={{ color: 'var(--c-coral-ink)' }}>{t('family.family_circle')}</p>
+              <p className="eyebrow">{t('family.family_circle')}</p>
               <h2 className="mt-0.5 text-lg sm:text-xl leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{household.name}</h2>
             </div>
             {isUserOwner && (

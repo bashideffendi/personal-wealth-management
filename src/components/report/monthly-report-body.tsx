@@ -318,8 +318,8 @@ export function MonthlyReportBody({
       </div>
 
       {/* Ringkasan eksekutif — narasi prosa 3 sub-paragraf + strip arus kas */}
-      <div className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
-        <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('report.exec_summary')}</p>
+      <div className="s-card p-5 sm:p-6 print-avoid-break">
+        <p className="eyebrow">{t('report.exec_summary')}</p>
         <div className="mt-2.5 space-y-2.5" style={{ maxWidth: variant === 'print' ? '64ch' : undefined }}>
           <p className="t-body" style={{ color: 'var(--ink)', lineHeight: 1.7 }}>
             <strong>{t('report.cashflow_label')}</strong> {t('report.cashflow_during')} {MONTHS[month - 1]} {year}, {t('report.cashflow_income')} {money(r.income)} {t('report.cashflow_and_expense')} {money(r.expense)} {t('report.cashflow_result')} {surplusWord}{' '}
@@ -526,11 +526,11 @@ export function MonthlyReportBody({
       )}
 
       {/* Sorotan */}
-      <div data-report-block="sorotan" className="s-card p-5 sm:p-6 print-avoid-break" style={{ borderLeft: '3px solid var(--c-mint)' }}>
-        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--c-mint-ink)' }} /><p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('report.highlights_eyebrow')}</p></div>
+      <div data-report-block="sorotan" className="s-card p-5 sm:p-6 print-avoid-break">
+        <div className="flex items-center gap-2 mb-3"><Sparkles className="size-4" style={{ color: 'var(--ink-soft)' }} /><p className="eyebrow">{t('report.highlights_eyebrow')}</p></div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { icon: <Trophy className="size-4" style={{ color: 'var(--c-amber)' }} />, title: `${t('report.highlight_saving_rate')} ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? t('report.dir_up') : t('report.dir_down')} ${Math.abs(r.savingRateDelta).toFixed(0)}pp ${t('report.from_prefix')} ${r.prevMonthLabel}` : t('report.this_month') },
+            { icon: <Trophy className="size-4" style={{ color: 'var(--ink-muted)' }} />, title: `${t('report.highlight_saving_rate')} ${r.savingRate.toFixed(0)}%`, sub: r.hasPrev ? `${r.savingRateDelta >= 0 ? t('report.dir_up') : t('report.dir_down')} ${Math.abs(r.savingRateDelta).toFixed(0)}pp ${t('report.from_prefix')} ${r.prevMonthLabel}` : t('report.this_month') },
             r.hasPrev && topDown && { icon: <ArrowDownRight className="size-4" style={{ color: 'var(--c-mint-ink)' }} />, title: `${topDown.name} ${t('report.dir_down_word')}`, sub: `${t('report.highlight_saved')} ${formatCurrency(Math.abs(topDown.delta))} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
             r.hasPrev && topUp && { icon: <ArrowUpRight className="size-4" style={{ color: 'var(--c-coral-ink)' }} />, title: `${topUp.name} ${t('report.dir_up_word')}`, sub: `+${formatCurrency(topUp.delta)} ${t('report.vs_prefix')} ${r.prevMonthLabel}` },
           ].filter(Boolean).slice(0, 3).map((h, i) => {
@@ -594,11 +594,9 @@ function Meta({ label, value }: { label: string; value: string }) {
 
 function Kpi({ label, value, pct, note, icon, kind, goodUp }: { label: string; value: number; pct?: number | null; note?: string; icon: React.ReactNode; kind: 'income' | 'expense' | 'amber' | 'violet'; goodUp?: boolean }) {
   const t = useT()
-  const tone: Record<string, { bg: string; fg: string }> = {
-    income: { bg: 'var(--c-mint-soft)', fg: 'var(--c-mint)' }, expense: { bg: 'var(--c-coral-soft)', fg: 'var(--c-coral)' },
-    amber: { bg: 'var(--c-amber-soft)', fg: 'var(--c-amber)' }, violet: { bg: 'var(--c-violet-soft)', fg: 'var(--c-violet)' },
-  }
-  const c = tone[kind]; const up = (pct ?? 0) >= 0; const good = goodUp === undefined ? true : up === goodUp
+  // Ikon KPI mono (bahasa desain); `kind` tetap di signature untuk pemanggil.
+  void kind
+  const c = { bg: 'var(--surface-2)', fg: 'var(--ink-muted)' }; const up = (pct ?? 0) >= 0; const good = goodUp === undefined ? true : up === goodUp
   return (
     <div className="stat-tile">
       <div className="flex items-center justify-between"><p className="eyebrow">{label}</p><div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: c.bg, color: c.fg }}>{icon}</div></div>
