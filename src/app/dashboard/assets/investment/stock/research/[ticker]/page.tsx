@@ -224,7 +224,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 <span className="font-mono font-bold tracking-tight" style={{ fontSize: 24, lineHeight: 1, color: 'var(--ink)' }}>{ticker}</span>
                 {verdict && (
                   <span
-                    className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-3xs font-bold uppercase tracking-wide"
                     style={{ background: verdictColor.bg, color: verdictColor.fg }}
                   >
                     {verdict}
@@ -232,7 +232,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
                 )}
               </div>
               <p className="font-semibold mt-1.5" style={{ fontSize: 17, color: 'var(--ink)' }}>{name}</p>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2.5 text-[13px]">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2.5 text-ui">
                 {sector && (
                   <span><span style={{ color: 'var(--ink-soft)' }}>Sektor </span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{sector}</span></span>
                 )}
@@ -274,7 +274,7 @@ export default async function StockResearchPage({ params }: RouteProps) {
             <p className="text-xs mt-2" style={{ color: 'var(--ink-muted)' }}>Conviction <strong style={{ color: 'var(--ink)' }}>{fm.conviction}</strong></p>
           )}
           {fm.generated && (
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>Diperbarui {fm.generated}</p>
+            <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>Diperbarui {fm.generated}</p>
           )}
         </div>
         <div className="p-4 flex flex-col justify-center border-b lg:border-b-0 lg:border-r" style={{ borderColor: 'var(--border-soft)' }}>
@@ -291,14 +291,14 @@ export default async function StockResearchPage({ params }: RouteProps) {
           <p className="num tabular text-xl font-bold mt-1" style={{ color: 'var(--ink)' }}>
             {valuationV2?.undervaluedCount ?? '—'}/{totalMethods}
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>metode: undervalued</p>
+          <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>metode: undervalued</p>
         </div>
         <div className="p-4 flex flex-col justify-center">
           <p className="eyebrow">Avg MoS</p>
           <p className="num tabular text-xl font-bold mt-1" style={{ color: isUp ? 'var(--c-mint)' : 'var(--c-coral)' }}>
             {heroMoS != null ? `${isUp ? '+' : ''}${(heroMoS * 100).toFixed(1)}%` : '—'}
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuationV2?.methodsValid ?? '—'}/{totalMethods} valid</p>
+          <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{valuationV2?.methodsValid ?? '—'}/{totalMethods} valid</p>
         </div>
         </div>
       </header>

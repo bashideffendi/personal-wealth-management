@@ -319,11 +319,11 @@ export default function NonLiquidAssetsPage() {
     const body = (
       <>
         <p className="num text-xl mt-2.5 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_value)}</p>
-        <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+        <div className="mt-1.5 flex items-center gap-2 text-2xs">
           <span className="num px-1.5 py-0.5 rounded font-semibold" style={{ background: tint(up ? MINT : CORAL, 10), color: up ? MINT_INK : CORAL_INK }}>{up ? '+' : ''}{pct.toFixed(1)}%</span>
           <span style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.from')} <span className="num">{formatCurrency(a.purchase_value)}</span></span>
         </div>
-        <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--outline)' }}>
+        <div className="mt-4 pt-3 border-t flex items-center justify-between text-2xs" style={{ borderColor: 'var(--outline)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.bought')} {monthYear(a.purchase_date, dloc)}{deprLabel ? ` · ${deprLabel}` : ''}</span>
           {hasMap && (
             <a href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>
@@ -352,9 +352,9 @@ export default function NonLiquidAssetsPage() {
             </div>
             <div className="px-4 pb-4 pt-8">
               <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-              <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
+              <p className="text-2xs mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
               {a.address && (
-                <p className="text-[11px] mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs mt-1 flex items-start gap-1" style={{ color: 'var(--ink-soft)' }}>
                   <MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="truncate">{a.address}</span>
                 </p>
               )}
@@ -369,7 +369,7 @@ export default function NonLiquidAssetsPage() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
+                <p className="text-2xs mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>{subtitle}</p>
               </div>
             </div>
             {body}
@@ -431,9 +431,9 @@ export default function NonLiquidAssetsPage() {
           {/* Strip stat 4-sel (ikut mock) */}
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
-              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.market_value_now')}</p>
+              <p className="text-2xs font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.market_value_now')}</p>
               <p className="num tabular text-xl sm:text-3xl font-bold mt-2 leading-none" title={formatCurrency(total)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(total)}</p>
-              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                 {t('assets_nonliquid.initial_capital')} <span className="num">{formatCurrency(totalPurchase)}</span>{' · '}
                 <span className="num font-semibold" style={{ color: totalDelta >= 0 ? MINT_INK : CORAL_INK }}>{totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}</span>
               </p>
@@ -444,9 +444,9 @@ export default function NonLiquidAssetsPage() {
               const empty = s.cur <= 0
               return (
                 <div key={cat} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
-                  <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: CAT[cat].ink }}><CatIcon className="size-3" />{CAT[cat].label}</p>
+                  <p className="flex items-center gap-1.5 text-2xs font-semibold tracking-wide uppercase" style={{ color: CAT[cat].ink }}><CatIcon className="size-3" />{CAT[cat].label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(s.cur)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(s.cur)}</p>
-                  <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+                  <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                     {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? MINT_INK : CORAL_INK }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}
                   </p>
                 </div>
@@ -468,7 +468,7 @@ export default function NonLiquidAssetsPage() {
                   const s = catStat(cat)
                   if (s.cur <= 0) return null
                   return (
-                    <span key={cat} className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                    <span key={cat} className="flex items-center gap-1.5 text-2xs" style={{ color: 'var(--ink-muted)' }}>
                       <span className="size-2 rounded-full" style={{ background: CAT[cat].color }} />
                       {CAT[cat].label}
                       <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{((s.cur / total) * 100).toFixed(0)}%</span>
@@ -484,8 +484,8 @@ export default function NonLiquidAssetsPage() {
           {mapPoints.length > 0 && (
             <section className="s-card hidden md:block overflow-hidden">
               <div className="flex items-center justify-between px-4 pt-3.5 pb-3">
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Peta Portofolio</p>
-                <span className="text-[11px]" style={{ color: 'var(--ink-muted)' }}><span className="num">{mapPoints.length}</span> properti di peta</span>
+                <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>Peta Portofolio</p>
+                <span className="text-2xs" style={{ color: 'var(--ink-muted)' }}><span className="num">{mapPoints.length}</span> properti di peta</span>
               </div>
               <PortfolioMap
                 items={mapPoints}
@@ -497,7 +497,7 @@ export default function NonLiquidAssetsPage() {
 
           {/* Toolbar — judul + toggle Kartu/Tabel */}
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.asset_details')}</p>
+            <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.asset_details')}</p>
             <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
               <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('assets_nonliquid.card_view')} aria-label={t('assets_nonliquid.card_view')}>
                 <LayoutGrid className="size-4" />
@@ -511,18 +511,18 @@ export default function NonLiquidAssetsPage() {
           {/* Data — Tabel (datar, sortable) atau Kartu (grouped per kategori) */}
           {view === 'table' ? (
             <div className="overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
-              <table className="w-full text-[13px]">
+              <table className="w-full text-ui">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_asset')}</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_type')}</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_bought')} {sortIcon('date')}</button></th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_age')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_initial_capital')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_current_value')} {sortIcon('value')}</button></th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_nonliquid.col_diff')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ% {sortIcon('gain')}</button></th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_nonliquid.col_method')}</th>
+                    <th className="px-4 py-2.5 text-left text-2xs font-medium">{t('assets_nonliquid.col_asset')}</th>
+                    <th className="px-3 py-2.5 text-left text-2xs font-medium">{t('assets_nonliquid.col_type')}</th>
+                    <th className="px-3 py-2.5 text-left text-2xs font-medium"><button onClick={() => toggleSort('date')} className="inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_bought')} {sortIcon('date')}</button></th>
+                    <th className="px-3 py-2.5 text-right text-2xs font-medium">{t('assets_nonliquid.col_age')}</th>
+                    <th className="px-3 py-2.5 text-right text-2xs font-medium">{t('assets_nonliquid.col_initial_capital')}</th>
+                    <th className="px-3 py-2.5 text-right text-2xs font-medium"><button onClick={() => toggleSort('value')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_nonliquid.col_current_value')} {sortIcon('value')}</button></th>
+                    <th className="px-3 py-2.5 text-right text-2xs font-medium">{t('assets_nonliquid.col_diff')}</th>
+                    <th className="px-3 py-2.5 text-right text-2xs font-medium"><button onClick={() => toggleSort('gain')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">Δ% {sortIcon('gain')}</button></th>
+                    <th className="px-3 py-2.5 text-left text-2xs font-medium">{t('assets_nonliquid.col_method')}</th>
                     <th className="px-3 py-2.5" />
                   </tr>
                 </thead>
@@ -579,9 +579,9 @@ export default function NonLiquidAssetsPage() {
                     <div className="flex items-center gap-2 mb-3">
                       <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.ink }} /></div>
                       <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{meta.label}</h3>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{s.count} {t('assets_nonliquid.item')}</span>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
-                      <span className="num text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(s.cur)}</span>
+                      <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>{s.count} {t('assets_nonliquid.item')}</span>
+                      <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>·</span>
+                      <span className="num text-cap font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(s.cur)}</span>
                       <div className="flex-1 h-px ml-1.5" style={{ background: 'var(--border-soft)' }} />
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -625,7 +625,7 @@ export default function NonLiquidAssetsPage() {
                         <div className="size-9 rounded-lg grid place-items-center" style={{ background: on ? tint(VIOLET, 10) : 'var(--surface-2)' }}>
                           <Icon className="size-4" style={{ color: on ? VIOLET_INK : 'var(--ink-muted)' }} />
                         </div>
-                        <span className="text-[12px] font-medium text-center leading-tight" style={{ color: on ? 'var(--ink)' : 'var(--ink-muted)' }}>{m.label}</span>
+                        <span className="text-cap font-medium text-center leading-tight" style={{ color: on ? 'var(--ink)' : 'var(--ink-muted)' }}>{m.label}</span>
                       </button>
                     )
                   })}
@@ -638,13 +638,13 @@ export default function NonLiquidAssetsPage() {
               </div>
 
               <div>
-                <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_type')}</Label>
+                <Label className="text-2xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_type')}</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {TYPE_PILLS[form.category].map((tp) => {
                     const on = form.type === tp
                     return (
                       <button key={tp} type="button" onClick={() => setForm({ ...form, type: tp })}
-                        className="rounded-full px-3 py-1.5 text-[12px] font-medium transition"
+                        className="rounded-full px-3 py-1.5 text-cap font-medium transition"
                         style={{ background: on ? 'var(--ink)' : 'var(--surface-2)', color: on ? 'var(--surface)' : 'var(--ink-muted)' }}>
                         {tp}
                       </button>
@@ -655,36 +655,36 @@ export default function NonLiquidAssetsPage() {
 
               {form.category === 'vehicle' && (
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_vehicle_detail')}</Label>
+                  <Label className="text-2xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_vehicle_detail')}</Label>
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_plate')}</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} placeholder="B 1234 XYZ" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_year')}</Label><Input value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2022" inputMode="numeric" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_color')}</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder={t('assets_nonliquid.ph_color')} /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_engine')}</Label><Input value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} placeholder={t('assets_nonliquid.ph_optional')} /></div>
+                    <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_plate')}</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} placeholder="B 1234 XYZ" /></div>
+                    <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_year')}</Label><Input value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2022" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_color')}</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder={t('assets_nonliquid.ph_color')} /></div>
+                    <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_engine')}</Label><Input value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} placeholder={t('assets_nonliquid.ph_optional')} /></div>
                   </div>
                 </div>
               )}
 
               {form.category === 'property' && (
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_property_detail')}</Label>
+                  <Label className="text-2xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_property_detail')}</Label>
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_land_area')}</Label><Input type="number" value={form.luasTanah} onChange={(e) => setForm({ ...form, luasTanah: e.target.value })} placeholder="144" inputMode="numeric" /></div>
-                    <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_building_area')}</Label><Input type="number" value={form.luasBangunan} onChange={(e) => setForm({ ...form, luasBangunan: e.target.value })} placeholder="90" inputMode="numeric" /></div>
-                    <div className="grid gap-1.5 col-span-2"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_specification')}</Label><Input value={form.spesifikasi} onChange={(e) => setForm({ ...form, spesifikasi: e.target.value })} placeholder={t('assets_nonliquid.ph_specification')} /></div>
+                    <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_land_area')}</Label><Input type="number" value={form.luasTanah} onChange={(e) => setForm({ ...form, luasTanah: e.target.value })} placeholder="144" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_building_area')}</Label><Input type="number" value={form.luasBangunan} onChange={(e) => setForm({ ...form, luasBangunan: e.target.value })} placeholder="90" inputMode="numeric" /></div>
+                    <div className="grid gap-1.5 col-span-2"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_specification')}</Label><Input value={form.spesifikasi} onChange={(e) => setForm({ ...form, spesifikasi: e.target.value })} placeholder={t('assets_nonliquid.ph_specification')} /></div>
                   </div>
                 </div>
               )}
 
               {form.category !== 'property' && (
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_depreciation')}</Label>
+                  <Label className="text-2xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.label_depreciation')}</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {(['garis_lurus', 'saldo_menurun_ganda', 'none'] as MetodePenyusutan[]).map((m) => {
                       const on = form.metode === m
                       return (
                         <button key={m} type="button" onClick={() => setForm({ ...form, metode: m, deprOverride: false })}
-                          className="rounded-full px-3 py-1.5 text-[12px] font-medium transition"
+                          className="rounded-full px-3 py-1.5 text-cap font-medium transition"
                           style={{ background: on ? 'var(--ink)' : 'var(--surface-2)', color: on ? 'var(--surface)' : 'var(--ink-muted)' }}>
                           {METODE_LABEL[m]}
                         </button>
@@ -693,8 +693,8 @@ export default function NonLiquidAssetsPage() {
                   </div>
                   {form.metode !== 'none' && (
                     <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_useful_life')}</Label><Input type="number" min={1} value={form.masaManfaat || ''} onChange={(e) => setForm({ ...form, masaManfaat: Number(e.target.value), deprOverride: false })} placeholder="8" inputMode="numeric" /></div>
-                      <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_residual')}</Label><RpField value={form.residu} onChange={(n) => setForm({ ...form, residu: n, deprOverride: false })} /></div>
+                      <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_useful_life')}</Label><Input type="number" min={1} value={form.masaManfaat || ''} onChange={(e) => setForm({ ...form, masaManfaat: Number(e.target.value), deprOverride: false })} placeholder="8" inputMode="numeric" /></div>
+                      <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_residual')}</Label><RpField value={form.residu} onChange={(n) => setForm({ ...form, residu: n, deprOverride: false })} /></div>
                     </div>
                   )}
                 </div>
@@ -704,28 +704,28 @@ export default function NonLiquidAssetsPage() {
                 <StepLabel n={3} text={t('assets_nonliquid.step_asset_value')} />
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <div className="grid gap-1.5">
-                    <Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_price')}</Label>
+                    <Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_price')}</Label>
                     {/* Auto-mirror current←purchase until the user edits "current" — no typing the same big number twice. */}
                     <RpField value={form.purchase_value} onChange={(n) => setForm((f) => ({ ...f, purchase_value: n, current_value: (f.current_value === 0 || f.current_value === f.purchase_value) ? n : f.current_value }))} />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label className="text-[11px] flex items-center justify-between gap-2" style={{ color: 'var(--ink-muted)' }}>
+                    <Label className="text-2xs flex items-center justify-between gap-2" style={{ color: 'var(--ink-muted)' }}>
                       <span>{isDeprForm ? t('assets_nonliquid.label_current_book') : t('assets_nonliquid.label_current')}</span>
                       {isDeprForm && (form.deprOverride
-                        ? <button type="button" onClick={() => setForm({ ...form, deprOverride: false })} className="text-[10px] underline" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.use_auto')}</button>
-                        : <span className="text-[10px] font-semibold" style={{ color: MINT_INK }}>{t('assets_nonliquid.auto')}</span>)}
+                        ? <button type="button" onClick={() => setForm({ ...form, deprOverride: false })} className="text-3xs underline" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.use_auto')}</button>
+                        : <span className="text-3xs font-semibold" style={{ color: MINT_INK }}>{t('assets_nonliquid.auto')}</span>)}
                     </Label>
                     <RpField value={shownCurrent} onChange={(n) => setForm({ ...form, current_value: n, deprOverride: true })} />
                   </div>
                 </div>
                 {isDeprForm && deprPreview ? (
                   <div className="mt-2.5 rounded-lg p-3" style={{ background: 'var(--surface-2)' }}>
-                    <div className="grid grid-cols-3 gap-2 text-[12px]">
+                    <div className="grid grid-cols-3 gap-2 text-cap">
                       <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_per_year')}</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.perYearFirst))}</p></div>
                       <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_accumulated')}</p><p className="num font-semibold mt-0.5" style={{ color: CORAL_INK }}>−{formatCurrency(Math.round(deprPreview.accumulated))}</p></div>
                       <div><p style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.depr_book_value')}</p><p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(deprPreview.bookValue))}</p></div>
                     </div>
-                    <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="text-2xs mt-2" style={{ color: 'var(--ink-soft)' }}>
                       {t('assets_nonliquid.age')} {deprPreview.yearsElapsed.toFixed(1)} {t('assets_nonliquid.unit_years')} · {METODE_LABEL[form.metode]}
                       {deprPreview.fullyDepreciated ? ` · ${t('assets_nonliquid.fully_depreciated')}` : ''}
                       {form.deprOverride ? ` · ${t('assets_nonliquid.manually_overridden')}` : ''}
@@ -736,7 +736,7 @@ export default function NonLiquidAssetsPage() {
                   const p = (d / form.purchase_value) * 100
                   const up = d >= 0
                   return (
-                    <div className="mt-2.5 rounded-lg px-3 py-2 text-[12px] flex items-center gap-2" style={{ background: tint(up ? MINT : CORAL, 8), color: up ? MINT_INK : CORAL_INK }}>
+                    <div className="mt-2.5 rounded-lg px-3 py-2 text-cap flex items-center gap-2" style={{ background: tint(up ? MINT : CORAL, 8), color: up ? MINT_INK : CORAL_INK }}>
                       {up ? <TrendingUp className="size-3.5 shrink-0" /> : <TrendingDown className="size-3.5 shrink-0" />}
                       {up ? t('assets_nonliquid.status_appreciation') : t('assets_nonliquid.status_depreciation')} <span className="num font-semibold">{up ? '+' : ''}{formatCurrency(d)} ({up ? '+' : ''}{p.toFixed(1)}%)</span> {t('assets_nonliquid.since_bought')}
                     </div>
@@ -745,8 +745,8 @@ export default function NonLiquidAssetsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_date')}</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
-                <div className="grid gap-1.5"><Label className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_notes')}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={PLACEHOLDERS[form.category].note} /></div>
+                <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_purchase_date')}</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
+                <div className="grid gap-1.5"><Label className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{t('assets_nonliquid.label_notes')}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={PLACEHOLDERS[form.category].note} /></div>
               </div>
             </div>
 
@@ -755,7 +755,7 @@ export default function NonLiquidAssetsPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" style={{ color: VIOLET_INK }} /> {t('assets_nonliquid.location_on_map')}</Label>
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('assets_nonliquid.optional')}</span>
+                  <span className="rounded-full px-2 py-0.5 text-3xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('assets_nonliquid.optional')}</span>
                 </div>
                 <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder={t('assets_nonliquid.ph_full_address')} />
                 <LeafletMap lat={form.latitude} lng={form.longitude} onPick={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} height={380} />
@@ -764,7 +764,7 @@ export default function NonLiquidAssetsPage() {
           </div>
 
           <DialogFooter className="sm:justify-between sm:items-center">
-            <p className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+            <p className="flex items-center gap-1.5 text-2xs" style={{ color: 'var(--ink-soft)' }}>
               <ShieldCheck className="size-3.5" style={{ color: MINT_INK }} /> {t('assets_nonliquid.encrypted_note')}
             </p>
             <div className="flex gap-2">
@@ -787,7 +787,7 @@ export default function NonLiquidAssetsPage() {
               <div key={a.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{a.name}</p>
-                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.reval_old')} <span className="num">{formatCurrency(a.current_value)}</span></p>
+                  <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('assets_nonliquid.reval_old')} <span className="num">{formatCurrency(a.current_value)}</span></p>
                 </div>
                 <div className="w-40"><NumberInput value={revalValues[a.id] ?? a.current_value} onChange={(n) => setRevalValues((p) => ({ ...p, [a.id]: n }))} placeholder="0" /></div>
               </div>
@@ -805,8 +805,8 @@ export default function NonLiquidAssetsPage() {
 
 function StepLabel({ n, text }: { n: number; text: string }) {
   return (
-    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-      <span className="size-4 rounded grid place-items-center text-[9px] num" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{n}</span>
+    <p className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+      <span className="size-4 rounded grid place-items-center text-3xs num" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{n}</span>
       {text}
     </p>
   )

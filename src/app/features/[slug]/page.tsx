@@ -69,7 +69,7 @@ export default async function FeatureDetailPage({ params }: { params: Promise<{ 
                 <span className="size-1.5 rounded-full shrink-0" style={{ background: 'var(--c-mint)' }} />
                 <h2 className="text-base font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>{s.title}</h2>
               </div>
-              <p className="text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
+              <p className="text-row leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
             </div>
           ))}
         </div>
@@ -81,11 +81,11 @@ export default async function FeatureDetailPage({ params }: { params: Promise<{ 
             <div className="mt-4 space-y-2">
               {f.faq.map((item) => (
                 <details key={item.q} className="group rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                  <summary className="list-none cursor-pointer px-5 py-4 text-[15px] font-medium flex items-center justify-between gap-3" style={{ color: 'var(--ink)' }}>
+                  <summary className="list-none cursor-pointer px-5 py-4 text-row font-medium flex items-center justify-between gap-3" style={{ color: 'var(--ink)' }}>
                     {item.q}
                     <span className="shrink-0 transition-transform group-open:rotate-45" style={{ color: 'var(--ink-soft)' }}>+</span>
                   </summary>
-                  <p className="px-5 pb-4 text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{item.a}</p>
+                  <p className="px-5 pb-4 text-row leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{item.a}</p>
                 </details>
               ))}
             </div>
@@ -109,7 +109,7 @@ export default async function FeatureDetailPage({ params }: { params: Promise<{ 
         </div>
 
         {/* trust line */}
-        <div className="max-w-5xl mx-auto mt-6 flex items-center gap-x-5 gap-y-2 flex-wrap text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+        <div className="max-w-5xl mx-auto mt-6 flex items-center gap-x-5 gap-y-2 flex-wrap text-cap" style={{ color: 'var(--ink-soft)' }}>
           {['Akses penuh 21 hari', 'Tanpa kartu kredit', 'Data dienkripsi, tidak dijual'].map((t) => (
             <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} /> {t}</span>
           ))}

@@ -227,7 +227,7 @@ export function StockWatchlistTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr
-                  className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
+                  className="text-left text-3xs uppercase tracking-[0.08em] font-semibold border-b"
                   style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
                 >
                   <th className="px-3 py-2.5">{t('watchlist.colTicker')}</th>
@@ -268,7 +268,7 @@ export function StockWatchlistTab() {
                       <td className="px-3 py-2.5 max-w-[220px] truncate text-xs" style={{ color: 'var(--ink-muted)' }}>
                         {meta?.name ?? '—'}
                         {meta?.sector && (
-                          <span className="block text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                          <span className="block text-3xs" style={{ color: 'var(--ink-soft)' }}>
                             {meta.sector}
                           </span>
                         )}
@@ -363,24 +363,24 @@ export function StockWatchlistTab() {
                     title={`${t('watchlist.viewResearch')} ${row.ticker}`}
                   >
                     <span
-                      className="font-mono text-[11px] font-bold px-1.5 py-1 rounded shrink-0"
+                      className="font-mono text-2xs font-bold px-1.5 py-1 rounded shrink-0"
                       style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                     >
                       {row.ticker}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>
+                      <span className="block truncate text-body font-medium leading-tight" style={{ color: 'var(--ink)' }}>
                         {meta?.name ?? row.ticker}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11px] leading-tight" style={{ color: 'var(--ink-soft)' }}>
+                      <span className="mt-0.5 block truncate text-2xs leading-tight" style={{ color: 'var(--ink-soft)' }}>
                         {row.note ?? meta?.sector ?? '—'}
                       </span>
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="num tabular block text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                      <span className="num tabular block text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                         {price != null ? formatCurrency(price) : '—'}
                       </span>
-                      <span className="num tabular mt-0.5 block text-[11px] leading-tight">
+                      <span className="num tabular mt-0.5 block text-2xs leading-tight">
                         {changePct != null && (
                           <span
                             className="font-semibold"
@@ -565,7 +565,7 @@ function AddDialog({
                         {e.name}
                       </span>
                       {e.sector && (
-                        <span className="block text-[10px] truncate" style={{ color: 'var(--ink-soft)' }}>
+                        <span className="block text-3xs truncate" style={{ color: 'var(--ink-soft)' }}>
                           {e.sector}
                         </span>
                       )}

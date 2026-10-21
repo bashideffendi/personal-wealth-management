@@ -143,7 +143,7 @@ export default function AssetsOverviewPage() {
       >
         <div className="relative p-6 sm:p-8">
         <p
-          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          className="text-2xs font-semibold tracking-[0.18em] uppercase"
           style={{ color: 'var(--on-hero-mut)' }}
         >
           {t('assets.total_recorded_wealth')}
@@ -171,7 +171,7 @@ export default function AssetsOverviewPage() {
                   border: '1px solid rgba(255,255,255,0.10)',
                 }}
               >
-                <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{b.label}</p>
+                <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{b.label}</p>
                 <p className="num tabular mt-2 font-bold" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
                   {formatCurrency(b.value)}
                 </p>
@@ -179,9 +179,9 @@ export default function AssetsOverviewPage() {
                   <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--c-mint)' }} />
                   </div>
-                  <span className="text-[11px] num font-semibold" style={{ color: 'var(--on-hero-mut)' }}>{pct.toFixed(0)}%</span>
+                  <span className="text-2xs num font-semibold" style={{ color: 'var(--on-hero-mut)' }}>{pct.toFixed(0)}%</span>
                 </div>
-                <div className="mt-2 flex items-center gap-0.5 text-[11px]" style={{ color: 'var(--on-hero-mut)' }}>
+                <div className="mt-2 flex items-center gap-0.5 text-2xs" style={{ color: 'var(--on-hero-mut)' }}>
                   {t('assets.view_detail')}
                 </div>
               </Link>

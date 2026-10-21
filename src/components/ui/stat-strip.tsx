@@ -62,7 +62,7 @@ export function StatStrip({ items, className }: { items: StatStripItem[]; classN
             {it.value}
           </p>
           {it.sub != null && (
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{it.sub}</p>
+            <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{it.sub}</p>
           )}
         </div>
       ))}

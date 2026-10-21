@@ -19,7 +19,7 @@ export function CalmModeToggle({ compact = false }: { compact?: boolean }) {
         type="button"
         onClick={toggle}
         aria-pressed={calm}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-medium transition"
         style={{
           background: calm ? 'var(--c-mint-soft)' : 'var(--surface-2)',
           color: calm ? 'var(--c-mint-ink)' : 'var(--ink-muted)',

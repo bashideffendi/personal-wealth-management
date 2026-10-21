@@ -446,10 +446,10 @@ export default function AccountsPage() {
     const act = activityByAccount[a.id]
     const color = opts?.muted ? 'var(--ink-soft)' : 'var(--ink-muted)'
     if (!act || act.count === 0) {
-      return <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{opts?.showWindow ? `${t('accounts.no_activity')} · ${t('accounts.days_30')}` : t('accounts.none_yet')}</span>
+      return <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{opts?.showWindow ? `${t('accounts.no_activity')} · ${t('accounts.days_30')}` : t('accounts.none_yet')}</span>
     }
     return (
-      <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]" style={{ color }}>
+      <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs" style={{ color }}>
         <span>{act.count} {t('accounts.trx')}{opts?.showWindow ? ` · ${t('accounts.days_30')}` : ''}</span>
         {act.inSum > 0 && <span className="num" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(act.inSum)}</span>}
         {act.outSum > 0 && <span className="num" style={{ color: 'var(--c-coral-ink)' }}>−{formatCurrency(act.outSum)}</span>}
@@ -477,7 +477,7 @@ export default function AccountsPage() {
           >
             {privacyHidden ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
           </button>
-          <p className="text-[13px] font-medium" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
+          <p className="text-ui font-medium" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
           <Link
             href="/dashboard/net-worth"
             aria-label={t('networth.net_worth')}
@@ -499,14 +499,14 @@ export default function AccountsPage() {
         )}
         <div className="mt-3.5 grid grid-cols-2 gap-3">
           <div className="text-center">
-            <p className="text-[11px]" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.assets')}</p>
-            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: 'var(--on-hero)' }}>
+            <p className="text-2xs" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.assets')}</p>
+            <p className="num tabular text-lead font-semibold mt-0.5" style={{ color: 'var(--on-hero)' }}>
               {nw ? formatCurrency(nw.assets) : '—'}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-[11px]" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.debt')}</p>
-            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: 'var(--hero-chip-neg-fg)' }}>
+            <p className="text-2xs" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.debt')}</p>
+            <p className="num tabular text-lead font-semibold mt-0.5" style={{ color: 'var(--hero-chip-neg-fg)' }}>
               {nw ? formatCurrency(nw.liabilities) : '—'}
             </p>
           </div>
@@ -523,7 +523,7 @@ export default function AccountsPage() {
         }}
       >
         <div className="relative p-6 sm:p-9">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>
+          <p className="text-2xs font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>
             {t('accounts.hero_label')}
           </p>
           {!loading && accounts.length > 0 ? (
@@ -539,7 +539,7 @@ export default function AccountsPage() {
                 {t('accounts.total_balance_from')} {accounts.length} {t('accounts.accounts_word')} · {today}
               </p>
               {(totals30d.inSum > 0 || totals30d.outSum > 0) && (
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-cap">
                   <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1" style={{ background: 'var(--hero-chip-pos-bg)', color: 'var(--hero-chip-pos-fg)' }}>
                     <ArrowDownLeft className="size-3.5" /> {t('accounts.in')} <span className="num font-semibold">+{formatCurrency(totals30d.inSum)}</span>
                   </span>
@@ -561,7 +561,7 @@ export default function AccountsPage() {
       {/* Toolbar: label + view toggle + add — desktop only (mobile: grup di bawah) */}
       {!loading && accounts.length > 0 && (
         <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('accounts.list_label')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('accounts.list_label')}</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-md border overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
               <button type="button" onClick={() => changeView('card')} className="size-8 flex items-center justify-center transition" style={{ background: view === 'card' ? 'var(--ink)' : 'var(--surface)', color: view === 'card' ? 'var(--surface)' : 'var(--ink-muted)' }} title={t('accounts.view_card')} aria-label={t('accounts.view_card')}><LayoutGrid className="size-4" /></button>
@@ -615,9 +615,9 @@ export default function AccountsPage() {
               aria-expanded={!collapsed['accounts']}
               className="w-full flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70"
             >
-              <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.col_account')}</p>
+              <p className="text-ui font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.col_account')}</p>
               <span className="flex items-center gap-1">
-                <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                <p className="num tabular text-ui font-semibold" style={{ color: 'var(--ink)' }}>
                   Bal. {formatCurrency(paymentBalance)}
                 </p>
                 <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['accounts'] ? '-rotate-90' : ''}`} style={{ color: 'var(--ink-soft)' }} />
@@ -629,15 +629,15 @@ export default function AccountsPage() {
               <div key={a.id} className="flex items-center gap-3 px-4" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
                 <InstitutionLogo accountName={a.name} size={30} shape="circle" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13.5px] font-medium truncate leading-tight inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
+                  <p className="text-ui font-medium truncate leading-tight inline-flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>
                     {a.name?.trim() || t('accounts.unnamed_account')}
                     {a.id === defaultAccountId && <Star className="size-3 fill-current shrink-0" style={{ color: 'var(--info)' }} />}
                   </p>
-                  <p className={`text-[11px] truncate leading-tight mt-0.5 ${masked ? 'num' : ''}`} style={{ color: 'var(--ink-soft)' }}>
+                  <p className={`text-2xs truncate leading-tight mt-0.5 ${masked ? 'num' : ''}`} style={{ color: 'var(--ink-soft)' }}>
                     {masked ?? (ACCOUNT_TYPES[a.type as AccountType] ?? a.type)}
                   </p>
                 </div>
-                <p className="num tabular text-[13.5px] font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
+                <p className="num tabular text-ui font-semibold leading-tight shrink-0" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(a.current_balance ?? 0)}
                 </p>
               </div>
@@ -651,7 +651,7 @@ export default function AccountsPage() {
               <div className="flex items-center justify-between pl-4 pt-3 pb-1">
                 {/* Nav ke halaman kartu pindah ke teks judul; chevron kanan = collapse list */}
                 <Link href="/dashboard/credit-cards" className="active:opacity-70">
-                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--ink)' }}>
+                  <p className="text-ui font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--ink)' }}>
                     {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
                   </p>
                 </Link>
@@ -661,7 +661,7 @@ export default function AccountsPage() {
                   aria-expanded={!collapsed['cards']}
                   className="flex items-center gap-1 pl-3 pr-4 py-1 active:opacity-70"
                 >
-                  <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-coral-ink)' }}>
+                  <p className="num tabular text-ui font-semibold" style={{ color: 'var(--c-coral-ink)' }}>
                     {t('networth.debt')} {formatCurrency(nw.ccTotal)}
                   </p>
                   <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--ink-soft)' }} />
@@ -671,17 +671,17 @@ export default function AccountsPage() {
                 <div key={c.id} className="flex items-center gap-3 px-4" style={{ minHeight: 50, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
                   <InstitutionLogo accountName={c.name} size={30} shape="circle" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13.5px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                    <p className="text-ui font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
                     {(c.last_four ?? '').trim() !== '' && (
-                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four}</p>
+                      <p className="num text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four}</p>
                     )}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="num tabular text-[13.5px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                    <p className="num tabular text-ui font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                       {(c.current_balance || 0) > 0 ? formatCurrency(-(c.current_balance || 0)) : formatCurrency(0)}
                     </p>
                     {(c.credit_limit || 0) > 0 && (
-                      <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                      <p className="num text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                         avl. {formatCurrency(Math.max(0, (c.credit_limit || 0) - (c.current_balance || 0)))}
                       </p>
                     )}
@@ -695,10 +695,10 @@ export default function AccountsPage() {
           {nw && (
             <section className="s-card overflow-hidden">
               <Link href="/dashboard/assets/investment" className="flex items-center justify-between px-4 py-3 active:opacity-70">
-                <p className="text-[13px] font-semibold" style={{ color: 'var(--c-violet-ink)' }}>
+                <p className="text-ui font-semibold" style={{ color: 'var(--c-violet-ink)' }}>
                   {t('assets.investments')}
                 </p>
-                <p className="num tabular text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-violet-ink)' }}>
+                <p className="num tabular text-ui font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-violet-ink)' }}>
                   {formatCurrency(nw.invTotal)} <ChevronRight className="size-3.5" />
                 </p>
               </Link>
@@ -709,14 +709,14 @@ export default function AccountsPage() {
         {view === 'table' ? (
         /* ─── TABLE VIEW (md+) ─── */
         <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
-          <table className="w-full text-[13px]">
+          <table className="w-full text-ui">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)', background: 'var(--surface-2)' }}>
-                <th scope="col" className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_account')}</th>
-                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_type')}</th>
-                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_number')}</th>
-                <th scope="col" className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_activity_30')}</th>
-                <th scope="col" className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">{t('accounts.col_balance')}</th>
+                <th scope="col" className="px-4 py-2.5 text-left text-2xs font-medium uppercase tracking-wider">{t('accounts.col_account')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-2xs font-medium uppercase tracking-wider">{t('accounts.col_type')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-2xs font-medium uppercase tracking-wider">{t('accounts.col_number')}</th>
+                <th scope="col" className="px-3 py-2.5 text-left text-2xs font-medium uppercase tracking-wider">{t('accounts.col_activity_30')}</th>
+                <th scope="col" className="px-4 py-2.5 text-right text-2xs font-medium uppercase tracking-wider">{t('accounts.col_balance')}</th>
               </tr>
             </thead>
             <tbody>
@@ -749,7 +749,7 @@ export default function AccountsPage() {
             </tbody>
             <tfoot>
               <tr className="border-t" style={{ borderColor: 'var(--outline)', background: 'var(--surface-2)' }}>
-                <td colSpan={4} className="px-4 py-3 text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                <td colSpan={4} className="px-4 py-3 text-cap font-semibold" style={{ color: 'var(--ink-muted)' }}>
                   {t('transactions.total')}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -776,11 +776,11 @@ export default function AccountsPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{a.name?.trim() || t('accounts.unnamed_account')}</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                           {typeLabel}
                           {masked && <span className="num"> · {masked}</span>}
                           {a.id === defaultAccountId && (
-                            <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px]" style={{ color: 'var(--info)' }}><Star className="size-2.5 fill-current" /> {t('accounts.default')}</span>
+                            <span className="ml-1.5 inline-flex items-center gap-0.5 text-3xs" style={{ color: 'var(--info)' }}><Star className="size-2.5 fill-current" /> {t('accounts.default')}</span>
                           )}
                         </p>
                       </div>
@@ -792,7 +792,7 @@ export default function AccountsPage() {
                 <div className="mt-3">
                   <p className="num tabular text-xl font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(a.current_balance ?? 0)}</p>
                   {totalAllocated > 0 && (
-                    <p className="text-[11px] mt-0.5" style={{ color: free < 0 ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
+                    <p className="text-2xs mt-0.5" style={{ color: free < 0 ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
                       {t('accounts.free')} {formatCurrency(free)} · {t('accounts.allocated')} {formatCurrency(totalAllocated)}
                     </p>
                   )}
@@ -801,7 +801,7 @@ export default function AccountsPage() {
                 {allocs.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {allocs.map((al, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: ALLOC_PILL[al.purpose_kind].bg, color: ALLOC_PILL[al.purpose_kind].fg }} title={privacyHidden ? al.label : `${al.label}: ${formatCurrency(al.amount)}`}>
+                      <span key={i} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-3xs font-medium" style={{ background: ALLOC_PILL[al.purpose_kind].bg, color: ALLOC_PILL[al.purpose_kind].fg }} title={privacyHidden ? al.label : `${al.label}: ${formatCurrency(al.amount)}`}>
                         {al.label} · {formatCurrency(al.amount)}
                       </span>
                     ))}
@@ -927,7 +927,7 @@ export default function AccountsPage() {
             <div className="s-card">
               {/* Baris institusi — avatar read-only, sekadar konfirmasi pilihan */}
               <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52 }}>
-                <span className="text-[13px] font-medium shrink-0" style={{ color: 'var(--ink-muted)' }}>
+                <span className="text-ui font-medium shrink-0" style={{ color: 'var(--ink-muted)' }}>
                   {locale === 'id' ? 'Institusi' : 'Institution'}
                 </span>
                 <span className="flex items-center gap-2.5 min-w-0">
@@ -935,7 +935,7 @@ export default function AccountsPage() {
                     <button
                       type="button"
                       onClick={stepBack}
-                      className="text-[11px] font-medium underline underline-offset-2"
+                      className="text-2xs font-medium underline underline-offset-2"
                       style={{ color: 'var(--ink)' }}
                     >
                       {locale === 'id' ? 'Pilih dari daftar' : 'Pick from list'}
@@ -947,7 +947,7 @@ export default function AccountsPage() {
 
               {/* Baris nama */}
               <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
-                <Label htmlFor="acc-name" className="text-[13px] shrink-0" style={{ color: 'var(--ink-muted)' }}>
+                <Label htmlFor="acc-name" className="text-ui shrink-0" style={{ color: 'var(--ink-muted)' }}>
                   {t('accounts.field_name')}
                 </Label>
                 <div className="flex-1 min-w-0">
@@ -958,13 +958,13 @@ export default function AccountsPage() {
                     onPick={(inst) => setForm({ ...form, name: inst.brand, type: inst.type as AccountType })}
                     placeholder={t('accounts.field_name_placeholder')}
                   />
-                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
+                  <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_name_hint')}</p>
                 </div>
               </div>
 
               {/* Baris jenis */}
               <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
-                <Label className="text-[13px] shrink-0" style={{ color: 'var(--ink-muted)' }}>{t('accounts.field_type')}</Label>
+                <Label className="text-ui shrink-0" style={{ color: 'var(--ink-muted)' }}>{t('accounts.field_type')}</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
                   <SelectTrigger className="max-w-[60%]">
                     <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
@@ -979,9 +979,9 @@ export default function AccountsPage() {
             {/* Grup nilai: nomor rekening + saldo awal */}
             <div className="s-card">
               <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52 }}>
-                <Label htmlFor="acc-number" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--ink-muted)' }}>
+                <Label htmlFor="acc-number" className="flex-col items-start gap-0.5 text-ui shrink-0 max-w-[46%]" style={{ color: 'var(--ink-muted)' }}>
                   {t('accounts.field_number')}
-                  <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
+                  <span className="text-3xs font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
                 </Label>
                 <Input
                   id="acc-number"
@@ -995,9 +995,9 @@ export default function AccountsPage() {
               </div>
 
               <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
-                <Label htmlFor="acc-balance" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--ink-muted)' }}>
+                <Label htmlFor="acc-balance" className="flex-col items-start gap-0.5 text-ui shrink-0 max-w-[46%]" style={{ color: 'var(--ink-muted)' }}>
                   {t('accounts.field_starting_balance')}
-                  <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
+                  <span className="text-3xs font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
                 </Label>
                 {/* tabular saja (bukan .num — .num ikut ke-blur privacy mode) */}
                 <NumberInput id="acc-balance" value={form.starting_balance} onChange={(n) => setForm({ ...form, starting_balance: n })} placeholder="0" className="flex-1 min-w-0 text-right tabular" />
@@ -1021,7 +1021,7 @@ export default function AccountsPage() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full h-11 rounded-full text-[15px] font-semibold sm:w-auto sm:h-8 sm:rounded-lg sm:text-sm sm:font-medium"
+                className="w-full h-11 rounded-full text-row font-semibold sm:w-auto sm:h-8 sm:rounded-lg sm:text-sm sm:font-medium"
               >
                 {saving && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
                 {editingId ? t('accounts.save') : t('accounts.add')}

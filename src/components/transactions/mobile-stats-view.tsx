@@ -138,7 +138,7 @@ function TotalsFooter({
     <div className="grid grid-cols-2 gap-3 mt-3 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
       <div>
         <span
-          className="inline-block rounded-full px-2 py-[3px] text-[10px] font-semibold"
+          className="inline-block rounded-full px-2 py-[3px] text-3xs font-semibold"
           style={softPill
             ? { background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }
             : { background: 'var(--c-coral)', color: '#fff' }}
@@ -146,7 +146,7 @@ function TotalsFooter({
           {expenseLabel}
         </span>
         <p
-          className="num tabular text-[15px] font-bold mt-1"
+          className="num tabular text-row font-bold mt-1"
           title={formatCurrency(totalExpense)}
           style={{ color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}
         >
@@ -154,11 +154,11 @@ function TotalsFooter({
         </p>
       </div>
       <div className="text-right">
-        <span className="inline-block py-[3px] text-[10px] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+        <span className="inline-block py-[3px] text-3xs font-semibold" style={{ color: 'var(--ink-soft)' }}>
           {incomeLabel}
         </span>
         <p
-          className="num tabular text-[15px] font-bold mt-1"
+          className="num tabular text-row font-bold mt-1"
           title={formatCurrency(totalIncome)}
           style={{ color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}
         >
@@ -311,7 +311,7 @@ export function MobileStatsView({
     `${(share * 100).toFixed(share * 100 >= 10 ? 0 : 1)}%`
 
   const emptyMsg = (
-    <p className="text-[13px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>
+    <p className="text-ui text-center py-8" style={{ color: 'var(--ink-soft)' }}>
       {t('dashboard.sankey_empty')}
     </p>
   )
@@ -376,7 +376,7 @@ export function MobileStatsView({
                 type="button"
                 onClick={() => setCatMode(mo)}
                 aria-pressed={catMode === mo}
-                className="num rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                className="num rounded-full px-2.5 py-1 text-2xs font-semibold transition-colors"
                 style={catMode === mo
                   ? { background: 'var(--ink)', color: 'var(--surface)' }
                   : { color: 'var(--ink-soft)' }}
@@ -454,21 +454,21 @@ export function MobileStatsView({
               <div key={row.name}>
                 <div className="flex items-start gap-2">
                   <span className="size-2 rounded-full shrink-0 mt-[5px]" style={{ background: row.bar }} />
-                  <span className="text-[12.5px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+                  <span className="text-cap font-medium truncate" style={{ color: 'var(--ink)' }}>
                     {row.name}
                   </span>
                   <span
-                    className="num rounded px-1.5 py-[1px] text-[10px] font-semibold shrink-0"
+                    className="num rounded px-1.5 py-[1px] text-3xs font-semibold shrink-0"
                     style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
                   >
                     {pctBadge(row.share)}
                   </span>
                   <span className="flex-1" />
                   <span className="text-right shrink-0">
-                    <span className="num tabular block text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>
+                    <span className="num tabular block text-cap font-semibold" style={{ color: 'var(--ink)' }}>
                       {formatCurrency(row.amount)}
                     </span>
-                    <span className="num block text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                    <span className="num block text-3xs" style={{ color: 'var(--ink-soft)' }}>
                       {row.count} trx
                     </span>
                   </span>
@@ -494,14 +494,14 @@ export function MobileStatsView({
               <div key={row.name}>
                 <div className="flex items-center gap-2">
                   <span
-                    className="rounded-full px-2 py-[2px] text-[11px] font-medium truncate"
+                    className="rounded-full px-2 py-[2px] text-2xs font-medium truncate"
                     style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                   >
                     {row.name}
                   </span>
                   <span className="flex-1" />
                   <span
-                    className="num tabular text-[12.5px] font-semibold shrink-0"
+                    className="num tabular text-cap font-semibold shrink-0"
                     title={formatCurrency(row.amount)}
                     style={{ color: 'var(--ink)' }}
                   >

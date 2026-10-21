@@ -120,7 +120,7 @@ export function MobileHome({
         onClick={() => openEntry(c, type)}
         className="s-card px-1.5 py-3.5 text-center active:opacity-70 transition-opacity"
       >
-        <span className="block text-[12px] font-medium leading-tight min-h-[30px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink-muted)' }}>
+        <span className="block text-cap font-medium leading-tight min-h-[30px] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden" style={{ color: 'var(--ink-muted)' }}>
           {c.category}
         </span>
         <span className="relative grid place-items-center size-[44px] mx-auto my-1.5">
@@ -139,7 +139,7 @@ export function MobileHome({
           </span>
         </span>
         <span
-          className="num tabular block text-[13px] font-semibold whitespace-nowrap"
+          className="num tabular block text-ui font-semibold whitespace-nowrap"
           title={formatCurrency(c.amount)}
           style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}
         >
@@ -174,7 +174,7 @@ export function MobileHome({
           <Link
             href="/dashboard/profile"
             aria-label="Profil"
-            className="inline-flex items-center gap-0.5 text-[15px] font-semibold"
+            className="inline-flex items-center gap-0.5 text-row font-semibold"
             style={{ color: 'var(--c-mint-ink)' }}
           >
             BD <ChevronDown className="size-3" />
@@ -184,7 +184,7 @@ export function MobileHome({
           <button type="button" onClick={onPrevMonth} aria-label="Bulan sebelumnya" className="grid place-items-center size-7 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
             <ChevronLeft className="size-[15px]" />
           </button>
-          <span className="text-[15px] font-semibold text-center" style={{ color: 'var(--ink)' }}>
+          <span className="text-row font-semibold text-center" style={{ color: 'var(--ink)' }}>
             {isCurrentMonth ? t('common.this_month') : `${monthLong(month - 1, locale)} ${year}`}
           </span>
           <button type="button" onClick={onNextMonth} aria-label="Bulan berikutnya" className="grid place-items-center size-7 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
@@ -193,7 +193,7 @@ export function MobileHome({
         </div>
         <div className="w-[76px] flex justify-end items-center gap-1.5">
           {usagePct != null && (
-            <span className="num text-[11px] font-medium" style={{ color: usagePct > 100 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>{usagePct}%</span>
+            <span className="num text-2xs font-medium" style={{ color: usagePct > 100 ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}>{usagePct}%</span>
           )}
           <button
             type="button"
@@ -225,10 +225,10 @@ export function MobileHome({
               <CategoryIcon category="Belanja" className="size-11" />
             </span>
           </div>
-          <p className="text-[13px] mt-5" style={{ color: 'var(--ink-soft)' }}>{t('dashboard.no_budget')}</p>
+          <p className="text-ui mt-5" style={{ color: 'var(--ink-soft)' }}>{t('dashboard.no_budget')}</p>
           <Link
             href="/dashboard/budgeting"
-            className="inline-flex items-center gap-1.5 mt-3.5 rounded-full px-4 py-2 text-[12.5px] font-medium"
+            className="inline-flex items-center gap-1.5 mt-3.5 rounded-full px-4 py-2 text-cap font-medium"
             style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
           >
             <Target className="size-3.5" /> {t('nav.budgeting')}
@@ -237,7 +237,7 @@ export function MobileHome({
       ) : (
         <>
           {/* 2 ── Pengeluaran */}
-          <p className="text-center text-[16px] pb-3" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-center text-lead pb-3" style={{ color: 'var(--ink-soft)' }}>
             {t('budgeting.expense')}{' '}
             <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totalExpense)}
@@ -253,7 +253,7 @@ export function MobileHome({
           {/* 3 ── Pemasukan — disembunyikan total kalau gak ada kartu (ala Budget) */}
           {incomeCards.length > 0 && (
             <>
-              <p className="text-center text-[16px] pt-4 pb-3" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-center text-lead pt-4 pb-3" style={{ color: 'var(--ink-soft)' }}>
                 {t('budgeting.income')}{' '}
                 <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(totalIncome)}
@@ -276,9 +276,9 @@ export function MobileHome({
         className="s-card mt-4 px-3.5 py-3 flex items-center justify-between active:opacity-80 transition-opacity"
         style={{ display: 'flex' }}
       >
-        <span className="text-[12.5px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth')}</span>
+        <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth')}</span>
         <span className="flex items-center gap-1">
-          <span className="num tabular text-[13.5px] font-semibold" title={formatCurrency(netWorth)} style={{ color: 'var(--ink)' }}>
+          <span className="num tabular text-ui font-semibold" title={formatCurrency(netWorth)} style={{ color: 'var(--ink)' }}>
             {formatCompactCurrency(netWorth)}
           </span>
           <ChevRight className="size-3.5" style={{ color: 'var(--ink-soft)' }} />

@@ -196,7 +196,7 @@ export function StockResearchTab() {
           <table className="w-full text-sm">
             <thead>
               <tr
-                className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
+                className="text-left text-3xs uppercase tracking-[0.08em] font-semibold border-b"
                 style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
               >
                 <th className="px-3 py-2.5">{t('stock_research.col_ticker')}</th>
@@ -244,7 +244,7 @@ export function StockResearchTab() {
                     <td className="px-3 py-2.5">
                       {r.verdict && (
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                          className="inline-flex items-center px-2 py-0.5 rounded text-3xs font-bold uppercase tracking-wide"
                           style={{ background: verdict.bg, color: verdict.fg }}
                         >
                           {r.verdict.toLowerCase()}
@@ -290,26 +290,26 @@ export function StockResearchTab() {
                 aria-label={`${t('stock_research.aria_open_research')} ${r.ticker}`}
               >
                 <span
-                  className="font-mono text-[11px] font-bold px-1.5 py-1 rounded shrink-0"
+                  className="font-mono text-2xs font-bold px-1.5 py-1 rounded shrink-0"
                   style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                 >
                   {r.ticker}
                 </span>
                 <span className="min-w-0 flex-1 py-2">
-                  <span className="block truncate text-[14px] font-medium leading-tight" style={{ color: 'var(--ink)' }}>
+                  <span className="block truncate text-body font-medium leading-tight" style={{ color: 'var(--ink)' }}>
                     {r.name}
                   </span>
-                  <span className="mt-0.5 block truncate text-[11px] leading-tight" style={{ color: 'var(--ink-soft)' }}>
+                  <span className="mt-0.5 block truncate text-2xs leading-tight" style={{ color: 'var(--ink-soft)' }}>
                     {r.sector ?? '—'}
                     {fv != null ? ` · ${t('stock_research.col_fair_value')} ${formatIDRCompact(fv)}` : ''}
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="num tabular block text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                  <span className="num tabular block text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                     {formatPrice(r.price)}
                   </span>
                   <span
-                    className="num tabular mt-0.5 block text-[11px] font-semibold leading-tight"
+                    className="num tabular mt-0.5 block text-2xs font-semibold leading-tight"
                     style={{ color: signColorVar(r.avgMoS) }}
                   >
                     {formatPercentValue(r.avgMoS)}
@@ -333,7 +333,7 @@ export function StockResearchTab() {
       </div>
 
       <div
-        className="rounded-lg border p-3 text-[11px] flex items-start gap-2"
+        className="rounded-lg border p-3 text-2xs flex items-start gap-2"
         style={{
           boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)',
           borderColor: 'var(--border-soft)',

@@ -32,7 +32,7 @@ export function WealthSubnav() {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors duration-150${active ? '' : ' hover:bg-[var(--surface-2)]'}`}
+            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-cap font-medium transition-colors duration-150${active ? '' : ' hover:bg-[var(--surface-2)]'}`}
             style={active
               ? { background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }
               : { color: 'var(--ink-muted)' }}

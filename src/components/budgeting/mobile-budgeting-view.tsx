@@ -302,7 +302,7 @@ export function MobileBudgetingView({
               </span>
             )}
             <p
-              className={`${opts.sub ? 'text-[12px]' : 'text-[12.5px]'} font-medium truncate`}
+              className={`${opts.sub ? 'text-cap' : 'text-cap'} font-medium truncate`}
               style={{ color: 'var(--ink)' }}
               title={cat}
             >
@@ -319,7 +319,7 @@ export function MobileBudgetingView({
                 if (e.key === 'Enter') e.currentTarget.blur()
               }}
               placeholder="0"
-              className="h-8 w-[110px] shrink-0 text-right text-[13px]"
+              className="h-8 w-[110px] shrink-0 text-right text-ui"
             />
           ) : (
             <button
@@ -329,7 +329,7 @@ export function MobileBudgetingView({
               title={pillTitle(plan, act)}
             >
               <span
-                className="num tabular rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+                className="num tabular rounded-full px-2.5 py-1 text-cap font-semibold"
                 style={{ background: 'var(--surface-2)', color: pillColor(type, plan, act) }}
               >
                 {pillText(plan, act)}
@@ -387,7 +387,7 @@ export function MobileBudgetingView({
           >
             <CategoryIcon category={root} className="size-[13px]" />
           </span>
-          <span className="text-[12.5px] font-semibold truncate" style={{ color: 'var(--ink)' }} title={root}>
+          <span className="text-cap font-semibold truncate" style={{ color: 'var(--ink)' }} title={root}>
             {root}
           </span>
           <ChevronDown
@@ -396,7 +396,7 @@ export function MobileBudgetingView({
           />
         </button>
         <span
-          className="num tabular shrink-0 rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+          className="num tabular shrink-0 rounded-full px-2.5 py-1 text-cap font-semibold"
           style={{ background: 'var(--surface-2)', color: pillColor(type, gPlan, gAct) }}
           title={pillTitle(gPlan, gAct)}
         >
@@ -449,14 +449,14 @@ export function MobileBudgetingView({
                   setCopying(false)
                 }
               }}
-              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-opacity active:opacity-70 disabled:opacity-45"
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-cap font-medium transition-opacity active:opacity-70 disabled:opacity-45"
               style={{ borderColor: 'var(--outline)', background: 'var(--surface)', color: 'var(--ink)' }}
             >
               <Copy className="size-3.5" style={{ color: 'var(--ink-soft)' }} />
               {locale === 'id' ? 'Salin dari bulan lalu' : 'Copy from last month'}
             </button>
             {prevEmpty && (
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                 {locale === 'id' ? 'Bulan lalu juga kosong' : 'Last month is empty too'}
               </p>
             )}
@@ -476,7 +476,7 @@ export function MobileBudgetingView({
             }))}
           />
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wide font-medium" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs uppercase tracking-wide font-medium" style={{ color: 'var(--ink-soft)' }}>
               {t('recurring.freq_monthly')}
             </p>
             <p
@@ -485,7 +485,7 @@ export function MobileBudgetingView({
             >
               {privacyHidden ? 'Rp ••••' : formatCurrency(allocated)}
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               ~{privacyHidden
                 ? 'Rp ••••'
                 : new Intl.NumberFormat('id-ID', {
@@ -515,15 +515,15 @@ export function MobileBudgetingView({
                     <CategoryIcon category={p.name} className="size-[13px]" />
                   </span>
                   <span className="flex-1 min-w-0 flex items-baseline gap-2">
-                    <p className="text-[12.5px] font-medium truncate" style={{ color: 'var(--ink)' }} title={p.name}>
+                    <p className="text-cap font-medium truncate" style={{ color: 'var(--ink)' }} title={p.name}>
                       {p.name}
                     </p>
-                    <span className="num tabular text-[11px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
+                    <span className="num tabular text-2xs shrink-0" style={{ color: 'var(--ink-soft)' }}>
                       {share.toFixed(2).replace('.', ',')}%
                     </span>
                   </span>
                   <span
-                    className="num tabular text-[12px] font-medium shrink-0 min-w-[88px] text-right"
+                    className="num tabular text-cap font-medium shrink-0 min-w-[88px] text-right"
                     style={{ color: 'var(--ink)' }}
                   >
                     {privacyHidden ? '••••' : formatCurrency(p.amount)}
@@ -539,7 +539,7 @@ export function MobileBudgetingView({
       {overAlloc && (
         <div className="mt-2 flex items-center gap-2 rounded-[12px] px-3 py-2" style={{ background: 'var(--c-coral-soft)' }}>
           <Info className="size-3.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />
-          <p className="text-[11.5px] font-medium leading-tight" style={{ color: 'var(--c-coral-ink)' }}>
+          <p className="text-2xs font-medium leading-tight" style={{ color: 'var(--c-coral-ink)' }}>
             <span className="num tabular font-semibold" title={full(allocated - incomePlan)}>
               {compact(allocated - incomePlan)}
             </span>{' '}
@@ -581,11 +581,11 @@ export function MobileBudgetingView({
           return (
             <section key={section.key} className="s-card px-3.5 py-1">
               <div className="flex min-h-[24px] items-center justify-between gap-2 py-2.5">
-                <p className="text-[12.5px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                <p className="text-cap font-semibold truncate" style={{ color: 'var(--ink)' }}>
                   {t(section.labelKey)}
                 </p>
                 <span
-                  className="num tabular shrink-0 rounded-full px-2.5 py-1 text-[12.5px] font-semibold"
+                  className="num tabular shrink-0 rounded-full px-2.5 py-1 text-cap font-semibold"
                   style={{ background: 'var(--surface-2)', color: pillColor(section.key, secPlan, secActual) }}
                   title={pillTitle(secPlan, secActual)}
                 >
@@ -630,7 +630,7 @@ export function MobileBudgetingView({
               type="button"
               onClick={() => setView(v)}
               aria-pressed={view === v}
-              className="rounded-full px-4 py-1.5 text-[12px] font-medium transition-colors"
+              className="rounded-full px-4 py-1.5 text-cap font-medium transition-colors"
               style={
                 view === v
                   ? { background: 'transparent', color: 'var(--c-teal-ink, #2a9d8f)', fontWeight: 600 }

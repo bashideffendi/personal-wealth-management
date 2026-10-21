@@ -83,7 +83,7 @@ export function StaticMapThumb({ lat, lng, name, height = 112, zoom = 15 }: Stat
       />
       {/* Atribusi wajib — kecil di pojok */}
       <span
-        className="absolute bottom-0.5 right-1 rounded px-1 py-0.5 text-[9px] leading-none"
+        className="absolute bottom-0.5 right-1 rounded px-1 py-0.5 text-3xs leading-none"
         style={{ color: 'var(--ink-soft)', background: 'color-mix(in srgb, var(--surface) 75%, transparent)' }}
         title="© OpenStreetMap contributors © CARTO"
       >

@@ -302,7 +302,7 @@ export function MoneyFlowSankey({
 
   if (!built) {
     return (
-      <p className="text-[13px] text-center py-10 px-6" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-ui text-center py-10 px-6" style={{ color: 'var(--ink-soft)' }}>
         {emptyMessage}
       </p>
     )

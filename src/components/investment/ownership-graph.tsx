@@ -606,7 +606,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
           />
           {searchMiss && (
             <p
-              className="absolute left-0 top-full mt-1 rounded-md border px-2 py-1 text-[11px]"
+              className="absolute left-0 top-full mt-1 rounded-md border px-2 py-1 text-2xs"
               style={{
                 background: 'var(--surface)',
                 borderColor: 'var(--border-soft)',
@@ -636,7 +636,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
 
       {/* Legend */}
       <div
-        className="absolute top-3 left-3 flex items-center gap-3 rounded-lg border px-3 py-1.5 text-[11px]"
+        className="absolute top-3 left-3 flex items-center gap-3 rounded-lg border px-3 py-1.5 text-2xs"
         style={{
           background: 'color-mix(in srgb, var(--surface) 92%, transparent)',
           borderColor: 'var(--border-soft)',
@@ -661,7 +661,7 @@ export default function OwnershipGraph({ network, activeId }: GraphData) {
       {/* Tooltip hover edge */}
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-10 rounded-lg border px-2.5 py-1.5 text-[11px] shadow-[var(--card-shadow)]"
+          className="pointer-events-none absolute z-10 rounded-lg border px-2.5 py-1.5 text-2xs shadow-[var(--card-shadow)]"
           style={{
             left: tooltip.x + 12,
             top: tooltip.y + 12,

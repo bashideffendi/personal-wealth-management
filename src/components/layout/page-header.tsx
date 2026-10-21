@@ -39,7 +39,7 @@ export function PageHeader({
           {title}
         </h1>
         {subtitle && (
-          <p className="text-[12.5px] mt-0.5 max-w-xl" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-cap mt-0.5 max-w-xl" style={{ color: 'var(--ink-soft)' }}>
             {subtitle}
           </p>
         )}

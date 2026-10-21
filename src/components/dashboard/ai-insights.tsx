@@ -270,7 +270,7 @@ export function AIInsightsCard({
             <p className="eyebrow" style={{ color: 'var(--c-violet-ink)' }}>
               {t('ai_insights.title')}
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
               {generatedAt
                 ? `${t('ai_insights.updated_prefix')} ${relativeTime(generatedAt, locale)} ${t('ai_insights.cache_suffix')}`
                 : loading
@@ -328,8 +328,8 @@ export function AIInsightsCard({
               className="rounded-lg border p-3 transition hover:shadow-sm"
               style={{ borderColor: 'var(--border-soft)', background: 'color-mix(in srgb, var(--surface) 55%, transparent)' }}
             >
-              <p className="text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>{p.label}</p>
-              <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--ink-muted)' }}>{p.desc}</p>
+              <p className="text-cap font-semibold" style={{ color: 'var(--ink)' }}>{p.label}</p>
+              <p className="text-2xs mt-0.5 leading-snug" style={{ color: 'var(--ink-muted)' }}>{p.desc}</p>
             </a>
           ))}
         </div>
@@ -361,7 +361,7 @@ export function AIInsightsCard({
             {/* MAIN insight — featured */}
             {/* Emoji dari AI sengaja TIDAK dirender — aturan anti-slop app. */}
             <p
-              className="text-sm sm:text-[15px] leading-relaxed mb-1 font-medium"
+              className="text-sm sm:text-row leading-relaxed mb-1 font-medium"
               style={{ color: 'var(--ink)' }}
             >
               {main.body}
@@ -374,14 +374,14 @@ export function AIInsightsCard({
                 style={{ borderColor: 'var(--border-soft)' }}
               >
                 <p
-                  className="text-[11px] font-semibold mb-2"
+                  className="text-2xs font-semibold mb-2"
                   style={{ color: 'var(--ink-soft)' }}
                 >
                   {rest.length} {t('ai_insights.other_suggestions')}
                 </p>
                 <div className="space-y-1.5">
                   {rest.map((ins, i) => (
-                    <div key={i} className="flex items-start gap-2 text-[12.5px]" style={{ color: 'var(--ink)' }}>
+                    <div key={i} className="flex items-start gap-2 text-cap" style={{ color: 'var(--ink)' }}>
                       <span
                         className="size-1.5 rounded-full mt-2 shrink-0"
                         style={{ background: dotColors[i % dotColors.length] }}
@@ -454,7 +454,7 @@ function WelcomeInsights() {
           <p className="eyebrow" style={{ color: 'var(--c-violet-ink)' }}>
             {t('ai_insights.welcome_eyebrow')}
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-mute)' }}>
+          <p className="text-2xs mt-0.5" style={{ color: 'var(--text-mute)' }}>
             {t('ai_insights.welcome_desc')}
           </p>
         </div>

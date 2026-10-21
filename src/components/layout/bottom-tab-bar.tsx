@@ -105,7 +105,7 @@ function TabLink({ tab, active }: { tab: TabItem; active: boolean }) {
       >
         <Icon className={cn('size-5', active && 'stroke-[2.25]')} />
       </span>
-      <span className={cn('text-[10px] leading-tight', active && 'font-medium')}>
+      <span className={cn('text-3xs leading-tight', active && 'font-medium')}>
         {t(tab.labelKey)}
       </span>
     </Link>

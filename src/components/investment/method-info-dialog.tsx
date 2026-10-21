@@ -85,7 +85,7 @@ export function MethodInfoDialog({
             </div>
             {suitability && (
               <span
-                className="inline-flex items-center shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                className="inline-flex items-center shrink-0 rounded-full px-2 py-0.5 text-3xs font-bold"
                 style={{ background: suitStyle(suitability).bg, color: suitStyle(suitability).fg }}
               >
                 {suitabilityLabel(suitability)}
@@ -170,7 +170,7 @@ export function MethodInfoDialog({
                 return (
                   <span
                     key={sec}
-                    className="inline-flex items-center justify-start rounded-full px-2 py-0.5 text-[11px] font-normal"
+                    className="inline-flex items-center justify-start rounded-full px-2 py-0.5 text-2xs font-normal"
                     style={{ background: st.bg, color: st.fg }}
                   >
                     <span className="truncate">{sec}</span>

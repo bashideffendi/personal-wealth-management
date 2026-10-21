@@ -145,7 +145,7 @@ function Chapter({ data, flip }: { data: ChapterData; flip: boolean }) {
         <div className={flip ? 'lg:order-2' : ''}>
           <p className="flex items-center gap-2.5">
             <span className="size-2.5 rounded-[4px] shrink-0" style={{ background: data.color }} />
-            <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: data.ink }}>{data.kicker}</span>
+            <span className="text-2xs font-bold tracking-[0.16em] uppercase" style={{ color: data.ink }}>{data.kicker}</span>
           </p>
           <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(26px, 3.4vw, 40px)', lineHeight: 1.12, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
             {data.title}
@@ -155,7 +155,7 @@ function Chapter({ data, flip }: { data: ChapterData; flip: boolean }) {
             {data.specs.map((s) => (
               <li key={s} className="flex items-start gap-3 py-2.5 border-t" style={{ borderColor: 'var(--border-soft)' }}>
                 <span className="size-1.5 rounded-[3px] mt-[8px] shrink-0" style={{ background: data.color }} />
-                <span className="text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{s}</span>
+                <span className="text-row leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{s}</span>
               </li>
             ))}
           </ul>
@@ -224,7 +224,7 @@ export default function LandingPage() {
       {/* ─── HERO ─── vertikal: headline di atas, product shot penuh di bawah */}
       <section className="px-6 sm:px-12 pt-14 sm:pt-20 pb-0">
         <div className="max-w-3xl mx-auto text-center">
-          <p className="inline-flex items-center gap-2.5 text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>
+          <p className="inline-flex items-center gap-2.5 text-2xs font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>
             <KluntingMark size={16} />
             Pencatat kekayaan pribadi untuk Indonesia
           </p>
@@ -235,14 +235,14 @@ export default function LandingPage() {
             Aset, utang, anggaran, dan riset saham IDX — semuanya dalam satu aplikasi.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 items-center justify-center">
-            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[15px] font-semibold transition hover:opacity-90 motion-reduce:transition-none" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
+            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-row font-semibold transition hover:opacity-90 motion-reduce:transition-none" style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}>
               Coba gratis 21 hari <ArrowRight className="size-4" />
             </Link>
-            <a href="#fitur" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-[15px] font-medium border transition hover:bg-[var(--surface-2)] motion-reduce:transition-none" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
+            <a href="#fitur" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-row font-medium border transition hover:bg-[var(--surface-2)] motion-reduce:transition-none" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--ink)' }}>
               Lihat fitur
             </a>
           </div>
-          <p className="mt-5 text-[12.5px]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="mt-5 text-cap" style={{ color: 'var(--ink-soft)' }}>
             Tanpa kartu kredit · Tanpa akses ke rekening bankmu · Berhenti kapan saja
           </p>
         </div>
@@ -271,12 +271,12 @@ export default function LandingPage() {
               <p className="num font-bold" style={{ fontSize: 'clamp(28px, 2.8vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--ink)' }}>
                 <CountUp value={s.n} />
               </p>
-              <p className="text-[13.5px] mt-2" style={{ color: 'var(--ink-muted)' }}>{s.label}</p>
+              <p className="text-ui mt-2" style={{ color: 'var(--ink-muted)' }}>{s.label}</p>
             </div>
           ))}
           <div>
             <p className="font-bold" style={{ fontSize: 'clamp(28px, 2.8vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--ink)' }}>CSV</p>
-            <p className="text-[13.5px] mt-2" style={{ color: 'var(--ink-muted)' }}>ekspor penuh, semua datamu</p>
+            <p className="text-ui mt-2" style={{ color: 'var(--ink-muted)' }}>ekspor penuh, semua datamu</p>
           </div>
         </Reveal>
       </section>
@@ -295,12 +295,12 @@ export default function LandingPage() {
           <div>
             <p className="flex items-center gap-2.5">
               <Users className="size-4" style={{ color: 'var(--c-violet-ink)' }} />
-              <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keluarga</span>
+              <span className="text-2xs font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keluarga</span>
             </p>
             <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
               Uang bersama, catatan masing-masing.
             </h2>
-            <p className="mt-3 text-[15px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+            <p className="mt-3 text-row leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
               Sampai 5 anggota berbagi tujuan, anggaran, dan dompet — pengeluaran pribadi
               tetap privat, kekayaan bersih gabungan tetap kelihatan.
             </p>
@@ -308,12 +308,12 @@ export default function LandingPage() {
           <div>
             <p className="flex items-center gap-2.5">
               <Shield className="size-4" style={{ color: 'var(--c-mint-ink)' }} />
-              <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keamanan</span>
+              <span className="text-2xs font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keamanan</span>
             </p>
             <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
               Datamu tetap milikmu.
             </h2>
-            <ul className="mt-4 space-y-2.5 text-[14.5px]" style={{ color: 'var(--ink-muted)' }}>
+            <ul className="mt-4 space-y-2.5 text-body" style={{ color: 'var(--ink-muted)' }}>
               <li className="flex items-start gap-2.5"><Lock className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Enkripsi TLS; password di-hash; 2FA dan PIN perangkat</li>
               <li className="flex items-start gap-2.5"><Database className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Data antar pengguna terisolasi di level database (Row Level Security)</li>
               <li className="flex items-start gap-2.5"><EyeOff className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} /> Tanpa iklan; datamu tidak dijual</li>
@@ -332,7 +332,7 @@ export default function LandingPage() {
           <h2 className="font-bold tracking-tight" style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', letterSpacing: '-0.025em', color: 'var(--ink)' }}>
             Pertanyaan yang sering diajukan.
           </h2>
-          <p className="mt-2 text-[14.5px]" style={{ color: 'var(--ink-muted)' }}>
+          <p className="mt-2 text-body" style={{ color: 'var(--ink-muted)' }}>
             Tidak ketemu jawabannya? <a href="mailto:support@klunting.com" className="font-medium underline" style={{ color: 'var(--ink)' }}>support@klunting.com</a>
           </p>
 
@@ -353,10 +353,10 @@ export default function LandingPage() {
             ].map((item, i) => (
               <details key={i} className="group border-t" style={{ borderColor: 'var(--border-soft)' }}>
                 <summary className="flex items-center justify-between gap-4 py-5 cursor-pointer list-none select-none" style={{ color: 'var(--ink)' }}>
-                  <span className="text-[15.5px] font-semibold pr-2" style={{ letterSpacing: '-0.01em' }}>{item.q}</span>
+                  <span className="text-row font-semibold pr-2" style={{ letterSpacing: '-0.01em' }}>{item.q}</span>
                   <ChevronDown className="size-5 shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none" style={{ color: 'var(--ink-soft)' }} />
                 </summary>
-                <div className="pb-6 text-[14.5px] leading-relaxed max-w-[62ch]" style={{ color: 'var(--ink-muted)' }}>{item.a}</div>
+                <div className="pb-6 text-body leading-relaxed max-w-[62ch]" style={{ color: 'var(--ink-muted)' }}>{item.a}</div>
               </details>
             ))}
             <div className="border-t" style={{ borderColor: 'var(--border-soft)' }} />
@@ -393,13 +393,13 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="col-span-2 lg:col-span-1">
               <KluntingLogo size={22} />
-              <p className="text-[13px] mt-3 leading-relaxed max-w-xs" style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-ui mt-3 leading-relaxed max-w-xs" style={{ color: 'var(--ink-muted)' }}>
                 Catat, hitung, putuskan. Dibuat dan dioperasikan di Indonesia.
               </p>
             </div>
 
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Produk</p>
+              <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Produk</p>
               <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
                 <Link href="/features" className="hover:text-[var(--ink)] transition-colors">Fitur</Link>
                 {BILLING_ENABLED && <a href="#harga" className="hover:text-[var(--ink)] transition-colors">Harga</a>}
@@ -409,7 +409,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Bantuan</p>
+              <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Bantuan</p>
               <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
                 <Link href="/contact" className="hover:text-[var(--ink)] transition-colors">Hubungi Kami</Link>
                 <a href="mailto:support@klunting.com" className="hover:text-[var(--ink)] transition-colors">support@klunting.com</a>
@@ -417,7 +417,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Legal</p>
+              <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>Legal</p>
               <div className="mt-3 flex flex-col gap-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
                 <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Syarat Layanan</Link>
                 <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Kebijakan Privasi</Link>
@@ -427,8 +427,8 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 pt-6 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>© {new Date().getFullYear()} Klunting</p>
-            <p className="text-[11px] max-w-md sm:text-right" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-cap" style={{ color: 'var(--ink-soft)' }}>© {new Date().getFullYear()} Klunting</p>
+            <p className="text-2xs max-w-md sm:text-right" style={{ color: 'var(--ink-soft)' }}>
               Klunting adalah alat bantu pencatatan keuangan, <strong>bukan</strong> lembaga jasa keuangan atau penasihat investasi berlisensi.
             </p>
           </div>

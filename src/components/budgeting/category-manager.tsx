@@ -270,7 +270,7 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
           <DialogTitle className="flex items-center gap-2">
             {t('category_manager.title')}
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-medium"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium"
               style={{
                 background: dbSynced ? 'color-mix(in srgb, var(--c-mint) 14%, transparent)' : 'var(--surface-2)',
                 color: dbSynced ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
@@ -296,14 +296,14 @@ export function CategoryManager({ open, onOpenChange, tree, dbSynced, usage = {}
                 key={bt}
                 type="button"
                 onClick={() => setType(bt)}
-                className="flex-1 rounded-lg px-2 py-2 text-[13px] font-semibold transition-colors whitespace-nowrap"
+                className="flex-1 rounded-lg px-2 py-2 text-ui font-semibold transition-colors whitespace-nowrap"
                 style={{
                   background: active ? m.accent : 'transparent',
                   color: active ? '#FFF' : 'var(--ink-muted)',
                 }}
               >
                 {t(`category_manager.${m.labelKey}`)}
-                <span className="ml-1.5 opacity-70 num text-[11px]">{draft[bt].length}</span>
+                <span className="ml-1.5 opacity-70 num text-2xs">{draft[bt].length}</span>
               </button>
             )
           })}
@@ -575,12 +575,12 @@ function AppearanceDialog({
                   style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
                 />
               )}
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                 {t('category_manager.target_hint')}
               </p>
             </>
           ) : (
-            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
               {t('category_manager.target_subcat_note')}
             </p>
           )}
@@ -822,13 +822,13 @@ function SortableCategory(props: SortableCategoryProps) {
           >
             {cat.name}
             {cat.subs.length > 0 && (
-              <span className="ml-1.5 num text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+              <span className="ml-1.5 num text-2xs font-medium" style={{ color: 'var(--ink-soft)' }}>
                 {cat.subs.length} {t('category_manager.sub')}
               </span>
             )}
             {props.count > 0 && (
               <span
-                className="ml-1.5 num text-[11px] font-medium"
+                className="ml-1.5 num text-2xs font-medium"
                 style={{ color: 'var(--ink-soft)' }}
                 title={`${props.count} ${t('category_manager.tx_using_cat')}`}
               >
@@ -837,7 +837,7 @@ function SortableCategory(props: SortableCategoryProps) {
             )}
             {!enabled && (
               <span
-                className="ml-1.5 rounded px-1 py-0.5 align-middle text-[9px] font-semibold uppercase tracking-wide"
+                className="ml-1.5 rounded px-1 py-0.5 align-middle text-3xs font-semibold uppercase tracking-wide"
                 style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
               >
                 {t('category_manager.inactive')}
@@ -902,7 +902,7 @@ function SortableCategory(props: SortableCategoryProps) {
               value={props.newSubValue}
               onChange={(e) => props.onNewSubChange(e.target.value)}
               placeholder={t('category_manager.add_sub_placeholder')}
-              className="h-8 flex-1 rounded-md border px-2 text-[13px] outline-none focus:border-[var(--ink)]"
+              className="h-8 flex-1 rounded-md border px-2 text-ui outline-none focus:border-[var(--ink)]"
               style={{ borderColor: 'var(--border-soft)', background: 'var(--surface)', color: 'var(--ink)' }}
             />
             <button
@@ -969,13 +969,13 @@ function SortableSub(props: SortableSubProps) {
         <button
           type="button"
           onClick={props.onStartEdit}
-          className="flex-1 truncate rounded px-1 py-0.5 text-left text-[13px] hover:bg-[var(--surface-2)]"
+          className="flex-1 truncate rounded px-1 py-0.5 text-left text-ui hover:bg-[var(--surface-2)]"
           style={{ color: 'var(--ink-muted)' }}
           title={t('category_manager.click_to_rename')}
         >
           {props.name}
           {props.count > 0 && (
-            <span className="ml-1.5 num text-[10.5px]" style={{ color: 'var(--ink-soft)' }}>
+            <span className="ml-1.5 num text-2xs" style={{ color: 'var(--ink-soft)' }}>
               · {props.count} {t('category_manager.tx')}
             </span>
           )}
@@ -1023,7 +1023,7 @@ function NameInput({
           }
         }}
         onBlur={onCommit}
-        className={`flex-1 rounded-md border px-2 outline-none focus:border-[var(--ink)] ${small ? 'h-7 text-[13px]' : 'h-8 text-sm font-semibold'}`}
+        className={`flex-1 rounded-md border px-2 outline-none focus:border-[var(--ink)] ${small ? 'h-7 text-ui' : 'h-8 text-sm font-semibold'}`}
         style={{ borderColor: 'var(--ink)', background: 'var(--surface)', color: 'var(--ink)' }}
       />
       <button

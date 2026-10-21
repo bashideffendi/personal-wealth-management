@@ -191,7 +191,7 @@ export function AnggaranMonthDrawer({
               </button>
             </div>
             <p
-              className="text-[10px]"
+              className="text-3xs"
               style={{ color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}
             >
               ← → ESC
@@ -270,7 +270,7 @@ export function AnggaranMonthDrawer({
                   }}
                 />
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+              <div className="mt-3 grid grid-cols-3 gap-2 text-2xs">
                 <LegendItem tone="coral" label={t('anggaran_drawer.legend_expense')} pct={expensePct} />
                 <LegendItem tone="amber" label={t('anggaran_drawer.legend_saving')} pct={savingPct} />
                 <LegendItem tone="primary" label={t('anggaran_drawer.legend_investment')} pct={investPct} />
@@ -417,7 +417,7 @@ export function AnggaranMonthDrawer({
                   {t('anggaran_drawer.projection_title')}
                 </p>
                 <p
-                  className="text-[11px] num tabular"
+                  className="text-2xs num tabular"
                   style={{ color: 'var(--c-primary-ink)' }}
                 >
                   {projection.daysLeft} {t('anggaran_drawer.days_left_suffix')}

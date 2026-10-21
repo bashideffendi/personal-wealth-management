@@ -215,7 +215,7 @@ export function InsightsPanel({
                 bold
               />
             </div>
-            <div className="pt-2 mt-2 border-t text-[11px]" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
+            <div className="pt-2 mt-2 border-t text-2xs" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
               {t('insights_panel.forecast_estimate_label')}
               <span className="num font-semibold ml-1" style={{ color: avg3mo.net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                 {formatCurrency(avg3mo.net * 3)}

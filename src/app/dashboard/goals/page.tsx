@@ -430,19 +430,19 @@ export default function GoalsPage() {
               className="shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                 {t('goals.stat_collected')} · {activeGoals.length} {t('goals.goals_unit')}
               </p>
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
                 <span className="num tabular font-semibold" style={{ fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink)' }} title={formatCurrency(stats.totalCurrent)}>
                   {formatCompactCurrency(stats.totalCurrent)}
                 </span>
-                <span className="num text-[11.5px]" style={{ color: 'var(--ink-soft)' }} title={formatCurrency(stats.totalTarget)}>
+                <span className="num text-2xs" style={{ color: 'var(--ink-soft)' }} title={formatCurrency(stats.totalTarget)}>
                   / {formatCompactCurrency(stats.totalTarget)}
                 </span>
               </p>
               {stats.avgProb != null && (
-                <span className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                <span className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-2xs font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
                   {t('goals.stat_avg_probability')} {stats.avgProb.toFixed(0)}%
                 </span>
               )}
@@ -503,13 +503,13 @@ export default function GoalsPage() {
                           <div className="flex items-center gap-1.5">
                             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
                             {i === 0 && g.deadline && !done && (
-                              <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
+                              <span className="shrink-0 text-3xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
                                 {t('goals.badge_nearest')}
                               </span>
                             )}
                           </div>
                           {/* Status = teks berwarna di meta (per mockup), bukan pill. */}
-                          <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
+                          <p className="text-2xs mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                             {g.deadline
                               ? `${t('goals.target_prefix')} ${new Date(g.deadline).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short', year: 'numeric' })}`
                               : (categoryLabel(g.category) ?? g.category)}
@@ -535,11 +535,11 @@ export default function GoalsPage() {
                           </Button>
                         </div>
                         {done ? (
-                          <Button variant="outline" size="sm" className="rounded-full text-[11px]" onClick={() => setActive(g.id, false)}>
+                          <Button variant="outline" size="sm" className="rounded-full text-2xs" onClick={() => setActive(g.id, false)}>
                             <Archive className="h-3.5 w-3.5" /> {t('goals.archive')}
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" className="rounded-full text-[11px]" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
+                          <Button variant="outline" size="sm" className="rounded-full text-2xs" onClick={() => { setDepositGoal(g); setDepositAmt(0); setDepositLogTx(false) }}>
                             <span className="sm:hidden">{t('goals.deposit_short')}</span>
                             <span className="hidden sm:inline">{t('goals.deposit_now')}</span>
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -554,7 +554,7 @@ export default function GoalsPage() {
                       <span className="num" style={{ fontSize: '1.375rem', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
                         {formatCurrency(g.current_amount)}
                       </span>
-                      <span className="num text-[12.5px] ml-2" style={{ color: 'var(--ink-soft)' }}>
+                      <span className="num text-cap ml-2" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.amount_of')} {formatCurrency(g.target_amount)}
                       </span>
                     </p>
@@ -563,7 +563,7 @@ export default function GoalsPage() {
                       <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: done ? 'var(--c-mint)' : layerColor }}>
                         <i style={{ width: `${Math.min(pct, 100)}%` }} />
                       </span>
-                      <span className="num text-[12px] font-semibold shrink-0" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
+                      <span className="num text-cap font-semibold shrink-0" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
                         {pct.toFixed(0)}%
                       </span>
                     </div>
@@ -573,28 +573,28 @@ export default function GoalsPage() {
                       h-4 biar tombol ⓘ gak ngedorong kolomnya turun. */}
                   <div className="px-4 py-3 border-t hidden sm:grid grid-cols-3 gap-3" style={{ borderColor: 'var(--outline)' }}>
                     <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center h-4" style={{ color: 'var(--ink-soft)' }}>
+                      <p className="text-3xs uppercase tracking-wide whitespace-nowrap flex items-center h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.monthly_label')}
                       </p>
-                      <p className="num text-[13px] font-semibold mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
+                      <p className="num text-ui font-semibold mt-0.5 truncate" style={{ color: 'var(--ink)' }}>
                         {perMonth != null ? formatCurrency(perMonth) : '—'}
                       </p>
                     </div>
                     <div className="min-w-0 text-center">
-                      <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center justify-center h-4" style={{ color: 'var(--ink-soft)' }}>
+                      <p className="text-3xs uppercase tracking-wide whitespace-nowrap flex items-center justify-center h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.footer_remaining')}
                       </p>
-                      <p className="num text-[13px] font-semibold mt-0.5 truncate" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink)' }}>
+                      <p className="num text-ui font-semibold mt-0.5 truncate" style={{ color: done ? 'var(--c-mint-ink)' : 'var(--ink)' }}>
                         {done ? t('goals.target_reached') : formatCurrency(remaining)}
                       </p>
                     </div>
                     <div className="min-w-0 text-right">
-                      <p className="text-[10px] uppercase tracking-wide whitespace-nowrap flex items-center justify-end gap-1 h-4" style={{ color: 'var(--ink-soft)' }}>
+                      <p className="text-3xs uppercase tracking-wide whitespace-nowrap flex items-center justify-end gap-1 h-4" style={{ color: 'var(--ink-soft)' }}>
                         {t('goals.probability_label')}
                         {assumption && <InfoTip text={assumption} />}
                       </p>
                       {/* Berwarna cuma kalau user set rencana sendiri (default = hipotesis). */}
-                      <p className="num text-[13px] font-semibold mt-0.5" style={{ color: prob == null ? 'var(--ink-soft)' : planned != null ? probInk(prob) : 'var(--ink)' }}>
+                      <p className="num text-ui font-semibold mt-0.5" style={{ color: prob == null ? 'var(--ink-soft)' : planned != null ? probInk(prob) : 'var(--ink)' }}>
                         {prob != null ? `${prob.toFixed(0)}%` : '—'}
                       </p>
                     </div>
@@ -622,10 +622,10 @@ export default function GoalsPage() {
                 className="w-full flex items-center justify-between gap-2 text-left"
                 onClick={() => setArchivedOpen((v) => !v)}
               >
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>
                   {t('goals.archived_title')} ({archivedGoals.length})
                 </p>
-                <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{archivedOpen ? '−' : '+'}</span>
+                <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{archivedOpen ? '−' : '+'}</span>
               </button>
               {archivedOpen && (
                 <div className="mt-3 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-3">
@@ -633,12 +633,12 @@ export default function GoalsPage() {
                     <div key={g.id} className="flex items-center justify-between gap-3 py-2 max-md:border-b max-md:last:border-0 md:border md:rounded-lg md:px-3 md:py-2.5" style={{ borderColor: 'var(--outline)' }}>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                        <p className="num text-[11px] md:hidden" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="num text-2xs md:hidden" style={{ color: 'var(--ink-soft)' }}>
                           {formatCurrency(g.current_amount)} / {formatCurrency(g.target_amount)}
                         </p>
                       </div>
                       <p
-                        className="num tabular-nums text-[12px] text-right shrink-0 hidden md:block"
+                        className="num tabular-nums text-cap text-right shrink-0 hidden md:block"
                         style={{ color: 'var(--ink-soft)' }}
                         title={`${formatCurrency(g.current_amount)} / ${formatCurrency(g.target_amount)}`}
                       >
@@ -712,7 +712,7 @@ export default function GoalsPage() {
                 <NumberInput value={form.planned_monthly} onChange={(n) => setForm({ ...form, planned_monthly: n })} placeholder="0" />
               </div>
             </div>
-            <p className="text-[11px] -mt-1" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs -mt-1" style={{ color: 'var(--ink-soft)' }}>
               {t('goals.field_plan_hint')}
             </p>
             <div className="grid gap-1.5">
@@ -729,7 +729,7 @@ export default function GoalsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                 {t('goals.strategy_hint')}
               </p>
             </div>
@@ -761,14 +761,14 @@ export default function GoalsPage() {
               <NumberInput value={depositAmt} onChange={setDepositAmt} placeholder="0" />
             </div>
             {depositGoal && (
-              <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-cap" style={{ color: 'var(--ink-muted)' }}>
                 {t('goals.collected_label')} <span className="num">{formatCurrency(depositGoal.current_amount)}</span>
                 {depositAmt > 0 && (
                   <> {' → '}<span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(depositGoal.current_amount + depositAmt)}</span></>
                 )}
               </p>
             )}
-            <label className="flex items-center gap-2 text-[12px] cursor-pointer select-none" style={{ color: 'var(--ink-muted)' }}>
+            <label className="flex items-center gap-2 text-cap cursor-pointer select-none" style={{ color: 'var(--ink-muted)' }}>
               <input
                 type="checkbox"
                 checked={depositLogTx}

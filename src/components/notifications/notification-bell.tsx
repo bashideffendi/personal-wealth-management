@@ -180,12 +180,12 @@ export function NotificationBell() {
             className="flex items-center justify-between px-3 py-2.5 border-b"
             style={{ borderColor: 'var(--border-soft)' }}
           >
-            <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+            <p className="text-ui font-semibold" style={{ color: 'var(--ink)' }}>
               Notifikasi
             </p>
             {unread > 0 && (
               <span
-                className="num tabular text-[11px] font-semibold px-1.5 py-px rounded-full"
+                className="num tabular text-2xs font-semibold px-1.5 py-px rounded-full"
                 style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
               >
                 {unread} baru
@@ -213,13 +213,13 @@ export function NotificationBell() {
                 >
                   <span className="flex items-baseline justify-between gap-2">
                     <span
-                      className="text-[13px] font-semibold truncate"
+                      className="text-ui font-semibold truncate"
                       style={{ color: 'var(--ink)' }}
                     >
                       {n.title}
                     </span>
                     <span
-                      className="text-[11px] shrink-0"
+                      className="text-2xs shrink-0"
                       style={{ color: 'var(--ink-soft)' }}
                     >
                       {waktuRelatif(n.created_at)}
@@ -227,7 +227,7 @@ export function NotificationBell() {
                   </span>
                   {n.body && (
                     <span
-                      className="mt-0.5 block text-[12px] leading-snug"
+                      className="mt-0.5 block text-cap leading-snug"
                       style={{
                         color: 'var(--ink-muted)',
                         display: '-webkit-box',
@@ -249,7 +249,7 @@ export function NotificationBell() {
               <button
                 type="button"
                 onClick={markAllRead}
-                className="text-[12px] font-medium transition-colors duration-100 hover:underline cursor-pointer"
+                className="text-cap font-medium transition-colors duration-100 hover:underline cursor-pointer"
                 style={{ color: 'var(--accent)' }}
               >
                 Tandai semua dibaca

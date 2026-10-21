@@ -148,7 +148,7 @@ export function CompoundDebtWarning({ balance, annualRate, label }: Props) {
       </div>
 
       {after5y && after5y.totalInterest > 0 && (
-        <p className="text-[11px] leading-relaxed mt-3 pt-3 border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
+        <p className="text-2xs leading-relaxed mt-3 pt-3 border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
           {t('compound_warning.total_interest_5y')}{' '}
           <span className="num font-semibold" style={{ color: isHighRate ? 'var(--c-coral)' : 'var(--ink)' }}>
             {formatCurrency(after5y.totalInterest)}
@@ -171,7 +171,7 @@ function ProjectionStat({
   const t = useT()
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-3xs uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>
         {label}
       </p>
       <p
@@ -181,7 +181,7 @@ function ProjectionStat({
         {formatCurrency(balance)}
       </p>
       {interest !== undefined && interest > 0 && (
-        <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-3xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
           +{formatCurrency(interest)} {t('compound_warning.interest_label')}
         </p>
       )}

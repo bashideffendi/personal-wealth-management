@@ -76,7 +76,7 @@ export function UpcomingDividends({ enriched }: { enriched: EnrichedHolding[] })
         </Link>
       </div>
       {mine.length === 0 && (
-        <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>
           {t('investment.upcoming_div_market_note')}
         </p>
       )}
@@ -87,7 +87,7 @@ export function UpcomingDividends({ enriched }: { enriched: EnrichedHolding[] })
           return (
             <div key={`${ev.ticker}-${ev.period}-${ev.exDate}`} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border-soft)' }}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="size-8 rounded-full grid place-items-center text-[10px] font-bold shrink-0" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
+                <span className="size-8 rounded-full grid place-items-center text-3xs font-bold shrink-0" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
                   {ev.ticker.slice(0, 4)}
                 </span>
                 <div className="min-w-0">
@@ -95,7 +95,7 @@ export function UpcomingDividends({ enriched }: { enriched: EnrichedHolding[] })
                     <span className="num tabular font-semibold">Rp {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(ev.dividend)}</span>
                     <span style={{ color: 'var(--ink-soft)' }}>{t('investment.upcoming_div_per_share')}</span>
                   </p>
-                  <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-2xs inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
                     <CalendarDays className="size-3" /> Ex-date {ev.exDate ?? '—'}
                   </p>
                 </div>
@@ -106,10 +106,10 @@ export function UpcomingDividends({ enriched }: { enriched: EnrichedHolding[] })
                     <p className="num tabular text-sm font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                       ±{formatCurrency(estimate)}
                     </p>
-                    <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.upcoming_div_estimate')}</p>
+                    <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{t('investment.upcoming_div_estimate')}</p>
                   </>
                 ) : (
-                  <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{ev.period}</p>
+                  <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{ev.period}</p>
                 )}
               </div>
             </div>

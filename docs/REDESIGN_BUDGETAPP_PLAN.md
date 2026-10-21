@@ -61,4 +61,14 @@ pada render lokal mode demo (390px & 1280px) + screenshot `docs/design-review/Kl
 
 ## Status
 
-_(diisi setelah perbaikan selesai)_
+Cakupan diganti `docs/REDESIGN_TOTAL_PROMPT.md` (redesign total, 5 fase). Dari
+rencana 10 perbaikan, yang selesai dan jadi fondasi: #1 radius 12 + hairline,
+#2 ikon mono, #3 angka tidak patah, #4 tanpa gradien/glow, #5 hero Akun & label
+mono, #6 judul HP Lainnya/Profil. Sisanya (#7–#10) dilebur ke fase di bawah.
+
+- **Fase 0 — bahasa desain:** `docs/DESIGN_LANGUAGE.md`; skala tipografi jadi
+  token (`text-3xs…text-hero`, 1.044 `text-[Npx]` ad-hoc dipetakan, selisih
+  ≤ 0.5px kecuali 9px→10px); CSS mati (`.glow-*`) dibuang; tab pill aktif di mode
+  gelap tidak lagi putih-di-atas-putih; komponen `EmptyState` + `Skeleton`.
+  Dibandingkan HP terang/gelap: kartu hairline + ikon mono lebih tenang dan
+  hierarki angka lebih jelas. Screener tidak disentuh.

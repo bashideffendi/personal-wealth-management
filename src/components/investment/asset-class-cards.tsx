@@ -67,7 +67,7 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
           <button
             type="button"
             onClick={() => setShowAllClasses((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-[11px] font-medium transition hover:opacity-70"
+            className="inline-flex items-center gap-1.5 text-2xs font-medium transition hover:opacity-70"
             style={{ color: 'var(--ink-soft)' }}
           >
             {showAllClasses
@@ -75,7 +75,7 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
               : <><Eye className="size-3.5" /> {t('investment.show_all_classes')} ({hiddenCount})</>}
           </button>
         ) : (
-          <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
+          <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('investment.asset_classes_hint')}</span>
         )}
       </div>
       {/* Grid kartu seragam (bukan list baris) — tiap kelas = .s-card klik-able:
@@ -104,21 +104,21 @@ export function AssetClassCards({ byClass, byCategory }: AssetClassCardsProps) {
                   <CardIcon className="size-4" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold leading-tight" style={{ color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}>{c.label}</p>
-                  <p className="mt-0.5 text-[11px] leading-tight" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="truncate text-ui font-semibold leading-tight" style={{ color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}>{c.label}</p>
+                  <p className="mt-0.5 text-2xs leading-tight" style={{ color: 'var(--ink-soft)' }}>
                     {hasPosition ? `${data.count} ${t('investment.positions')}` : t('investment.no_position')}
                   </p>
                 </div>
               </div>
               <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-                <p className="num tabular min-w-0 truncate text-[15px] font-bold leading-tight" title={formatCurrency(data.market)} style={{ color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                <p className="num tabular min-w-0 truncate text-row font-bold leading-tight" title={formatCurrency(data.market)} style={{ color: hasPosition ? 'var(--ink)' : 'var(--ink-soft)' }}>
                   {/* HP: ringkas biar angka gak kepotong "Rp 15.036..." */}
                   <span className="md:hidden">{formatCompactCurrency(data.market)}</span>
                   <span className="hidden md:inline">{formatCurrency(data.market)}</span>
                 </p>
                 {data.invested > 0 && (
                   <span
-                    className="num tabular shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold leading-tight"
+                    className="num tabular shrink-0 rounded px-1.5 py-0.5 text-2xs font-semibold leading-tight"
                     data-calm-hide="" data-loss={plUp ? undefined : 'true'}
                     style={{
                       background: plUp ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',

@@ -118,7 +118,7 @@ export function StockDividendCalendar() {
       </Tabs>
 
       <div
-        className="rounded-lg border p-3 text-[11px] flex items-start gap-2"
+        className="rounded-lg border p-3 text-2xs flex items-start gap-2"
         style={{
           boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)',
           borderColor: 'var(--border-soft)',
@@ -145,7 +145,7 @@ function DividendList({ events }: { events: DividendEvent[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr
-              className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
+              className="text-left text-3xs uppercase tracking-[0.08em] font-semibold border-b"
               style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
             >
               <th className="px-3 py-2.5">{t('dividend_calendar.col_ex_date')}</th>
@@ -183,7 +183,7 @@ function DividendList({ events }: { events: DividendEvent[] }) {
                     </div>
                     {daysUntil != null && daysUntil >= 0 && (
                       <div
-                        className="text-[10px] mt-0.5"
+                        className="text-3xs mt-0.5"
                         style={{
                           color:
                             urgency === 'critical' ? 'var(--c-coral)'

@@ -44,7 +44,7 @@ export function PlanCard({ plan, billing, ctaLabel, ctaHref, onCta }: PlanCardPr
     >
       {plan.popular && (
         <span
-          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold uppercase whitespace-nowrap"
+          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-2xs font-bold uppercase whitespace-nowrap"
           style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', letterSpacing: '0.08em' }}
         >
           Paling populer

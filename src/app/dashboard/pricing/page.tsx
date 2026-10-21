@@ -75,7 +75,7 @@ export default function PricingPage() {
                 style={{ background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--ink-soft)', boxShadow: on ? '0 1px 3px rgba(16,24,40,0.10)' : undefined }}
               >
                 {label}
-                {key === 'annual' && <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>{t('pricing.save_badge')}</span>}
+                {key === 'annual' && <span className="rounded-full px-1.5 py-0.5 text-3xs font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>{t('pricing.save_badge')}</span>}
               </button>
             )
           })}
@@ -155,7 +155,7 @@ export default function PricingPage() {
             >
               {pack.popular && (
                 <span
-                  className="absolute -top-2 right-3 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  className="absolute -top-2 right-3 rounded-full px-2 py-0.5 text-3xs font-bold"
                   style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber-ink)', border: '1px solid var(--c-amber)' }}
                 >
                   {t('pricing.save_badge')}

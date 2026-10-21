@@ -1321,7 +1321,7 @@ export default function TransactionsPage() {
     return (
       <TableHead
         aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-        className={`text-[11px] uppercase tracking-[0.08em] whitespace-nowrap ${numeric ? 'text-right' : ''}`}
+        className={`text-2xs uppercase tracking-[0.08em] whitespace-nowrap ${numeric ? 'text-right' : ''}`}
         style={{ color: 'var(--ink-soft)' }}
       >
         <button
@@ -1402,7 +1402,7 @@ export default function TransactionsPage() {
               <span className="grid place-items-center size-8 rounded-lg shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                 <a.icon className="size-4" />
               </span>
-              <span className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>{a.label}</span>
+              <span className="text-body font-medium" style={{ color: 'var(--ink)' }}>{a.label}</span>
             </button>
           ))}
         </div>
@@ -1498,7 +1498,7 @@ export default function TransactionsPage() {
         {/* Saved views (desktop) — chip apply + tombol simpan snapshot filter+sort.
             Chip aktif (state persis match) = pill near-black. */}
         <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-3">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] mr-1" style={{ color: 'var(--ink-soft)' }}>
+          <span className="text-2xs font-semibold uppercase tracking-[0.08em] mr-1" style={{ color: 'var(--ink-soft)' }}>
             Tampilan
           </span>
           {savedViews.map((v) => {
@@ -1515,7 +1515,7 @@ export default function TransactionsPage() {
                   type="button"
                   onClick={() => applyView(v)}
                   title={`Terapkan tampilan: ${v.name}`}
-                  className="max-w-40 truncate pl-2.5 pr-1 py-1 text-[12px] font-medium transition-colors duration-100"
+                  className="max-w-40 truncate pl-2.5 pr-1 py-1 text-cap font-medium transition-colors duration-100"
                   style={{ color: active ? 'var(--surface)' : 'var(--ink-muted)' }}
                 >
                   {v.name}
@@ -1537,7 +1537,7 @@ export default function TransactionsPage() {
             disabled={!canSaveView}
             onClick={() => { setViewNameDraft(''); setViewDialogOpen(true) }}
             title={canSaveView ? 'Simpan kombinasi filter & urutan saat ini' : 'Atur filter/urutan dulu sebelum menyimpan tampilan'}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 hover:bg-[var(--surface-2)] disabled:opacity-40 disabled:pointer-events-none"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-cap font-medium transition-colors duration-100 hover:bg-[var(--surface-2)] disabled:opacity-40 disabled:pointer-events-none"
             style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)', background: 'transparent' }}
           >
             <Plus className="size-3" /> Simpan tampilan
@@ -1675,17 +1675,17 @@ export default function TransactionsPage() {
         <div ref={quickAddRef} className="rounded-xl border bg-[var(--surface)] p-3" style={{ borderColor: 'var(--accent, var(--c-mint))' }}>
           <div className="flex items-center gap-2 mb-2 px-1">
             <Plus className="size-3.5" style={{ color: 'var(--ink-muted)' }} />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
+            <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
               {t('transactions.quick_add')}
             </p>
-            <span className="text-[10px] hidden sm:inline" style={{ color: 'var(--ink-soft)' }}>
+            <span className="text-3xs hidden sm:inline" style={{ color: 'var(--ink-soft)' }}>
               · {t('transactions.quick_add_hint')}
             </span>
             <div className="ml-auto flex items-center gap-1">
               <button
                 type="button"
                 onClick={openAddDialog}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-2xs font-medium transition-colors hover:bg-[var(--surface-2)]"
                 style={{ color: 'var(--ink-muted)' }}
               >
                 <ScanLine className="size-3.5" /> {t('transactions.add_detail')}
@@ -1806,10 +1806,10 @@ export default function TransactionsPage() {
             </Button>
           </form>
           {/* Tip shortcut keyboard cuma relevan di desktop; di HP arahkan ke tombol +. */}
-          <p className="hidden sm:block text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden sm:block text-3xs mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
             {t('transactions.quick_add_tip_prefix')} <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>{isMac ? '⌘K' : 'Ctrl K'}</kbd> {t('transactions.quick_add_tip_suffix')}
           </p>
-          <p className="sm:hidden text-[10px] mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
+          <p className="sm:hidden text-3xs mt-1.5 px-1" style={{ color: 'var(--ink-soft)' }}>
             {t('transactions.quick_add_tip_mobile')}
           </p>
         </div>
@@ -1818,13 +1818,13 @@ export default function TransactionsPage() {
       {/* Bulk-action bar — appears when rows are selected (desktop) */}
       {selectedIds.size > 0 && (
         <div className="hidden md:flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2" style={{ background: 'var(--surface)', borderColor: 'var(--c-primary)' }}>
-          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+          <span className="text-ui font-semibold" style={{ color: 'var(--ink)' }}>
             {selectedIds.size} {t('transactions.selected_count')}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <Popover.Root open={bulkCatOpen} onOpenChange={setBulkCatOpen}>
               <Popover.Trigger
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] transition-colors hover:bg-[var(--surface-2)]"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-ui transition-colors hover:bg-[var(--surface-2)]"
                 style={{ borderColor: 'var(--border)', color: 'var(--ink)', background: 'var(--surface)' }}
               >
                 <Pencil className="size-3.5" style={{ color: 'var(--ink-soft)' }} /> {t('transactions.bulk_recategorize')}
@@ -1833,7 +1833,7 @@ export default function TransactionsPage() {
                 <Popover.Positioner side="bottom" align="end" sideOffset={6} className="z-50">
                   <Popover.Popup className="max-h-72 overflow-y-auto rounded-xl border p-1.5 outline-none" style={{ background: 'var(--surface)', borderColor: 'var(--outline)', width: 220, boxShadow: 'var(--card-shadow)' }}>
                     {allCategoryOptions.map((c) => (
-                      <button key={c} type="button" onClick={() => { setBulkCatOpen(false); void bulkSetCategory(c) }} className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}>
+                      <button key={c} type="button" onClick={() => { setBulkCatOpen(false); void bulkSetCategory(c) }} className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-ui transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--ink-muted)' }}>
                         {c}
                       </button>
                     ))}
@@ -1845,12 +1845,12 @@ export default function TransactionsPage() {
               type="button"
               onClick={() => void bulkDelete()}
               disabled={bulkBusy}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors disabled:opacity-50"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-ui font-medium transition-colors disabled:opacity-50"
               style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral-ink)', background: 'var(--surface)' }}
             >
               {bulkBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />} {t('transactions.bulk_delete')}
             </button>
-            <button type="button" onClick={() => setSelectedIds(new Set())} className="px-2 text-[13px] font-medium" style={{ color: 'var(--ink-muted)' }}>
+            <button type="button" onClick={() => setSelectedIds(new Set())} className="px-2 text-ui font-medium" style={{ color: 'var(--ink-muted)' }}>
               {t('transactions.cancel')}
             </button>
           </div>
@@ -1915,11 +1915,11 @@ export default function TransactionsPage() {
                   {/* Klik "Tanggal" balik ke sort tanggal → grouping harian lagi */}
                   {sortKey !== 'date' && renderSortHead('date', t('transactions.col_date'))}
                   {renderSortHead('account', t('transactions.col_account'))}
-                  <TableHead className="text-[11px] uppercase tracking-[0.08em] whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_type')}</TableHead>
+                  <TableHead className="text-2xs uppercase tracking-[0.08em] whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_type')}</TableHead>
                   {renderSortHead('category', t('transactions.col_category'))}
                   {renderSortHead('description', t('transactions.col_description'))}
                   {renderSortHead('amount', t('transactions.col_amount'), true)}
-                  <TableHead className="text-[11px] uppercase tracking-[0.08em] text-right whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_action')}</TableHead>
+                  <TableHead className="text-2xs uppercase tracking-[0.08em] text-right whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>{t('transactions.col_action')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1946,7 +1946,7 @@ export default function TransactionsPage() {
                       <TableRow className="hover:bg-transparent border-[color:var(--border-soft)]">
                         <TableCell
                           colSpan={7}
-                          className="px-3 py-2 text-[12px] font-semibold"
+                          className="px-3 py-2 text-cap font-semibold"
                           style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                         >
                           <div className="flex items-center justify-between gap-3">
@@ -1999,11 +1999,11 @@ export default function TransactionsPage() {
                             <input type="checkbox" checked={selected} onChange={() => toggleSelect(tx.id)} aria-label={t('transactions.select_row')} style={{ accentColor: 'var(--c-primary)', width: 15, height: 15, cursor: 'pointer' }} />
                           </TableCell>
                           {isFlat && (
-                            <TableCell className="num text-[13px] tabular-nums whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                            <TableCell className="num text-ui tabular-nums whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
                               {formatDateShort(tx.date, locale)}
                             </TableCell>
                           )}
-                          <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
+                          <TableCell className="text-ui whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             {getAccountName(tx.account_id)}
                           </TableCell>
                           <TableCell>
@@ -2017,7 +2017,7 @@ export default function TransactionsPage() {
                               {t(TYPE_LABEL_KEYS[tx.type])}
                             </span>
                           </TableCell>
-                          <TableCell className="text-[13px] whitespace-nowrap" style={{ color: 'var(--ink)' }}>
+                          <TableCell className="text-ui whitespace-nowrap" style={{ color: 'var(--ink)' }}>
                             <Popover.Root open={inlineCatId === tx.id} onOpenChange={(o) => setInlineCatId(o ? tx.id : null)}>
                               <Popover.Trigger className="flex items-center gap-2 -ml-1 rounded-md px-1 py-0.5 transition-colors hover:bg-[var(--surface-3)]" title={t('transactions.edit_category_inline')} aria-label={`${tx.category} — ${t('transactions.edit_category_inline')}`}>
                                 <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: TYPE_BADGE_STYLES[tx.type].bg, color: TYPE_BADGE_STYLES[tx.type].color }}>
@@ -2033,7 +2033,7 @@ export default function TransactionsPage() {
                                         key={o.value}
                                         type="button"
                                         onClick={() => inlineSetCategory(tx.id, o.value)}
-                                        className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]"
+                                        className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-ui transition-colors hover:bg-[var(--surface-2)]"
                                         style={{ color: o.value === tx.category ? 'var(--ink)' : 'var(--ink-muted)', fontWeight: o.value === tx.category ? 600 : 400, paddingLeft: o.depth > 0 ? 22 : 10 }}
                                       >
                                         {o.depth > 0 ? `↳ ${o.label}` : o.label}
@@ -2044,12 +2044,12 @@ export default function TransactionsPage() {
                               </Popover.Portal>
                             </Popover.Root>
                           </TableCell>
-                          <TableCell className="text-[13px]" style={{ color: 'var(--ink)' }}>
+                          <TableCell className="text-ui" style={{ color: 'var(--ink)' }}>
                             {tx.description}
                             {/* Penanda hasil Pecah Transaksi (migrasi 064) */}
                             {tx.split_group_id && (
                               <span
-                                className="ml-2 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium align-middle"
+                                className="ml-2 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs font-medium align-middle"
                                 style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}
                                 title={locale === 'id' ? 'Bagian dari transaksi yang dipecah' : 'Part of a split transaction'}
                               >
@@ -2059,12 +2059,12 @@ export default function TransactionsPage() {
                             {tx.tags && tx.tags.length > 0 && (
                               <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
                                 {tx.tags.slice(0, 2).map((tg) => (
-                                  <span key={tg} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                                  <span key={tg} className="rounded-full px-1.5 py-0.5 text-3xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                                     {tg}
                                   </span>
                                 ))}
                                 {tx.tags.length > 2 && (
-                                  <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
+                                  <span className="rounded-full px-1.5 py-0.5 text-3xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
                                     +{tx.tags.length - 2}
                                   </span>
                                 )}
@@ -2072,7 +2072,7 @@ export default function TransactionsPage() {
                             )}
                           </TableCell>
                           <TableCell
-                            className={`num text-right text-[13px] font-medium tabular-nums whitespace-nowrap ${
+                            className={`num text-right text-ui font-medium tabular-nums whitespace-nowrap ${
                               tx.type === 'income'
                                 ? 'text-[var(--c-mint-ink)]'
                                 : tx.type === 'expense'
@@ -2102,10 +2102,10 @@ export default function TransactionsPage() {
               <TableFooter>
                 <TableRow className="hover:bg-transparent" style={{ background: 'var(--surface-2)' }}>
                   {/* Mode flat nambah 1 kolom tanggal → colSpan ikut geser */}
-                  <TableCell colSpan={sortKey !== 'date' ? 6 : 5} className="text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }}>
+                  <TableCell colSpan={sortKey !== 'date' ? 6 : 5} className="text-cap font-semibold" style={{ color: 'var(--ink-muted)' }}>
                     {t('transactions.total')} · {filteredTransactions.length} {t('transactions.transactions_word')}
                   </TableCell>
-                  <TableCell className="num text-right text-[13px] font-bold tabular-nums">
+                  <TableCell className="num text-right text-ui font-bold tabular-nums">
                     {(() => {
                       const n = filteredTransactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
                       return <span style={{ color: n >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>{n >= 0 ? '+' : '−'}{formatCurrency(Math.abs(n))}</span>
@@ -2136,7 +2136,7 @@ export default function TransactionsPage() {
                 .sort((a, b) => (a < b ? 1 : -1))
               if (dates.length === 0) {
                 return (
-                  <p className="text-[12.5px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-cap text-center py-8" style={{ color: 'var(--ink-soft)' }}>
                     {t('transactions.empty_title')}
                   </p>
                 )
@@ -2147,11 +2147,11 @@ export default function TransactionsPage() {
                 return (
                   <div key={date}>
                     <div className="flex items-baseline justify-between px-1 mt-3 mb-1.5">
-                      <span className="text-[11.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+                      <span className="text-2xs font-medium" style={{ color: 'var(--ink-soft)' }}>
                         {new Date(`${date}T00:00:00`).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
                       </span>
                       {net !== 0 && (
-                        <span className="num tabular text-[11.5px] font-medium" style={{ color: 'var(--ink-soft)' }}>
+                        <span className="num tabular text-2xs font-medium" style={{ color: 'var(--ink-soft)' }}>
                           {net > 0 ? '+' : '−'}{formatCompactCurrency(Math.abs(net))}
                         </span>
                       )}
@@ -2188,15 +2188,15 @@ export default function TransactionsPage() {
                               <CategoryIcon category={tx.category} className="size-[15px]" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                              <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
                                 {tx.split_group_id && (
-                                  <span className="mr-1 inline-flex items-center rounded-full px-1.5 align-middle text-[9px] font-semibold uppercase" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                                  <span className="mr-1 inline-flex items-center rounded-full px-1.5 align-middle text-3xs font-semibold uppercase" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
                                     {locale === 'id' ? 'Pecahan' : 'Split'}
                                   </span>
                                 )}
                                 {tx.description || tx.category}
                               </p>
-                              <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                              <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                                 {/* Ikon kecil = bagian dari transaksi yang dipecah */}
                                 {tx.split_group_id && (
                                   <Split className="size-3 inline align-[-2px] mr-1" aria-hidden style={{ color: 'var(--c-violet)' }} />
@@ -2204,7 +2204,7 @@ export default function TransactionsPage() {
                                 {tx.category} · {getAccountName(tx.account_id)}
                               </p>
                             </div>
-                            <p className="num text-[14px] font-semibold tabular-nums leading-tight shrink-0" style={{ color: amountColor }}>
+                            <p className="num text-body font-semibold tabular-nums leading-tight shrink-0" style={{ color: amountColor }}>
                               {tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : ''}{formatCurrency(tx.amount)}
                             </p>
                             <button
@@ -2256,7 +2256,7 @@ export default function TransactionsPage() {
             }}
           >
             <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border-soft)' }}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-2xs font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>
                 Detail transaksi
               </p>
               <button
@@ -2271,7 +2271,7 @@ export default function TransactionsPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="num tabular-nums text-[28px] font-bold leading-none" style={{ color: amountColor }}>
+              <p className="num tabular-nums text-hero font-bold leading-none" style={{ color: amountColor }}>
                 {peekTx.type === 'income' ? '+' : peekTx.type === 'expense' ? '−' : ''}{formatCurrency(peekTx.amount)}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -2290,25 +2290,25 @@ export default function TransactionsPage() {
 
               <dl className="mt-6 grid gap-4">
                 <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tanggal</dt>
-                  <dd className="mt-0.5 text-[13.5px]" style={{ color: 'var(--ink)' }}>{formatDateShort(peekTx.date, locale)}</dd>
+                  <dt className="text-2xs font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tanggal</dt>
+                  <dd className="mt-0.5 text-ui" style={{ color: 'var(--ink)' }}>{formatDateShort(peekTx.date, locale)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Akun</dt>
-                  <dd className="mt-0.5 text-[13.5px]" style={{ color: 'var(--ink)' }}>{getAccountName(peekTx.account_id)}</dd>
+                  <dt className="text-2xs font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Akun</dt>
+                  <dd className="mt-0.5 text-ui" style={{ color: 'var(--ink)' }}>{getAccountName(peekTx.account_id)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Deskripsi</dt>
-                  <dd className="mt-0.5 text-[13.5px] break-words" style={{ color: peekTx.description ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                  <dt className="text-2xs font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Deskripsi</dt>
+                  <dd className="mt-0.5 text-ui break-words" style={{ color: peekTx.description ? 'var(--ink)' : 'var(--ink-soft)' }}>
                     {peekTx.description || '—'}
                   </dd>
                 </div>
                 {peekTx.tags && peekTx.tags.length > 0 && (
                   <div>
-                    <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tag</dt>
+                    <dt className="text-2xs font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--ink-soft)' }}>Tag</dt>
                     <dd className="mt-1 flex flex-wrap gap-1">
                       {peekTx.tags.map((tg) => (
-                        <span key={tg} className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+                        <span key={tg} className="rounded-full px-2 py-0.5 text-2xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                           {tg}
                         </span>
                       ))}
@@ -2317,7 +2317,7 @@ export default function TransactionsPage() {
                 )}
               </dl>
 
-              <p className="mt-6 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="mt-6 text-2xs" style={{ color: 'var(--ink-soft)' }}>
                 Navigasi: <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>j</kbd>/<kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>k</kbd> pindah baris · <kbd className="font-mono px-1 rounded" style={{ background: 'var(--surface-2)' }}>Esc</kbd> tutup
               </p>
             </div>
@@ -2335,7 +2335,7 @@ export default function TransactionsPage() {
               <button
                 type="button"
                 onClick={() => void handleDelete(peekTx.id)}
-                className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-medium transition-colors duration-100 hover:bg-[var(--surface-2)]"
+                className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-ui font-medium transition-colors duration-100 hover:bg-[var(--surface-2)]"
                 style={{ borderColor: 'var(--c-coral)', color: 'var(--c-coral-ink)', background: 'var(--surface)' }}
               >
                 <Trash2 className="size-3.5" /> {t('transactions.delete')}
@@ -2810,7 +2810,7 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={openSplitDialog}
-                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-2xs font-medium transition-colors hover:bg-[var(--surface-2)]"
                     style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
                     title={locale === 'id' ? 'Pecah transaksi ini ke beberapa kategori' : 'Split this transaction into several categories'}
                   >
@@ -3014,7 +3014,7 @@ export default function TransactionsPage() {
                 {t('transactions.csv_preview_prefix')} {importRows.length} {t('transactions.csv_preview_suffix')}
               </p>
               <div className="text-xs">
-                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 text-[11px] uppercase tracking-wider font-medium border-b bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
+                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 px-2 py-1 text-2xs uppercase tracking-wider font-medium border-b bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
                   <div className="col-span-1">✓</div>
                   <div className="col-span-2">{t('transactions.col_date')}</div>
                   <div className="col-span-4 sm:col-span-3">{t('transactions.col_description')}</div>
@@ -3040,7 +3040,7 @@ export default function TransactionsPage() {
                     <div className="col-span-2 num">{r.date}</div>
                     <div className="col-span-4 sm:col-span-3 truncate">{r.description}</div>
                     <div className="col-span-2">
-                      <span className="text-[10px] px-1 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{r.type}</span>
+                      <span className="text-3xs px-1 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{r.type}</span>
                       {' '}{r.category}
                     </div>
                     <div className="col-span-2">
@@ -3159,7 +3159,7 @@ export default function TransactionsPage() {
             type="button"
             onClick={() => setMobileView(v)}
             aria-pressed={mobileView === v}
-            className="rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition-colors"
+            className="rounded-full px-4 py-1.5 text-cap font-semibold transition-colors"
             style={mobileView === v
               ? { background: 'var(--ink)', color: 'var(--surface)' }
               : { color: 'var(--ink-soft)' }}

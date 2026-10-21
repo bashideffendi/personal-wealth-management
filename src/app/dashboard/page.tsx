@@ -986,7 +986,7 @@ export default function DashboardPage() {
             </p>
           </div>
           {/* Legend — ikut grouping sankey (nabung+investasi = satu grup violet) */}
-          <div className="hidden md:flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          <div className="hidden md:flex flex-wrap items-center gap-x-3 gap-y-1 text-3xs sm:text-2xs" style={{ color: 'var(--ink-soft)' }}>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm" style={{ background: 'var(--c-mint)' }} />
               {t('dashboard.kpi_income')}
@@ -1021,7 +1021,7 @@ export default function DashboardPage() {
             const totalOut = sankeyData.outflow.reduce((s, c) => s + c.amount, 0)
             if (totalIn === 0 && totalOut === 0) {
               return (
-                <p className="text-[13px] text-center py-4" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-ui text-center py-4" style={{ color: 'var(--ink-soft)' }}>
                   {t('dashboard.sankey_empty')}
                 </p>
               )
@@ -1038,8 +1038,8 @@ export default function DashboardPage() {
                     { label: t('dashboard.sankey_left'), val: sisa, color: 'var(--ink)' },
                   ].map((s) => (
                     <div key={s.label} className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{s.label}</p>
-                      <p className="num tabular text-[14px] font-semibold mt-0.5" title={formatCurrency(s.val)} style={{ color: s.color }}>
+                      <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{s.label}</p>
+                      <p className="num tabular text-body font-semibold mt-0.5" title={formatCurrency(s.val)} style={{ color: s.color }}>
                         {formatCompactCurrency(s.val)}
                       </p>
                     </div>
@@ -1053,7 +1053,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setSankeySheetOpen(true)}
-                  className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border py-2 text-[13px] font-medium transition-colors active:bg-[var(--surface-2)]"
+                  className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border py-2 text-ui font-medium transition-colors active:bg-[var(--surface-2)]"
                   style={{ borderColor: 'var(--border)', color: 'var(--ink)' }}
                 >
                   {t('dashboard.sankey_view_full')} →
@@ -1107,7 +1107,7 @@ export default function DashboardPage() {
             <p className="eyebrow">
               {t('dashboard.activity_this_month')} · {MONTHS[selectedMonth - 1]} {selectedYear}
             </p>
-            <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+            <div className="flex items-center gap-3 text-2xs" style={{ color: 'var(--ink-soft)' }}>
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded" style={{ background: 'var(--c-mint)' }} />
                 {t('dashboard.kpi_income')}
@@ -1148,7 +1148,7 @@ export default function DashboardPage() {
                   {dayLabels.map((d) => (
                     <div
                       key={d}
-                      className="text-center text-[10px] font-semibold uppercase tracking-wider"
+                      className="text-center text-3xs font-semibold uppercase tracking-wider"
                       style={{ color: 'var(--ink-soft)' }}
                     >
                       {d}
@@ -1208,7 +1208,7 @@ export default function DashboardPage() {
                         title={tooltipParts.join(' · ')}
                       >
                         <span
-                          className="text-[10px] font-semibold leading-none"
+                          className="text-3xs font-semibold leading-none"
                           style={{ color: 'var(--ink)' }}
                         >
                           {d.day}
@@ -1222,22 +1222,22 @@ export default function DashboardPage() {
                                     kalender (auto-rows-fr) ikut melar. Detail tetap ada
                                     di tooltip + breakdown per-hari. */}
                                 <p
-                                  className="sm:hidden num tabular text-[9px] font-semibold"
+                                  className="sm:hidden num tabular text-3xs font-semibold"
                                   style={{ color: net >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                                 >
                                   {net >= 0 ? '+' : '−'}
                                   {tight(net)}
                                 </p>
-                                <p className="hidden sm:block num tabular text-[9px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+                                <p className="hidden sm:block num tabular text-3xs font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
                                   +{tight(d.income)}
                                 </p>
-                                <p className="hidden sm:block num tabular text-[9px] font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
+                                <p className="hidden sm:block num tabular text-3xs font-semibold mt-0.5" style={{ color: 'var(--c-coral-ink)' }}>
                                   −{tight(d.expense)}
                                 </p>
                               </>
                             ) : (
                               <p
-                                className="num tabular text-[9px] sm:text-[11px] font-semibold"
+                                className="num tabular text-3xs sm:text-2xs font-semibold"
                                 style={{ color: hasIncome ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                               >
                                 {hasIncome ? '+' : '−'}
@@ -1282,14 +1282,14 @@ export default function DashboardPage() {
                   <div key={row.category}>
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="font-medium truncate" style={{ color: 'var(--ink)' }}>{row.category}</span>
-                      <span className="num tabular text-[11px] shrink-0 ml-2" style={{ color: overBudget ? 'var(--danger)' : 'var(--ink-muted)' }}>
+                      <span className="num tabular text-2xs shrink-0 ml-2" style={{ color: overBudget ? 'var(--danger)' : 'var(--ink-muted)' }}>
                         {row.pct.toFixed(0)}%
                       </span>
                     </div>
                     <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: barColor, ['--bar-h' as string]: '9px' }}>
                       <i style={{ width: `${pctCapped}%` }} />
                     </span>
-                    <div className="text-[10px] mt-0.5 num" style={{ color: 'var(--ink-soft)' }}>
+                    <div className="text-3xs mt-0.5 num" style={{ color: 'var(--ink-soft)' }}>
                       {formatCurrency(row.actual)} / {formatCurrency(row.budget)}
                     </div>
                   </div>
@@ -1347,7 +1347,7 @@ export default function DashboardPage() {
             <p className="eyebrow">{t('dashboard.portfolio')}</p>
             <Link
               href="/dashboard/assets/investment"
-              className="text-[11px] font-medium inline-flex items-center gap-0.5 hover:underline"
+              className="text-2xs font-medium inline-flex items-center gap-0.5 hover:underline"
               style={{ color: 'var(--c-mint-ink)' }}
             >
               {t('dashboard.detail')} <ArrowRight className="size-3" />
@@ -1382,7 +1382,7 @@ export default function DashboardPage() {
               {/* Total + P/L hero */}
               <div className="mt-3 flex items-end gap-3 flex-wrap">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                     {t('dashboard.total_value')}
                   </p>
                   <p className="num tabular text-2xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -1391,7 +1391,7 @@ export default function DashboardPage() {
                 </div>
                 {investmentSummary.totalCost > 0 && (
                   <div className="ml-auto text-right">
-                    <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                       {t('dashboard.profit_loss')}
                     </p>
                     <p
@@ -1404,7 +1404,7 @@ export default function DashboardPage() {
                     >
                       {investmentSummary.unrealizedPL >= 0 ? '+' : ''}
                       {formatCurrency(investmentSummary.unrealizedPL)}
-                      <span className="text-[10px] ml-1 opacity-70">
+                      <span className="text-3xs ml-1 opacity-70">
                         ({investmentSummary.unrealizedPct >= 0 ? '+' : ''}
                         {investmentSummary.unrealizedPct.toFixed(2)}%)
                       </span>
@@ -1423,7 +1423,7 @@ export default function DashboardPage() {
                     const total = investmentPieData.reduce((s, r) => s + r.value, 0)
                     const pct = total > 0 ? (row.value / total) * 100 : 0
                     return (
-                      <div key={row.name} className="flex items-center justify-between text-[11px]">
+                      <div key={row.name} className="flex items-center justify-between text-2xs">
                         <span className="flex items-center gap-1.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                           <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CHART_PALETTE[i % CHART_PALETTE.length] }} />
                           <span className="truncate">{row.name}</span>
@@ -1439,11 +1439,11 @@ export default function DashboardPage() {
               {investmentSummary.topHoldings.length > 0 && (
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-soft)' }}>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="text-3xs uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>
                       {t('dashboard.top_holding')}
                     </p>
                     <span
-                      className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                      className="text-3xs px-2 py-0.5 rounded-full font-bold"
                       style={{
                         background:
                           investmentSummary.risk === 'tinggi' ? 'color-mix(in srgb, var(--c-coral) 16%, transparent)'
@@ -1467,14 +1467,14 @@ export default function DashboardPage() {
                       const isStock = h.category === 'stock'
                       return (
                         <div key={h.id}>
-                          <div className="flex items-center justify-between gap-2 text-[12px]">
+                          <div className="flex items-center justify-between gap-2 text-cap">
                             <span className="truncate flex items-center gap-1.5 min-w-0">
                               {isStock ? (
                                 <StockLogo ticker={h.ticker} size={28} />
                               ) : h.category === 'crypto' ? (
                                 <CryptoLogo symbol={h.ticker} size={28} />
                               ) : (
-                                <span className="text-[10px] tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
+                                <span className="text-3xs tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
                                   #{i + 1}
                                 </span>
                               )}
@@ -1490,12 +1490,12 @@ export default function DashboardPage() {
                             <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: CHART_PALETTE[i % CHART_PALETTE.length], ['--bar-h' as string]: '9px' }}>
                               <i style={{ width: `${pct}%` }} />
                             </span>
-                            <span className="text-[10px] tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
+                            <span className="text-3xs tabular shrink-0" style={{ color: 'var(--ink-soft)' }}>
                               {pct.toFixed(0)}%
                             </span>
                             {h.cost > 0 && (
                               <span
-                                className="text-[10px] tabular shrink-0 font-medium"
+                                className="text-3xs tabular shrink-0 font-medium"
                                 style={{ color: h.pl >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
                               >
                                 {h.pl >= 0 ? '+' : ''}{plPct.toFixed(1)}%
@@ -1507,7 +1507,7 @@ export default function DashboardPage() {
                     })}
                   </div>
                   {investmentSummary.count > 4 && (
-                    <p className="text-[10px] mt-2.5 text-center" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="text-3xs mt-2.5 text-center" style={{ color: 'var(--ink-soft)' }}>
                       +{investmentSummary.count - 4} {t('dashboard.more_holdings')}
                     </p>
                   )}

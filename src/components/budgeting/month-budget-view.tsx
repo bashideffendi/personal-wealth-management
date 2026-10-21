@@ -216,7 +216,7 @@ export function MonthBudgetView({
           <button
             type="button"
             onClick={autoFillFromAverage}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-ui font-medium transition-colors hover:bg-[var(--surface-2)]"
             style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
             title={t('month_budget.btn_fill_average_title')}
           >
@@ -226,7 +226,7 @@ export function MonthBudgetView({
           <button
             type="button"
             onClick={copyFromPrevMonth}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-ui font-medium transition-colors hover:bg-[var(--surface-2)]"
             style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
             title={t('month_budget.btn_copy_prev_title')}
           >
@@ -237,7 +237,7 @@ export function MonthBudgetView({
             <button
               type="button"
               onClick={applyTargets}
-              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-ui font-medium transition-colors hover:bg-[var(--surface-2)]"
               style={{ borderColor: 'var(--outline)', color: 'var(--ink-muted)' }}
               title={t('month_budget.btn_apply_targets_title')}
             >
@@ -247,7 +247,7 @@ export function MonthBudgetView({
           )}
           {verdict && (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-ui font-semibold"
               style={{
                 background: verdict.tone === 'over' ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)',
                 color: verdict.tone === 'over' ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)',
@@ -291,7 +291,7 @@ export function MonthBudgetView({
                 <span className="size-2 rounded-full" style={{ background: sec.tint }} />
                 <p className="t-title">{sec.label}</p>
               </div>
-              <div className="flex items-center gap-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+              <div className="flex items-center gap-5 text-cap" style={{ color: 'var(--ink-soft)' }}>
                 <span>{t('month_budget.col_plan')} <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(planTotal(sec.key))}</strong></span>
                 <span>{t('month_budget.col_actual')} <strong className="num tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(actualTotal(sec.key))}</strong></span>
               </div>
@@ -335,7 +335,7 @@ export function MonthBudgetView({
                         if (tgt == null) return null
                         const met = plan >= tgt
                         return (
-                          <p className="num text-[10px] mt-0.5" style={{ color: met ? 'var(--c-mint-ink)' : 'var(--c-violet-ink)' }}>
+                          <p className="num text-3xs mt-0.5" style={{ color: met ? 'var(--c-mint-ink)' : 'var(--c-violet-ink)' }}>
                             {t('month_budget.row_target')} {formatCurrency(tgt)}{met ? ' ✓' : ''}
                           </p>
                         )
@@ -345,13 +345,13 @@ export function MonthBudgetView({
                       value={plan}
                       onChange={(n) => onCellChange(sec.key, cat, month, n)}
                       placeholder="0"
-                      className="h-8 text-right text-[13px]"
+                      className="h-8 text-right text-ui"
                     />
-                    <p className="num tabular text-[13px] text-right" style={{ color: 'var(--ink-muted)' }}>
+                    <p className="num tabular text-ui text-right" style={{ color: 'var(--ink-muted)' }}>
                       {act ? formatCurrency(act) : '—'}
                     </p>
                     <p
-                      className="num tabular text-[13px] text-right"
+                      className="num tabular text-ui text-right"
                       style={{ color: overRow ? 'var(--c-coral)' : 'var(--ink-soft)' }}
                     >
                       {formatCurrency(sisa)}

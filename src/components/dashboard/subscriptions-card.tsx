@@ -33,7 +33,7 @@ export function SubscriptionsCard({ recurring }: { recurring: Rec[] }) {
         <div className="min-w-0">
           <p className="eyebrow">{t('subs_card.title')}</p>
           <p className="num tabular mt-1 truncate" title={formatCurrency(total)} style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)' }}>
-            {formatCompactCurrency(total)}<span className="text-[12px] font-normal" style={{ color: 'var(--text-mute)' }}> /bln</span>
+            {formatCompactCurrency(total)}<span className="text-cap font-normal" style={{ color: 'var(--text-mute)' }}> /bln</span>
           </p>
         </div>
         <Link href="/dashboard/recurring" className="btn-outline shrink-0" style={{ fontSize: 11, padding: '6px 10px' }}>

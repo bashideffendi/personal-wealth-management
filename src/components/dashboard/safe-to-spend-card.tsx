@@ -11,7 +11,7 @@ import { useT } from '@/lib/i18n/context'
 
 function Row({ label, val, sign, color }: { label: string; val: number; sign: string; color?: string }) {
   return (
-    <div className="flex items-center justify-between text-[12px]">
+    <div className="flex items-center justify-between text-cap">
       <span style={{ color: 'var(--ink-muted)' }}>{label}</span>
       <span className="num tabular font-semibold" style={{ color: color ?? 'var(--ink)' }}>{sign}{formatCurrency(val)}</span>
     </div>
@@ -46,13 +46,13 @@ export function SafeToSpendCard({ income, spent, saved = 0, upcoming }: { income
         <p className="num tabular leading-none font-bold" style={{ fontSize: 24, letterSpacing: '-0.02em', color: numColor }}>
           {formatCurrency(safe)}
         </p>
-        <p className="text-[13px] mt-2 font-medium" style={{ color: numColor }}>
+        <p className="text-ui mt-2 font-medium" style={{ color: numColor }}>
           {income === 0 ? t('safe_card.no_income') : ok ? t('safe_card.ok') : t('safe_card.over')}
         </p>
         {income > 0 && (
           <div className="mt-5">
             <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: barColor, ['--bar-h' as string]: '10px' }}><i style={{ width: `${pct}%` }} /></span>
-            <p className="text-[10.5px] mt-1.5" style={{ color: 'var(--text-mute)' }}>
+            <p className="text-2xs mt-1.5" style={{ color: 'var(--text-mute)' }}>
               {Math.round(pct)}% {t('safe_card.committed_of_income')}
             </p>
           </div>

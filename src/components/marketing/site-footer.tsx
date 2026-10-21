@@ -22,8 +22,8 @@ export function SiteFooter() {
         <Link href="/refund" className="hover:text-[var(--ink)] transition-colors motion-reduce:transition-none">Pengembalian Dana</Link>
       </div>
       <div className="max-w-2xl mx-auto mt-6 pt-5 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" style={{ borderColor: 'var(--border-soft)' }}>
-        <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>© {new Date().getFullYear()} Klunting</p>
-        <p className="text-[11px] max-w-md sm:text-right" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-cap" style={{ color: 'var(--ink-soft)' }}>© {new Date().getFullYear()} Klunting</p>
+        <p className="text-2xs max-w-md sm:text-right" style={{ color: 'var(--ink-soft)' }}>
           Klunting adalah alat bantu pencatatan keuangan, <strong>bukan</strong> lembaga jasa keuangan atau penasihat investasi berlisensi.
         </p>
       </div>

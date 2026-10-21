@@ -275,6 +275,21 @@
 
   /* Satu skala: 12px untuk kartu/tile/tombol; 8px hanya elemen kecil di dalam
      kartu (badge, swatch). Pill (rounded-full) hanya untuk chip/avatar. */
+  /* Skala tipografi (lihat docs/DESIGN_LANGUAGE.md). Nama sengaja beda dari
+     bawaan Tailwind (xs/sm/base) supaya line-height ikut induk, persis
+     perilaku text-[Npx] yang digantikannya. */
+  --text-3xs: 10px;   /* label data rapat: sumbu grafik, sel kalender */
+  --text-2xs: 11px;   /* caption kecil, eyebrow */
+  --text-cap: 12px;   /* caption, meta baris */
+  --text-ui: 13px;    /* label kontrol, isi tabel */
+  --text-body: 14px;  /* teks isi */
+  --text-row: 15px;   /* judul baris list HP */
+  --text-lead: 16px;  /* judul kartu */
+  --text-h3: 18px;
+  --text-h2: 20px;
+  --text-h1: 22px;
+  --text-hero: 28px;  /* angka momen */
+
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 12px;
@@ -758,15 +773,6 @@ html[data-skin="cartoon"] .btn-primary {
 .chip-neutral { background: var(--surface-2);   color: var(--ink); }
 .dark .chip-neutral { background: var(--surface-2);      color: var(--ink); }
 
-.glow-indigo,
-.glow-emerald,
-.glow-rose,
-.glow-amber,
-.glow-violet,
-.glow-cyan {
-  box-shadow: none;
-}
-
 /* Sidebar nav — thin scrollbar */
 .sidebar-nav-scroll {
   scrollbar-width: thin;
@@ -845,15 +851,16 @@ body[data-privacy="hidden"] .num {
   transition: filter 0.18s ease;
 }
 /* Smaller numbers (in tables, pills, list items) only need a lighter blur.
-   The .num.tabular .text-xs / text-sm / text-[11px] etc. patterns hit the
+   The .num.tabular .text-xs / text-sm / text-2xs etc. patterns hit the
    light blur via this more-specific selector. */
 body[data-privacy="hidden"] .num.text-xs,
 body[data-privacy="hidden"] .num.text-sm,
+body[data-privacy="hidden"] .num.text-ui,
+body[data-privacy="hidden"] .num.text-cap,
+body[data-privacy="hidden"] .num.text-2xs,
+body[data-privacy="hidden"] .num.text-3xs,
 body[data-privacy="hidden"] .num.text-\[11px\],
-body[data-privacy="hidden"] .num.text-\[10px\],
-body[data-privacy="hidden"] .num.text-\[9px\],
-body[data-privacy="hidden"] .num.text-\[8px\],
-body[data-privacy="hidden"] .num.text-\[8\.5px\] {
+body[data-privacy="hidden"] .num.text-\[10px\] {
   filter: blur(8px) saturate(0.6);
 }
 body[data-privacy="hidden"] .num:hover {

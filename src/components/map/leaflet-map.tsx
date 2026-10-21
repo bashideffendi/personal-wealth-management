@@ -230,7 +230,7 @@ export default function LeafletMap({
                 e.preventDefault()
                 setMapStyle(key)
               }}
-              className="px-2 py-1 text-[10px] font-semibold transition-colors uppercase tracking-wider"
+              className="px-2 py-1 text-3xs font-semibold transition-colors uppercase tracking-wider"
               style={{
                 background: mapStyle === key ? 'var(--surface-2)' : 'transparent',
                 color: mapStyle === key ? 'var(--ink)' : 'var(--ink-muted)',
@@ -245,7 +245,7 @@ export default function LeafletMap({
       </div>
 
       {!readOnly && (
-        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
           Klik peta untuk set lokasi, atau cari alamat di atas.
           {lat != null && lng != null && (
             <span className="num ml-2" style={{ color: 'var(--ink-muted)' }}>

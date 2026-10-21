@@ -189,7 +189,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
         <OwnershipGraph network={ownership.network} activeId={activeId} />
       </div>
 
-      <p className="text-[11px] flex items-start gap-1.5" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-2xs flex items-start gap-1.5" style={{ color: 'var(--ink-soft)' }}>
         <Network className="size-3.5 shrink-0 mt-0.5" />
         {t('ownership.graphCaption')}
       </p>
@@ -200,7 +200,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
           <UserRound className="size-4 self-center" style={{ color: 'var(--c-mint-ink)' }} />
           <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('ownership.shareholdersTitle')}</p>
           {namedHolders.length > 0 && (
-            <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+            <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
               {t('ownership.fromNetwork')} {formatTanggalID(ownership.asOf)}
             </span>
           )}
@@ -215,7 +215,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
           <div>
             {/* Header baris */}
             <div
-              className="hidden sm:flex items-center gap-3 pb-2 mb-1 text-[11px] font-medium uppercase tracking-wide"
+              className="hidden sm:flex items-center gap-3 pb-2 mb-1 text-2xs font-medium uppercase tracking-wide"
               style={{ color: 'var(--ink-soft)', borderBottom: '1px solid var(--border-soft)' }}
             >
               <span className="flex-1">{t('ownership.colName')}</span>
@@ -250,7 +250,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                         />
                       )}
                       <span
-                        className="text-[13px] truncate"
+                        className="text-ui truncate"
                         style={{ color: 'var(--ink)' }}
                         title={h.node.name ?? ''}
                       >
@@ -259,7 +259,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                     </div>
                     {/* Persen */}
                     <span
-                      className="num tabular text-[13px] font-bold shrink-0 w-20 text-right"
+                      className="num tabular text-ui font-bold shrink-0 w-20 text-right"
                       // --c-mint-ink = varian teks (kontras AA); --c-mint mentah gagal kontras.
                       style={{ color: h.pct >= 50 ? 'var(--c-mint-ink)' : 'var(--ink)' }}
                     >
@@ -267,7 +267,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                     </span>
                     {/* Lembar */}
                     <span
-                      className="num tabular text-[12px] shrink-0 w-28 text-right"
+                      className="num tabular text-cap shrink-0 w-28 text-right"
                       style={{ color: 'var(--ink-muted)' }}
                       title={h.shares != null ? new Intl.NumberFormat('id-ID').format(h.shares) + ' ' + t('ownership.sharesUnit') : ''}
                     >
@@ -301,7 +301,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
               const pct = c.pct ?? 0
               return (
                 <div key={`${c.label}-${i}`}>
-                  <div className="flex items-center justify-between gap-2 text-[13px]">
+                  <div className="flex items-center justify-between gap-2 text-ui">
                     <span className="truncate" style={{ color: 'var(--ink)' }} title={c.label ?? ''}>
                       {c.label ?? '—'}
                     </span>
@@ -320,7 +320,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
             })}
 
             {composition.tailPct > 0 && (
-              <div className="flex items-center justify-between gap-2 text-[13px] pt-1">
+              <div className="flex items-center justify-between gap-2 text-ui pt-1">
                 <span style={{ color: 'var(--ink-soft)' }}>{t('ownership.othersCombined')}</span>
                 <span className="num tabular shrink-0" style={{ color: 'var(--ink-muted)' }}>
                   {composition.tailPct.toFixed(2)}%
@@ -330,7 +330,7 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
           </div>
 
           {ownership.totalShares != null && (
-            <p className="text-[11px] mt-4 pt-3" style={{ color: 'var(--ink-soft)', borderTop: '1px solid var(--border-soft)' }}>
+            <p className="text-2xs mt-4 pt-3" style={{ color: 'var(--ink-soft)', borderTop: '1px solid var(--border-soft)' }}>
               {t('ownership.totalSharesOutstanding')}{' '}
               <span className="num tabular font-medium" style={{ color: 'var(--ink-muted)' }}>
                 {formatIDRCompact(ownership.totalShares)}
@@ -361,15 +361,15 @@ export function OwnershipTab({ ticker, ownership }: OwnershipTabProps) {
                   style={{ borderBottom: i < subsidiaries.length - 1 ? '1px solid var(--border-soft)' : undefined }}
                 >
                   <div className="min-w-0">
-                    <p className="text-[13px] truncate" style={{ color: 'var(--ink)' }} title={s.name ?? ''}>
+                    <p className="text-ui truncate" style={{ color: 'var(--ink)' }} title={s.name ?? ''}>
                       {s.name}
                     </p>
-                    <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }} title={s.businessType ?? ''}>
+                    <p className="text-2xs truncate" style={{ color: 'var(--ink-soft)' }} title={s.businessType ?? ''}>
                       {[s.location, s.businessType].filter(Boolean).join(' · ') || '—'}
                     </p>
                   </div>
                   {/* --c-mint-ink = varian teks (kontras AA) buat persen mayoritas */}
-                  <span className="num tabular text-[13px] font-semibold shrink-0" style={{ color: (s.pct ?? 0) >= 50 ? 'var(--c-mint-ink)' : 'var(--ink-muted)' }}>
+                  <span className="num tabular text-ui font-semibold shrink-0" style={{ color: (s.pct ?? 0) >= 50 ? 'var(--c-mint-ink)' : 'var(--ink-muted)' }}>
                     {s.pct != null ? `${s.pct}%` : '—'}
                   </span>
                 </div>

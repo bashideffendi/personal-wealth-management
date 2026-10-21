@@ -79,12 +79,12 @@ function MonthGrid({
   const weekdaysMonFirst = [...weekdays.slice(1), weekdays[0]]
   return (
     <div>
-      <div className="mb-2 text-center text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+      <div className="mb-2 text-center text-ui font-semibold" style={{ color: 'var(--ink)' }}>
         {monthLong(month.getMonth(), locale)} {month.getFullYear()}
       </div>
       <div className="grid grid-cols-7 gap-y-1">
         {weekdaysMonFirst.map((w) => (
-          <div key={w} className="text-center text-[10px] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+          <div key={w} className="text-center text-3xs font-semibold" style={{ color: 'var(--ink-soft)' }}>
             {w}
           </div>
         ))}

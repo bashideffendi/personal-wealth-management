@@ -20,7 +20,7 @@ export function LangToggle({ full = false }: { full?: boolean }) {
             type="button"
             onClick={() => setLocale(l)}
             aria-pressed={active}
-            className={`rounded-md px-2.5 py-1 text-[12px] font-semibold transition-colors ${full ? 'flex-1' : ''}`}
+            className={`rounded-md px-2.5 py-1 text-cap font-semibold transition-colors ${full ? 'flex-1' : ''}`}
             style={{
               background: active ? 'var(--surface)' : 'transparent',
               color: active ? 'var(--ink)' : 'var(--text-mute)',

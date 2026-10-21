@@ -74,7 +74,7 @@ export function CurrencyRates() {
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="eyebrow">{t('investment.fx_title')}</p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
             {t('investment.fx_subtitle')} {updatedAt
               ? updatedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
               : '—'}
@@ -135,20 +135,20 @@ export function CurrencyRates() {
                   unoptimized
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+                  <p className="text-ui font-bold leading-tight" style={{ color: 'var(--ink)' }}>
                     {pair.code}
                   </p>
                   {/* Nama panjang kepotong di tile mobile ("Malay…") → kode + nilai aja; nama muncul mulai sm */}
-                  <p className="hidden sm:block text-[10.5px] leading-tight truncate" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="hidden sm:block text-2xs leading-tight truncate" style={{ color: 'var(--ink-soft)' }}>
                     {pair.name}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="num tabular text-[15px] font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+                  <p className="num tabular text-row font-bold leading-tight" style={{ color: 'var(--ink)' }}>
                     {q ? `Rp ${formatRate(q.price)}` : '—'}
                   </p>
                   {change !== null && (
-                    <p className="num tabular text-[10.5px] font-semibold leading-tight mt-0.5" style={{ color: changeColor }}>
+                    <p className="num tabular text-2xs font-semibold leading-tight mt-0.5" style={{ color: changeColor }}>
                       {change >= 0 ? '+' : ''}{change.toFixed(2)}%
                     </p>
                   )}

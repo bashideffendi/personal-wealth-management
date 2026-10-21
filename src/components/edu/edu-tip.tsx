@@ -111,7 +111,7 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
           {/* Header */}
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <p
-              className="text-[10px] uppercase tracking-wider font-semibold"
+              className="text-3xs uppercase tracking-wider font-semibold"
               style={{ color: 'var(--ink-soft)' }}
             >
               Teori
@@ -119,7 +119,7 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="text-[11px] opacity-50 hover:opacity-100 transition"
+              className="text-2xs opacity-50 hover:opacity-100 transition"
               style={{ color: 'var(--ink-muted)' }}
               aria-label="Tutup"
             >
@@ -131,14 +131,14 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
           </p>
 
           {/* Body */}
-          <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+          <p className="text-cap leading-relaxed" style={{ color: 'var(--ink)' }}>
             {tip.body}
           </p>
 
           {/* Applied (Klunting context) — only if present */}
           {tip.applied && (
             <p
-              className="text-[12px] leading-relaxed mt-2 pt-2 border-t"
+              className="text-cap leading-relaxed mt-2 pt-2 border-t"
               style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
             >
               <span className="font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
@@ -150,7 +150,7 @@ export function EduTip({ topic, children, side = 'bottom', iconSize = 14 }: Prop
 
           {/* Citation */}
           <p
-            className="text-[10px] mt-2.5 pt-2 border-t"
+            className="text-3xs mt-2.5 pt-2 border-t"
             style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
           >
             {tip.source}

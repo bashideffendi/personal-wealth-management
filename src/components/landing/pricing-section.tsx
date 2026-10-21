@@ -35,7 +35,7 @@ export function PricingSection() {
                 >
                   {label}
                   {key === 'annual' && (
-                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>HEMAT</span>
+                    <span className="rounded-full px-1.5 py-0.5 text-3xs font-bold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>HEMAT</span>
                   )}
                 </button>
               )

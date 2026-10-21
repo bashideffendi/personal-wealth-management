@@ -170,7 +170,7 @@ function Stat({
       <p className="num text-xl mt-2 tabular font-bold" style={{ color: accent ?? 'var(--ink)' }}>
         {value}
       </p>
-      {sub && <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{sub}</p>}
+      {sub && <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{sub}</p>}
     </div>
   )
 }

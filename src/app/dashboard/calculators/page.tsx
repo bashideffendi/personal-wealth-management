@@ -73,8 +73,8 @@ export default function CalculatorsPage() {
               <c.icon className="size-[15px]" style={{ color: c.ink }} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
-              <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t(`calculators.${c.descKey}`)}</p>
+              <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{t(`calculators.${c.titleKey}`)}</p>
+              <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t(`calculators.${c.descKey}`)}</p>
             </div>
             <ArrowRight className="size-4 shrink-0" style={{ color: 'var(--ink-soft)' }} />
           </button>
@@ -126,7 +126,7 @@ function KprFeatured() {
     <div className="grid lg:grid-cols-2 rounded-2xl overflow-hidden border" >
       {/* Input (kiri, tinted) */}
       <div className="p-5 sm:p-6" style={{ background: 'var(--surface-2)' }}>
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
+        <p className="text-2xs font-semibold tracking-[0.14em] uppercase flex items-center gap-2" style={{ color: VIOLET_INK }}>
           <span className="size-7 rounded-lg grid place-items-center" style={{ background: tint(VIOLET, 10) }}><Home className="size-4" /></span> {t('calculators.kpr_popular_badge')}
         </p>
         <p className="text-xl mt-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('calculators.kpr_featured_title')}</p>
@@ -142,20 +142,20 @@ function KprFeatured() {
       </div>
       {/* Result (kanan) */}
       <div className="p-5 sm:p-6" style={{ background: 'var(--surface)' }}>
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
+        <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('calculators.calc_result')}</p>
         <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 'clamp(26px,4.5vw,36px)', color: VIOLET_INK, letterSpacing: '-0.03em' }}>{formatCurrency(Math.round(monthly))}</p>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_monthly_for')} {tenor} {t('calculators.unit_years')}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_interest')}</p><p className="num font-bold mt-0.5" style={{ color: CORAL_INK }}>{jt(bungaTotal)}</p></div>
-          <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_principal')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(principal)}</p></div>
+          <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_paid')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(total)}</p></div>
+          <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_total_interest')}</p><p className="num font-bold mt-0.5" style={{ color: CORAL_INK }}>{jt(bungaTotal)}</p></div>
+          <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_principal')}</p><p className="num font-bold mt-0.5" style={{ color: 'var(--ink)' }}>{jt(principal)}</p></div>
         </div>
-        <p className="text-[10px] uppercase tracking-wide mt-5 mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_payment_composition')}</p>
+        <p className="text-3xs uppercase tracking-wide mt-5 mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('calculators.kpr_payment_composition')}</p>
         <div className="flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
           <div style={{ width: `${pokokPct}%`, background: VIOLET }} />
           <div style={{ width: `${100 - pokokPct}%`, background: CORAL }} />
         </div>
-        <div className="flex items-center justify-between mt-1.5 text-[11px]">
+        <div className="flex items-center justify-between mt-1.5 text-2xs">
           <span style={{ color: VIOLET_INK }}>● {t('calculators.kpr_principal')} {pokokPct.toFixed(0)}%</span>
           <span style={{ color: CORAL_INK }}>{t('calculators.kpr_interest')} {(100 - pokokPct).toFixed(0)}% ●</span>
         </div>
@@ -176,7 +176,7 @@ function Slider({ label, valueLabel, suffix, min, max, step = 1, value, onChange
       </div>
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))}
         className="w-full mt-2" style={{ accentColor: VIOLET }} />
-      <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{suffix}</p>
+      <p className="text-3xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{suffix}</p>
     </div>
   )
 }
@@ -372,7 +372,7 @@ function PensionGapCalculator() {
           </div>
         )}
 
-        <p className="hidden md:block text-[10px] mt-4" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-3xs mt-4" style={{ color: 'var(--ink-soft)' }}>
           {t('calculators.bpjs_disclaimer')}
         </p>
       </div>
@@ -645,7 +645,7 @@ function ZakatCalculator() {
             big
           />
           {netAssets < nisabGold && netAssets > 0 && (
-            <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs mt-2" style={{ color: 'var(--ink-soft)' }}>
               {t('calculators.zakat_below_nisab')} {formatCurrency(nisabGold - netAssets)}
             </p>
           )}
@@ -669,7 +669,7 @@ function ZakatCalculator() {
             big
           />
           {yearlyIncome < nisabYearly && yearlyIncome > 0 && (
-            <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs mt-2" style={{ color: 'var(--ink-soft)' }}>
               {t('calculators.zakat_below_nisab_yearly')} ({formatCurrency(nisabYearly)})
             </p>
           )}

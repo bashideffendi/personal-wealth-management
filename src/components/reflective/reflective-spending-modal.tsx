@@ -120,7 +120,7 @@ export function ReflectiveSpendingModal({
               {formatCurrency(amount)}
             </span>
           </div>
-          <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>
             {category}
           </p>
         </div>
@@ -138,7 +138,7 @@ export function ReflectiveSpendingModal({
                   background: ans === null ? 'var(--surface)' : 'var(--surface-2)',
                 }}
               >
-                <p className="text-[13px] flex-1" style={{ color: 'var(--ink)' }}>
+                <p className="text-ui flex-1" style={{ color: 'var(--ink)' }}>
                   {q.text}
                 </p>
                 <div className="flex gap-1 shrink-0">
@@ -193,7 +193,7 @@ export function ReflectiveSpendingModal({
           <button
             type="button"
             onClick={handleDisable}
-            className="text-[11px] underline opacity-50 hover:opacity-100 mr-auto"
+            className="text-2xs underline opacity-50 hover:opacity-100 mr-auto"
             style={{ color: 'var(--ink-muted)' }}
           >
             Matikan reflection

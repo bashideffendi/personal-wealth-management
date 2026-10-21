@@ -104,7 +104,7 @@ export default function CategoryDrilldownPage() {
       >
         <div className="relative p-6 sm:p-7">
         <p
-          className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+          className="text-2xs font-semibold tracking-[0.18em] uppercase"
           style={{ color: 'var(--on-hero-mut)' }}
         >
           {t('category_detail.eyebrow_drilldown')}
@@ -121,25 +121,25 @@ export default function CategoryDrilldownPage() {
         </h1>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_total')}</p>
+            <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_total')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.total)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_ytd')}</p>
+            <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_ytd')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.thisYear)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_this_month')}</p>
+            <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_this_month')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.thisMonth)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_avg_per_tx')}</p>
+            <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('category_detail.stat_avg_per_tx')}</p>
             <p className="num tabular font-bold mt-1" style={{ fontSize: 20, color: 'var(--on-hero)' }}>
               {formatCurrency(stats.avg)}
             </p>
@@ -191,7 +191,7 @@ export default function CategoryDrilldownPage() {
                   <li key={t.id} className="py-2 flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="text-sm truncate" style={{ color: 'var(--ink)' }}>{t.description || '-'}</p>
-                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{formatDate(t.date)}</p>
+                      <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{formatDate(t.date)}</p>
                     </div>
                     <span className="num text-sm font-semibold tabular shrink-0 ml-3" style={{ color: 'var(--ink)' }}>
                       {formatCurrency(t.amount)}

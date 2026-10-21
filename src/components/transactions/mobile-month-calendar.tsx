@@ -75,7 +75,7 @@ export function MobileMonthCalendar({
       className="rounded-[9px] pt-[5px] pb-[3px] min-h-[46px] leading-tight"
       style={{ background: 'var(--surface-2)', opacity: 0.5 }}
     >
-      <span className="num block text-[12px] font-medium" style={{ color: 'var(--ink-soft)' }}>{d}</span>
+      <span className="num block text-cap font-medium" style={{ color: 'var(--ink-soft)' }}>{d}</span>
     </span>
   )
 
@@ -85,7 +85,7 @@ export function MobileMonthCalendar({
         <button type="button" onClick={onPrev} aria-label="Bulan sebelumnya" className="grid place-items-center size-8 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
           <ChevronLeft className="size-4" />
         </button>
-        <span className="text-[14px] font-semibold min-w-[120px] text-center" style={{ color: 'var(--ink)' }}>
+        <span className="text-body font-semibold min-w-[120px] text-center" style={{ color: 'var(--ink)' }}>
           {monthLong(m, locale)} {y}
         </span>
         <button type="button" onClick={onNext} aria-label="Bulan berikutnya" className="grid place-items-center size-8 rounded-full active:opacity-60" style={{ color: 'var(--ink-soft)' }}>
@@ -95,7 +95,7 @@ export function MobileMonthCalendar({
 
       <div className="grid grid-cols-7 gap-[3px] text-center">
         {weekdays.map((w) => (
-          <span key={w} className="text-[10px] pb-1" style={{ color: 'var(--ink-soft)' }}>{w}</span>
+          <span key={w} className="text-3xs pb-1" style={{ color: 'var(--ink-soft)' }}>{w}</span>
         ))}
         {Array.from({ length: leadBlanks }, (_, i) =>
           dimCell(`p${i}`, daysInPrevMonth - leadBlanks + 1 + i),
@@ -125,10 +125,10 @@ export function MobileMonthCalendar({
                   : isToday ? 'var(--c-coral-soft)' : 'var(--surface-2)',
               }}
             >
-              <span className="num block text-[12px] font-medium" style={{ color: selected ? 'var(--surface)' : 'var(--ink)' }}>{d}</span>
+              <span className="num block text-cap font-medium" style={{ color: selected ? 'var(--surface)' : 'var(--ink)' }}>{d}</span>
               {day && day.income > 0 && (
                 <span
-                  className="num block text-[7.5px] font-medium truncate px-[1px]"
+                  className="num block text-3xs font-medium truncate px-[1px]"
                   style={{ color: selected ? 'var(--surface)' : 'var(--c-mint-ink)' }}
                 >
                   {cellAmount(day.income)}
@@ -136,7 +136,7 @@ export function MobileMonthCalendar({
               )}
               {day && day.expense > 0 && (
                 <span
-                  className="num block text-[7.5px] font-medium truncate px-[1px]"
+                  className="num block text-3xs font-medium truncate px-[1px]"
                   style={{ color: selected ? 'var(--surface)' : 'var(--c-coral-ink)' }}
                 >
                   {cellAmount(day.expense)}
@@ -150,16 +150,16 @@ export function MobileMonthCalendar({
 
       <div className="flex justify-between mt-2 pt-2.5" style={{ borderTop: '1px solid var(--border-soft)' }}>
         <span>
-          <span className="block text-[10px]" style={{ color: 'var(--ink-soft)' }}>{labels.income}</span>
-          <span className="num tabular text-[15px] font-bold" style={{ color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(data.income)}</span>
+          <span className="block text-3xs" style={{ color: 'var(--ink-soft)' }}>{labels.income}</span>
+          <span className="num tabular text-row font-bold" style={{ color: 'var(--c-mint-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(data.income)}</span>
         </span>
         <span>
-          <span className="block text-[10px]" style={{ color: 'var(--ink-soft)' }}>{labels.expense}</span>
-          <span className="num tabular text-[15px] font-bold" style={{ color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(data.expense)}</span>
+          <span className="block text-3xs" style={{ color: 'var(--ink-soft)' }}>{labels.expense}</span>
+          <span className="num tabular text-row font-bold" style={{ color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCurrency(data.expense)}</span>
         </span>
         <span className="text-right">
-          <span className="block text-[10px]" style={{ color: 'var(--ink-soft)' }}>{labels.net}</span>
-          <span className="num tabular text-[15px] font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>{formatCurrency(net)}</span>
+          <span className="block text-3xs" style={{ color: 'var(--ink-soft)' }}>{labels.net}</span>
+          <span className="num tabular text-row font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>{formatCurrency(net)}</span>
         </span>
       </div>
     </div>

@@ -113,7 +113,7 @@ export function NetWorthHero({
         <div className="min-w-0">
           {/* Label net worth (greeting "Hi, Nama" pindah ke atas hero) */}
           <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            className="text-2xs font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'var(--on-hero-mut)' }}
           >
             {t('nw_hero.label_net_worth')}
@@ -180,7 +180,7 @@ export function NetWorthHero({
           >
             <div>
               <p
-                className="text-[11px] font-bold tracking-[0.12em] uppercase"
+                className="text-2xs font-bold tracking-[0.12em] uppercase"
                 style={{ color: 'var(--on-hero-mut)' }}
               >
                 {t('nw_hero.total_assets')}
@@ -194,7 +194,7 @@ export function NetWorthHero({
             </div>
             <div>
               <p
-                className="text-[11px] font-bold tracking-[0.12em] uppercase"
+                className="text-2xs font-bold tracking-[0.12em] uppercase"
                 style={{ color: 'var(--on-hero-mut)' }}
               >
                 {t('nw_hero.total_debt')}
@@ -243,7 +243,7 @@ export function NetWorthHero({
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
               <p
-                className="text-[11px] font-semibold tracking-[0.14em] uppercase"
+                className="text-2xs font-semibold tracking-[0.14em] uppercase"
                 style={{ color: 'var(--on-hero-mut)' }}
               >
                 {t('nw_hero.growth')}
@@ -278,7 +278,7 @@ export function NetWorthHero({
                     type="button"
                     aria-pressed={active}
                     onClick={() => setChartPeriod(p)}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
+                    className="px-2.5 py-1 rounded-md text-2xs font-semibold transition-colors"
                     style={{
                       background: active ? 'rgba(255,255,255,0.14)' : 'transparent',
                       color: active ? 'var(--on-hero)' : 'var(--on-hero-mut)',

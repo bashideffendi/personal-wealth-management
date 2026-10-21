@@ -202,7 +202,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
                 key={r}
                 type="button"
                 onClick={() => setRange(r)}
-                className="px-2.5 py-1 rounded-md text-[12px] font-semibold transition"
+                className="px-2.5 py-1 rounded-md text-cap font-semibold transition"
                 style={
                   active
                     ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
@@ -282,7 +282,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
                       <p className="num tabular text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                         {sym} {fmtPrice(p.c, currency)}
                       </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                      <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                         {fmtTooltipTime(p.t)}
                       </p>
                     </div>
@@ -302,7 +302,7 @@ export function StockPriceChart({ ticker, fallbackPrice, fallbackCurrency, chart
         )}
       </div>
 
-      <p className="text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-2xs mt-3" style={{ color: 'var(--ink-soft)' }}>
         {sourceLabel ?? (chartApi === 'crypto' ? t('price_chart.source_crypto') : t('price_chart.source_stock'))}
       </p>
     </div>

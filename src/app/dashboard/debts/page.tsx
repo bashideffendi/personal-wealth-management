@@ -266,7 +266,7 @@ export default function DebtsOverviewPage() {
       {/* Header terang — eyebrow + judul serif + subtitle + aksi (pola Dana Darurat) */}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="max-w-xl">
-          <h1 className="text-[20px] font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
+          <h1 className="text-h2 font-semibold leading-tight truncate" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.01em' }}>
             {t('debts.page_title')}
           </h1>
           <p className="hidden md:block text-sm mt-1.5" style={{ color: 'var(--ink-muted)' }}>
@@ -301,23 +301,23 @@ export default function DebtsOverviewPage() {
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_remaining')}</p>
               <p className="num font-bold mt-2 leading-none" title={formatCurrency(totalRemaining)} style={{ fontSize: 20, color: 'var(--c-coral-ink)', letterSpacing: '-0.02em' }}>{formatCompactCurrency(totalRemaining)}</p>
-              <p className="text-[12px] mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-cap mt-2 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                 {t('debts.already_paid')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(totalPaid)}</span> {t('debts.of_principal')} <span className="num">{formatCurrency(totalPrincipal)}</span>
               </p>
               <span className="quest-bar mt-3 w-full" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '8px' }}><i style={{ width: `${Math.min(paidPct, 100)}%` }} /></span>
-              <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+              <div className="mt-1 flex justify-between text-3xs" style={{ color: 'var(--ink-soft)' }}>
                 <span className="num">{paidPct.toFixed(0)}% {t('debts.paid_off')}</span><span className="num">{Math.max(0, 100 - paidPct).toFixed(0)}% {t('debts.remaining_label')}</span>
               </div>
               {/* Countdown bebas utang — focal point (pakai strategi aktif) */}
               <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid var(--border-soft)' }}>
                 <Flag className="size-3.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
                 {tlResult.feasible && tlResult.months > 0 && tlResult.months < 600 ? (
-                  <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-muted)' }}>
+                  <p className="text-cap leading-snug" style={{ color: 'var(--ink-muted)' }}>
                     {t('debts.debt_free_by')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(tlResult.months, locale)}</span>
                     <span className="num"> · {tlResult.months >= 24 ? `± ${Math.round(tlResult.months / 12)} ${t('debts.years')}` : `${tlResult.months} ${t('debts.months')}`} {t('debts.to_go')}</span>
                   </p>
                 ) : (
-                  <p className="text-[12px] leading-snug" style={{ color: 'var(--c-amber-ink)' }}>{t('debts.payment_below_interest')}</p>
+                  <p className="text-cap leading-snug" style={{ color: 'var(--c-amber-ink)' }}>{t('debts.payment_below_interest')}</p>
                 )}
               </div>
             </div>
@@ -325,7 +325,7 @@ export default function DebtsOverviewPage() {
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.monthly_payment')}</p>
               <p className="num font-bold mt-2 leading-none" title={formatCurrency(totalMonthly)} style={{ fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.02em' }}>{formatCompactCurrency(totalMonthly)}</p>
-              <div className="mt-3 space-y-1.5 text-[12px]">
+              <div className="mt-3 space-y-1.5 text-cap">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5" style={{ color: 'var(--ink-muted)' }}><span className="size-2 rounded-full" style={{ background: 'var(--c-violet)' }} />{t('debts.long_term')}</span>
                   <span className="num" style={{ color: 'var(--ink)' }}>{formatCurrency(longTermMonthly)}</span>
@@ -336,7 +336,7 @@ export default function DebtsOverviewPage() {
                 </div>
               </div>
               {monthlyInterestNow > 0 && (
-                <p className="text-[11px] mt-2.5 pt-2.5 leading-snug" style={{ borderTop: '1px solid var(--border-soft)', color: 'var(--ink-soft)' }}>
+                <p className="text-2xs mt-2.5 pt-2.5 leading-snug" style={{ borderTop: '1px solid var(--border-soft)', color: 'var(--ink-soft)' }}>
                   {t('debts.of_this_payment')} ± <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{formatCurrency(Math.round(monthlyInterestNow))}</span>{t('debts.per_month_interest_burn')}
                 </p>
               )}
@@ -345,7 +345,7 @@ export default function DebtsOverviewPage() {
             <div className="s-card p-5">
               <p className="eyebrow" style={{ color: 'var(--ink-soft)' }}>{t('debts.dti')}</p>
               <p className="num font-bold mt-2 leading-none" style={{ fontSize: 20, color: dtiColor, letterSpacing: '-0.02em' }}>{dti != null ? `${dti.toFixed(1)}%` : '—'}</p>
-              <p className="text-[12px] mt-2" style={{ color: 'var(--ink-muted)' }}>{t('debts.of_monthly_income')}</p>
+              <p className="text-cap mt-2" style={{ color: 'var(--ink-muted)' }}>{t('debts.of_monthly_income')}</p>
               <div className="mt-3 relative h-2 w-full rounded-full overflow-hidden" role="progressbar"
                 aria-valuenow={dti != null ? Math.round(dti) : 0} aria-valuemin={0} aria-valuemax={60}
                 aria-label={dti != null ? `${t('debts.dti')} ${dti.toFixed(1)}% — ${t('debts.dti_aria_ideal')}` : t('debts.dti_aria_no_data')}
@@ -354,7 +354,7 @@ export default function DebtsOverviewPage() {
                 {/* tanda ambang ideal 36% (di 60% lebar = skala 0–60%) */}
                 <div className="absolute inset-y-0" style={{ left: '60%', width: 1.5, background: 'var(--ink-soft)', opacity: 0.45 }} />
               </div>
-              <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}><span>{t('debts.ideal_under_36')}</span><span>60%+</span></div>
+              <div className="mt-1 flex justify-between text-3xs" style={{ color: 'var(--ink-soft)' }}><span>{t('debts.ideal_under_36')}</span><span>60%+</span></div>
             </div>
           </div>
 
@@ -366,7 +366,7 @@ export default function DebtsOverviewPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold" style={{ color: 'var(--ink)' }}>{t('debts.high_interest_title')}</p>
-                <p className="hidden md:block text-[13px] mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                <p className="hidden md:block text-ui mt-0.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                   {highApr.map((d) => d.name).slice(0, 3).join(', ')}{highApr.length > 3 ? ` +${highApr.length - 3}` : ''} {t('debts.refi_interest_up_to')} <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>{maxApr}%{t('debts.per_year_suffix')}</span>. {t('debts.refi_balance_transfer')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(refiSaving)}{t('debts.per_year_saving_suffix')}</span>. {t('debts.refi_strategy_prefix')} <span style={{ color: 'var(--c-violet-ink)', fontWeight: 500 }}>Avalanche</span> {t('debts.refi_strategy_suffix')}
                 </p>
               </div>
@@ -376,10 +376,10 @@ export default function DebtsOverviewPage() {
           {/* Tabel utang */}
           <div className="s-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.debt_list')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.debt_list')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {FILTERS.filter((f) => f.cat == null || allActive.some((d) => d.category === f.cat)).map((f) => (
-                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} aria-label={`${t('debts.filter_category_aria')} ${f.key}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                  <button key={f.key} onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} aria-label={`${t('debts.filter_category_aria')} ${f.key}`} className="rounded-full px-2.5 py-1 text-2xs font-medium transition"
                     style={{ background: filter === f.key ? 'var(--ink)' : 'var(--surface-2)', color: filter === f.key ? 'var(--surface)' : 'var(--ink)' }}>
                     {f.key}
                   </button>
@@ -389,7 +389,7 @@ export default function DebtsOverviewPage() {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-[10px] uppercase tracking-wide md:bg-[var(--surface-2)] md:text-[11px] md:tracking-wider md:border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
+                  <tr className="text-3xs uppercase tracking-wide md:bg-[var(--surface-2)] md:text-2xs md:tracking-wider md:border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
                     <th scope="col" className="text-left font-medium px-4 py-2.5">{t('debts.col_debt')}</th>
                     <th scope="col" className="text-left font-medium px-3 py-2.5">{t('debts.col_type')}</th>
                     <th scope="col" className="text-right font-medium px-3 py-2.5">{t('debts.col_remaining_principal')}</th>
@@ -414,15 +414,15 @@ export default function DebtsOverviewPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                              <p className="text-[10.5px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.due_on')} {d.due_date ? new Date(d.due_date).getDate() : '—'}{t('debts.day_of_month_suffix')}</p>
+                              <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.due_on')} {d.due_date ? new Date(d.due_date).getDate() : '—'}{t('debts.day_of_month_suffix')}</p>
                               <span className="quest-bar mt-1.5" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '7px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-3"><span className="inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold" style={{ background: tint(meta.color, 10), color: meta.ink }}>{getTypeLabel(d.type)}</span></td>
+                        <td className="px-3 py-3"><span className="inline-block rounded-md px-2 py-0.5 text-3xs font-semibold" style={{ background: tint(meta.color, 10), color: meta.ink }}>{getTypeLabel(d.type)}</span></td>
                         <td className="px-3 py-3 text-right">
                           <p className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
-                          <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.of_amount')} {formatCurrency(d.principal)}</p>
+                          <p className="num text-3xs" style={{ color: 'var(--ink-soft)' }}>{t('debts.of_amount')} {formatCurrency(d.principal)}</p>
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="inline-flex items-center justify-end gap-1">
@@ -430,12 +430,12 @@ export default function DebtsOverviewPage() {
                             <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral)' : 'var(--ink)' }}>{d.interest_rate}%</span>
                             {d.interest_rate >= 18 && <span className="sr-only">{t('debts.high_interest_sr')}</span>}
                           </span>
-                          <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.per_year')}</p>
-                          {(tlResult.perDebtInterest[d.id] ?? 0) > 0 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>± {formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} {t('debts.interest_word')}</p>}
+                          <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{t('debts.per_year')}</p>
+                          {(tlResult.perDebtInterest[d.id] ?? 0) > 0 && <p className="num text-3xs" style={{ color: 'var(--ink-soft)' }}>± {formatCurrency(Math.round(tlResult.perDebtInterest[d.id]))} {t('debts.interest_word')}</p>}
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="num" style={{ color: 'var(--ink)' }}>{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span>
-                          {d.monthly_payment > 0 && <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.per_month')}</p>}
+                          {d.monthly_payment > 0 && <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{t('debts.per_month')}</p>}
                           <div className="flex justify-end gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition mt-1">
                             {isCC ? (
                               <Link href="/dashboard/credit-cards"><Button variant="ghost" size="icon-sm" title={t('debts.manage_in_credit_cards')}><CreditCard className="h-3 w-3" /></Button></Link>
@@ -447,9 +447,9 @@ export default function DebtsOverviewPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right num text-[12px]" style={{ color: 'var(--ink-muted)' }}>
+                        <td className="px-4 py-3 text-right num text-cap" style={{ color: 'var(--ink-muted)' }}>
                           {tenor}
-                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_lower')} {payoffDate(tlResult.perDebt[d.id] ?? 0, locale)}</p>}
+                          {(tlResult.perDebt[d.id] ?? 0) > 0 && (tlResult.perDebt[d.id] ?? 0) < 600 && <p className="num text-3xs" style={{ color: 'var(--ink-soft)' }}>{t('debts.paid_off_lower')} {payoffDate(tlResult.perDebt[d.id] ?? 0, locale)}</p>}
                         </td>
                       </tr>
                     )
@@ -474,15 +474,15 @@ export default function DebtsOverviewPage() {
                         <Icon className="size-4" style={{ color: meta.ink }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                        <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{d.name}</p>
+                        <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                           {t('debts.interest_label')} <span className="num font-medium" style={{ color: d.interest_rate >= 18 ? 'var(--c-coral-ink)' : 'var(--ink-muted)' }}>{d.interest_rate}%</span>
                           {' · '}{t('debts.payment_label')} <span className="num">{d.monthly_payment > 0 ? formatCurrency(d.monthly_payment) : '—'}</span>
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="num tabular-nums text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
-                        <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{tenor}</p>
+                        <p className="num tabular-nums text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
+                        <p className="num text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{tenor}</p>
                       </div>
                       {!isCC && (
                         <button
@@ -533,7 +533,7 @@ export default function DebtsOverviewPage() {
             {/* Rekomendasi tradeoff eksplisit */}
             <div className="mb-3 hidden md:flex items-start gap-2.5 rounded-xl p-3.5" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)' }}>
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
-              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+              <p className="text-ui leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
                   <><span style={{ color: 'var(--ink)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth, locale)}</span>.</>
                 ) : (
@@ -559,7 +559,7 @@ export default function DebtsOverviewPage() {
           <div className="s-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_timeline')}</p>
+                <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_timeline')}</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
                   {consumerFreeMonth > 0 && consumerFreeMonth < 600 && (<>{t('debts.consumer_debt_free')} <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{payoffDate(consumerFreeMonth, locale)}</span> · </>)}
                   {t('debts.all_paid_off')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{payoffDate(tlResult.months, locale)}</span>
@@ -567,7 +567,7 @@ export default function DebtsOverviewPage() {
               </div>
               <div className="flex gap-1.5">
                 {(['snowball', 'avalanche'] as const).map((s) => (
-                  <button key={s} onClick={() => setTlStrategy(s)} aria-pressed={tlStrategy === s} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
+                  <button key={s} onClick={() => setTlStrategy(s)} aria-pressed={tlStrategy === s} className="rounded-full px-2.5 py-1 text-2xs font-medium capitalize transition"
                     style={{ background: tlStrategy === s ? 'var(--c-primary)' : 'var(--surface-2)', color: tlStrategy === s ? 'var(--c-primary-foreground)' : 'var(--ink)' }}>
                     {s}
                   </button>
@@ -581,18 +581,18 @@ export default function DebtsOverviewPage() {
           <div className="s-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.speed_up_payoff')}</p>
+                <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.speed_up_payoff')}</p>
                 <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>
                   {t('debts.speed_up_prefix')} <span className="capitalize font-medium" style={{ color: 'var(--ink)' }}>{tlStrategy}</span>{t('debts.speed_up_suffix')}
                 </p>
               </div>
               {extraPayment > 0 && (
-                <button type="button" onClick={() => setExtraPayment(0)} className="text-[11px] font-medium shrink-0" style={{ color: 'var(--ink-soft)' }}>{t('debts.reset')}</button>
+                <button type="button" onClick={() => setExtraPayment(0)} className="text-2xs font-medium shrink-0" style={{ color: 'var(--ink-soft)' }}>{t('debts.reset')}</button>
               )}
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {[0, 500_000, 1_000_000, 2_000_000, 5_000_000].map((v) => (
-                <button key={v} type="button" onClick={() => setExtraPayment(v)} aria-pressed={extraPayment === v} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                <button key={v} type="button" onClick={() => setExtraPayment(v)} aria-pressed={extraPayment === v} className="rounded-full px-2.5 py-1 text-2xs font-medium transition"
                   style={{ background: extraPayment === v ? 'var(--c-mint)' : 'var(--surface-2)', color: extraPayment === v ? '#FFF' : 'var(--ink)' }}>
                   {v === 0 ? t('debts.no_extra') : `+${formatCurrency(v)}`}
                 </button>
@@ -607,9 +607,9 @@ export default function DebtsOverviewPage() {
               <span className="num text-sm font-semibold shrink-0 w-32 text-right" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(extraPayment)}</span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.now_paid_off')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months, locale)}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.faster')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} ${t('debts.months')}` : '—'}</p></div>
-              <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.interest_saved')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCurrency(Math.round(interestSaved)) : '—'}</p></div>
+              <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.now_paid_off')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(whatIf.months, locale)}</p></div>
+              <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.faster')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: monthsSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{monthsSaved > 0 ? `${monthsSaved} ${t('debts.months')}` : '—'}</p></div>
+              <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.interest_saved')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: interestSaved > 0 ? 'var(--c-mint)' : 'var(--ink-soft)' }}>{interestSaved > 0 ? formatCurrency(Math.round(interestSaved)) : '—'}</p></div>
             </div>
           </div>
 
@@ -617,8 +617,8 @@ export default function DebtsOverviewPage() {
           <div className="grid gap-3 md:gap-4 lg:grid-cols-2">
             <div className="s-card p-5">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.upcoming_payments')}</p>
-                <Link href="/dashboard/debts/payments" className="text-[11px] font-medium hover:underline shrink-0" style={{ color: 'var(--ink-soft)' }}>{t('debts.record_payment_link')} →</Link>
+                <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.upcoming_payments')}</p>
+                <Link href="/dashboard/debts/payments" className="text-2xs font-medium hover:underline shrink-0" style={{ color: 'var(--ink-soft)' }}>{t('debts.record_payment_link')} →</Link>
               </div>
               <div className="mt-3 space-y-2.5">
                 {upcoming.map((d) => {
@@ -629,12 +629,12 @@ export default function DebtsOverviewPage() {
                     <div key={d.id} className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="size-9 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: urgent ? 'var(--c-coral-soft)' : 'var(--surface-2)' }}>
-                          <span className="text-[8px] uppercase leading-none" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>{d.due_date ? new Date(d.due_date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short' }) : '—'}</span>
+                          <span className="text-3xs uppercase leading-none" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>{d.due_date ? new Date(d.due_date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'short' }) : '—'}</span>
                           <span className="text-sm font-bold leading-none num" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink)' }}>{d.due_date ? new Date(d.due_date).getDate() : ''}</span>
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
-                          <p className="text-[10px] flex items-center gap-1" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
+                          <p className="text-3xs flex items-center gap-1" style={{ color: urgent ? 'var(--c-coral)' : 'var(--ink-soft)' }}>
                             {urgent ? <><AlertCircle className="size-2.5" /> {t('debts.urgent')} · {days <= 0 ? t('debts.due_now') : `${days} ${t('debts.days_left')}`}</> : isCC ? <><CheckCircle2 className="size-2.5" style={{ color: 'var(--c-mint-ink)' }} /> {t('debts.autodebit_active')}</> : `${days} ${t('debts.days_left')}`}
                           </p>
                         </div>
@@ -646,7 +646,7 @@ export default function DebtsOverviewPage() {
               </div>
             </div>
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.debt_ratios')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('debts.debt_ratios')}</p>
               <div className="mt-3 space-y-3.5">
                 <RatioRow label={t('debts.ratio_dti')} ideal={t('debts.ideal_under_36')} value={dti} idealMax={36} />
                 <RatioRow label={t('debts.ratio_debt_to_asset')} ideal={t('debts.ideal_under_50')} value={debtToAsset} idealMax={50} />
@@ -673,7 +673,7 @@ export default function DebtsOverviewPage() {
             <div className="grid gap-1.5">
               <Label>{t('debts.field_name')}</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={triedSave && !!formErrors.name} />
-              {triedSave && formErrors.name && <p className="text-[11px]" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.name}</p>}
+              {triedSave && formErrors.name && <p className="text-2xs" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.name}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
@@ -693,11 +693,11 @@ export default function DebtsOverviewPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5"><Label>{t('debts.field_principal')}</Label><NumberInput value={form.principal} onChange={(n) => setForm({ ...form, principal: n })} placeholder="0" /></div>
-              <div className="grid gap-1.5"><Label>{t('debts.field_remaining')}</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-[11px]" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.remaining}</p>}</div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_remaining')}</Label><NumberInput value={form.remaining} onChange={(n) => setForm({ ...form, remaining: n })} placeholder="0" />{triedSave && formErrors.remaining && <p className="text-2xs" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.remaining}</p>}</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="grid gap-1.5"><Label>{t('debts.field_interest')}</Label><Input type="number" step="any" value={form.interest_rate || ''} onChange={(e) => setForm({ ...form, interest_rate: Number(e.target.value) || 0 })} /></div>
-              <div className="grid gap-1.5"><Label>{t('debts.field_monthly')}</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-[11px]" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.monthly_payment}</p>}</div>
+              <div className="grid gap-1.5"><Label>{t('debts.field_monthly')}</Label><NumberInput value={form.monthly_payment} onChange={(n) => setForm({ ...form, monthly_payment: n })} placeholder="0" />{triedSave && formErrors.monthly_payment && <p className="text-2xs" style={{ color: 'var(--c-coral-ink)' }}>{formErrors.monthly_payment}</p>}</div>
               <div className="grid gap-1.5"><Label>{t('debts.field_due_date')}</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
           </div>
@@ -731,29 +731,29 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
     <div className="rounded-xl p-4 sm:p-6" style={{ background: accentSoft, border: '1px solid var(--border)' }}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('debts.strategy')}</p>
-          <h3 className="text-[18px] font-semibold leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
+          <p className="text-2xs font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('debts.strategy')}</p>
+          <h3 className="text-h3 font-semibold leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
         </div>
-        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface-2)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months, locale)}</span>
+        <span className="rounded-full px-3 py-1 text-2xs font-semibold num shrink-0" style={{ background: 'var(--surface-2)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months, locale)}</span>
       </div>
-      <p className="hidden md:block mt-3 text-[15px] leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
-      <p className="hidden md:block text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
+      <p className="hidden md:block mt-3 text-row leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
+      <p className="hidden md:block text-cap mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
       {savedNote && (
-        <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface-2)', color: accent }}>
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-2xs font-semibold" style={{ background: 'var(--surface-2)', color: accent }}>
           <Zap className="size-3" /> {savedNote}
         </div>
       )}
-      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_order')}</p>
+      <p className="mt-4 text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>{t('debts.payoff_order')}</p>
       <div className="mt-2 space-y-1.5">
         {result.order.slice(0, 5).map((o, i) => {
           const d = byId.get(o.id)
           return (
             <div key={o.id} className="flex items-center justify-between rounded-xl px-3 py-2" style={{ background: 'var(--surface)' }}>
               <span className="flex items-center gap-2.5 min-w-0">
-                <span className="num size-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: i === 0 ? accent : 'var(--surface-2)', color: i === 0 ? '#FFF' : 'var(--ink-muted)' }}>{i + 1}</span>
+                <span className="num size-5 rounded-full flex items-center justify-center text-3xs font-bold shrink-0" style={{ background: i === 0 ? accent : 'var(--surface-2)', color: i === 0 ? '#FFF' : 'var(--ink-muted)' }}>{i + 1}</span>
                 <span className="text-sm truncate" style={{ color: 'var(--ink)' }}>{o.name}</span>
               </span>
-              <span className="num text-[12px] shrink-0 ml-2" style={{ color: 'var(--ink-muted)' }}>
+              <span className="num text-cap shrink-0 ml-2" style={{ color: 'var(--ink-muted)' }}>
                 {isSnow
                   ? formatCurrency(d?.remaining ?? 0)
                   : <>{(d?.interest_rate ?? 0)}% · <span style={{ color: 'var(--ink-soft)' }}>{formatCurrency(d?.remaining ?? 0)}</span></>}
@@ -763,11 +763,11 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
         })}
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 pt-3" style={{ borderTop: `1px solid color-mix(in srgb, ${accent} 28%, transparent)` }}>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_payoff')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months, locale)}</p></div>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_interest')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
-        <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.character')}</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
+        <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_payoff')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{payoffDate(result.months, locale)}</p></div>
+        <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.total_interest')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: accent }}>{formatCurrency(Math.round(result.totalInterest))}</p></div>
+        <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('debts.character')}</p><p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{karakter}</p></div>
       </div>
-      {!result.feasible && <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--c-coral-ink)' }}>{t('debts.infeasible_note')}</p>}
+      {!result.feasible && <p className="mt-3 text-2xs leading-relaxed" style={{ color: 'var(--c-coral-ink)' }}>{t('debts.infeasible_note')}</p>}
     </div>
   )
 }
@@ -799,14 +799,14 @@ function PayoffTimeline({ result, accent }: { result: PayoffResult; accent: stri
           )
         })}
       </div>
-      <div className="mt-1.5 flex justify-between text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+      <div className="mt-1.5 flex justify-between text-3xs" style={{ color: 'var(--ink-soft)' }}>
         <span>{t('debts.now')}</span>
         {axisMarks.map((m) => (<span key={m} className="num">{m} {t('debts.months')}</span>))}
       </div>
       {result.events.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {result.events.slice(0, 6).map((e) => (
-            <span key={`leg-${e.name}-${e.month}`} className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px]" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
+            <span key={`leg-${e.name}-${e.month}`} className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-2xs" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
               <span className="size-1.5 rounded-full" style={{ background: accent }} />
               {e.name} {t('debts.paid_off_lower')} · <span className="num">{payoffDate(e.month, locale)}</span>
             </span>
@@ -828,7 +828,7 @@ function RatioRow({ label, ideal, value, idealMax }: { label: string; ideal: str
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm" style={{ color: 'var(--ink)' }}>{label}</p>
-          <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{ideal}</p>
+          <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{ideal}</p>
         </div>
         <span className="num font-semibold text-sm flex items-center gap-1.5 shrink-0" style={{ color }}>
           {value != null ? `${value.toFixed(1)}%` : '—'}<span className="size-1.5 rounded-full" style={{ background: color }} />

@@ -75,13 +75,13 @@ export default function PortfolioMap({ items, height = 380, onView }: PortfolioM
           <Marker key={it.id} position={[it.lat, it.lng]} icon={pinIcon}>
             <Popup>
               <div className="min-w-36">
-                <p className="text-[13px] font-semibold leading-snug" style={{ color: 'var(--ink)' }}>{it.name}</p>
-                <p className="num tabular text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(it.value)}</p>
+                <p className="text-ui font-semibold leading-snug" style={{ color: 'var(--ink)' }}>{it.name}</p>
+                <p className="num tabular text-cap mt-0.5" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(it.value)}</p>
                 {onView && (
                   <button
                     type="button"
                     onClick={() => onView(it.id)}
-                    className="mt-2 h-6 rounded px-2 text-[11px] font-medium transition-opacity duration-150 hover:opacity-85"
+                    className="mt-2 h-6 rounded px-2 text-2xs font-medium transition-opacity duration-150 hover:opacity-85"
                     style={{ background: 'var(--c-primary)', color: 'var(--c-primary-foreground)' }}
                   >
                     Lihat

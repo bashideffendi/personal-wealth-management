@@ -167,7 +167,7 @@ export function CashFlowForecast({
         </div>
         {bootstrap ? (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide shrink-0"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-medium tracking-wide shrink-0"
             style={{ background: 'var(--c-blue-soft)', color: 'var(--c-blue-ink)' }}
             title="Dari rata-rata belanja & tagihanmu — belum termasuk pemasukan"
           >
@@ -175,7 +175,7 @@ export function CashFlowForecast({
           </span>
         ) : hasNegative ? (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wide shrink-0"
             style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
           >
             <AlertTriangle className="size-2.5" />
@@ -183,14 +183,14 @@ export function CashFlowForecast({
           </span>
         ) : hasRisk ? (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shrink-0"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wide shrink-0"
             style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber-ink)' }}
           >
             Saldo Tipis
           </span>
         ) : (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide shrink-0"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-medium tracking-wide shrink-0"
             style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
           >
             <TrendingUp className="size-2.5" />
@@ -201,7 +201,7 @@ export function CashFlowForecast({
 
       {/* Side-by-side: stats (left) + mini sparkline (right) */}
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-center">
-        <div className="grid grid-cols-3 gap-3 text-[11px]">
+        <div className="grid grid-cols-3 gap-3 text-2xs">
           <Stat
             label="Sekarang"
             value={formatCompactCurrency(liquidBalance)}
@@ -267,7 +267,7 @@ export function CashFlowForecast({
           className="mt-3 pt-2 border-t"
           style={{ borderColor: 'var(--border-soft)' }}
         >
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-2xs">
             {eventDays.slice(0, 4).map((p) => {
               // Nominal dari EVENT-nya, bukan total hari — di mode bootstrap
               // outflow harian ikut memuat burn rata-rata yang bukan bagian
@@ -293,7 +293,7 @@ export function CashFlowForecast({
               )
             })}
             {eventDays.length > 4 && (
-              <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+              <span className="text-3xs" style={{ color: 'var(--ink-soft)' }}>
                 +{eventDays.length - 4} event lain
               </span>
             )}
@@ -304,7 +304,7 @@ export function CashFlowForecast({
       {/* Bootstrap: jelaskan asal angkanya + jalan halus ke recurring —
           pengganti empty-state nag yang dulu menyita seluruh kartu. */}
       {bootstrap && (
-        <p className="mt-3 pt-2 border-t text-[10.5px] leading-relaxed" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+        <p className="mt-3 pt-2 border-t text-2xs leading-relaxed" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
           Perkiraan dari rata-rata belanjamu 60 hari terakhir + tagihan terjadwal — belum
           termasuk pemasukan.{' '}
           <a href="/dashboard/recurring" className="font-semibold hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
@@ -339,7 +339,7 @@ function Stat({
         {value}
       </p>
       {sub && (
-        <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-3xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
           {sub}
         </p>
       )}

@@ -196,11 +196,11 @@ export default function LiquidAssetsPage() {
             : <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(m.color, 10) }}><Icon className="size-5" style={{ color: m.color }} /></div>}
           <div className="min-w-0">
             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{e.name}</p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.auto_from_account') : t('assets_liquid.source_manual')}</p>
+            <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.auto_from_account') : t('assets_liquid.source_manual')}</p>
           </div>
         </div>
         <p className="num text-xl mt-2.5 tabular font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(e.balance)}</p>
-        <div className="mt-4 pt-3 border-t text-[11px]" style={{ borderColor: 'var(--outline)' }}>
+        <div className="mt-4 pt-3 border-t text-2xs" style={{ borderColor: 'var(--outline)' }}>
           <span style={{ color: 'var(--ink-soft)' }}>
             {TIER_META[m.tier].label}
           </span>
@@ -248,9 +248,9 @@ export default function LiquidAssetsPage() {
           {/* Stat strip — ikut Aset Non-Likuid (ikon + sel kosong di-mute) */}
           <div className="s-card grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden" style={{ borderColor: 'var(--outline)' }}>
             <div className="p-5">
-              <p className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
+              <p className="text-2xs font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.stat_total')}</p>
               <p className="num tabular text-xl sm:text-3xl font-bold mt-2 leading-none" title={formatCurrency(total)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(total)}</p>
-              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')}</p>
+              <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>{accountCount} {t('assets_liquid.stat_total_sub')}</p>
             </div>
             {([
               { id: 'instant', label: t('assets_liquid.card_instant'), val: stats.instan, color: MINT_INK, icon: Zap, sub: total > 0 ? `${((stats.instan / total) * 100).toFixed(0)}% ${t('assets_liquid.card_instant_sub')}` : '—' },
@@ -261,9 +261,9 @@ export default function LiquidAssetsPage() {
               const empty = c.val <= 0
               return (
                 <div key={c.id} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
-                  <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide uppercase" style={{ color: c.color }}><CIcon className="size-3" />{c.label}</p>
+                  <p className="flex items-center gap-1.5 text-2xs font-semibold tracking-wide uppercase" style={{ color: c.color }}><CIcon className="size-3" />{c.label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(c.val)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(c.val)}</p>
-                  <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>{c.sub}</p>
+                  <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>{c.sub}</p>
                 </div>
               )
             })}
@@ -277,7 +277,7 @@ export default function LiquidAssetsPage() {
               </div>
               <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5">
                 {typesPresent.map((t) => (typeSum(t) > 0 ? (
-                  <span key={t} className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                  <span key={t} className="flex items-center gap-1.5 text-2xs" style={{ color: 'var(--ink-muted)' }}>
                     <span className="size-2 rounded-full" style={{ background: metaFor(t).color }} />{metaFor(t).jenis}
                     <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{((typeSum(t) / total) * 100).toFixed(0)}%</span>
                   </span>
@@ -288,11 +288,11 @@ export default function LiquidAssetsPage() {
 
           {/* Toolbar — label + filter pills + toggle ikon (ikut saham/non-likuid) */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.detail_heading')}</p>
+            <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.detail_heading')}</p>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex flex-wrap gap-1.5">
                 {jenisPresent.map((j) => (
-                  <button key={j} onClick={() => setFilter(j)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === j ? 'var(--ink)' : 'var(--surface-2)', color: filter === j ? 'var(--surface)' : 'var(--ink-muted)' }}>{j}</button>
+                  <button key={j} onClick={() => setFilter(j)} className="rounded-full px-2.5 py-1 text-2xs font-medium transition" style={{ background: filter === j ? 'var(--ink)' : 'var(--surface-2)', color: filter === j ? 'var(--surface)' : 'var(--ink-muted)' }}>{j}</button>
                 ))}
               </div>
               {/* F10: toggle tabel = desktop-only — tabel 5 kolom kepotong di
@@ -308,14 +308,14 @@ export default function LiquidAssetsPage() {
               Mobile: selalu kartu (tabel di-hide, lihat komentar toggle). */}
           {view === 'table' && (
             <div className="hidden md:block overflow-x-auto rounded-xl border bg-[var(--surface)]" style={{ borderColor: 'var(--outline)' }}>
-              <table className="w-full text-[13px]">
+              <table className="w-full text-ui">
                 <thead>
                   <tr className="border-b" style={{ borderColor: 'var(--outline)', color: 'var(--ink-soft)' }}>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_asset')}</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_type')}</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium">{t('assets_liquid.col_source')}</th>
-                    <th className="px-3 py-2.5 text-right text-[11px] font-medium">{t('assets_liquid.col_liquidity')}</th>
-                    <th className="px-4 py-2.5 text-right text-[11px] font-medium"><button onClick={() => toggleSort('saldo')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_liquid.col_balance')} {sortKey === 'saldo' && <ArrowUpDown className="size-3" />}</button></th>
+                    <th className="px-4 py-2.5 text-left text-2xs font-medium">{t('assets_liquid.col_asset')}</th>
+                    <th className="px-3 py-2.5 text-left text-2xs font-medium">{t('assets_liquid.col_type')}</th>
+                    <th className="px-3 py-2.5 text-left text-2xs font-medium">{t('assets_liquid.col_source')}</th>
+                    <th className="px-3 py-2.5 text-right text-2xs font-medium">{t('assets_liquid.col_liquidity')}</th>
+                    <th className="px-4 py-2.5 text-right text-2xs font-medium"><button onClick={() => toggleSort('saldo')} className="ml-auto inline-flex items-center gap-1 transition-colors hover:text-[var(--ink)]">{t('assets_liquid.col_balance')} {sortKey === 'saldo' && <ArrowUpDown className="size-3" />}</button></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -365,9 +365,9 @@ export default function LiquidAssetsPage() {
                     <div className="flex items-center gap-2 mb-3">
                       <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(m.color, 10) }}><SIcon className="size-4" style={{ color: m.color }} /></div>
                       <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{m.jenis}</h3>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>{list.length} {t('assets_liquid.asset_count_suffix')}</span>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>·</span>
-                      <span className="num text-[12px] font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(sub)}</span>
+                      <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>{list.length} {t('assets_liquid.asset_count_suffix')}</span>
+                      <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>·</span>
+                      <span className="num text-cap font-medium" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(sub)}</span>
                       <div className="flex-1 h-px ml-1.5" style={{ background: 'var(--border-soft)' }} />
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -379,13 +379,13 @@ export default function LiquidAssetsPage() {
           </div>
 
           {/* Footnote */}
-          <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="hidden md:block text-2xs" style={{ color: 'var(--ink-soft)' }}>
             {t('assets_liquid.footnote')} <Link href="/dashboard/accounts" className="hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('assets_liquid.footnote_link')}</Link>
           </p>
 
           {/* Tangga likuiditas */}
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.ladder_heading')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('assets_liquid.ladder_heading')}</p>
               <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
                 {ladder.map((b) => (
                   <div key={b.tier} style={{ width: `${total > 0 ? (b.amount / total) * 100 : 0}%`, background: TIER_META[b.tier].bar }} />

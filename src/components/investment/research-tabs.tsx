@@ -232,7 +232,7 @@ export function ResearchTabs(props: ResearchTabsProps) {
                         <div className="relative h-1.5 rounded-full mt-3" style={{ background: 'var(--surface-2)' }}>
                           <div className="absolute size-3 rounded-full -top-[3px] -translate-x-1/2" style={{ left: `${pct}%`, background: 'var(--c-primary)' }} />
                         </div>
-                        <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>{t('research_tabs.price_in_range_prefix')} {Math.round(pct)}{t('research_tabs.price_in_range_suffix')}</p>
+                        <p className="text-2xs mt-2" style={{ color: 'var(--ink-soft)' }}>{t('research_tabs.price_in_range_prefix')} {Math.round(pct)}{t('research_tabs.price_in_range_suffix')}</p>
                       </>
                     )
                   })()}
@@ -262,17 +262,17 @@ export function ResearchTabs(props: ResearchTabsProps) {
                 <p className="eyebrow mb-3">{t('research_tabs.fundamental')}</p>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>{latestYear ? `Revenue FY${latestYear}` : 'Revenue'}</p>
+                    <p className="text-2xs" style={{ color: 'var(--ink-muted)' }}>{latestYear ? `Revenue FY${latestYear}` : 'Revenue'}</p>
                     <p className="num tabular font-bold" style={{ color: 'var(--ink)' }}>{formatIDRCompact(latestRevenue)}</p>
-                    <p className="text-[11px]" style={{ color: signColorVar(latestRevYoY) }}>YoY {formatPercentValue(latestRevYoY)}</p>
+                    <p className="text-2xs" style={{ color: signColorVar(latestRevYoY) }}>YoY {formatPercentValue(latestRevYoY)}</p>
                   </div>
                   <div>
-                    <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Net Profit</p>
+                    <p className="text-2xs" style={{ color: 'var(--ink-muted)' }}>Net Profit</p>
                     <p className="num tabular font-bold" style={{ color: 'var(--ink)' }}>{formatIDRCompact(latestNetProfit)}</p>
-                    <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Margin {formatPercentValue(latestNPM)}</p>
+                    <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>Margin {formatPercentValue(latestNPM)}</p>
                   </div>
                   <div>
-                    <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>Market Cap</p>
+                    <p className="text-2xs" style={{ color: 'var(--ink-muted)' }}>Market Cap</p>
                     <p className="num tabular font-bold" style={{ color: 'var(--ink)' }}>{formatIDRCompact(latestMarketCap ?? stats?.marketCap ?? null)}</p>
                   </div>
                 </div>
@@ -377,17 +377,17 @@ export function ResearchTabs(props: ResearchTabsProps) {
                       style={{ minHeight: 56, borderTop: i === 0 ? undefined : '1px solid var(--border-soft)' }}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-[14px] font-medium leading-tight truncate" style={{ color: 'var(--ink)' }}>{e.period}</p>
-                        <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="text-body font-medium leading-tight truncate" style={{ color: 'var(--ink)' }}>{e.period}</p>
+                        <p className="text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                           Ex {e.exDate ?? '—'} · Pay {e.payDate ?? '—'}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                        <p className="num tabular text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                           Rp {formatPrice(e.dividend)}
                         </p>
                         {price > 0 && (
-                          <p className="num tabular text-[11px] font-semibold leading-tight mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>
+                          <p className="num tabular text-2xs font-semibold leading-tight mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>
                             Yield* {formatPercentValue(e.dividend / price)}
                           </p>
                         )}
@@ -437,12 +437,12 @@ export function ResearchTabs(props: ResearchTabsProps) {
                   style={{ minHeight: 52, borderTop: i === 0 ? undefined : '1px solid var(--border-soft)' }}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-medium leading-tight truncate" style={{ color: 'var(--ink)' }}>{e.period}</p>
-                    <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="text-body font-medium leading-tight truncate" style={{ color: 'var(--ink)' }}>{e.period}</p>
+                    <p className="text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                       Ex {e.exDate ?? '—'} · Pay {e.payDate ?? '—'}
                     </p>
                   </div>
-                  <p className="num tabular text-[14px] font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
+                  <p className="num tabular text-body font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
                     Rp {formatPrice(e.dividend)}
                   </p>
                 </div>
@@ -490,7 +490,7 @@ function ResearchView({
           <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
             <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('research_tabs.investment_thesis')}</p>
             <p
-              className="mt-2 pl-4 border-l-2 italic leading-relaxed text-[15px] sm:text-base"
+              className="mt-2 pl-4 border-l-2 italic leading-relaxed text-row sm:text-base"
               style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
             >
               {research.frontmatter.thesis}
@@ -720,7 +720,7 @@ function GenerateResearchEmpty({
           )}
         </Button>
 
-        <p className="mt-4 text-[11px] max-w-md mx-auto" style={{ color: 'var(--ink-soft)' }}>
+        <p className="mt-4 text-2xs max-w-md mx-auto" style={{ color: 'var(--ink-soft)' }}>
           {t('research_tabs.cache_hint_prefix')} {ticker} {t('research_tabs.cache_hint_suffix')}
         </p>
       </div>
@@ -769,7 +769,7 @@ function RegenerateBar({
       className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
       style={{ background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}
     >
-      <span className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+      <span className="text-2xs leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
         {dataPeriod ? `${t('research_tabs.based_on')} ${dataPeriod}` : ''}
         {generated ? `${dataPeriod ? ' · ' : ''}${t('research_tabs.generated_on')} ${generated}` : ''}
       </span>
@@ -777,7 +777,7 @@ function RegenerateBar({
         type="button"
         onClick={regenerate}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px] font-medium transition-colors hover:bg-[var(--surface)] disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-cap font-medium transition-colors hover:bg-[var(--surface)] disabled:opacity-50"
         style={{ borderColor: 'var(--border)', color: 'var(--ink-muted)' }}
       >
         {busy ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
@@ -791,7 +791,7 @@ function DisclaimerBox() {
   const t = useT()
   return (
     <div
-      className="rounded-lg border p-3 text-[11px] flex items-start gap-2"
+      className="rounded-lg border p-3 text-2xs flex items-start gap-2"
       style={{
         boxShadow: 'var(--card-shadow)', background: 'var(--surface-2)',
         borderColor: 'var(--border-soft)',

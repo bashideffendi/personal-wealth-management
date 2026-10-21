@@ -68,7 +68,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 function Key({ children }: { children: React.ReactNode }) {
   return (
     <kbd
-      className="inline-flex items-center justify-center min-w-5 px-1.5 py-0.5 rounded font-mono text-[10px] font-medium"
+      className="inline-flex items-center justify-center min-w-5 px-1.5 py-0.5 rounded font-mono text-3xs font-medium"
       style={{
         background: 'var(--surface-2)',
         color: 'var(--ink-muted)',
@@ -99,7 +99,7 @@ function ShortcutRow({
         {keys.map((k, i) => (
           <Fragment key={i}>
             {i > 0 && (
-              <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+              <span className="text-3xs" style={{ color: 'var(--ink-soft)' }}>
                 {sep ?? 'lalu'}
               </span>
             )}
@@ -115,7 +115,7 @@ function ShortcutRow({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="text-[11px] uppercase tracking-[0.08em] font-semibold pt-2 pb-0.5"
+      className="text-2xs uppercase tracking-[0.08em] font-semibold pt-2 pb-0.5"
       style={{ color: 'var(--ink-soft)' }}
     >
       {children}

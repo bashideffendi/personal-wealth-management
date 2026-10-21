@@ -128,7 +128,7 @@ export function NewsTab() {
                       {item.source}
                     </span>
                     {rel && (
-                      <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                      <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                         · {rel}
                       </span>
                     )}
@@ -154,7 +154,7 @@ export function NewsTab() {
           })}
         </ul>
       </div>
-      <p className="text-[11px] text-center px-2" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-2xs text-center px-2" style={{ color: 'var(--ink-soft)' }}>
         {t('news.sourcesPrefix')} CNBC Indonesia · Detik · Bisnis · Kontan · IDX Channel {t('news.updatedEvery')}
       </p>
     </div>

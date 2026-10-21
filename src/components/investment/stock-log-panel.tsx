@@ -188,14 +188,14 @@ export function StockLogPanel() {
                   <Td>
                     <div className="flex items-center gap-2">
                       <StockLogo ticker={t.ticker} size={28} shape="circle" />
-                      <span className="num font-semibold text-[11px] px-1.5 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
+                      <span className="num font-semibold text-2xs px-1.5 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
                         {t.ticker ?? '—'}
                       </span>
                     </div>
                   </Td>
                   <Td>
                     <span
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase"
+                      className="text-3xs font-semibold px-1.5 py-0.5 rounded uppercase"
                       style={{
                         background: t.side === 'buy' ? 'var(--c-mint)' : 'var(--danger-bg)',
                         color: t.side === 'buy' ? 'var(--c-mint)' : 'var(--danger)',
@@ -307,7 +307,7 @@ export function StockLogPanel() {
                         <span className="flex items-center gap-1.5 min-w-0">
                           {b.code && (
                             <span
-                              className="font-mono text-[9px] px-1 py-0.5 rounded shrink-0"
+                              className="font-mono text-3xs px-1 py-0.5 rounded shrink-0"
                               style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                             >
                               {b.code}
@@ -316,7 +316,7 @@ export function StockLogPanel() {
                           <span className="truncate text-sm">{b.short}</span>
                         </span>
                         {b.buyRate > 0 && (
-                          <span className="text-[10px] tabular" style={{ color: 'var(--ink-soft)' }}>
+                          <span className="text-3xs tabular" style={{ color: 'var(--ink-soft)' }}>
                             {t('stock_log.rate_buy')} {(b.buyRate * 100).toFixed(2)}% · {t('stock_log.rate_sell')} {(b.sellRate * 100).toFixed(2)}%
                           </span>
                         )}
@@ -331,7 +331,7 @@ export function StockLogPanel() {
                 if (!b || !b.code || txValue === 0) return null
                 const fee = computeFee(b.code, form.side, txValue) ?? 0
                 return (
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                     {t('stock_log.auto_fee')} {form.side === 'buy' ? t('stock_log.side_buy') : t('stock_log.side_sell')}: {formatCurrency(fee)}
                     {' '}({((form.side === 'buy' ? b.buyRate : b.sellRate) * 100).toFixed(2)}%)
                     {form.fee !== fee && (
@@ -375,7 +375,7 @@ export function StockLogPanel() {
 
 function Th({ children, className = '' }: { children?: React.ReactNode; className?: string }) {
   return (
-    <th className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider ${className}`} style={{ color: 'var(--ink-muted)' }}>
+    <th className={`px-3 py-2 text-left text-2xs font-semibold uppercase tracking-wider ${className}`} style={{ color: 'var(--ink-muted)' }}>
       {children}
     </th>
   )

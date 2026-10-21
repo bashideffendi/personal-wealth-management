@@ -731,7 +731,7 @@ function PreviewView({
           {t('quickadd.back')}
         </button>
         <span
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-3xs font-bold uppercase"
           style={{
             background: 'var(--c-mint-soft)',
             color: 'var(--c-mint-ink)',
@@ -1022,7 +1022,7 @@ function ManualForm({
             <button
               type="button"
               onClick={() => setForm((p) => ({ ...p, category: suggested }))}
-              className="self-start mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition hover:opacity-80"
+              className="self-start mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium transition hover:opacity-80"
               style={{
                 background: 'var(--c-mint-soft)',
                 color: 'var(--c-mint-ink)',

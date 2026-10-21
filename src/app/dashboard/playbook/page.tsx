@@ -35,10 +35,10 @@ export default function PlaybookIndexPage() {
                 <Icon className="size-[15px]" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
                   {p.title}
                 </p>
-                <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {p.tagline} · {p.steps.length} {t('playbook.steps_suffix')}
                 </p>
               </div>

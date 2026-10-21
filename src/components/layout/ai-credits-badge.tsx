@@ -75,7 +75,7 @@ export function AICreditsBadge() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors hover:opacity-90"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-semibold transition-colors hover:opacity-90"
         style={{
           background: empty ? 'var(--c-coral-soft)' : low ? 'var(--c-amber-soft)' : 'var(--surface-2)',
           color: empty ? 'var(--c-coral)' : low ? 'var(--amber-700)' : 'var(--ink)',
@@ -106,7 +106,7 @@ export function AICreditsBadge() {
           >
             <div className="flex items-start justify-between gap-2 mb-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                   Kredit AI Tersisa
                 </p>
                 {/* Just the current balance — no /cap inline (read as "86/10"
@@ -134,7 +134,7 @@ export function AICreditsBadge() {
               <i style={{ width: `${Math.min(100, pct)}%` }} />
             </span>
 
-            <p className="text-[11px] mt-2 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+            <p className="text-2xs mt-2 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
               Plafon bulanan{' '}
               <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{status.cap}</span>
               {' '}kredit · top-up otomatis{' '}
@@ -142,10 +142,10 @@ export function AICreditsBadge() {
             </p>
 
             <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-soft)' }}>
-              <p className="text-[10px] uppercase tracking-wide font-semibold mb-1.5" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-3xs uppercase tracking-wide font-semibold mb-1.5" style={{ color: 'var(--ink-soft)' }}>
                 Biaya per fitur
               </p>
-              <ul className="space-y-1 text-[11px]" style={{ color: 'var(--ink)' }}>
+              <ul className="space-y-1 text-2xs" style={{ color: 'var(--ink)' }}>
                 <li className="flex justify-between">
                   <span>Scan struk</span><span className="num tabular font-medium">5</span>
                 </li>

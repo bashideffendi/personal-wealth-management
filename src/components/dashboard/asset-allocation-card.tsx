@@ -32,7 +32,7 @@ export function AssetAllocationCard({
           <p className="num tabular mt-1 truncate" title={formatCurrency(net)} style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)' }}>
             {formatCompactCurrency(net)}
           </p>
-          <p className="text-[11px]" style={{ color: 'var(--text-mute)' }}>{t('asset_alloc.net')}</p>
+          <p className="text-2xs" style={{ color: 'var(--text-mute)' }}>{t('asset_alloc.net')}</p>
         </div>
         <Link href="/dashboard/net-worth" className="btn-outline shrink-0" style={{ fontSize: 11, padding: '6px 10px' }}>
           {t('asset_alloc.detail')} <ChevronRight className="size-3" />
@@ -49,7 +49,7 @@ export function AssetAllocationCard({
 
       <div className="mt-4 space-y-2.5 flex-1 min-h-0 overflow-y-auto">
         {seg.map((s) => (
-          <div key={s.key} className="flex items-center justify-between text-[12.5px]">
+          <div key={s.key} className="flex items-center justify-between text-cap">
             <span className="flex items-center gap-2 min-w-0" style={{ color: 'var(--ink-muted)' }}>
               <span className="inline-block size-2.5 rounded-sm shrink-0" style={{ background: s.color }} />
               <span className="truncate">{s.label}</span>
@@ -62,12 +62,12 @@ export function AssetAllocationCard({
       </div>
 
       <div className="mt-3 pt-3 border-t space-y-1.5 shrink-0" style={{ borderColor: 'var(--border-soft)' }}>
-        <div className="flex items-center justify-between text-[12px]">
+        <div className="flex items-center justify-between text-cap">
           <span style={{ color: 'var(--ink-muted)' }}>{t('asset_alloc.total_assets')}</span>
           <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(assets)}</span>
         </div>
         {debt > 0 && (
-          <div className="flex items-center justify-between text-[12px]">
+          <div className="flex items-center justify-between text-cap">
             <span style={{ color: 'var(--ink-muted)' }}>{t('asset_alloc.debt')}</span>
             <span className="num font-semibold" style={{ color: 'var(--c-coral-ink)' }}>−{formatCurrency(debt)}</span>
           </div>

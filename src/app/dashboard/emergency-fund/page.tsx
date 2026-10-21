@@ -342,12 +342,12 @@ export default function EmergencyFundPage() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="num font-bold" style={{ fontSize: 'clamp(28px,3vw,36px)', color: AMBER_INK, letterSpacing: '-0.02em' }}>{progressPercent.toFixed(0)}%</span>
-              <span className="text-[10px] uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.ring_achieved')}</span>
+              <span className="text-3xs uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.ring_achieved')}</span>
             </div>
           </div>
         </div>
         <div className="p-6 sm:p-8 min-w-0" style={{ background: 'var(--surface)' }}>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.accumulated_label')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.accumulated_label')}</p>
           <p className="num tabular font-bold leading-none mt-1.5 flex items-baseline gap-2 flex-wrap" style={{ color: 'var(--ink)' }}>
             <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
             <button type="button" onClick={() => document.getElementById('ef-kalkulator')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="text-base font-normal inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : t('emergency_fund.set_target_inline')} <Pencil className="size-3" /></button>
@@ -357,11 +357,11 @@ export default function EmergencyFundPage() {
             <>
               <div className="mt-5 grid grid-cols-3 gap-4">
                 {/* Mint cuma kalau coverage udah nyampe target — 0 bulan jangan hijau. */}
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_coverage')}</p><p className="num font-bold mt-1" style={{ color: coverageMonths >= targetMonths && targetAmount > 0 ? 'var(--c-mint-ink)' : 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_target')}</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} {t('emergency_fund.months_unit')}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_deficit')}</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? 'var(--c-coral-ink)' : MINT_INK, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : t('emergency_fund.metric_achieved')}</p></div>
+                <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_coverage')}</p><p className="num font-bold mt-1" style={{ color: coverageMonths >= targetMonths && targetAmount > 0 ? 'var(--c-mint-ink)' : 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</p></div>
+                <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_target')}</p><p className="num font-bold mt-1" style={{ color: 'var(--ink)', fontSize: 'clamp(15px,1.6vw,19px)' }}>{targetMonths.toFixed(0)} {t('emergency_fund.months_unit')}</p></div>
+                <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.metric_deficit')}</p><p className="num font-bold mt-1" style={{ color: deficit > 0 ? 'var(--c-coral-ink)' : MINT_INK, fontSize: 'clamp(15px,1.6vw,19px)' }}>{deficit > 0 ? formatCurrency(deficit) : t('emergency_fund.metric_achieved')}</p></div>
               </div>
-              {coverageMonths > 0 && <p className="mt-4 text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.coverage_explainer_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</span> {t('emergency_fund.coverage_explainer_until')} {etaDate(coverageMonths, dloc)}.</p>}
+              {coverageMonths > 0 && <p className="mt-4 text-cap leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.coverage_explainer_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</span> {t('emergency_fund.coverage_explainer_until')} {etaDate(coverageMonths, dloc)}.</p>}
             </>
           ) : (
             <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.empty_target_pre')} <span className="font-semibold" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_calculator')}</span> {t('emergency_fund.empty_target_mid')} <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_action')}</button> {t('emergency_fund.empty_target_post')}</p>
@@ -372,7 +372,7 @@ export default function EmergencyFundPage() {
       {/* Kalkulator (kiri) + Rencana setoran (kanan) */}
       <div className="grid gap-3 lg:grid-cols-2 items-start">
         <div id="ef-kalkulator" className="scroll-mt-20 s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_title')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_title')}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.calc_subtitle')}</p>
           <div className="mt-4 grid gap-4">
             <div className="grid gap-1.5">
@@ -382,7 +382,7 @@ export default function EmergencyFundPage() {
                   const on = jobStability === k
                   return (
                     <button key={k} type="button" onClick={() => setJobStability(k)}
-                      className="rounded-lg border px-2 py-2.5 text-[12px] font-medium leading-tight transition"
+                      className="rounded-lg border px-2 py-2.5 text-cap font-medium leading-tight transition"
                       style={{ borderColor: on ? AMBER : 'var(--border-soft)', background: on ? tint(AMBER, 9) : 'var(--surface)', color: on ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
                       {t(`emergency_fund.job_stability_${k}`)}
                     </button>
@@ -403,8 +403,8 @@ export default function EmergencyFundPage() {
             </div>
             <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: tint(AMBER, 9) }}>
               <div>
-                <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_recommendation')}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.calc_rec_pre')} {multiplier} {t('emergency_fund.calc_rec_mid')} ({multiplier}{t('emergency_fund.calc_rec_post')})</p>
+                <p className="text-2xs uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_recommendation')}</p>
+                <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.calc_rec_pre')} {multiplier} {t('emergency_fund.calc_rec_mid')} ({multiplier}{t('emergency_fund.calc_rec_post')})</p>
               </div>
               <span className="num text-xl font-bold whitespace-nowrap" style={{ color: AMBER_INK }}>{formatCurrency(recommendation)}</span>
             </div>
@@ -416,31 +416,31 @@ export default function EmergencyFundPage() {
         <div className="grid gap-3">
         {deficit > 0 ? (
           <div className="s-card p-5">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_title')}</p>
+            <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_title')}</p>
             <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_short_pre')} {formatCurrency(deficit)}. {t('emergency_fund.plan_short_question')}</p>
             <div className="mt-3"><RpField value={monthlySaving} onChange={setMonthlySaving} /></div>
             {monthsToGoal > 0 ? (
               <div className="mt-3 rounded-xl p-4" style={{ background: tint(AMBER, 9) }}>
-                <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_with')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlySaving)}</span>{t('emergency_fund.plan_per_month_reached')}</p>
+                <p className="text-cap" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_with')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlySaving)}</span>{t('emergency_fund.plan_per_month_reached')}</p>
                 <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER_INK }}>{etaDate(monthsToGoal, dloc)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
               </div>
             ) : (
-              <p className="mt-3 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_enter_hint')}</p>
+              <p className="mt-3 text-cap" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_enter_hint')}</p>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_finish_in')}</span>
+              <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_finish_in')}</span>
               {[6, 12, 24].map((m) => (
-                <button key={m} type="button" onClick={() => setMonthlySaving(Math.ceil(deficit / m))} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{m} {t('emergency_fund.months_unit_short')}</button>
+                <button key={m} type="button" onClick={() => setMonthlySaving(Math.ceil(deficit / m))} className="rounded-full px-2.5 py-1 text-2xs font-medium transition" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{m} {t('emergency_fund.months_unit_short')}</button>
               ))}
             </div>
-            <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_tip_pre')} <strong>{t('emergency_fund.plan_tip_emphasis')}</strong> {t('emergency_fund.plan_tip_post')}</p>
+            <p className="text-2xs mt-3 leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_tip_pre')} <strong>{t('emergency_fund.plan_tip_emphasis')}</strong> {t('emergency_fund.plan_tip_post')}</p>
           </div>
         ) : (
           <div className="s-card p-5 grid place-items-center text-center">
             <div>
               <div className="size-11 rounded-full grid place-items-center mx-auto" style={{ background: tint(MINT, 10) }}><Check className="size-5" style={{ color: MINT }} /></div>
               <p className="font-semibold mt-2" style={{ color: 'var(--ink)' }}>{targetAmount > 0 ? t('emergency_fund.safe_title') : t('emergency_fund.calc_first_title')}</p>
-              <p className="text-[12px] mt-1 max-w-xs" style={{ color: 'var(--ink-muted)' }}>{targetAmount > 0 ? t('emergency_fund.safe_body') : t('emergency_fund.calc_first_body')}</p>
+              <p className="text-cap mt-1 max-w-xs" style={{ color: 'var(--ink-muted)' }}>{targetAmount > 0 ? t('emergency_fund.safe_body') : t('emergency_fund.calc_first_body')}</p>
             </div>
           </div>
         )}
@@ -451,7 +451,7 @@ export default function EmergencyFundPage() {
       <div className="s-card p-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.journey_title')}</p>
+            <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.journey_title')}</p>
             <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>
               {/* ETA dari pace RENCANA user (monthlySaving) — rumus lama
                   deficit/ceil(deficit/6) selalu ±6 bulan, angka karangan. */}
@@ -465,7 +465,7 @@ export default function EmergencyFundPage() {
               ) : t('emergency_fund.journey_empty_subtitle')}
             </p>
           </div>
-          {targetAmount > 0 && <span className="text-[11px] num" style={{ color: MINT_INK }}>● {t('emergency_fund.metric_target')} {formatCurrency(targetAmount)}</span>}
+          {targetAmount > 0 && <span className="text-2xs num" style={{ color: MINT_INK }}>● {t('emergency_fund.metric_target')} {formatCurrency(targetAmount)}</span>}
         </div>
         {journey.length >= 2 ? (() => {
           const W = 720, H = 180, padT = 14, padB = 6
@@ -482,7 +482,7 @@ export default function EmergencyFundPage() {
                 <polygon points={areaPts} fill="url(#efg)" />
                 <polyline points={linePts} fill="none" stroke={AMBER} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
               </svg>
-              <div className="flex items-center justify-between mt-1.5 text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+              <div className="flex items-center justify-between mt-1.5 text-3xs" style={{ color: 'var(--ink-soft)' }}>
                 <span>{journey[0].label}</span>
                 <span className="font-semibold" style={{ color: AMBER_INK }}>{t('emergency_fund.journey_now')} · {formatCurrency(accumulatedFund)}</span>
               </div>
@@ -501,7 +501,7 @@ export default function EmergencyFundPage() {
         {/* Disimpan Di Mana — akun riil (sinkron) + non-akun */}
         <div className="s-card p-5">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.locations_title')}</p>
+            <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.locations_title')}</p>
           </div>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.locations_subtitle')}</p>
           {allLocations.length > 0 && (
@@ -515,9 +515,9 @@ export default function EmergencyFundPage() {
                 <span className="flex items-center gap-2 min-w-0">
                   <span className="size-2 rounded-full shrink-0" style={{ background: locPalette[i % locPalette.length] }} />
                   <span className="min-w-0">
-                    <span className="flex items-center gap-1.5 text-sm truncate" style={{ color: 'var(--ink)' }}>{l.name}{l.kind === 'account' && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded shrink-0" style={{ background: tint(MINT, 10), color: 'var(--c-mint-ink)' }}>{t('emergency_fund.location_account_badge')}</span>}</span>
+                    <span className="flex items-center gap-1.5 text-sm truncate" style={{ color: 'var(--ink)' }}>{l.name}{l.kind === 'account' && <span className="text-3xs uppercase tracking-wide px-1 py-0.5 rounded shrink-0" style={{ background: tint(MINT, 10), color: 'var(--c-mint-ink)' }}>{t('emergency_fund.location_account_badge')}</span>}</span>
                     {l.kind === 'account' && (
-                      <span className="num text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                      <span className="num text-3xs" style={{ color: 'var(--ink-soft)' }}>
                         {t('emergency_fund.location_account_balance')} {formatCurrency(l.balance ?? 0)}
                         {l.amount > (l.balance ?? Infinity) && <span className="font-semibold" style={{ color: 'var(--c-amber-ink)' }}> · {t('emergency_fund.over_balance_badge')}</span>}
                       </span>
@@ -540,7 +540,7 @@ export default function EmergencyFundPage() {
                 </span>
               </div>
             ))}
-            {allLocations.length === 0 && <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.locations_empty')}</p>}
+            {allLocations.length === 0 && <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.locations_empty')}</p>}
           </div>
         </div>
 
@@ -548,17 +548,17 @@ export default function EmergencyFundPage() {
         <div className="s-card overflow-hidden">
           <div className="flex items-center justify-between gap-3 p-5 pb-3">
             <div>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.log_title')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.log_title')}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.log_subtitle')}</p>
             </div>
           </div>
           {transactions.length === 0 ? (
-            <p className="px-5 pb-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.log_empty')}</p>
+            <p className="px-5 pb-5 text-cap" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.log_empty')}</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-ui">
                 <thead>
-                  <tr className="border-y text-[11px] font-medium" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
+                  <tr className="border-y text-2xs font-medium" style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}>
                     <th className="px-5 py-2 text-left">{t('emergency_fund.col_date')}</th>
                     <th className="px-3 py-2 text-left">{t('emergency_fund.col_location')}</th>
                     <th className="px-3 py-2 text-right">{t('emergency_fund.col_amount')}</th>
@@ -575,7 +575,7 @@ export default function EmergencyFundPage() {
                           <span className="flex items-center gap-1.5 min-w-0">
                             {setor ? <ArrowDownLeft className="size-3.5 shrink-0" style={{ color: MINT }} /> : <ArrowUpRight className="size-3.5 shrink-0" style={{ color: 'var(--c-coral-ink)' }} />}
                             <span className="truncate" style={{ color: 'var(--ink)' }}>{tx.location || (setor ? t('emergency_fund.txn_deposit') : t('emergency_fund.txn_withdrawal'))}</span>
-                            {tx.note && <span className="truncate text-[11px]" style={{ color: 'var(--ink-soft)' }}>· {tx.note}</span>}
+                            {tx.note && <span className="truncate text-2xs" style={{ color: 'var(--ink-soft)' }}>· {tx.note}</span>}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-right num font-semibold whitespace-nowrap" style={{ color: setor ? MINT_INK : 'var(--c-coral-ink)' }}>{setor ? '+' : '−'}{formatCurrency(tx.amount)}</td>
@@ -607,7 +607,7 @@ export default function EmergencyFundPage() {
           <div className="grid gap-4 py-2">
             <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: tint(MINT, 9), border: `1px solid ${tint(MINT, 20)}` }}>
               <Check className="size-4 mt-0.5 shrink-0" style={{ color: 'var(--c-mint-ink)' }} />
-              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>{t('emergency_fund.txn_note_pre')} <strong>{t('emergency_fund.txn_note_emphasis')}</strong> {t('emergency_fund.txn_note_post')}</p>
+              <p className="text-cap leading-relaxed" style={{ color: 'var(--ink)' }}>{t('emergency_fund.txn_note_pre')} <strong>{t('emergency_fund.txn_note_emphasis')}</strong> {t('emergency_fund.txn_note_post')}</p>
             </div>
 
             <div className="grid gap-1.5">
@@ -620,7 +620,7 @@ export default function EmergencyFundPage() {
                       {txnOther ? (
                         <><div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Plus className="size-4" style={{ color: 'var(--ink-muted)' }} /></div><span className="text-sm" style={{ color: 'var(--ink)' }}>{t('emergency_fund.txn_other_place')}</span></>
                       ) : acc ? (
-                        <><InstitutionLogo accountName={acc.name} size={32} shape="circle" /><span className="min-w-0"><span className="block text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{acc.name}</span><span className="block num text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.txn_recorded_balance')} {formatCurrency(acc.current_balance)}</span></span></>
+                        <><InstitutionLogo accountName={acc.name} size={32} shape="circle" /><span className="min-w-0"><span className="block text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{acc.name}</span><span className="block num text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.txn_recorded_balance')} {formatCurrency(acc.current_balance)}</span></span></>
                       ) : (
                         <span className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.txn_select_account')}</span>
                       )}
@@ -656,7 +656,7 @@ export default function EmergencyFundPage() {
                 return (
                   <div className="mt-1">
                     <span className="quest-bar w-full" style={{ ['--bar-fill' as string]: over ? 'var(--c-coral)' : MINT, ['--bar-h' as string]: '8px' }}><i style={{ width: `${Math.min(100, pct)}%` }} /></span>
-                    <div className="flex items-center justify-between mt-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                    <div className="flex items-center justify-between mt-1.5 text-2xs" style={{ color: 'var(--ink-soft)' }}>
                       <span>{t('emergency_fund.txn_marked')} <span className="font-semibold" style={{ color: over ? 'var(--c-coral-ink)' : 'var(--ink)' }}>{pct.toFixed(0)}%</span> {t('emergency_fund.txn_of_balance')}{over ? ` · ${t('emergency_fund.txn_over_balance')}` : ''}</span>
                       <button type="button" onClick={() => setTxnForm((f) => ({ ...f, total: acc.current_balance }))} className="num hover:underline" style={{ color: 'var(--ink-soft)' }}>{formatCurrency(txnForm.total)} / {formatCurrency(acc.current_balance)}</button>
                     </div>
@@ -711,12 +711,12 @@ export default function EmergencyFundPage() {
                 <option value="">{t('emergency_fund.link_select_account')}</option>
                 {accounts.map((a) => <option key={a.id} value={a.id} disabled={a.id !== linkForm.accountId && linkedAccountIds.has(a.id)}>{a.name} · {formatCurrency(a.current_balance)}{a.id !== linkForm.accountId && linkedAccountIds.has(a.id) ? ` (${t('emergency_fund.link_already_linked')})` : ''}</option>)}
               </select>
-              {accounts.length === 0 && <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.link_no_accounts')}</p>}
+              {accounts.length === 0 && <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.link_no_accounts')}</p>}
             </div>
             <div className="grid gap-1.5">
               <Label>{t('emergency_fund.link_earmark_label')}</Label>
               <RpField value={linkForm.amount} onChange={(n) => setLinkForm((f) => ({ ...f, amount: n }))} />
-              {(() => { const acc = accounts.find((a) => a.id === linkForm.accountId); return acc && linkForm.amount > acc.current_balance ? <p className="text-[11px]" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.link_over_balance')} ({formatCurrency(acc.current_balance)}).</p> : null })()}
+              {(() => { const acc = accounts.find((a) => a.id === linkForm.accountId); return acc && linkForm.amount > acc.current_balance ? <p className="text-2xs" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.link_over_balance')} ({formatCurrency(acc.current_balance)}).</p> : null })()}
             </div>
           </div>
           <DialogFooter>

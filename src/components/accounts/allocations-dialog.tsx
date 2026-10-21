@@ -246,7 +246,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
         >
           <div className="flex items-end justify-between gap-3 flex-wrap">
             <div>
-              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                 {t('allocations.account_balance')}
               </p>
               <p className="num tabular text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>
@@ -254,7 +254,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                 {overAllocated ? t('allocations.over_allocated_label') : t('allocations.free_label')}
               </p>
               <p
@@ -280,7 +280,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
             </div>
           )}
           {overAllocated && (
-            <p className="text-[11px] mt-2" style={{ color: 'var(--c-coral-ink)' }}>
+            <p className="text-2xs mt-2" style={{ color: 'var(--c-coral-ink)' }}>
               {t('allocations.over_allocated_warning')}
             </p>
           )}
@@ -315,7 +315,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                     </div>
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-[11px]">{t('allocations.purpose')}</Label>
+                        <Label className="text-2xs">{t('allocations.purpose')}</Label>
                         <Select
                           value={a.purpose_kind}
                           onValueChange={(v) => v && handlePurposeChange(idx, v as AllocationPurpose)}
@@ -335,9 +335,9 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                       {/* Conditional second field based on purpose */}
                       {a.purpose_kind === 'goal' && (
                         <div>
-                          <Label className="text-[11px]">{t('allocations.goal')}</Label>
+                          <Label className="text-2xs">{t('allocations.goal')}</Label>
                           {goals.length === 0 ? (
-                            <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
+                            <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-soft)' }}>
                               {t('allocations.no_active_goals')}
                             </p>
                           ) : (
@@ -362,13 +362,13 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
 
                       {a.purpose_kind === 'emergency_fund' && (
                         <div>
-                          <Label className="text-[11px]">{t('allocations.status')}</Label>
+                          <Label className="text-2xs">{t('allocations.status')}</Label>
                           {emergencyFund ? (
-                            <p className="text-[12px] mt-1.5 font-medium" style={{ color: 'var(--c-mint-ink)' }}>
+                            <p className="text-cap mt-1.5 font-medium" style={{ color: 'var(--c-mint-ink)' }}>
                               ✓ {t('allocations.connected')}
                             </p>
                           ) : (
-                            <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
+                            <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-soft)' }}>
                               {t('allocations.setup_ef_hint')}
                             </p>
                           )}
@@ -377,7 +377,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
 
                       {(a.purpose_kind === 'sinking_fund' || a.purpose_kind === 'other') && (
                         <div>
-                          <Label className="text-[11px]">{t('allocations.label')}</Label>
+                          <Label className="text-2xs">{t('allocations.label')}</Label>
                           <Input
                             value={a.custom_label}
                             onChange={(e) => updateAllocation(idx, { custom_label: e.target.value })}
@@ -400,7 +400,7 @@ export function AccountAllocationsDialog({ open, onClose, account, onSaved }: Pr
                   </div>
 
                   <div>
-                    <Label className="text-[11px]">{t('allocations.amount')}</Label>
+                    <Label className="text-2xs">{t('allocations.amount')}</Label>
                     <NumberInput
                       value={a.amount}
                       onChange={(n) => updateAllocation(idx, { amount: n })}

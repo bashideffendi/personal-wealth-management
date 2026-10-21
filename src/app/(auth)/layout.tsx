@@ -62,7 +62,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </Link>
 
       {/* trust — bottom-left viewport edge (desktop) */}
-      <p className="hidden lg:inline-flex absolute z-20 bottom-12 left-12 items-center gap-2 text-[13px]" style={{ color: 'var(--ink-soft)' }}>
+      <p className="hidden lg:inline-flex absolute z-20 bottom-12 left-12 items-center gap-2 text-ui" style={{ color: 'var(--ink-soft)' }}>
         <Shield className="size-3.5" style={{ color: 'var(--c-primary-ink)' }} /> Data kamu dienkripsi dan tidak dijual.
       </p>
 
@@ -70,7 +70,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           both vertically centered & aligned, sitting close together in the middle */}
       <div className="relative z-10 mx-auto max-w-5xl px-6 min-h-screen grid lg:grid-cols-2 items-center gap-8">
         <div className="hidden lg:block max-w-md">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keuangan pribadi</p>
+          <p className="text-2xs font-semibold tracking-[0.2em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keuangan pribadi</p>
           <h2 className="mt-4 font-bold" style={{ fontSize: 'clamp(32px, 2.8vw, 42px)', lineHeight: 1.16, letterSpacing: '-0.03em', color: 'var(--ink)' }}>
             Kelola keuanganmu dengan <span style={{ color: 'var(--accent)' }}>tenang</span>.
           </h2>

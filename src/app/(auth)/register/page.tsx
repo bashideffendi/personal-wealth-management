@@ -58,11 +58,11 @@ export default function RegisterPage() {
     <>
       {!success && (
         <div className="text-center mb-8">
-          <h1 className="font-bold tracking-tight text-[22px] sm:text-[28px]" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>
+          <h1 className="font-bold tracking-tight text-h1 sm:text-hero" style={{ color: 'var(--ink)', letterSpacing: '-0.025em' }}>
             Buat akun Klunting.
           </h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--ink-muted)' }}>Coba 21 hari gratis, tanpa kartu kredit.</p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-cap" style={{ color: 'var(--ink-soft)' }}>
             {['Akses penuh', 'Tanpa kartu kredit', 'Batal kapan saja'].map((t) => (
               <span key={t} className="inline-flex items-center gap-1.5"><Check className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} /> {t}</span>
             ))}
@@ -124,10 +124,10 @@ export default function RegisterPage() {
                   {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Minimal 8 karakter, kombinasi huruf dan angka.</p>
+              <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>Minimal 8 karakter, kombinasi huruf dan angka.</p>
             </div>
 
-            <label className="flex items-start gap-2 text-[11px] leading-relaxed mt-1 cursor-pointer" style={{ color: 'var(--ink-soft)' }}>
+            <label className="flex items-start gap-2 text-2xs leading-relaxed mt-1 cursor-pointer" style={{ color: 'var(--ink-soft)' }}>
               <input
                 type="checkbox"
                 checked={agreed}

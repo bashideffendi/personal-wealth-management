@@ -15,12 +15,12 @@ export function AiEntryVignette() {
         style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
       >
         <span className="size-2 rounded-full shrink-0" style={{ background: 'var(--c-coral)' }} />
-        <span className="text-[15px]" style={{ color: 'var(--ink)' }}>
+        <span className="text-row" style={{ color: 'var(--ink)' }}>
           kopi 25rb pake gopay
           <span className="inline-block w-[2px] h-[1.05em] align-middle ml-0.5" style={{ background: 'var(--ink)', opacity: 0.7 }} />
         </span>
         <span
-          className="ml-auto text-[10px] font-bold tracking-[0.12em] uppercase px-1.5 py-0.5 rounded shrink-0"
+          className="ml-auto text-3xs font-bold tracking-[0.12em] uppercase px-1.5 py-0.5 rounded shrink-0"
           style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
         >
           AI
@@ -38,16 +38,16 @@ export function AiEntryVignette() {
         style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
       >
         <div className="size-9 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--c-coral-soft)' }}>
-          <span className="text-[15px] font-bold" style={{ color: 'var(--c-coral-ink)' }}>K</span>
+          <span className="text-row font-bold" style={{ color: 'var(--c-coral-ink)' }}>K</span>
         </div>
         <div className="min-w-0">
-          <p className="text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Kopi</p>
-          <p className="text-[11.5px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>Makanan &amp; Minuman · GoPay · hari ini</p>
+          <p className="text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Kopi</p>
+          <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>Makanan &amp; Minuman · GoPay · hari ini</p>
         </div>
-        <p className="ml-auto num tabular text-[15px] font-bold shrink-0" style={{ color: 'var(--ink)' }}>−Rp 25.000</p>
+        <p className="ml-auto num tabular text-row font-bold shrink-0" style={{ color: 'var(--ink)' }}>−Rp 25.000</p>
       </div>
 
-      <p className="text-center text-[11px] mt-3" style={{ color: 'var(--ink-soft)' }}>
+      <p className="text-center text-2xs mt-3" style={{ color: 'var(--ink-soft)' }}>
         Tanpa form, tanpa dropdown.
       </p>
     </div>
@@ -75,15 +75,15 @@ export function NetWorthVignette() {
         style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
       >
         <div className="px-4 pt-4 pb-3.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-3xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
             Kekayaan bersih
           </p>
           <div className="flex items-baseline gap-2.5 mt-1 flex-wrap">
-            <p className="num tabular text-[24px] leading-none" style={{ color: 'var(--ink)', fontWeight: 800 }}>
+            <p className="num tabular text-h1 leading-none" style={{ color: 'var(--ink)', fontWeight: 800 }}>
               Rp 2.424.056.000
             </p>
             <span
-              className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded"
+              className="num tabular text-2xs font-bold px-1.5 py-0.5 rounded"
               style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
             >
               +2,8% vs bulan lalu
@@ -102,7 +102,7 @@ export function NetWorthVignette() {
           {NW_ROWS.map((r, i) => (
             <li
               key={r.label}
-              className={`flex items-center gap-2.5 py-[7px] text-[12.5px] ${i > 0 ? 'border-t' : ''}`}
+              className={`flex items-center gap-2.5 py-[7px] text-cap ${i > 0 ? 'border-t' : ''}`}
               style={{ borderColor: 'var(--border-soft)' }}
             >
               <span className="size-2 rounded-[3px] shrink-0" style={{ background: r.c }} />
@@ -111,7 +111,7 @@ export function NetWorthVignette() {
             </li>
           ))}
           <li
-            className="flex items-center gap-2.5 py-[7px] border-t text-[12.5px]"
+            className="flex items-center gap-2.5 py-[7px] border-t text-cap"
             style={{ borderColor: 'var(--border)' }}
           >
             <span className="size-2 rounded-[3px] shrink-0 border" style={{ borderColor: 'var(--c-coral)' }} />
@@ -139,13 +139,13 @@ export function BudgetVignette() {
       style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}
       aria-hidden="true"
     >
-      <table className="w-full text-[12.5px]" style={{ borderCollapse: 'collapse' }}>
+      <table className="w-full text-cap" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ background: 'var(--surface-2)' }}>
             {['Kategori', 'Jan', 'Feb', 'Mar'].map((h, i) => (
               <th
                 key={h}
-                className={`px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.1em] ${i === 0 ? 'text-left' : 'text-right'}`}
+                className={`px-3.5 py-2 text-3xs font-semibold uppercase tracking-[0.1em] ${i === 0 ? 'text-left' : 'text-right'}`}
                 style={{ color: 'var(--ink-soft)' }}
               >
                 {h}
@@ -186,7 +186,7 @@ export function BudgetVignette() {
 function Key({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <span
-      className={`inline-grid place-items-center rounded-lg border text-[13px] font-semibold ${wide ? 'px-3 h-10' : 'size-10'}`}
+      className={`inline-grid place-items-center rounded-lg border text-ui font-semibold ${wide ? 'px-3 h-10' : 'size-10'}`}
       style={{
         background: 'var(--surface)',
         borderColor: 'var(--border)',
@@ -206,18 +206,18 @@ export function KeyboardVignette() {
       <div className="flex flex-wrap items-center gap-2.5 justify-center">
         <Key wide>Ctrl / ⌘</Key>
         <Key>K</Key>
-        <span className="mx-1 text-[13px]" style={{ color: 'var(--ink-soft)' }}>lompat ke mana pun</span>
+        <span className="mx-1 text-ui" style={{ color: 'var(--ink-soft)' }}>lompat ke mana pun</span>
       </div>
       <div className="flex flex-wrap items-center gap-2.5 justify-center mt-3">
         <Key>N</Key>
-        <span className="text-[13px] mr-2" style={{ color: 'var(--ink-soft)' }}>transaksi baru</span>
+        <span className="text-ui mr-2" style={{ color: 'var(--ink-soft)' }}>transaksi baru</span>
         <Key>J</Key>
         <Key>K</Key>
-        <span className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>telusuri baris</span>
+        <span className="text-ui" style={{ color: 'var(--ink-soft)' }}>telusuri baris</span>
       </div>
       <div className="flex flex-wrap items-center gap-2.5 justify-center mt-3">
         <Key wide>Space</Key>
-        <span className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>intip detail baris</span>
+        <span className="text-ui" style={{ color: 'var(--ink-soft)' }}>intip detail baris</span>
       </div>
     </div>
   )

@@ -352,7 +352,7 @@ export function StockCompareTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr
-                  className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold border-b"
+                  className="text-left text-3xs uppercase tracking-[0.08em] font-semibold border-b"
                   style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}
                 >
                   <th className="px-3 py-3 sticky left-0 bg-[var(--surface)] z-10">{t('stock_compare.col_metric')}</th>
@@ -375,7 +375,7 @@ export function StockCompareTab() {
                           <X className="size-3.5" />
                         </button>
                       </div>
-                      <p className="text-[10px] mt-1 truncate normal-case font-normal" style={{ color: 'var(--ink-muted)' }}>
+                      <p className="text-3xs mt-1 truncate normal-case font-normal" style={{ color: 'var(--ink-muted)' }}>
                         {s.name}
                       </p>
                     </th>
@@ -419,7 +419,7 @@ export function StockCompareTab() {
                       ticker: s.ticker,
                       jsx: s.verdict ? (
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                          className="inline-flex items-center px-2 py-0.5 rounded text-3xs font-bold uppercase tracking-wide"
                           style={{ background: verdict.bg, color: verdict.fg }}
                         >
                           {s.verdict.toLowerCase()}
@@ -547,20 +547,20 @@ export function StockCompareTab() {
 
       {/* Catatan kecil — desktop only, muncul kalau ada gap data '—' */}
       {selected.length > 0 && adaGap && (
-        <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-2xs" style={{ color: 'var(--ink-soft)' }}>
           — = data belum ter-cover snapshot untuk emiten tersebut.
         </p>
       )}
       {selected.length > 0 && !masihLoading && deeps.some((d) => d) &&
         !adaPiotroski && !adaTrenRevenue && !adaTrenLaba && (
-        <p className="hidden md:block text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+        <p className="hidden md:block text-2xs" style={{ color: 'var(--ink-soft)' }}>
           Skor Piotroski &amp; tren 10 tahun butuh metrik historis per emiten — belum
           tersedia dari sumber data compare.
         </p>
       )}
 
       {selected.length >= 2 && (
-        <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-2xs inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
           <CheckCircle2 className="size-3 shrink-0" style={{ color: 'var(--c-mint-ink)' }} /> {t('stock_compare.legend')}
         </p>
       )}
@@ -616,7 +616,7 @@ function SectionRow({ label, span }: { label: string; span: number }) {
   return (
     <tr className="hidden md:table-row border-t" style={{ borderColor: 'var(--border-soft)' }}>
       <td
-        className="px-3 py-2 text-[10px] uppercase tracking-[0.08em] font-semibold sticky left-0 z-10"
+        className="px-3 py-2 text-3xs uppercase tracking-[0.08em] font-semibold sticky left-0 z-10"
         style={{ color: 'var(--ink-soft)', background: 'var(--surface-2)' }}
       >
         {label}
@@ -674,7 +674,7 @@ function MethodCell({ m }: { m: MethodDetail | undefined }) {
       <span className="num tabular">{formatPrice(m.fairValue)}</span>
       {m.mos != null && !isNaN(m.mos) && (
         <span
-          className="num tabular text-[11px]"
+          className="num tabular text-2xs"
           style={{ color: m.mos >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}
         >
           {m.mos >= 0 ? '+' : ''}
@@ -692,7 +692,7 @@ function PiotroskiCell({ p }: { p: DeepData['piotroski'] }) {
     <div>
       <div className="flex items-baseline gap-1.5">
         <span className="num tabular font-semibold">{p.score}/9</span>
-        <span className="text-[10px]" style={{ color: 'var(--ink-muted)' }}>{p.verdict}</span>
+        <span className="text-3xs" style={{ color: 'var(--ink-muted)' }}>{p.verdict}</span>
       </div>
       <div className="mt-1 flex gap-0.5" aria-hidden="true">
         {Array.from({ length: 9 }, (_, i) => (
@@ -745,7 +745,7 @@ function Sparkline({ points, label }: { points: SeriPoint[]; label: string }) {
         />
         <circle cx={x(points.length - 1)} cy={y(last.value)} r="2" fill="var(--c-blue)" />
       </svg>
-      <span className="num tabular text-[10px] whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+      <span className="num tabular text-3xs whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
         {formatIDRCompact(last.value)}
       </span>
     </div>
@@ -835,7 +835,7 @@ function PickerDialog({
                         {r.name}
                       </span>
                       {r.sector && (
-                        <span className="block text-[10px] truncate" style={{ color: 'var(--ink-soft)' }}>
+                        <span className="block text-3xs truncate" style={{ color: 'var(--ink-soft)' }}>
                           {r.sector}
                         </span>
                       )}

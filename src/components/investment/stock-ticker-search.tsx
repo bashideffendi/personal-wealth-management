@@ -162,12 +162,12 @@ export function StockTickerSearch({ value, onSelect, placeholder }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span
-                      className="text-[11px] font-mono font-bold tabular px-1.5 py-0.5 rounded"
+                      className="text-2xs font-mono font-bold tabular px-1.5 py-0.5 rounded"
                       style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                     >
                       {s.t}
                     </span>
-                    <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                    <span className="text-3xs" style={{ color: 'var(--ink-soft)' }}>
                       {s.s}
                     </span>
                   </div>

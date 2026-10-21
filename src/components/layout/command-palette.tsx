@@ -520,7 +520,7 @@ export function CommandPalette() {
                 ? t('command_palette.listening_placeholder')
                 : t('command_palette.search_placeholder')
             }
-            className="flex-1 bg-transparent outline-none text-[15px]"
+            className="flex-1 bg-transparent outline-none text-row"
             style={{ color: 'var(--ink)' }}
             readOnly={speech.listening}
           />
@@ -544,7 +544,7 @@ export function CommandPalette() {
           )}
 
           <kbd
-            className="text-[10px] px-1.5 py-0.5 rounded font-mono shrink-0"
+            className="text-3xs px-1.5 py-0.5 rounded font-mono shrink-0"
             style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
           >
             ESC
@@ -582,7 +582,7 @@ export function CommandPalette() {
                     key={ex}
                     type="button"
                     onClick={() => setQuery(ex)}
-                    className="text-[11px] px-2 py-1 rounded-md font-medium transition"
+                    className="text-2xs px-2 py-1 rounded-md font-medium transition"
                     style={{
                       background: 'var(--surface-2)',
                       color: 'var(--ink-muted)',
@@ -600,7 +600,7 @@ export function CommandPalette() {
               return groups.map((group) => (
                 <div key={group.key} className="mb-1">
                   <p
-                    className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-[0.12em] font-semibold"
+                    className="px-4 pt-2 pb-1 text-3xs uppercase tracking-[0.12em] font-semibold"
                     style={{ color: 'var(--ink-soft)' }}
                   >
                     {group.label}
@@ -649,7 +649,7 @@ export function CommandPalette() {
                           </span>
                           {item.breadcrumb && (
                             <span
-                              className="block text-[11px] truncate"
+                              className="block text-2xs truncate"
                               style={{ color: 'var(--ink-soft)' }}
                             >
                               {item.breadcrumb}
@@ -676,7 +676,7 @@ export function CommandPalette() {
                   className="size-3 animate-spin shrink-0"
                   style={{ color: 'var(--ink-soft)' }}
                 />
-                <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                   {locale === 'id' ? 'Mencari transaksi…' : 'Searching transactions…'}
                 </span>
               </div>
@@ -688,7 +688,7 @@ export function CommandPalette() {
 
         {/* Footer hints */}
         <div
-          className="flex items-center justify-between px-4 py-2.5 text-[10px] border-t"
+          className="flex items-center justify-between px-4 py-2.5 text-3xs border-t"
           style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-soft)' }}
         >
           <span className="flex items-center gap-3">
@@ -725,7 +725,7 @@ export function CommandPalette() {
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
     <kbd
-      className="font-mono px-1.5 py-0.5 rounded text-[9px] inline-flex items-center"
+      className="font-mono px-1.5 py-0.5 rounded text-3xs inline-flex items-center"
       style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
     >
       {children}
@@ -774,7 +774,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
       <div className="px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} />
-          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-3xs uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
             {t('command_palette.ai_confirm_title')}
           </p>
         </div>
@@ -784,7 +784,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
         >
           <div className="flex items-baseline justify-between gap-2 mb-2">
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-3xs font-bold uppercase"
               style={{ background: typeColor[d.type] + '20', color: typeColor[d.type] }}
             >
               {typeLabel[d.type] ?? d.type}
@@ -826,7 +826,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
             {t('command_palette.save_to_default')}
           </button>
         </div>
-        <p className="text-[10px] mt-2 text-center" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-3xs mt-2 text-center" style={{ color: 'var(--ink-soft)' }}>
           {t('command_palette.save_footnote')}
         </p>
       </div>

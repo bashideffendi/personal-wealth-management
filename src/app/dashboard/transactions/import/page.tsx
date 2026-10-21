@@ -739,7 +739,7 @@ function PreviewStage({
         <table className="w-full text-sm">
           <thead>
             <tr
-              className="text-left text-[10px] uppercase tracking-[0.08em] font-semibold"
+              className="text-left text-3xs uppercase tracking-[0.08em] font-semibold"
               style={{ color: 'var(--ink-soft)' }}
             >
               <th className="px-3 py-2 w-8"></th>
@@ -867,7 +867,7 @@ function PreviewStage({
 function Tag({ children, color, bg }: { children: React.ReactNode; color: string; bg: string }) {
   return (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.06em]"
+      className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold uppercase tracking-[0.06em]"
       style={{ color, background: bg }}
     >
       {children}

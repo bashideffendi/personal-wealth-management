@@ -366,7 +366,7 @@ export default function ProfilePage() {
       >
         <div className="relative p-5 sm:p-7">
           <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase"
+            className="text-2xs font-semibold tracking-[0.18em] uppercase"
             style={{ color: 'var(--on-hero-mut)' }}
           >
             {t('profile.eyebrow')}
@@ -374,7 +374,7 @@ export default function ProfilePage() {
           <div className="mt-2 flex items-end justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <div
-                className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-2xl font-bold text-[20px] sm:text-[28px]"
+                className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-2xl font-bold text-h2 sm:text-hero"
                 style={{
                   background: 'var(--c-primary)',
                   color: 'var(--c-primary-foreground)',
@@ -389,7 +389,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h1
-                  className="font-bold text-[22px] sm:text-[28px]"
+                  className="font-bold text-h1 sm:text-hero"
                   style={{
                     color: 'var(--on-hero)',
                     letterSpacing: '-0.035em',
@@ -404,7 +404,7 @@ export default function ProfilePage() {
                   {/* Billing beku (src/lib/billing-flag.ts) → label paket disembunyikan */}
                   {BILLING_ENABLED && (
                   <span
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-bold"
                     style={{
                       background: subscription?.plan_id === 'full' ? 'var(--hero-chip-pos-bg)' : 'rgba(255,255,255,0.10)',
                       color: subscription?.plan_id === 'full' ? 'var(--hero-chip-pos-fg)' : 'var(--on-hero)',

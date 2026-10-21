@@ -424,14 +424,14 @@ export default function RecurringPage() {
     <div className="px-1 pb-2 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="num tabular text-[22px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
-          <p className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
+          <p className="num tabular text-h1 font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+          <p className="text-2xs mt-0.5 truncate" style={{ color: 'var(--ink-soft)' }}>{FREQ_LABELS[detailItem.frequency]} · {detailItem.category}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
+          <span className="rounded-full px-2.5 py-1 text-2xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{KLAS_LABELS[klasOf(detailItem)]}</span>
           <button
             type="button"
-            className="rounded-full px-3.5 py-1.5 text-[12px] font-medium"
+            className="rounded-full px-3.5 py-1.5 text-cap font-medium"
             style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
             onClick={() => { const r = detailItem; setDetailId(null); openEdit(r) }}
           >Edit</button>
@@ -440,12 +440,12 @@ export default function RecurringPage() {
 
       <div className="grid grid-cols-2 text-center rounded-xl px-3.5 py-3" style={{ background: 'var(--surface-2)' }}>
         <div>
-          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>Total</p>
-          <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)}</p>
+          <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>Total</p>
+          <p className="num tabular text-row font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(detailData.totalPaid)}</p>
         </div>
         <div>
-          <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Transactions' : 'Transaksi'}</p>
-          <p className="num tabular text-[15px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{detailData.paidCount}</p>
+          <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Transactions' : 'Transaksi'}</p>
+          <p className="num tabular text-row font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{detailData.paidCount}</p>
         </div>
       </div>
 
@@ -455,7 +455,7 @@ export default function RecurringPage() {
             key={k}
             type="button"
             onClick={() => setDetailTab(k)}
-            className="rounded-full px-5 py-1.5 text-[12px] font-medium transition-colors"
+            className="rounded-full px-5 py-1.5 text-cap font-medium transition-colors"
             style={{
               background: detailTab === k ? 'var(--surface)' : 'transparent',
               color: detailTab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
@@ -471,18 +471,18 @@ export default function RecurringPage() {
           return (
             <div key={i} className="flex items-center gap-3" style={{ minHeight: 52, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}>
               <div className="size-9 rounded-xl grid place-items-center shrink-0" style={{ background: av.bg }}>
-                <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
+                <span className="text-cap font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
               </div>
-              <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
+              <p className="text-ui font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>{detailItem.name}</p>
               <div className="text-right shrink-0">
-                <p className="num tabular text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
-                <p className="num text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d, dloc)}</p>
+                <p className="num tabular text-ui font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(detailItem.amount)}</p>
+                <p className="num text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{dmyy(d, dloc)}</p>
               </div>
             </div>
           )
         })}
         {detailList.length === 0 && (
-          <p className="text-[12px] text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
+          <p className="text-cap text-center py-6" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'Nothing yet' : 'Belum ada'}</p>
         )}
       </div>
     </div>
@@ -534,7 +534,7 @@ export default function RecurringPage() {
                   key={k}
                   type="button"
                   onClick={() => setMtab(k)}
-                  className="flex items-center justify-center gap-1 rounded-full py-2 text-[12px] transition-colors min-w-0"
+                  className="flex items-center justify-center gap-1 rounded-full py-2 text-cap transition-colors min-w-0"
                   style={{
                     background: mtab === k ? 'var(--surface)' : 'transparent',
                     color: mtab === k ? 'var(--c-mint-ink)' : 'var(--ink-soft)',
@@ -565,15 +565,15 @@ export default function RecurringPage() {
                         style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
                       >
                         <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
-                          <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(c.name)}</span>
+                          <span className="text-cap font-semibold" style={{ color: av.fg }}>{providerInitials(c.name)}</span>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                          <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                          <p className="text-ui font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                          <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                             {label} · {locale === 'en' ? 'renews' : 'perpanjang'} {dmy(new Date(c.end_date), dloc)}
                           </p>
                         </div>
-                        <p className="num tabular text-[13px] font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
+                        <p className="num tabular text-ui font-semibold shrink-0" style={{ color: 'var(--ink)' }}>
                           {c.cost ? formatCompactCurrency(c.cost) : '—'}
                         </p>
                       </button>
@@ -593,17 +593,17 @@ export default function RecurringPage() {
                       style={{ minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }}
                     >
                       <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
-                        <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(r.name)}</span>
+                        <span className="text-cap font-semibold" style={{ color: av.fg }}>{providerInitials(r.name)}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
-                        <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="text-ui font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
+                        <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                           {FREQ_LABELS[r.frequency]} · {next ? dmy(next, dloc) : '—'}
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {r.auto_post && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>auto</span>}
-                        <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(r.amount)}</p>
+                        {r.auto_post && <span className="text-3xs uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>auto</span>}
+                        <p className="num tabular text-ui font-semibold" style={{ color: 'var(--ink)' }}>{formatCompactCurrency(r.amount)}</p>
                         <span className="size-1.5 rounded-full" style={{ background: r.is_active ? 'var(--c-mint)' : 'var(--c-amber)' }} />
                       </div>
                     </button>
@@ -619,9 +619,9 @@ export default function RecurringPage() {
                     <div className="size-12 rounded-2xl grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}>
                       <EIcon className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
                     </div>
-                    <p className="text-[12.5px] mt-3" style={{ color: 'var(--ink-muted)' }}>{cfg.text}</p>
+                    <p className="text-cap mt-3" style={{ color: 'var(--ink-muted)' }}>{cfg.text}</p>
                     <button type="button" onClick={handleMobileAdd}
-                      className="mt-3 text-[12px] font-medium rounded-full px-3.5 py-1.5"
+                      className="mt-3 text-cap font-medium rounded-full px-3.5 py-1.5"
                       style={{ background: 'var(--surface-2)', color: 'var(--c-mint-ink)' }}>{cfg.cta}</button>
                   </div>
                 )
@@ -635,9 +635,9 @@ export default function RecurringPage() {
               <div key={s.label} className="s-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
-                    <p className="num tabular text-[19px] font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
-                    <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
+                    <p className="text-2xs font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
+                    <p className="num tabular text-h3 font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}><s.icon className="size-4" style={{ color: s.color }} /></div>
                 </div>
@@ -649,8 +649,8 @@ export default function RecurringPage() {
           {payments.length > 0 && (
             <div className="s-card p-4 hidden md:block">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.next_30_days')}</p>
-                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('recurring.total')} {formatCurrency(calendar.reduce((s, d) => s + d.amount, 0))}</p>
+                <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.next_30_days')}</p>
+                <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('recurring.total')} {formatCurrency(calendar.reduce((s, d) => s + d.amount, 0))}</p>
               </div>
               <div className="flex gap-1.5 overflow-x-auto pb-1">
                 {calendar.map((d, i) => {
@@ -659,8 +659,8 @@ export default function RecurringPage() {
                   return (
                     <div key={i} className="shrink-0 rounded-lg border grid content-between text-center" title={has ? `${dmy(d.date, dloc)} · ${formatCurrency(d.amount)}` : dmy(d.date, dloc)}
                       style={{ width: 46, height: 56, padding: 6, borderColor: isToday ? 'var(--ink)' : has ? tint(VIOLET, 33) : 'var(--border-soft)', background: has ? tint(VIOLET, 6) : 'var(--surface)' }}>
-                      <span className="num text-[13px] font-semibold" style={{ color: isToday ? 'var(--ink)' : has ? VIOLET_INK : 'var(--ink-soft)' }}>{d.date.getDate()}</span>
-                      {has && <span className="num text-[8.5px] leading-tight" style={{ color: VIOLET_INK }}>{d.amount >= 1e6 ? `${(d.amount / 1e6).toFixed(1)}jt` : `${Math.round(d.amount / 1e3)}k`}</span>}
+                      <span className="num text-ui font-semibold" style={{ color: isToday ? 'var(--ink)' : has ? VIOLET_INK : 'var(--ink-soft)' }}>{d.date.getDate()}</span>
+                      {has && <span className="num text-3xs leading-tight" style={{ color: VIOLET_INK }}>{d.amount >= 1e6 ? `${(d.amount / 1e6).toFixed(1)}jt` : `${Math.round(d.amount / 1e3)}k`}</span>}
                     </div>
                   )
                 })}
@@ -672,8 +672,8 @@ export default function RecurringPage() {
             /* F10: empty state hangat (desktop — mobile punya empty state per tab di atas) */
             <div className="s-card px-6 py-10 text-center hidden md:block">
               <div className="size-12 rounded-xl grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><Repeat className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
-              <p className="text-[15px] font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
-              <p className="text-[12.5px] mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
+              <p className="text-row font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('recurring.empty_title')}</p>
+              <p className="text-cap mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('recurring.empty_body')}</p>
               <Button className="mt-4 rounded-full" onClick={() => openAdd()}><Plus className="h-4 w-4" /> {t('recurring.add_recurring')}</Button>
             </div>
           ) : (
@@ -685,7 +685,7 @@ export default function RecurringPage() {
                     key={k}
                     type="button"
                     onClick={() => setTab(k)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12.5px] font-medium transition-colors"
+                    className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-cap font-medium transition-colors"
                     style={{
                       background: tab === k ? 'var(--surface)' : 'transparent',
                       color: tab === k ? 'var(--ink)' : 'var(--ink-muted)',
@@ -693,7 +693,7 @@ export default function RecurringPage() {
                     }}
                   >
                     {KLAS_LABELS[k]}
-                    <span className="num tabular text-[10px] min-w-[18px] px-1 py-px rounded-full" style={{ background: tab === k ? 'var(--surface-2)' : tint('var(--ink)', 6), color: 'var(--ink-soft)' }}>{klasCounts[k]}</span>
+                    <span className="num tabular text-3xs min-w-[18px] px-1 py-px rounded-full" style={{ background: tab === k ? 'var(--surface-2)' : tint('var(--ink)', 6), color: 'var(--ink-soft)' }}>{klasCounts[k]}</span>
                   </button>
                 ))}
               </div>
@@ -701,21 +701,21 @@ export default function RecurringPage() {
               {/* Tabel (desktop) */}
               <div className="hidden md:block s-card overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.list_title')}</p>
+                  <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.list_title')}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {([['all', t('recurring.filter_all')], ['monthly', t('recurring.freq_monthly')], ['weekly', t('recurring.freq_weekly')], ['daily', t('recurring.freq_daily')], ['yearly', t('recurring.freq_yearly')]] as const).map(([f, lbl]) => (
-                      <button key={f} onClick={() => setFilter(f)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
+                      <button key={f} onClick={() => setFilter(f)} className="rounded-full px-2.5 py-1 text-2xs font-medium transition"
                         style={{ background: filter === f ? 'var(--ink)' : 'var(--surface-2)', color: filter === f ? 'var(--surface)' : 'var(--ink-muted)' }}>{lbl}</button>
                     ))}
                   </div>
                 </div>
                 {visible.length === 0 && (
-                  <p className="text-[12px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'No items in this tab' : 'Belum ada item di tab ini'}</p>
+                  <p className="text-cap text-center py-8" style={{ color: 'var(--ink-soft)' }}>{locale === 'en' ? 'No items in this tab' : 'Belum ada item di tab ini'}</p>
                 )}
                 <div className={visible.length === 0 ? 'hidden' : 'overflow-x-auto hidden md:block'}>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-[11px] uppercase tracking-wider border-b" style={{ color: 'var(--ink-soft)', background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}>
+                      <tr className="text-2xs uppercase tracking-wider border-b" style={{ color: 'var(--ink-soft)', background: 'var(--surface-2)', borderColor: 'var(--border-soft)' }}>
                         <th className="text-left font-medium px-4 py-2.5">{t('recurring.col_name')}</th>
                         <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_category')}</th>
                         <th className="text-left font-medium px-3 py-2.5">{t('recurring.col_frequency')}</th>
@@ -740,17 +740,17 @@ export default function RecurringPage() {
                               <button type="button" onClick={(e) => { e.stopPropagation(); openDetail(r) }} className="flex items-center gap-3 min-w-0 w-full text-left cursor-pointer">
                                 <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10), opacity: r.is_active ? 1 : 0.5 }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                                 <div className="min-w-0">
-                                  <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-[9px] uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}</p>
-                                  <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{TYPE_LABELS[r.type]}{r.notes ? ` · ${r.notes}` : ''}</p>
+                                  <p className="font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--ink)' }}>{r.name}{!r.is_active && <span className="text-3xs uppercase tracking-wide px-1 py-0.5 rounded" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{t('recurring.badge_paused')}</span>}</p>
+                                  <p className="text-2xs truncate" style={{ color: 'var(--ink-soft)' }}>{TYPE_LABELS[r.type]}{r.notes ? ` · ${r.notes}` : ''}</p>
                                 </div>
                               </button>
                             </td>
-                            <td className="px-3 py-3 text-[13px]" style={{ color: 'var(--ink-muted)' }}>{r.category}</td>
-                            <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{FREQ_LABELS[r.frequency]}</span></td>
-                            <td className="px-3 py-3 text-[13px] truncate" style={{ color: 'var(--ink-muted)' }}>{acc?.name ?? '—'}</td>
+                            <td className="px-3 py-3 text-ui" style={{ color: 'var(--ink-muted)' }}>{r.category}</td>
+                            <td className="px-3 py-3"><span className="inline-block rounded-full px-2 py-0.5 text-3xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{FREQ_LABELS[r.frequency]}</span></td>
+                            <td className="px-3 py-3 text-ui truncate" style={{ color: 'var(--ink-muted)' }}>{acc?.name ?? '—'}</td>
                             <td className="px-3 py-3 text-right">
-                              <p className="num text-[13px] font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next, dloc) : '—'}</p>
-                              <p className="num text-[10px]" style={{ color: urgent ? CORAL_INK : 'var(--ink-soft)' }}>{ended ? t('recurring.badge_ended') : r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
+                              <p className="num text-ui font-medium" style={{ color: urgent ? CORAL_INK : 'var(--ink)' }}>{next ? dmy(next, dloc) : '—'}</p>
+                              <p className="num text-3xs" style={{ color: urgent ? CORAL_INK : 'var(--ink-soft)' }}>{ended ? t('recurring.badge_ended') : r.is_active ? `${days} ${t('recurring.days_left')}` : t('recurring.paused')}</p>
                             </td>
                             <td className="px-4 py-3 text-right">
                               <span className="num font-semibold tabular" style={{ color: 'var(--ink)' }}>{formatCurrency(r.amount)}</span>
@@ -772,7 +772,7 @@ export default function RecurringPage() {
               {/* Breakdown + Saran (desktop) */}
               <div className="hidden md:grid gap-3 lg:grid-cols-2">
                 <div className="s-card p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.by_category')}</p>
+                  <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('recurring.by_category')}</p>
                   {breakdown.length > 0 ? (
                     <>
                       <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
@@ -783,7 +783,7 @@ export default function RecurringPage() {
                           <div key={b.cat} className="flex items-center justify-between text-sm">
                             <span className="flex items-center gap-2 min-w-0"><span className="size-2 rounded-full shrink-0" style={{ background: catMeta(b.cat).color }} /><span className="truncate" style={{ color: 'var(--ink-muted)' }}>{b.cat}</span></span>
                             <span className="flex items-center gap-3 shrink-0">
-                              <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{b.count} {t('recurring.item')}</span>
+                              <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{b.count} {t('recurring.item')}</span>
                               <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(b.total))}</span>
                             </span>
                           </div>
@@ -794,12 +794,12 @@ export default function RecurringPage() {
                 </div>
 
                 <div className="s-card p-5">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: VIOLET_INK }}><Sparkles className="size-3.5" /> {t('recurring.suggestions_title')}</p>
+                  <p className="text-2xs font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: VIOLET_INK }}><Sparkles className="size-3.5" /> {t('recurring.suggestions_title')}</p>
                   <div className="mt-3 space-y-2.5">
                     {suggestions.length > 0 ? suggestions.map((s, i) => (
                       <div key={i} className="rounded-xl p-3" style={{ background: 'var(--surface-2)' }}>
-                        <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</p>
-                        <p className="hidden md:block text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
+                        <p className="text-ui font-semibold" style={{ color: 'var(--ink)' }}>{s.title}</p>
+                        <p className="hidden md:block text-cap mt-0.5" style={{ color: 'var(--ink-muted)' }}>{s.body}</p>
                       </div>
                     )) : <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{t('recurring.no_suggestions')}</p>}
                   </div>
@@ -857,7 +857,7 @@ export default function RecurringPage() {
               <div className="grid gap-1.5"><Label>{t('recurring.field_date')} {form.frequency === 'monthly' ? '(1–31)' : ''}</Label>
                 {form.frequency === 'monthly'
                   ? <Input type="number" min={1} max={31} value={form.day_of_period} onChange={(e) => setForm({ ...form, day_of_period: Number(e.target.value) || 1 })} />
-                  : <p className="text-[12px] flex items-center rounded-md border px-3" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)', minHeight: 36 }}>{form.frequency === 'weekly' ? t('recurring.weekly_follows_start') : form.frequency === 'yearly' ? t('recurring.yearly_follows_start') : t('recurring.daily_every_day')}</p>}
+                  : <p className="text-cap flex items-center rounded-md border px-3" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)', minHeight: 36 }}>{form.frequency === 'weekly' ? t('recurring.weekly_follows_start') : form.frequency === 'yearly' ? t('recurring.yearly_follows_start') : t('recurring.daily_every_day')}</p>}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -900,7 +900,7 @@ export default function RecurringPage() {
                   <div key={i} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--border-soft)' }}>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{c.category} · {t('recurring.appeared')} {c.count}× · ~{formatCurrency(c.amount)}</p>
+                      <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{c.category} · {t('recurring.appeared')} {c.count}× · ~{formatCurrency(c.amount)}</p>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => { setDetectOpen(false); openAdd({ name: c.name, amount: c.amount, category: c.category, type: 'expense' }) }}><Plus className="h-3.5 w-3.5" /> {t('recurring.add')}</Button>
                   </div>
@@ -936,9 +936,9 @@ export default function RecurringPage() {
                 return (
                   <div className="flex items-center gap-3 min-w-0 pr-8">
                     <div className="size-9 rounded-full grid place-items-center shrink-0" style={{ background: av.bg }}>
-                      <span className="text-[12px] font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
+                      <span className="text-cap font-semibold" style={{ color: av.fg }}>{providerInitials(detailItem.name)}</span>
                     </div>
-                    <SheetTitle className="text-[16px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                    <SheetTitle className="text-lead font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
                       {detailItem.name}
                     </SheetTitle>
                   </div>

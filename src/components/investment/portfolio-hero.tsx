@@ -78,7 +78,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
             {formatCompactCurrency(totals.market)}
           </p>
           <span
-            className="num inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+            className="num inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-semibold"
             data-calm-hide="" data-loss={up ? undefined : 'true'}
             style={{
               background: up ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
@@ -88,7 +88,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
             {up ? '+' : ''}{totals.plPct.toFixed(2)}%
           </span>
         </div>
-        <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-muted)' }}>
+        <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>
           <span
             className="num tabular font-semibold"
             data-calm-hide="" data-loss={up ? undefined : 'true'}
@@ -115,7 +115,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
                   type="button"
                   aria-pressed={active}
                   onClick={() => setChartRange(r.key)}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition"
+                  className="px-2.5 py-1 rounded-full text-2xs font-semibold transition"
                   style={active
                     ? { background: 'var(--ink)', color: 'var(--surface)' }
                     : { background: 'var(--surface)', color: 'var(--ink-muted)' }}
@@ -175,7 +175,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
                   type="button"
                   aria-pressed={active}
                   onClick={() => setChartRange(r.key)}
-                  className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+                  className="px-2.5 py-1 rounded-md text-2xs font-semibold transition"
                   style={active ? { background: 'var(--surface)', color: 'var(--ink)', boxShadow: 'var(--card-shadow)' } : { color: 'var(--ink-soft)' }}
                 >
                   {r.key === 'all' ? t('investment.range_all') : r.label}
@@ -198,7 +198,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
               return (
                 <>
                   <div className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
+                    <span className="w-28 shrink-0 text-3xs uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
                       {t('investment.stat_invested')}
                     </span>
                     <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
@@ -209,7 +209,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-[10px] uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
+                    <span className="w-28 shrink-0 text-3xs uppercase tracking-wide truncate" style={{ color: 'var(--ink-soft)' }}>
                       {t('investment.chart_interim_now')}
                     </span>
                     <div className="flex-1 h-6 rounded-md overflow-hidden" style={{ background: 'var(--surface-3)' }}>
@@ -219,7 +219,7 @@ export function PortfolioHero({ totals, todayPL, dividenYtd, institutionCount, s
                       {formatCurrency(totals.market)}
                     </span>
                   </div>
-                  <p className="text-[11px] text-center" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-2xs text-center" style={{ color: 'var(--ink-soft)' }}>
                     {t('investment.chart_collecting_desc')}
                   </p>
                 </>

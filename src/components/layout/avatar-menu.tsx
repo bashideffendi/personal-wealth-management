@@ -147,7 +147,7 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
           <div className="py-1 border-t" style={{ borderColor: 'var(--border-soft)' }}>
             <MenuItem onClick={cycleTheme} icon={ThemeIcon}>
               <span className="flex-1 text-left">{themeLabel}</span>
-              <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+              <span className="text-3xs" style={{ color: 'var(--ink-soft)' }}>
                 Klik utk ganti
               </span>
             </MenuItem>

@@ -62,18 +62,18 @@ export function ProviderCatalog({
                 className="rounded-xl px-1.5 py-2.5 flex flex-col items-center gap-1.5 transition-colors active:bg-[var(--surface-2)]"
               >
                 <span
-                  className="size-10 rounded-full grid place-items-center text-[13px] font-semibold text-white select-none"
+                  className="size-10 rounded-full grid place-items-center text-ui font-semibold text-white select-none"
                   style={{ background: p.color }}
                   aria-hidden
                 >
                   {providerInitials(p.name)}
                 </span>
-                <span className="text-[11px] leading-tight text-center w-full truncate" style={{ color: 'var(--ink-muted)' }}>{p.name}</span>
+                <span className="text-2xs leading-tight text-center w-full truncate" style={{ color: 'var(--ink-muted)' }}>{p.name}</span>
               </button>
             ))}
           </div>
         ) : (
-          <p className="text-[12px] text-center py-8" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-cap text-center py-8" style={{ color: 'var(--ink-soft)' }}>
             {locale === 'en' ? 'No match' : 'Gak ketemu'}
           </p>
         )}

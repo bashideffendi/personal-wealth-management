@@ -77,7 +77,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
                 <span className="leading-none tabular-nums font-bold" style={{ fontSize: 32, letterSpacing: '-0.03em', color: tierMeta.ink }}>
                   {score}
                 </span>
-                <span className="text-[11px] mt-1.5 font-medium opacity-50" style={{ color: tierMeta.ink }}>
+                <span className="text-2xs mt-1.5 font-medium opacity-50" style={{ color: tierMeta.ink }}>
                   {t('health_card.out_of_100')}
                 </span>
               </div>
@@ -88,7 +88,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
               </span>
               {tier === 'thriving' && <Sparkles className="size-4" style={{ color: tierMeta.ink }} />}
             </div>
-            <p className="text-[12.5px] leading-relaxed max-w-[26ch]" style={{ color: 'var(--ink-muted)' }}>
+            <p className="text-cap leading-relaxed max-w-[26ch]" style={{ color: 'var(--ink-muted)' }}>
               {tierMeta.description}
             </p>
           </div>
@@ -119,14 +119,14 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
           </span>
           <span className="text-base font-semibold" style={{ color: burnInk }}>{t('health_card.months')}</span>
         </div>
-        <p className="text-[12px] mt-2 font-bold uppercase tracking-[0.08em]" style={{ color: burnInk }}>
+        <p className="text-cap mt-2 font-bold uppercase tracking-[0.08em]" style={{ color: burnInk }}>
           {burnVerdict}
         </p>
 
         {/* Runway bar — coverage vs target 6 bulan */}
         {hasExpenseData && (
           <div className="mt-5">
-            <div className="flex justify-between text-[10px] mb-1.5" style={{ color: 'var(--ink-soft)' }}>
+            <div className="flex justify-between text-3xs mb-1.5" style={{ color: 'var(--ink-soft)' }}>
               <span>0</span>
               <span>Target 6 bln</span>
             </div>
@@ -134,7 +134,7 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
           </div>
         )}
 
-        <p className="text-[12px] mt-4 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+        <p className="text-cap mt-4 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
           {hasExpenseData ? (
             <>{t('health_card.coverage_prefix')}{' '}
             <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{burnMonths > 99 ? '> 99' : burnMonths.toFixed(1)}</span> {t('health_card.coverage_suffix')}</>
@@ -144,11 +144,11 @@ export function FinancialHealthCard({ result, liquidBalance, monthlyExpense, par
         </p>
 
         <div className="mt-auto pt-4 border-t space-y-2" style={{ borderColor: `color-mix(in srgb, ${burnColor} 12%, transparent)` }}>
-          <div className="flex items-center justify-between text-[12px]">
+          <div className="flex items-center justify-between text-cap">
             <span style={{ color: 'var(--ink-muted)' }}>{t('health_card.liquid_cash')}</span>
             <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(liquidBalance)}</span>
           </div>
-          <div className="flex items-center justify-between text-[12px]">
+          <div className="flex items-center justify-between text-cap">
             <span style={{ color: 'var(--ink-muted)' }}>{t('health_card.expense_per_month')}</span>
             <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlyExpense)}</span>
           </div>
@@ -181,9 +181,9 @@ function IndicatorBar({ indicator }: { indicator: FHSIndicator }) {
 
   return (
     <div title={tooltip} className="cursor-help">
-      <div className="flex items-center justify-between text-[12.5px] mb-1.5">
+      <div className="flex items-center justify-between text-cap mb-1.5">
         <span style={{ color: 'var(--ink)' }}>{indicator.label}</span>
-        <span className="num text-[11px] font-semibold shrink-0" style={{ color: isNa ? 'var(--ink-soft)' : barInk }}>
+        <span className="num text-2xs font-semibold shrink-0" style={{ color: isNa ? 'var(--ink-soft)' : barInk }}>
           {isNa ? 'N/A' : indicator.score}
         </span>
       </div>

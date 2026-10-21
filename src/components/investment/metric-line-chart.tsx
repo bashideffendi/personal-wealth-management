@@ -84,7 +84,7 @@ export function MetricLineChart({
                 <p className="num tabular text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                   {typeof v === 'number' ? fmt(v, format) : '—'}
                 </p>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {String(label ?? '')}
                 </p>
               </div>

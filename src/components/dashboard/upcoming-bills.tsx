@@ -168,7 +168,7 @@ export function UpcomingBills({ contracts, debts, creditCards, recurring }: Upco
       </div>
       {bills.length > 6 && (
         <p
-          className="text-[11px] text-center mt-2"
+          className="text-2xs text-center mt-2"
           style={{ color: 'var(--text-mute)' }}
         >
           +{bills.length - 6} {t('upcoming_bills.more_bills')}

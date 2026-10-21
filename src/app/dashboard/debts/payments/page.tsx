@@ -143,23 +143,23 @@ export default function DebtPaymentsPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="s-card p-5">
               <div className="flex items-start justify-between">
-                <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.eyebrow')}</p>
+                <p className="text-cap" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.eyebrow')}</p>
                 <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--c-mint-soft)' }}>
                   <BadgeDollarSign className="size-4" style={{ color: 'var(--c-mint-ink)' }} />
                 </div>
               </div>
               <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(totalPaid)}</p>
-              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>{payments.length} {t('debts_payments.transactions')}</p>
+              <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-soft)' }}>{payments.length} {t('debts_payments.transactions')}</p>
             </div>
             <div className="s-card p-5">
               <div className="flex items-start justify-between">
-                <p className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.this_month')}</p>
+                <p className="text-cap" style={{ color: 'var(--ink-muted)' }}>{t('debts_payments.this_month')}</p>
                 <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
                   <CalendarDays className="size-4" style={{ color: 'var(--ink)' }} />
                 </div>
               </div>
               <p className="num tabular text-xl sm:text-2xl font-bold mt-3 leading-none" style={{ color: 'var(--ink)' }}>{formatCurrency(thisMonth)}</p>
-              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-soft)' }}>
                 {new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { month: 'long', year: 'numeric' })}
               </p>
             </div>
@@ -183,7 +183,7 @@ export default function DebtPaymentsPage() {
                       <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: 'var(--c-mint)' }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{d?.name ?? '—'}</p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                        <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                           {formatDate(p.date)}{p.notes ? ` · ${p.notes}` : ''}
                         </p>
                       </div>
@@ -207,16 +207,16 @@ export default function DebtPaymentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow style={{ borderColor: 'var(--border-soft)' }}>
-                    <TableHead className="px-5 text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                    <TableHead className="px-5 text-2xs uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
                       {locale === 'en' ? 'Date' : 'Tanggal'}
                     </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                    <TableHead className="text-2xs uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
                       {locale === 'en' ? 'Debt' : 'Utang'}
                     </TableHead>
-                    <TableHead className="text-right text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                    <TableHead className="text-right text-2xs uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
                       {locale === 'en' ? 'Amount' : 'Jumlah'}
                     </TableHead>
-                    <TableHead className="text-[11px] uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
+                    <TableHead className="text-2xs uppercase tracking-[0.08em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
                       {locale === 'en' ? 'Notes' : 'Catatan'}
                     </TableHead>
                     <TableHead className="w-12 px-5">
@@ -235,7 +235,7 @@ export default function DebtPaymentsPage() {
                         <TableCell>
                           <p className="font-semibold" style={{ color: 'var(--ink)' }}>{d?.name ?? '—'}</p>
                           {d && (
-                            <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                            <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                               {locale === 'en' ? DEBT_CAT_LABEL[d.category]?.en : DEBT_CAT_LABEL[d.category]?.id}
                             </p>
                           )}

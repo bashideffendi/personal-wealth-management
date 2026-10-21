@@ -564,12 +564,12 @@ export function MonthlyReportBody({
           <div className="mt-3 flex flex-col">
             {r.top_expenses.map((tx, i) => (
               <div key={i} className="flex items-center gap-3 py-2.5" style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                <span className="num shrink-0 w-11 text-[11px]" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}</span>
+                <span className="num shrink-0 w-11 text-2xs" style={{ color: 'var(--text-mute)' }}>{new Date(tx.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}</span>
                 <span className="flex-1 min-w-0">
-                  <span className="block truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</span>
-                  <span className="block truncate text-[11px]" style={{ color: 'var(--text-mute)' }}>{tx.category}</span>
+                  <span className="block truncate text-ui" style={{ color: 'var(--ink)' }}>{tx.description || '—'}</span>
+                  <span className="block truncate text-2xs" style={{ color: 'var(--text-mute)' }}>{tx.category}</span>
                 </span>
-                <span className="num font-semibold shrink-0 text-[13.5px]" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</span>
+                <span className="num font-semibold shrink-0 text-ui" style={{ color: 'var(--c-coral-ink)' }}>{money(tx.amount)}</span>
               </div>
             ))}
           </div>

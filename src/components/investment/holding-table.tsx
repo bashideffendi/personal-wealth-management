@@ -205,7 +205,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
           <p className="eyebrow">{t('investment.holding')}</p>
           <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.holding_list')}</h2>
           {wedgeSummary && (
-            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-muted)' }}>
+            <p className="text-cap mt-1" style={{ color: 'var(--ink-muted)' }}>
               <span className="num tabular font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{wedgeSummary.under}</span>
               {' '}{t('investment.wedge_of')} {wedgeSummary.covered} {t('investment.wedge_summary')}{' '}
               <Link href="/dashboard/assets/investment/stock?tab=research" className="inline-flex items-center gap-0.5 font-medium hover:underline" style={{ color: 'var(--c-mint-ink)' }}>
@@ -224,7 +224,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setTab(tabItem.key)}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
+                  className="px-2.5 py-1 rounded-full text-2xs font-medium transition"
                   style={active
                     ? { background: 'var(--c-primary)', color: 'var(--on-black)' }
                     : { background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
@@ -265,7 +265,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
                     key={col.key ?? `static-${i}`}
                     scope="col"
                     aria-sort={col.key == null ? undefined : active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
-                    className={`${col.numeric ? 'text-right' : 'text-left'} text-[11px] uppercase tracking-[0.08em] font-medium px-3 py-2 whitespace-nowrap`}
+                    className={`${col.numeric ? 'text-right' : 'text-left'} text-2xs uppercase tracking-[0.08em] font-medium px-3 py-2 whitespace-nowrap`}
                     style={{ color: 'var(--ink-soft)' }}
                   >
                     {col.key == null ? (
@@ -296,7 +296,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
               return (
                 <tr key={r.id} className="border-b transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                   <td className="px-3 py-2.5 whitespace-nowrap">
-                    <span className="num tabular text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
+                    <span className="num tabular text-2xs font-bold px-1.5 py-0.5 rounded" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
                       {r.sym || '—'}
                     </span>
                   </td>
@@ -304,12 +304,12 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
                     {r.href ? (
                       <Link href={r.href} className="group/name block">
                         <p className="truncate font-medium group-hover/name:underline" style={{ color: 'var(--ink)' }}>{r.name}</p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{r.classLabel}</p>
+                        <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{r.classLabel}</p>
                       </Link>
                     ) : (
                       <>
                         <p className="truncate font-medium" style={{ color: 'var(--ink)' }}>{r.name}</p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{r.classLabel}</p>
+                        <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{r.classLabel}</p>
                       </>
                     )}
                   </td>
@@ -326,15 +326,15 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
                         className="inline-flex flex-col items-end gap-0.5 group/fv"
                         title={`${tone.label} · ${t('investment.fair_value_hint')}`}
                       >
-                        <span className="num tabular text-[12px] group-hover/fv:underline" style={{ color: 'var(--ink-muted)' }}>
+                        <span className="num tabular text-cap group-hover/fv:underline" style={{ color: 'var(--ink-muted)' }}>
                           Rp {priceFmt.format(r.fairValue)}
                         </span>
-                        <span className="num tabular text-[10px] font-semibold px-1.5 py-px rounded" style={{ background: tone.bg, color: tone.color }}>
+                        <span className="num tabular text-3xs font-semibold px-1.5 py-px rounded" style={{ background: tone.bg, color: tone.color }}>
                           MoS {r.mos >= 0 ? '+' : ''}{(r.mos * 100).toFixed(0)}%
                         </span>
                       </Link>
                     ) : (
-                      <span className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>—</span>
+                      <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>—</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-right num tabular whitespace-nowrap" data-calm-hide="" data-loss={r.plPct != null && !plUp ? 'true' : undefined} style={{ color: r.plPct == null ? 'var(--ink-soft)' : plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
@@ -358,20 +358,20 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
           const rowStyle = { minHeight: 56, borderTop: i ? '1px solid var(--border-soft)' : 'none' }
           const inner = (
             <>
-              <span className="num tabular text-[11px] font-bold px-1.5 py-1 rounded shrink-0" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
+              <span className="num tabular text-2xs font-bold px-1.5 py-1 rounded shrink-0" style={{ background: `${r.classColor}1A`, color: `color-mix(in srgb, ${r.classColor} 60%, var(--ink))` }}>
                 {r.sym || '—'}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
-                <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{r.name}</p>
+                <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {r.classLabel} · {r.qty.toLocaleString('id-ID')}
                   {tone && r.mos != null ? <span className="num font-semibold" style={{ color: tone.color }}> · MoS {r.mos >= 0 ? '+' : ''}{(r.mos * 100).toFixed(0)}%</span> : null}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(r.market)}</p>
+                <p className="num tabular text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(r.market)}</p>
                 {r.plPct != null && (
-                  <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" data-calm-hide="" data-loss={!plUp ? 'true' : undefined} style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
+                  <p className="num tabular text-2xs font-semibold leading-tight mt-0.5" data-calm-hide="" data-loss={!plUp ? 'true' : undefined} style={{ color: plUp ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)' }}>
                     {plUp ? '+' : ''}{r.plPct.toFixed(1)}%
                   </p>
                 )}
@@ -384,7 +384,7 @@ export function HoldingTable({ enriched, quotes }: HoldingTableProps) {
         })}
       </div>
       {wedgeSummary && (
-        <p className="px-5 sm:px-6 py-2.5 text-[10px] border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
+        <p className="px-5 sm:px-6 py-2.5 text-3xs border-t" style={{ color: 'var(--ink-soft)', borderColor: 'var(--border-soft)' }}>
           {t('investment.fair_value_hint')}
         </p>
       )}

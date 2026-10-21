@@ -25,11 +25,11 @@ type Tint = 'blue' | 'violet' | 'coral'
 function SectionLabel({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="mt-4 mb-1.5 px-0.5">
-      <h2 className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+      <h2 className="text-ui font-semibold" style={{ color: 'var(--ink)' }}>
         {title}
       </h2>
       {hint && (
-        <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-2xs mt-0.5 leading-snug" style={{ color: 'var(--ink-soft)' }}>
           {hint}
         </p>
       )}
@@ -80,7 +80,7 @@ export default function AppearancePage() {
               >
                 <Icon className="size-[19px]" />
               </span>
-              <span className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>
+              <span className="text-body font-medium" style={{ color: 'var(--ink)' }}>
                 {opt.label}
               </span>
               {active && (
@@ -116,7 +116,7 @@ export default function AppearancePage() {
                 <Icon className="size-[17px]" />
               </span>
               <span
-                className="text-[15px] font-medium flex-1 min-w-0 truncate"
+                className="text-row font-medium flex-1 min-w-0 truncate"
                 style={{ color: 'var(--ink)' }}
               >
                 {opt.label}
@@ -166,14 +166,14 @@ export default function AppearancePage() {
                 <CategoryIcon category="Makanan" className="size-[17px]" />
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block text-[15px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+                <span className="block text-row font-medium truncate" style={{ color: 'var(--ink)' }}>
                   {id ? 'Makanan' : 'Food'}
                 </span>
-                <span className="block text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
+                <span className="block text-2xs" style={{ color: 'var(--ink-soft)' }}>
                   {id ? 'Contoh transaksi' : 'Sample transaction'}
                 </span>
               </span>
-              <span className="num text-[15px] font-semibold shrink-0" style={{ color: 'var(--c-coral-ink)' }}>
+              <span className="num text-row font-semibold shrink-0" style={{ color: 'var(--c-coral-ink)' }}>
                 -Rp 25.000
               </span>
             </div>

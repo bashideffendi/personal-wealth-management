@@ -108,13 +108,13 @@ export function MonthChangeStrip({
     >
       <div className="flex items-center gap-2 mb-1.5">
         <span
-          className="text-[10px] uppercase font-semibold tracking-[0.10em]"
+          className="text-3xs uppercase font-semibold tracking-[0.10em]"
           style={{ color: 'var(--ink-soft)' }}
         >
           Apa yang berubah bulan ini
         </span>
         <span
-          className="text-[10px]"
+          className="text-3xs"
           style={{ color: 'var(--ink-soft)' }}
         >
           · vs rata-rata {actualPriorMonthCount} bulan
@@ -169,7 +169,7 @@ function ChangeRow({
             {formatCurrency(Math.round(Math.abs(row.abs)))}
           </span>
         </p>
-        <p className="text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+        <p className="text-2xs" style={{ color: 'var(--ink-muted)' }}>
           {row.avg > 0
             ? `${sign}${Math.abs(Math.round(row.pct))}% · rata-rata ${formatCurrency(
                 Math.round(row.avg),

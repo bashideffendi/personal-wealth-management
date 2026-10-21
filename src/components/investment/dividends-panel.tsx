@@ -193,7 +193,7 @@ export function DividendsPanel() {
                   <tr key={d.id} className="border-b" style={{ borderColor: 'var(--border-soft)' }}>
                     <Td>{formatDate(d.pay_date)}</Td>
                     <Td>
-                      <span className="rounded-sm px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-2xs font-semibold" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
                         {d.ticker ?? s?.ticker ?? '—'}
                       </span>
                     </Td>
@@ -292,7 +292,7 @@ function monthsSpan(items: Dividend[]): number {
 
 function Th({ children, className = '' }: { children?: React.ReactNode; className?: string }) {
   return (
-    <th className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider ${className}`} style={{ color: 'var(--ink-muted)' }}>
+    <th className={`px-3 py-2 text-left text-2xs font-semibold uppercase tracking-wider ${className}`} style={{ color: 'var(--ink-muted)' }}>
       {children}
     </th>
   )

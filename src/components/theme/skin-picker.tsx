@@ -60,8 +60,8 @@ export function SkinPicker() {
               <span style={{ position: 'absolute', left: 8, top: 9, width: 56, height: 10, borderRadius: 4, background: o.sw.card, border: `1px solid ${o.sw.border}` }} />
               <span style={{ position: 'absolute', left: 8, top: 25, width: 30, height: 9, borderRadius: 999, background: o.sw.accent }} />
             </span>
-            <span className="block text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{o.label}</span>
-            <span className="block text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{o.desc}</span>
+            <span className="block text-ui font-semibold" style={{ color: 'var(--ink)' }}>{o.label}</span>
+            <span className="block text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{o.desc}</span>
           </button>
         )
       })}

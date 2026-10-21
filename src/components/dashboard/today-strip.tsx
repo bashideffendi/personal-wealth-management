@@ -109,14 +109,14 @@ export function TodayStrip({ monthTransactions, monthBudgets = [] }: TodayStripP
       <div className="px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <span
-            className="text-[10px] uppercase font-semibold tracking-[0.10em]"
+            className="text-3xs uppercase font-semibold tracking-[0.10em]"
             style={{ color: 'var(--ink-soft)' }}
           >
             {t('today_strip.heading')}
           </span>
           <Link
             href="/dashboard/transactions"
-            className="text-[11px] font-medium hover:underline inline-flex items-center gap-0.5"
+            className="text-2xs font-medium hover:underline inline-flex items-center gap-0.5"
             style={{ color: 'var(--c-mint-ink)' }}
           >
             {t('today_strip.view_all')}
@@ -190,7 +190,7 @@ function Stat({
   return (
     <div className="min-w-0">
       <p
-        className="text-[10px] uppercase tracking-[0.08em] font-medium truncate"
+        className="text-3xs uppercase tracking-[0.08em] font-medium truncate"
         style={{ color: 'var(--ink-soft)' }}
       >
         {label}
@@ -203,7 +203,7 @@ function Stat({
       </p>
       {sub && (
         <p
-          className="text-[11px] mt-0.5 truncate"
+          className="text-2xs mt-0.5 truncate"
           style={{ color: 'var(--ink-muted)' }}
         >
           {sub}

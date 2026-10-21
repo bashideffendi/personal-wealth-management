@@ -58,14 +58,14 @@ export function BottomSheet({
 
         <div className={cn('px-4', hideTitle ? 'sr-only' : 'pb-2 shrink-0')}>
           <SheetTitle
-            className="text-[17px] font-semibold leading-tight"
+            className="text-lead font-semibold leading-tight"
             style={{ color: 'var(--ink)' }}
           >
             {title}
           </SheetTitle>
           {description && (
             <SheetDescription
-              className="text-[13px] mt-0.5"
+              className="text-ui mt-0.5"
               style={{ color: 'var(--ink-soft)' }}
             >
               {description}

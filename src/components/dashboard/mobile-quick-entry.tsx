@@ -147,7 +147,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
     window.dispatchEvent(new CustomEvent('klunting:data-changed'))
   }
 
-  const keyBtn = 'rounded-[12px] py-3 text-center text-[17px] font-medium active:opacity-60 transition-opacity'
+  const keyBtn = 'rounded-[12px] py-3 text-center text-lead font-medium active:opacity-60 transition-opacity'
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange} title={category} hideTitle className="h-[92dvh]">
@@ -159,7 +159,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
         <button type="button" onClick={() => onOpenChange(false)} aria-label={t('common.close')} className="grid place-items-center size-8 rounded-full" style={{ color: 'var(--ink)' }}>
           <X className="size-[17px]" />
         </button>
-        <span className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>{category}</span>
+        <span className="text-row font-semibold" style={{ color: 'var(--ink)' }}>{category}</span>
         <Link href="/dashboard/transactions" aria-label={t('nav.transactions')} onClick={() => onOpenChange(false)} className="grid place-items-center size-9 rounded-full" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
           <ArrowUpRight className="size-[16px]" />
         </Link>
@@ -176,12 +176,12 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
       {budget > 0 && (
         <div className="flex justify-between -mx-3 px-4 py-2.5 mb-2.5" style={{ background: remaining < 0 ? 'var(--c-coral-soft)' : 'var(--c-mint-soft)' }}>
           <span>
-            <b className="num tabular text-[17px] font-bold" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{formatCompactCurrency(spent + amount)}</b>
-            <span className="block text-[12px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{spentPct.toFixed(0)}% {t('safe_card.spent').toLowerCase()}</span>
+            <b className="num tabular text-lead font-bold" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{formatCompactCurrency(spent + amount)}</b>
+            <span className="block text-cap" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{spentPct.toFixed(0)}% {t('safe_card.spent').toLowerCase()}</span>
           </span>
           <span className="text-right">
-            <b className="num tabular text-[17px] font-bold" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{remaining < 0 ? '−' : ''}{formatCompactCurrency(Math.abs(remaining))}</b>
-            <span className="block text-[12px]" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{t('month_budget.stat_remaining')}</span>
+            <b className="num tabular text-lead font-bold" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{remaining < 0 ? '−' : ''}{formatCompactCurrency(Math.abs(remaining))}</b>
+            <span className="block text-cap" style={{ color: remaining < 0 ? 'var(--c-coral-ink)' : 'var(--c-mint-ink)' }}>{t('month_budget.stat_remaining')}</span>
           </span>
         </div>
       )}
@@ -194,7 +194,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
               key={s}
               type="button"
               onClick={() => setSub((cur) => (cur === s ? null : s))}
-              className="shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-medium transition-colors"
+              className="shrink-0 rounded-full px-3 py-1.5 text-2xs font-medium transition-colors"
               style={{
                 background: sub === s ? 'var(--ink)' : 'var(--surface-2)',
                 color: sub === s ? 'var(--surface)' : 'var(--ink-muted)',
@@ -208,7 +208,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
 
       {/* Meta chips: akun · tanggal · catatan */}
       <div className="flex gap-1.5 items-center pb-2.5 flex-wrap">
-        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
+        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-2xs font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <Wallet className="size-3.5" />
           {accounts.find((a) => a.id === accountId)?.name ?? t('quickadd.pick_account_first')}
           <select
@@ -220,14 +220,14 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
             {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </label>
-        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
+        <label className="relative shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-2xs font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <CalendarDays className="size-3.5" />
           {date === todayIso()
             ? (locale === 'id' ? 'Hari ini' : 'Today')
             : (() => { const d = new Date(`${date}T00:00:00`); return `${d.getDate()} ${monthShort(d.getMonth(), locale)}` })()}
           <input type="date" aria-label="Tanggal" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="absolute inset-0 opacity-0" />
         </label>
-        <button type="button" onClick={() => setNoteOpen((v) => !v)} className="shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11.5px] font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
+        <button type="button" onClick={() => setNoteOpen((v) => !v)} className="shrink-0 flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-2xs font-medium" style={{ background: 'var(--c-coral-soft)', color: 'var(--c-mint-ink)' }}>
           <StickyNote className="size-3.5" />
           {note ? note.slice(0, 14) + (note.length > 14 ? '…' : '') : t('quickadd.note_label')}
         </button>
@@ -238,7 +238,7 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={t('quickadd.description')}
-          className="w-full rounded-[10px] px-3 py-2 mb-2.5 text-[13px] outline-none"
+          className="w-full rounded-[10px] px-3 py-2 mb-2.5 text-ui outline-none"
           style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
         />
       )}
@@ -258,9 +258,9 @@ export function MobileQuickEntry({ open, onOpenChange, category, type, budget, s
           <button key={d} type="button" onClick={() => press(d)} className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>{d}</button>
         ))}
         <span aria-hidden="true" />
-        <span aria-hidden="true" className="grid place-items-center text-[15px] font-medium select-none" style={{ color: 'var(--ink-soft)' }}>Rp</span>
+        <span aria-hidden="true" className="grid place-items-center text-row font-medium select-none" style={{ color: 'var(--ink-soft)' }}>Rp</span>
         <button type="button" onClick={() => press('0')} className={keyBtn} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>0</button>
-        <button type="button" onClick={() => press('000')} className={`${keyBtn} text-[13px]`} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>000</button>
+        <button type="button" onClick={() => press('000')} className={`${keyBtn} text-ui`} style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>000</button>
         <button
           type="button"
           onClick={() => void save()}

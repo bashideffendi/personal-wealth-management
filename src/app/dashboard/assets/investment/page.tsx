@@ -530,7 +530,7 @@ export default function InvestmentOverviewPage() {
       {/* F9 mobile: header "Kelas Aset" (sudah di kanvas dalam komponen) di-restyle
           jadi rupa .m-sec — 13px/600 ink, non-uppercase. `!` wajib: .eyebrow
           unlayered di globals ngalahin utilities tanpa important. Desktop tetap. */}
-      <div className="max-md:[&_.eyebrow]:text-[13px]! max-md:[&_.eyebrow]:font-semibold! max-md:[&_.eyebrow]:normal-case! max-md:[&_.eyebrow]:tracking-normal! max-md:[&_.eyebrow]:text-[color:var(--ink)]! max-md:[&>div>div:first-child]:mb-1.5">
+      <div className="max-md:[&_.eyebrow]:text-ui! max-md:[&_.eyebrow]:font-semibold! max-md:[&_.eyebrow]:normal-case! max-md:[&_.eyebrow]:tracking-normal! max-md:[&_.eyebrow]:text-[color:var(--ink)]! max-md:[&>div>div:first-child]:mb-1.5">
         <AssetClassCards byClass={byClass} byCategory={byCategory} />
       </div>
 
@@ -581,7 +581,7 @@ export default function InvestmentOverviewPage() {
               <div className="relative h-[150px] md:h-[180px]">
                 <AllocationDonut data={donut} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
                     {donut.length} {t('investment.classes')}
                   </p>
                   <p className="num tabular text-base font-semibold leading-tight" title={formatCurrency(totals.market)} style={{ color: 'var(--ink)' }}>
@@ -617,7 +617,7 @@ export default function InvestmentOverviewPage() {
         <div className="lg:col-span-3 flex flex-col">
           <div className="m-sec md:hidden" style={{ marginTop: 0 }}>
             <span>{t('investment.return_per_class')}</span>
-            <span className="text-[11px] font-normal" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
+            <span className="text-2xs font-normal" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
           </div>
           <div className="s-card p-5 sm:p-6 flex-1 flex flex-col">
           <div className="flex items-start justify-between gap-2 mb-4 max-md:hidden">
@@ -625,7 +625,7 @@ export default function InvestmentOverviewPage() {
               <p className="eyebrow">{t('investment.performance')}</p>
               <h2 className="text-xl font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{t('investment.return_per_class')}</h2>
             </div>
-            <span className="text-[11px] shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
+            <span className="text-2xs shrink-0 mt-1" style={{ color: 'var(--ink-soft)' }}>{t('investment.performance_hint')}</span>
           </div>
           {kinerja.length === 0 ? (
             <div className="flex-1 min-h-[180px] flex flex-col items-center justify-center text-center">
@@ -703,14 +703,14 @@ export default function InvestmentOverviewPage() {
               <p className="eyebrow max-md:hidden">{t('investment.dividend_6mo')}</p>
               <p className="num tabular font-bold mt-1" style={{ fontSize: 19, color: 'var(--ink)' }} title={formatCurrency(dividen6Total)}>{formatCompactCurrency(dividen6Total)}</p>
               {yieldOnCost != null && (
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                   {t('investment.yoc_label')} ~{yieldOnCost.toFixed(1).replace('.', ',')}% {t('investment.yoc_suffix')}
                 </p>
               )}
             </div>
             {dividen6DeltaPct != null && (
               <span
-                className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                className="text-2xs font-semibold px-2 py-0.5 rounded-full shrink-0"
                 style={{
                   background: dividen6DeltaPct >= 0 ? 'var(--c-mint-soft)' : 'var(--c-coral-soft)',
                   color: dividen6DeltaPct >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',

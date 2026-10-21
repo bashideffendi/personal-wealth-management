@@ -524,7 +524,7 @@ export default function InvestmentCategoryPage() {
         </Link>
         <div className="flex items-start justify-between gap-3">
           <p
-            className="text-[11px] font-semibold tracking-[0.18em] uppercase inline-flex items-center gap-1.5"
+            className="text-2xs font-semibold tracking-[0.18em] uppercase inline-flex items-center gap-1.5"
             style={{ color: up ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}
           >
             {subcat.label}
@@ -702,13 +702,12 @@ export default function InvestmentCategoryPage() {
             Untung-Rugi/Hari Ini). "Hari Ini" cuma real buat kelas ber-harga
             live (saham & kripto); sisanya "—". */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MiniStat label={t('investment_detail.stat_value')} value={formatCompactCurrency(totals.market)} title={formatCurrency(totals.market)} glow="glow-violet" />
-          <MiniStat label={t('investment_detail.stat_invested')} value={formatCompactCurrency(totals.invested)} title={formatCurrency(totals.invested)} glow="glow-indigo" />
+          <MiniStat label={t('investment_detail.stat_value')} value={formatCompactCurrency(totals.market)} title={formatCurrency(totals.market)} />
+          <MiniStat label={t('investment_detail.stat_invested')} value={formatCompactCurrency(totals.invested)} title={formatCurrency(totals.invested)} />
           <MiniStat
             label={t('investment_detail.stat_profit_loss')}
             value={`${formatCompactCurrency(totals.pl)}${totals.invested > 0 ? `  ·  ${up ? '+' : ''}${totals.plPct.toFixed(2)}%` : ''}`}
             title={formatCurrency(totals.pl)}
-            glow={up ? 'glow-emerald' : 'glow-rose'}
             accent={up ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'}
             calmHide
           />
@@ -720,7 +719,6 @@ export default function InvestmentCategoryPage() {
                 : '—'
             }
             title={todayPL ? formatCurrency(todayPL.value) : undefined}
-            glow={todayPL ? (todayPL.value >= 0 ? 'glow-emerald' : 'glow-rose') : undefined}
             accent={todayPL ? (todayPL.value >= 0 ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)') : undefined}
             calmHide={!!todayPL}
           />
@@ -755,15 +753,15 @@ export default function InvestmentCategoryPage() {
                   <CryptoLogo symbol={e.i.ticker} size={32} shape="circle" />
                 ) : null}
                 <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
-                  <p className="num tabular text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
+                  <p className="num tabular text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                     {tick ? `${tick} · ` : ''}{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</p>
+                  <p className="num tabular text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(e.market)}</p>
                   {e.invested > 0 && (
-                    <p className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                    <p className="num tabular text-2xs font-semibold leading-tight mt-0.5" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                       {pos ? '+' : ''}{e.plPct.toFixed(2)}%
                     </p>
                   )}
@@ -840,7 +838,7 @@ export default function InvestmentCategoryPage() {
                           >
                             <StockLogo ticker={e.i.ticker} size={36} />
                             <Badge
-                              className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular group-hover/row:underline"
+                              className="rounded-md px-1.5 py-0.5 text-2xs font-semibold border-0 tabular group-hover/row:underline"
                               style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                             >
                               {fromYahooTicker(e.i.ticker)}
@@ -854,7 +852,7 @@ export default function InvestmentCategoryPage() {
                           >
                             <CryptoLogo symbol={e.i.ticker} size={36} />
                             <Badge
-                              className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular group-hover/row:underline"
+                              className="rounded-md px-1.5 py-0.5 text-2xs font-semibold border-0 tabular group-hover/row:underline"
                               style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                             >
                               {cryptoBase(e.i.ticker)}
@@ -868,7 +866,7 @@ export default function InvestmentCategoryPage() {
                               <CryptoLogo symbol={e.i.ticker} size={36} />
                             ) : null}
                             <Badge
-                              className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 tabular"
+                              className="rounded-md px-1.5 py-0.5 text-2xs font-semibold border-0 tabular"
                               style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}
                             >
                               {category === 'stock' && e.i.ticker ? fromYahooTicker(e.i.ticker) : (e.i.ticker ?? '—')}
@@ -908,7 +906,7 @@ export default function InvestmentCategoryPage() {
                       <Td className="text-right tabular">
                         <div style={{ color: 'var(--ink)' }}>{formatCurrency(e.live)}</div>
                         {e.q?.changePct !== null && e.q?.changePct !== undefined && (
-                          <div className="text-[10px] tabular" data-calm-hide="" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
+                          <div className="text-3xs tabular" data-calm-hide="" style={{ color: e.q.changePct >= 0 ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
                             {formatPercent(e.q.changePct)}
                           </div>
                         )}
@@ -967,7 +965,7 @@ export default function InvestmentCategoryPage() {
                         ) : (
                           <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{e.i.name}</p>
                         )}
-                        <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
+                        <p className="text-2xs mt-0.5 truncate" style={{ color: 'var(--ink-muted)' }}>
                           {e.i.platform || '—'} {e.i.ticker ? `· ${e.i.ticker}` : ''}
                         </p>
                       </div>
@@ -985,7 +983,7 @@ export default function InvestmentCategoryPage() {
                 <p className="num text-2xl mt-4 tabular font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(e.market)}
                 </p>
-                <div className="mt-1.5 flex items-center justify-between text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                <div className="mt-1.5 flex items-center justify-between text-2xs" style={{ color: 'var(--ink-muted)' }}>
                   <span>{e.shares.toLocaleString('id-ID')} × {formatCurrency(e.i.avg_cost)}</span>
                   {e.invested > 0 && (
                     <span className="num font-medium" data-calm-hide="" style={{ color: pos ? 'var(--c-mint-ink)' : 'var(--danger)' }}>
@@ -1170,7 +1168,7 @@ export default function InvestmentCategoryPage() {
                         placeholder={cfg.name.placeholder}
                       />
                       {cfg.name.help && (
-                        <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{cfg.name.help}</p>
+                        <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{cfg.name.help}</p>
                       )}
                     </div>
                     {cfg.showTicker && cfg.ticker && (
@@ -1182,7 +1180,7 @@ export default function InvestmentCategoryPage() {
                           placeholder={cfg.ticker.placeholder}
                         />
                         {cfg.ticker.help && (
-                          <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{cfg.ticker.help}</p>
+                          <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{cfg.ticker.help}</p>
                         )}
                       </div>
                     )}
@@ -1224,7 +1222,7 @@ export default function InvestmentCategoryPage() {
                               <span className="flex items-center gap-1.5 min-w-0">
                                 {b.code && (
                                   <span
-                                    className="font-mono text-[9px] px-1 py-0.5 rounded shrink-0"
+                                    className="font-mono text-3xs px-1 py-0.5 rounded shrink-0"
                                     style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                                   >
                                     {b.code}
@@ -1233,7 +1231,7 @@ export default function InvestmentCategoryPage() {
                                 <span className="truncate text-sm">{b.short}</span>
                               </span>
                               {b.buyRate > 0 && (
-                                <span className="text-[10px] tabular" style={{ color: 'var(--ink-soft)' }}>
+                                <span className="text-3xs tabular" style={{ color: 'var(--ink-soft)' }}>
                                   {t('investment_detail.fee_buy')} {(b.buyRate * 100).toFixed(2)}% · {t('investment_detail.fee_sell')} {(b.sellRate * 100).toFixed(2)}%
                                 </span>
                               )}
@@ -1260,7 +1258,7 @@ export default function InvestmentCategoryPage() {
                             <div className="flex flex-col py-0.5 gap-0.5 min-w-0">
                               <span className="text-sm truncate">{opt.label}</span>
                               {opt.sub && (
-                                <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>
+                                <span className="text-3xs" style={{ color: 'var(--ink-soft)' }}>
                                   {opt.sub}
                                 </span>
                               )}
@@ -1277,7 +1275,7 @@ export default function InvestmentCategoryPage() {
                     />
                   )}
                   {platformHelp && (
-                    <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{platformHelp}</p>
+                    <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{platformHelp}</p>
                   )}
                 </div>
               )
@@ -1302,7 +1300,7 @@ export default function InvestmentCategoryPage() {
                       placeholder={qtyCfg.placeholder}
                     />
                     {qtyCfg.help && (
-                      <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{qtyCfg.help}</p>
+                      <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{qtyCfg.help}</p>
                     )}
                   </div>
                   <div className="grid gap-1.5">
@@ -1313,7 +1311,7 @@ export default function InvestmentCategoryPage() {
                       placeholder={costCfg.placeholder ?? '0'}
                     />
                     {costCfg.help && (
-                      <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{costCfg.help}</p>
+                      <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{costCfg.help}</p>
                     )}
                   </div>
                   <div className="grid gap-1.5">
@@ -1324,7 +1322,7 @@ export default function InvestmentCategoryPage() {
                       placeholder={priceCfg.placeholder ?? '0'}
                     />
                     {priceCfg.help && (
-                      <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{priceCfg.help}</p>
+                      <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{priceCfg.help}</p>
                     )}
                   </div>
                 </div>
@@ -1341,7 +1339,7 @@ export default function InvestmentCategoryPage() {
               const pos = pl >= 0
               return (
                 <div className="rounded-lg p-3" style={{ background: 'var(--surface-2)' }}>
-                  <div className="grid grid-cols-3 gap-2 text-[12px]">
+                  <div className="grid grid-cols-3 gap-2 text-cap">
                     <div>
                       <p style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_capital')}</p>
                       <p className="num font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(Math.round(modal))}</p>
@@ -1358,7 +1356,7 @@ export default function InvestmentCategoryPage() {
                     </div>
                   </div>
                   {(category === 'stock' || category === 'crypto') && (
-                    <p className="text-[11px] mt-2" style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_hint_live')}</p>
+                    <p className="text-2xs mt-2" style={{ color: 'var(--ink-soft)' }}>{t('investment_detail.preview_hint_live')}</p>
                   )}
                 </div>
               )
@@ -1376,7 +1374,7 @@ export default function InvestmentCategoryPage() {
                     placeholder={cfg?.notesHelp ?? t('investment_detail.placeholder_notes')}
                   />
                   {cfg?.notesHelp && (
-                    <p className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{cfg.notesHelp}</p>
+                    <p className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{cfg.notesHelp}</p>
                   )}
                 </div>
               )
@@ -1397,8 +1395,8 @@ export default function InvestmentCategoryPage() {
 
 function StepInv({ n, text }: { n: number; text: string }) {
   return (
-    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
-      <span className="size-4 rounded grid place-items-center text-[9px] num" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{n}</span>
+    <p className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>
+      <span className="size-4 rounded grid place-items-center text-3xs num" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{n}</span>
       {text}
     </p>
   )
@@ -1415,7 +1413,7 @@ function RpFieldInv({ value, onChange, placeholder }: { value: number; onChange:
 
 /* Header tabel posisi — sticky top-0 dalam kartu ber-max-h (garis bawah pakai
    inset shadow, bukan border: border di tabel border-collapse gak ikut sticky). */
-const TH_STICKY_CLASS = 'sticky top-0 z-20 px-3 py-2.5 text-[11px] font-semibold uppercase whitespace-nowrap'
+const TH_STICKY_CLASS = 'sticky top-0 z-20 px-3 py-2.5 text-2xs font-semibold uppercase whitespace-nowrap'
 const TH_STICKY_STYLE: React.CSSProperties = {
   color: 'var(--ink-soft)', letterSpacing: '0.08em',
   background: 'var(--surface-alt)', boxShadow: 'inset 0 -1px 0 var(--outline)',
@@ -1467,11 +1465,10 @@ function Td({ children, className = '', style }: { children: React.ReactNode; cl
 }
 
 function MiniStat({
-  label, value, glow, accent, title, calmHide,
+  label, value, accent, title, calmHide,
 }: {
   label: string
   value: string
-  glow?: string
   accent?: string
   /** Full digit buat hover — angka display-nya compact */
   title?: string
@@ -1479,7 +1476,7 @@ function MiniStat({
   calmHide?: boolean
 }) {
   return (
-    <div className={`s-card p-4 ${glow ?? ''}`}>
+    <div className="s-card p-4">
       <p className="eyebrow">{label}</p>
       <p className="num mt-2 tabular font-bold" data-calm-hide={calmHide ? '' : undefined} style={{ fontSize: 19, color: accent ?? 'var(--ink)' }} title={title}>
         {value}

@@ -114,7 +114,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
             {t('goal_pyramid.title')}
             <EduTip topic="goal-based-investing" side="bottom" />
           </p>
@@ -128,7 +128,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
       <div className="mt-3 rounded-lg px-3 py-2.5" style={{ background: tint(insight.color, 9) }}>
         <div className="flex items-start gap-2.5">
           <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: insight.ink }} />
-          <p className="text-[12px] leading-snug" style={{ color: 'var(--ink)' }}>
+          <p className="text-cap leading-snug" style={{ color: 'var(--ink)' }}>
             {insight.text}
           </p>
         </div>
@@ -136,7 +136,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
           <button
             type="button"
             onClick={() => onSetor(focusGoalId)}
-            className="mt-2.5 ml-[26px] inline-flex items-center gap-1 text-[12px] font-semibold hover:underline"
+            className="mt-2.5 ml-[26px] inline-flex items-center gap-1 text-cap font-semibold hover:underline"
             style={{ color: insight.ink }}
           >
             {t('goal_pyramid.deposit_to_tier')} <ArrowRight className="size-3.5" />
@@ -166,27 +166,27 @@ export function GoalPyramid({ goals, onSetor }: Props) {
                 }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: meta.ink }}>
+                  <span className="text-2xs font-bold uppercase tracking-wide" style={{ color: meta.ink }}>
                     {layerLabel(key)}
                     {isFocus && <span className="ml-1.5 font-medium normal-case opacity-80">· {t('goal_pyramid.focus_here')}</span>}
                   </span>
-                  <span className="num text-[11px] font-semibold shrink-0" style={{ color: meta.ink }}>
+                  <span className="num text-2xs font-semibold shrink-0" style={{ color: meta.ink }}>
                     {items.length > 0 ? `${a.pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 {items.length === 0 ? (
-                  <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>
+                  <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>
                     {t('goal_pyramid.empty_tier')}
                   </p>
                 ) : (
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
                     {items.slice(0, 4).map((g) => (
-                      <span key={g.id} className="text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>
+                      <span key={g.id} className="text-2xs truncate" style={{ color: 'var(--ink-muted)' }}>
                         {g.name}
                       </span>
                     ))}
                     {items.length > 4 && (
-                      <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                      <span className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                         +{items.length - 4} {t('goal_pyramid.more_suffix')}
                       </span>
                     )}
@@ -206,7 +206,7 @@ export function GoalPyramid({ goals, onSetor }: Props) {
         {BOTTOM_UP.map((key) => {
           const meta = PYRAMID_LAYERS[key]
           return (
-            <div key={key} className="min-w-0 text-[11px]">
+            <div key={key} className="min-w-0 text-2xs">
               <p className="uppercase tracking-wide truncate" style={{ color: meta.ink }}>{layerLabel(key)}</p>
               <p className="num font-semibold truncate mt-0.5" style={{ color: 'var(--ink)' }}>
                 {formatCurrency(agg[key].current)}

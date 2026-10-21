@@ -100,14 +100,14 @@ export function InstitutionPicker({ type, onPick, onManual }: Props) {
         style={{ borderColor: 'var(--border)' }}
       >
         {sections.length === 0 ? (
-          <p className="px-3 py-4 text-[12px] text-center" style={{ color: 'var(--ink-soft)' }}>
+          <p className="px-3 py-4 text-cap text-center" style={{ color: 'var(--ink-soft)' }}>
             {locale === 'id' ? 'Nggak ketemu — ketik manual aja.' : 'No match — type it manually.'}
           </p>
         ) : (
           sections.map(([letter, items], si) => (
             <div key={letter}>
               <div
-                className="sticky top-0 z-10 px-3 pt-1.5 pb-0.5 text-[11px] font-semibold"
+                className="sticky top-0 z-10 px-3 pt-1.5 pb-0.5 text-2xs font-semibold"
                 style={{
                   background: 'var(--surface)',
                   color: 'var(--c-mint-ink)',

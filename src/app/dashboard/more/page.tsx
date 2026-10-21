@@ -132,7 +132,7 @@ function NotificationRow() {
       >
         <Bell className="size-[17px]" />
       </span>
-      <span className="text-[15px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+      <span className="text-row font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
         {label}
       </span>
       <button
@@ -185,12 +185,12 @@ function Group({ rows, trailing }: { rows: Row[]; trailing?: React.ReactNode }) 
             >
               <Icon className="size-[17px]" />
             </span>
-            <span className="text-[15px] font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+            <span className="text-row font-medium truncate flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
               {t(row.titleKey)}
             </span>
             {row.value && (
               <span
-                className="text-[14px] shrink-0"
+                className="text-body shrink-0"
                 style={{ color: row.valueTone === 'danger' ? 'var(--c-coral-ink)' : 'var(--ink-soft)' }}
               >
                 {row.value}
@@ -329,7 +329,7 @@ export default function MorePage() {
           className="flex flex-col items-center px-3.5 pt-5 pb-4 transition-opacity active:opacity-70 md:flex-row md:gap-4 md:px-5 md:pt-5 md:pb-3"
         >
           <span
-            className="grid place-items-center size-16 rounded-full text-[22px] font-bold md:size-14 md:text-[20px] shrink-0"
+            className="grid place-items-center size-16 rounded-full text-h1 font-bold md:size-14 md:text-h2 shrink-0"
             style={{
               background: 'var(--surface-2)',
               color: 'var(--ink)',
@@ -340,14 +340,14 @@ export default function MorePage() {
           </span>
           <span className="flex flex-col items-center max-w-full min-w-0 md:items-start md:flex-1">
             <span
-              className="mt-2.5 inline-flex items-center gap-0.5 max-w-full text-[15px] font-semibold md:mt-0 md:text-[16px]"
+              className="mt-2.5 inline-flex items-center gap-0.5 max-w-full text-row font-semibold md:mt-0 md:text-lead"
               style={{ color: 'var(--ink)' }}
             >
               <span className="truncate">{name}</span>
               <ChevronRight className="size-3.5 shrink-0" style={{ color: 'var(--ink-soft)' }} />
             </span>
             {me?.email && (
-              <span className="mt-0.5 max-w-full truncate text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>
+              <span className="mt-0.5 max-w-full truncate text-2xs" style={{ color: 'var(--ink-soft)' }}>
                 {me.email}
               </span>
             )}
@@ -359,10 +359,10 @@ export default function MorePage() {
               key={s.label}
               className="min-w-0 md:flex md:items-baseline md:gap-1.5 md:rounded-full md:border md:border-[var(--border-soft)] md:bg-[var(--surface)] md:px-3.5 md:py-1.5"
             >
-              <div className="num text-[22px] font-bold leading-tight md:text-[15px]" style={{ color: 'var(--ink)' }}>
+              <div className="num text-h1 font-bold leading-tight md:text-row" style={{ color: 'var(--ink)' }}>
                 {s.num}
               </div>
-              <div className="mt-0.5 truncate text-[12px] md:mt-0" style={{ color: 'var(--ink-soft)' }}>
+              <div className="mt-0.5 truncate text-cap md:mt-0" style={{ color: 'var(--ink-soft)' }}>
                 {s.label}
               </div>
             </div>

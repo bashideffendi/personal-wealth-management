@@ -204,10 +204,10 @@ export default function ContractsPage() {
           {items.length === 0 && stats.length > 0 && (
             <div className="s-card px-4 py-3 flex items-center justify-between md:hidden">
               <div>
-                <p className="text-[11px] font-medium" style={{ color: 'var(--ink-soft)' }}>{stats[0].label}</p>
-                <p className="num tabular text-[18px] font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stats[0].value}</p>
+                <p className="text-2xs font-medium" style={{ color: 'var(--ink-soft)' }}>{stats[0].label}</p>
+                <p className="num tabular text-h3 font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{stats[0].value}</p>
               </div>
-              <span className="text-[11.5px] rounded-full px-2.5 py-1" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{stats[0].sub}</span>
+              <span className="text-2xs rounded-full px-2.5 py-1" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>{stats[0].sub}</span>
             </div>
           )}
           {/* Stat strip */}
@@ -216,9 +216,9 @@ export default function ContractsPage() {
               <div key={s.label} className="s-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
-                    <p className="num tabular text-[20px] font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
-                    <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
+                    <p className="text-2xs font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}><span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}</p>
+                    <p className="num tabular text-h2 font-semibold mt-1.5 whitespace-nowrap" title={s.full} style={{ color: 'var(--ink)' }}>{s.value}</p>
+                    <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}><s.icon className="size-4" style={{ color: s.color }} /></div>
                 </div>
@@ -230,8 +230,8 @@ export default function ContractsPage() {
             /* F10: empty state hangat — chip ikon tint brand, bukan abu datar */
             <div className="s-card px-6 py-10 text-center">
               <div className="size-12 rounded-xl grid place-items-center mx-auto" style={{ background: 'var(--c-mint-soft)' }}><ShieldCheck className="size-7" style={{ color: 'var(--c-mint-ink)' }} /></div>
-              <p className="text-[15px] font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('contracts.empty_title')}</p>
-              <p className="text-[12.5px] mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('contracts.empty_desc')}</p>
+              <p className="text-row font-semibold mt-3.5" style={{ color: 'var(--ink)' }}>{t('contracts.empty_title')}</p>
+              <p className="text-cap mt-1 max-w-[300px] mx-auto leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('contracts.empty_desc')}</p>
               <Button className="mt-4 rounded-full" onClick={openAdd}><Plus className="h-4 w-4" /> {t('contracts.btn_add')}</Button>
             </div>
           ) : (
@@ -239,11 +239,11 @@ export default function ContractsPage() {
               {/* Tabel */}
               <div className="s-card overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.table_title')}</p>
+                  <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.table_title')}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => setFilter('all')} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === 'all' ? 'var(--ink)' : 'var(--surface-2)', color: filter === 'all' ? 'var(--surface)' : 'var(--ink-muted)' }}>{t('contracts.filter_all')}</button>
+                    <button onClick={() => setFilter('all')} className="rounded-full px-2.5 py-1 text-2xs font-medium transition" style={{ background: filter === 'all' ? 'var(--ink)' : 'var(--surface-2)', color: filter === 'all' ? 'var(--surface)' : 'var(--ink-muted)' }}>{t('contracts.filter_all')}</button>
                     {catsPresent.map((c) => (
-                      <button key={c} onClick={() => setFilter(c)} className="rounded-full px-2.5 py-1 text-[11px] font-medium transition" style={{ background: filter === c ? 'var(--ink)' : 'var(--surface-2)', color: filter === c ? 'var(--surface)' : 'var(--ink-muted)' }}>{CAT[c].label}</button>
+                      <button key={c} onClick={() => setFilter(c)} className="rounded-full px-2.5 py-1 text-2xs font-medium transition" style={{ background: filter === c ? 'var(--ink)' : 'var(--surface-2)', color: filter === c ? 'var(--surface)' : 'var(--ink-muted)' }}>{CAT[c].label}</button>
                     ))}
                   </div>
                 </div>
@@ -257,12 +257,12 @@ export default function ContractsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[var(--surface-2)] hover:bg-[var(--surface-2)]">
-                        <TableHead className="pl-4 text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_name')}</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_category')}</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{locale === 'en' ? 'Expires' : 'Berakhir'}</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_cost')}</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Status</TableHead>
-                        <TableHead className="pr-4 text-[11px] uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_action')}</TableHead>
+                        <TableHead className="pl-4 text-2xs uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_name')}</TableHead>
+                        <TableHead className="text-2xs uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_category')}</TableHead>
+                        <TableHead className="text-2xs uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{locale === 'en' ? 'Expires' : 'Berakhir'}</TableHead>
+                        <TableHead className="text-2xs uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('contracts.field_cost')}</TableHead>
+                        <TableHead className="text-2xs uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>Status</TableHead>
+                        <TableHead className="pr-4 text-2xs uppercase tracking-wider text-right whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>{t('transactions.col_action')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -284,30 +284,30 @@ export default function ContractsPage() {
                               <div className="flex items-center gap-3 min-w-0">
                                 <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                                 <div className="min-w-0">
-                                  <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                                  {(c.provider || c.policy_number) && <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.provider || c.policy_number}</p>}
+                                  <p className="text-ui font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                                  {(c.provider || c.policy_number) && <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.provider || c.policy_number}</p>}
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
-                              <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
+                              <span className="rounded-full px-2 py-0.5 text-2xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
-                              <p className="num tabular-nums text-[13px] font-medium leading-tight" style={{ color: dateInk }}>{fullDate(c.end_date, locale)}</p>
-                              <p className="text-[11px] leading-tight mt-0.5" style={{ color: st === 'upcoming' ? 'var(--ink-soft)' : dateInk }}>{humanizeSisa(c.end_date, today)}</p>
+                              <p className="num tabular-nums text-ui font-medium leading-tight" style={{ color: dateInk }}>{fullDate(c.end_date, locale)}</p>
+                              <p className="text-2xs leading-tight mt-0.5" style={{ color: st === 'upcoming' ? 'var(--ink-soft)' : dateInk }}>{humanizeSisa(c.end_date, today)}</p>
                             </TableCell>
                             <TableCell className="text-right whitespace-nowrap">
                               {c.cost ? (
                                 <>
-                                  <p className="num tabular-nums text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}{c.frequency ? <span className="font-normal" style={{ color: 'var(--ink-soft)' }}> / {FREQ[c.frequency].toLowerCase()}</span> : null}</p>
-                                  {monthly > 0 && c.frequency !== 'monthly' && <p className="num tabular-nums text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>≈ {formatCurrency(Math.round(monthly))}{t('calculators.per_month')}</p>}
+                                  <p className="num tabular-nums text-ui font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}{c.frequency ? <span className="font-normal" style={{ color: 'var(--ink-soft)' }}> / {FREQ[c.frequency].toLowerCase()}</span> : null}</p>
+                                  {monthly > 0 && c.frequency !== 'monthly' && <p className="num tabular-nums text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>≈ {formatCurrency(Math.round(monthly))}{t('calculators.per_month')}</p>}
                                 </>
                               ) : (
-                                <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>—</p>
+                                <p className="text-ui" style={{ color: 'var(--ink-soft)' }}>—</p>
                               )}
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
-                              <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium" style={{ background: tint(badge.c, 12), color: badge.ink }}>{badge.t}</span>
+                              <span className="rounded-full px-2 py-0.5 text-2xs font-medium" style={{ background: tint(badge.c, 12), color: badge.ink }}>{badge.t}</span>
                             </TableCell>
                             <TableCell className="pr-4 text-right">
                               <div className="flex justify-end gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition">
@@ -347,14 +347,14 @@ export default function ContractsPage() {
                       >
                         <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[14px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                          <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
+                          <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
+                          <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                             <span className="font-medium" style={{ color: badge.ink }}>{badge.t}</span>{' · '}{sub}
                           </p>
                         </div>
-                        <span className="hidden sm:inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
+                        <span className="hidden sm:inline-block rounded-full px-2 py-0.5 text-3xs font-medium shrink-0" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{meta.label}</span>
                         <div className="text-right shrink-0">
-                          {c.cost ? <><p className="num tabular-nums text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-[13px]" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
+                          {c.cost ? <><p className="num tabular-nums text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{formatCurrency(c.cost)}</p><p className="text-2xs leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : ''}</p></> : <p className="text-ui" style={{ color: 'var(--ink-soft)' }}>{c.frequency ? FREQ[c.frequency] : '—'}</p>}
                         </div>
                         <div className="flex gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition shrink-0">
                           <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); toggleArchive(c) }} title={c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')} aria-label={`${c.is_archived ? t('contracts.tip_unarchive') : t('contracts.tip_archive')}: ${c.name}`}>{c.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}</Button>
@@ -370,7 +370,7 @@ export default function ContractsPage() {
               {/* Timeline tanggal kunci */}
               {timeline.length > 0 && (
                 <div className="s-card p-5 md:p-4">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.timeline_title')}</p>
+                  <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('contracts.timeline_title')}</p>
                   <p className="text-base mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{expiring.length} {t('contracts.timeline_subtitle')}</p>
                   <div className="mt-2 lg:grid lg:grid-cols-2 lg:gap-x-6">
                     {timeline.map((c, i) => {
@@ -378,10 +378,10 @@ export default function ContractsPage() {
                       const color = st === 'overdue' ? CORAL_INK : st === 'expiring' ? AMBER_INK : MINT_INK
                       return (
                         <div key={c.id} className={`flex items-start gap-4 py-2.5${i ? ' border-t' : ''}${i === 1 ? ' lg:border-t-0' : ''}`} style={{ borderColor: 'var(--border-soft)' }}>
-                          <span className="num text-[12px] font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date, locale)}</span>
+                          <span className="num text-cap font-semibold w-24 shrink-0" style={{ color }}>{fullDate(c.end_date, locale)}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}{c.auto_renew ? ` · ${t('contracts.auto_renew_suffix')}` : ''}</p>
-                            <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
+                            <p className="text-2xs truncate" style={{ color: 'var(--ink-soft)' }}>{CAT[c.category].label}{c.cost ? ` · ${formatCurrency(c.cost)}/${c.frequency ? FREQ[c.frequency].toLowerCase() : ''}` : ''}{c.notes ? ` · ${c.notes}` : ''}</p>
                           </div>
                         </div>
                       )

@@ -69,7 +69,7 @@ export function KpiCard({ label, value, deltaPct, kind }: KpiCardProps) {
           <IconCmp className="size-[15px]" />
         </div>
         <p
-          className="text-[11px] font-medium leading-tight flex-1 min-w-0 line-clamp-2"
+          className="text-2xs font-medium leading-tight flex-1 min-w-0 line-clamp-2"
           style={{ color: 'var(--ink-muted)' }}
         >
           {label}

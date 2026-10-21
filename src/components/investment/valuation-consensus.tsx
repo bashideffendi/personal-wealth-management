@@ -81,7 +81,7 @@ export function ValuationConsensus({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+            className="inline-flex items-center rounded-full px-2.5 py-1 text-3xs font-bold uppercase tracking-wide"
             style={{ background: verdictColor.bg, color: verdictColor.fg }}
           >
             {data.verdict}
@@ -172,7 +172,7 @@ export function ValuationConsensus({
                     </td>
                     <td className="px-3 py-2">
                       <span
-                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-3xs font-semibold"
                         style={{ background: suit.bg, color: suit.fg }}
                       >
                         {suitabilityLabel(suitability)}
@@ -192,7 +192,7 @@ export function ValuationConsensus({
                         <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>N/A</span>
                       ) : (
                         <span
-                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-3xs font-bold"
                           style={{
                             background: undervalued ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)',
                             color: '#FFFFFF',
@@ -231,24 +231,24 @@ export function ValuationConsensus({
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1">
-                    <span className="text-[14px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                    <span className="text-body font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
                       {r.method}
                     </span>
                     <MethodInfoDialog methodKey={r.method} sector={sector} />
                   </div>
                   <span
-                    className="mt-0.5 inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-semibold"
+                    className="mt-0.5 inline-flex items-center rounded-full px-1.5 py-px text-3xs font-semibold"
                     style={{ background: suit.bg, color: suit.fg }}
                   >
                     {suitabilityLabel(suitability)}
                   </span>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="num tabular text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                  <p className="num tabular text-body font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
                     {r.fairValue === null ? '—' : `Rp ${formatPrice(r.fairValue)}`}
                   </p>
                   <p
-                    className="num tabular text-[11.5px] font-semibold leading-tight mt-0.5"
+                    className="num tabular text-2xs font-semibold leading-tight mt-0.5"
                     style={{ color: signColorVar(r.mos), opacity: isAvoid ? 0.6 : 1 }}
                   >
                     {formatPercentValue(r.mos)}
@@ -283,7 +283,7 @@ export function ValuationConsensus({
 function Counter({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold num tabular"
+      className="inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold num tabular"
       style={{ borderColor: 'var(--border-soft)', color: 'var(--ink-muted)' }}
     >
       {children}
@@ -311,7 +311,7 @@ function SummaryStat({
       <span className="num tabular text-lg font-semibold" style={{ color: valueColor ?? 'var(--ink)' }}>
         {value}
       </span>
-      {sub && <span className="text-[10px]" style={{ color: 'var(--ink-soft)' }}>{sub}</span>}
+      {sub && <span className="text-3xs" style={{ color: 'var(--ink-soft)' }}>{sub}</span>}
     </div>
   )
 }

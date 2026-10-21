@@ -26,25 +26,25 @@ export default function ContactPage() {
             <div className="size-10 rounded-xl grid place-items-center" style={{ background: 'var(--c-mint-soft)' }}><Mail className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
             <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Email</p>
             <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>support@klunting.com</p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Balasan dalam ≤1 hari kerja</p>
+            <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>Balasan dalam ≤1 hari kerja</p>
           </a>
           <a href="https://wa.me/628558829500" className="s-card p-5 transition hover:border-[var(--ink)] block" style={{ borderColor: 'var(--border-soft)' }}>
             <div className="size-10 rounded-xl grid place-items-center" style={{ background: 'var(--c-mint-soft)' }}><MessageCircle className="size-5" style={{ color: 'var(--c-mint-ink)' }} /></div>
             <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>WhatsApp / Telepon</p>
             <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>0855-8829-500</p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Chat lebih cepat direspons</p>
+            <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>Chat lebih cepat direspons</p>
           </a>
           <div className="s-card p-5" style={{ borderColor: 'var(--border-soft)' }}>
             <div className="size-10 rounded-xl grid place-items-center" style={{ background: 'var(--surface-2)' }}><Clock className="size-5" style={{ color: 'var(--ink)' }} /></div>
             <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Jam Operasional</p>
             <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>Senin–Jumat, 09.00–18.00 WIB</p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Email di luar jam tetap masuk antrian</p>
+            <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>Email di luar jam tetap masuk antrian</p>
           </div>
           <div className="s-card p-5" style={{ borderColor: 'var(--border-soft)' }}>
             <div className="size-10 rounded-xl grid place-items-center" style={{ background: 'var(--surface-2)' }}><MapPin className="size-5" style={{ color: 'var(--ink)' }} /></div>
             <p className="font-semibold mt-3" style={{ color: 'var(--ink)' }}>Lokasi</p>
             <p className="text-sm mt-0.5" style={{ color: 'var(--ink-muted)' }}>Beroperasi di Indonesia 🇮🇩</p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>Layanan berbasis web (PWA)</p>
+            <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>Layanan berbasis web (PWA)</p>
           </div>
         </div>
 

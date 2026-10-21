@@ -343,11 +343,11 @@ export default function CreditCardsPage() {
               <div key={s.label} className="s-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="text-2xs font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
                       <span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}
                     </p>
                     <p className="num tabular font-bold mt-1.5 whitespace-nowrap" title={s.full} style={{ fontSize: 19, color: 'var(--ink)' }}>{s.value}</p>
-                    <p className="text-[11px] mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
+                    <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
                   </div>
                   <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}>
                     <s.icon className="size-4" style={{ color: s.color }} />
@@ -366,10 +366,10 @@ export default function CreditCardsPage() {
               style={{ borderColor: tint(dueSoon[0].days <= 3 ? CORAL : AMBER, 33), background: tint(dueSoon[0].days <= 3 ? CORAL : AMBER, 6) }}
             >
               <CalendarClock className="size-4 shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL_INK : AMBER_INK }} />
-              <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+              <p className="text-ui flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
                 <strong>{dueSoon.length} {t('credit_cards.cards_unit')}</strong> {t('credit_cards.nudge_due_within_7d')} — <strong>{dueSoon[0].c.name}</strong> {dueSoon[0].days} {t('credit_cards.days_left_suffix')} ({formatCurrency(dueSoon[0].c.current_balance)}).
               </p>
-              <span className="text-[12px] font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL_INK : AMBER_INK }}>{t('credit_cards.pay_arrow')}</span>
+              <span className="text-cap font-semibold shrink-0" style={{ color: dueSoon[0].days <= 3 ? CORAL_INK : AMBER_INK }}>{t('credit_cards.pay_arrow')}</span>
             </button>
           )}
 
@@ -407,21 +407,21 @@ export default function CreditCardsPage() {
                   {/* Stats bottom */}
                   <div className="p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.utilization')}</p>
-                      <p className="num tabular text-[12px] font-semibold" style={{ color: uInk }}>{util.toFixed(0)}%</p>
+                      <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.utilization')}</p>
+                      <p className="num tabular text-cap font-semibold" style={{ color: uInk }}>{util.toFixed(0)}%</p>
                     </div>
                     <div className="kl-bar mt-2" style={{ color: uColor }}><i style={{ width: `${Math.min(util, 100)}%` }} /></div>
-                    <p className="num tabular mt-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                    <p className="num tabular mt-1.5 text-2xs" style={{ color: 'var(--ink-soft)' }}>
                       {formatCurrency(c.current_balance)} / {formatCurrency(c.credit_limit)}
                     </p>
                     <div className="mt-3 pt-3 border-t flex items-end justify-between gap-2" style={{ borderColor: 'var(--border-soft)' }}>
                       <div className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.bill')}</p>
+                        <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.bill')}</p>
                         <p className="num tabular font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{formatCurrency(c.current_balance)}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.due_date')}</p>
-                        <p className="num tabular font-medium mt-0.5 text-[12px]" style={{ color: urgency }}>{formatDate(due.toISOString())} <span className="opacity-70">({daysLeft}{t('credit_cards.days_short')})</span></p>
+                        <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.due_date')}</p>
+                        <p className="num tabular font-medium mt-0.5 text-cap" style={{ color: urgency }}>{formatDate(due.toISOString())} <span className="opacity-70">({daysLeft}{t('credit_cards.days_short')})</span></p>
                       </div>
                     </div>
                     <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => openPayCard(c)} disabled={c.current_balance === 0}>{t('credit_cards.pay_bill')}</Button>
@@ -434,22 +434,22 @@ export default function CreditCardsPage() {
           {/* Tagihan Bulanan + Utilization */}
           <div className="grid gap-3 lg:grid-cols-[1.5fr_1fr]">
             <div className="s-card p-5">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.monthly_bills')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.monthly_bills')}</p>
               <div className="mt-3 divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {active.map((c) => (
                   <div key={c.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
                     <div className="min-w-0">
                       <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c.name}</p>
-                      <p className="text-[11px] num" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four || '••••'} · {t('credit_cards.statement_day_prefix')} {c.billing_day}</p>
+                      <p className="text-2xs num" style={{ color: 'var(--ink-soft)' }}>•••• {c.last_four || '••••'} · {t('credit_cards.statement_day_prefix')} {c.billing_day}</p>
                     </div>
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="text-right hidden sm:block">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.minimum')}</p>
-                        <p className="num tabular text-[12px]" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(minPayment(c.current_balance))}</p>
+                        <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.minimum')}</p>
+                        <p className="num tabular text-cap" style={{ color: 'var(--ink-muted)' }}>{formatCurrency(minPayment(c.current_balance))}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.bill')}</p>
-                        <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.current_balance)}</p>
+                        <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.bill')}</p>
+                        <p className="num tabular text-ui font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(c.current_balance)}</p>
                       </div>
                       <Button size="sm" variant="outline" onClick={() => openPayCard(c)} disabled={c.current_balance === 0}>{t('credit_cards.pay')}</Button>
                     </div>
@@ -459,14 +459,14 @@ export default function CreditCardsPage() {
             </div>
 
             <div className="s-card p-5" style={{ background: `color-mix(in srgb, ${utilColor} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${utilColor} 25%, var(--border-soft))` }}>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: utilInk }}>{t('credit_cards.utilization_rate')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: utilInk }}>{t('credit_cards.utilization_rate')}</p>
               <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 24, color: utilInk, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
               <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> {t('credit_cards.of_total_limit')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>
               </p>
               <div className="mt-4 hidden md:flex items-start gap-2 rounded-xl p-3" style={{ background: 'var(--surface)' }}>
                 <ShieldCheck className="size-4 mt-0.5 shrink-0" style={{ color: utilInk }} />
-                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
+                <p className="text-cap leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
                   {t('credit_cards.advice_prefix')} <strong style={{ color: 'var(--ink)' }}>{t('credit_cards.advice_below_30')}</strong>. {t('credit_cards.advice_you_are')} <strong style={{ color: utilInk }}>{utilZone}</strong>.
                 </p>
               </div>
@@ -481,10 +481,10 @@ export default function CreditCardsPage() {
           {/* Riwayat pembayaran */}
           <div className="s-card overflow-hidden">
             <div className="flex items-center justify-between gap-3 p-5 pb-3">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.payment_history')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.payment_history')}</p>
             </div>
             {payments.length === 0 ? (
-              <p className="px-5 pb-5 text-[12px]" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.no_payments')}</p>
+              <p className="px-5 pb-5 text-cap" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.no_payments')}</p>
             ) : (
               <div className="divide-y" style={{ borderColor: 'var(--border-soft)' }}>
                 {payments.slice(0, 8).map((p) => {
@@ -495,7 +495,7 @@ export default function CreditCardsPage() {
                       <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ background: MINT }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{c?.name ?? '—'}</p>
-                        <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{formatDate(p.date)}{a ? ` · ${t('credit_cards.from_prefix')} ${a.name}` : ''}{p.notes ? ` · ${p.notes}` : ''}</p>
+                        <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>{formatDate(p.date)}{a ? ` · ${t('credit_cards.from_prefix')} ${a.name}` : ''}{p.notes ? ` · ${p.notes}` : ''}</p>
                       </div>
                       <p className="num font-semibold tabular" style={{ color: MINT_INK }}>−{formatCurrency(p.amount)}</p>
                       <Button
@@ -538,9 +538,9 @@ export default function CreditCardsPage() {
                   <InstitutionLogo accountName={cardForm.issuer} size={38} shape="rounded" />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{cardForm.issuer}</p>
-                    <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{identifyInstitution(cardForm.issuer)?.legal ?? t('credit_cards.card_issuer_bank')}</p>
+                    <p className="text-2xs truncate" style={{ color: 'var(--ink-soft)' }}>{identifyInstitution(cardForm.issuer)?.legal ?? t('credit_cards.card_issuer_bank')}</p>
                   </div>
-                  <button type="button" onClick={() => { setCardForm({ ...cardForm, issuer: '' }); setIssuerQuery('') }} className="text-[12px] font-medium px-2 py-1 rounded-md transition hover:bg-[var(--surface)]" style={{ color: 'var(--ink-muted)' }}>{t('credit_cards.change')}</button>
+                  <button type="button" onClick={() => { setCardForm({ ...cardForm, issuer: '' }); setIssuerQuery('') }} className="text-cap font-medium px-2 py-1 rounded-md transition hover:bg-[var(--surface)]" style={{ color: 'var(--ink-muted)' }}>{t('credit_cards.change')}</button>
                 </div>
               ) : (
                 <InstitutionSearch
@@ -574,7 +574,7 @@ export default function CreditCardsPage() {
                       key={net.value}
                       type="button"
                       onClick={() => setCardForm({ ...cardForm, network: on ? '' : net.value })}
-                      className="rounded-lg border px-3 py-2 text-[12px] font-medium transition"
+                      className="rounded-lg border px-3 py-2 text-cap font-medium transition"
                       style={{ borderColor: on ? CORAL : 'var(--border-soft)', background: on ? 'var(--c-coral-soft)' : 'var(--surface)', color: on ? CORAL_INK : 'var(--ink-muted)' }}
                     >
                       {net.label}
@@ -635,8 +635,8 @@ export default function CreditCardsPage() {
             </div>
             {payCard && payCard.current_balance > 0 && (
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setPayForm({ ...payForm, amount: minPayment(payCard.current_balance) })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{t('credit_cards.minimum')} {formatCurrency(minPayment(payCard.current_balance))}</button>
-                <button type="button" onClick={() => setPayForm({ ...payForm, amount: payCard.current_balance })} className="rounded-full px-3 py-1.5 text-[12px] font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{t('credit_cards.full')} {formatCurrency(payCard.current_balance)}</button>
+                <button type="button" onClick={() => setPayForm({ ...payForm, amount: minPayment(payCard.current_balance) })} className="rounded-full px-3 py-1.5 text-cap font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{t('credit_cards.minimum')} {formatCurrency(minPayment(payCard.current_balance))}</button>
+                <button type="button" onClick={() => setPayForm({ ...payForm, amount: payCard.current_balance })} className="rounded-full px-3 py-1.5 text-cap font-medium transition hover:brightness-95" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>{t('credit_cards.full')} {formatCurrency(payCard.current_balance)}</button>
               </div>
             )}
             <div className="grid gap-1.5">

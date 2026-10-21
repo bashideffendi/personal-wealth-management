@@ -218,7 +218,7 @@ export default function NetWorthPage() {
     <div className="space-y-6">
       {/* Slim header — judul gak diulang (ada di hero card di bawah) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
+        <p className="text-2xs font-semibold tracking-[0.18em] uppercase" style={{ color: 'var(--ink-soft)' }}>
           {t('networth.eyebrow')} · {todayLong(dloc)}
         </p>
         <div className="flex items-center gap-2">
@@ -237,33 +237,33 @@ export default function NetWorthPage() {
       <section className="relative overflow-hidden rounded-2xl grid sm:grid-cols-[1.6fr_1fr_1fr]"
         style={{ background: 'var(--hero-bg)', border: 'var(--outline-w) solid var(--outline)', boxShadow: 'var(--card-shadow)' }}>
         <div className="relative p-5 sm:p-6 sm:border-r" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
+          <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
           {/* MOMENT: digit penuh di >=lg (baris 11px di bawah jadi redundan → lg:hidden), compact di <lg */}
           <p className="num tabular font-bold mt-2 leading-none whitespace-nowrap" style={{ fontSize: 'clamp(28px,5.5vw,44px)', letterSpacing: '-0.04em', color: isPositive ? 'var(--on-hero)' : 'var(--hero-chip-neg-fg)' }}><span className="lg:hidden">{formatCompactCurrency(netWorth)}</span><span className="hidden lg:inline" style={{ fontWeight: 800 }}>{formatCurrency(netWorth)}</span></p>
-          <p className="num tabular text-[11px] mt-1.5 lg:hidden" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
+          <p className="num tabular text-2xs mt-1.5 lg:hidden" style={{ color: 'var(--on-hero-mut)' }}>{formatCurrency(netWorth)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {heroStats?.vs1mo && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vs1mo.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
                 {heroStats.vs1mo.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
                 {heroStats.vs1mo.delta >= 0 ? '+' : ''}{formatCurrency(heroStats.vs1mo.delta)} {t('networth.vs_last_month_short')}
               </span>
             )}
             {heroStats?.vsYtd && (
-              <span className="num rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vsYtd.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
+              <span className="num rounded-full px-2 py-0.5 text-2xs font-semibold" style={{ background: 'rgba(255,255,255,0.08)', color: heroStats.vsYtd.delta >= 0 ? 'var(--hero-chip-pos-fg)' : 'var(--hero-chip-neg-fg)' }}>
                 YTD {heroStats.vsYtd.delta >= 0 ? '+' : ''}{heroStats.vsYtd.pct.toFixed(1)}%
               </span>
             )}
           </div>
         </div>
         <div className="relative p-5 sm:p-6 sm:border-r border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_assets')}</p>
+          <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_assets')}</p>
           <p className="num tabular font-bold mt-2 leading-none" title={formatCurrency(totalAssets)} style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: 'var(--hero-chip-pos-fg)' }}>{formatCompactCurrency(totalAssets)}</p>
-          <p className="text-[11px] mt-2" style={{ color: 'var(--on-hero-mut)' }}>{assetClasses.length} {t('networth.asset_classes')}</p>
+          <p className="text-2xs mt-2" style={{ color: 'var(--on-hero-mut)' }}>{assetClasses.length} {t('networth.asset_classes')}</p>
         </div>
         <div className="relative p-5 sm:p-6 border-t sm:border-t-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_debt')}</p>
+          <p className="text-3xs font-bold tracking-[0.14em] uppercase" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.total_debt')}</p>
           <p className="num tabular font-bold mt-2 leading-none" title={totalDebt > 0 ? `−${formatCurrency(totalDebt)}` : formatCurrency(0)} style={{ fontSize: 'clamp(20px,2.4vw,26px)', color: totalDebt > 0 ? 'var(--hero-chip-neg-fg)' : 'var(--hero-chip-pos-fg)' }}>{totalDebt > 0 ? `−${formatCompactCurrency(totalDebt)}` : formatCompactCurrency(0)}</p>
-          <p className="text-[11px] mt-2" style={{ color: 'var(--on-hero-mut)' }}>{debtCount} {t('networth.active_debts')}</p>
+          <p className="text-2xs mt-2" style={{ color: 'var(--on-hero-mut)' }}>{debtCount} {t('networth.active_debts')}</p>
         </div>
       </section>
 
@@ -276,13 +276,13 @@ export default function NetWorthPage() {
         <section className="s-card p-5">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="max-w-md">
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_projection')}</p>
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_projection')}</p>
               {/* F11: deskripsi panjang desktop-only — HP cukup label + angka */}
               <p className="hidden md:block text-sm mt-1" style={{ color: 'var(--ink-muted)' }}>{t('networth.debt_free_projection_desc')}</p>
             </div>
             <div className="flex gap-1.5 shrink-0">
               {(['snowball', 'avalanche'] as const).map((s) => (
-                <button key={s} onClick={() => setNwStrategy(s)} aria-pressed={nwStrategy === s} aria-label={`${t('networth.strategy')} ${s}`} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
+                <button key={s} onClick={() => setNwStrategy(s)} aria-pressed={nwStrategy === s} aria-label={`${t('networth.strategy')} ${s}`} className="rounded-full px-2.5 py-1 text-2xs font-medium capitalize transition"
                   style={{ background: nwStrategy === s ? (s === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)') : 'var(--surface-2)', color: nwStrategy === s ? '#FFF' : 'var(--ink)' }}>{s}</button>
               ))}
             </div>
@@ -290,18 +290,18 @@ export default function NetWorthPage() {
           {projection.feasible ? (
             <>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months, dloc)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(projection.endNetWorth)}</p></div>
-                <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
+                <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.debt_free_by')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--ink)' }}>{nwMonthLabel(projection.months, dloc)}</p></div>
+                <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.net_worth_becomes')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>{formatCurrency(projection.endNetWorth)}</p></div>
+                <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{t('networth.increase')}</p><p className="num text-sm font-semibold mt-0.5" style={{ color: 'var(--c-mint-ink)' }}>+{formatCurrency(projection.endNetWorth - projection.startNetWorth)}</p></div>
               </div>
               {/* F11: grafik proyeksi + footnote = desktop-only */}
               <div className="mt-4 hidden md:block h-[200px] md:h-[260px] xl:h-[300px]">
                 <ProjectionChart data={projChartData} accent={projAccent} />
               </div>
-              <p className="hidden md:block mt-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
+              <p className="hidden md:block mt-2 text-2xs" style={{ color: 'var(--ink-soft)' }}>{t('networth.projection_cta_prefix')} <a href="/dashboard/debts" className="underline" style={{ color: 'var(--ink-muted)' }}>{t('networth.projection_cta_link')}</a>.</p>
             </>
           ) : (
-            <p className="mt-3 text-[12px]" style={{ color: 'var(--c-amber-ink)' }}>{t('networth.projection_not_feasible')}</p>
+            <p className="mt-3 text-cap" style={{ color: 'var(--c-amber-ink)' }}>{t('networth.projection_not_feasible')}</p>
           )}
         </section>
       )}
@@ -309,16 +309,16 @@ export default function NetWorthPage() {
       {/* Rincian aset & liabilitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_breakdown')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_assets')}</p>
+              <p className="text-3xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_assets')}</p>
               <Row label={t('networth.cash_and_equivalent')} value={data.cashAndEquivalent} />
               <Row label={t('networth.receivable')} value={data.receivable} />
               <SubtotalRow label={t('networth.subtotal_current_assets')} value={totalCurrentAssets} color="var(--c-mint)" ink="var(--c-mint-ink)" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.non_current_assets')}</p>
+              <p className="text-3xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.non_current_assets')}</p>
               <Row label={t('networth.long_term_investment')} value={data.longTermInvestment} />
               <Row label={t('networth.property')} value={data.property} />
               <Row label={t('networth.vehicle_equipment')} value={data.vehicle} />
@@ -333,17 +333,17 @@ export default function NetWorthPage() {
         </div>
 
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.liabilities_breakdown')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.liabilities_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_debt')}</p>
+              <p className="text-3xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_debt')}</p>
               <Row label={t('networth.consumer_debt')} value={data.consumerDebt} neg />
               <Row label={t('networth.credit_card')} value={data.creditCard} neg />
               <Row label={t('networth.cash_loan')} value={data.cashLoan} neg />
               <SubtotalRow label={t('networth.subtotal_current_debt')} value={totalCurrentDebt} color="var(--c-coral)" ink="var(--c-coral-ink)" neg />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.long_term_debt')}</p>
+              <p className="text-3xs uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.long_term_debt')}</p>
               <Row label={t('networth.mortgage_long_term')} value={data.longTermDebt} neg />
               <SubtotalRow label={t('networth.subtotal_long_term')} value={data.longTermDebt} color="var(--c-coral)" ink="var(--c-coral-ink)" neg />
             </div>
@@ -358,7 +358,7 @@ export default function NetWorthPage() {
       {/* Komposisi + Rasio */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_composition')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_composition')}</p>
           {totalAssets > 0 ? (
             <>
               <div className="mt-3 flex w-full quest-track" style={{ ['--bar-h' as string]: '10px' }}>
@@ -410,7 +410,7 @@ function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, i
   ]
   return (
     <div className="s-card p-5">
-      <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.balance_health_ratios')}</p>
+      <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.balance_health_ratios')}</p>
       <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5">
         {rows.map((r) => {
           const c = r.value === '—' ? 'var(--ink-soft)' : r.ok ? 'var(--c-mint-ink)' : 'var(--c-amber-ink)'
@@ -418,10 +418,10 @@ function HealthRatiosCard({ liquidAssets, totalAssets, totalDebt, currentDebt, i
             <div key={r.label}>
               <div className="flex items-center gap-1.5">
                 <span className="size-1.5 rounded-full shrink-0" style={{ background: c }} />
-                <p className="text-[11px] truncate" style={{ color: 'var(--ink-muted)' }}>{r.label}</p>
+                <p className="text-2xs truncate" style={{ color: 'var(--ink-muted)' }}>{r.label}</p>
               </div>
               <p className="num tabular font-bold mt-1.5 leading-none" style={{ fontSize: 20, color: c }}>{r.value}</p>
-              <p className="text-[10px] mt-1" style={{ color: 'var(--ink-soft)' }}>{r.ideal}</p>
+              <p className="text-3xs mt-1" style={{ color: 'var(--ink-soft)' }}>{r.ideal}</p>
             </div>
           )
         })}
@@ -441,8 +441,8 @@ function Row({ label, value, neg = false }: { label: string; value: number; neg?
 function SubtotalRow({ label, value, color, ink, neg = false }: { label: string; value: number; color: string; ink: string; neg?: boolean }) {
   return (
     <div className="flex items-center justify-between mt-1.5 rounded-md px-2 py-1.5" style={{ background: `color-mix(in srgb, ${color} 6%, transparent)` }}>
-      <span className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{label}</span>
-      <span className="num text-[12px] font-semibold" style={{ color: ink }}>{neg && value > 0 ? '−' : ''}{formatCurrency(value)}</span>
+      <span className="text-cap font-medium" style={{ color: 'var(--ink)' }}>{label}</span>
+      <span className="num text-cap font-semibold" style={{ color: ink }}>{neg && value > 0 ? '−' : ''}{formatCurrency(value)}</span>
     </div>
   )
 }
@@ -484,13 +484,13 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
     <div className="s-card p-5 sm:p-6">
       <div className="mb-4 flex items-start justify-between flex-wrap gap-3">
         <div>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.history')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.history')}</p>
           <h3 className="text-lg mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{t('networth.history_heading')}</h3>
         </div>
         {/* F11: chips periode cuma relevan buat chart → desktop-only */}
         <div className="hidden md:flex items-center gap-1.5">
           {(['3m', '6m', '12m', 'all'] as const).map((p) => (
-            <button key={p} type="button" onClick={() => onPeriodChange(p)} className="text-[11px] font-medium px-2.5 py-1 rounded-md transition"
+            <button key={p} type="button" onClick={() => onPeriodChange(p)} className="text-2xs font-medium px-2.5 py-1 rounded-md transition"
               style={{ background: period === p ? 'var(--ink)' : 'var(--surface-2)', color: period === p ? 'var(--surface)' : 'var(--ink-muted)' }}>
               {periodLabels[p]}
             </button>
@@ -527,16 +527,16 @@ function NetWorthHistoryCard({ snapshots, period, onPeriodChange }: HistoryProps
 
 function ChangeStat({ label, change }: { label: string; change: { delta: number; pct: number } | null }) {
   if (!change) {
-    return <div><p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p><p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>—</p></div>
+    return <div><p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p><p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>—</p></div>
   }
   const positive = change.delta >= 0
   const color = positive ? 'var(--c-mint-ink)' : 'var(--c-coral-ink)'
   const Icon = positive ? TrendingUp : TrendingDown
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
+      <p className="text-3xs uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>{label}</p>
       <p className="num tabular text-base font-semibold mt-0.5 flex items-center gap-1 min-w-0" title={`${positive ? '+' : ''}${formatCurrency(change.delta)}`} style={{ color }}><Icon className="size-3.5 shrink-0" />{positive ? '+' : ''}{formatCompactCurrency(change.delta)}</p>
-      <p className="text-[11px] mt-0.5" style={{ color }}>{positive ? '+' : ''}{change.pct.toFixed(1)}%</p>
+      <p className="text-2xs mt-0.5" style={{ color }}>{positive ? '+' : ''}{change.pct.toFixed(1)}%</p>
     </div>
   )
 }

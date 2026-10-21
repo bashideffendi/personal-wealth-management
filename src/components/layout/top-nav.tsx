@@ -90,7 +90,7 @@ function NavDropdown({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative px-3.5 py-2.5 rounded-xl text-[13.5px] inline-flex items-center gap-1 transition-colors"
+        className="relative px-3.5 py-2.5 rounded-xl text-ui inline-flex items-center gap-1 transition-colors"
         style={{
           fontWeight: active ? 600 : 500,
           color: active || open ? 'var(--ink)' : 'var(--text-mute)',
@@ -131,7 +131,7 @@ function NavDropdown({
                   href={it.href}
                   aria-current={a ? 'page' : undefined}
                   onClick={() => setOpen(false)}
-                  className="px-3 py-2 rounded-lg text-[13px] transition-colors"
+                  className="px-3 py-2 rounded-lg text-ui transition-colors"
                   style={{
                     fontWeight: a ? 600 : 500,
                     color: a ? 'var(--c-primary)' : 'var(--ink-muted)',
@@ -229,7 +229,7 @@ function MobileAppBar({ pathname }: { pathname: string }) {
             <ArrowLeft className="size-5" />
           </button>
         )}
-        <h1 className="text-[17px] font-semibold truncate" style={{ color: 'var(--ink)', letterSpacing: '-0.01em', fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-lead font-semibold truncate" style={{ color: 'var(--ink)', letterSpacing: '-0.01em', fontFamily: 'var(--font-display)' }}>
           {title}
         </h1>
       </div>
@@ -312,7 +312,7 @@ export function TopNav({ user }: TopNavProps) {
                   key={it.href}
                   href={it.href}
                   aria-current={active ? 'page' : undefined}
-                  className="relative px-3.5 py-2.5 rounded-xl text-[13.5px] transition-colors"
+                  className="relative px-3.5 py-2.5 rounded-xl text-ui transition-colors"
                   style={{
                     fontWeight: active ? 600 : 500,
                     color: active ? 'var(--ink)' : 'var(--text-mute)',
@@ -339,7 +339,7 @@ export function TopNav({ user }: TopNavProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={openCommandPalette}
-              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] transition-colors"
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-ui transition-colors"
               style={{ background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--text-mute)', width: 180 }}
               onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
@@ -347,7 +347,7 @@ export function TopNav({ user }: TopNavProps) {
               <Search className="size-3.5" />
               <span className="flex-1 text-left">{t('common.search')}</span>
               <kbd
-                className="text-[10px] px-1.5 py-px rounded"
+                className="text-3xs px-1.5 py-px rounded"
                 style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-faint)', border: '1px solid var(--line)' }}
               >
                 {isMac ? '⌘K' : 'Ctrl K'}

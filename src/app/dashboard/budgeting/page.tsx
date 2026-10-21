@@ -638,7 +638,7 @@ export default function BudgetingPage() {
             return (
               <td key={month} className="border-b border-[color:var(--border)] px-1 py-0 text-right">
                 <span
-                  className="num block h-7 px-1 text-[11px] tabular"
+                  className="num block h-7 px-1 text-2xs tabular"
                   style={{ lineHeight: '1.75rem', color: a ? 'var(--ink)' : 'var(--ink-soft)' }}
                 >
                   {privacyHidden ? '••••' : a ? idFormatter.format(a) : '—'}
@@ -677,7 +677,7 @@ export default function BudgetingPage() {
                   handleCellBlur(type, categoryKey, month, parsed)
                   e.target.value = parsed ? idFormatter.format(parsed) : ''
                 }}
-                className="num h-7 w-full text-right text-[11px] border-0 bg-transparent outline-none focus:bg-[var(--surface)] focus:ring-1 focus:ring-inset focus:ring-[var(--c-primary)] px-1 tabular"
+                className="num h-7 w-full text-right text-2xs border-0 bg-transparent outline-none focus:bg-[var(--surface)] focus:ring-1 focus:ring-inset focus:ring-[var(--c-primary)] px-1 tabular"
                 style={{ color: 'var(--ink)' }}
               />
               <span
@@ -723,7 +723,7 @@ export default function BudgetingPage() {
           return (
             <td
               key={i}
-              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
+              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-2xs font-semibold bg-inherit whitespace-nowrap tabular"
               style={{ color: 'var(--ink-muted)' }}
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
@@ -889,7 +889,7 @@ export default function BudgetingPage() {
                 setNewCatInline('')
                 setAddingTo(kind)
               }}
-              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-2xs font-medium transition-colors hover:bg-[var(--surface-2)]"
               style={{ color: 'var(--ink-soft)' }}
             >
               <Plus className="size-3" /> {t('budgeting.add_category')}
@@ -917,7 +917,7 @@ export default function BudgetingPage() {
           return (
             <td
               key={i}
-              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular"
+              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-2xs font-bold bg-inherit whitespace-nowrap tabular"
               title={privacyHidden ? '••••••' : formatCurrency(v)}
             >
               {privacyHidden ? '••••••' : formatCurrency(v)}
@@ -942,7 +942,7 @@ export default function BudgetingPage() {
           return (
             <td
               key={month}
-              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular"
+              className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-2xs font-semibold bg-inherit whitespace-nowrap tabular"
               style={{ color: 'var(--ink-muted)' }}
             >
               {pct}%
@@ -1015,9 +1015,9 @@ export default function BudgetingPage() {
               className="size-3.5 shrink-0 transition-transform duration-150"
               style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', opacity: 0.7 }}
             />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em]">{label}</span>
+            <span className="text-2xs font-semibold uppercase tracking-[0.12em]">{label}</span>
             <span
-              className="num tabular ml-auto text-[11px] font-bold tabular-nums"
+              className="num tabular ml-auto text-2xs font-bold tabular-nums"
               title={privacyHidden ? '••••••' : formatCurrency(annualTotal)}
             >
               {isCollapsed ? formatCurrency(annualTotal) : ''}
@@ -1047,7 +1047,7 @@ export default function BudgetingPage() {
           <tbody>
             <tr style={{ background: 'color-mix(in srgb, var(--ink) 11%, var(--surface))' }}>
               <td colSpan={13} className="sticky left-0 z-10 border-b border-[color:var(--border)] px-3 py-2 bg-inherit">
-                <span className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
+                <span className="text-2xs font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--ink)' }}>{t('budgeting.allocation_summary')}</span>
                 <span className="ml-1.5 inline-flex align-middle"><InfoTip text={t('budgeting.allocation_formula')} /></span>
               </td>
             </tr>
@@ -1056,7 +1056,7 @@ export default function BudgetingPage() {
               {Array.from({ length: 12 }, (_, i) => {
                 const v = allocatedOf(i + 1)
                 return (
-                  <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-semibold bg-inherit whitespace-nowrap tabular" style={{ color: 'var(--ink-muted)' }} title={privacyHidden ? '••••••' : formatCurrency(v)}>
+                  <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-2xs font-semibold bg-inherit whitespace-nowrap tabular" style={{ color: 'var(--ink-muted)' }} title={privacyHidden ? '••••••' : formatCurrency(v)}>
                     {privacyHidden ? '••••••' : v ? formatCurrency(v) : '—'}
                   </td>
                 )
@@ -1069,7 +1069,7 @@ export default function BudgetingPage() {
                 const left = incomeOf(m) - allocatedOf(m)
                 const color = Math.abs(left) < 1 ? 'var(--c-mint-ink)' : left > 0 ? 'var(--c-amber-ink)' : 'var(--c-coral-ink)'
                 return (
-                  <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-[11px] font-bold bg-inherit whitespace-nowrap tabular" style={{ color }} title={privacyHidden ? '••••••' : formatCurrency(left)}>
+                  <td key={i} className="num border-b border-[color:var(--border)] px-1 py-1 text-right text-2xs font-bold bg-inherit whitespace-nowrap tabular" style={{ color }} title={privacyHidden ? '••••••' : formatCurrency(left)}>
                     {privacyHidden ? '••••••' : formatCurrency(left)}
                   </td>
                 )
@@ -1138,7 +1138,7 @@ export default function BudgetingPage() {
 
       {/* Mobile (F9c): total tahunan jadi 1 baris teks kecil di kanvas — kartu
           ringkasan bulanan baru ada di MobileBudgetingView, ini konteks setahun. */}
-      <p className="md:hidden text-[11.5px] px-1" style={{ color: 'var(--ink-soft)' }}>
+      <p className="md:hidden text-2xs px-1" style={{ color: 'var(--ink-soft)' }}>
         {t('budgeting.annual')} · {t('budgeting.income')}{' '}
         <span className="num font-semibold" style={{ color: 'var(--c-mint-ink)' }} title={privacyHidden ? undefined : formatCurrency(totalIncomeYear)}>
           {privacyHidden ? '••' : formatCompactCurrency(totalIncomeYear)}
@@ -1165,12 +1165,12 @@ export default function BudgetingPage() {
               <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${c.dot} 15%, var(--surface))`, color: c.dot }}>
                 <c.Icon className="size-4" />
               </span>
-              <span className="text-[11px] font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{c.label}</span>
+              <span className="text-2xs font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{c.label}</span>
             </div>
             <p className="num tabular font-semibold mt-2" title={privacyHidden ? undefined : formatCurrency(c.value)} style={{ color: 'var(--ink)', fontSize: 19, letterSpacing: '-0.02em' }}>
               {privacyHidden ? '••••••' : formatCompactCurrency(c.value)}
             </p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
+            <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.sub}</p>
           </div>
         ))}
       </div>
@@ -1195,7 +1195,7 @@ export default function BudgetingPage() {
         return (
           <div className="hidden md:flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
             {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
-            <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+            <p className="text-ui font-medium" style={{ color: 'var(--ink)' }}>
               <span className="font-semibold">{shortMonths[bMonth - 1]}</span>{' — '}
               {ok ? (
                 t('budgeting.alloc_banner_done')
@@ -1267,7 +1267,7 @@ export default function BudgetingPage() {
             <div className="min-w-0">
               <p className="eyebrow">{viewMode === 'year' ? t('budgeting.grid_eyebrow_year') : t('budgeting.grid_eyebrow_month')}</p>
               {viewMode === 'year' && (
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-2xs" style={{ color: 'var(--ink-soft)' }}>
                   {gridMode === 'plan' ? (
                     <>
                       <span className="inline-flex items-center gap-1"><CalendarDays className="size-3.5 shrink-0" /> {t('budgeting.tip_click_month')}</span>
@@ -1295,7 +1295,7 @@ export default function BudgetingPage() {
                         key={mode}
                         type="button"
                         onClick={() => setGridMode(mode)}
-                        className="rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors"
+                        className="rounded-md px-3 py-1.5 text-ui font-semibold transition-colors"
                         style={{
                           background: active ? 'var(--surface)' : 'transparent',
                           color: active ? 'var(--ink)' : 'var(--ink-soft)',
@@ -1316,7 +1316,7 @@ export default function BudgetingPage() {
                       key={mode}
                       type="button"
                       onClick={() => setViewMode(mode)}
-                      className="rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
+                      className="rounded-md px-3.5 py-1.5 text-ui font-semibold transition-colors"
                       style={{
                         background: active ? 'var(--surface)' : 'transparent',
                         color: active ? 'var(--ink)' : 'var(--ink-soft)',
@@ -1363,7 +1363,7 @@ export default function BudgetingPage() {
                   </colgroup>
                   <thead>
                     <tr>
-                      <th scope="col" className="sticky left-0 z-20 px-3 py-2 text-left text-[11px] font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
+                      <th scope="col" className="sticky left-0 z-20 px-3 py-2 text-left text-2xs font-bold whitespace-nowrap eyebrow" style={{ background: 'var(--surface)' }}>
                         {t('budgeting.category')}
                       </th>
                       {shortMonths.map((m, i) => {
@@ -1373,7 +1373,7 @@ export default function BudgetingPage() {
                           <th
                             key={m}
                             scope="col"
-                            className="px-1 py-2 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
+                            className="px-1 py-2 text-center text-2xs font-bold whitespace-nowrap cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
                             style={{
                               background: isCurrent ? 'color-mix(in srgb, var(--c-primary) 9%, transparent)' : undefined,
                               color: isCurrent ? 'var(--c-primary)' : undefined,

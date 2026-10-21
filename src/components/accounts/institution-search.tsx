@@ -128,7 +128,7 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
                     {inst.brand}
                   </span>
                   <span
-                    className="text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide shrink-0"
+                    className="text-3xs px-1.5 py-0.5 rounded font-medium uppercase tracking-wide shrink-0"
                     style={{
                       background:
                         inst.type === 'bank' ? 'rgba(59,130,246,0.10)'
@@ -143,7 +143,7 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
                     {inst.type === 'digital_wallet' ? 'wallet' : inst.type}
                   </span>
                 </div>
-                <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs truncate" style={{ color: 'var(--ink-soft)' }}>
                   {inst.legal}
                 </p>
               </div>
@@ -168,7 +168,7 @@ export function InstitutionSearch({ value, onTextChange, onPick, placeholder, re
                 <p className="text-sm font-medium">
                   {t('institution_search.use_prefix')}&ldquo;{value.trim()}&rdquo;{t('institution_search.use_suffix')}
                 </p>
-                <p className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-2xs" style={{ color: 'var(--ink-soft)' }}>
                   {t('institution_search.custom_hint')}
                 </p>
               </div>

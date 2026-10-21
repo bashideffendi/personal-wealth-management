@@ -455,7 +455,7 @@ export default function FamilyPage() {
       {partialFailures.length > 0 && (
         <div className="rounded-xl px-4 py-3 flex items-center gap-2.5 flex-wrap" style={{ background: 'color-mix(in srgb, var(--c-amber) 10%, transparent)' }}>
           <AlertCircle className="size-4 shrink-0" style={{ color: 'var(--c-amber-ink)' }} />
-          <p className="text-[13px] flex-1 min-w-0" style={{ color: 'var(--c-amber-ink)' }}>
+          <p className="text-ui flex-1 min-w-0" style={{ color: 'var(--c-amber-ink)' }}>
             {t('family.partial_load_prefix')} {partialFailures.map((k) => t(`family.${k}`)).join(', ')}.
           </p>
           <Button variant="outline" size="sm" onClick={refresh}>{t('common.retry')}</Button>
@@ -486,16 +486,16 @@ export default function FamilyPage() {
           >
             <span className="flex -space-x-2">
               {members.map((m) => (
-                <span key={m.user_id} className="size-9 rounded-full border-2 flex items-center justify-center text-[12px] font-bold" style={{ background: m.role === 'owner' ? 'var(--c-amber)' : 'var(--surface-2)', color: m.role === 'owner' ? '#FFF' : 'var(--ink)', borderColor: 'var(--surface)' }}>
+                <span key={m.user_id} className="size-9 rounded-full border-2 flex items-center justify-center text-cap font-bold" style={{ background: m.role === 'owner' ? 'var(--c-amber)' : 'var(--surface-2)', color: m.role === 'owner' ? '#FFF' : 'var(--ink)', borderColor: 'var(--surface)' }}>
                   {(m.full_name || m.email || '?').slice(0, 1).toUpperCase()}
                 </span>
               ))}
             </span>
-            <span className="num text-[12px] font-semibold" style={{ color: 'var(--ink-muted)' }} title={`${household.max_seats - members.length} ${t('family.seats_remaining')}`}>
+            <span className="num text-cap font-semibold" style={{ color: 'var(--ink-muted)' }} title={`${household.max_seats - members.length} ${t('family.seats_remaining')}`}>
               {members.length}<span style={{ color: 'var(--ink-soft)' }}>/{household.max_seats}</span>
             </span>
             {isUserOwner && invitations.length > 0 && (
-              <span className="num inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: 'color-mix(in srgb, var(--c-amber) 16%, transparent)', color: 'var(--c-amber-ink)' }} title={`${invitations.length} ${t('family.awaiting_acceptance')}`}>
+              <span className="num inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-3xs font-semibold" style={{ background: 'color-mix(in srgb, var(--c-amber) 16%, transparent)', color: 'var(--c-amber-ink)' }} title={`${invitations.length} ${t('family.awaiting_acceptance')}`}>
                 <Mail className="size-2.5" /> {invitations.length}
               </span>
             )}
@@ -511,15 +511,15 @@ export default function FamilyPage() {
               const viewOnly = !owner && m.can_edit === false
               return (
                 <div key={m.user_id} className="flex items-center gap-2.5 px-4 py-2.5" title={`${t('family.joined')} ${formatDate(new Date(m.joined_at))}`}>
-                  <span className="size-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0" style={{ background: owner ? 'var(--c-amber)' : 'var(--surface-2)', color: owner ? '#FFF' : 'var(--ink)' }}>
+                  <span className="size-8 rounded-full flex items-center justify-center text-2xs font-bold shrink-0" style={{ background: owner ? 'var(--c-amber)' : 'var(--surface-2)', color: owner ? '#FFF' : 'var(--ink)' }}>
                     {(m.full_name || m.email || '?').slice(0, 1).toUpperCase()}
                   </span>
                   <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{me ? t('family.you') : (m.full_name || t('family.member_fallback'))}</p>
-                    <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
+                    <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-3xs font-semibold" style={{ background: owner ? 'color-mix(in srgb, var(--c-amber) 16%, transparent)' : 'var(--surface-2)', color: owner ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
                       {owner && <Crown className="size-2.5" />}{relLabel ?? (owner ? t('family.role_owner') : t('family.role_member'))}
                     </span>
-                    {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />{t('family.view_only')}</span>}
+                    {viewOnly && <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-3xs font-semibold" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}><Eye className="size-2.5" />{t('family.view_only')}</span>}
                   </div>
                   {isUserOwner && !me && (
                     <>
@@ -543,8 +543,8 @@ export default function FamilyPage() {
                     <Mail className="size-3.5" style={{ color: 'var(--c-amber-ink)' }} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || t('family.no_email_link')}</p>
-                    <p className="text-[11px] inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}><CalendarClock className="size-3" /> {t('family.expires')} {formatDate(new Date(inv.expires_at))}</p>
+                    <p className="text-ui font-medium truncate" style={{ color: 'var(--ink)' }}>{inv.email || t('family.no_email_link')}</p>
+                    <p className="text-2xs inline-flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}><CalendarClock className="size-3" /> {t('family.expires')} {formatDate(new Date(inv.expires_at))}</p>
                   </div>
                   <Button variant="ghost" size="icon-sm" onClick={() => { navigator.clipboard.writeText(link); toast.success(t('family.toast_invite_link_copied')) }} title={t('family.copy')} aria-label={t('family.copy')}><Copy className="size-3.5" /></Button>
                   <Button variant="ghost" size="icon-sm" onClick={() => revokeInvite(inv.id)} title={t('family.revoke_invite')} aria-label={t('family.revoke_invite')}><Trash2 className="size-3.5" style={{ color: 'var(--c-coral-ink)' }} /></Button>
@@ -557,7 +557,7 @@ export default function FamilyPage() {
 
       {/* KARTU BERBAGI — toggle net worth (1 baris) + chip yang dibagikan + privat 1 baris */}
       <section className="s-card p-4 sm:p-5">
-        <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.whats_shared')}</p>
+        <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.whats_shared')}</p>
         {nwActive && (
           <button
             type="button"
@@ -577,7 +577,7 @@ export default function FamilyPage() {
           </button>
         )}
         {nwActive && (netWorth?.members_sharing ?? 0) > 0 && (
-          <p className="mt-2 text-[12px]" style={{ color: 'var(--ink-muted)' }} title={`${netWorth?.members_sharing} ${t('family.of')} ${netWorth?.members_total} ${t('family.members_sharing_note')}`}>
+          <p className="mt-2 text-cap" style={{ color: 'var(--ink-muted)' }} title={`${netWorth?.members_sharing} ${t('family.of')} ${netWorth?.members_total} ${t('family.members_sharing_note')}`}>
             {t('family.combined_net_worth')}{' '}
             <span className="num font-bold" title={formatCurrency(netWorth?.combined_net_worth ?? 0)} style={{ color: 'var(--c-mint-ink)' }}>{formatCompactCurrency(netWorth?.combined_net_worth ?? 0)}</span>
             <span className="num" style={{ color: 'var(--ink-soft)' }}> · {netWorth?.members_sharing}/{netWorth?.members_total}</span>
@@ -590,12 +590,12 @@ export default function FamilyPage() {
             { icon: PieChart, label: t('family.shared_budgets_goals') },
             { icon: TrendingUp, label: t('family.shared_net_worth') },
           ].map((c, i) => (
-            <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
+            <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-2xs font-medium" style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}>
               <c.icon className="size-3 shrink-0" /> {c.label}
             </span>
           ))}
         </div>
-        <p className="mt-2.5 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-soft)' }} title={`${t('family.private_assets')} · ${t('family.private_debts')} · ${t('family.private_personal_goals')}`}>
+        <p className="mt-2.5 flex items-center gap-1.5 text-2xs" style={{ color: 'var(--ink-soft)' }} title={`${t('family.private_assets')} · ${t('family.private_debts')} · ${t('family.private_personal_goals')}`}>
           <Lock className="size-3 shrink-0" /> {t('family.stays_private')}
         </p>
       </section>
@@ -603,7 +603,7 @@ export default function FamilyPage() {
       {/* Tujuan Bersama */}
       <section className="s-card overflow-hidden">
         <div className="flex items-center justify-between gap-3 p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_goals')}</p>
+          <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('family.shared_goals')}</p>
           {canWrite && (
             <Button variant="outline" size="sm" onClick={() => { setGoalName(''); setGoalTarget(0); setGoalDeadline(''); setGoalDialogOpen(true) }}>
               <Target className="size-3.5" /> {t('family.add_goal')}
@@ -622,9 +622,9 @@ export default function FamilyPage() {
                 <div key={g.id} className="p-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium" style={{ color: 'var(--ink)' }}>{g.name}</p>
-                    <span className="num text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{pct.toFixed(0)}%</span>
+                    <span className="num text-ui font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{pct.toFixed(0)}%</span>
                   </div>
-                  <p className="num text-[12px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                  <p className="num text-cap mt-0.5" style={{ color: 'var(--ink-muted)' }}>
                     {formatCurrency(g.current_amount)} <span style={{ color: 'var(--ink-soft)' }}>{t('family.of')} {formatCurrency(g.target_amount)}</span>
                     {g.deadline && <span style={{ color: 'var(--ink-soft)' }}> · {t('family.target')} {formatDate(new Date(g.deadline))}</span>}
                   </p>
@@ -636,14 +636,14 @@ export default function FamilyPage() {
         )}
         {goals.length > 0 && (
           <div className="p-3 border-t text-center" style={{ borderColor: 'var(--border-soft)' }}>
-            <Link href="/dashboard/goals" className="text-[12px] inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.manage_in_goals')}</Link>
+            <Link href="/dashboard/goals" className="text-cap inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-muted)' }}>{t('family.manage_in_goals')}</Link>
           </div>
         )}
       </section>
 
       {/* Aktivitas terakhir — 1 baris teks kecil, bukan kartu */}
       {activities.length > 0 && (
-        <p className="flex items-center gap-2 px-1 text-[11px]" title={t('family.recent_activity')} style={{ color: 'var(--ink-soft)' }}>
+        <p className="flex items-center gap-2 px-1 text-2xs" title={t('family.recent_activity')} style={{ color: 'var(--ink-soft)' }}>
           <Activity className="size-3 shrink-0" />
           <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink-muted)' }}>
             <span className="font-medium">{activities[0].user_id === user?.id ? t('family.you') : (activities[0].full_name || t('family.member_fallback'))}</span> · {activities[0].description}
@@ -655,11 +655,11 @@ export default function FamilyPage() {
       {/* Bubarkan / keluar — 1 baris teks merah, confirm/dialog tetap jalan */}
       <div className="pb-1 text-center">
         {isUserOwner ? (
-          <button type="button" onClick={deleteHousehold} className="text-[12px] font-medium hover:underline" style={{ color: 'var(--c-coral-ink)' }}>
+          <button type="button" onClick={deleteHousehold} className="text-cap font-medium hover:underline" style={{ color: 'var(--c-coral-ink)' }}>
             {t('family.disband_household')}
           </button>
         ) : (
-          <button type="button" onClick={() => setLeaveDialogOpen(true)} className="text-[12px] font-medium hover:underline" style={{ color: 'var(--c-coral-ink)' }}>
+          <button type="button" onClick={() => setLeaveDialogOpen(true)} className="text-cap font-medium hover:underline" style={{ color: 'var(--c-coral-ink)' }}>
             {t('family.leave_household')}
           </button>
         )}
@@ -727,7 +727,7 @@ export default function FamilyPage() {
             <button type="button" onClick={() => setPermCanEdit((v) => !v)} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left" style={{ background: 'var(--surface-2)' }}>
               <span className="min-w-0">
                 <span className="text-sm font-medium block" style={{ color: 'var(--ink)' }}>{permCanEdit ? t('family.full_access') : t('family.view_only')}</span>
-                <span className="text-[12px] block mt-0.5" style={{ color: 'var(--ink-soft)' }}>{permCanEdit ? t('family.full_access_desc') : t('family.view_only_desc')}</span>
+                <span className="text-cap block mt-0.5" style={{ color: 'var(--ink-soft)' }}>{permCanEdit ? t('family.full_access_desc') : t('family.view_only_desc')}</span>
               </span>
               <span className="relative inline-flex h-5 w-9 items-center rounded-full transition shrink-0" style={{ background: permCanEdit ? 'var(--c-mint)' : 'var(--border)' }}>
                 <span className="inline-block size-4 rounded-full bg-white transition" style={{ transform: permCanEdit ? 'translateX(18px)' : 'translateX(2px)' }} />
