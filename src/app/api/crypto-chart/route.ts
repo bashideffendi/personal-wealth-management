@@ -39,6 +39,12 @@ export async function GET(req: NextRequest) {
   }
   const cfg = RANGE_MAP[range] ?? RANGE_MAP['1D']
   const symbol = toBinanceSymbol(symbolRaw)
+  // Route publik → validasi format sebelum memanggil Binance (hindari URL
+  // aneh di upstream & log). Catatan: simbol fiktif tetap bisa memicu error
+  // upstream yang dihitung circuit breaker — lihat laporan audit.
+  if (!/^[A-Z0-9]{1,20}USDT$/.test(symbol)) {
+    return NextResponse.json({ points: [], meta: null }, { status: 400 })
+  }
 
   try {
     const klines = await getKlines(symbol, cfg.interval, cfg.limit)

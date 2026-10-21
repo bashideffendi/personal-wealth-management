@@ -16,6 +16,12 @@ interface RouteContext {
 export async function GET(_request: Request, context: RouteContext) {
   const { ticker: rawTicker } = await context.params
   const ticker = rawTicker.toUpperCase()
+  // Ticker IDX = alfanumerik pendek. Tolak sisanya sebelum dipakai sebagai nama
+  // file (getStock → path.join(STOCK_DIR, `${t}.json`)) — cegah path traversal
+  // & pertumbuhan negative-cache Map tanpa batas.
+  if (!/^[A-Z0-9]{1,12}$/.test(ticker)) {
+    return NextResponse.json({ error: 'Ticker tidak valid' }, { status: 404 })
+  }
 
   const valuation = getValuation(ticker)
   const detail = getValuationDetail(ticker)

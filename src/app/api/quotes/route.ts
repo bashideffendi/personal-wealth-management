@@ -24,6 +24,10 @@ interface QuoteResult {
   source: 'cache' | 'yahoo'
 }
 
+const MAX_TICKERS = 100
+// Format Yahoo: BBCA.JK, BTC-USD, USDIDR=X, GC=F, ^JKSE.
+const TICKER_RE = /^[A-Z0-9.\-=^]{1,20}$/
+
 function normalizeTicker(raw: string): string {
   return raw.trim().toUpperCase()
 }
@@ -84,9 +88,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ quotes: [] })
   }
 
+  // Batasi jumlah & format ticker: tiap ticker baru = 1 fetch Yahoo + 1 baris
+  // cache SHARED (ditulis service-role). Tanpa batas, satu request bisa fan-out
+  // ribuan panggilan upstream / mengisi price_snapshots dengan sampah.
   const tickers = Array.from(
-    new Set(raw.split(',').map(normalizeTicker).filter(Boolean))
-  )
+    new Set(raw.split(',').map(normalizeTicker).filter((t) => TICKER_RE.test(t)))
+  ).slice(0, MAX_TICKERS)
   if (tickers.length === 0) {
     return NextResponse.json({ quotes: [] })
   }
@@ -156,14 +163,17 @@ export async function GET(request: Request) {
         }
       }
     })
-    if (successes.length > 0) {
+    // Harga 0 (Yahoo gak kasih harga) jangan masuk cache SHARED — kalau masuk,
+    // semua user dapat valuasi Rp 0 selama TTL.
+    const cacheable = successes.filter((q) => q.price > 0)
+    if (cacheable.length > 0) {
       // Cache harga SHARED → tulis via service-role (security-4/5). price_snapshots
       // RLS gak punya policy write buat authenticated (migrasi 002), jadi upsert
       // user-client sebelumnya sebenernya silently ditolak; admin bikin warm-cache
       // ini jalan + nutup vektor. Fallback ke user client kalau key absen.
       const writer = createAdminClient() ?? supabase
       await writer.from('price_snapshots').upsert(
-        successes.map((q) => ({
+        cacheable.map((q) => ({
           ticker: q.ticker,
           price: q.price,
           currency: q.currency,
