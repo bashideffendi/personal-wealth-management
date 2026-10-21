@@ -6,6 +6,7 @@
  * tab Log Manual), ticker disimpan format Yahoo (.JK).
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useState } from 'react'
 import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +29,7 @@ export function ResearchLogButton({ ticker, name }: { ticker: string; name: stri
   const [shares, setShares] = useState(0)
   const [price, setPrice] = useState(0)
   const [fee, setFee] = useState(0)
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => toLocalISO(new Date()))
   const [notes, setNotes] = useState('')
 
   async function save() {

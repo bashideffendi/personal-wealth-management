@@ -10,6 +10,7 @@
  * transaksi via /api/parse-transaction (preview dulu, lalu simpan).
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { formatRupiahPlain, formatCompactCurrency } from '@/lib/utils'
@@ -438,7 +439,7 @@ export function CommandPalette() {
 
     const { error } = await supabase.from('transactions').insert({
       user_id: user.id,
-      date: new Date().toISOString().split('T')[0],
+      date: toLocalISO(new Date()),
       account_id: accountId,
       type: data.type,
       category: data.category,

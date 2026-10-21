@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
-import { isExpired, nextRunDate, occurrencesInRange, parseISODate, startOfToday, type RecurLike } from '@/lib/recurrence'
+import { isExpired, nextRunDate, occurrencesInRange, parseISODate, startOfToday, type RecurLike, toLocalISO } from '@/lib/recurrence'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
@@ -79,7 +79,7 @@ interface FormState {
 const EMPTY: FormState = {
   id: null, name: '', type: 'expense', category: 'Langganan',
   amount: 0, account_id: '', frequency: 'monthly', day_of_period: 1,
-  start_date: new Date().toISOString().split('T')[0], end_date: '',
+  start_date: toLocalISO(new Date()), end_date: '',
   is_active: true, auto_post: false, notes: '',
 }
 
@@ -246,12 +246,12 @@ export default function RecurringPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { error } = await supabase.from('transactions').insert({
-      user_id: user.id, date: new Date().toISOString().split('T')[0], account_id: r.account_id,
+      user_id: user.id, date: toLocalISO(new Date()), account_id: r.account_id,
       type: r.type, category: r.category, description: `[Auto] ${r.name}`, amount: r.amount,
     })
     if (error) { toast.error(t('common.mutation_failed')); return }
     // last_run_date cuma penanda; transaksi utamanya sudah benar tercatat.
-    await supabase.from('recurring_transactions').update({ last_run_date: new Date().toISOString().split('T')[0] }).eq('id', r.id)
+    await supabase.from('recurring_transactions').update({ last_run_date: toLocalISO(new Date()) }).eq('id', r.id)
     toast.success(`${r.name} ${t('recurring.toast_recorded_suffix')}`)
     refresh()
   }
@@ -266,7 +266,7 @@ export default function RecurringPage() {
     setDialogOpen(true)
   }
   function openAdd(prefill?: Partial<FormState>) {
-    setForm({ ...EMPTY, ...prefill, start_date: new Date().toISOString().split('T')[0] })
+    setForm({ ...EMPTY, ...prefill, start_date: toLocalISO(new Date()) })
     setDialogOpen(true)
   }
 

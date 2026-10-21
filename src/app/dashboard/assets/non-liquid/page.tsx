@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { toast } from 'sonner'
 
 import { useEffect, useMemo, useState } from 'react'
@@ -96,7 +97,7 @@ interface FormState {
 const EMPTY: FormState = {
   id: null, name: '', category: 'property', type: '',
   purchase_value: 0, current_value: 0,
-  purchase_date: new Date().toISOString().split('T')[0], notes: '',
+  purchase_date: toLocalISO(new Date()), notes: '',
   latitude: null, longitude: null, address: '',
   plate: '', engine: '', color: '', year: '',
   metode: 'garis_lurus', masaManfaat: 8, residu: 0, deprOverride: false,

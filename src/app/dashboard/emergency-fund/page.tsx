@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -38,7 +39,7 @@ const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transpare
 const LOCATION_PRESETS = ['Tabungan', 'Deposito', 'Reksa Dana Pasar Uang', 'Emas', 'Saham', 'P2P Lending', 'Lainnya']
 
 const dmy = (d: string, dloc: string) => (d ? new Date(d).toLocaleDateString(dloc, { day: 'numeric', month: 'short', year: '2-digit' }) : '—')
-const todayISO = () => new Date().toISOString().split('T')[0]
+const todayISO = () => toLocalISO(new Date())
 function etaDate(months: number, dloc: string): string {
   if (!Number.isFinite(months) || months <= 0) return '—'
   const d = new Date(); d.setMonth(d.getMonth() + Math.ceil(months))

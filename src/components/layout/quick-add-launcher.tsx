@@ -12,6 +12,7 @@
  * akses ke kamera dari FAB. Sekarang foto struk adalah opsi pertama.
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useT, useI18n } from '@/lib/i18n/context'
@@ -120,7 +121,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [cards, setCards] = useState<CreditCard[]>([])
   const [form, setForm] = useState<ManualFormState>({
-    date: new Date().toISOString().split('T')[0],
+    date: toLocalISO(new Date()),
     account_id: '',
     type: 'expense',
     category: firstOf('expense'),
@@ -217,7 +218,7 @@ export function QuickAddLauncher({ variant = 'desktop' }: QuickAddLauncherProps)
       setReceiptFile(null)
       setScanError(null)
       setForm({
-        date: new Date().toISOString().split('T')[0],
+        date: toLocalISO(new Date()),
         account_id: '',
         type: 'expense',
         category: firstOf('expense'),

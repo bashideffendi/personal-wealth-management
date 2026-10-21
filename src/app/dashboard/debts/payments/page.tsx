@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -45,7 +46,7 @@ export default function DebtPaymentsPage() {
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({
-    debt_id: '', amount: 0, date: new Date().toISOString().split('T')[0], notes: '',
+    debt_id: '', amount: 0, date: toLocalISO(new Date()), notes: '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -91,7 +92,7 @@ export default function DebtPaymentsPage() {
     }
     setSaving(false)
     setDialogOpen(false)
-    setForm({ debt_id: '', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
+    setForm({ debt_id: '', amount: 0, date: toLocalISO(new Date()), notes: '' })
     toast.success(t('debts_payments.saved_toast'))
     refresh()
   }

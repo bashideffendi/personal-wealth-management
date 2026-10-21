@@ -3,6 +3,7 @@
  * diekstrak dari transactions/page.tsx (protokol pecah god-file, langkah A).
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { applyRules, type RuleLike, type TxType } from './rules'
 
 export type ParsedCsvRow = {
@@ -77,7 +78,7 @@ export function parseFlexibleDate(raw: string, fallback: string): string {
 export function parseCsvRows(
   data: readonly Record<string, string>[],
   rules: readonly RuleLike[],
-  today: string = new Date().toISOString().split('T')[0],
+  today: string = toLocalISO(new Date()),
 ): ParsedCsvRow[] {
   return data
     .map((row) => {

@@ -10,6 +10,7 @@
  * Cost: ~Rp 30 per refresh via Haiku 4.5. Cached daily = ~Rp 900/user/month.
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useState, useMemo } from 'react'
 import { Sparkles, RefreshCw, Loader2, AlertCircle, PenLine, Camera, Command as CommandIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -172,7 +173,7 @@ export function AIInsightsCard({
         remaining: Math.max(0, g.target_amount - g.current_amount),
         deadline: g.deadline ?? undefined,
       })),
-      today: new Date().toISOString().split('T')[0],
+      today: toLocalISO(new Date()),
     }
   }, [monthTransactions, yearTransactions, selectedYear, selectedMonth, goals, locale])
 

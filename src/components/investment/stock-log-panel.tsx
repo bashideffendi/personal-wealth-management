@@ -6,6 +6,7 @@
  * Was previously the standalone /dashboard/stock-log page.
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -40,7 +41,7 @@ interface FormState {
 const EMPTY: FormState = {
   id: null, investment_id: '', ticker: '', side: 'buy',
   shares: 0, price: 0, fee: 0, broker: '',
-  date: new Date().toISOString().split('T')[0], notes: '',
+  date: toLocalISO(new Date()), notes: '',
 }
 
 

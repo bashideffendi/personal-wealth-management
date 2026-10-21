@@ -6,6 +6,7 @@
  * Was previously the standalone /dashboard/dividends page.
  */
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useMemo, useState } from 'react'
 import { useT } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/client'
@@ -35,7 +36,7 @@ interface FormState {
 }
 const EMPTY: FormState = {
   id: null, investment_id: '', ticker: '', amount: 0, shares: 0,
-  ex_date: '', pay_date: new Date().toISOString().split('T')[0], notes: '',
+  ex_date: '', pay_date: toLocalISO(new Date()), notes: '',
 }
 
 export function DividendsPanel() {

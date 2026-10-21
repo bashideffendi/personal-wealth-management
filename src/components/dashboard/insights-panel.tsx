@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { formatCurrency } from '@/lib/utils'
 import { rootCategory } from '@/lib/budget-categories'
 import { useT } from '@/lib/i18n/context'
@@ -116,8 +117,8 @@ export function InsightsPanel({
   const prevMonthExp = (() => {
     const y = today.getFullYear()
     const m = today.getMonth() // current
-    const prevStart = new Date(y, m - 1, 1).toISOString().split('T')[0]
-    const prevEnd   = new Date(y, m, 1).toISOString().split('T')[0]
+    const prevStart = toLocalISO(new Date(y, m - 1, 1))
+    const prevEnd   = toLocalISO(new Date(y, m, 1))
     return yearTransactions
       .filter((t) => t.type === 'expense' && t.category !== 'Transfer' && t.date >= prevStart && t.date < prevEnd)
       .reduce((s, t) => s + t.amount, 0)
@@ -140,8 +141,8 @@ export function InsightsPanel({
     let inc = 0, exp = 0, months = 0
     for (let i = 1; i <= 3; i++) {
       const mm = m - i
-      const start = new Date(y, mm, 1).toISOString().split('T')[0]
-      const end   = new Date(y, mm + 1, 1).toISOString().split('T')[0]
+      const start = toLocalISO(new Date(y, mm, 1))
+      const end   = toLocalISO(new Date(y, mm + 1, 1))
       // Exclude leg Transfer di KEDUA sisi — sama dengan currMonthExp/prevMonthExp
       // di atas; tanpa ini transfer antar rekening menggelembungkan income & expense.
       const txs = yearTransactions.filter((t) => t.date >= start && t.date < end && t.category !== 'Transfer')

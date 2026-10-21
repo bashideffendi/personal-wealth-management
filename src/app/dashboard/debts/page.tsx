@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { toast } from 'sonner'
 
 import { useMemo, useState } from 'react'
@@ -72,7 +73,7 @@ function ccNextDueISO(dueDay: number): string {
   const t = new Date(); const y = t.getFullYear(); const m = t.getMonth()
   const thisMonth = new Date(y, m, dueDay)
   const due = thisMonth >= new Date(y, m, t.getDate()) ? thisMonth : new Date(y, m + 1, dueDay)
-  return due.toISOString().split('T')[0]
+  return toLocalISO(due)
 }
 
 /** Jatuh tempo berikutnya utang non-revolving: due_date tersimpan itu tanggal
@@ -104,7 +105,7 @@ const FILTERS: { key: string; cat: string | null }[] = [
 const emptyForm = {
   id: null as string | null, name: '', category: 'consumer', type: '',
   principal: 0, remaining: 0, interest_rate: 0, monthly_payment: 0,
-  due_date: new Date().toISOString().split('T')[0], is_active: true,
+  due_date: toLocalISO(new Date()), is_active: true,
 }
 
 export default function DebtsOverviewPage() {
