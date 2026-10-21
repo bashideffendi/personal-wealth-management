@@ -17,6 +17,9 @@ import { useI18n, useT } from '@/lib/i18n/context'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { MONTHS } from '@/lib/constants'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
+import { fetchAllRows } from '@/lib/data/fetch-all'
+import { computeNetWorth, sumField } from '@/lib/data/net-worth'
+import { monthBounds, sumFlow } from '@/lib/data/flow'
 import type { Transaction } from '@/types'
 import {
   Loader2, TrendingUp, TrendingDown, Calendar,
@@ -63,7 +66,9 @@ export function MonthlyReportBody({
       const endBound = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, '0')}-01`
 
       const [txRes, budRes, liquidEntries, nlqRes, invRes, debtRes, ccRes, goalsRes, recRes, ctrRes, treeRes] = await Promise.all([
-        supabase.from('transactions').select('*').eq('user_id', user.id).gte('date', startBound).lt('date', endBound).order('amount', { ascending: false }),
+        // 6 bulan bisa > 1000 baris → paginate (cap PostgREST dulu membuang
+        // transaksi TERKECIL karena urut amount desc → total bulan kurang).
+        fetchAllRows((from, to) => supabase.from('transactions').select('*').eq('user_id', user.id).gte('date', startBound).lt('date', endBound).order('amount', { ascending: false }).order('id').range(from, to)),
         supabase.from('budgets').select('category, type, amount').eq('user_id', user.id).eq('year', year).eq('month', month),
         fetchLiquidEntries(supabase, user.id, { strict: true }),
         supabase.from('assets_non_liquid').select('current_value').eq('user_id', user.id),
@@ -77,6 +82,11 @@ export function MonthlyReportBody({
       ])
       if (txRes.error) throw txRes.error
       if (budRes.error) throw budRes.error
+      // Komponen kekayaan bersih gagal → error, bukan 0 diam-diam.
+      if (nlqRes.error) throw nlqRes.error
+      if (invRes.error) throw invRes.error
+      if (debtRes.error) throw debtRes.error
+      if (ccRes.error) throw ccRes.error
 
       // Filter ke leaf key tree saat ini (sama kayak dashboard & halaman Anggaran):
       // buang baris parent basi (double-count) + kategori stale yg udah dihapus/rename.
@@ -100,11 +110,11 @@ export function MonthlyReportBody({
         allTx: (txRes.data ?? []) as Transaction[],
         budgets: budgetRows,
         liquidTotal: sumLiquid(liquidEntries),
-        nonLiquidTotal: ((nlqRes.data ?? []) as { current_value: number }[]).reduce((s, a) => s + (a.current_value ?? 0), 0),
-        investTotal: ((invRes.data ?? []) as { total_value: number }[]).reduce((s, a) => s + (a.total_value ?? 0), 0),
+        nonLiquidTotal: sumField(nlqRes.data, 'current_value'),
+        investTotal: sumField(invRes.data, 'total_value'),
         debts: debtRows,
-        debtTotal: debtRows.reduce((s, a) => s + (a.remaining ?? 0), 0),
-        ccTotal: ((ccRes.data ?? []) as { current_balance: number }[]).reduce((s, a) => s + (a.current_balance ?? 0), 0),
+        debtTotal: sumField(debtRows, 'remaining'),
+        ccTotal: sumField(ccRes.data, 'current_balance'),
         goals: (goalsRes.data ?? []) as GoalRow[],
         recurring: (recRes.data ?? []) as RecurringRow[],
         contracts: (ctrRes.data ?? []) as ContractRow[],
@@ -125,14 +135,11 @@ export function MonthlyReportBody({
   const debts = useMemo(() => pageQuery.data?.debts ?? [], [pageQuery.data])
   const contracts = useMemo(() => pageQuery.data?.contracts ?? [], [pageQuery.data])
 
-  function bounds(y: number, m: number) {
-    const start = `${y}-${String(m).padStart(2, '0')}-01`
-    const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-    return { start, end }
-  }
+  // Aturan bulan & Transfer = lib/data/flow (sama dengan dashboard).
+  const bounds = monthBounds
   // Exclude kategori 'Transfer' (pindah antar-akun = 2 leg income+expense) dari
   // semua agregasi — konsisten sama dashboard, biar gross income/expense gak double.
-  const sumType = (txs: Transaction[], t: Transaction['type']) => txs.filter((x) => x.type === t && x.category !== 'Transfer').reduce((s, x) => s + x.amount, 0)
+  const sumType = (txs: Transaction[], t: Transaction['type']) => sumFlow(txs, t)
   function byCat(txs: Transaction[], t: Transaction['type']) {
     const m: Record<string, number> = {}
     for (const x of txs.filter((y) => y.type === t && y.category !== 'Transfer')) m[x.category] = (m[x.category] || 0) + x.amount
@@ -208,7 +215,7 @@ export function MonthlyReportBody({
     const sankeyOutflow = [...bucketFlow('expense'), ...bucketFlow('saving'), ...bucketFlow('investment')]
 
     const top_expenses = cur.filter((t) => t.type === 'expense' && t.category !== 'Transfer').sort((a, b) => b.amount - a.amount).slice(0, 10)
-    const netWorth = liquidTotal + nonLiquidTotal + investTotal - debtTotal - ccTotal
+    const { netWorth } = computeNetWorth({ liquid: liquidTotal, nonLiquid: nonLiquidTotal, investments: investTotal, debts: debtTotal, creditCards: ccTotal })
 
     // Forward-looking next month: recurring (active) + debt monthly payments + monthly contracts
     const upcoming: { name: string; amount: number; kind: string }[] = []

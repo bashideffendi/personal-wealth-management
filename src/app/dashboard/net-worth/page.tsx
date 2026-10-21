@@ -1,10 +1,12 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { averageMonthlyIncome } from '@/lib/data/monthly-income'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
+import { computeNetWorth } from '@/lib/data/net-worth'
 import { fetchLiquidEntries, sumCashEquivalent, sumReceivable } from '@/lib/liquid'
 import type { NetWorthSnapshot } from '@/types'
 import { projectNetWorth } from '@/lib/net-worth-projection'
@@ -68,6 +70,17 @@ function snapshotDelta(snapshots: NetWorthSnapshot[], target: Date): { delta: nu
   return { delta, pct: best.net_worth !== 0 ? (delta / Math.abs(best.net_worth)) * 100 : 0 }
 }
 
+// Rincian halaman ini → rumus kanonik lib/data/net-worth.
+function netWorthOf(d: NetWorthData) {
+  return computeNetWorth({
+    liquid: d.cashAndEquivalent + d.receivable,
+    nonLiquid: d.property + d.vehicle + d.personalItem,
+    investments: d.longTermInvestment,
+    debts: d.consumerDebt + d.cashLoan + d.longTermDebt,
+    creditCards: d.creditCard,
+  })
+}
+
 export default function NetWorthPage() {
   const supabase = createClient()
   const { t, locale } = useI18n()
@@ -97,6 +110,10 @@ export default function NetWorthPage() {
       ])
       if (nonLiquidRes.error) throw nonLiquidRes.error
       if (debtRes.error) throw debtRes.error
+      // Dulu investasi/kartu gagal → 0 diam-diam, lalu efek di bawah MENULIS
+      // snapshot net worth palsu itu ke DB.
+      if (investmentRes.error) throw investmentRes.error
+      if (ccRes.error) throw ccRes.error
       if (snapshotRes.error) throw snapshotRes.error
 
       type NonLiquidRow = { category: string; current_value: number }
@@ -155,16 +172,15 @@ export default function NetWorthPage() {
     const d = pageQuery.data
     if (!d) return
     const totals = d.data
-    const assets = totals.cashAndEquivalent + totals.receivable + totals.property + totals.vehicle + totals.personalItem + totals.longTermInvestment
-    const debtsTotal = totals.consumerDebt + totals.creditCard + totals.cashLoan + totals.longTermDebt
-    const todayISO = new Date().toISOString().split('T')[0]
+    const { assets, liabilities: debtsTotal } = netWorthOf(totals)
+    const todayISO = toLocalISO(new Date())
     const last = d.snapshots[d.snapshots.length - 1]
     if (last && last.snapshot_date === todayISO && last.total_assets === assets && last.total_debts === debtsTotal) return
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { error } = await supabase.from('net_worth_snapshots').upsert(
-        { user_id: user.id, snapshot_date: todayISO, total_assets: assets, total_debts: debtsTotal, net_worth: assets - debtsTotal },
+        { user_id: user.id, snapshot_date: todayISO, total_assets: assets, total_debts: debtsTotal, net_worth: netWorthOf(totals).netWorth },
         { onConflict: 'user_id,snapshot_date' },
       )
       if (!error) qc.invalidateQueries({ queryKey: ['net-worth'] })
@@ -174,10 +190,8 @@ export default function NetWorthPage() {
 
   const totalCurrentAssets = data.cashAndEquivalent + data.receivable
   const totalNonCurrentAssets = data.property + data.vehicle + data.personalItem + data.longTermInvestment
-  const totalAssets = totalCurrentAssets + totalNonCurrentAssets
   const totalCurrentDebt = data.consumerDebt + data.creditCard + data.cashLoan
-  const totalDebt = totalCurrentDebt + data.longTermDebt
-  const netWorth = totalAssets - totalDebt
+  const { assets: totalAssets, liabilities: totalDebt, netWorth } = netWorthOf(data)
   const isPositive = netWorth >= 0
   const projection = useMemo(() => projectNetWorth(totalAssets, payoffDebts, nwStrategy), [totalAssets, payoffDebts, nwStrategy])
   const projAccent = nwStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'

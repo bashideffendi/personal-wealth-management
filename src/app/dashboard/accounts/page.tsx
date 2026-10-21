@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
+import { computeNetWorth, sumField } from '@/lib/data/net-worth'
 import { fetchLiquidEntries, sumLiquid } from '@/lib/liquid'
 import { ACCOUNT_TYPES } from '@/lib/constants'
 import type { Account, AllocationPurpose } from '@/types'
@@ -240,23 +241,28 @@ export default function AccountsPage() {
       ])
       if (nlqRes.error) throw nlqRes.error
       if (debtRes.error) throw debtRes.error
+      // Dulu investasi/kartu gagal → diam-diam 0 → kekayaan bersih salah.
+      if (invRes.error) throw invRes.error
+      if (ccRes.error) throw ccRes.error
 
       type CardRow = { id: string; name: string; last_four: string | null; current_balance: number; credit_limit: number | null }
       const nonLiquid = (nlqRes.data ?? []) as { category: string; current_value: number }[]
       const investments = (invRes.data ?? []) as { total_value: number }[]
       const cards = (ccRes.data ?? []) as CardRow[]
 
-      const invTotal = investments.reduce((s, i) => s + (i.total_value || 0), 0)
-      const ccTotal = cards.reduce((s, c) => s + (c.current_balance || 0), 0)
-      const debtTotal = ((debtRes.data ?? []) as { remaining: number }[]).reduce((s, d) => s + (d.remaining || 0), 0)
-      const assets = sumLiquid(liquidEntries)
-        + nonLiquid.reduce((s, a) => s + (a.current_value || 0), 0)
-        + invTotal
-      const liabilities = debtTotal + ccTotal
+      const invTotal = sumField(investments, 'total_value')
+      const ccTotal = sumField(cards, 'current_balance')
+      const { assets, liabilities, netWorth } = computeNetWorth({
+        liquid: sumLiquid(liquidEntries),
+        nonLiquid: sumField(nonLiquid, 'current_value'),
+        investments: invTotal,
+        debts: sumField(debtRes.data, 'remaining'),
+        creditCards: ccTotal,
+      })
       return {
         assets,
         liabilities,
-        netWorth: assets - liabilities,
+        netWorth,
         invTotal,
         ccTotal,
         cards,

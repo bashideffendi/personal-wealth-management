@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAllRows } from '@/lib/data/fetch-all'
+import { computeNetWorth, type NetWorthParts } from '@/lib/data/net-worth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -54,13 +56,16 @@ export async function GET(request: Request) {
 
   // Semua komponen lintas user — kolom sama persis dengan query client
   // (fetchLiquidEntries + net-worth page), plus user_id buat grouping.
+  // LINTAS USER → total baris cepat > 1000: wajib paginate. Dulu cap PostgREST
+  // memotong diam-diam → user yang barisnya kepotong dapat snapshot salah
+  // (mis. aset hilang tapi utang ikut → net worth anjlok palsu).
   const [accRes, alRes, nlqRes, invRes, debtRes, ccRes] = await Promise.all([
-    admin.from('accounts').select('user_id, current_balance'),
-    admin.from('assets_liquid').select('user_id, balance'),
-    admin.from('assets_non_liquid').select('user_id, current_value'),
-    admin.from('investments').select('user_id, total_value'),
-    admin.from('debts').select('user_id, remaining').eq('is_active', true),
-    admin.from('credit_cards').select('user_id, current_balance').eq('is_active', true),
+    fetchAllRows((f, t) => admin.from('accounts').select('id, user_id, current_balance').order('id').range(f, t)),
+    fetchAllRows((f, t) => admin.from('assets_liquid').select('id, user_id, balance').order('id').range(f, t)),
+    fetchAllRows((f, t) => admin.from('assets_non_liquid').select('id, user_id, current_value').order('id').range(f, t)),
+    fetchAllRows((f, t) => admin.from('investments').select('id, user_id, total_value').order('id').range(f, t)),
+    fetchAllRows((f, t) => admin.from('debts').select('id, user_id, remaining').eq('is_active', true).order('id').range(f, t)),
+    fetchAllRows((f, t) => admin.from('credit_cards').select('id, user_id, current_balance').eq('is_active', true).order('id').range(f, t)),
   ])
   // Strict (pola fetchLiquidEntries strict): satu query gagal = abort run.
   // Lanjut dengan tabel "kosong" bakal nulis snapshot Rp 0 palsu buat semua user.
@@ -69,21 +74,20 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: firstErr.message }, { status: 500 })
   }
 
-  // Agregasi per user, meniru client: aset = liquid (accounts + assets_liquid,
-  // cash-equivalent MAUPUN receivable — dua-duanya masuk total_assets) +
-  // non-liquid + investasi; kewajiban = debts.remaining + CC balance.
-  const totals = new Map<string, { assets: number; debts: number }>()
-  const bump = (userId: string, field: 'assets' | 'debts', amount: number) => {
-    const t = totals.get(userId) ?? { assets: 0, debts: 0 }
-    t[field] += amount || 0
-    totals.set(userId, t)
+  // Agregasi komponen per user, lalu rumus kanonik lib/data/net-worth (sama
+  // persis dengan client: likuid termasuk piutang; kewajiban = utang + kartu).
+  const parts = new Map<string, NetWorthParts>()
+  const bump = (userId: string, field: keyof NetWorthParts, amount: number | null) => {
+    const p = parts.get(userId) ?? { liquid: 0, nonLiquid: 0, investments: 0, debts: 0, creditCards: 0 }
+    p[field] += Number(amount) || 0
+    parts.set(userId, p)
   }
-  for (const r of (accRes.data ?? []) as { user_id: string; current_balance: number }[]) bump(r.user_id, 'assets', r.current_balance)
-  for (const r of (alRes.data ?? []) as { user_id: string; balance: number }[]) bump(r.user_id, 'assets', r.balance)
-  for (const r of (nlqRes.data ?? []) as { user_id: string; current_value: number }[]) bump(r.user_id, 'assets', r.current_value)
-  for (const r of (invRes.data ?? []) as { user_id: string; total_value: number }[]) bump(r.user_id, 'assets', r.total_value)
-  for (const r of (debtRes.data ?? []) as { user_id: string; remaining: number }[]) bump(r.user_id, 'debts', r.remaining)
-  for (const r of (ccRes.data ?? []) as { user_id: string; current_balance: number }[]) bump(r.user_id, 'debts', r.current_balance)
+  for (const r of accRes.data) bump(r.user_id, 'liquid', r.current_balance)
+  for (const r of alRes.data) bump(r.user_id, 'liquid', r.balance)
+  for (const r of nlqRes.data) bump(r.user_id, 'nonLiquid', r.current_value)
+  for (const r of invRes.data) bump(r.user_id, 'investments', r.total_value)
+  for (const r of debtRes.data) bump(r.user_id, 'debts', r.remaining)
+  for (const r of ccRes.data) bump(r.user_id, 'creditCards', r.current_balance)
 
   // Tanggal kalender Asia/Jakarta (pola post-recurring/portfolio-snapshots) —
   // di 17:30 UTC tanggal UTC masih kemarin, tapi WIB sudah masuk hari baru.
@@ -92,7 +96,8 @@ export async function GET(request: Request) {
   let written = 0
   const errors: Array<{ user_id: string; error: string }> = []
 
-  for (const [userId, t] of totals) {
+  for (const [userId, p] of parts) {
+    const t = computeNetWorth(p)
     // Per-user try/catch: satu user gagal gak ngehentikan sisanya.
     try {
       // Bentuk baris + onConflict SAMA PERSIS dengan upsert client di
@@ -102,8 +107,8 @@ export async function GET(request: Request) {
           user_id: userId,
           snapshot_date: snapshotDate,
           total_assets: t.assets,
-          total_debts: t.debts,
-          net_worth: t.assets - t.debts,
+          total_debts: t.liabilities,
+          net_worth: t.netWorth,
         },
         { onConflict: 'user_id,snapshot_date' },
       )
@@ -114,5 +119,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, date: snapshotDate, users: totals.size, written, errors })
+  return NextResponse.json({ ok: true, date: snapshotDate, users: parts.size, written, errors })
 }

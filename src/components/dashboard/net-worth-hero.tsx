@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { ArrowUp, ArrowDown, ArrowUpRight } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { useT } from '@/lib/i18n/context'
+import { computeNetWorth } from '@/lib/data/net-worth'
 
 interface MonthlyData {
   month: string
@@ -46,8 +47,11 @@ export function NetWorthHero({
   monthlyTrend = [],
 }: NetWorthHeroProps) {
   const t = useT()
-  const totalAssets = liquidTotal + nonLiquidTotal + investmentsTotal
-  const netWorth = totalAssets - debtTotal
+  // debtTotal dari dashboard SUDAH termasuk saldo kartu (nw.liabilities).
+  const { assets: totalAssets, netWorth } = computeNetWorth({
+    liquid: liquidTotal, nonLiquid: nonLiquidTotal, investments: investmentsTotal,
+    debts: debtTotal, creditCards: 0,
+  })
 
   const now = new Date()
 

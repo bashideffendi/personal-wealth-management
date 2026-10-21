@@ -447,7 +447,9 @@ export async function loadMonthlyActuals(
       .order('id')
       .range(from, to),
   )
-  if (error || !data) return {}
+  // Gagal = lempar → halaman Anggaran menampilkan kartu error, bukan kolom
+  // realisasi nol palsu (dulu `return {}`).
+  if (error) throw error
   const out: Record<string, number> = {}
   for (const row of data as {
     type: string

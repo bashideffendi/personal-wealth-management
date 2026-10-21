@@ -62,6 +62,8 @@ import { Loader2, ArrowRight, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 import { fetchAllRows } from '@/lib/data/fetch-all'
+import { computeNetWorth, sumField } from '@/lib/data/net-worth'
+import { inMonth, monthFlow } from '@/lib/data/flow'
 
 // Palet chart = 4 warna logo (mint → biru → violet → coral) sebagai aksen data,
 // disusul varian -ink (lebih gelap, kontras teks/label) dengan urutan yang sama
@@ -303,8 +305,15 @@ export default function DashboardPage() {
       // Total utang HARUS termasuk saldo kartu kredit — konsisten sama
       // /dashboard/net-worth + report. Sebelumnya cuma debts.remaining →
       // net worth hero kelebihan sebesar saldo CC.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ccSumForDebt = ((ccRes.data ?? []) as any[]).reduce((s, c) => s + (c.current_balance ?? 0), 0)
+      // Rumus kanonik lib/data/net-worth (dipakai juga Akun, Net Worth,
+      // laporan, cron snapshot).
+      const nw = computeNetWorth({
+        liquid: sumLiquid(liquidEntries),
+        nonLiquid: sumField(nlqRes.data, 'current_value'),
+        investments: sumField(invRes.data, 'total_value'),
+        debts: sumField(debtRows, 'remaining'),
+        creditCards: sumField(ccRes.data, 'current_balance'),
+      })
 
       return {
         firstName: fullName.split(' ')[0],
@@ -314,9 +323,9 @@ export default function DashboardPage() {
         accounts,
         liquidTotal: sumLiquid(liquidEntries),
         cashEquivalent: sumCashEquivalent(liquidEntries),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        nonLiquidTotal: ((nlqRes.data ?? []) as any[]).reduce((s, a) => s + (a.current_value ?? 0), 0),
-        debtTotal: debtRows.reduce((s, d) => s + (d.remaining ?? 0), 0) + ccSumForDebt,
+        nonLiquidTotal: sumField(nlqRes.data, 'current_value'),
+        debtTotal: nw.liabilities,
+        netWorth: nw.netWorth,
         activeDebts: debtRows as DebtRow[],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         activeGoals: ((goalsRes.data ?? []) as any[]) as GoalRow[],
@@ -337,11 +346,7 @@ export default function DashboardPage() {
   // Slice bulan terpilih dari transaksi setahun — murni turunan (dulu dihitung
   // di fetchData), jadi ganti bulan gak perlu narik ulang data transaksi.
   const monthTransactions = useMemo(() => {
-    const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
-    const endMonth = selectedMonth === 12 ? 1 : selectedMonth + 1
-    const endYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
-    const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
-    return yearTransactions.filter((tx) => tx.date >= startDate && tx.date < endDate)
+    return inMonth(yearTransactions, selectedYear, selectedMonth)
   }, [yearTransactions, selectedYear, selectedMonth])
   const investments = useMemo(() => staticQuery.data?.investments ?? [], [staticQuery.data])
   // Filter budget ke LEAF KEY tree saat ini — samain PERSIS sama halaman
@@ -492,15 +497,8 @@ export default function DashboardPage() {
   const totals = useMemo(() => {
     // Kategori 'Transfer' (pindah antar-akun) tercatat sbg 2 leg expense+income
     // → kalau ikut dihitung, gross income & expense double-count, saving-rate ngaco.
-    const income = monthTransactions.filter((t) => t.type === 'income' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
-    const expense = monthTransactions.filter((t) => t.type === 'expense' && t.category !== 'Transfer').reduce((s, t) => s + t.amount, 0)
-    const saving = monthTransactions.filter((t) => t.type === 'saving').reduce((s, t) => s + t.amount, 0)
-    const investment = monthTransactions.filter((t) => t.type === 'investment').reduce((s, t) => s + t.amount, 0)
-    return {
-      income, expense, saving, investment,
-      net: income - expense - saving - investment,
-      savingRate: income > 0 ? ((saving + investment) / income) * 100 : 0,
-    }
+    // Rumus kanonik lib/data/flow — SAMA dengan laporan bulanan.
+    return monthFlow(monthTransactions)
   }, [monthTransactions])
 
   // ---- Prior-month totals (buat delta KPI vs bulan lalu) ----
@@ -816,7 +814,7 @@ export default function DashboardPage() {
           if (selectedMonth === 12) { setSelectedMonth(1); setSelectedYear(selectedYear + 1) }
           else setSelectedMonth(selectedMonth + 1)
         }}
-        netWorth={liquidTotal + nonLiquidTotal + investments.reduce((s, i) => s + (i.total_value || 0), 0) - debtTotal}
+        netWorth={staticQuery.data?.netWorth ?? 0}
         transactions={monthTransactions}
         budget={budgetProgress}
         budgetKeys={monthBudgets.filter((b) => b.type === 'expense' && b.amount > 0).map((b) => b.category)}

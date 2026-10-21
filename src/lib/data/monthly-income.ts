@@ -35,12 +35,15 @@ export async function fetchMonthlyIncome(
 ): Promise<number> {
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - months * 30)
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('transactions')
     .select('amount, date')
     .eq('user_id', userId)
     .eq('type', 'income')
     .neq('category', 'Transfer')
     .gte('date', cutoff.toISOString().slice(0, 10))
+  // Gagal = lempar (pemanggil react-query tampilkan error), BUKAN 0 yang
+  // terbaca "belum ada pemasukan".
+  if (error) throw error
   return averageMonthlyIncome((data ?? []) as IncomeRow[], months)
 }
