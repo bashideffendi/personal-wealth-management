@@ -774,7 +774,7 @@ function AIPanel({ state, text, onConfirm, onCancel }: AIPanelProps) {
       <div className="px-5 py-4">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="size-3.5" style={{ color: 'var(--c-mint-ink)' }} />
-          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+          <p className="text-[10px] uppercase tracking-[0.12em] font-semibold" style={{ color: 'var(--ink-soft)' }}>
             {t('command_palette.ai_confirm_title')}
           </p>
         </div>

@@ -403,7 +403,7 @@ export default function EmergencyFundPage() {
             </div>
             <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: tint(AMBER, 9) }}>
               <div>
-                <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.calc_recommendation')}</p>
+                <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_recommendation')}</p>
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.calc_rec_pre')} {multiplier} {t('emergency_fund.calc_rec_mid')} ({multiplier}{t('emergency_fund.calc_rec_post')})</p>
               </div>
               <span className="num text-xl font-bold whitespace-nowrap" style={{ color: AMBER_INK }}>{formatCurrency(recommendation)}</span>

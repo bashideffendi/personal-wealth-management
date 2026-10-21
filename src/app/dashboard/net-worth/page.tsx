@@ -309,7 +309,7 @@ export default function NetWorthPage() {
       {/* Rincian aset & liabilitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--c-mint-ink)' }}>{t('networth.asset_breakdown')}</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.asset_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_assets')}</p>
@@ -333,7 +333,7 @@ export default function NetWorthPage() {
         </div>
 
         <div className="s-card p-5">
-          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--c-coral-ink)' }}>{t('networth.liabilities_breakdown')}</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('networth.liabilities_breakdown')}</p>
           <div className="mt-4 space-y-4">
             <div>
               <p className="text-[10px] uppercase tracking-wide mb-1.5" style={{ color: 'var(--ink-soft)' }}>{t('networth.current_debt')}</p>

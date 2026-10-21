@@ -295,7 +295,7 @@ export default function LandingPage() {
           <div>
             <p className="flex items-center gap-2.5">
               <Users className="size-4" style={{ color: 'var(--c-violet-ink)' }} />
-              <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--c-violet-ink)' }}>Keluarga</span>
+              <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keluarga</span>
             </p>
             <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
               Uang bersama, catatan masing-masing.
@@ -308,7 +308,7 @@ export default function LandingPage() {
           <div>
             <p className="flex items-center gap-2.5">
               <Shield className="size-4" style={{ color: 'var(--c-mint-ink)' }} />
-              <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--c-mint-ink)' }}>Keamanan</span>
+              <span className="text-[11px] font-bold tracking-[0.16em] uppercase" style={{ color: 'var(--ink-soft)' }}>Keamanan</span>
             </p>
             <h2 className="mt-4 font-bold tracking-tight" style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', letterSpacing: '-0.02em', color: 'var(--ink)' }}>
               Datamu tetap milikmu.

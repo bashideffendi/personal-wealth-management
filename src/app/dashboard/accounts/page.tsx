@@ -462,27 +462,27 @@ export default function AccountsPage() {
       {/* Sub-nav Kekayaan — halaman ini gak punya header judul, jadi strip di paling atas */}
       <WealthSubnav />
 
-      {/* ═══ MOBILE (<md): hero teal ala Budget — kekayaan bersih ═══ */}
+      {/* ═══ MOBILE (<md): hero mono gelap — kekayaan bersih ═══ */}
       <section
         className="md:hidden rounded-xl px-5 pt-3.5 pb-5"
-        style={{ background: '#128a6d', boxShadow: '0 10px 24px rgba(18,138,109,.28)' }}
+        style={{ background: 'var(--hero-bg)', border: '1px solid var(--hero-line)' }}
       >
         <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={togglePrivacy}
             aria-label={privacyHidden ? t('budgeting.show') : t('budgeting.hide')}
-            className="size-9 -ml-1.5 grid place-items-center rounded-full active:opacity-70"
-            style={{ color: 'rgba(255,255,255,.85)', background: 'rgba(255,255,255,.16)' }}
+            className="size-11 -ml-2.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'var(--on-hero-mut)' }}
           >
             {privacyHidden ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
           </button>
-          <p className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,.92)' }}>{t('networth.net_worth')}</p>
+          <p className="text-[13px] font-medium" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.net_worth')}</p>
           <Link
             href="/dashboard/net-worth"
             aria-label={t('networth.net_worth')}
-            className="size-9 -mr-1.5 grid place-items-center rounded-full active:opacity-70"
-            style={{ color: 'rgba(255,255,255,.85)', background: 'rgba(255,255,255,.16)' }}
+            className="size-11 -mr-2.5 grid place-items-center rounded-full active:opacity-70"
+            style={{ color: 'var(--on-hero-mut)' }}
           >
             <LineChart className="size-[18px]" />
           </Link>
@@ -490,23 +490,23 @@ export default function AccountsPage() {
         {nw ? (
           <p
             className="num tabular text-center font-bold mt-1.5 whitespace-nowrap"
-            style={{ color: '#FFFFFF', fontSize: 'clamp(28px, 8.5vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1.15 }}
+            style={{ color: 'var(--on-hero)', fontSize: 'clamp(28px, 8.5vw, 36px)', letterSpacing: '-0.02em', lineHeight: 1.15 }}
           >
             {formatCurrency(nw.netWorth)}
           </p>
         ) : (
-          <div className="mx-auto mt-2.5 h-[27px] w-44 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,.22)' }} />
+          <div className="mx-auto mt-2.5 h-[27px] w-44 rounded-md animate-pulse" style={{ background: 'var(--hero-line)' }} />
         )}
         <div className="mt-3.5 grid grid-cols-2 gap-3">
           <div className="text-center">
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.assets')}</p>
-            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: '#FFFFFF' }}>
+            <p className="text-[11px]" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.assets')}</p>
+            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: 'var(--on-hero)' }}>
               {nw ? formatCurrency(nw.assets) : '—'}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,.75)' }}>{t('networth.debt')}</p>
-            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: '#ffd9cf' }}>
+            <p className="text-[11px]" style={{ color: 'var(--on-hero-mut)' }}>{t('networth.debt')}</p>
+            <p className="num tabular text-[16px] font-semibold mt-0.5" style={{ color: 'var(--hero-chip-neg-fg)' }}>
               {nw ? formatCurrency(nw.liabilities) : '—'}
             </p>
           </div>
@@ -600,8 +600,8 @@ export default function AccountsPage() {
               type="button"
               onClick={openAddDialog}
               aria-label={t('accounts.add_account')}
-              className="size-9 grid place-items-center rounded-full active:opacity-70"
-              style={{ background: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }}
+              className="size-11 grid place-items-center rounded-full active:opacity-70"
+              style={{ background: 'var(--surface)', border: '1px solid var(--input-border)', color: 'var(--ink)' }}
             >
               <Plus className="size-4" />
             </button>
@@ -615,12 +615,12 @@ export default function AccountsPage() {
               aria-expanded={!collapsed['accounts']}
               className="w-full flex items-center justify-between px-4 pt-3 pb-1 active:opacity-70"
             >
-              <p className="text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.col_account')}</p>
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{t('accounts.col_account')}</p>
               <span className="flex items-center gap-1">
-                <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-mint-ink)' }}>
+                <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
                   Bal. {formatCurrency(paymentBalance)}
                 </p>
-                <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['accounts'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
+                <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['accounts'] ? '-rotate-90' : ''}`} style={{ color: 'var(--ink-soft)' }} />
               </span>
             </button>
             {!collapsed['accounts'] && paymentAccounts.map((a, i) => {
@@ -651,7 +651,7 @@ export default function AccountsPage() {
               <div className="flex items-center justify-between pl-4 pt-3 pb-1">
                 {/* Nav ke halaman kartu pindah ke teks judul; chevron kanan = collapse list */}
                 <Link href="/dashboard/credit-cards" className="active:opacity-70">
-                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--c-mint-ink)' }}>
+                  <p className="text-[13px] font-semibold inline-flex items-center gap-0.5" style={{ color: 'var(--ink)' }}>
                     {t('accounts.footer_credit_cards')} <ChevronRight className="size-3.5" />
                   </p>
                 </Link>
@@ -664,7 +664,7 @@ export default function AccountsPage() {
                   <p className="num tabular text-[13px] font-semibold" style={{ color: 'var(--c-coral-ink)' }}>
                     {t('networth.debt')} {formatCurrency(nw.ccTotal)}
                   </p>
-                  <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--c-mint-ink)' }} />
+                  <ChevronDown className={`size-4 shrink-0 transition-transform ${collapsed['cards'] ? '-rotate-90' : ''}`} style={{ color: 'var(--ink-soft)' }} />
                 </button>
               </div>
               {!collapsed['cards'] && nw.cards.map((c, i) => (
@@ -927,7 +927,7 @@ export default function AccountsPage() {
             <div className="s-card">
               {/* Baris institusi — avatar read-only, sekadar konfirmasi pilihan */}
               <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52 }}>
-                <span className="text-[13px] font-medium shrink-0" style={{ color: 'var(--c-mint-ink)' }}>
+                <span className="text-[13px] font-medium shrink-0" style={{ color: 'var(--ink-muted)' }}>
                   {locale === 'id' ? 'Institusi' : 'Institution'}
                 </span>
                 <span className="flex items-center gap-2.5 min-w-0">
@@ -935,8 +935,8 @@ export default function AccountsPage() {
                     <button
                       type="button"
                       onClick={stepBack}
-                      className="text-[11px] font-medium hover:underline"
-                      style={{ color: 'var(--c-mint-ink)' }}
+                      className="text-[11px] font-medium underline underline-offset-2"
+                      style={{ color: 'var(--ink)' }}
                     >
                       {locale === 'id' ? 'Pilih dari daftar' : 'Pick from list'}
                     </button>
@@ -947,7 +947,7 @@ export default function AccountsPage() {
 
               {/* Baris nama */}
               <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
-                <Label htmlFor="acc-name" className="text-[13px] shrink-0" style={{ color: 'var(--c-mint-ink)' }}>
+                <Label htmlFor="acc-name" className="text-[13px] shrink-0" style={{ color: 'var(--ink-muted)' }}>
                   {t('accounts.field_name')}
                 </Label>
                 <div className="flex-1 min-w-0">
@@ -964,7 +964,7 @@ export default function AccountsPage() {
 
               {/* Baris jenis */}
               <div className="flex items-center justify-between gap-3 px-4" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
-                <Label className="text-[13px] shrink-0" style={{ color: 'var(--c-mint-ink)' }}>{t('accounts.field_type')}</Label>
+                <Label className="text-[13px] shrink-0" style={{ color: 'var(--ink-muted)' }}>{t('accounts.field_type')}</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: (v ?? 'bank') as AccountType })}>
                   <SelectTrigger className="max-w-[60%]">
                     <SelectValue placeholder={t('accounts.field_type_placeholder')}>{(v) => ACCOUNT_TYPES[v as AccountType] ?? t('accounts.field_type_placeholder')}</SelectValue>
@@ -979,7 +979,7 @@ export default function AccountsPage() {
             {/* Grup nilai: nomor rekening + saldo awal */}
             <div className="s-card">
               <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52 }}>
-                <Label htmlFor="acc-number" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--c-mint-ink)' }}>
+                <Label htmlFor="acc-number" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--ink-muted)' }}>
                   {t('accounts.field_number')}
                   <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_number_hint')}</span>
                 </Label>
@@ -995,7 +995,7 @@ export default function AccountsPage() {
               </div>
 
               <div className="flex items-center gap-3 px-4 py-2.5" style={{ minHeight: 52, borderTop: '1px solid var(--border-soft)' }}>
-                <Label htmlFor="acc-balance" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--c-mint-ink)' }}>
+                <Label htmlFor="acc-balance" className="flex-col items-start gap-0.5 text-[13px] shrink-0 max-w-[46%]" style={{ color: 'var(--ink-muted)' }}>
                   {t('accounts.field_starting_balance')}
                   <span className="text-[10px] font-normal leading-snug" style={{ color: 'var(--ink-soft)' }}>{t('accounts.field_starting_balance_hint')}</span>
                 </Label>

@@ -535,7 +535,7 @@ export default function DebtsOverviewPage() {
               <Lightbulb className="size-4 shrink-0 mt-0.5" style={{ color: 'var(--c-amber)' }} />
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink)' }}>
                 {interestDiff > 0 ? (
-                  <><span style={{ color: 'var(--c-violet-ink)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth, locale)}</span>.</>
+                  <><span style={{ color: 'var(--ink)', fontWeight: 600 }}>Avalanche</span> {t('debts.tradeoff_saves')} <span className="num">{formatCurrency(interestDiff)}</span> {t('debts.tradeoff_interest')}{monthsDiff > 0 ? <> &amp; {t('debts.tradeoff_pays_off')} <span className="num">{monthsDiff} {t('debts.months')}</span> {t('debts.tradeoff_faster')}</> : null}. {t('debts.tradeoff_pick')} <span style={{ color: 'var(--c-mint-ink)', fontWeight: 600 }}>Snowball</span> {t('debts.tradeoff_if_need_push')}{snowFirst ? ` (${snowFirst.name})` : ''} {t('debts.paid_off_lower')} <span className="num">{payoffDate(snowFirstMonth, locale)}</span>.</>
                 ) : (
                   <>{t('debts.tradeoff_similar')}</>
                 )}
@@ -544,12 +544,12 @@ export default function DebtsOverviewPage() {
             <div className="grid gap-4 lg:grid-cols-2">
               <StrategyCard
                 strategy="snowball" result={snowball} debts={allActive}
-                accent="var(--c-mint)" accentSoft="var(--c-mint-soft)"
+                accent="var(--ink)" accentSoft="var(--surface)"
                 savedNote={cheaper === 'snowball' && interestDiff > 0 ? `${t('debts.cheapest_interest')} · ${t('debts.save_word')} ${formatCurrency(interestDiff)}` : t('debts.note_fastest_win')}
               />
               <StrategyCard
                 strategy="avalanche" result={avalanche} debts={allActive}
-                accent="var(--c-violet)" accentSoft="var(--c-violet-soft)"
+                accent="var(--ink)" accentSoft="var(--surface)"
                 savedNote={cheaper === 'avalanche' && interestDiff > 0 ? `${t('debts.cheapest_interest')} · ${t('debts.save_word')} ${formatCurrency(interestDiff)}` : t('debts.note_most_efficient')}
               />
             </div>
@@ -568,13 +568,13 @@ export default function DebtsOverviewPage() {
               <div className="flex gap-1.5">
                 {(['snowball', 'avalanche'] as const).map((s) => (
                   <button key={s} onClick={() => setTlStrategy(s)} aria-pressed={tlStrategy === s} className="rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition"
-                    style={{ background: tlStrategy === s ? (s === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)') : 'var(--surface-2)', color: tlStrategy === s ? '#FFF' : 'var(--ink)' }}>
+                    style={{ background: tlStrategy === s ? 'var(--c-primary)' : 'var(--surface-2)', color: tlStrategy === s ? 'var(--c-primary-foreground)' : 'var(--ink)' }}>
                     {s}
                   </button>
                 ))}
               </div>
             </div>
-            <PayoffTimeline result={tlResult} accent={tlStrategy === 'snowball' ? 'var(--c-mint)' : 'var(--c-violet)'} />
+            <PayoffTimeline result={tlResult} accent="var(--c-mint)" />
           </div>
 
           {/* What-If: percepat pelunasan dengan cicilan ekstra */}
@@ -728,18 +728,18 @@ function StrategyCard({ strategy, result, debts, accent, accentSoft, savedNote }
   const karakter = isSnow ? t('debts.character_fast') : t('debts.character_efficient')
   const byId = new Map(debts.map((d) => [d.id, d]))
   return (
-    <div className="rounded-2xl p-4 sm:p-6 transition-shadow hover:shadow-lg" style={{ background: accentSoft, border: `1.5px solid color-mix(in srgb, ${accent} 55%, transparent)` }}>
+    <div className="rounded-xl p-4 sm:p-6" style={{ background: accentSoft, border: '1px solid var(--border)' }}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: accent }}>{t('debts.strategy')}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('debts.strategy')}</p>
           <h3 className="text-[18px] font-semibold leading-none mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
         </div>
-        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months, locale)}</span>
+        <span className="rounded-full px-3 py-1 text-[11px] font-semibold num shrink-0" style={{ background: 'var(--surface-2)', color: accent }}>{t('debts.paid_off_cap')} {payoffDate(result.months, locale)}</span>
       </div>
       <p className="hidden md:block mt-3 text-[15px] leading-snug" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{desc}</p>
       <p className="hidden md:block text-[12.5px] mt-1.5 leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{cocok}</p>
       {savedNote && (
-        <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface)', color: accent }}>
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'var(--surface-2)', color: accent }}>
           <Zap className="size-3" /> {savedNote}
         </div>
       )}
