@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { scrubBreadcrumb } from '@/lib/sentry-scrub'
 
 // Sentry — Edge runtime (middleware, edge routes). Same privacy hardening as
 // the server config: no PII, no log forwarding, request data scrubbed.
@@ -9,6 +10,7 @@ Sentry.init({
   sendDefaultPii: false,
   enableLogs: false,
   tracesSampleRate: process.env.NODE_ENV === 'development' ? 1.0 : 0.1,
+  beforeBreadcrumb: scrubBreadcrumb,
   beforeSend(event) {
     if (event.request) {
       delete event.request.cookies

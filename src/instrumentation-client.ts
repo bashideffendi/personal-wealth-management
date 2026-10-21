@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { scrubBreadcrumb } from '@/lib/sentry-scrub'
 
 // Sentry — browser / client runtime. Privacy-hardened for a financial app:
 // Session Replay is intentionally NOT enabled (it would record balances,
@@ -12,6 +13,7 @@ Sentry.init({
   enableLogs: false,
   // Tanpa tracesSampleRate: browser-tracing gak ke-bundle (±50KB+ di semua
   // halaman) — error capture tetap jalan penuh, cuma performance span yang off.
+  beforeBreadcrumb: scrubBreadcrumb,
   beforeSend(event) {
     if (event.request) {
       delete event.request.cookies

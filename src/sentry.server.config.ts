@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { scrubBreadcrumb } from '@/lib/sentry-scrub'
 
 // Sentry — Node.js server runtime. Privacy-hardened for a financial app under
 // UU PDP: no PII, no local-variable capture (would leak balances / amounts /
@@ -12,6 +13,7 @@ Sentry.init({
   includeLocalVariables: false,
   enableLogs: false,
   tracesSampleRate: process.env.NODE_ENV === 'development' ? 1.0 : 0.1,
+  beforeBreadcrumb: scrubBreadcrumb,
   beforeSend(event) {
     if (event.request) {
       delete event.request.cookies
