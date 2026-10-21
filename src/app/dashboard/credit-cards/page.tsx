@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { toast } from 'sonner'
 
 import { useMemo, useState } from 'react'
@@ -7,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/utils'
 import { adjustCardBalance, adjustAccountBalance } from '@/lib/data/balances'
+import { applyCardPaymentBalances } from '@/lib/data/card-payment'
 import type { Account, CreditCard as CreditCardType, CreditCardPayment } from '@/types'
 import { Button } from '@/components/ui/button'
 import { WealthSubnav } from '@/components/layout/wealth-subnav'
@@ -85,7 +87,7 @@ interface PayFormState {
 }
 const EMPTY_PAY: PayFormState = {
   card_id: '', amount: 0, from_account_id: '',
-  date: new Date().toISOString().split('T')[0], notes: '',
+  date: toLocalISO(new Date()), notes: '',
 }
 
 /** Issuer → gradient (match substring, fallback ink slate). */
@@ -219,31 +221,16 @@ export default function CreditCardsPage() {
     }).select('id').single()
     if (payErr || !payRow) { setPaySaving(false); toast.error(t('common.mutation_failed')); return }
     const paymentId = payRow.id as string
-    // Tiga langkah berurutan dengan KOMPENSASI: kalau langkah saldo gagal, hapus
-    // payment row (dan balikin saldo kartu) supaya gak ada torn state — pembayaran
-    // tercatat tapi saldo gak berubah (yg bikin reversal over-credit pas dihapus).
-    const card = cards.find((x) => x.id === payForm.card_id)
-    if (card) {
-      const { ok: cardOk } = await adjustCardBalance(supabase, card.id, -payForm.amount, card.current_balance, true)
-      if (!cardOk) {
-        await supabase.from('credit_card_payments').delete().eq('id', paymentId)
-        setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
-      }
-    }
     // Bayar kartu = uang KELUAR dari rekening sumber → kurangi saldonya biar masuk
     // cash flow & net worth gak naik gratis. CC payment = transfer (bukan expense
     // baru), jadi sengaja TIDAK bikin transaksi (belanja kartu udah jadi expense).
-    if (payForm.from_account_id) {
-      const acc = accounts.find((a) => a.id === payForm.from_account_id)
-      if (acc) {
-        const { ok: accOk } = await adjustAccountBalance(supabase, acc.id, -payForm.amount, acc.current_balance)
-        if (!accOk) {
-          // rollback: balikin saldo kartu + hapus payment row (all-or-nothing)
-          if (card) await supabase.from('credit_cards').update({ current_balance: card.current_balance }).eq('id', card.id)
-          await supabase.from('credit_card_payments').delete().eq('id', paymentId)
-          setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
-        }
-      }
+    // Saldo gagal → hapus payment row juga (gak ada torn state).
+    const card = cards.find((x) => x.id === payForm.card_id)
+    const acc = payForm.from_account_id ? accounts.find((a) => a.id === payForm.from_account_id) : undefined
+    const { ok } = await applyCardPaymentBalances(supabase, payForm.amount, card, acc)
+    if (!ok) {
+      await supabase.from('credit_card_payments').delete().eq('id', paymentId)
+      setPaySaving(false); toast.error(t('common.mutation_failed')); refresh(); return
     }
     setPaySaving(false); setPayDialogOpen(false); refresh()
   }
