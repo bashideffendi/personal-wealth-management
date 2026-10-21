@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -183,7 +184,7 @@ export default function GoalsPage() {
       if (user) {
         const { error: txErr } = await supabase.from('transactions').insert({
           user_id: user.id,
-          date: new Date().toISOString().slice(0, 10),
+          date: toLocalISO(new Date()),
           type: 'saving',
           category: 'Sinking Fund',
           description: `${t('goals.deposit_tx_desc')} ${depositGoal.name}`,
@@ -212,8 +213,10 @@ export default function GoalsPage() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
+    // user_id HANYA saat insert — di edit, goal bersama household tidak boleh
+    // berpindah pemilik ke anggota yang mengedit.
     const payload = {
-      user_id: user.id,
+      ...(form.id ? {} : { user_id: user.id }),
       name: form.name.trim(),
       category: form.category,
       target_amount: form.target_amount,
@@ -373,7 +376,7 @@ export default function GoalsPage() {
   const categoryLabel = (key: string) => t(`goals.cat_${key}`)
   const strategyLabel = (value: string) => t(`goals.strat_${value}`)
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = toLocalISO(new Date())
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalISO } from '@/lib/recurrence'
 import { useEffect, useState, useMemo, useDeferredValue, useRef, Fragment } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -83,7 +84,7 @@ const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string }> 
 }
 
 const emptyForm = {
-  date: new Date().toISOString().split('T')[0],
+  date: toLocalISO(new Date()),
   account_id: '',
   type: 'expense' as TransactionType,
   category: '',
@@ -409,7 +410,7 @@ export default function TransactionsPage() {
   // Transfer dialog
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [transferForm, setTransferForm] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: toLocalISO(new Date()),
     from_account_id: '',
     to_account_id: '',
     amount: 0,
@@ -475,7 +476,7 @@ export default function TransactionsPage() {
     toast.success(t('transactions.toast_transfer_recorded'))
     setTransferDialogOpen(false)
     setTransferForm({
-      date: new Date().toISOString().split('T')[0],
+      date: toLocalISO(new Date()),
       from_account_id: '', to_account_id: '', amount: 0, notes: '',
     })
     refresh()
@@ -498,7 +499,7 @@ export default function TransactionsPage() {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
-    const dateStr = new Date().toISOString().split('T')[0]
+    const dateStr = toLocalISO(new Date())
     link.href = url
     link.setAttribute('download', `transaksi-${dateStr}.csv`)
     document.body.appendChild(link)
@@ -938,8 +939,10 @@ export default function TransactionsPage() {
         ;({ error: saveErr } = await supabase.from('transactions').insert(buildRows(false)))
       }
     } else {
+      // user_id HANYA saat insert — di edit, mengirim user_id diam-diam
+      // memindahkan transaksi bersama milik anggota household lain ke user ini.
       const payload: Record<string, unknown> = {
-        user_id: user.id,
+        ...(editingId ? {} : { user_id: user.id }),
         date: form.date,
         account_id: form.account_id,
         type: form.type,
@@ -1078,7 +1081,7 @@ export default function TransactionsPage() {
   // ─── Quick-add (inline row) ─────────────────────────────────
   // Faster than opening the modal — Tab between fields, Enter to submit.
   const [quickForm, setQuickForm] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: toLocalISO(new Date()),
     account_id: '',
     type: 'expense' as TransactionType,
     category: '',
