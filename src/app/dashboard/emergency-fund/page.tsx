@@ -29,8 +29,9 @@ function calculateMultiplier(stability: JobStability, dependents: number): numbe
   return dependents === 0 ? 9 : dependents <= 2 ? 10 : 12
 }
 
-const AMBER = 'var(--c-amber)'
-const AMBER_INK = 'var(--c-amber-ink)'
+// Aksen progres = teal (data positif); amber hanya untuk status peringatan.
+const ACCENT = 'var(--c-mint)'
+const ACCENT_INK = 'var(--c-mint-ink)'
 const MINT = 'var(--c-mint)'
 const MINT_INK = 'var(--c-mint-ink)'
 const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
@@ -292,7 +293,7 @@ export default function EmergencyFundPage() {
     ...locations.map((l) => ({ key: `loc-${l.id}`, kind: 'manual' as const, name: l.account_name, amount: l.amount, balance: null as number | null, allocId: l.id, accountId: null as string | null })),
   ].filter((l) => l.amount > 0).sort((a, b) => b.amount - a.amount)
   const linkedAccountIds = new Set(accountAllocations.map((a) => a.account_id))
-  const locPalette = [AMBER, 'var(--c-violet)', MINT, 'var(--ink)', 'var(--c-coral)', 'var(--ink-soft)']
+  const locPalette = [ACCENT, 'var(--c-violet)', MINT, 'var(--ink)', 'var(--c-coral)', 'var(--ink-soft)']
 
   // Perjalanan membangun dana — kumulatif dari log. Baseline = saldo sebelum transaksi tercatat.
   const journey = useMemo(() => {
@@ -333,15 +334,15 @@ export default function EmergencyFundPage() {
       <WealthSubnav />
 
       {/* Card — cuma ring (kiri, amber-tint) + metrik (kanan, surface). Tanpa judul di dalam. */}
-      <div className="grid sm:grid-cols-[auto_1fr] rounded-2xl border overflow-hidden" style={{ borderColor: tint(AMBER, 20) }}>
-        <div className="grid place-items-center p-6 sm:p-8" style={{ background: tint(AMBER, 6) }}>
+      <div className="grid sm:grid-cols-[auto_1fr] rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--outline)', background: 'var(--surface)' }}>
+        <div className="grid place-items-center p-6 sm:p-8">
           <div className="relative size-36">
             <svg viewBox="0 0 120 120" className="size-36 -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke={tint(AMBER, 20)} strokeWidth="11" />
-              <circle cx="60" cy="60" r="52" fill="none" stroke={AMBER} strokeWidth="11" strokeLinecap="round" strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface-2)" strokeWidth="11" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke={ACCENT} strokeWidth="11" strokeLinecap="round" strokeDasharray={2 * Math.PI * 52} strokeDashoffset={(1 - Math.min(progressPercent, 100) / 100) * 2 * Math.PI * 52} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="num font-bold" style={{ fontSize: 'clamp(28px,3vw,36px)', color: AMBER_INK, letterSpacing: '-0.02em' }}>{progressPercent.toFixed(0)}%</span>
+              <span className="num font-bold" style={{ fontSize: 'clamp(28px,3vw,36px)', color: ACCENT_INK, letterSpacing: '-0.02em' }}>{progressPercent.toFixed(0)}%</span>
               <span className="text-3xs uppercase tracking-[0.14em]" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.ring_achieved')}</span>
             </div>
           </div>
@@ -352,7 +353,7 @@ export default function EmergencyFundPage() {
             <span style={{ fontSize: 'clamp(30px,4.5vw,46px)', letterSpacing: '-0.03em' }}>{formatCurrency(accumulatedFund)}</span>
             <button type="button" onClick={() => document.getElementById('ef-kalkulator')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="text-base font-normal inline-flex items-center gap-1 hover:underline" style={{ color: 'var(--ink-soft)' }}>/ {targetAmount > 0 ? formatCurrency(targetAmount) : t('emergency_fund.set_target_inline')} <Pencil className="size-3" /></button>
           </p>
-          <span className="quest-bar mt-4 w-full" style={{ ['--bar-fill' as string]: AMBER, ['--bar-h' as string]: '10px' }}><i style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%` }} /></span>
+          <span className="quest-bar mt-4 w-full" style={{ ['--bar-fill' as string]: ACCENT, ['--bar-h' as string]: '10px' }}><i style={{ width: `${Math.max(progressPercent, accumulatedFund > 0 ? 2 : 0)}%` }} /></span>
           {targetAmount > 0 ? (
             <>
               <div className="mt-5 grid grid-cols-3 gap-4">
@@ -364,7 +365,7 @@ export default function EmergencyFundPage() {
               {coverageMonths > 0 && <p className="mt-4 text-cap leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.coverage_explainer_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>± {coverageMonths.toFixed(1)} {t('emergency_fund.months_unit')}</span> {t('emergency_fund.coverage_explainer_until')} {etaDate(coverageMonths, dloc)}.</p>}
             </>
           ) : (
-            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.empty_target_pre')} <span className="font-semibold" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_calculator')}</span> {t('emergency_fund.empty_target_mid')} <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_action')}</button> {t('emergency_fund.empty_target_post')}</p>
+            <p className="mt-4 text-sm" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.empty_target_pre')} <span className="font-semibold" style={{ color: 'var(--ink)' }}>{t('emergency_fund.empty_target_calculator')}</span> {t('emergency_fund.empty_target_mid')} <button type="button" onClick={openTxn} className="font-semibold underline underline-offset-2" style={{ color: 'var(--c-amber-ink)' }}>{t('emergency_fund.empty_target_action')}</button> {t('emergency_fund.empty_target_post')}</p>
           )}
         </div>
       </div>
@@ -383,7 +384,7 @@ export default function EmergencyFundPage() {
                   return (
                     <button key={k} type="button" onClick={() => setJobStability(k)}
                       className="rounded-lg border px-2 py-2.5 text-cap font-medium leading-tight transition"
-                      style={{ borderColor: on ? AMBER : 'var(--border-soft)', background: on ? tint(AMBER, 9) : 'var(--surface)', color: on ? 'var(--c-amber-ink)' : 'var(--ink-muted)' }}>
+                      style={{ borderColor: on ? 'var(--ink)' : 'var(--input-border)', background: on ? 'var(--surface-2)' : 'var(--surface)', color: on ? 'var(--ink)' : 'var(--ink-muted)' }}>
                       {t(`emergency_fund.job_stability_${k}`)}
                     </button>
                   )
@@ -401,12 +402,12 @@ export default function EmergencyFundPage() {
               </div>
               <div className="grid gap-1.5"><Label>{t('emergency_fund.calc_monthly_expenses')}</Label><RpField value={monthlyExpenses} onChange={setMonthlyExpenses} /></div>
             </div>
-            <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: tint(AMBER, 9) }}>
+            <div className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: 'var(--surface-2)' }}>
               <div>
                 <p className="text-2xs uppercase tracking-wide font-semibold" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.calc_recommendation')}</p>
                 <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.calc_rec_pre')} {multiplier} {t('emergency_fund.calc_rec_mid')} ({multiplier}{t('emergency_fund.calc_rec_post')})</p>
               </div>
-              <span className="num text-xl font-bold whitespace-nowrap" style={{ color: AMBER_INK }}>{formatCurrency(recommendation)}</span>
+              <span className="num text-xl font-bold whitespace-nowrap" style={{ color: ACCENT_INK }}>{formatCurrency(recommendation)}</span>
             </div>
             <div className="grid gap-1.5"><Label>{t('emergency_fund.calc_your_target')}</Label><RpField value={targetAmount} onChange={setTargetAmount} /></div>
             <Button onClick={handleSaveSettings} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{t('emergency_fund.calc_save_target')}</Button>
@@ -420,9 +421,9 @@ export default function EmergencyFundPage() {
             <p className="text-xs mt-1" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_short_pre')} {formatCurrency(deficit)}. {t('emergency_fund.plan_short_question')}</p>
             <div className="mt-3"><RpField value={monthlySaving} onChange={setMonthlySaving} /></div>
             {monthsToGoal > 0 ? (
-              <div className="mt-3 rounded-xl p-4" style={{ background: tint(AMBER, 9) }}>
+              <div className="mt-3 rounded-xl p-4" style={{ background: 'var(--surface-2)' }}>
                 <p className="text-cap" style={{ color: 'var(--ink-muted)' }}>{t('emergency_fund.plan_with')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(monthlySaving)}</span>{t('emergency_fund.plan_per_month_reached')}</p>
-                <p className="num text-xl font-bold mt-0.5" style={{ color: AMBER_INK }}>{etaDate(monthsToGoal, dloc)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
+                <p className="num text-xl font-bold mt-0.5" style={{ color: ACCENT_INK }}>{etaDate(monthsToGoal, dloc)} <span className="text-sm font-normal" style={{ color: 'var(--ink-soft)' }}>· ≈ {monthsToGoal} {t('emergency_fund.plan_months_left')}</span></p>
               </div>
             ) : (
               <p className="mt-3 text-cap" style={{ color: 'var(--ink-soft)' }}>{t('emergency_fund.plan_enter_hint')}</p>
@@ -438,7 +439,7 @@ export default function EmergencyFundPage() {
         ) : (
           <div className="s-card p-5 grid place-items-center text-center">
             <div>
-              <div className="size-11 rounded-full grid place-items-center mx-auto" style={{ background: tint(MINT, 10) }}><Check className="size-5" style={{ color: MINT }} /></div>
+              <div className="size-11 rounded-full grid place-items-center mx-auto" style={{ background: 'var(--surface-2)' }}><Check className="size-5" style={{ color: 'var(--ink-muted)' }} /></div>
               <p className="font-semibold mt-2" style={{ color: 'var(--ink)' }}>{targetAmount > 0 ? t('emergency_fund.safe_title') : t('emergency_fund.calc_first_title')}</p>
               <p className="text-cap mt-1 max-w-xs" style={{ color: 'var(--ink-muted)' }}>{targetAmount > 0 ? t('emergency_fund.safe_body') : t('emergency_fund.calc_first_body')}</p>
             </div>
@@ -477,14 +478,14 @@ export default function EmergencyFundPage() {
           return (
             <div className="mt-4 relative" style={{ height: 200 }}>
               <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full" preserveAspectRatio="none">
-                <defs><linearGradient id="efg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={AMBER} stopOpacity="0.18" /><stop offset="100%" stopColor={AMBER} stopOpacity="0" /></linearGradient></defs>
+                
                 {targetAmount > 0 && <line x1={0} y1={yv(targetAmount)} x2={W} y2={yv(targetAmount)} stroke={MINT} strokeWidth="1.5" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />}
-                <polygon points={areaPts} fill="url(#efg)" />
-                <polyline points={linePts} fill="none" stroke={AMBER} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                <polygon points={areaPts} fill={ACCENT} fillOpacity="0.08" />
+                <polyline points={linePts} fill="none" stroke={ACCENT} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
               </svg>
               <div className="flex items-center justify-between mt-1.5 text-3xs" style={{ color: 'var(--ink-soft)' }}>
                 <span>{journey[0].label}</span>
-                <span className="font-semibold" style={{ color: AMBER_INK }}>{t('emergency_fund.journey_now')} · {formatCurrency(accumulatedFund)}</span>
+                <span className="font-semibold" style={{ color: ACCENT_INK }}>{t('emergency_fund.journey_now')} · {formatCurrency(accumulatedFund)}</span>
               </div>
             </div>
           )
@@ -597,7 +598,7 @@ export default function EmergencyFundPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(MINT, 10) }}><ShieldCheck className="size-5" style={{ color: MINT }} /></div>
+              <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><ShieldCheck className="size-5" style={{ color: 'var(--ink-muted)' }} /></div>
               <div className="min-w-0">
                 <DialogTitle className="text-lg" style={{ fontFamily: 'var(--font-display)' }}>{t('emergency_fund.txn_dialog_title')}</DialogTitle>
                 <DialogDescription>{t('emergency_fund.txn_dialog_desc')}</DialogDescription>

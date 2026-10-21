@@ -125,7 +125,6 @@ const STATUS_TONE: Record<'ok' | 'risk' | 'overdue' | 'done', { bg: string; ink:
   overdue: { bg: 'var(--c-coral-soft)', ink: 'var(--c-coral-ink)' },
 }
 
-const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
 
 export default function GoalsPage() {
   const { t, locale } = useI18n()
@@ -424,7 +423,7 @@ export default function GoalsPage() {
               pct={stats.pct}
               size={84}
               strokeWidth={9}
-              color="var(--c-violet)"
+              color="var(--c-mint)"
               label={stats.totalTarget > 0 ? `${stats.pct.toFixed(0)}%` : '—'}
               subLabel={t('goals.of_target')}
               className="shrink-0"
@@ -442,7 +441,7 @@ export default function GoalsPage() {
                 </span>
               </p>
               {stats.avgProb != null && (
-                <span className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-2xs font-medium" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                <span className="inline-block mt-1.5 rounded-full px-2.5 py-1 text-2xs font-medium" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                   {t('goals.stat_avg_probability')} {stats.avgProb.toFixed(0)}%
                 </span>
               )}
@@ -468,7 +467,7 @@ export default function GoalsPage() {
           {/* Goal cards + pyramid sebagai cell terakhir */}
           <div className="grid gap-3 sm:grid-cols-2">
             {derived.map((d, i) => {
-              const { g, pct, remaining, perMonth, planned, contribution, done, layerColor, layerInk, prob, requiredFor90 } = d
+              const { g, pct, remaining, perMonth, planned, contribution, done, layerInk, prob, requiredFor90 } = d
               const Icon = CATEGORY_ICON[g.category] ?? Target
               const status = goalStatus(g, pct, done)
               // Detail asumsi → tooltip ⓘ di label Probabilitas. Footnote lama
@@ -492,18 +491,18 @@ export default function GoalsPage() {
                           pct={pct}
                           size={36}
                           strokeWidth={4}
-                          color={done ? 'var(--c-mint)' : layerColor}
+                          color="var(--c-mint)"
                           label={`${Math.min(pct, 999).toFixed(0)}`}
                           className="shrink-0 md:hidden"
                         />
-                        <div className="size-8 rounded-xl hidden md:flex items-center justify-center shrink-0" style={{ background: tint(layerColor, 11) }}>
-                          <Icon className="size-4" style={{ color: layerInk }} />
+                        <div className="size-8 rounded-lg hidden md:flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+                          <Icon className="size-4" style={{ color: 'var(--ink-muted)' }} />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
+                            <p className="font-semibold leading-snug line-clamp-2 md:truncate" style={{ color: 'var(--ink)' }}>{g.name}</p>
                             {i === 0 && g.deadline && !done && (
-                              <span className="shrink-0 text-3xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
+                              <span className="hidden md:inline shrink-0 text-3xs font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--ink-soft)' }}>
                                 {t('goals.badge_nearest')}
                               </span>
                             )}
@@ -531,7 +530,7 @@ export default function GoalsPage() {
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
-                            <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                            <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--ink-soft)' }} />
                           </Button>
                         </div>
                         {done ? (
@@ -560,7 +559,7 @@ export default function GoalsPage() {
                     </p>
 
                     <div className="mt-3.5 flex items-center gap-3">
-                      <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: done ? 'var(--c-mint)' : layerColor }}>
+                      <span className="quest-bar flex-1" style={{ ['--bar-fill' as string]: 'var(--c-mint)' }}>
                         <i style={{ width: `${Math.min(pct, 100)}%` }} />
                       </span>
                       <span className="num text-cap font-semibold shrink-0" style={{ color: done ? 'var(--c-mint-ink)' : layerInk }}>
@@ -649,7 +648,7 @@ export default function GoalsPage() {
                           <RotateCcw className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon-sm" aria-label={t('goals.delete_aria')} onClick={() => remove(g.id)}>
-                          <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--danger)' }} />
+                          <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--ink-soft)' }} />
                         </Button>
                       </div>
                     </div>

@@ -97,3 +97,13 @@ mono, #6 judul HP Lainnya/Profil. Sisanya (#7–#10) dilebur ke fase di bawah.
     (tautan "Kelola" di Investasi mengarah ke sana); memindahkannya = keputusan
     produk.
   - Mode demo kini memuat Anggaran (sebelumnya macet karena mock tanpa `rpc`).
+- **Fase 3 — Kekayaan:** label stat berwarna (Cair Instan, Piutang, Properti,
+  Kendaraan…) jadi ink-soft; `StatCard` & tile Kartu Kredit tanpa ikon/titik
+  warna (tanggal jatuh tempo tidak meluber); spanduk duplikat Aset Likuid,
+  nudge "Bunga tinggi" Utang, kartu Utilization, disclaimer riset jadi kartu/
+  caption netral; Dana Darurat dari tema amber → aksen teal + permukaan netral,
+  grafik tanpa gradien; Tujuan: progres teal (dulu amber/ungu terbaca
+  peringatan), chip probabilitas & ikon hapus mono, judul 2 baris di HP;
+  Utang: chip jenis = teks, ikon & bar per baris mono/teal; riset saham tanpa
+  italic. Grafik & donat data (net worth, komposisi aset, peta) dibiarkan —
+  sudah memakai warna sebagai seri data.

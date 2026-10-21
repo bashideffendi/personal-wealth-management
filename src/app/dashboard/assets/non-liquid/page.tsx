@@ -444,7 +444,7 @@ export default function NonLiquidAssetsPage() {
               const empty = s.cur <= 0
               return (
                 <div key={cat} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
-                  <p className="flex items-center gap-1.5 text-2xs font-semibold tracking-wide uppercase" style={{ color: CAT[cat].ink }}><CatIcon className="size-3" />{CAT[cat].label}</p>
+                  <p className="flex items-center gap-1.5 text-2xs font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}><CatIcon className="size-3" />{CAT[cat].label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(s.cur)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(s.cur)}</p>
                   <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>
                     {s.count} {t('assets_nonliquid.item')}{s.count > 0 && <>{' · '}<span style={{ color: s.pct >= 0 ? MINT_INK : CORAL_INK }}>{s.pct >= 0 ? `${t('assets_nonliquid.appreciation')} +` : `${t('assets_nonliquid.depreciation')} `}{s.pct.toFixed(1)}%</span></>}

@@ -488,10 +488,10 @@ function ResearchView({
       >
         {research.frontmatter.thesis && (
           <div className="mb-5 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-            <p className="eyebrow" style={{ color: 'var(--c-mint-ink)' }}>{t('research_tabs.investment_thesis')}</p>
+            <p className="eyebrow">{t('research_tabs.investment_thesis')}</p>
             <p
-              className="mt-2 pl-4 border-l-2 italic leading-relaxed text-row sm:text-base"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', borderColor: 'var(--c-mint)' }}
+              className="mt-2 leading-relaxed text-row sm:text-lead font-medium"
+              style={{ color: 'var(--ink)' }}
             >
               {research.frontmatter.thesis}
             </p>
@@ -559,11 +559,10 @@ function ResearchView({
           color: var(--ink);
         }
         :global(.prose-research blockquote) {
-          border-left: 3px solid var(--c-mint);
+          border-left: 1px solid var(--border);
           padding-left: 1em;
           margin: 1em 0;
           color: var(--ink-muted);
-          font-style: italic;
         }
         :global(.prose-research code) {
           background: var(--surface-2);

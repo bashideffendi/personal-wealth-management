@@ -282,7 +282,7 @@ export default function ContractsPage() {
                           >
                             <TableCell className="pl-4">
                               <div className="flex items-center gap-3 min-w-0">
-                                <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                                <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Icon className="size-4" style={{ color: 'var(--ink-muted)' }} /></div>
                                 <div className="min-w-0">
                                   <p className="text-ui font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
                                   {(c.provider || c.policy_number) && <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>{c.provider || c.policy_number}</p>}
@@ -345,7 +345,7 @@ export default function ContractsPage() {
                         className="group flex items-center gap-3 px-4 py-2 hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] transition-colors cursor-pointer"
                         style={{ minHeight: 56 }}
                       >
-                        <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(meta.color, 10) }}><Icon className="size-4" style={{ color: meta.color }} /></div>
+                        <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Icon className="size-4" style={{ color: 'var(--ink-muted)' }} /></div>
                         <div className="min-w-0 flex-1">
                           <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{c.name}</p>
                           <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>

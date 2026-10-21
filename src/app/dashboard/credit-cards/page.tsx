@@ -261,7 +261,6 @@ export default function CreditCardsPage() {
     return { outstanding, limit, available: Math.max(0, limit - outstanding), utilization, count: active.length }
   }, [active])
 
-  const utilColor = totals.utilization < 30 ? MINT : totals.utilization < 70 ? AMBER : CORAL
   const utilInk = totals.utilization < 30 ? MINT_INK : totals.utilization < 70 ? AMBER_INK : CORAL_INK
   const utilZone = totals.utilization < 30 ? t('credit_cards.util_zone_safe') : totals.utilization < 70 ? t('credit_cards.util_zone_high') : t('credit_cards.util_zone_too_high')
 
@@ -341,18 +340,10 @@ export default function CreditCardsPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {stats.map((s) => (
               <div key={s.label} className="s-card p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-2xs font-medium flex items-center gap-1.5" style={{ color: 'var(--ink-soft)' }}>
-                      <span className="size-1.5 rounded-full" style={{ background: s.color }} />{s.label}
-                    </p>
-                    <p className="num tabular font-bold mt-1.5 whitespace-nowrap" title={s.full} style={{ fontSize: 19, color: 'var(--ink)' }}>{s.value}</p>
-                    <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
-                  </div>
-                  <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: s.tint }}>
-                    <s.icon className="size-4" style={{ color: s.color }} />
-                  </div>
-                </div>
+                {/* Tile stat mono: label → angka → sub (tanpa ikon/titik warna). */}
+                <p className="text-2xs font-medium" style={{ color: 'var(--ink-soft)' }}>{s.label}</p>
+                <p className="num tabular font-bold mt-1.5 whitespace-nowrap" title={s.full} style={{ fontSize: 19, color: 'var(--ink)' }}>{s.value}</p>
+                <p className="text-2xs mt-1" style={{ color: 'var(--ink-soft)' }}>{s.sub}</p>
               </div>
             ))}
           </div>
@@ -458,8 +449,8 @@ export default function CreditCardsPage() {
               </div>
             </div>
 
-            <div className="s-card p-5" style={{ background: `color-mix(in srgb, ${utilColor} 7%, var(--surface))`, borderColor: `color-mix(in srgb, ${utilColor} 25%, var(--border-soft))` }}>
-              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: utilInk }}>{t('credit_cards.utilization_rate')}</p>
+            <div className="s-card p-5">
+              <p className="text-2xs font-semibold tracking-[0.14em] uppercase" style={{ color: 'var(--ink-soft)' }}>{t('credit_cards.utilization_rate')}</p>
               <p className="num tabular font-bold leading-none mt-3" style={{ fontSize: 24, color: utilInk, letterSpacing: '-0.03em' }}>{totals.utilization.toFixed(0)}%</p>
               <p className="text-sm mt-3" style={{ color: 'var(--ink-muted)' }}>
                 <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.outstanding)}</span> {t('credit_cards.of_total_limit')} <span className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(totals.limit)}</span>

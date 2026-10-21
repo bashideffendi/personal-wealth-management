@@ -477,9 +477,9 @@ export default function InvestmentOverviewPage() {
         <div className="flex items-center gap-3 shrink-0">
           <div
             className="size-11 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'var(--c-mint-soft)' }}
+            style={{ background: 'var(--surface-2)' }}
           >
-            <Wallet className="size-5" style={{ color: 'var(--c-mint-ink)' }} />
+            <Wallet className="size-5" style={{ color: 'var(--ink-muted)' }} />
           </div>
           <div>
             <p className="eyebrow max-md:hidden">{t('investment.rdn_cash')}</p>

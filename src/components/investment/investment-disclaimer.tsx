@@ -22,14 +22,11 @@ export function InvestmentDisclaimer({
   return (
     <div
       role="note"
-      className={`hidden md:flex items-start gap-2 rounded-lg border px-3 py-2 text-2xs leading-relaxed ${className}`}
-      style={{
-        background: 'var(--c-amber-soft)',
-        borderColor: 'color-mix(in srgb, var(--c-amber) 28%, transparent)',
-        color: 'var(--ink-muted)',
-      }}
+      // Caption abu, bukan kotak kuning (bahasa desain: tanpa spanduk peringatan).
+      className={`hidden md:flex items-start gap-2 text-2xs leading-relaxed ${className}`}
+      style={{ color: 'var(--ink-soft)' }}
     >
-      <Info className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--c-amber-ink)' }} />
+      <Info className="size-3.5 shrink-0 mt-0.5" style={{ color: 'var(--ink-soft)' }} />
       <span>
         {t('investment.disclaimer_banner')}
         {asOf ? (

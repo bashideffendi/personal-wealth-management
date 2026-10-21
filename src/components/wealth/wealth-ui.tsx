@@ -89,7 +89,7 @@ export function WealthHero({
 
 /** Stat tile (4-up) — label + ikon ber-chip + angka gede + sub. */
 export function StatCard({
-  label, value, sub, subColor = 'var(--ink-soft)', icon: Icon, color = 'var(--ink)', chip = 'var(--surface-2)',
+  label, value, sub, subColor = 'var(--ink-soft)', icon: Icon,
 }: {
   label: string
   value: string
@@ -104,8 +104,9 @@ export function StatCard({
       <div className="flex items-start justify-between gap-2">
         <p className="text-cap" style={{ color: 'var(--ink-muted)' }}>{label}</p>
         {Icon && (
-          <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: chip }}>
-            <Icon className="size-4" style={{ color }} />
+          // Mono (bahasa desain) — `color`/`chip` diabaikan; warna tinggal di angka/sub.
+          <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+            <Icon className="size-4" style={{ color: 'var(--ink-muted)' }} />
           </div>
         )}
       </div>

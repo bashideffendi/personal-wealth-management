@@ -32,10 +32,10 @@ import { InstitutionLogo } from '@/components/accounts/institution-logo'
 import { WealthHeader } from '@/components/wealth/wealth-ui'
 import { WealthSubnav } from '@/components/layout/wealth-subnav'
 import { useT } from '@/lib/i18n/context'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 
-const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', AMBER = 'var(--c-amber)', CORAL = 'var(--c-coral)'
+const MINT = 'var(--c-mint)', VIOLET = 'var(--c-violet)', CORAL = 'var(--c-coral)'
 const MINT_INK = 'var(--c-mint-ink)', VIOLET_INK = 'var(--c-violet-ink)', AMBER_INK = 'var(--c-amber-ink)', CORAL_INK = 'var(--c-coral-ink)'
-const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 // Likuiditas tier (perkiraan dari jenis aset — model belum simpan per-aset).
 // F10: warna tier = gradasi makna "makin lama cair makin ungu→coral",
@@ -193,7 +193,7 @@ export default function LiquidAssetsPage() {
         <div className="flex items-center gap-3">
           {isAccount
             ? <InstitutionLogo accountName={e.name} size={40} shape="circle" />
-            : <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: tint(m.color, 10) }}><Icon className="size-5" style={{ color: m.color }} /></div>}
+            : <div className="size-10 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Icon className="size-5" style={{ color: 'var(--ink-muted)' }} /></div>}
           <div className="min-w-0">
             <p className="font-semibold truncate" style={{ color: 'var(--ink)' }}>{e.name}</p>
             <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{isAccount ? t('assets_liquid.auto_from_account') : t('assets_liquid.source_manual')}</p>
@@ -223,8 +223,8 @@ export default function LiquidAssetsPage() {
       <WealthSubnav />
 
       {duplicates.length > 0 && (
-        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: tint(AMBER, 8), border: `1px solid ${tint(AMBER, 20)}` }}>
-          <AlertTriangle className="size-5 shrink-0 mt-0.5" style={{ color: AMBER_INK }} />
+        <div className="s-card flex items-start gap-3 px-4 py-3">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" style={{ color: AMBER_INK }} />
           <div className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>
             <p className="font-medium">{t('assets_liquid.dup_title')}</p>
             <p className="hidden md:block md:mt-1" style={{ color: 'var(--ink-muted)' }}>
@@ -237,7 +237,7 @@ export default function LiquidAssetsPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+        <PageSkeleton variant="cards" label={t('common.loading')} />
       ) : pageQuery.isError ? (
         <div className="s-card flex flex-col items-center text-center py-14 px-8 gap-3">
           <p className="text-sm" style={{ color: 'var(--ink-muted)' }}>{t('common.load_failed')}</p>
@@ -261,7 +261,7 @@ export default function LiquidAssetsPage() {
               const empty = c.val <= 0
               return (
                 <div key={c.id} className="p-5" style={{ opacity: empty ? 0.5 : 1 }}>
-                  <p className="flex items-center gap-1.5 text-2xs font-semibold tracking-wide uppercase" style={{ color: c.color }}><CIcon className="size-3" />{c.label}</p>
+                  <p className="flex items-center gap-1.5 text-2xs font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-soft)' }}><CIcon className="size-3" />{c.label}</p>
                   <p className="num tabular text-xl font-bold mt-2 leading-none" title={formatCurrency(c.val)} style={{ color: 'var(--ink)' }}>{formatCompactCurrency(c.val)}</p>
                   <p className="text-2xs mt-1.5" style={{ color: 'var(--ink-muted)' }}>{c.sub}</p>
                 </div>
@@ -327,7 +327,7 @@ export default function LiquidAssetsPage() {
                       <tr key={`${e.source}-${e.id}`} className="group border-b last:border-b-0 transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--outline)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            {isAccount ? <InstitutionLogo accountName={e.name} size={32} shape="circle" /> : <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: tint(m.color, 10) }}><Icon className="size-4" style={{ color: m.color }} /></div>}
+                            {isAccount ? <InstitutionLogo accountName={e.name} size={32} shape="circle" /> : <div className="size-8 rounded-lg grid place-items-center shrink-0" style={{ background: 'var(--surface-2)' }}><Icon className="size-4" style={{ color: 'var(--ink-muted)' }} /></div>}
                             <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{e.name}</p>
                           </div>
                         </td>
@@ -363,7 +363,7 @@ export default function LiquidAssetsPage() {
                 return (
                   <section key={typeKey}>
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(m.color, 10) }}><SIcon className="size-4" style={{ color: m.color }} /></div>
+                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}><SIcon className="size-4" style={{ color: 'var(--ink-muted)' }} /></div>
                       <h3 className="font-semibold" style={{ color: 'var(--ink)' }}>{m.jenis}</h3>
                       <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>{list.length} {t('assets_liquid.asset_count_suffix')}</span>
                       <span className="text-cap" style={{ color: 'var(--ink-soft)' }}>·</span>

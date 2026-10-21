@@ -34,7 +34,6 @@ const CAT: Record<string, { label: string; color: string; ink: string; icon: Luc
   cash_loan: { label: 'Pinjaman Tunai', color: 'var(--c-amber)',  ink: 'var(--c-amber-ink)',  icon: Banknote },
   long_term: { label: 'Jangka Panjang', color: 'var(--c-violet)', ink: 'var(--c-violet-ink)', icon: Home },
 }
-const tint = (c: string, p: number) => `color-mix(in srgb, ${c} ${p}%, transparent)`
 
 const DEBT_TYPE_OPTIONS: Record<string, { value: string; label: string }[]> = {
   consumer: [
@@ -360,8 +359,8 @@ export default function DebtsOverviewPage() {
 
           {/* Nudge refinance — utang bunga tinggi */}
           {highApr.length > 0 && refiSaving > 0 && (
-            <div className="s-card flex items-start gap-3 p-4" style={{ borderColor: 'color-mix(in srgb, var(--c-amber) 32%, var(--border-soft))', background: 'color-mix(in srgb, var(--c-amber) 5%, var(--surface))' }}>
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ background: 'var(--c-amber-soft)', color: 'var(--c-amber)' }}>
+            <div className="s-card flex items-start gap-3 p-4">
+              <div className="grid size-9 shrink-0 place-items-center rounded-lg" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                 <TrendingDown className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
@@ -400,7 +399,6 @@ export default function DebtsOverviewPage() {
                 </thead>
                 <tbody>
                   {visible.map((d) => {
-                    const meta = CAT[d.category] ?? CAT.consumer
                     const Icon = typeIcon(d.type)
                     const isCC = d.id.startsWith('cc:')
                     const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
@@ -409,17 +407,17 @@ export default function DebtsOverviewPage() {
                       <tr key={d.id} className="group border-t align-top transition-colors hover:bg-[var(--surface-2)]" style={{ borderColor: 'var(--border-soft)' }}>
                         <td className="px-4 py-3">
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: tint(meta.color, 10) }}>
-                              <Icon className="size-4" style={{ color: meta.ink }} />
+                            <div className="size-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: 'var(--surface-2)' }}>
+                              <Icon className="size-4" style={{ color: 'var(--ink-muted)' }} />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate" style={{ color: 'var(--ink)' }}>{d.name}</p>
                               <p className="text-2xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{t('debts.due_on')} {d.due_date ? new Date(d.due_date).getDate() : '—'}{t('debts.day_of_month_suffix')}</p>
-                              <span className="quest-bar mt-1.5" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '7px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
+                              <span className="quest-bar mt-1.5" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '6px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-3"><span className="inline-block rounded-md px-2 py-0.5 text-3xs font-semibold" style={{ background: tint(meta.color, 10), color: meta.ink }}>{getTypeLabel(d.type)}</span></td>
+                        <td className="px-3 py-3"><span className="inline-block text-ui" style={{ color: 'var(--ink-muted)' }}>{getTypeLabel(d.type)}</span></td>
                         <td className="px-3 py-3 text-right">
                           <p className="num font-semibold" style={{ color: 'var(--ink)' }}>{formatCurrency(d.remaining)}</p>
                           <p className="num text-3xs" style={{ color: 'var(--ink-soft)' }}>{t('debts.of_amount')} {formatCurrency(d.principal)}</p>
@@ -460,7 +458,6 @@ export default function DebtsOverviewPage() {
             {/* Mobile: baris kompak ~72px — tap baris = edit (CC → kelola kartu), hapus = icon kecil (pola list transaksi) */}
             <div className="sm:hidden">
               {visible.map((d, i) => {
-                const meta = CAT[d.category] ?? CAT.consumer
                 const Icon = typeIcon(d.type)
                 const isCC = d.id.startsWith('cc:')
                 const paid = d.principal > 0 ? ((d.principal - d.remaining) / d.principal) * 100 : 0
@@ -470,8 +467,8 @@ export default function DebtsOverviewPage() {
                 const inner = (
                   <>
                     <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tint(meta.color, 10) }}>
-                        <Icon className="size-4" style={{ color: meta.ink }} />
+                      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--surface-2)' }}>
+                        <Icon className="size-4" style={{ color: 'var(--ink-muted)' }} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>{d.name}</p>
@@ -496,7 +493,7 @@ export default function DebtsOverviewPage() {
                         </button>
                       )}
                     </div>
-                    <span className="quest-bar mt-2 w-full" style={{ ['--bar-fill' as string]: meta.color, ['--bar-h' as string]: '4px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
+                    <span className="quest-bar mt-2 w-full" style={{ ['--bar-fill' as string]: 'var(--c-mint)', ['--bar-h' as string]: '4px' }}><i style={{ width: `${Math.min(paid, 100)}%` }} /></span>
                   </>
                 )
                 return isCC ? (
