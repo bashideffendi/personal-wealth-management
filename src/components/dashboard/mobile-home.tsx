@@ -21,13 +21,13 @@ import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ChevronDown, Eye, EyeOff, ChevronRight as ChevRight, Target } from 'lucide-react'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { CategoryIcon } from '@/components/transactions/category-icon'
-import { categoryHue } from '@/lib/category-hue'
 import { MobileQuickEntry } from '@/components/dashboard/mobile-quick-entry'
 import { SUB_SEP } from '@/lib/budget-categories'
 import { monthLong } from '@/lib/i18n/dates'
 import { useI18n } from '@/lib/i18n/context'
 import { usePrivacy } from '@/components/privacy/privacy-provider'
 import type { Transaction } from '@/types'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface BudgetRow { category: string; budget: number; actual: number; pct: number }
 
@@ -175,7 +175,7 @@ export function MobileHome({
             href="/dashboard/profile"
             aria-label="Profil"
             className="inline-flex items-center gap-0.5 text-row font-semibold"
-            style={{ color: 'var(--c-mint-ink)' }}
+            style={{ color: 'var(--ink)' }}
           >
             BD <ChevronDown className="size-3" />
           </Link>
@@ -209,31 +209,21 @@ export function MobileHome({
       </div>
 
       {empty ? (
-        /* Empty state ala Budget: ilustrasi pudar + ajakan, bukan grid Rp0 */
-        <div className="text-center pt-14 pb-10">
-          <div className="relative h-[110px] w-[130px] mx-auto opacity-40" aria-hidden="true">
-            <span className="absolute top-0 left-2" style={{ color: categoryHue('Makanan').ink }}>
-              <CategoryIcon category="Makanan" className="size-11" />
-            </span>
-            <span className="absolute top-1 right-0 rotate-6" style={{ color: categoryHue('Transportasi').ink }}>
-              <CategoryIcon category="Transportasi" className="size-11" />
-            </span>
-            <span className="absolute bottom-0 left-6 -rotate-3" style={{ color: categoryHue('Tagihan').ink }}>
-              <CategoryIcon category="Tagihan" className="size-11" />
-            </span>
-            <span className="absolute bottom-1 right-4 rotate-2" style={{ color: categoryHue('Belanja').ink }}>
-              <CategoryIcon category="Belanja" className="size-11" />
-            </span>
-          </div>
-          <p className="text-ui mt-5" style={{ color: 'var(--ink-soft)' }}>{t('dashboard.no_budget')}</p>
-          <Link
-            href="/dashboard/budgeting"
-            className="inline-flex items-center gap-1.5 mt-3.5 rounded-full px-4 py-2 text-cap font-medium"
-            style={{ background: 'var(--c-coral-soft)', color: 'var(--c-coral-ink)' }}
-          >
-            <Target className="size-3.5" /> {t('nav.budgeting')}
-          </Link>
-        </div>
+        /* Keadaan kosong standar — bukan grid Rp0 */
+        <EmptyState
+          className="pt-14"
+          icon={Target}
+          title={t('dashboard.no_budget')}
+          action={
+            <Link
+              href="/dashboard/budgeting"
+              className="inline-flex h-11 items-center rounded-full border px-5 text-ui font-medium"
+              style={{ borderColor: 'var(--input-border)', background: 'var(--surface)', color: 'var(--ink)' }}
+            >
+              {t('nav.budgeting')}
+            </Link>
+          }
+        />
       ) : (
         <>
           {/* 2 ── Pengeluaran */}
@@ -242,8 +232,8 @@ export function MobileHome({
             <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
               {formatCurrency(totalExpense)}
             </b>{' '}
-            <span className="inline-grid place-items-center size-5 rounded-full align-middle" style={{ background: 'var(--c-mint-soft)' }} aria-hidden="true">
-              <ChevronDown className="size-3" style={{ color: 'var(--c-mint-ink)' }} />
+            <span className="inline-grid place-items-center size-5 rounded-full align-middle" style={{ background: 'var(--surface-2)' }} aria-hidden="true">
+              <ChevronDown className="size-3" style={{ color: 'var(--ink-soft)' }} />
             </span>
           </p>
           <div className="grid grid-cols-4 gap-2">
@@ -258,8 +248,8 @@ export function MobileHome({
                 <b className="num tabular font-semibold" style={{ color: 'var(--ink)' }}>
                   {formatCurrency(totalIncome)}
                 </b>{' '}
-                <span className="inline-grid place-items-center size-5 rounded-full align-middle" style={{ background: 'var(--c-mint-soft)' }} aria-hidden="true">
-                  <ChevronDown className="size-3" style={{ color: 'var(--c-mint-ink)' }} />
+                <span className="inline-grid place-items-center size-5 rounded-full align-middle" style={{ background: 'var(--surface-2)' }} aria-hidden="true">
+                  <ChevronDown className="size-3" style={{ color: 'var(--ink-soft)' }} />
                 </span>
               </p>
               <div className="grid grid-cols-4 gap-2">

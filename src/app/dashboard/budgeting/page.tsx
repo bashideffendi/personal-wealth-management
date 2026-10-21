@@ -985,10 +985,10 @@ export default function BudgetingPage() {
     },
   }
 
-  // Semantic row tint — each section carries its hue at varying intensity
-  // (header strong → parent medium → sub faint), so green=income, coral=expense, etc.
-  const tint = (kind: BudgetType, pct: number) =>
-    `color-mix(in srgb, ${KIND_COLOR[kind].hex} ${pct}%, var(--surface))`
+  // Latar baris mono (bahasa desain: warna hanya di data) — header seksi
+  // surface-2, baris lain surface; identitas seksi tetap lewat titik warna.
+  const tint = (_kind: BudgetType, pct: number) =>
+    pct >= 14 ? 'var(--surface-2)' : 'var(--surface)'
 
   // Current month index (1-12) for highlighting current column
   const currentMonth = new Date().getMonth() + 1
@@ -1121,12 +1121,13 @@ export default function BudgetingPage() {
                 </Button>
               )
             })()}
-            <Button onClick={() => setManagerOpen(true)}>
+            {/* Aksi sekunder → outline (primer hitam terlalu dominan di header). */}
+            <Button variant="outline" onClick={() => setManagerOpen(true)} className="max-md:h-11 max-md:rounded-full">
               <FolderTree className="h-4 w-4" data-icon="inline-start" />
               {t('budgeting.manage_categories')}
             </Button>
             <Select value={year} onValueChange={(v) => setYear(v ?? year)}>
-              <SelectTrigger className="w-[120px]" style={{ background: 'var(--surface)' }}>
+              <SelectTrigger className="w-[120px] max-md:ml-auto max-md:h-11 max-md:rounded-full" style={{ background: 'var(--surface)' }}>
                 <SelectValue placeholder={t('budgeting.year')} />
               </SelectTrigger>
               <SelectContent>
@@ -1163,7 +1164,7 @@ export default function BudgetingPage() {
         ].map((c) => (
           <div key={c.label} className="rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}>
             <div className="flex items-center gap-2.5">
-              <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 9, background: `color-mix(in srgb, ${c.dot} 15%, var(--surface))`, color: c.dot }}>
+              <span className="grid place-items-center shrink-0" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                 <c.Icon className="size-4" />
               </span>
               <span className="text-2xs font-medium leading-tight" style={{ color: 'var(--ink-muted)' }}>{c.label}</span>
@@ -1194,7 +1195,7 @@ export default function BudgetingPage() {
         const amt = privacyHidden ? '••••••' : formatCurrency(Math.abs(remaining))
         // Mobile: strip over-alokasi ramping dirender MobileBudgetingView (per bulan terpilih)
         return (
-          <div className="hidden md:flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: `color-mix(in srgb, ${hex} 9%, var(--surface))`, borderColor: `color-mix(in srgb, ${hex} 35%, transparent)` }}>
+          <div className="hidden md:flex items-center gap-2.5 rounded-xl border px-4 py-2.5" style={{ background: 'var(--surface)', borderColor: 'var(--outline)' }}>
             {ok ? <Check className="size-4 shrink-0" style={{ color: hex }} /> : <Info className="size-4 shrink-0" style={{ color: hex }} />}
             <p className="text-ui font-medium" style={{ color: 'var(--ink)' }}>
               <span className="font-semibold">{shortMonths[bMonth - 1]}</span>{' — '}

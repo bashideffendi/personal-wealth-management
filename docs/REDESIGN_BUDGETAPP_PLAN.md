@@ -79,3 +79,21 @@ mono, #6 judul HP Lainnya/Profil. Sisanya (#7–#10) dilebur ke fase di bawah.
   `Segmented`; toggle Catatan|Statistik pindah ke baris aksi Transaksi (dulu
   melayang menutupi daftar), tombol ikon HP 44px. Mode demo: stub `rpc` supaya
   Anggaran tidak macet memuat. Desktop top-nav sudah satu area gulir — dibiarkan.
+- **Fase 2 — halaman inti:**
+  - *Beranda:* grafik hero tanpa area gradien; ikon widget Transaksi/Akun mono;
+    kartu "Selangkah lagi" tidak lagi blok abu; kartu Anggaran 2 kolom (menutup
+    lubang grid bento di 1440); select periode pakai border kontrol; HP: keadaan
+    kosong pakai `EmptyState`, chevron/profil mono.
+  - *Transaksi:* tipe di tabel desktop = titik kecil + teks (bukan badge
+    warna-warni); ikon kategori & penanda "Pecahan" mono; pemilih tipe di dialog
+    aktif = tombol primer; hapus baris HP target 44px; label donat Statistik
+    tidak terpotong.
+  - *Anggaran:* toggle Rencana|Sisa inline (bukan melayang), panah bulan 44px,
+    "Kelola Kategori" jadi outline; donat pakai palet seri berurutan (dulu
+    semua coral), legend titik, %/per-hari tanpa desimal; grid desktop tanpa
+    latar tint per seksi; kartu ringkasan & catatan alokasi mono.
+  - *Akun:* sudah dirapikan di fondasi (hero mono). **Dilewati:** "hanya akun
+    pembayaran" di desktop — RDN saat ini hanya bisa dikelola dari halaman Akun
+    (tautan "Kelola" di Investasi mengarah ke sana); memindahkannya = keputusan
+    produk.
+  - Mode demo kini memuat Anggaran (sebelumnya macet karena mock tanpa `rpc`).

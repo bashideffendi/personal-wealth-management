@@ -39,6 +39,7 @@ import { usePrivacy } from '@/components/privacy/privacy-provider'
 import { useI18n } from '@/lib/i18n/context'
 import { monthLong } from '@/lib/i18n/dates'
 import { SUB_SEP, rootCategory } from '@/lib/budget-categories'
+import { Segmented } from '@/components/ui/segmented'
 
 type BudgetType = 'income' | 'expense' | 'saving' | 'investment'
 
@@ -138,6 +139,13 @@ function AllocationDonut({
       </g>
     </svg>
   )
+}
+
+// Seri grafik (bahasa desain): palet logo berurutan, bukan hue per kategori —
+// donat alokasi tidak boleh terbaca "merah semua".
+const SERIES = ['var(--c-blue)', 'var(--c-violet)', 'var(--c-mint)', 'var(--c-amber)', 'var(--c-coral)']
+function seriesColor(i: number) {
+  return SERIES[i] ?? 'var(--ink-soft)'
 }
 
 export function MobileBudgetingView({
@@ -296,7 +304,7 @@ export function MobileBudgetingView({
             {!opts.sub && (
               <span
                 className="grid place-items-center size-6 rounded-[8px] shrink-0"
-                style={{ background: hue.soft, color: hue.ink }}
+                style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
               >
                 <CategoryIcon category={label} className="size-[13px]" />
               </span>
@@ -369,7 +377,6 @@ export function MobileBudgetingView({
     const isOpen = expanded.has(gKey)
     const gPlan = cats.reduce((s, c) => s + getValue(type, c, month), 0)
     const gAct = cats.reduce((s, c) => s + actualOf(type, c), 0)
-    const hue = categoryHue(root)
     return (
       <div
         className="flex min-h-[24px] items-center justify-between gap-2 py-2.5"
@@ -383,7 +390,7 @@ export function MobileBudgetingView({
         >
           <span
             className="grid place-items-center size-6 rounded-[8px] shrink-0"
-            style={{ background: hue.soft, color: hue.ink }}
+            style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
           >
             <CategoryIcon category={root} className="size-[13px]" />
           </span>
@@ -414,7 +421,7 @@ export function MobileBudgetingView({
         <button
           type="button"
           onClick={prev}
-          className="p-2 active:opacity-60"
+          className="grid size-11 place-items-center rounded-full active:opacity-60"
           aria-label={t('mobile_budget.prev_month')}
         >
           <ChevronLeft className="size-4" style={{ color: 'var(--ink-soft)' }} />
@@ -425,11 +432,25 @@ export function MobileBudgetingView({
         <button
           type="button"
           onClick={next}
-          className="p-2 active:opacity-60"
+          className="grid size-11 place-items-center rounded-full active:opacity-60"
           aria-label={t('mobile_budget.next_month')}
         >
           <ChevronRight className="size-4" style={{ color: 'var(--ink-soft)' }} />
         </button>
+      </div>
+
+      {/* Rencana | Sisa — inline di bawah pemilih bulan (dulu pill melayang di
+          atas dock yang menutupi daftar). */}
+      <div className="flex justify-center pt-1 pb-2">
+        <Segmented
+          value={view}
+          onChange={setView}
+          ariaLabel={`${t('budgeting.mode_plan')} | ${t('mobile_budget.remaining')}`}
+          options={[
+            ['plan', t('budgeting.mode_plan')],
+            ['remain', t('mobile_budget.remaining')],
+          ] as const}
+        />
       </div>
 
       {/* Salin dari bulan lalu — HANYA saat bulan terpilih kosong total.
@@ -469,9 +490,9 @@ export function MobileBudgetingView({
       <section className="s-card px-4 py-3.5 mt-3">
         <div className="flex items-center gap-4">
           <AllocationDonut
-            segments={donutParents.map((p) => ({
+            segments={donutParents.map((p, i) => ({
               key: p.name,
-              color: categoryHue(p.name).bar,
+              color: seriesColor(i),
               frac: expenseAlloc > 0 ? p.amount / expenseAlloc : 0,
             }))}
           />
@@ -491,8 +512,7 @@ export function MobileBudgetingView({
                 : new Intl.NumberFormat('id-ID', {
                     style: 'currency',
                     currency: 'IDR',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    maximumFractionDigits: 0,
                   }).format(perDay)}{' '}
               {locale === 'id' ? 'per hari' : 'per day'}
             </p>
@@ -503,23 +523,17 @@ export function MobileBudgetingView({
             bukan tempat edit; edit tetap di list per tipe di bawah) */}
         {donutParents.length > 0 && (
           <div className="mt-3 pt-1.5" style={{ borderTop: '1px solid var(--border-soft)' }}>
-            {donutParents.map((p) => {
-              const hue = categoryHue(p.name)
+            {donutParents.map((p, i) => {
               const share = expenseAlloc > 0 ? (p.amount / expenseAlloc) * 100 : 0
               return (
                 <div key={p.name} className="flex items-center gap-2 py-1.5">
-                  <span
-                    className="grid place-items-center size-6 rounded-[8px] shrink-0"
-                    style={{ background: hue.soft, color: hue.ink }}
-                  >
-                    <CategoryIcon category={p.name} className="size-[13px]" />
-                  </span>
+                  <span aria-hidden className="size-2 rounded-full shrink-0 mx-1" style={{ background: seriesColor(i) }} />
                   <span className="flex-1 min-w-0 flex items-baseline gap-2">
                     <p className="text-cap font-medium truncate" style={{ color: 'var(--ink)' }} title={p.name}>
                       {p.name}
                     </p>
                     <span className="num tabular text-2xs shrink-0" style={{ color: 'var(--ink-soft)' }}>
-                      {share.toFixed(2).replace('.', ',')}%
+                      {Math.round(share)}%
                     </span>
                   </span>
                   <span
@@ -609,39 +623,6 @@ export function MobileBudgetingView({
         })}
       </div>
 
-      {/* Toggle floating "Rencana | Sisa" ala Budget — pill gelap (samain dock,
-          warna hardcoded bukan token) fixed di atas dock; md+ ke-hide bareng
-          wrapper mobile halaman */}
-      <div
-        className="fixed inset-x-0 z-30 flex justify-center md:hidden pointer-events-none"
-        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
-      >
-        <div
-          className="pointer-events-auto flex items-center rounded-full p-1"
-          style={{
-            background: 'rgba(244,244,246,0.92)',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 6px 20px rgba(0,0,0,.12)',
-          }}
-        >
-          {(['plan', 'remain'] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              aria-pressed={view === v}
-              className="rounded-full px-4 py-1.5 text-cap font-medium transition-colors"
-              style={
-                view === v
-                  ? { background: 'transparent', color: 'var(--c-teal-ink, #2a9d8f)', fontWeight: 600 }
-                  : { color: 'var(--ink-soft)' }
-              }
-            >
-              {v === 'plan' ? t('budgeting.mode_plan') : t('mobile_budget.remaining')}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

@@ -391,7 +391,8 @@ export function MobileStatsView({
           <>
             {/* Donut polos — tanpa angka di tengah, callout slice terbesar */}
             <div className="flex justify-center mt-3">
-              <svg viewBox="0 0 180 156" width="280" height="242" className="max-w-full" role="img" aria-label={t('transactions.col_category')}>
+              {/* viewBox dilebarkan kiri-kanan supaya label callout tidak terpotong tepi */}
+              <svg viewBox="-28 0 236 156" width="320" height="212" className="max-w-full h-auto" role="img" aria-label={t('transactions.col_category')}>
                 <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--surface-2)" strokeWidth={SW} />
                 {slices.map((s) => (
                   <circle

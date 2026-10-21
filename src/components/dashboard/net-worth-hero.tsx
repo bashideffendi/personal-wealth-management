@@ -302,13 +302,8 @@ export function NetWorthHero({
                 className="w-full h-full"
                 style={{ minHeight: 120 }}
               >
-                <defs>
-                  <linearGradient id="nwspark" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="var(--hero-accent)" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="var(--hero-accent)" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d={sparkline.areaPath} fill="url(#nwspark)" />
+                {/* Area flat tipis (tanpa gradien hiasan) */}
+                <path d={sparkline.areaPath} fill="var(--hero-accent)" fillOpacity="0.08" />
                 <path
                   d={sparkline.linePath}
                   fill="none"

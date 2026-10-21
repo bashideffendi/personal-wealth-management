@@ -15,7 +15,6 @@ import { formatDateShort } from '@/lib/i18n/dates'
 import type { Transaction, Account, CreditCard, CategorizationRule } from '@/types'
 import { RangePicker, type DateRange, matchPresetKey, resolvePresetRange } from '@/components/transactions/range-picker'
 import { CategoryIcon } from '@/components/transactions/category-icon'
-import { categoryHue } from '@/lib/category-hue'
 import { MobileMonthCalendar } from '@/components/transactions/mobile-month-calendar'
 import { MobileStatsView } from '@/components/transactions/mobile-stats-view'
 import { monthLong } from '@/lib/i18n/dates'
@@ -76,11 +75,13 @@ const TYPE_LABELS: Record<TransactionType, string> = {
 // Semantic chips: mint=income, coral=expense, amber=saving, violet=investment.
 // Foreground uses the -ink (AA-contrast) variants — the full-saturation hues fail
 // WCAG AA on their own soft tints (amber worst, ~2:1).
-const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string }> = {
-  income:     { bg: 'var(--c-mint-soft)',    color: 'var(--c-mint-ink)' },
-  expense:    { bg: 'var(--c-coral-soft)',   color: 'var(--c-coral-ink)' },
-  saving:     { bg: 'var(--c-amber-soft)',   color: 'var(--c-amber-ink)' },
-  investment: { bg: 'var(--c-violet-soft)',  color: 'var(--c-violet-ink)' },
+// Mono (bahasa desain): chip/ikon tipe netral; warna tipe tinggal di titik
+// kecil `dot` (penanda data) + warna nominal.
+const TYPE_BADGE_STYLES: Record<TransactionType, { bg: string; color: string; dot: string }> = {
+  income:     { bg: 'var(--surface-2)', color: 'var(--ink-muted)', dot: 'var(--c-mint)' },
+  expense:    { bg: 'var(--surface-2)', color: 'var(--ink-muted)', dot: 'var(--c-coral)' },
+  saving:     { bg: 'var(--surface-2)', color: 'var(--ink-muted)', dot: 'var(--c-amber)' },
+  investment: { bg: 'var(--surface-2)', color: 'var(--ink-muted)', dot: 'var(--c-violet)' },
 }
 
 const emptyForm = {
@@ -2024,13 +2025,8 @@ export default function TransactionsPage() {
                             {getAccountName(tx.account_id)}
                           </TableCell>
                           <TableCell>
-                            <span
-                              className="chip"
-                              style={{
-                                background: TYPE_BADGE_STYLES[tx.type].bg,
-                                color: TYPE_BADGE_STYLES[tx.type].color,
-                              }}
-                            >
+                            <span className="inline-flex items-center gap-1.5 text-ui whitespace-nowrap" style={{ color: 'var(--ink-muted)' }}>
+                              <span aria-hidden className="size-1.5 rounded-full" style={{ background: TYPE_BADGE_STYLES[tx.type].dot }} />
                               {t(TYPE_LABEL_KEYS[tx.type])}
                             </span>
                           </TableCell>
@@ -2067,7 +2063,7 @@ export default function TransactionsPage() {
                             {tx.split_group_id && (
                               <span
                                 className="ml-2 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-3xs font-medium align-middle"
-                                style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}
+                                style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                                 title={locale === 'id' ? 'Bagian dari transaksi yang dipecah' : 'Part of a split transaction'}
                               >
                                 <Split className="size-2.5" /> {locale === 'id' ? 'Pecahan' : 'Split'}
@@ -2181,12 +2177,8 @@ export default function TransactionsPage() {
                           : tx.type === 'expense'
                             ? 'var(--c-coral-ink)'
                             : 'var(--ink)'
-                        // F10: chip ikon = hue KATEGORI (konsisten Beranda/Anggaran);
-                        // pemasukan tetap mint (semantik masuk lebih penting).
-                        const hue = categoryHue(tx.category)
-                        const tint = tx.type === 'income'
-                          ? { bg: 'var(--c-mint-soft)', color: 'var(--c-mint-ink)' }
-                          : { bg: hue.soft, color: hue.ink }
+                        // Chip ikon mono (konsisten Beranda); arti masuk/keluar ada di warna nominal.
+                        const tint = { bg: 'var(--surface-2)', color: 'var(--ink-muted)' }
                         return (
                           <div
                             key={tx.id}
@@ -2207,7 +2199,7 @@ export default function TransactionsPage() {
                             <div className="min-w-0 flex-1">
                               <p className="text-body font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
                                 {tx.split_group_id && (
-                                  <span className="mr-1 inline-flex items-center rounded-full px-1.5 align-middle text-3xs font-semibold uppercase" style={{ background: 'var(--c-violet-soft)', color: 'var(--c-violet-ink)' }}>
+                                  <span className="mr-1 inline-flex items-center rounded-full px-1.5 align-middle text-3xs font-semibold uppercase" style={{ background: 'var(--surface-2)', color: 'var(--ink-muted)' }}>
                                     {locale === 'id' ? 'Pecahan' : 'Split'}
                                   </span>
                                 )}
@@ -2216,7 +2208,7 @@ export default function TransactionsPage() {
                               <p className="text-2xs truncate leading-tight mt-0.5" style={{ color: 'var(--ink-soft)' }}>
                                 {/* Ikon kecil = bagian dari transaksi yang dipecah */}
                                 {tx.split_group_id && (
-                                  <Split className="size-3 inline align-[-2px] mr-1" aria-hidden style={{ color: 'var(--c-violet)' }} />
+                                  <Split className="size-3 inline align-[-2px] mr-1" aria-hidden style={{ color: 'var(--ink-soft)' }} />
                                 )}
                                 {tx.category} · {getAccountName(tx.account_id)}
                               </p>
@@ -2228,7 +2220,7 @@ export default function TransactionsPage() {
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
                               aria-label={`${t('transactions.delete')}: ${tx.description || tx.category}`}
-                              className="grid place-items-center size-7 rounded-md shrink-0 -mr-1 transition-colors active:bg-[var(--surface-2)]"
+                              className="grid place-items-center size-11 rounded-lg shrink-0 -mr-3 -ml-1 transition-colors active:bg-[var(--surface-2)]"
                               style={{ color: 'var(--ink-soft)' }}
                             >
                               <Trash2 className="size-3.5" />
@@ -2293,6 +2285,7 @@ export default function TransactionsPage() {
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 <span className="chip" style={{ background: TYPE_BADGE_STYLES[peekTx.type].bg, color: TYPE_BADGE_STYLES[peekTx.type].color }}>
+                  <span aria-hidden className="size-1.5 rounded-full" style={{ background: TYPE_BADGE_STYLES[peekTx.type].dot }} />
                   {t(TYPE_LABEL_KEYS[peekTx.type])}
                 </span>
                 <span className="chip inline-flex items-center gap-1.5" style={{ background: 'var(--surface-2)', color: 'var(--ink)' }}>
@@ -2611,13 +2604,12 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            {/* Type — segmented colored chips */}
+            {/* Type — segmented; aktif = tombol primer (mono) */}
             <div className="grid gap-1.5">
               <Label id="tx-type-label">{t('transactions.label_type')}</Label>
               <div className="grid grid-cols-4 gap-1.5" role="group" aria-labelledby="tx-type-label">
                 {(Object.keys(TYPE_LABELS) as TransactionType[]).map((ty) => {
                   const active = form.type === ty
-                  const c = TYPE_BADGE_STYLES[ty]
                   return (
                     <button
                       key={ty}
@@ -2630,7 +2622,7 @@ export default function TransactionsPage() {
                       }}
                       className="rounded-lg border py-2 text-xs font-semibold transition-colors"
                       style={active
-                        ? { background: c.bg, color: c.color, borderColor: c.color }
+                        ? { background: 'var(--c-primary)', color: 'var(--c-primary-foreground)', borderColor: 'var(--c-primary)' }
                         : { background: 'var(--surface)', color: 'var(--ink-muted)', borderColor: 'var(--outline)' }}
                     >
                       {t(TYPE_LABEL_KEYS[ty])}

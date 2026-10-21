@@ -827,7 +827,7 @@ export default function DashboardPage() {
             kebaca sebagai kontrol, bukan nyatu sama kanvas. Scope: widget bulanan. */}
         <div className="flex items-center gap-2">
           <Select value={String(selectedMonth)} onValueChange={(v) => { if (v) setSelectedMonth(Number(v)) }}>
-            <SelectTrigger aria-label={t('dashboard.month_placeholder')} className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
+            <SelectTrigger aria-label={t('dashboard.month_placeholder')} className="w-[124px] h-9 text-sm" style={{ background: 'var(--surface)' }}>
               <SelectValue placeholder={t('dashboard.month_placeholder')}>{(v) => MONTHS[Number(v) - 1] ?? v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -835,7 +835,7 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
           <Select value={String(selectedYear)} onValueChange={(v) => { if (v) setSelectedYear(Number(v)) }}>
-            <SelectTrigger aria-label={t('dashboard.year_placeholder')} className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: 'var(--card-shadow)' }}>
+            <SelectTrigger aria-label={t('dashboard.year_placeholder')} className="w-[90px] h-9 text-sm" style={{ background: 'var(--surface)' }}>
               <SelectValue placeholder={t('dashboard.year_placeholder')}>{(v) => v}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -1254,7 +1254,7 @@ export default function DashboardPage() {
       </SortableSection>
 
       {/* Budget Progress (per-card, span 1) */}
-      <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="lg:col-span-1 lg:row-span-3">
+      <SortableSection id="anggaran" order={blockOrder} overflow="scroll-list" className="md:col-span-2 lg:row-span-3">
         <div className="s-card p-4 sm:p-5 h-full">
           <div className="mb-3">
             <p className="eyebrow">{t('dashboard.budget_progress')}</p>

@@ -63,7 +63,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
       ) : (
         <div className="flex flex-col mt-3">
           {recent.map((tx, i) => {
-            const { Icon, tone } = categoryStyle(tx.category, tx.type)
+            const { Icon } = categoryStyle(tx.category, tx.type)
             const pos = tx.type === 'income'
             const expense = tx.type === 'expense'
             return (
@@ -81,8 +81,8 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                     width: 32,
                     height: 32,
                     borderRadius: 10,
-                    background: pos ? 'var(--c-mint-soft)' : `var(--c-${tone}-soft)`,
-                    color: pos ? 'var(--c-mint)' : `var(--c-${tone})`,
+                    background: 'var(--surface-2)',
+                    color: 'var(--ink-muted)',
                   }}
                 >
                   <Icon className="size-[15px]" />

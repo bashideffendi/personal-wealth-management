@@ -22,14 +22,6 @@ const TYPE_ICON: Record<Account['type'], React.ComponentType<{ className?: strin
   rdn: TrendingUp,
   investment: TrendingUp,
 }
-const TYPE_TONE: Record<Account['type'], string> = {
-  cash: 'amber',
-  bank: 'primary',
-  digital_wallet: 'violet',
-  rdn: 'mint',
-  investment: 'mint',
-}
-
 export function AccountsCard({ accounts }: { accounts: AccountRow[] }) {
   const t = useT()
   const total = accounts.reduce((s, a) => s + (a.current_balance || 0), 0)
@@ -61,7 +53,6 @@ export function AccountsCard({ accounts }: { accounts: AccountRow[] }) {
         <div className="flex flex-col mt-3 flex-1 min-h-0 overflow-y-auto">
           {sorted.map((a, i) => {
             const Icon = TYPE_ICON[a.type] ?? Wallet
-            const tone = TYPE_TONE[a.type] ?? 'primary'
             return (
               <div
                 key={a.id}
@@ -70,7 +61,7 @@ export function AccountsCard({ accounts }: { accounts: AccountRow[] }) {
               >
                 <div
                   className="grid place-items-center"
-                  style={{ width: 32, height: 32, borderRadius: 10, background: `var(--c-${tone}-soft)`, color: `var(--c-${tone})` }}
+                  style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--surface-2)', color: 'var(--ink-muted)' }}
                 >
                   <Icon className="size-[15px]" />
                 </div>

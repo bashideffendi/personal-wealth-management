@@ -124,7 +124,6 @@ export function GettingStarted() {
   return (
     <div
       className="s-card p-5 sm:p-6"
-      style={{ background: 'var(--c-primary-soft)' }}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5">
