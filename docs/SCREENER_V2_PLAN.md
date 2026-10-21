@@ -90,3 +90,9 @@ Dibangun 21 Okt 2026 di `feat/screener-v2` (sesi cloud). Belum di-merge ke `mast
 - Belum ada tes komponen/DOM; pola repo hanya menguji lib murni.
 - Mobile: tabel menampilkan ticker + maks. 3 kolom per set (tanpa gulir horizontal); kolom lain tersedia di desktop dan CSV.
 - Preview Vercel: tautan tidak terlihat dari sesi ini. Cek tab Deployments untuk branch `feat/screener-v2`.
+
+**Design pass (21 Okt 2026):**
+
+- **Filter.** Tiga baris filter dan deretan chip hitam diganti satu bilah kontrol: pencarian, menu preset pilih-satu dengan jumlah hasil dan keterangan kriteria, menu sektor multi-pilih, Lanjutan, dan set kolom. Filter aktif tampil sebagai token yang bisa dihapus di samping "N dari 967", sehingga tidak ada lagi filter yang menumpuk diam-diam.
+- **Tabel dan panel.** Skor gabungan kini menjadi kolom kedua di setiap set dengan angka yang lebih besar, jadi itu yang dibaca pertama. Ticker ditebalkan, nama diredupkan, dan Ringkas mendapat kolom perubahan 1 tahun berwarna. Panel samping membuka dengan skor besar tabular dan batang nilai wajar yang bersih.
+- **Mobile.** Tabel diganti daftar baris ringkas, dan filter serta urutan dipindah ke sheet bawah.
