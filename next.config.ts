@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // -> First Load JS lebih kecil, load lebih cepat. (lucide-react udah auto.)
   experimental: {
     optimizePackageImports: ['recharts', 'date-fns', 'lucide-react'],
+    // Next 16.3 menyalakan cache FS Turbopack untuk `next build` secara default,
+    // dan Vercel memulihkan .next/cache antar-deploy → pernah bikin CSS basi
+    // (kelas Tailwind baru hilang) di proyek lain. Build bersih tiap deploy.
+    turbopackFileSystemCacheForBuild: false,
   },
   // Data investasi dibaca via fs (lazy) — bukan static import — supaya cold
   // start gak nge-parse ~11 MB JSON yang belum tentu diminta. Tracer Next gak
